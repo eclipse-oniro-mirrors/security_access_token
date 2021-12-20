@@ -1,0 +1,29 @@
+{
+  "subsystem": "security",
+  "parts": {
+    "access_token": {
+      "variants": [
+        "phone",
+        "wearable"
+      ],
+      "inner_kits": [
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+          "header": {
+            "header_files": [
+              "accesstoken.h",
+              "accesstoken_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
+          }
+        }
+      ],
+      "module_list": [
+        "//base/security/access_token:accesstoken_build_module_standard"
+      ],
+      "test_list": [
+        "//base/security/access_token:accesstoken_build_module_standard_test"
+      ]
+    }
+  }
+}
