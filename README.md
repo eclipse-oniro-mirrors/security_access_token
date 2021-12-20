@@ -17,7 +17,7 @@ ATM模块主要提供如下功能：
 -   提供基于tokenID的Accestoken信息查询，应用可以根据tokenID查询自身的APL等级等信息；
 
 ## 缩略词<a name="section161941989596"></a>
--   AT:Access Toke, 访问凭据
+-   AT:Access Token, 访问凭据
 -   AACL:API Access Control List, 权限访问控制列表
 -   APL:API Ability Privilege Level, 权限访问控制列表
 
