@@ -27,7 +27,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerProxy"};
 }
 
-AccessTokenManagerProxy::AccessTokenManagerProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAccessTokenManager>(impl)
+AccessTokenManagerProxy::AccessTokenManagerProxy(const sptr<IRemoteObject>& impl)
+    : IRemoteProxy<IAccessTokenManager>(impl)
 {}
 
 AccessTokenManagerProxy::~AccessTokenManagerProxy()

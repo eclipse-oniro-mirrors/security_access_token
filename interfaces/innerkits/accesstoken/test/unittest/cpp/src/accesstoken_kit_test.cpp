@@ -33,12 +33,12 @@ void AccessTokenKitTest::TearDown()
 {}
 
 /**
- * @tc.name: VerifyAccesstokenn001
+ * @tc.name: VerifyAccesstoken001
  * @tc.desc: Verify user granted permission
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitTest, VerifyAccesstokenn001, TestSize.Level0)
+HWTEST_F(AccessTokenKitTest, VerifyAccesstoken001, TestSize.Level0)
 {
     AccessTokenID tokenID = 1;
     const std::string TEST_PERMISSION_NAME = "ohos.permission.TEST";
