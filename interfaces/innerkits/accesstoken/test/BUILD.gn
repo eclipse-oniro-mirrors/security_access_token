@@ -20,7 +20,8 @@ ohos_unittest("libaccesstoken_sdk_test") {
 
   include_dirs = [
     "//utils/native/base/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include/",
+    "//third_party/googletest/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
   ]
 
   sources = [ "unittest/cpp/src/accesstoken_kit_test.cpp" ]

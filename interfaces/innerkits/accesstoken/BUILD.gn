@@ -16,7 +16,7 @@ import("//build/ohos.gni")
 ################################################################
 # C++, Main, source file here.
 ################################################################
-config("accesstoken_sdk_cxx_public_config_standard") {
+config("accesstoken") {
   visibility = [ ":*" ]
   include_dirs = [ "main/cpp/include" ]
 }
@@ -27,14 +27,15 @@ ohos_shared_library("libaccesstoken_sdk") {
 
   output_name = "libaccesstoken_sdk"
 
-  public_configs = [ ":accesstoken_sdk_cxx_public_config_standard" ]
+  public_configs = [ ":accesstoken" ]
 
   include_dirs = [
     "//utils/native/base/include",
     "main/cpp/include",
     "main/cpp/src",
-    "//base/security/access_token/frameworks/accesstoken",
-    "//base/security/access_token/nterfaces/innerkits/accesstoken/main/cpp/include",
+    "//base/security/access_token/frameworks/accesstoken/include",
+    "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
   ]
 
   sources = [
@@ -44,8 +45,7 @@ ohos_shared_library("libaccesstoken_sdk") {
   ]
 
   deps = [
-    "//base/security/permission/frameworks/permission_standard/permissioncommunicationadapter:permission_standard_communication_adapter_cxx",
-    "//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
+    "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//utils/native/base:utils",
   ]
 

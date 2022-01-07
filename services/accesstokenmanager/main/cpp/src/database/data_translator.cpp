@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "data_translator.h"
+
+#include <memory>
+
+#include "accesstoken_log.h"
+#include "field_const.h"
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues)
+{
+    outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionDef.permissionName);
+    outGenericValues.Put(FIELD_BUNDLE_NAME, inPermissionDef.bundleName);
+    outGenericValues.Put(FIELD_GRANT_MODE, inPermissionDef.grantMode);
+    outGenericValues.Put(FIELD_AVAILABLE_SCOPE, inPermissionDef.availableScope);
+    outGenericValues.Put(FIELD_LABEL, inPermissionDef.label);
+    outGenericValues.Put(FIELD_LABEL_ID, inPermissionDef.labelId);
+    outGenericValues.Put(FIELD_DESCRIPTION, inPermissionDef.description);
+    outGenericValues.Put(FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
+    return RET_SUCCESS;
+}
+
+int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericValues, PermissionDef& outPermissionDef)
+{
+    outPermissionDef.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
+    outPermissionDef.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
+    outPermissionDef.grantMode = inGenericValues.GetInt(FIELD_GRANT_MODE);
+    outPermissionDef.availableScope = inGenericValues.GetInt(FIELD_AVAILABLE_SCOPE);
+    outPermissionDef.label = inGenericValues.GetString(FIELD_LABEL);
+    outPermissionDef.labelId = inGenericValues.GetInt(FIELD_LABEL_ID);
+    outPermissionDef.description = inGenericValues.GetString(FIELD_DESCRIPTION);
+    outPermissionDef.descriptionId = inGenericValues.GetInt(FIELD_DESCRIPTION_ID);
+    return RET_SUCCESS;
+}
+
+int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPermissionState,
+    const unsigned int grantIndex, GenericValues& outGenericValues)
+{
+    if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size()
+        || grantIndex >= inPermissionState.grantFlags.size()) {
+        return RET_FAILED;
+    }
+    outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionState.permissionName);
+    outGenericValues.Put(FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
+    outGenericValues.Put(FIELD_GRANT_IS_GENERAL, inPermissionState.isGeneral ? 1 : 0);
+    outGenericValues.Put(FIELD_GRANT_STATE, inPermissionState.grantStatus[grantIndex]);
+    outGenericValues.Put(FIELD_GRANT_FLAG, inPermissionState.grantFlags[grantIndex]);
+    return RET_SUCCESS;
+}
+
+int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
+    PermissionStateFull& outPermissionState)
+{
+    outPermissionState.isGeneral = ((inGenericValues.GetInt(FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
+    outPermissionState.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
+    outPermissionState.resDeviceID.push_back(inGenericValues.GetString(FIELD_DEVICE_ID));
+    outPermissionState.grantStatus.push_back((PermissionState)inGenericValues.GetInt(FIELD_GRANT_STATE));
+    outPermissionState.grantFlags.push_back(inGenericValues.GetInt(FIELD_GRANT_FLAG));
+    return RET_SUCCESS;
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

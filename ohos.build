@@ -11,7 +11,6 @@
           "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
           "header": {
             "header_files": [
-              "accesstoken.h",
               "accesstoken_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
@@ -19,10 +18,12 @@
         }
       ],
       "module_list": [
-        "//base/security/access_token:accesstoken_build_module_standard"
+        "//base/security/access_token:accesstoken_build_module",
+        "//base/security/access_token:tokensync_build_module"
       ],
       "test_list": [
-        "//base/security/access_token:accesstoken_build_module_standard_test"
+        "//base/security/access_token:accesstoken_build_module_test",
+        "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest"
       ]
     }
   }
