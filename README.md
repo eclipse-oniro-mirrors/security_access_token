@@ -7,7 +7,7 @@
     -   [接口说明](#section1551164914237)
     -   [使用说明](#section129654513264)
 
--   [相关仓](#section1371113476307) 
+-   [相关仓](#section1371113476307)
 
 ## 简介<a name="section11660541593"></a>
 
@@ -24,7 +24,7 @@ ATM模块主要提供如下功能：
 ## 目录<a name="section161941989596"></a>
 
 ```
-/base/security/access_token         
+/base/security/access_token
 ├── frameworks                  # 框架层，作为基础功能目录，被interfaces和services使用
 │   ├── accesstoken             # Accesstoken管理框架代码实现
 │   ├── tokensync               # Accesstoken信息同步框架代码实现

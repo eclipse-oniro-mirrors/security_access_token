@@ -17,14 +17,39 @@
 #define INTERFACES_INNER_KITS_ACCESSTOKEN_KIT_H
 
 #include <string>
-#include "accesstoken.h"
+#include <vector>
+
+#include "access_token.h"
+#include "hap_token_info.h"
+#include "native_token_info.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 class AccessTokenKit {
 public:
-    static int VerifyAccesstoken(AccessTokenID tokenID, const std::string& permissionName);
+    static AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
+    static AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
+    static int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
+    static int DeleteToken(AccessTokenID tokenID);
+    static int GetTokenType(AccessTokenID tokenID);
+    static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
+    static AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    static int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
+    static int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+    static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    static int VerifyAccessToken(
+        AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
+    static int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
+    static int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
+    static int GetReqPermissions(
+        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
+    static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName);
+    static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    static int ClearUserGrantedPermissionState(AccessTokenID tokenID);
 };
 } // namespace AccessToken
 } // namespace Security
