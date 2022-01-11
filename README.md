@@ -10,8 +10,10 @@
 
 ## 简介<a name="section11660541593"></a>
 
-ATM是OpenHarmony上基于AccessToken构建的统一的应用权限管理能力。
+ATM(AccessTokenManager)是OpenHarmony上基于AccessToken构建的统一的应用权限管理能力。
+
 应用的Accesstoken信息主要包括应用身份标识APPID、用户ID，应用分身索引、应用APL等级、应用权限信息等。每个应用的Accestoken信息由一个32bits的设备内唯一标识符TokenID来标识。
+
 ATM模块主要提供如下功能：
 -   提供基于TokenID的应用权限校验机制，应用访问敏感数据或者API时可以检查是否有对应的权限。
 -   提供基于TokenID的Accestoken信息查询，应用可以根据tokenID查询自身的APL等级等信息。
@@ -19,7 +21,6 @@ ATM模块主要提供如下功能：
 ## 缩略词<a name="section161941989596"></a>
 -   AT:      AccessToken, 访问凭据
 -   ATM:     AccessTokenManager, 访问凭据管理
--   API：    Application Programming Interface, 应用程序接口
 -   APL:     API Ability Privilege Level, 元能力权限等级
 -   APPID:   APP identity，应用身份标识
 -   TokenID: Token identity，凭据身份标识
@@ -35,6 +36,7 @@ ATM模块主要提供如下功能：
 ├── interfaces                  # 接口层
 │   └── innerkits               # 内部接口层
 │       ├── accesstoken         # Accesstoken内部接口代码存放目录
+│       ├── accesstoken_lib     # Accesstoken_lib内部接口代码存放目录
 │       └── tokensync           # Accesstoken信息同步内部接口代码存放目录
 └── services                    # 服务层
     ├── accesstokenmanager      # Accesstoken管理服务代码存放目录
