@@ -19,6 +19,7 @@ group("accesstoken_build_module") {
     deps = [
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/interfaces/innerkits/nativetoken:libaccesstoken_lib",
+      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
       "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
       "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
     ]
@@ -43,6 +44,7 @@ group("accesstoken_build_module_test") {
       "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest",
       "//base/security/access_token/interfaces/innerkits/nativetoken/test:unittest",
       "//base/security/access_token/interfaces/innerkits/tokensync/test:unittest",
+      "//base/security/access_token/interfaces/innerkits/token_setproc/test:unittest",
       "//base/security/access_token/services/accesstokenmanager/test:unittest",
     ]
   }
