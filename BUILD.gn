@@ -13,7 +13,6 @@
 
 #import("//base/security/permission/permission.gni")
 import("//build/ohos.gni")
-
 group("accesstoken_build_module") {
   if (is_standard_system) {
     deps = [
