@@ -1,4 +1,4 @@
-# security_access_token<a name="ZH-CN_TOPIC_0000001101239136"></a>
+# 访问控制<a name="ZH-CN_TOPIC_0000001101239136"></a>
 
 -   [简介](#section11660541593)
 -   [目录](#section119744591305)
