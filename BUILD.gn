@@ -13,12 +13,12 @@
 
 #import("//base/security/permission/permission.gni")
 import("//build/ohos.gni")
-
 group("accesstoken_build_module") {
   if (is_standard_system) {
     deps = [
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/interfaces/innerkits/nativetoken:libaccesstoken_lib",
+      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
       "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
       "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
     ]
@@ -42,12 +42,12 @@ group("accesstoken_build_module_test") {
     deps += [
       "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest",
       "//base/security/access_token/interfaces/innerkits/nativetoken/test:unittest",
+      "//base/security/access_token/interfaces/innerkits/token_setproc/test:unittest",
       "//base/security/access_token/interfaces/innerkits/tokensync/test:unittest",
       "//base/security/access_token/services/accesstokenmanager/test:unittest",
     ]
   }
 }
-
 #group("distributed_permission") {
 #  if (is_standard_system) {
 #    deps = [
