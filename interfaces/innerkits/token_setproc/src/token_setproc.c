@@ -31,13 +31,13 @@ enum {
 };
 
 #define ACCESS_TOKENID_GET_TOKENID \
-    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE,GET_TOKEN_ID,unsigned long long)
+    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_TOKEN_ID, unsigned long long)
 #define ACCESS_TOKENID_SET_TOKENID \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE,SET_TOKEN_ID,unsigned long long)
-#define ACCESS_TOKENID_GET_FTOKENID\
-    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE,GET_FTOKEN_ID,unsigned long long)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_TOKEN_ID, unsigned long long)
+#define ACCESS_TOKENID_GET_FTOKENID \
+    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_FTOKEN_ID, unsigned long long)
 #define ACCESS_TOKENID_SET_FTOKENID \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE,SET_FTOKEN_ID,unsigned long long)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_FTOKEN_ID, unsigned long long)
 
 #define ACCESS_TOKEN_OK 0
 #define ACCESS_TOKEN_ERROR (-1)
@@ -47,14 +47,14 @@ enum {
 
 #define TOKENID_DEVNODE "/dev/access_token_id"
 
-uint64_t GetSelfTokenID()
+uint64_t GetSelfTokenID(void)
 {
     uint64_t token = INVAL_TOKEN_ID;
-    int fd = open(TOKENID_DEVNODE,O_RDWR);
+    int fd = open(TOKENID_DEVNODE, O_RDWR);
     if (fd < 0) {
         return INVAL_TOKEN_ID;
     }
-    int ret =ioctl(fd,ACCESS_TOKENID_GET_TOKENID,&token);
+    int ret =ioctl(fd, ACCESS_TOKENID_GET_TOKENID, &token);
     if (ret) {
         close(fd);
         return INVAL_TOKEN_ID;
@@ -66,11 +66,11 @@ uint64_t GetSelfTokenID()
 
 int SetSelfTokenID(uint64_t tokenID)
 {
-    int fd = open(TOKENID_DEVNODE,O_RDWR);
+    int fd = open(TOKENID_DEVNODE, O_RDWR);
     if (fd < 0) {
         return ACCESS_TOKEN_ERROR;
     }
-    int ret = ioctl(fd,ACCESS_TOKENID_SET_TOKENID,&tokenID);
+    int ret = ioctl(fd, ACCESS_TOKENID_SET_TOKENID, &tokenID);
     if (ret) {
         close(fd);
         return ACCESS_TOKEN_ERROR;
@@ -80,14 +80,14 @@ int SetSelfTokenID(uint64_t tokenID)
     return ACCESS_TOKEN_OK;
 }
 
-uint64_t GetFirstCallerTokenID()
+uint64_t GetFirstCallerTokenID(void)
 {
     uint64_t token = INVAL_TOKEN_ID;
-    int fd = open(TOKENID_DEVNODE,O_RDWR);
+    int fd = open(TOKENID_DEVNODE, O_RDWR);
     if (fd < 0) {
         return INVAL_TOKEN_ID;
     }
-    int ret = ioctl(fd,ACCESS_TOKENID_GET_FTOKENID,&token);
+    int ret = ioctl(fd, ACCESS_TOKENID_GET_FTOKENID, &token);
     if (ret) {
         close(fd);
         return INVAL_TOKEN_ID;
@@ -99,11 +99,11 @@ uint64_t GetFirstCallerTokenID()
 
 int SetFirstCallerTokenID(uint64_t tokenID)
 {
-    int fd = open(TOKENID_DEVNODE,O_RDWR);
+    int fd = open(TOKENID_DEVNODE, O_RDWR);
     if (fd < 0) {
         return ACCESS_TOKEN_ERROR;
     }
-    int ret = ioctl(fd,ACCESS_TOKENID_SET_FTOKENID,&tokenID);
+    int ret = ioctl(fd, ACCESS_TOKENID_SET_FTOKENID, &tokenID);
     if (ret) {
         close(fd);
         return ACCESS_TOKEN_ERROR;
