@@ -41,15 +41,34 @@ PermissionManager::~PermissionManager()
 {
 }
 
-void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& permList)
+void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tokenInfo, bool updateFlag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, permList.size());
+    if (tokenInfo == nullptr) {
+        return;
+    }
+    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfo->GetHapInfoPermissionPolicySet();
+    if (permPolicySet == nullptr) {
+        return;
+    }
+    std::vector<PermissionDef> permList;
+    permPolicySet->GetDefPermissions(permList);
     for (auto perm : permList) {
         if (!PermissionValidator::IsPermissionDefValid(perm)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: invalid permission definition info: %{public}s", __func__,
                 TransferPermissionDefToString(perm).c_str());
-        } else {
+            continue;
+        }
+
+        if (updateFlag) {
+            PermissionDefinitionCache::GetInstance().Update(perm);
+            continue;
+        }
+
+        if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
             PermissionDefinitionCache::GetInstance().Insert(perm);
+        } else {
+            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: permission %{public}s has define", __func__,
+                TransferPermissionDefToString(perm).c_str());
         }
     }
 }
@@ -87,13 +106,7 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
         return PERMISSION_DENIED;
     }
 
-    std::vector<PermissionStateFull> permList = permPolicySet->permStateList_;
-    for (auto perm : permList) {
-        if (perm.permissionName == permissionName) {
-            return QueryPermissionStatus(perm);
-        }
-    }
-    return PERMISSION_DENIED;
+    return permPolicySet->VerifyPermissStatus(permissionName);
 }
 
 int PermissionManager::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
@@ -120,8 +133,8 @@ int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Perm
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
         return RET_FAILED;
     }
-    std::vector<PermissionDef> permListGet = permPolicySet->permList_;
-    permList.assign(permListGet.begin(), permListGet.end());
+
+    permPolicySet->GetDefPermissions(permList);
     return RET_SUCCESS;
 }
 
@@ -138,8 +151,9 @@ int PermissionManager::GetReqPermissions(
     }
 
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
-    std::vector<PermissionStateFull> permList = permPolicySet->permStateList_;
-    for (auto perm : permList) {
+    std::vector<PermissionStateFull> tmpList;
+    permPolicySet->GetPermissionStateFulls(tmpList);
+    for (auto perm : tmpList) {
         PermissionDef permDef;
         GetDefPermission(perm.permissionName, permDef);
         if (permDef.grantMode == mode) {
@@ -168,24 +182,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
         return DEFAULT_PERMISSION_FLAGS;
     }
-
-    std::vector<PermissionStateFull> permList = permPolicySet->permStateList_;
-    for (auto perm : permList) {
-        if (perm.permissionName == permissionName) {
-            return QueryPermissionFlag(perm);
-        }
-    }
-    return DEFAULT_PERMISSION_FLAGS;
-}
-
-
-int PermissionManager::UpdatePermissionStatus(PermissionStateFull& permStat, bool isGranted, int flag)
-{
-    if (permStat.isGeneral == true) {
-        permStat.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-        permStat.grantFlags[0] = flag;
-    }
-    return RET_FAILED;
+    return permPolicySet->QueryPermissionFlag(permissionName);
 }
 
 void PermissionManager::UpdateTokenPermissionState(
@@ -198,13 +195,8 @@ void PermissionManager::UpdateTokenPermissionState(
         return;
     }
 
-    std::vector<PermissionStateFull>& permList = permPolicySet->permStateList_;
-    for (auto& perm : permList) {
-        if (perm.permissionName == permissionName) {
-            UpdatePermissionStatus(perm, isGranted, flag);
-            break;
-        }
-    }
+    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
 }
 
 void PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
@@ -259,30 +251,16 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         return;
     }
 
-    std::vector<PermissionStateFull>& permList = permPolicySet->permStateList_;
+    std::vector<PermissionStateFull> permList;
+    permPolicySet->GetPermissionStateFulls(permList);
     for (auto& perm : permList) {
         PermissionDef permDef;
-        bool isGranted;
+        bool isGranted = false;
         GetDefPermission(perm.permissionName, permDef);
         isGranted = (permDef.grantMode == SYSTEM_GRANT) ? true : false;
-        UpdatePermissionStatus(perm, isGranted, DEFAULT_PERMISSION_FLAGS);
+        permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, DEFAULT_PERMISSION_FLAGS);
     }
-}
-
-int PermissionManager::QueryPermissionFlag(const PermissionStateFull& permStat)
-{
-    if (permStat.isGeneral == true) {
-        return permStat.grantFlags[0];
-    }
-    return DEFAULT_PERMISSION_FLAGS;
-}
-
-int PermissionManager::QueryPermissionStatus(const PermissionStateFull& permStat)
-{
-    if (permStat.isGeneral == true) {
-        return permStat.grantStatus[0];
-    }
-    return PERMISSION_DENIED;
+    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
 }
 
 std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)
@@ -291,7 +269,9 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
     infos.append(R"({"permissionName": ")" + inPermissionDef.permissionName + R"(")");
     infos.append(R"(, "bundleName": ")" + inPermissionDef.bundleName + R"(")");
     infos.append(R"(, "grantMode": )" + std::to_string(inPermissionDef.grantMode));
-    infos.append(R"(, "availableScope": )" + std::to_string(inPermissionDef.availableScope));
+    infos.append(R"(, "availableLevel": )" + std::to_string(inPermissionDef.availableLevel));
+    infos.append(R"(, "provisionEnable": )" + std::to_string(inPermissionDef.provisionEnable));
+    infos.append(R"(, "distributedSceneEnable": )" + std::to_string(inPermissionDef.distributedSceneEnable));
     infos.append(R"(, "label": ")" + inPermissionDef.label + R"(")");
     infos.append(R"(, "labelId": )" + std::to_string(inPermissionDef.labelId));
     infos.append(R"(, "description": ")" + inPermissionDef.description + R"(")");

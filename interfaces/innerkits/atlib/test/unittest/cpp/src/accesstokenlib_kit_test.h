@@ -20,9 +20,11 @@
 
 namespace OHOS {
 namespace Security {
+static const int BUFF_LEN = 102400;
+static const int DELAY_ONE_SECONDS = 5;
+static const int DELAY_FIVE_SECONDS = 10;
 class TokenLibKitTest : public testing::Test {
 public:
-    static char buffer[102400];
     static void SetUpTestCase();
 
     static void TearDownTestCase();
@@ -30,6 +32,8 @@ public:
     void SetUp();
 
     void TearDown();
+    void ResetFile(void);
+    void PthreadCloseTrigger(void);
 };
 } // namespace Security
 } // namespace OHOS

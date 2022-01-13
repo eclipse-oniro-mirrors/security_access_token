@@ -38,11 +38,11 @@
 /* define LOG_TAG as "security_*" at your submodule, * means your submodule name such as "security_dac" */
 #define LOG_TAG "accssToken_"
 
-#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) printf("[%s] debug: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_INFO(fmt, ...) printf("[%s] info: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_WARN(fmt, ...) printf("[%s] warn: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_ERROR(fmt, ...) printf("[%s] error: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_FATAL(fmt, ...) printf("[%s] fatal: %s: " fmt "\n", LOG_TAG, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) printf("[%s] debug: " fmt "\n", LOG_TAG, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_INFO(fmt, ...) printf("[%s] info: " fmt "\n", LOG_TAG,  ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_WARN(fmt, ...) printf("[%s] warn: " fmt "\n", LOG_TAG,  ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_ERROR(fmt, ...) printf("[%s] error: " fmt "\n", LOG_TAG, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_FATAL(fmt, ...) printf("[%s] fatal: " fmt "\n", LOG_TAG, ##__VA_ARGS__)
 
 #endif  // HILOG_ENABLE
 

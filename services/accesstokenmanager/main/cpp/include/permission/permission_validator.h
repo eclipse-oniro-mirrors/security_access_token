@@ -35,7 +35,6 @@ public:
     static void FilterInvalidPermisionState(
         const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result);
     static bool IsGrantModeValid(int grantMode);
-    static bool IsAvailableScopeValid(int availableScope);
     static bool IsGrantStatusValid(int grantStaus);
 private:
     static void DeduplicateResDevID(const PermissionStateFull& permState, PermissionStateFull& result);

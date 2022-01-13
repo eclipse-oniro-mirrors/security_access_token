@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_MANAGER_CLIENT_H
 #define ACCESSTOKEN_MANAGER_CLIENT_H
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -38,31 +39,32 @@ public:
 
     virtual ~AccessTokenManagerClient();
 
-    int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) const;
-    int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult) const;
-    int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList) const;
+    int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
+    int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
-        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant) const;
-    int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) const;
-    int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) const;
-    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) const;
-    int ClearUserGrantedPermissionState(AccessTokenID tokenID) const;
-    AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy) const;
-    int DeleteToken(AccessTokenID tokenID) const;
-    int GetTokenType(AccessTokenID tokenID) const;
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) const;
-    AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex) const;
-    AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) const;
-    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy) const;
-    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes) const;
-    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes) const;
+        AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
+    int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName);
+    int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    int ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
+    int DeleteToken(AccessTokenID tokenID);
+    ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
+    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
+    AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
+    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
+    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
+    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
 
 private:
     AccessTokenManagerClient();
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
-
-    sptr<IAccessTokenManager> GetProxy() const;
+    std::mutex proxyMutex_;
+    sptr<IAccessTokenManager> proxy_ = nullptr;
+    sptr<IAccessTokenManager> GetProxy();
 };
 } // namespace AccessToken
 } // namespace Security

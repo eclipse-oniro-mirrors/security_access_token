@@ -42,7 +42,8 @@ public:
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& InfoParcel);
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
-    int RemoveTokenInfo(AccessTokenID id);
+    int RemoveHapTokenInfo(AccessTokenID id);
+    int RemoveNativeTokenInfo(AccessTokenID id);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
@@ -76,6 +77,7 @@ private:
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, int> hapTokenIdMap_;
     std::map<int, std::shared_ptr<NativeTokenInfoInner>> nativeTokenInfoMap_;
+    std::map<std::string, int> nativeTokenIdMap_;
 };
 } // namespace AccessToken
 } // namespace Security

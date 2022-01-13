@@ -35,6 +35,8 @@ public:
 
     bool Insert(const PermissionDef& info);
 
+    bool Update(const PermissionDef& info);
+
     void DeleteByBundleName(const std::string& bundleName);
 
     int FindByPermissionName(const std::string& permissionName, PermissionDef& info);

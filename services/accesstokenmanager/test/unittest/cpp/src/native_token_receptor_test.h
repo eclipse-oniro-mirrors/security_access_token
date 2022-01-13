@@ -13,24 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNER_KITS_ACCESSTOKEN_H
-#define INTERFACES_INNER_KITS_ACCESSTOKEN_H
+#ifndef NATIVE_TOKEN_RECEPTOR_TEST_H
+#define NATIVE_TOKEN_RECEPTOR_TEST_H
+
+#include <gtest/gtest.h>
+#include "accesstoken_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef unsigned int AccessTokenID;
-enum AccessTokenKitRet {
-    RET_FAILED = -1,
-    RET_SUCCESS = 0,
-};
+class NativeTokenReceptorTest : public testing::Test {
+public:
+    static void SetUpTestCase();
 
-typedef enum TypePermissionState {
-    PERMISSION_DENIED = -1,
-    PERMISSION_GRANTED = 0,
-} PermissionState;
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif
+#endif // NATIVE_TOKEN_RECEPTOR_TEST_H

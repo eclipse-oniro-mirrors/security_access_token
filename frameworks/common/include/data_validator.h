@@ -33,8 +33,18 @@ public:
     static bool IsDomainValid(const std::string& domain);
 
     static bool IsAplNumValid(const int apl);
+
+    static bool IsProcessNameValid(const std::string& processName);
+
+    static bool IsDeviceIdValid(const std::string& deviceId);
+
+    static bool IsLabelValid(const std::string& label);
+
+    static bool IsDescValid(const std::string& desc);
+    static bool IsPermissionFlagValid(int flag);
 private:
     const static int MAX_LENGTH = 256;
+    const static int MAX_APPIDDESC_LENGTH = 10240;
 };
 } // namespace AccessToken
 } // namespace Security

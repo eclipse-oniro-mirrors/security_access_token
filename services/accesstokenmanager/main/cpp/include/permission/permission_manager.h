@@ -30,13 +30,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const int DEFAULT_PERMISSION_FLAGS = 0;
 class PermissionManager final {
 public:
     static PermissionManager& GetInstance();
     virtual ~PermissionManager();
 
-    void AddDefPermissions(const std::vector<PermissionDef>& permList);
+    void AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tokenInfo, bool updateFlag);
     void RemoveDefPermissions(AccessTokenID tokenID);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
@@ -49,17 +48,9 @@ public:
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
 private:
     PermissionManager();
-    int UpdatePermissionStatus(PermissionStateFull& permStat, bool isGranted, int flag);
     void UpdateTokenPermissionState(
         AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag);
-
-    int QueryPermissionFlag(const PermissionStateFull& permStat);
-    int QueryPermissionStatus(const PermissionStateFull& permStat);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
-    bool IsPermissionFlagValid(int flag) const;
-    bool IsGrantModeValid(const int grantMode) const;
-    bool IsAvailableScopeValid(const int availableScope) const;
-    bool IsPermissionDefValid(const PermissionDef& permissionDef) const;
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };

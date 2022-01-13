@@ -183,11 +183,11 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
-        return RET_FAILED;
+        return DEFAULT_PERMISSION_FLAGS;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
-        return RET_FAILED;
+        return DEFAULT_PERMISSION_FLAGS;
     }
 
     MessageParcel reply;
@@ -195,13 +195,13 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
-        return RET_FAILED;
+        return DEFAULT_PERMISSION_FLAGS;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_FLAG), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
-        return RET_FAILED;
+        return DEFAULT_PERMISSION_FLAGS;
     }
 
     int32_t result = reply.ReadInt32();
@@ -341,7 +341,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
         return res;
     }
 
-    uint64_t result = reply.ReadUint64();
+    unsigned long long result = reply.ReadUint64();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}llu", __func__, result);
     res.tokenIDEx = result;
     return res;

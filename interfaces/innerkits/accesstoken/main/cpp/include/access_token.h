@@ -22,6 +22,7 @@ namespace AccessToken {
 typedef unsigned int AccessTokenID;
 typedef unsigned int AccessTokenAttr;
 static const int DEFAULT_TOKEN_VERSION = 1;
+static const int DEFAULT_PERMISSION_FLAGS = 0;
 
 enum AccessTokenKitRet {
     RET_FAILED = -1,
@@ -64,12 +65,6 @@ typedef enum TypeGrantMode {
     USER_GRANT = 0,
     SYSTEM_GRANT = 1,
 } GrantMode;
-
-typedef enum TypeAvailableScope {
-    AVAILABLE_SCOPE_ALL = 1 << 0,
-    AVAILABLE_SCOPE_SIGNATURE = 1 << 1,
-    AVAILABLE_SCOPE_RESTRICTED = 1 << 2
-} AvailableScope;
 
 typedef enum TypePermissionFlag {
     PERMISSION_USER_SET = 1 << 0,

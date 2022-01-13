@@ -66,7 +66,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     NativeTokenInfoTable.tableColumnNames_ = {
         FIELD_TOKEN_ID, FIELD_PROCESS_NAME,
         FIELD_TOKEN_VERSION, FIELD_TOKEN_ATTR,
-        FIELD_DCAP
+        FIELD_DCAP, FIELD_APL
     };
 
     SqliteTable permissionDefTable;
@@ -74,7 +74,8 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     permissionDefTable.tableColumnNames_ = {
         FIELD_TOKEN_ID, FIELD_PERMISSION_NAME,
         FIELD_BUNDLE_NAME, FIELD_GRANT_MODE,
-        FIELD_AVAILABLE_SCOPE, FIELD_LABEL,
+        FIELD_AVAILABLE_LEVEL, FIELD_PROVISION_ENABLE,
+        FIELD_DISTRIBUTED_SCENE_ENABLE, FIELD_LABEL,
         FIELD_LABEL_ID, FIELD_DESCRIPTION,
         FIELD_DESCRIPTION_ID
     };
@@ -315,6 +316,7 @@ int SqliteStorage::CreateNativeTokenInfoTable() const
         .append(FIELD_TOKEN_VERSION + " integer not null,")
         .append(FIELD_TOKEN_ATTR + " integer not null,")
         .append(FIELD_DCAP + " text not null,")
+        .append(FIELD_APL + " integer not null,")
         .append("primary key(" + FIELD_TOKEN_ID)
         .append("))");
     return ExecuteSql(sql);
@@ -332,7 +334,9 @@ int SqliteStorage::CreatePermissionDefinitionTable() const
         .append(FIELD_PERMISSION_NAME + " text not null,")
         .append(FIELD_BUNDLE_NAME + " text not null,")
         .append(FIELD_GRANT_MODE + " integer not null,")
-        .append(FIELD_AVAILABLE_SCOPE + " integer not null,")
+        .append(FIELD_AVAILABLE_LEVEL + " integer not null,")
+        .append(FIELD_PROVISION_ENABLE + " integer not null,")
+        .append(FIELD_DISTRIBUTED_SCENE_ENABLE + " integer not null,")
         .append(FIELD_LABEL + " text not null,")
         .append(FIELD_LABEL_ID + " integer not null,")
         .append(FIELD_DESCRIPTION + " text not null,")

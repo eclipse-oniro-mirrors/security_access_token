@@ -52,6 +52,13 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info)
     return true;
 }
 
+bool PermissionDefinitionCache::Update(const PermissionDef& info)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    permissionDefinitionMap_[info.permissionName] = info;
+    return true;
+}
+
 void PermissionDefinitionCache::DeleteByBundleName(const std::string& bundleName)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);

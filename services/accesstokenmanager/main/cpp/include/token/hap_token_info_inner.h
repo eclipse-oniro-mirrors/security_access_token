@@ -34,7 +34,7 @@ class HapTokenInfoInner final {
 public:
     HapTokenInfoInner() : ver_(DEFAULT_TOKEN_VERSION), tokenID_(0), tokenAttr_(0), userID_(0),
         instIndex_(0), apl_(APL_NORMAL) {};
-    virtual ~HapTokenInfoInner() = default;
+    virtual ~HapTokenInfoInner();
 
     void Init(AccessTokenID id, const HapInfoParams& info, const HapPolicyParams& policy);
     void Update(const std::string& appIDDesc, const HapPolicyParams& policy);

@@ -23,7 +23,6 @@ ohos_unittest("libtoken_setproc_test") {
   ]
 
   sources = [ "unittest/cpp/src/tokensetproc_kit_test.cpp" ]
-
   cflags_cc = [ "-fexceptions" ]
 
   deps = [

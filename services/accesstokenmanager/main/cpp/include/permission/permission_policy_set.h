@@ -16,14 +16,15 @@
 #ifndef PERMISSION_POLICY_SET_H
 #define PERMISSION_POLICY_SET_H
 
-#include "permission_def.h"
-#include "permission_state_full.h"
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "access_token.h"
 #include "generic_values.h"
-
-#include <vector>
-#include <string>
-#include <memory>
+#include "permission_def.h"
+#include "permission_state_full.h"
+#include "rwlock.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,28 +32,35 @@ namespace AccessToken {
 struct PermissionPolicySet final {
 public:
     PermissionPolicySet() : tokenId_(0) {};
-    virtual ~PermissionPolicySet() {};
+    virtual ~PermissionPolicySet();
 
     static std::shared_ptr<PermissionPolicySet> BuildPermissionPolicySet(AccessTokenID tokenId,
         const std::vector<PermissionDef>& permList, const std::vector<PermissionStateFull>& permStateList);
     static std::shared_ptr<PermissionPolicySet> RestorePermissionPolicy(AccessTokenID tokenId,
         const std::vector<GenericValues>& permDefRes, const std::vector<GenericValues>& permStateRes);
     void StorePermissionPolicySet(std::vector<GenericValues>& permDefValueList,
-        std::vector<GenericValues>& permStateValueList) const;
+        std::vector<GenericValues>& permStateValueList);
     void Update(const std::vector<PermissionDef>& permList, const std::vector<PermissionStateFull>& permStateList);
-    void ToString(std::string& info) const;
-    std::vector<PermissionDef> permList_;
-    std::vector<PermissionStateFull> permStateList_;
+
+    int VerifyPermissStatus(const std::string& permissionName);
+    void GetDefPermissions(std::vector<PermissionDef>& permList);
+    void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);
+    int QueryPermissionFlag(const std::string& permissionName);
+    void UpdatePermissionStatus(const std::string& permissionName, bool isGranted, int flag);
+    void ToString(std::string& info);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
         const PermissionStateFull& state);
-    void UpdatePermStateFull(PermissionStateFull& permOld, const PermissionStateFull& permNew);
-    void UpdatePermDef(PermissionDef& permOld, const PermissionDef& permNew);
+    void UpdatePermStateFull(const PermissionStateFull& permOld, PermissionStateFull& permNew);
     void StorePermissionDef(std::vector<GenericValues>& valueList) const;
     void StorePermissionState(std::vector<GenericValues>& valueList) const;
     void PermDefToString(const PermissionDef& def, std::string& info) const;
     void PermStateFullToString(const PermissionStateFull& state, std::string& info) const;
+
+    OHOS::Utils::RWLock permPolicySetLock_;
+    std::vector<PermissionDef> permList_;
+    std::vector<PermissionStateFull> permStateList_;
     AccessTokenID tokenId_;
 };
 }  // namespace AccessToken

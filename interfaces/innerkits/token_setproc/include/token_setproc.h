@@ -13,20 +13,19 @@
  * limitations under the License.
  */
 
-
-#ifndef TOKEN_setproc_H
-#define TOKEN_setproc_H
+#ifndef TOKEN_SETPROC_H
+#define TOKEN_SETPROC_H
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint64_t GetSelfTokenID(void);
+uint64_t GetSelfTokenID();
 
 int SetSelfTokenID(uint64_t tokenID);
 
-uint64_t GetFirstCallerTokenID(void);
+uint64_t GetFirstCallerTokenID();
 
 int SetFirstCallerTokenID(uint64_t tokenID);
 

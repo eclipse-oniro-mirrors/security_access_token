@@ -34,7 +34,7 @@ public:
     static AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     static int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
     static int DeleteToken(AccessTokenID tokenID);
-    static int GetTokenType(AccessTokenID tokenID);
+    static ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     static AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
     static int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);

@@ -35,7 +35,7 @@ ohos_shared_library("libaccesstoken_sdk") {
     "main/cpp/src",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
+    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
   ]
 
   sources = [
@@ -46,6 +46,7 @@ ohos_shared_library("libaccesstoken_sdk") {
 
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//utils/native/base:utils",
   ]
 
