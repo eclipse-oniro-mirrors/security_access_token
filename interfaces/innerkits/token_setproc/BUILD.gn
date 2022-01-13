@@ -36,9 +36,7 @@ ohos_static_library("libtoken_setproc") {
     "src",
   ]
 
-  sources = [
-    "src/token_setproc.c",
-  ]
+  sources = [ "src/token_setproc.c" ]
 
   deps = []
 }
