@@ -45,6 +45,10 @@ void TokenSyncManagerService::OnStart()
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenSyncManagerService is starting");
+    if (!Initialize()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        return;
+    }
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<TokenSyncManagerService>::GetInstance().get());
     if (!ret) {

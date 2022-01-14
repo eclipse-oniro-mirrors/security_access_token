@@ -28,6 +28,12 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenIDManager"};
 }
 
+ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
+{
+    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&id;
+    return (ATokenTypeEnum)idInner->type;
+}
+
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 {
     {
@@ -36,8 +42,7 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
             return TOKEN_INVALID;
         }
     }
-    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&id;
-    return (ATokenTypeEnum)idInner->type;
+    return GetTokenIdTypeEnum(id);
 }
 
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)

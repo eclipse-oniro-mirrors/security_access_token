@@ -35,9 +35,10 @@ static const std::string JSON_DCAPS = "dcaps";
 class NativeTokenInfoInner final {
 public:
     NativeTokenInfoInner() : ver_(DEFAULT_TOKEN_VERSION), tokenID_(0), tokenAttr_(0), apl_(APL_NORMAL) {};
-    virtual ~NativeTokenInfoInner() = default;
+    NativeTokenInfoInner(NativeTokenInfo& info);
+    virtual ~NativeTokenInfoInner();
 
-    void Init(AccessTokenID id, const std::string& processName, ATokenAplEnum apl,
+    int Init(AccessTokenID id, const std::string& processName, int apl,
         const std::vector<std::string>& dcap);
     void StoreNativeInfo(std::vector<GenericValues>& valueList) const;
     void TranslateToNativeTokenInfo(NativeTokenInfo& InfoParcel) const;

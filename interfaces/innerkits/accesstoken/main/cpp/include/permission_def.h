@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include "access_token.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -26,7 +28,9 @@ public:
     std::string permissionName;
     std::string bundleName;
     int grantMode;
-    int availableScope;
+    TypeATokenAplEnum availableLevel;
+    bool provisionEnable;
+    bool distributedSceneEnable;
     std::string label;
     int labelId;
     std::string description;

@@ -70,11 +70,6 @@ void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     std::string permissionName = data.ReadString();
     PermissionDefParcel permissionDefParcel;
     int result = this->GetDefPermission(permissionName, permissionDefParcel);
@@ -84,11 +79,6 @@ void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageP
 
 void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     AccessTokenID tokenID = data.ReadUint32();
     std::vector<PermissionDefParcel> permList;
 
@@ -103,11 +93,6 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     AccessTokenID tokenID = data.ReadUint32();
     int isSystemGrant = data.ReadInt32();
     std::vector<PermissionStateFullParcel> permList;
@@ -125,45 +110,50 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
 {
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
+    if (!IsAuthorizedCalling() &&
+        VerifyAccessToken(tokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
+        VerifyAccessToken(tokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
+        VerifyAccessToken(tokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(DEFAULT_PERMISSION_FLAGS);
+        return;
+    }
     int result = this->GetPermissionFlag(tokenID, permissionName);
     reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
+    AccessTokenID tokenID = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    int flag = data.ReadInt32();
+    if (!IsAuthorizedCalling() &&
+        VerifyAccessToken(tokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
-    std::string permissionName = data.ReadString();
-    int flag = data.ReadInt32();
     int result = this->GrantPermission(tokenID, permissionName, flag);
     reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
+    AccessTokenID tokenID = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    int flag = data.ReadInt32();
+    if (!IsAuthorizedCalling() &&
+        VerifyAccessToken(tokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
-    std::string permissionName = data.ReadString();
-    int flag = data.ReadInt32();
     int result = this->RevokePermission(tokenID, permissionName, flag);
     reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->ClearUserGrantedPermissionState(tokenID);
     reply.WriteInt32(result);

@@ -16,26 +16,40 @@ import("//build/ohos.gni")
 ################################################################
 # C, Main, source file here.
 ################################################################
-config("token_setproc") {
+config("accesstokenlib") {
   visibility = [ ":*" ]
-  include_dirs = [ "include" ]
+  include_dirs = [ "main/include" ]
 }
 
-ohos_static_library("libtoken_setproc") {
+ohos_shared_library("libaccesstoken_lib") {
   subsystem_name = "security"
   part_name = "access_token"
-  output_name = "libtoken_setproc"
+  output_name = "libaccesstoken_lib"
 
-  public_configs = [ ":token_setproc" ]
+  public_configs = [ ":accesstokenlib" ]
 
   cflags = [ "-Wall" ]
+  cflags += [ "-pthread" ]
 
   include_dirs = [
-    "include",
-    "src",
+    "//utils/native/base/include",
+    "//base/security/access_token/frameworks/common/include",
+    "main/include",
+    "main/src",
+    "//third_party/cJSON",
+    "//third_party/bounds_checking_function/include",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara/include/",
   ]
 
-  sources = [ "src/token_setproc.c" ]
+  sources = [ "main/src/accesstoken_lib.c" ]
 
-  deps = []
+  deps = [
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
+    "//third_party/cJSON:cjson_static",
+    "//utils/native/base:utils",
+    "//utils/native/base:utilsecurec_shared",
+  ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
 }

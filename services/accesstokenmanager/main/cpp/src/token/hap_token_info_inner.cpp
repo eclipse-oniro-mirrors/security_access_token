@@ -27,6 +27,13 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "HapTokenInfoInner"};
 }
+
+HapTokenInfoInner::~HapTokenInfoInner()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
+        "%{public}s called, tokenID: 0x%{public}x destruction", __func__, tokenID_);
+}
+
 void HapTokenInfoInner::Init(AccessTokenID id, const HapInfoParams &info, const HapPolicyParams &policy)
 {
     tokenID_ = id;
@@ -42,6 +49,7 @@ void HapTokenInfoInner::Init(AccessTokenID id, const HapInfoParams &info, const 
 void HapTokenInfoInner::Update(const std::string& appIDDesc, const HapPolicyParams& policy)
 {
     appID_ = appIDDesc;
+    apl_ = policy.apl;
     if (permPolicySet_ == nullptr) {
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenID_,
             policy.permList, policy.permStateList);
@@ -82,9 +90,26 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 {
     userID_ = inGenericValues.GetInt(FIELD_USER_ID);
     bundleName_ = inGenericValues.GetString(FIELD_BUNDLE_NAME);
+    if (!DataValidator::IsBundleNameValid(bundleName_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x bundle name is error", __func__, tokenID_);
+        return RET_FAILED;
+    }
+
     instIndex_ = inGenericValues.GetInt(FIELD_INST_INDEX);
     appID_ = inGenericValues.GetString(FIELD_APP_ID);
+    if (!DataValidator::IsAppIDDescValid(appID_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x appID is error", __func__, tokenID_);
+        return RET_FAILED;
+    }
+
     deviceID_ = inGenericValues.GetString(FIELD_DEVICE_ID);
+    if (!DataValidator::IsDeviceIdValid(deviceID_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x devId is error", __func__, tokenID_);
+        return RET_FAILED;
+    }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
         apl_ = (ATokenAplEnum)aplNum;

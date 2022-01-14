@@ -22,6 +22,7 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
+#include "native_token_receptor.h"
 #include "permission_manager.h"
 
 namespace OHOS {
@@ -175,7 +176,8 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
-    return AccessTokenInfoManager::GetInstance().RemoveTokenInfo(tokenID);
+    // only support hap token deletion
+    return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
@@ -219,26 +221,20 @@ int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenIn
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
 
-    HapTokenInfo hapTokenInfo;
-    AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfo);
-    InfoParcel.hapTokenInfoParams = hapTokenInfo;
-    return RET_SUCCESS;
+    return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, InfoParcel.hapTokenInfoParams);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& InfoParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
 
-    NativeTokenInfo nativeTokenInfo;
-    AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfo);
-    InfoParcel.nativeTokenInfoParams = nativeTokenInfo;
-
-    return RET_SUCCESS;
+    return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
 }
 
 bool AccessTokenManagerService::Initialize() const
 {
     AccessTokenInfoManager::GetInstance().Init();
+    NativeTokenReceptor::GetInstance().Init();
     return true;
 }
 } // namespace AccessToken

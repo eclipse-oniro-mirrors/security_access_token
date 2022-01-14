@@ -29,13 +29,36 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenInfoInner"};
 }
 
-void NativeTokenInfoInner::Init(AccessTokenID id, const std::string& processName,
-    ATokenAplEnum apl, const std::vector<std::string>& dcap)
+NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native)
+    : ver_(native.ver), tokenID_(native.tokenID), tokenAttr_(native.tokenAttr),
+    processName_(native.processName), apl_(native.apl), dcap_(native.dcap)
+{}
+
+NativeTokenInfoInner::~NativeTokenInfoInner()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
+        "%{public}s called, tokenID: 0x%{public}x destruction", __func__, tokenID_);
+}
+
+int NativeTokenInfoInner::Init(AccessTokenID id, const std::string& processName,
+    int apl, const std::vector<std::string>& dcap)
 {
     tokenID_ = id;
+    if (!DataValidator::IsProcessNameValid(processName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x process name is null", __func__, tokenID_);
+        return RET_FAILED;
+    }
     processName_ = processName;
-    apl_ = apl;
+    if (!DataValidator::IsAplNumValid(apl)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x init failed, apl %{public}d is invalid",
+            __func__, tokenID_, apl);
+        return RET_FAILED;
+    }
+    apl_ = (ATokenAplEnum)apl;
     dcap_ = dcap;
+    return RET_SUCCESS;
 }
 
 std::string NativeTokenInfoInner::DcapToString(const std::vector<std::string>& dcap) const
@@ -66,14 +89,18 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
 {
     tokenID_ = tokenId;
     processName_ = inGenericValues.GetString(FIELD_PROCESS_NAME);
+    if (!DataValidator::IsProcessNameValid(processName_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "%{public}s called, tokenID: 0x%{public}x process name is null", __func__, tokenID_);
+        return RET_FAILED;
+    }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
-    if (DataValidator::IsAplNumValid(aplNum)) {
-        apl_ = (ATokenAplEnum)aplNum;
-    } else {
+    if (!DataValidator::IsAplNumValid(aplNum)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "%{public}s called, tokenID: 0x%{public}x apl is error, value %{public}d", __func__, tokenID_, aplNum);
         return RET_FAILED;
     }
+    apl_ = (ATokenAplEnum)aplNum;
     ver_ = inGenericValues.GetInt(FIELD_TOKEN_VERSION);
     if (ver_ != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
@@ -159,7 +186,7 @@ void NativeTokenInfoInner::SetDcaps(const std::string& dcapStr)
 {
     int start = 0;
     while (true) {
-        unsigned int offset = dcapStr.find(',', start);
+        std::string::size_type offset = dcapStr.find(',', start);
         if (offset == std::string::npos) {
             dcap_.push_back(dcapStr.substr(start));
             break;

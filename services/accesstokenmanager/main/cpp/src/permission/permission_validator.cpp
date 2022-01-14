@@ -28,13 +28,6 @@ bool PermissionValidator::IsGrantModeValid(int grantMode)
     return grantMode == GrantMode::SYSTEM_GRANT || grantMode == GrantMode::USER_GRANT;
 }
 
-bool PermissionValidator::IsAvailableScopeValid(int availableScope)
-{
-    return availableScope == AvailableScope::AVAILABLE_SCOPE_ALL ||
-        availableScope == AvailableScope::AVAILABLE_SCOPE_RESTRICTED ||
-        availableScope == AvailableScope::AVAILABLE_SCOPE_SIGNATURE;
-}
-
 bool PermissionValidator::IsGrantStatusValid(int grantStaus)
 {
     return grantStaus == PermissionState::PERMISSION_GRANTED || grantStaus == PermissionState::PERMISSION_DENIED;
@@ -42,7 +35,8 @@ bool PermissionValidator::IsGrantStatusValid(int grantStaus)
 
 bool PermissionValidator::IsPermissionFlagValid(int flag)
 {
-    return flag == PermissionFlag::PERMISSION_USER_SET ||
+    return flag == DEFAULT_PERMISSION_FLAGS ||
+    flag == PermissionFlag::PERMISSION_USER_SET ||
     flag == PermissionFlag::PERMISSION_USER_FIXED ||
     flag == PermissionFlag::PERMISSION_SYSTEM_FIXED;
 }
@@ -54,13 +48,22 @@ bool PermissionValidator::IsPermissionNameValid(const std::string& permissionNam
 
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 {
+    if (!DataValidator::IsLabelValid(permDef.label)) {
+        return false;
+    }
+    if (!DataValidator::IsDescValid(permDef.description)) {
+        return false;
+    }
+    if (!DataValidator::IsBundleNameValid(permDef.bundleName)) {
+        return false;
+    }
     if (!DataValidator::IsPermissionNameValid(permDef.permissionName)) {
         return false;
     }
     if (!IsGrantModeValid(permDef.grantMode)) {
         return false;
     }
-    return IsAvailableScopeValid(permDef.availableScope);
+    return DataValidator::IsAplNumValid(permDef.availableLevel);
 }
 
 bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& permState)

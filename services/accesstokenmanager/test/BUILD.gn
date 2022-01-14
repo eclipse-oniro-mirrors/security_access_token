@@ -28,18 +28,22 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//third_party/json/include",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara/include/",
   ]
 
   sources = [
     "unittest/cpp/src/accesstoken_info_manager_test.cpp",
+    "unittest/cpp/src/native_token_receptor_test.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
-    "//base/security/access_token/services/accesstokenmanager/:accesstoken_manager_service",
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/security/access_token/services/accesstokenmanager/:accesstoken_manager_service",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
     "//third_party/googletest:gtest_main",
     "//utils/native/base:utils",
   ]

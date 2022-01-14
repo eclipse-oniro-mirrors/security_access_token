@@ -36,7 +36,9 @@ static PermissionDef g_infoManagerTestPermDef1 = {
     .labelId = 1,
     .description = "open the door",
     .descriptionId = 1,
-    .availableScope = 1
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false
 };
 
 static PermissionDef g_infoManagerTestPermDef2 = {
@@ -47,7 +49,9 @@ static PermissionDef g_infoManagerTestPermDef2 = {
     .labelId = 1,
     .description = "break the door",
     .descriptionId = 1,
-    .availableScope = 1
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false
 };
 
 static PermissionStateFull g_infoManagerTestState1 = {
@@ -105,7 +109,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
 
     if (getTokenId != 0) {
-        int ret = AccessTokenInfoManager::GetInstance().RemoveTokenInfo(getTokenId);
+        int ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(getTokenId);
         ASSERT_EQ(RET_SUCCESS, ret);
     }
 
@@ -133,7 +137,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
     tokenInfo->ToString(infoDes);
     GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 
@@ -172,7 +176,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
     tokenInfo->ToString(infoDes);
     GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
@@ -201,7 +205,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
     ASSERT_NE(nullptr, tokenInfo);
     GTEST_LOG_(INFO) << "remove the token info";
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
@@ -234,7 +238,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
     tokenInfo->ToString(infoDes);
     GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }

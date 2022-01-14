@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 
-
 ohos_prebuilt_etc("access_token.rc") {
   source = "access_token.cfg"
   relative_install_dir = "init"
@@ -35,19 +34,10 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
     "//third_party/json/include",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara/include/",
   ]
 
   sources = [
-    "main/cpp/src/service/accesstoken_manager_service.cpp",
-    "main/cpp/src/service/accesstoken_manager_stub.cpp",
-    "main/cpp/src/token/accesstoken_id_manager.cpp",
-    "main/cpp/src/token/accesstoken_info_manager.cpp",
-    "main/cpp/src/token/hap_token_info_inner.cpp",
-    "main/cpp/src/token/native_token_info_inner.cpp",
-    "main/cpp/src/permission/permission_manager.cpp",
-    "main/cpp/src/permission/permission_definition_cache.cpp",
-    "main/cpp/src/permission/permission_policy_set.cpp",
-    "main/cpp/src/permission/permission_validator.cpp",
     "main/cpp/src/database/data_storage.cpp",
     "main/cpp/src/database/data_translator.cpp",
     "main/cpp/src/database/generic_values.cpp",
@@ -55,6 +45,17 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/src/database/sqlite_storage.cpp",
     "main/cpp/src/database/statement.cpp",
     "main/cpp/src/database/variant_value.cpp",
+    "main/cpp/src/permission/permission_definition_cache.cpp",
+    "main/cpp/src/permission/permission_manager.cpp",
+    "main/cpp/src/permission/permission_policy_set.cpp",
+    "main/cpp/src/permission/permission_validator.cpp",
+    "main/cpp/src/service/accesstoken_manager_service.cpp",
+    "main/cpp/src/service/accesstoken_manager_stub.cpp",
+    "main/cpp/src/token/accesstoken_id_manager.cpp",
+    "main/cpp/src/token/accesstoken_info_manager.cpp",
+    "main/cpp/src/token/hap_token_info_inner.cpp",
+    "main/cpp/src/token/native_token_info_inner.cpp",
+    "main/cpp/src/token/native_token_receptor.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -62,10 +63,11 @@ ohos_shared_library("accesstoken_manager_service") {
   deps = [
     #"//base/security/accesstoken/frameworks/accesstooken/permissioncommunicationadapter:permission_standard_communication_adapter_cxx",
     #"//base/security/accesstoken/frameworks/accesstooken/common:permission_standard_infrastructure_cxx",
-    "//third_party/sqlite:sqlite",
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
+    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
+    "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
 

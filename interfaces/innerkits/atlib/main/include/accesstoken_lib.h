@@ -34,13 +34,18 @@ extern "C" {
 
 #define MAX_PROCESS_NAME_LEN 256
 #define TOKEN_ID_CFG_PATH "/data/token.json"
-#define SOCKET_FILE "/data/token_unix_socket"
-#define ERR 1
-#define SUCCESS 0
+#define SOCKET_FILE "/data/system/token_unix_socket.socket"
+#define ATRET_FAILED 1
+#define ATRET_SUCCESS 0
 #define TOKEN_NATIVE_TYPE 1
 #define DEFAULT_AT_VERSION 1
 #define TRANSFER_KEY_WORDS "NativeTokenInfo"
 #define MAX_JSON_FILE_LEN 102400
+#define MAX_DCAPS_NUM 32
+#define MAX_DCAP_LEN 1024
+#define MAX_PARAMTER_LEN 128
+#define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
+#define PATH_MAX_LEN 4096
 
 typedef unsigned int NativeAtId;
 typedef unsigned int NativeAtAttr;
@@ -73,8 +78,8 @@ typedef struct TokenQueue {
     struct TokenQueue *next;
 } NativeTokenQueue;
 
-#define TOKEN_QUEUE_NODE_INFO_SET(tmp, aplStr, processname, tokenId, exist, dcap, dacpNum) do { \
-    (tmp).apl = GetAplLevel((aplStr)); \
+#define TOKEN_QUEUE_NODE_INFO_SET(tmp, apl, processname, tokenId, exist, dcap, dacpNum) do { \
+    (tmp).apl = (apl); \
     (tmp).processName = (processname); \
     (tmp).tokenId = (tokenId); \
     (tmp).flag = (exist); \
@@ -82,8 +87,7 @@ typedef struct TokenQueue {
     (tmp).dcapsNum = (dacpNum); \
 } while (0)
 
-extern void *ThreadTransferFunc(const void *args);
-
+extern char *GetFileBuff(const char *cfg);
 #ifdef __cplusplus
 }
 #endif

@@ -179,10 +179,8 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         hapTokenInfoMap_[id] = info;
         hapTokenIdMap_[HapUniqueKey] = id;
     }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = info->GetHapInfoPermissionPolicySet();
-    if (permPolicySet != nullptr) {
-        PermissionManager::GetInstance().AddDefPermissions(permPolicySet->permList_);
-    }
+    PermissionManager::GetInstance().AddDefPermissions(info, false);
+
     return RET_SUCCESS;
 }
 
@@ -194,13 +192,17 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
     }
 
     AccessTokenID id = info->GetTokenID();
+    std::string processName = info->GetProcessName();
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-    if (nativeTokenInfoMap_.count(id) > 0) {
+    if (nativeTokenInfoMap_.count(id) > 0
+        || nativeTokenIdMap_.count(processName) > 0) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: token %{public}x has exist.", __func__, id);
+            LABEL, "%{public}s: token %{public}x process name %{public}s has exist.",
+            __func__, id, processName.c_str());
         return RET_FAILED;
     }
     nativeTokenInfoMap_[id] = info;
+    nativeTokenIdMap_[processName] = id;
     return RET_SUCCESS;
 }
 
@@ -262,12 +264,17 @@ int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeToke
     return RET_SUCCESS;
 }
 
-int AccessTokenInfoManager::RemoveTokenInfo(AccessTokenID id)
+int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
-    if (type == TOKEN_HAP) {
-        // make sure that RemoveDefPermissions is called outside of the lock to avoid deadlocks.
-        PermissionManager::GetInstance().RemoveDefPermissions(id);
+    if (type != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "%{public}s: token %{public}x is not hap.", __func__, id);
+    }
+
+    // make sure that RemoveDefPermissions is called outside of the lock to avoid deadlocks.
+    PermissionManager::GetInstance().RemoveDefPermissions(id);
+    {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) == 0) {
             ACCESSTOKEN_LOG_ERROR(
@@ -287,20 +294,35 @@ int AccessTokenInfoManager::RemoveTokenInfo(AccessTokenID id)
         }
 
         hapTokenInfoMap_.erase(id);
-    } else if (type == TOKEN_NATIVE) {
+    }
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s:remove hap token 0x%{public}x ok!", __func__, id);
+    RefreshTokenInfoIfNeeded();
+    return RET_SUCCESS;
+}
+
+int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
+{
+    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
+    if (type != TOKEN_NATIVE) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "%{public}s: token %{public}x is not hap.", __func__, id);
+    }
+
+    {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "%{public}s: native token %{public}x is null.", __func__, id);
             return RET_FAILED;
         }
-        nativeTokenInfoMap_.erase(id);
-    } else {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: token %{public}x unknown type.", __func__, id);
-        return RET_FAILED;
-    }
 
+        std::string processName = nativeTokenInfoMap_[id]->GetProcessName();
+        if (nativeTokenIdMap_.count(processName) != 0) {
+            nativeTokenIdMap_.erase(processName);
+        }
+        nativeTokenInfoMap_.erase(id);
+    }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s:remove hap token 0x%{public}x ok!", __func__, id);
     RefreshTokenInfoIfNeeded();
@@ -390,43 +412,33 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     AccessTokenID id = infoPtr->GetTokenID();
-    // if native token is exist, update it
-    if (nativeTokenInfoMap_.count(id) == 0) {
+    std::string processName = infoPtr->GetProcessName();
+    bool idExist = (nativeTokenInfoMap_.count(id) > 0);
+    bool processExist = (nativeTokenIdMap_.count(processName) > 0);
+    // id is exist, but it is not this process, so neither update nor add.
+    if (idExist && !processExist) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "%{public}s: token Id is exist, but process name is not exist, can not update.", __func__);
+        return true;
+    }
+
+    // this process is exist, but id is not same, perhaps libat lose his data, we need delete old, add new later.
+    if (!idExist && processExist) {
+        AccessTokenID idRemove = nativeTokenIdMap_[processName];
+        nativeTokenIdMap_.erase(processName);
+        if (nativeTokenInfoMap_.count(idRemove) > 0) {
+            nativeTokenInfoMap_.erase(idRemove);
+        }
+        AccessTokenIDManager::GetInstance().ReleaseTokenId(idRemove);
         return false;
     }
-    std::shared_ptr<NativeTokenInfoInner> oldTokenInfoPtr = nativeTokenInfoMap_[id];
-    if (oldTokenInfoPtr != nullptr) {
-        nativeTokenInfoMap_[id] = infoPtr;
-    } else {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: native token exist, but is null.", __func__);
+
+    if (!idExist && !processExist) {
+        return false;
     }
+
+    nativeTokenInfoMap_[id] = infoPtr;
     return true;
-}
-
-int AccessTokenInfoManager::AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr)
-{
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s called, token info is null", __func__);
-        return RET_FAILED;
-    }
-
-    AccessTokenID id = infoPtr->GetTokenID();
-    int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_NATIVE);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, token Id register fail", __func__);
-        return RET_FAILED;
-    }
-
-    ret = AddNativeTokenInfo(infoPtr);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, %{public}s add token info failed",
-            __func__, infoPtr->GetProcessName().c_str());
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-        return RET_FAILED;
-    }
-
-    return RET_SUCCESS;
 }
 
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
@@ -442,8 +454,15 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "%{public}s: token 0x%{public}x process name %{public}s is new, add to manager!",
                 __func__, infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
-            int ret = AllocNativeToken(infoPtr);
+            AccessTokenID id = infoPtr->GetTokenID();
+            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_NATIVE);
             if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, token Id register fail", __func__);
+                continue;
+            }
+            ret = AddNativeTokenInfo(infoPtr);
+            if (ret != RET_SUCCESS) {
+                AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
                 ACCESSTOKEN_LOG_ERROR(LABEL,
                     "%{public}s: token 0x%{public}x process name %{public}s add to manager failed!",
                     __func__, infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
@@ -456,18 +475,25 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
 int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
     const std::string& appIDDesc, const HapPolicyParams& policy)
 {
+    if (!DataValidator::IsAppIDDescValid(appIDDesc)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s:token 0x%{public}x parm format error!", __func__, tokenID);
+        return RET_FAILED;
+    }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s:token 0x%{public}x is null, can not update!", __func__, tokenID);
         return RET_FAILED;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    infoPtr->Update(appIDDesc, policy);
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s: token 0x%{public}x bundle name %{public}s user %{public}d inst %{public}d update ok!",
-        __func__, tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        infoPtr->Update(appIDDesc, policy);
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "%{public}s: token 0x%{public}x bundle name %{public}s user %{public}d inst %{public}d update ok!",
+            __func__, tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());
+    }
 
+    PermissionManager::GetInstance().AddDefPermissions(infoPtr, true);
     RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }

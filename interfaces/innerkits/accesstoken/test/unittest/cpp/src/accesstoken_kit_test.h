@@ -28,6 +28,13 @@ static const std::string TEST_PERMISSION_NAME_GAMMA = "ohos.permission.GAMMA";
 static const int TEST_USER_ID = 0;
 static const int TEST_USER_ID_INVALID = -1;
 static const unsigned int TEST_TOKENID_INVALID = 0;
+static const int INVALID_BUNDLENAME_LEN = 260;
+static const int INVALID_APPIDDESC_LEN = 10244;
+static const int INVALID_LABEL_LEN = 260;
+static const int INVALID_DESCRIPTION_LEN = 260;
+static const int INVALID_PERMNAME_LEN = 260;
+static const int CYCLE_TIMES = 100;
+static const int THREAD_NUM = 3;
 class AccessTokenKitTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -38,6 +45,8 @@ public:
 
     void TearDown();
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
+    void DeleteTestToken() const;
+    void AllocTestToken() const;
 };
 } // namespace AccessToken
 } // namespace Security

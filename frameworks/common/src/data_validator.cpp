@@ -24,6 +24,16 @@ bool DataValidator::IsBundleNameValid(const std::string& bundleName)
     return !bundleName.empty() && (bundleName.length() <= MAX_LENGTH);
 }
 
+bool DataValidator::IsLabelValid(const std::string& label)
+{
+    return label.length() <= MAX_LENGTH;
+}
+
+bool DataValidator::IsDescValid(const std::string& desc)
+{
+    return desc.length() <= MAX_LENGTH;
+}
+
 bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
 {
     return !permissionName.empty() && (permissionName.length() <= MAX_LENGTH);
@@ -36,7 +46,7 @@ bool DataValidator::IsUserIdValid(const int userId)
 
 bool DataValidator::IsAppIDDescValid(const std::string& appIDDesc)
 {
-    return !appIDDesc.empty() && (appIDDesc.length() <= MAX_LENGTH);
+    return !appIDDesc.empty() && (appIDDesc.length() <= MAX_APPIDDESC_LENGTH);
 }
 
 bool DataValidator::IsDomainValid(const std::string& domain)
@@ -47,6 +57,24 @@ bool DataValidator::IsDomainValid(const std::string& domain)
 bool DataValidator::IsAplNumValid(const int apl)
 {
     return (apl == APL_NORMAL || apl == APL_SYSTEM_BASIC || apl == APL_SYSTEM_CORE);
+}
+
+bool DataValidator::IsProcessNameValid(const std::string& processName)
+{
+    return !processName.empty() && (processName.length() <= MAX_LENGTH);
+}
+
+bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
+{
+    return !deviceId.empty() && (deviceId.length() <= MAX_LENGTH);
+}
+
+bool DataValidator::IsPermissionFlagValid(int flag)
+{
+    return flag == DEFAULT_PERMISSION_FLAGS ||
+    flag == PermissionFlag::PERMISSION_USER_SET ||
+    flag == PermissionFlag::PERMISSION_USER_FIXED ||
+    flag == PermissionFlag::PERMISSION_SYSTEM_FIXED;
 }
 } // namespace AccessToken
 } // namespace Security

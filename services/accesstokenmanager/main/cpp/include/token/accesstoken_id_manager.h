@@ -39,6 +39,7 @@ public:
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
+    static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
 
 private:
     AccessTokenIDManager() = default;
