@@ -18,7 +18,7 @@ import("//build/ohos.gni")
 ################################################################
 config("accesstoken_common_cxx_public_config") {
   visibility = [ ":*" ]
-  include_dirs = [ "main/cpp/include" ]
+  include_dirs = [ "include" ]
 }
 
 ohos_shared_library("accesstoken_common_cxx") {
@@ -31,17 +31,17 @@ ohos_shared_library("accesstoken_common_cxx") {
     "include",
     "//utils/system/safwk/native/include",
     "//third_party/mbedtls/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
   ]
 
   sources = [
     "src/data_validator.cpp",
-    "src/random_mbedtls.cpp"
+    "src/random_mbedtls.cpp",
   ]
 
   deps = [
-    "//utils/native/base:utils",
     "//third_party/mbedtls:mbedtls_shared",
+    "//utils/native/base:utils",
   ]
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
 

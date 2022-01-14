@@ -23,10 +23,10 @@
 #include <sys/un.h>
 #include "cJSON.h"
 #include "securec.h"
-#include "accesstoken_log.h"
+#include "nativetoken_log.h"
 
-#ifndef ACCESSTOKEN_LIB_H
-#define ACCESSTOKEN_LIB_H
+#ifndef NATIVE_TOKEN_H
+#define NATIVE_TOKEN_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,4 +92,4 @@ extern char *GetFileBuff(const char *cfg);
 }
 #endif
 
-#endif // ACCESSTOKEN_LIB_H
+#endif // NATIVE_TOKEN_H

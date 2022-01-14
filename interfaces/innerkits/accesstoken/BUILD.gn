@@ -18,7 +18,7 @@ import("//build/ohos.gni")
 ################################################################
 config("accesstoken") {
   visibility = [ ":*" ]
-  include_dirs = [ "main/cpp/include" ]
+  include_dirs = [ "include" ]
 }
 
 ohos_shared_library("libaccesstoken_sdk") {
@@ -31,17 +31,17 @@ ohos_shared_library("libaccesstoken_sdk") {
 
   include_dirs = [
     "//utils/native/base/include",
-    "main/cpp/include",
-    "main/cpp/src",
+    "include",
+    "src",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
   ]
 
   sources = [
-    "main/cpp/src/accesstoken_kit.cpp",
-    "main/cpp/src/accesstoken_manager_client.cpp",
-    "main/cpp/src/accesstoken_manager_proxy.cpp",
+    "src/accesstoken_kit.cpp",
+    "src/accesstoken_manager_client.cpp",
+    "src/accesstoken_manager_proxy.cpp",
   ]
 
   deps = [
