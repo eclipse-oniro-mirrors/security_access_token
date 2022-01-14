@@ -1,0 +1,56 @@
+{
+  "name": "@openharmony/access_token",
+  "version": "3.1.0",
+  "description": "access_token",
+  "publishAs": "code-segment",
+  "author": {},
+  "repository": "",
+  "license": "Apache License 2.0",
+  "component": {
+    "name": "access_token",
+    "subsystem": "security",
+    "adapted_system_type": [ "standard" ],
+    "deps": {
+      "components": [
+        "hiviewdfx_hilog_native",
+        "ipc_core",
+        "ans_standard",
+        "aafwk_standard",
+        "system_ability_fwk",
+        "samgr_proxy",
+        "appexecfwk_standard",
+        "eventhandler",
+        "napi",
+        "safwk",
+        "samgr_standard",
+        "utils_base"
+      ],
+      "third_party": [ 
+        "cJSON",
+        "sqlite",
+        "mbedtls"
+      ]
+    },
+    "build": {
+      "sub_component": [
+        "//base/security/access_token:accesstoken_build_module",
+        "//base/security/access_token:tokensync_build_module"
+      ],
+      "inner_kits": [
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+          "header": {
+            "header_files": [
+              "accesstoken_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
+          }
+        }
+      ],
+      "test": [ 
+        "//base/security/access_token:accesstoken_build_module_test",
+        "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest"
+        ]
+    }
+  }
+}
