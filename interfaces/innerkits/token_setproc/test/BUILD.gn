@@ -22,7 +22,7 @@ ohos_unittest("libtoken_setproc_test") {
     "//base/security/access_token/interfaces/innerkits/token_setproc/include",
   ]
 
-  sources = [ "unittest/cpp/src/tokensetproc_kit_test.cpp" ]
+  sources = [ "unittest/src/tokensetproc_kit_test.cpp" ]
   cflags_cc = [ "-fexceptions" ]
 
   deps = [

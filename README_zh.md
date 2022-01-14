@@ -28,7 +28,7 @@ ATM模块主要提供如下功能：
 ├── interfaces                  # 接口层
 │   └── innerkits               # 内部接口层
 │       ├── accesstoken         # Accesstoken内部接口代码存放目录
-│       ├── accesstoken_lib     # Accesstoken_lib内部接口代码存放目录
+│       ├── nativetoken         # nativetoken内部接口代码存放目录
 │       └── tokensync           # Accesstoken信息同步内部接口代码存放目录
 └── services                    # 服务层
     ├── accesstokenmanager      # Accesstoken管理服务代码存放目录

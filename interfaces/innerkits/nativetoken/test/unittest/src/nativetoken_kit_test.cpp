@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include "accesstokenlib_kit_test.h"
+#include "nativetoken_kit_test.h"
 #include <pthread.h>
-#include "accesstoken_lib.h"
-#include "accesstokenlib_kit.h"
+#include "nativetoken.h"
+#include "nativetoken_kit.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;

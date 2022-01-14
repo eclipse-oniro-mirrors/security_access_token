@@ -43,7 +43,7 @@
             "header_files": [
               "accesstoken_kit.h"
             ],
-            "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include"
+            "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
           }
         }
       ],

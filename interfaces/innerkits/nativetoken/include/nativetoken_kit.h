@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNER_KITS_ACCESSTOKEN_LIB_H
-#define INTERFACES_INNER_KITS_ACCESSTOKEN_LIB_H
+#ifndef INTERFACES_INNER_KITS_NATIVE_TOKEN_H
+#define INTERFACES_INNER_KITS_NATIVE_TOKEN_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,4 +33,4 @@ extern uint64_t GetAccessTokenId(const char *processname, const char **dcap, int
 }
 #endif
 
-#endif // INTERFACES_INNER_KITS_ACCESSTOKEN_LIB_H
+#endif // INTERFACES_INNER_KITS_NATIVE_TOKEN_H

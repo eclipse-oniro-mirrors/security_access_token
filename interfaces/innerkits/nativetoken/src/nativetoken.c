@@ -12,8 +12,8 @@
  * See the License for the specific language governing ACCESSTOKENs and
  * limitations under the License.
  */
-#include "accesstoken_lib.h"
-#include "accesstokenlib_kit.h"
+#include "nativetoken.h"
+#include "nativetoken_kit.h"
 #include "parameter.h"
 #include "random.h"
 

@@ -18,7 +18,7 @@ import("//build/ohos.gni")
 ################################################################
 config("tokensync") {
   visibility = [ ":*" ]
-  include_dirs = [ "main/cpp/include" ]
+  include_dirs = [ "include" ]
 }
 
 ohos_shared_library("libtokensync_sdk") {
@@ -31,11 +31,12 @@ ohos_shared_library("libtokensync_sdk") {
 
   include_dirs = [
     "//utils/native/base/include",
-    "main/cpp/include",
-    "main/cpp/src",
+    "include",
+    "src",
     "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/main/cpp/include"
+    "//base/security/access_token/interfaces/innerkits/tokensync/include",
+
     #"//base/security/permission/interfaces/innerkits/permission_standard/permissionsdk/main/cpp/include/permission",
   ]
 
@@ -43,9 +44,9 @@ ohos_shared_library("libtokensync_sdk") {
     #"main/cpp/src/permission/permission_kit.cpp",
     #"main/cpp/src/permission/permission_manager_client.cpp",
     #"main/cpp/src/permission/permission_manager_proxy.cpp",
-    "main/cpp/src/tokensync_kit.cpp",
-    "main/cpp/src/tokensync_manager_client.cpp",
-    "main/cpp/src/tokensync_manager_proxy.cpp",
+    "src/tokensync_kit.cpp",
+    "src/tokensync_manager_client.cpp",
+    "src/tokensync_manager_proxy.cpp",
   ]
 
   deps = [

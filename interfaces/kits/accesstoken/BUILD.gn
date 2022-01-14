@@ -34,7 +34,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "//foundation/aafwk/standard/interfaces/innerkits/ability_manager/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/interfaces/kits/accesstoken/napi/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
   ]
 
   sources = [ "//base/security/access_token/interfaces/kits/accesstoken/napi/src/napi_atmanager.cpp" ]

@@ -21,16 +21,17 @@ ohos_unittest("libtokensync_sdk_test") {
   include_dirs = [
     "//utils/native/base/include",
     "//third_party/googletest/include",
+
     #"//base/security/permission/interfaces/innerkits/permission_standard/permissionsdk/main/cpp/include/permission/",
-    "//base/security/access_token/interfaces/innerkits/tokensync/main/cpp/include"
+    "//base/security/access_token/interfaces/innerkits/tokensync/include",
   ]
 
-  sources = [ "unittest/cpp/src/tokensync_kit_test.cpp" ]
+  sources = [ "unittest/src/tokensync_kit_test.cpp" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
-#"//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
+    #"//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
     "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
     "//utils/native/base:utils",
   ]
