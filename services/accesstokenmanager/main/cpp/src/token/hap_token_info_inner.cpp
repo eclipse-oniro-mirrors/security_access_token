@@ -124,7 +124,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             "%{public}s called, tokenID: 0x%{public}x version is error, version %{public}d", __func__, tokenID_, ver_);
         return RET_FAILED;
     }
-    tokenAttr_ = inGenericValues.GetInt(FIELD_TOKEN_ATTR);
+    tokenAttr_ = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
     return RET_SUCCESS;
 }
 

@@ -49,10 +49,10 @@ HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
     auto* hapTokenInfoParcel = new (std::nothrow) HapTokenInfoParcel();
     RELEASE_IF_FALSE(hapTokenInfoParcel != nullptr, hapTokenInfoParcel);
     int apl;
-    int8_t ver;
+    uint8_t ver;
     RELEASE_IF_FALSE(in.ReadInt32(apl), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.apl = ATokenAplEnum(apl);
-    RELEASE_IF_FALSE(in.ReadInt8(ver), hapTokenInfoParcel);
+    RELEASE_IF_FALSE(in.ReadUint8(ver), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.ver = ver;
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.userID), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.bundleName = in.ReadString();

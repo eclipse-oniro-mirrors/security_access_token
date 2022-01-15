@@ -85,6 +85,14 @@ ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
 int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    if (tokenID == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        return RET_FAILED;
+    }
+    if (!DataValidator::IsDcapValid(dcap)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: dcap is invalid", __func__);
+        return RET_FAILED;
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, dcap=%{public}s", tokenID, dcap.c_str());
     return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
 }

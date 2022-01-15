@@ -35,17 +35,17 @@ bool PermissionStateFullParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->permStatFull.permissionName));
     RETURN_IF_FALSE(out.WriteBool(this->permStatFull.isGeneral));
 
-    RETURN_IF_FALSE(out.WriteInt32(this->permStatFull.resDeviceID.size()));
+    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.resDeviceID.size())));
     for (auto devId : this->permStatFull.resDeviceID) {
         RETURN_IF_FALSE(out.WriteString(devId));
     }
 
-    RETURN_IF_FALSE(out.WriteInt32(this->permStatFull.grantStatus.size()));
+    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.grantStatus.size())));
     for (auto grantStat : this->permStatFull.grantStatus) {
         RETURN_IF_FALSE(out.WriteInt32(grantStat));
     }
 
-    RETURN_IF_FALSE(out.WriteInt32(this->permStatFull.grantFlags.size()));
+    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.grantFlags.size())));
     for (auto grantFlag : this->permStatFull.grantFlags) {
         RETURN_IF_FALSE(out.WriteInt32(grantFlag));
     }

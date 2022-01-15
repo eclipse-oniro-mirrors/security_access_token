@@ -22,6 +22,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "//utils/native/base/include",
     "//third_party/googletest/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/nativetoken/include",
   ]
 
   sources = [ "unittest/src/accesstoken_kit_test.cpp" ]
@@ -30,6 +31,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
     "//utils/native/base:utils",
   ]
 }

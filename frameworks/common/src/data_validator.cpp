@@ -69,6 +69,11 @@ bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
     return !deviceId.empty() && (deviceId.length() <= MAX_LENGTH);
 }
 
+bool DataValidator::IsDcapValid(const std::string& dcap)
+{
+    return !dcap.empty() && (dcap.length() <= MAX_DCAP_LENGTH);
+}
+
 bool DataValidator::IsPermissionFlagValid(int flag)
 {
     return flag == DEFAULT_PERMISSION_FLAGS ||

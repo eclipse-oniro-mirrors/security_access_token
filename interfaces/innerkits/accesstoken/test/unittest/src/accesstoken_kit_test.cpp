@@ -17,6 +17,7 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
+#include "nativetoken_kit.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -89,14 +90,14 @@ static HapPolicyParams g_infoManagerTestPolicyPrams = {
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
 
-static HapInfoParams g_infoManagerTestInfoParms_bak = {
+static HapInfoParams g_infoManagerTestInfoParmsBak = {
     .bundleName = "accesstoken_test",
     .userID = 1,
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPrams_bak = {
+static HapPolicyParams g_infoManagerTestPolicyPramsBak = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
@@ -122,8 +123,8 @@ void AccessTokenKitTest::TearDownTestCase()
 
 void AccessTokenKitTest::SetUp()
 {
-    g_infoManagerTestInfoParms = g_infoManagerTestInfoParms_bak;
-    g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPrams_bak;
+    g_infoManagerTestInfoParms = g_infoManagerTestInfoParmsBak;
+    g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPramsBak;
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -180,6 +181,7 @@ void AccessTokenKitTest::SetUp()
                                                           g_infoManagerTestInfoParms.bundleName,
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
+    (void)remove("/data/token.json");
 }
 
 void AccessTokenKitTest::TearDown()
@@ -291,9 +293,9 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
 {
-    HapPolicyParams TestPolicyPrams = g_infoManagerTestPolicyPrams;
-    TestPolicyPrams.permList.clear();
-    AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, TestPolicyPrams);
+    HapPolicyParams testPolicyPrams = g_infoManagerTestPolicyPrams;
+    testPolicyPrams.permList.clear();
+    AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, testPolicyPrams);
 
     AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
@@ -1343,6 +1345,8 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
     AccessTokenID tokenID;
     int ret;
     bool exist = false;
+    int allocFlag = 0;
+    int deleteFlag = 0;
 
     DeleteTestToken();
     vector<unsigned int> obj;
@@ -1353,12 +1357,18 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
                                    g_infoManagerTestInfoParms.instIndex);
 
         exist = ExistInVector(obj, tokenID);
-        ASSERT_EQ(false, exist);
+        if (exist) {
+            allocFlag = 1;
+        }
         obj.push_back(tokenID);
 
         ret = AccessTokenKit::DeleteToken(tokenID);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        if (RET_SUCCESS != ret) {
+            deleteFlag = 1;
+        }
     }
+    ASSERT_EQ(allocFlag, 0);
+    ASSERT_EQ(deleteFlag, 0);
 }
 
 /**
@@ -1642,7 +1652,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
     PermissionDef permDefResult;
 
     DeleteTestToken();
-    g_infoManagerTestInfoParms.bundleName = "test_UpdateHapToken005";
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(0, tokenID);
@@ -1698,6 +1707,9 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 {
+    int allocFlag = 0;
+    int updateFlag = 0;
+    int deleteFlag = 0;
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenID tokenID;
     int ret;
@@ -1714,7 +1726,10 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
                                    infoManagerTestInfo.instIndex);
 
         exist = ExistInVector(obj, tokenID);
-        ASSERT_EQ(false, exist);
+        if (exist) {
+            allocFlag = 1;
+            break;
+        }
         obj.push_back(tokenID);
         infoManagerTestInfo.userID++;
     }
@@ -1723,14 +1738,22 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
     g_infoManagerTestPolicyPrams.apl = APL_SYSTEM_BASIC;
     for (int i = 0; i < obj.size(); i++) {
         ret = AccessTokenKit::UpdateHapToken(obj[i], appIDDesc, g_infoManagerTestPolicyPrams);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        if (RET_SUCCESS != ret) {
+            updateFlag = 1;
+            break;
+        }
     }
     g_infoManagerTestPolicyPrams.apl = APL_NORMAL;
 
     for (int i = 0; i < obj.size(); i++) {
         ret = AccessTokenKit::DeleteToken(obj[i]);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        if (RET_SUCCESS != ret) {
+            deleteFlag = 1;
+        }
     }
+    ASSERT_EQ(allocFlag, 0);
+    ASSERT_EQ(updateFlag, 0);
+    ASSERT_EQ(deleteFlag, 0);
 }
 
 /**
@@ -1951,6 +1974,191 @@ HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
     std::vector<std::thread> threadVec;
     for (int i = 0; i < THREAD_NUM; i++) {
         threadVec.emplace_back(std::thread(ConcurrencyTask, tokenID));
+    }
+    for (auto it = threadVec.begin(); it != threadVec.end(); it++) {
+        it->join();
+    }
+}
+
+/**
+ * @tc.name: CheckNativeDCap001
+ * @tc.desc: cannot Check native dcap with invalid tokenID.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 0;
+    const std::string dcap = "AT_CAP";
+    int ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
+    ASSERT_EQ(RET_FAILED, ret);
+
+    tokenID = 1;
+    ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
+    ASSERT_EQ(RET_FAILED, ret);
+}
+
+/**
+ * @tc.name: CheckNativeDCap002
+ * @tc.desc: cannot Check native dcap with invalid dcap.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, CheckNativeDCap002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 0Xff;
+    const std::string invalidDcap (INVALID_DCAP_LEN, 'x');
+    int ret = AccessTokenKit::CheckNativeDCap(tokenID, invalidDcap);
+    ASSERT_EQ(RET_FAILED, ret);
+}
+
+static void ConcurrencyCheckNativeDCapTask(unsigned int tokenID)
+{
+    for (int i = 0; i < CYCLE_TIMES; i++) {
+        int ret = AccessTokenKit::CheckNativeDCap(tokenID, "AT_CAP_01");
+        ASSERT_EQ(RET_SUCCESS, ret);
+    }
+}
+
+/**
+ * @tc.name: CheckNativeDCap004
+ * @tc.desc: Check native dcap multiple threads.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, CheckNativeDCap004, TestSize.Level1)
+{
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    dcaps[0] = "AT_CAP_01";
+    int dcapNum = 1;
+    uint64_t tokenId;
+    tokenId = GetAccessTokenId("foundation", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+    tokenId = GetAccessTokenId("CheckNativeDCap004", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    sleep(5);
+    AccessTokenID tokenID = tokenId & 0xffffffff;
+    std::vector<std::thread> threadVec;
+    for (int i = 0; i < THREAD_NUM; i++) {
+        threadVec.emplace_back(std::thread(ConcurrencyCheckNativeDCapTask, tokenID));
+    }
+    for (auto it = threadVec.begin(); it != threadVec.end(); it++) {
+        it->join();
+    }
+}
+
+/**
+ * @tc.name: GetNativeTokenInfo001
+ * @tc.desc: cannot get native token with invalid tokenID.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 0;
+    NativeTokenInfo findInfo;
+    int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
+    ASSERT_EQ(ret, RET_FAILED);
+
+    tokenID = 0xff;
+    ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
+    ASSERT_EQ(ret, RET_FAILED);
+}
+
+/**
+ * @tc.name: GetNativeTokenInfo002
+ * @tc.desc: get native token successfully.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo002, TestSize.Level1)
+{
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    dcaps[0] = "AT_CAP_01";
+    dcaps[1] = "ST_CAP_01";
+    int dcapNum = 2;
+    uint64_t tokenId;
+    tokenId = GetAccessTokenId("foundation", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+    tokenId = GetAccessTokenId("GetNativeTokenInfo002", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    sleep(5);
+    AccessTokenID tokenID = tokenId & 0xffffffff;
+    NativeTokenInfo findInfo;
+    int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(findInfo.apl, 3);
+    ASSERT_EQ(findInfo.ver, 1);
+    ASSERT_EQ(findInfo.processName, "GetNativeTokenInfo002");
+    ASSERT_EQ(findInfo.tokenID, tokenID);
+    ASSERT_EQ(findInfo.tokenAttr, 0);
+    std::vector<std::string> dcap = {"AT_CAP_01", "ST_CAP_01"};
+    ASSERT_EQ(findInfo.dcap, dcap);
+}
+
+/**
+ * @tc.name: GetNativeTokenInfo003
+ * @tc.desc: get native token successfully.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo003, TestSize.Level1)
+{
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    dcaps[0] = "AT_CAP_01";
+    dcaps[1] = "ST_CAP_01";
+    int dcapNum = 0;
+    uint64_t tokenId;
+    tokenId = GetAccessTokenId("foundation", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+    tokenId = GetAccessTokenId("GetNativeTokenInfo003", nullptr, 0, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    sleep(5);
+    AccessTokenID tokenID = tokenId & 0xffffffff;
+    NativeTokenInfo findInfo;
+    int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(findInfo.apl, 3);
+    ASSERT_EQ(findInfo.ver, 1);
+    ASSERT_EQ(findInfo.processName, "GetNativeTokenInfo003");
+    ASSERT_EQ(findInfo.tokenID, tokenID);
+    ASSERT_EQ(findInfo.tokenAttr, 0);
+}
+
+static void ConcurrGetNativeTokenInfoTask(unsigned int tokenID)
+{
+    NativeTokenInfo findInfo;
+    for (int i = 0; i < CYCLE_TIMES; i++) {
+        int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
+        ASSERT_EQ(RET_SUCCESS, ret);
+    }
+}
+
+/**
+ * @tc.name: GetNativeTokenInfo004
+ * @tc.desc: Concurrency testing.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo004, TestSize.Level1)
+{
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    dcaps[0] = "AT_CAP_01";
+    int dcapNum = 1;
+    uint64_t tokenId;
+    tokenId = GetAccessTokenId("foundation", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+    tokenId = GetAccessTokenId("GetNativeTokenInfo004", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    sleep(5);
+    AccessTokenID tokenID = tokenId & 0xffffffff;
+    std::vector<std::thread> threadVec;
+    for (int i = 0; i < THREAD_NUM; i++) {
+        threadVec.emplace_back(std::thread(ConcurrGetNativeTokenInfoTask, tokenID));
     }
     for (auto it = threadVec.begin(); it != threadVec.end(); it++) {
         it->join();

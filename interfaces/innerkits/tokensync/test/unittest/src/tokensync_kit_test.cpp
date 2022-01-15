@@ -42,10 +42,10 @@ void TokenSyncKitTest::TearDown()
  */
 HWTEST_F(TokenSyncKitTest, VerifyPermission001, TestSize.Level1)
 {
-    const std::string TEST_BUNDLE_NAME = "ohos";
-    const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
-    const int TEST_USER_ID = 0;
-    int ret = TokenSyncKit::VerifyPermission(TEST_BUNDLE_NAME, TEST_PERMISSION_NAME_ALPHA, TEST_USER_ID);
+    const std::string testBundleName = "ohos";
+    const std::string testPermissionNameAlpha = "ohos.permission.ALPHA";
+    const int testUserId = 0;
+    int ret = TokenSyncKit::VerifyPermission(testBundleName, testPermissionNameAlpha, testUserId);
 
     ASSERT_EQ(0, ret);
 }

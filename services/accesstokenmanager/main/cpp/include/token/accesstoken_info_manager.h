@@ -75,9 +75,9 @@ private:
     OHOS::Utils::RWLock managerLock_;
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
-    std::map<std::string, int> hapTokenIdMap_;
+    std::map<std::string, AccessTokenID> hapTokenIdMap_;
     std::map<int, std::shared_ptr<NativeTokenInfoInner>> nativeTokenInfoMap_;
-    std::map<std::string, int> nativeTokenIdMap_;
+    std::map<std::string, AccessTokenID> nativeTokenIdMap_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -42,9 +42,11 @@ public:
 
     static bool IsDescValid(const std::string& desc);
     static bool IsPermissionFlagValid(int flag);
+    static bool IsDcapValid(const std::string& dcap);
 private:
     const static int MAX_LENGTH = 256;
     const static int MAX_APPIDDESC_LENGTH = 10240;
+    const static int MAX_DCAP_LENGTH = 1024;
 };
 } // namespace AccessToken
 } // namespace Security

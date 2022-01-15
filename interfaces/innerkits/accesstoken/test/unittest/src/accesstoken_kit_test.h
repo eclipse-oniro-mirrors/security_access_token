@@ -35,6 +35,7 @@ static const int INVALID_DESCRIPTION_LEN = 260;
 static const int INVALID_PERMNAME_LEN = 260;
 static const int CYCLE_TIMES = 100;
 static const int THREAD_NUM = 3;
+static const int INVALID_DCAP_LEN = 1025;
 class AccessTokenKitTest : public testing::Test {
 public:
     static void SetUpTestCase();

@@ -60,7 +60,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
 
     if (j.find(JSON_VERSION) != j.end()) {
-        native.ver = j.at(JSON_VERSION).get<int>();
+        native.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
         if (native.ver != DEFAULT_TOKEN_VERSION) {
             return;
         }
