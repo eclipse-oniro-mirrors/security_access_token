@@ -16,6 +16,8 @@
       "Systemcapability.Security.AccessToken"
     ],
     "adapted_system_type": [ "standard" ],
+    "rom": "2048KB",
+    "ram": "5102KB",
     "deps": {
       "components": [
         "hiviewdfx_hilog_native",
