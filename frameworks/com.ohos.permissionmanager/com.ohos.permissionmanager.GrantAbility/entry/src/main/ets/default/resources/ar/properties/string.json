@@ -1,0 +1,14 @@
+{
+  "strings": {
+    "app_name": "CategoryPage",
+    "describe": "describe",
+    "category": "Category",
+    "itemChild": "ItemChild",
+    "item": "Item",
+    "search": "search...",
+    "you_search": "You search ",
+    "you_clicked": "You clicked ",
+    "tab": "Tab",
+    "more": "< more"
+  }
+}

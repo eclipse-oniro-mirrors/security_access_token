@@ -1,0 +1,48 @@
+{
+  "color": [
+    {
+      "name": "text_color",
+      "value": "#182331"
+    },
+    {
+      "name": "background_color",
+      "value": "#f1f3f5"
+    },
+    {
+      "name": "title_text_color",
+      "value": "#182431"
+    },
+    {
+      "name": "active_background_color",
+      "value": "#e5f3ff"
+    },
+    {
+      "name": "divider_color",
+      "value": "#f3f4f6"
+    },
+    {
+      "name": "text_decoration_color",
+      "value": "#f3f4f6"
+    },
+    {
+      "name": "icon_color",
+      "value": "#18233199"
+    },
+    {
+      "name": "default_background_color",
+      "value": "#ffffff"
+    },
+    {
+      "name": "button_color",
+      "value": "#0a59f7"
+    },
+    {
+      "name": "secondary_font_color",
+      "value": "#808080"
+    },
+    {
+      "name": "toggle_color",
+      "value": "#409eff"
+    }
+  ]
+}

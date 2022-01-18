@@ -1,0 +1,14 @@
+{
+  "strings": {
+    "app_name": "分类页",
+    "describe": "描述",
+    "category": "分类",
+    "itemChild": "子类",
+    "item": "类型",
+    "search": "搜索...",
+    "you_search": "你搜索了",
+    "you_clicked": "你点击了",
+    "tab": "分页",
+    "more": "更多 >"
+  }
+}
