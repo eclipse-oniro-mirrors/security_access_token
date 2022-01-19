@@ -1,0 +1,19 @@
+{
+  "strings": {
+    "app_name": "CategoryPage",
+    "describe": "describe",
+    "category": "Category",
+    "itemChild": "ItemChild",
+    "item": "Item",
+    "search": "search...",
+    "you_search": "You search ",
+    "you_clicked": "You clicked ",
+    "tab": "Tab",
+    "more": "more >"
+  },
+  "colors": {
+    "colorSubBackground": "#f1f3f5",
+    "appbar_subtitle_color": "#99000000",
+    "text_color": "#000000"
+  }
+}
