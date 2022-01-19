@@ -26,7 +26,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static constexpr int TOKEN_RANDOM_MASK = (1 << 24) - 1;
+static constexpr unsigned int TOKEN_RANDOM_MASK = (1 << 24) - 1;
 static const int MAX_CREATE_TOKEN_ID_RETRY = 2;
 
 class AccessTokenIDManager final {

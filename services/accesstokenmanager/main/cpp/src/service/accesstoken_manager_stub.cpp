@@ -84,7 +84,7 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
 
     int result = this->GetDefPermissions(tokenID, permList);
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, (int) permList.size());
-    reply.WriteInt32(permList.size());
+    reply.WriteInt32((int32_t)permList.size());
     for (auto permDef : permList) {
         reply.WriteParcelable(&permDef);
     }
@@ -99,7 +99,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, (int) permList.size());
-    reply.WriteInt32(permList.size());
+    reply.WriteInt32((int32_t)permList.size());
     for (auto permDef : permList) {
         reply.WriteParcelable(&permDef);
     }

@@ -79,7 +79,7 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& perm
         return false;
     }
 
-    for (int i = 0; i < resDevIdSize; i++) {
+    for (uint32_t i = 0; i < resDevIdSize; i++) {
         if (!IsGrantStatusValid(permState.grantStatus[i]) ||
             !IsPermissionFlagValid(permState.grantFlags[i])) {
             return false;

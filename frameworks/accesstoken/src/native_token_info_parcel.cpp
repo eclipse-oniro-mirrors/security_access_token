@@ -38,11 +38,11 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenAttr));
 
-    int dcapSize = (this->nativeTokenInfoParams.dcap).size();
+    int dcapSize = (int)(this->nativeTokenInfoParams.dcap).size();
     RETURN_IF_FALSE(out.WriteInt32(dcapSize));
 
-    for (int i = 0; i < dcapSize; i++) {
-        RETURN_IF_FALSE(out.WriteString(this->nativeTokenInfoParams.dcap[i]));
+    for (auto dcapItem : this->nativeTokenInfoParams.dcap) {
+        RETURN_IF_FALSE(out.WriteString(dcapItem));
     }
 
     return true;
@@ -54,9 +54,9 @@ NativeTokenInfoParcel* NativeTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(nativeTokenInfoParcel != nullptr, nativeTokenInfoParcel);
 
     int32_t apl;
-    int8_t ver;
+    uint8_t ver;
     RELEASE_IF_FALSE(in.ReadInt32(apl), nativeTokenInfoParcel);
-    RELEASE_IF_FALSE(in.ReadInt8(ver), nativeTokenInfoParcel);
+    RELEASE_IF_FALSE(in.ReadUint8(ver), nativeTokenInfoParcel);
     nativeTokenInfoParcel->nativeTokenInfoParams.apl = ATokenAplEnum(apl);
     nativeTokenInfoParcel->nativeTokenInfoParams.ver = ver;
 
@@ -68,7 +68,9 @@ NativeTokenInfoParcel* NativeTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(dcapSize), nativeTokenInfoParcel);
 
     for (int i = 0; i < dcapSize; i++) {
-        nativeTokenInfoParcel->nativeTokenInfoParams.dcap[i] = in.ReadString();
+        std::string dcapsItem;
+        RELEASE_IF_FALSE(in.ReadString(dcapsItem), nativeTokenInfoParcel);
+        nativeTokenInfoParcel->nativeTokenInfoParams.dcap.emplace_back(dcapsItem);
     }
     return nativeTokenInfoParcel;
 }

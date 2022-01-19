@@ -109,7 +109,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     }
 
     SetDcaps(inGenericValues.GetString(FIELD_DCAP));
-    tokenAttr_ = inGenericValues.GetInt(FIELD_TOKEN_ATTR);
+    tokenAttr_ = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
     return RET_SUCCESS;
 }
 
@@ -149,7 +149,7 @@ bool NativeTokenInfoInner::FromJsonString(const std::string& jsonString)
     }
 
     if (jsonObject.find(JSON_VERSION) != jsonObject.end()) {
-        ver_ = jsonObject.at(JSON_VERSION).get<int>();
+        ver_ = jsonObject.at(JSON_VERSION).get<char>();
     }
 
     if (jsonObject.find(JSON_TOKEN_ID) != jsonObject.end()) {
@@ -184,7 +184,7 @@ std::string NativeTokenInfoInner::GetProcessName() const
 
 void NativeTokenInfoInner::SetDcaps(const std::string& dcapStr)
 {
-    int start = 0;
+    std::string::size_type start = 0;
     while (true) {
         std::string::size_type offset = dcapStr.find(',', start);
         if (offset == std::string::npos) {

@@ -23,7 +23,8 @@ using namespace OHOS::Security;
 
 extern NativeTokenQueue *g_tokenQueueHead;
 extern NativeTokenList *g_tokenListHead;
-extern char *GetFileBuff(const char *cfg);
+extern int32_t g_isNativeTokenInited;
+extern int32_t GetFileBuff(const char *cfg, char **retBuff);
 namespace {
 static NativeTokenQueue g_readRes;
 static string g_jsonStr = "["
@@ -40,7 +41,7 @@ void TokenLibKitTest::TearDownTestCase()
 
 void TokenLibKitTest::SetUp()
 {
-    AtlibInit();
+    g_isNativeTokenInited = 0;
     ResetFile();
     g_readRes.next = nullptr;
 }
@@ -124,6 +125,12 @@ int Start(const char *processName)
     return tokenId;
 }
 
+/**
+ * @tc.name: GetAccessTokenId001
+ * @tc.desc: cannot getAccessTokenId with invalid processName.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
 {
     const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
@@ -135,11 +142,29 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     ASSERT_EQ(tokenId, 0);
     tokenId = GetAccessTokenId(nullptr, dcaps, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
+
+    /* 257 is invalid processName length */
     const std::string invalidProcName (257, 'x');
     tokenId = GetAccessTokenId(invalidProcName.c_str(), dcaps, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
+
+    /* 255 is valid processName length */
+    const std::string validProcName01 (255, 'x');
+    tokenId = GetAccessTokenId(validProcName01.c_str(), dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    /* 256 is valid processName length */
+    const std::string validProcName02 (256, 'x');
+    tokenId = GetAccessTokenId(validProcName02.c_str(), dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
 }
 
+/**
+ * @tc.name: GetAccessTokenId002
+ * @tc.desc: cannot getAccessTokenId with invalid dcapNum.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
 {
     const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
@@ -150,11 +175,18 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     tokenId = GetAccessTokenId("GetAccessTokenId002", dcaps, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
 
-    dcapNum = 1025;
-    tokenId = GetAccessTokenId("GetAccessTokenId002", dcaps, dcapNum, "system_core");
+    /* 33 is invalid dcapNum */
+    dcapNum = 33;
+    tokenId = GetAccessTokenId("GetAccessTokenId002_00", dcaps, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
 }
 
+/**
+ * @tc.name: GetAccessTokenId003
+ * @tc.desc: cannot getAccessTokenId with invalid dcaps.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
 {
     const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
@@ -165,12 +197,36 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     tokenId = GetAccessTokenId("GetAccessTokenId003", nullptr, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
 
-    const std::string invalidDcaps (1025, 'x');
-    dcaps[0] = invalidDcaps.c_str();
-    tokenId = GetAccessTokenId("GetAccessTokenId003", dcaps, dcapNum, "system_core");
+    dcapNum = 0;
+    tokenId = GetAccessTokenId("GetAccessTokenId003_01", nullptr, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    dcapNum = 2;
+    /* 1025 is invalid dcap length */
+    const std::string invalidDcap (1025, 'x');
+    dcaps[0] = invalidDcap.c_str();
+    tokenId = GetAccessTokenId("GetAccessTokenId003_02", dcaps, dcapNum, "system_core");
     ASSERT_EQ(tokenId, 0);
+
+    /* 1024 is valid dcap length */
+    const std::string validDcap01 (1024, 'x');
+    dcaps[0] = validDcap01.c_str();
+    tokenId = GetAccessTokenId("GetAccessTokenId003_03", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
+
+    /* 1023 is valid dcap length */
+    const std::string validDcap02 (1023, 'x');
+    dcaps[0] = validDcap02.c_str();
+    tokenId = GetAccessTokenId("GetAccessTokenId003_04", dcaps, dcapNum, "system_core");
+    ASSERT_NE(tokenId, 0);
 }
 
+/**
+ * @tc.name: GetAccessTokenId004
+ * @tc.desc: cannot getAccessTokenId with invalid APL.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
 {
     const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
@@ -185,6 +241,12 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
     ASSERT_EQ(tokenId, 0);
 }
 
+/**
+ * @tc.name: GetAccessTokenId005
+ * @tc.desc: Get AccessTokenId successfully.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
 {
     uint64_t tokenId01 = Start("GetAccessTokenId005");
@@ -195,6 +257,12 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
     ASSERT_EQ(tokenId01, tokenId02);
 }
 
+/**
+ * @tc.name: GetAccessTokenId007
+ * @tc.desc: Get AccessTokenId before ATM is prepared with new processName.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
 {
     uint64_t tokenID;
@@ -209,12 +277,20 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
     ASSERT_EQ(ret, 0);
     ASSERT_EQ(tokenIdEx->tokenId, g_tokenQueueHead->next->tokenId);
 
-    char *fileBuff = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuff = nullptr;
+    ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    ASSERT_EQ(ret, ATRET_SUCCESS);
     string s = "GetAccessTokenId007";
     char *pos = strstr(fileBuff, s.c_str());
     ASSERT_EQ(pos, nullptr);
 }
 
+/**
+ * @tc.name: GetAccessTokenId008
+ * @tc.desc: Get AccessTokenId before ATM is prepared with processName which has existed.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
 {
     uint64_t tokenID;
@@ -227,9 +303,17 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     ASSERT_EQ(tokenIdEx->tokenId, g_tokenQueueHead->next->tokenId);
 }
 
+/**
+ * @tc.name: GetAccessTokenId009
+ * @tc.desc: Get AccessTokenId after ATM is prepared with new processName.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
 {
-    char *fileBuffBefore = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuffBefore = nullptr;
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuffBefore);
+    ASSERT_EQ(ret, ATRET_SUCCESS);
     char *posMatch = strstr(fileBuffBefore, "GetAccessTokenId009");
     ASSERT_NE(posMatch, nullptr);
     free(fileBuffBefore);
@@ -247,7 +331,9 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     ASSERT_NE(tokenID009, 0);
 
     sleep(DELAY_ONE_SECONDS);
-    char *fileBuff = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuff = nullptr;
+    ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    ASSERT_EQ(ret, ATRET_SUCCESS);
     char *pos = strstr(fileBuff, "GetAccessTokenId009");
     ASSERT_NE(pos, nullptr);
     pos = strstr(fileBuff, "GetAccessTokenId009_01");
@@ -258,9 +344,18 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     PthreadCloseTrigger();
 }
 
+/**
+ * @tc.name: GetAccessTokenId010
+ * @tc.desc: Get AccessTokenId after ATM is prepared with processName which has existed.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
 {
-    char *fileBuffBefore = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuffBefore = nullptr;
+    int ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuffBefore);
+    ASSERT_EQ(ret, ATRET_SUCCESS);
+
     char *posMatch = strstr(fileBuffBefore, "GetAccessTokenId010");
     ASSERT_EQ(posMatch, nullptr);
     free(fileBuffBefore);
@@ -272,15 +367,47 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
     ASSERT_NE(tokenID010, 0);
 
     sleep(DELAY_ONE_SECONDS);
-    char *fileBuff = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuff = nullptr;
+    ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    ASSERT_EQ(ret, ATRET_SUCCESS);
+
     char *pos = strstr(fileBuff, "GetAccessTokenId010");
     ASSERT_NE(pos, nullptr);
     free(fileBuff);
 
     PthreadCloseTrigger();
 }
+/**
+ * @tc.name: GetAccessTokenId011
+ * @tc.desc: Get AccessTokenId after ATM is prepared with processName which has existed.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
+{
+    char processName[200][MAX_PROCESS_NAME_LEN];
+    /* enable 200 process before fondation is prepared */
+    for (int32_t i = 0; i < 200; i++) {
+        processName[i][0] = '\0';
+        int ret = sprintf_s(processName[i], MAX_PROCESS_NAME_LEN, "processName_%d", i);
+        ASSERT_NE(ret, 0);
+        uint64_t tokenId = Start(processName[i]);
+        ASSERT_NE(tokenId, 0);
+    }
+    uint64_t tokenId011 = Start("foundation");
+    ASSERT_NE(tokenId011, 0);
+    sleep(5);
+    tokenId011 = Start("process");
+    ASSERT_NE(tokenId011, 0);
+}
 
- HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
+/**
+ * @tc.name: GetAccessTokenId012
+ * @tc.desc: Get AccessTokenId after ATM is prepared with processName which has existed.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
 {
     Start("process1");
     Start("process2");
@@ -305,7 +432,9 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
     sleep(5);
     Start("process19");
     sleep(5);
-    char *fileBuff = GetFileBuff(TOKEN_ID_CFG_PATH);
+    char *fileBuff = nullptr;
+    int ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    ASSERT_EQ(ret, 0);
     char *pos = strstr(fileBuff, "process1");
     ASSERT_NE(pos, nullptr);
     pos = strstr(fileBuff, "process2");
@@ -330,7 +459,13 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
     PthreadCloseTrigger();
 }
 
- HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
+/**
+ * @tc.name: GetAccessTokenId013
+ * @tc.desc: Get AccessTokenId after ATM is prepared with processName which has existed.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
 {
     sleep(5);
     Start("process1");
