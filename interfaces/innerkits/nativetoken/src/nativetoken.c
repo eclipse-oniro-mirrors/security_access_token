@@ -14,15 +14,9 @@
  */
 #include "nativetoken.h"
 #include "nativetoken_kit.h"
-#include "parameter.h"
-#include "random.h"
 
-NativeTokenQueue *g_tokenQueueHead;
 NativeTokenList *g_tokenListHead;
-int32_t g_tranferStatus;
 int32_t g_isNativeTokenInited = 0;
-int32_t g_signalFd;
-static pthread_mutex_t g_tokenQueueHeadLock = PTHREAD_MUTEX_INITIALIZER;
 
 int32_t GetFileBuff(const char *cfg, char **retBuff)
 {
@@ -64,7 +58,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         return ATRET_FAILED;
     }
 
-    if (fread(buff, fileSize, 1, cfgFd) != 1) {
+    if (fread(buff, (size_t)fileSize, 1, cfgFd) != 1) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:fread failed.", __func__);
         free(buff);
         buff = NULL;
@@ -79,13 +73,95 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     return ret;
 }
 
+void FreeDcaps(char *dcaps[MAX_DCAPS_NUM], int32_t num)
+{
+    for (int32_t i = 0; i <= num; i++) {
+        if (dcaps[i] != NULL) {
+            free(dcaps[i]);
+            dcaps[i] = NULL;
+        }
+    }
+}
+
+int32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+{
+    cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
+    if (cJSON_IsString(processNameJson) == 0 || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processNameJson is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+
+    if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, processNameJson->valuestring) != EOK) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
+        return ATRET_FAILED;
+    }
+    return ATRET_SUCCESS;
+}
+
+int32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+{
+    cJSON *tokenIdJson = cJSON_GetObjectItem(cjsonItem, TOKENID_KEY_NAME);
+    if ((cJSON_IsNumber(tokenIdJson) == 0) || (cJSON_GetNumberValue(tokenIdJson) <= 0)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenIdJson is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+    tokenNode->tokenId = (NativeAtId)tokenIdJson->valueint;
+    return ATRET_SUCCESS;
+}
+
+int32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+{
+    cJSON *aplJson = cJSON_GetObjectItem(cjsonItem, APL_KEY_NAME);
+    if (cJSON_IsNumber(aplJson) == 0) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:aplJson is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+    int apl = cJSON_GetNumberValue(aplJson);
+    if (apl <= 0 || apl > SYSTEM_CORE) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:apl = %d in file is invalid.", __func__, apl);
+        return ATRET_FAILED;
+    }
+    tokenNode->apl = aplJson->valueint;
+    return ATRET_SUCCESS;
+}
+
+int32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+{
+    cJSON *dcapsJson = cJSON_GetObjectItem(cjsonItem, DCAPS_KEY_NAME);
+    int32_t dcapSize = cJSON_GetArraySize(dcapsJson);
+
+    tokenNode->dcapsNum = dcapSize;
+    for (int32_t i = 0; i < dcapSize; i++) {
+        cJSON *dcapItem = cJSON_GetArrayItem(dcapsJson, i);
+        if (dcapItem == NULL) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
+            return ATRET_FAILED;
+        }
+        size_t length = strlen(dcapItem->valuestring);
+        if (cJSON_IsString(dcapItem) == 0 || (length > MAX_DCAP_LEN)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcapItem is invalid.", __func__);
+            return ATRET_FAILED;
+        }
+        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * length);
+        if (tokenNode->dcaps[i] == NULL) {
+            FreeDcaps(tokenNode->dcaps, i - 1);
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:malloc invalid.", __func__);
+            return ATRET_FAILED;
+        }
+        if (strcpy_s(tokenNode->dcaps[i], length + 1, dcapItem->valuestring) != EOK) {
+            FreeDcaps(tokenNode->dcaps, i);
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
+            return ATRET_FAILED;
+        }
+    }
+    return ATRET_SUCCESS;
+}
+
 int32_t GetTokenList(const cJSON *object)
 {
-    cJSON *cjsonItem = NULL;
     int32_t arraySize;
     int32_t i;
-    cJSON *processNameJson = NULL;
-    cJSON *tokenIdJson = NULL;
+    int ret;
     NativeTokenList *tmp = NULL;
 
     if (object == NULL) {
@@ -93,29 +169,26 @@ int32_t GetTokenList(const cJSON *object)
     }
     arraySize = cJSON_GetArraySize(object);
     for (i = 0; i < arraySize; i++) {
-        cjsonItem = cJSON_GetArrayItem(object, i);
-        processNameJson = cJSON_GetObjectItem(cjsonItem, "processName");
-        tokenIdJson = cJSON_GetObjectItem(cjsonItem, "tokenId");
-        if (cJSON_IsString(processNameJson) == 0 || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processNameJson is invalid.", __func__);
-            return ATRET_FAILED;
-        }
-        if ((cJSON_IsNumber(tokenIdJson) == 0) || (cJSON_GetNumberValue(tokenIdJson) <= 0)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenIdJson is invalid.", __func__);
-            return ATRET_FAILED;
-        }
-
         tmp = (NativeTokenList *)malloc(sizeof(NativeTokenList));
         if (tmp == NULL) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
             return ATRET_FAILED;
         }
-        if (strcpy_s(tmp->processName, MAX_PROCESS_NAME_LEN + 1, processNameJson->valuestring) != EOK) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
+        cJSON *cjsonItem = cJSON_GetArrayItem(object, i);
+        if (cjsonItem == NULL) {
             free(tmp);
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
-        tmp->tokenId = (NativeAtId)tokenIdJson->valueint;
+        ret = GetprocessNameFromJson(cjsonItem, tmp);
+        ret |= GetTokenIdFromJson(cjsonItem, tmp);
+        ret |= GetAplFromJson(cjsonItem, tmp);
+        ret |= GetDcapsInfoFromJson(cjsonItem, tmp);
+        if (ret != ATRET_SUCCESS) {
+            free(tmp);
+            return ret;
+        }
+
         tmp->next = g_tokenListHead->next;
         g_tokenListHead->next = tmp;
     }
@@ -157,26 +230,32 @@ int32_t AtlibInit(void)
     }
     g_tokenListHead->next = NULL;
 
-    g_tokenQueueHead = (NativeTokenQueue *)malloc(sizeof(NativeTokenQueue));
-    if (g_tokenQueueHead == NULL) {
-        free(g_tokenListHead);
-        g_tokenListHead = NULL;
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:g_tokenQueueHead memory alloc failed.", __func__);
-        return ATRET_FAILED;
-    }
-    g_tokenQueueHead->next = NULL;
-
     int32_t ret = ParseTokenInfoFromCfg(TOKEN_ID_CFG_PATH);
     if (ret != ATRET_SUCCESS) {
         free(g_tokenListHead);
         g_tokenListHead = NULL;
-        free(g_tokenQueueHead);
-        g_tokenQueueHead = NULL;
         return ret;
     }
-    g_tranferStatus = FOUNDATION_NOT_STARTED;
     g_isNativeTokenInited = 1;
 
+    return ATRET_SUCCESS;
+}
+
+int GetRandomTokenId(uint32_t *randNum)
+{
+    uint32_t random;
+    int len;
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0) {
+        return ATRET_FAILED;
+    }
+    len = read(fd, &random, sizeof(random));
+    (void)close(fd);
+    if (len != sizeof(random)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
+        return ATRET_FAILED;
+    }
+    *randNum = random;
     return ATRET_SUCCESS;
 }
 
@@ -186,7 +265,10 @@ NativeAtId CreateNativeTokenId(void)
     NativeAtId tokenId;
     AtInnerInfo *innerId = (AtInnerInfo *)(&tokenId);
 
-    rand = GetRandomUint32();
+    int ret = GetRandomTokenId(&rand);
+    if (ret != ATRET_SUCCESS) {
+        return 0;
+    }
 
     innerId->reserved = 0;
     innerId->tokenUniqueId = rand & (0xFFFFFF);
@@ -195,76 +277,22 @@ NativeAtId CreateNativeTokenId(void)
     return tokenId;
 }
 
-int32_t TriggerTransfer()
-{
-    int32_t ret;
-    static const uint64_t increment = 1;
-    ret = write(g_signalFd, &increment, sizeof(increment));
-    if (ret == -1) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:TriggerTransfer write failed.", __func__);
-        return ATRET_FAILED;
-    }
-    return ATRET_SUCCESS;
-}
-
-int32_t TokenInfoSave(const NativeTokenQueue *node)
-{
-    if (node->apl == 0) {
-        return ATRET_FAILED;
-    }
-    NativeTokenQueue *curr;
-    curr = (NativeTokenQueue *)malloc(sizeof(NativeTokenQueue));
-    if (curr == NULL) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
-        return ATRET_FAILED;
-    }
-    curr->apl = node->apl;
-    curr->processName = node->processName;
-    curr->tokenId = node->tokenId;
-    curr->flag = node->flag;
-    curr->dcaps = node->dcaps;
-    curr->dcapsNum = node->dcapsNum;
-
-    pthread_mutex_lock(&g_tokenQueueHeadLock);
-    curr->next = g_tokenQueueHead->next;
-    g_tokenQueueHead->next = curr;
-    pthread_mutex_unlock(&g_tokenQueueHeadLock);
-
-    if (g_tranferStatus == ATM_SERVICE_STARTUP) {
-        return TriggerTransfer();
-    }
-    return ATRET_SUCCESS;
-}
-
 int32_t GetAplLevel(const char *aplStr)
 {
     if (aplStr == NULL) {
         return 0;
     }
     if (strcmp(aplStr, "system_core") == 0) {
-        return 3; // system_core means apl level is 3
+        return SYSTEM_CORE; // system_core means apl level is 3
     }
     if (strcmp(aplStr, "system_basic") == 0) {
-        return 2; // system_basic means apl level is 2
+        return SYSTEM_BASIC; // system_basic means apl level is 2
     }
     if (strcmp(aplStr, "normal") == 0) {
-        return 1;
+        return NORMAL;
     }
     ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:aplStr is invalid.", __func__);
     return 0;
-}
-
-int32_t SendString(const char *str, int32_t fd)
-{
-    int32_t writtenSize;
-    int32_t len = strlen(str);
-
-    writtenSize = write(fd, str, len);
-    if (len != writtenSize) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:SendString write failed.", __func__);
-        return ATRET_FAILED;
-    }
-    return ATRET_SUCCESS;
 }
 
 void WriteToFile(const cJSON *root)
@@ -286,7 +314,7 @@ void WriteToFile(const cJSON *root)
             break;
         }
         strLen = strlen(jsonStr);
-        writtenLen = write(fd, (void *)jsonStr, strLen);
+        writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
         if (writtenLen != strLen) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %d.", __func__, writtenLen);
@@ -298,29 +326,89 @@ void WriteToFile(const cJSON *root)
     return;
 }
 
-int32_t ExistNewTokenInfo(const NativeTokenQueue *head)
+int32_t AddDcapsArray(cJSON *object, const NativeTokenList *curr)
 {
-    const NativeTokenQueue *iter = head;
-    while (iter != NULL) {
-        if (iter->flag == 0) {
-            return 1;
-        }
-        iter = iter->next;
+    cJSON *dcapsArr = cJSON_CreateArray();
+    if (dcapsArr == NULL) {
+        return ATRET_FAILED;
     }
-    return 0;
+    for (int32_t i = 0; i < curr->dcapsNum; i++) {
+        cJSON *item =  cJSON_CreateString(curr->dcaps[i]);
+        if (item == NULL || !cJSON_AddItemToArray(dcapsArr, item)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenAttr cJSON_AddItemToArray failed.", __func__);
+            cJSON_Delete(item);
+            cJSON_Delete(dcapsArr);
+            return ATRET_FAILED;
+        }
+    }
+    if (!cJSON_AddItemToObject(object, DCAPS_KEY_NAME, dcapsArr)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(dcapsArr);
+        return ATRET_FAILED;
+    }
+    return ATRET_SUCCESS;
 }
-void SaveTokenIdToCfg(const NativeTokenQueue *head)
+
+static cJSON *CreateNativeTokenJsonObject(const NativeTokenList *curr)
 {
-    const NativeTokenQueue *iter = head;
+    cJSON *object = cJSON_CreateObject();
+    if (object == NULL) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateObject failed.", __func__);
+        return NULL;
+    }
+
+    cJSON *item = cJSON_CreateString(curr->processName);
+    if (item == NULL || !cJSON_AddItemToObject(object, PROCESS_KEY_NAME, item)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processName cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(item);
+        cJSON_Delete(object);
+        return NULL;
+    }
+
+    item = cJSON_CreateNumber(curr->apl);
+    if (item == NULL || !cJSON_AddItemToObject(object, APL_KEY_NAME, item)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:APL cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(item);
+        cJSON_Delete(object);
+        return NULL;
+    }
+
+    item = cJSON_CreateNumber(DEFAULT_AT_VERSION);
+    if (item == NULL || !cJSON_AddItemToObject(object, VERSION_KEY_NAME, item)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:version cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(item);
+        cJSON_Delete(object);
+        return NULL;
+    }
+
+    item = cJSON_CreateNumber(curr->tokenId);
+    if (item == NULL || !cJSON_AddItemToObject(object, TOKENID_KEY_NAME, item)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenId cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(item);
+        cJSON_Delete(object);
+        return NULL;
+    }
+
+    item = cJSON_CreateNumber(0);
+    if (item == NULL || !cJSON_AddItemToObject(object, TOKEN_ATTR_KEY_NAME, item)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenAttr cJSON_AddItemToObject failed.", __func__);
+        cJSON_Delete(item);
+        cJSON_Delete(object);
+        return NULL;
+    }
+    int ret = AddDcapsArray(object, curr);
+    if (ret != ATRET_SUCCESS) {
+        cJSON_Delete(object);
+    }
+    return object;
+}
+ 
+void SaveTokenIdToCfg(const NativeTokenList *curr)
+{
     char *fileBuff = NULL;
     cJSON *record = NULL;
     int32_t ret;
 
-    ret = ExistNewTokenInfo(head);
-    if (ret == 0) {
-        ACCESSTOKEN_LOG_INFO("[ATLIB-%s]:there is no new info.", __func__);
-        return;
-    }
     ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
         return;
@@ -339,247 +427,17 @@ void SaveTokenIdToCfg(const NativeTokenQueue *head)
         return;
     }
 
-    while (iter != NULL) {
-        if (iter->flag == 1) {
-            iter = iter->next;
-            continue;
-        }
-        cJSON *node = cJSON_CreateObject();
-        if (node == NULL) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateObject failed.", __func__);
-            cJSON_Delete(record);
-            return;
-        }
-        cJSON_AddItemToObject(node, "processName", cJSON_CreateString(iter->processName));
-        cJSON_AddItemToObject(node, "tokenId", cJSON_CreateNumber(iter->tokenId));
-        cJSON_AddItemToArray(record, node);
-        iter = iter->next;
+    cJSON *node = CreateNativeTokenJsonObject(curr);
+    if (node == NULL) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:CreateNativeTokenJsonObject failed.", __func__);
+        cJSON_Delete(record);
+        return;
     }
+    cJSON_AddItemToArray(record, node);
+
     WriteToFile(record);
     cJSON_Delete(record);
     return;
-}
-
-static cJSON *CreateNativeTokenJsonObject(const NativeTokenQueue *curr)
-{
-    cJSON *object = cJSON_CreateObject();
-    if (object == NULL) {
-        return NULL;
-    }
-    cJSON *item = cJSON_CreateString(curr->processName);
-    if (item == NULL || !cJSON_AddItemToObject(object, "processName", item)) {
-        cJSON_Delete(item);
-        return NULL;
-    }
-
-    item = cJSON_CreateNumber(curr->apl);
-    if (item == NULL || !cJSON_AddItemToObject(object, "APL", item)) {
-        cJSON_Delete(item);
-        return NULL;
-    }
-
-    item = cJSON_CreateNumber(DEFAULT_AT_VERSION);
-    if (item == NULL || !cJSON_AddItemToObject(object, "version", item)) {
-        cJSON_Delete(item);
-        return NULL;
-    }
-
-    item = cJSON_CreateNumber(curr->tokenId);
-    if (item == NULL || !cJSON_AddItemToObject(object, "tokenId", item)) {
-        cJSON_Delete(item);
-        return NULL;
-    }
-
-    item = cJSON_CreateNumber(0);
-    if (item == NULL || !cJSON_AddItemToObject(object, "tokenAttr", item)) {
-        cJSON_Delete(item);
-        return NULL;
-    }
-
-    cJSON *dcapsArr = cJSON_CreateArray();
-    if (dcapsArr == NULL) {
-        return NULL;
-    }
-    for (int32_t i = 0; i < curr->dcapsNum; i++) {
-        item =  cJSON_CreateString(curr->dcaps[i]);
-        if (item == NULL || !cJSON_AddItemToArray(dcapsArr, item)) {
-            cJSON_Delete(item);
-            cJSON_Delete(dcapsArr);
-            return NULL;
-        }
-    }
-    if (!cJSON_AddItemToObject(object, "dcaps", dcapsArr)) {
-        cJSON_Delete(dcapsArr);
-        return NULL;
-    }
-
-    return object;
-}
-
-static char *GetStrFromJson(const cJSON *root)
-{
-    char *jsonStr = cJSON_PrintUnformatted(root);
-    if (jsonStr == NULL) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_PrintUnformatted failed.", __func__);
-        return NULL;
-    }
-
-    char *str = (char *)malloc(sizeof(char) * (strlen(jsonStr) + 1));
-    if (str == NULL) {
-        cJSON_free(jsonStr);
-        return NULL;
-    }
-
-    if (strcpy_s(str, strlen(jsonStr) + 1, jsonStr) != EOK) {
-        free(str);
-        str = NULL;
-    }
-    cJSON_free(jsonStr);
-    return str;
-}
-
-static char *GetStringToBeSync(NativeTokenQueue *head)
-{
-    cJSON *object = NULL;
-    NativeTokenQueue *node = NULL;
-
-    cJSON *array = cJSON_CreateArray();
-    if (array == NULL) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateArray failed.", __func__);
-        return NULL;
-    }
-
-    NativeTokenQueue *curr = head;
-    while (curr != 0) {
-        object = CreateNativeTokenJsonObject(curr);
-        if (object == NULL) {
-            cJSON_Delete(array);
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:CreateNativeTokenJsonObject failed.", __func__);
-            return NULL;
-        }
-        if (!cJSON_AddItemToArray(array, object)) {
-            cJSON_Delete(object);
-            cJSON_Delete(array);
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_AddItemToArray failed.", __func__);
-            return NULL;
-        }
-        node = curr;
-        curr = curr->next;
-        free(node);
-        node = NULL;
-    }
-
-    cJSON *root = cJSON_CreateObject();
-    if (root == NULL) {
-        cJSON_Delete(array);
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateObject failed.", __func__);
-        return NULL;
-    }
-
-    if (!cJSON_AddItemToObject(root, TRANSFER_KEY_WORDS, array)) {
-        cJSON_Delete(root);
-        cJSON_Delete(array);
-        return NULL;
-    }
-    char *str = GetStrFromJson(root);
-    cJSON_Delete(root);
-    return str;
-}
-
-static int32_t SyncToAtm(void)
-{
-    int32_t result;
-    struct sockaddr_un addr;
-    int32_t fd = -1;
-    char *str = NULL;
-
-    pthread_mutex_lock(&g_tokenQueueHeadLock);
-    NativeTokenQueue *begin = g_tokenQueueHead->next;
-    g_tokenQueueHead->next = NULL;
-    pthread_mutex_unlock(&g_tokenQueueHeadLock);
-
-    if (begin == NULL) {
-        ACCESSTOKEN_LOG_INFO("[ATLIB-%s]:noting to be sent.", __func__);
-        return ATRET_SUCCESS;
-    }
-
-    SaveTokenIdToCfg(begin);
-
-    str = GetStringToBeSync(begin);
-    if (str == NULL) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:str is null.", __func__);
-        return ATRET_FAILED;
-    }
-
-    do {
-        fd = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (fd < 0) {
-            result = ATRET_FAILED;
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:socket failed.", __func__);
-            break;
-        }
-        (void)memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un));
-        addr.sun_family = AF_UNIX;
-        if (strncpy_s(addr.sun_path, sizeof(addr.sun_path), SOCKET_FILE, sizeof(addr.sun_path) - 1) != EOK) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strncpy_s failed.", __func__);
-            close(fd);
-            result = ATRET_FAILED;
-            break;
-        }
-        result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
-        if (result != 0) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:connect failed. errno %d", __func__, errno);
-            close(fd);
-            result = ATRET_FAILED;
-            break;
-        }
-        ACCESSTOKEN_LOG_INFO("[ATLIB-%s]:str is to be sent %s.", __func__, str);
-        result = SendString(str, fd);
-        close(fd);
-    } while (0);
-
-    free(str);
-    return result;
-}
-
-void *ThreadTransferFunc(const void *args)
-{
-    int32_t ret;
-    g_tranferStatus = FOUNDATION_STARTING;
-
-    /* getpram */
-    while (1) {
-        char buffer[MAX_PARAMTER_LEN] = {0};
-        ret = GetParameter(SYSTEM_PROP_NATIVE_RECEPTOR, "false", buffer, MAX_PARAMTER_LEN - 1);
-        if (ret > 0 && !strncmp(buffer, "true", strlen("true"))) {
-            break;
-        }
-        ACCESSTOKEN_LOG_INFO("[ATLIB-%s]: %s get failed.", __func__, SYSTEM_PROP_NATIVE_RECEPTOR);
-        sleep(1);
-    }
-
-    g_signalFd = eventfd(0, 0);
-    if (g_signalFd == -1) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:eventfd failed.", __func__);
-        return NULL;
-    }
-
-    g_tranferStatus = ATM_SERVICE_STARTUP;
-
-    uint64_t result;
-    while (1) {
-        ret = read(g_signalFd, &result, sizeof(uint64_t));
-        if (ret == -1) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
-            continue;
-        }
-
-        ret = SyncToAtm();
-        if (ret != ATRET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:SyncToAtm failed.", __func__);
-        }
-    }
-    return NULL;
 }
 
 int32_t CheckProcessInfo(const char *processname, const char **dcaps,
@@ -595,7 +453,7 @@ int32_t CheckProcessInfo(const char *processname, const char **dcaps,
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is null or dacpNum is invalid.", __func__);
         return ATRET_FAILED;
     }
-    for (int i = 0; i < dacpNum; i++) {
+    for (int32_t i = 0; i < dacpNum; i++) {
         if (strlen(dcaps[i]) > MAX_DCAP_LEN) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcap length is invalid.", __func__);
             return ATRET_FAILED;
@@ -610,7 +468,7 @@ int32_t CheckProcessInfo(const char *processname, const char **dcaps,
     return ATRET_SUCCESS;
 }
 
-int NativeTokenIdCheck(NativeAtId tokenId)
+int32_t NativeTokenIdCheck(NativeAtId tokenId)
 {
     NativeTokenList *tokenNode = g_tokenListHead;
     while (tokenNode != NULL) {
@@ -621,11 +479,14 @@ int NativeTokenIdCheck(NativeAtId tokenId)
     }
     return 0;
 }
-static int32_t AddNewNativeTokenToList(const char *processname, NativeAtId *tokenId)
+
+static int32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
+                                           int32_t dacpNumIn, int32_t aplIn, NativeAtId *tokenId)
 {
     NativeTokenList *tokenNode;
     NativeAtId id;
     int32_t repeat;
+
     do {
         id = CreateNativeTokenId();
         repeat = NativeTokenIdCheck(id);
@@ -636,25 +497,169 @@ static int32_t AddNewNativeTokenToList(const char *processname, NativeAtId *toke
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
         return ATRET_FAILED;
     }
+    tokenNode->tokenId = id;
+    tokenNode->apl = aplIn;
     if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, processname) != EOK) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
         free(tokenNode);
         return ATRET_FAILED;
     }
-    tokenNode->tokenId = id;
+    tokenNode->dcapsNum = dacpNumIn;
+
+    for (int32_t i = 0; i < dacpNumIn; i++) {
+        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * (strlen(dcapsIn[i]) + 1));
+        if (tokenNode->dcaps[i] != NULL &&
+            (strcpy_s(tokenNode->dcaps[i], strlen(dcapsIn[i]) + 1, dcapsIn[i]) != EOK)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy dcapsIn[%d] failed.", __func__, i);
+            FreeDcaps(tokenNode->dcaps, i);
+            free(tokenNode);
+            return ATRET_FAILED;
+        }
+    }
     tokenNode->next = g_tokenListHead->next;
     g_tokenListHead->next = tokenNode;
 
     *tokenId = id;
+
+    SaveTokenIdToCfg(tokenNode);
+    return ATRET_SUCCESS;
+}
+
+int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
+{
+    if (tokenNode->apl != aplIn) {
+        return 1;
+    }
+    if (tokenNode->dcapsNum != dacpNumIn) {
+        return 1;
+    }
+    for (int32_t i = 0; i < dacpNumIn; i++) {
+        if (strcmp(tokenNode->dcaps[i], dcapsIn[i]) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
+{
+    tokenNode->apl = aplIn;
+
+    for (int32_t i = 0; i < tokenNode->dcapsNum; i++) {
+        free(tokenNode->dcaps[i]);
+        tokenNode->dcaps[i] = NULL;
+    }
+
+    tokenNode->dcapsNum = dacpNumIn;
+    for (int32_t i = 0; i < dacpNumIn; i++) {
+        int32_t len = strlen(dcapsIn[i]) + 1;
+        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * len);
+        if (tokenNode->dcaps[i] != NULL && (strcpy_s(tokenNode->dcaps[i], len, dcapsIn[i]) != EOK)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy dcapsIn[%d] failed.", __func__, i);
+            FreeDcaps(tokenNode->dcaps, i);
+            return ATRET_FAILED;
+        }
+    }
+    return ATRET_SUCCESS;
+}
+
+int32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *record)
+{
+    cJSON *itemApl =  cJSON_CreateNumber(tokenNode->apl);
+    if (itemApl == NULL) {
+        return ATRET_FAILED;
+    }
+    if (!cJSON_ReplaceItemInObject(record, APL_KEY_NAME, itemApl)) {
+        cJSON_Delete(itemApl);
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:APL update failed.", __func__);
+        return ATRET_FAILED;
+    }
+
+    cJSON *dcapsArr = cJSON_CreateArray();
+    if (dcapsArr == NULL) {
+        return ATRET_FAILED;
+    }
+    for (int32_t i = 0; i < tokenNode->dcapsNum; i++) {
+        cJSON *item =  cJSON_CreateString(tokenNode->dcaps[i]);
+        if (item == NULL) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateString failed.", __func__);
+            cJSON_Delete(dcapsArr);
+            return ATRET_FAILED;
+        }
+        if (!cJSON_AddItemToArray(dcapsArr, item)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_AddItemToArray failed.", __func__);
+            cJSON_Delete(item);
+            return ATRET_FAILED;
+        }
+    }
+    if (!cJSON_ReplaceItemInObject(record, DCAPS_KEY_NAME, dcapsArr)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps update failed.", __func__);
+        cJSON_Delete(dcapsArr);
+        return ATRET_FAILED;
+    }
+    return ATRET_SUCCESS;
+}
+
+int32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *record)
+{
+    int32_t arraySize = cJSON_GetArraySize(record);
+    for (int32_t i = 0; i < arraySize; i++) {
+        cJSON *cjsonItem = cJSON_GetArrayItem(record, i);
+        if (cjsonItem == NULL) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
+            return ATRET_FAILED;
+        }
+        cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
+        if (processNameJson == NULL) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processNameJson is null.", __func__);
+            return ATRET_FAILED;
+        }
+        if (strcmp(processNameJson->valuestring, tokenNode->processName) == 0) {
+            return UpdateItemcontent(tokenNode, cjsonItem);
+        }
+    }
+    ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cannot find process in config file.", __func__);
+    return ATRET_FAILED;
+}
+
+int32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
+{
+    cJSON *record = NULL;
+    char *fileBuff = NULL;
+
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    if (ret != ATRET_SUCCESS) {
+        return ret;
+    }
+
+    if (fileBuff == NULL) {
+        record = cJSON_CreateArray();
+    } else {
+        record = cJSON_Parse(fileBuff);
+        free(fileBuff);
+        fileBuff = NULL;
+    }
+
+    if (record == NULL) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:get record failed.", __func__);
+        return ATRET_FAILED;
+    }
+
+    ret = UpdateGoalItemFromRecord(tokenNode, record);
+    if (ret != ATRET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:UpdateGoalItemFromRecord failed.", __func__);
+        cJSON_Delete(record);
+        return ATRET_FAILED;
+    }
+
+    WriteToFile(record);
+    cJSON_Delete(record);
     return ATRET_SUCCESS;
 }
 
 uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t dacpNum, const char *aplStr)
 {
-    NativeAtId tokenId;
-    NativeTokenQueue tmp = {0};
-    pthread_t tid;
-    int32_t exist = 0;
+    NativeAtId tokenId = 0;
     uint64_t result = 0;
     int32_t apl;
     NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
@@ -668,14 +673,9 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
         return 0;
     }
 
-    if ((g_tranferStatus == FOUNDATION_NOT_STARTED) && strcmp("foundation", processname) == 0) {
-        (void)pthread_create(&tid, 0, (void*)ThreadTransferFunc, NULL);
-    }
-
     NativeTokenList *tokenNode = g_tokenListHead;
     while (tokenNode != NULL) {
         if (strcmp(tokenNode->processName, processname) == 0) {
-            exist = 1;
             tokenId = tokenNode->tokenId;
             break;
         }
@@ -683,17 +683,18 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
     }
 
     if (tokenNode == NULL) {
-        ret = AddNewNativeTokenToList(processname, &tokenId);
-        if (ret != ATRET_SUCCESS) {
-            return 0;
+        ret = AddNewTokenToListAndCfgFile(processname, dcaps, dacpNum, apl, &tokenId);
+    } else {
+        int32_t needUpdate = CompareProcessInfo(tokenNode, dcaps, dacpNum, apl);
+        if (needUpdate != 0) {
+            ret = UpdateTokenInfoInList(tokenNode, dcaps, dacpNum, apl);
+            ret |= UpdateTokenInfoInCfgFile(tokenNode);
         }
     }
-
-    TOKEN_QUEUE_NODE_INFO_SET(tmp, apl, processname, tokenId, exist, dcaps, dacpNum);
-    ret = TokenInfoSave(&tmp);
-    if (ret != 0) {
-        return result;
+    if (ret != ATRET_SUCCESS) {
+        return 0;
     }
+
     atPoint->tokenId = tokenId;
     atPoint->tokenAttr = 0;
     return result;
