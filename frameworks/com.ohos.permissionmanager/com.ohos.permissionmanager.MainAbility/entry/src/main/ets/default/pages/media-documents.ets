@@ -13,48 +13,85 @@
  * limitations under the License.
  */
 
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
 import { backBar } from "../common/components/backBar.ets"
-import { mediaDocListItem } from "../common/model/mediaDocList.ets"
+import { mediaDocListItem, mediaListItem } from "../common/model/mediaDocList.ets"
 import router from '@system.router'
+import AccessCtrl from "@ohos.abilityAccessCtrl"
+
 @Entry
 @Component
 struct mediaDocumentPage {
   private routerData = router.getParams().routerData
   build() {
-    Flex({ justifyContent: FlexAlign.Center }) {
-      Column() {
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
+            md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
+          })
+          .height("100%")
         Row() {
-//          titleBar()
-          backBar({title: JSON.stringify(this.routerData.name)})
-        }
-        Row() {
-//          categoryPage()
           Column() {
-            Scroll() {
-              otherMediaDocItem({
-                mediaDocListItem:mediaDocListItem
-              })
+            Row() {
+              backBar({title: JSON.stringify(this.routerData.name)})
             }
-          }.width(360)
+            Row() {
+              Column() {
+                Scroll() {
+                  otherMediaDocItem({
+                    mediaDocListItem:mediaDocListItem,
+                    mediaListItem:mediaListItem
+                  })
+                }
+              }.width("100%")
+            }
+            .layoutWeight(1)
+          }
         }
-        .layoutWeight(1)
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+            md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+          })
+          .height("100%")
       }
+      .height('100%')
     }
   }
 }
 
 @Component
 struct otherMediaDocItem {
+  aboutToAppear() {
+    console.info("yanxi" + "start run testcase!!!!")
+    AccessCtrl.createAtManager().verifyAccessToken(0, 'ohos.permission.PLACE_CALL')
+      .then((Want) => {
+        console.info( "yanxi" + Want);
+        console.info( "yanxi" + Want);
+      })
+      .catch((error) => {
+        console.error("yanxi" + 'Operation failed. Cause: ' + error);
+      })
+  }
   private routerData = router.getParams().routerData
   @State checkList: any[] = [1, 0]
   private mediaDocListItem: any[]
+  private mediaListItem: any[]
   build() {
     Column() {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-          Image(this.routerData.image)
+//          Text(this.mediaListItem[0].name)
+//          this.mediaListItem.filter(item => {
+//
+//          })
+          Image(this.mediaListItem[0].image)
             .width(64)
             .height(64)
             .margin({left:24,right:12})
@@ -83,7 +120,8 @@ struct otherMediaDocItem {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
-            Text('媒体和文件访问权限')
+            Text(this.routerData.name + '访问权限')
+              .fontSize(16)
           }.margin({left:36,right:12})
         }
       }
@@ -118,7 +156,6 @@ struct otherMediaDocItem {
                             this.checkList = [1, 0]
                           }
                         })
-                      Image($r('app.media.ic_ssensor'))
                     }.backgroundColor($r('app.color.default_background_color'))
                     .width('100%')
                     .height('48')
@@ -142,9 +179,5 @@ struct otherMediaDocItem {
       .backgroundColor($r('app.color.background_color'))
     }
     .backgroundColor($r('app.color.background_color'))
-    .useSizeType({
-      xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-      md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-    })
   }
 }

@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
 import { backBar } from "../common/components/backBar.ets"
 import { otherPermissionsListItem } from "../common/model/otherPermissionsList.ets"
 import router from '@system.router'
@@ -22,26 +20,44 @@ import router from '@system.router'
 @Component
 struct permissionsPage {
   build() {
-    Flex({ justifyContent: FlexAlign.Center }) {
-      Column() {
-        Row() {
-//          titleBar()
-          backBar({title: JSON.stringify($r("app.string.other_permissions"))})
-        }
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
+            md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
+          })
+          .height("100%")
         Row() {
           Column() {
-//            categoryPage()
-          }
-          Column() {
-            Scroll() {
-              otherPermissionsItem({
-                otherPermissionsListItem: otherPermissionsListItem
-              })
+            Row() {
+              backBar({title: JSON.stringify($r("app.string.other_permissions"))})
             }
-          }.width(360)
+            Row() {
+              Column() {
+                Scroll() {
+                  otherPermissionsItem({
+                    otherPermissionsListItem: otherPermissionsListItem
+                  })
+                }
+              }.width("100%")
+            }
+            .layoutWeight(1)
+          }
         }
-        .layoutWeight(1)
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+            md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+          })
+          .height("100%")
       }
+      .height('100%')
     }
   }
 }
@@ -98,9 +114,5 @@ struct otherPermissionsItem {
       .height('100%')
       .backgroundColor($r('app.color.background_color'))
     }
-    .useSizeType({
-      xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-      md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-    })
   }
 }

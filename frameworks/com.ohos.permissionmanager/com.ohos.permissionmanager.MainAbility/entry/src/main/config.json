@@ -41,6 +41,26 @@
         "label": "$string:entry_MainAbility",
         "type": "page",
         "launchType": "standard"
+      },
+      {
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "action.system.home"
+            ]
+          }
+        ],
+        "orientation": "portrait",
+        "visible": true,
+        "name": "com.example.myapplication.GrantAbility",
+        "icon": "$media:icon",
+        "description": "$string:mainability_description",
+        "label": "$string:entry_MainAbility",
+        "type": "page",
+        "launchType": "standard"
       }
     ],
     "js": [
@@ -56,7 +76,10 @@
           "pages/app-name",
           "pages/location-info",
           "pages/app-name-plus",
-          "pages/other-permissions"
+          "pages/other-permissions",
+          "pages/calendar",
+          "pages/dialog",
+          "pages/dialogPlus"
         ],
         "name": "default",
         "window": {

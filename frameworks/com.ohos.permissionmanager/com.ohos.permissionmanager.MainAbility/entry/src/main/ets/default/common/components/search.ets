@@ -23,12 +23,11 @@ export struct textInput {
           .padding({ left: 36 })
           .type(InputType.Normal)
           .border({ radius: 20 })
-          .placeholderColor($r('app.color.secondary_font_color'))
+          .placeholderColor($r('app.color.default_background_color'))
           .placeholderFont({ size: '16vp', weight: FontWeight.Normal, family: "sans-serif", style: FontStyle.Normal })
           .caretColor($r('app.color.secondary_font_color'))
           .backgroundColor($r('app.color.default_background_color'))
           .height(40)
-          .width(324)
           .onChange((value: string) => {
 
           })
@@ -43,7 +42,7 @@ export struct textInput {
             .objectFit(ImageFit.Contain)
             .width(16)
             .height(16)
-            .margin({ left: -312, top: 12 })
+            .margin({ left: -300, top: 12 })
         }
       }
     }

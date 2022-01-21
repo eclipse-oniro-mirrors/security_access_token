@@ -14,8 +14,6 @@
  */
 
 import { permissionAccessRecordListItem } from "../common/model/permissionAccessRecordList.ets"
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
 import { backBar } from "../common/components/backBar.ets"
 import router from '@system.router'
 
@@ -33,34 +31,54 @@ import router from '@system.router'
 @Component
 struct permissionAccessRecordPage {
   build() {
-    Flex({ justifyContent: FlexAlign.Center }) {
-      Column() {
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
+            md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
+          })
+          .height("100%")
         Row() {
-          //        titleBar()
-          backBar({ title: JSON.stringify($r('app.string.permission_access_record'))})
-        }
-        Row() {
-          //        categoryPage()
           Column() {
-            Column() {
-              Flex({ justifyContent: FlexAlign.Start }) {
-                Text($r('app.string.authority_message'))
-                  .fontSize("16vp")
-                  .margin({
-                    left: '15vp'
-                  })
-              }
-              .backgroundColor($r('app.color.background_color'))
-              Scroll() {
-                permissionAccessRecordItem({
-                  permissionAccessRecordListItem: permissionAccessRecordListItem,
-                })
-              }
+            Row() {
+              backBar({ title: JSON.stringify($r('app.string.permission_access_record'))})
             }
-          }.width(360)
+            Row() {
+              Column() {
+                Column() {
+                  Flex({ justifyContent: FlexAlign.Start }) {
+                    Text($r('app.string.authority_message'))
+                      .fontSize("16vp")
+                      .margin({
+                        left: '15vp'
+                      })
+                  }
+                  .backgroundColor($r('app.color.background_color'))
+                  Scroll() {
+                    permissionAccessRecordItem({
+                      permissionAccessRecordListItem: permissionAccessRecordListItem,
+                    })
+                  }
+                }
+              }.width("100%")
+            }
+            .layoutWeight(1)
+          }
         }
-        .layoutWeight(1)
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+            md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+          })
+          .height("100%")
       }
+      .height('100%')
     }
   }
 }
@@ -172,16 +190,9 @@ struct permissionAccessRecordItem {
           }, item => item.index.toString())
         }
       }
-      .useSizeType({
-        xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-        md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-      })
       .width('100%')
       .height('100%')
       .backgroundColor($r('app.color.background_color'))
-    }.useSizeType({
-      xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-      md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-    })
+    }
   }
 }

@@ -65,7 +65,6 @@ export struct backBar {
         }
       }
     }
-    .width(360)
     .height(56)
     .constraintSize({ minHeight: "56vp" })
     .alignItems(HorizontalAlign.Start)
