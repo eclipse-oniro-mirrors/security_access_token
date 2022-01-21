@@ -25,8 +25,6 @@
 extern "C" {
 #endif
 
-extern int32_t AtlibInit(void);
-
 extern uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr);
 
 #ifdef __cplusplus

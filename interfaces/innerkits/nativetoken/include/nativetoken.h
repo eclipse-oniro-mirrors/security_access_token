@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/eventfd.h>
-#include <poll.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <poll.h>
+#include <stdint.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
+
 #include "cJSON.h"
 #include "securec.h"
 #include "nativetoken_log.h"
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #define MAX_PROCESS_NAME_LEN 256
-#define TOKEN_ID_CFG_PATH "/data/token.json"
+#define TOKEN_ID_CFG_PATH "/data/system/access_token/nativetoken.json"
 #define SOCKET_FILE "/data/system/token_unix_socket.socket"
 #define TOKEN_NATIVE_TYPE 1
 #define DEFAULT_AT_VERSION 1
@@ -45,12 +45,19 @@ extern "C" {
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
 #define PATH_MAX_LEN 4096
 
-#define FOUNDATION_NOT_STARTED 0
-#define FOUNDATION_STARTING 1
-#define ATM_SERVICE_STARTUP 2
-
 #define ATRET_FAILED 1
 #define ATRET_SUCCESS 0
+
+#define DCAPS_KEY_NAME  "dcaps"
+#define TOKENID_KEY_NAME "tokenId"
+#define TOKEN_ATTR_KEY_NAME "tokenAttr"
+#define APL_KEY_NAME "APL"
+#define VERSION_KEY_NAME "version"
+#define PROCESS_KEY_NAME "processName"
+
+#define SYSTEM_CORE 3
+#define SYSTEM_BASIC 2
+#define NORMAL 1
 
 typedef unsigned int NativeAtId;
 typedef unsigned int NativeAtAttr;
@@ -69,28 +76,12 @@ typedef struct {
 
 typedef struct TokenList {
     NativeAtId tokenId;
+    int32_t apl;
+    char *dcaps[MAX_DCAPS_NUM];
+    int dcapsNum;
     char processName[MAX_PROCESS_NAME_LEN + 1];
     struct TokenList *next;
 } NativeTokenList;
-
-typedef struct TokenQueue {
-    NativeAtId tokenId;
-    int apl;
-    const char *processName;
-    const char **dcaps;
-    int dcapsNum;
-    int flag;
-    struct TokenQueue *next;
-} NativeTokenQueue;
-
-#define TOKEN_QUEUE_NODE_INFO_SET(tmp, apl, processname, tokenId, exist, dcap, dacpNum) do { \
-    (tmp).apl = (apl); \
-    (tmp).processName = (processname); \
-    (tmp).tokenId = (tokenId); \
-    (tmp).flag = (exist); \
-    (tmp).dcaps = (dcap); \
-    (tmp).dcapsNum = (dacpNum); \
-} while (0)
 
 extern int32_t GetFileBuff(const char *cfg, char **retBuff);
 #ifdef __cplusplus
