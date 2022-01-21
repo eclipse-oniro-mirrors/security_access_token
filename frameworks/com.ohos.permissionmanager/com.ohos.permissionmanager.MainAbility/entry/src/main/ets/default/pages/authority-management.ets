@@ -13,13 +13,12 @@
  * limitations under the License.
  */
 
-import { authorityListItem, messageListItem, appInstallListItem, otherPermissionsListItem, applicationListItem } from "../common/model/authorityManagementList.ets"
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
+import { authorityListItem, messageListItem, applicationListItem } from "../common/model/authorityManagementList.ets"
 import { backBar } from "../common/components/backBar.ets"
 import { alphabetIndexerComponent } from "../common/components/alphabeticalIndex.ets"
 import { textInput } from "../common/components/search.ets"
 import router from '@system.router'
+import bundle from "@ohos.bundle"
 
 @Extend(Text) function customizeText(fontSize: string) {
   .fontSize(fontSize)
@@ -45,51 +44,64 @@ import router from '@system.router'
 struct authorityManagementPage {
 
   build() {
-    Flex({ justifyContent: FlexAlign.Center }) {
-      Column() {
-        Row() {
-          //        titleBar()
-          backBar( { title: JSON.stringify($r('app.string.authority_management')) })
-        }
-        Row() {
-          //        categoryPage()
-          Column() {
-            Column() {
-              Stack() {
-                Tabs() {
-                  TabContent() {
-                    Scroll() {
-                      authorityItem({
-                        authorityListItem: authorityListItem,
-                        messageListItem: messageListItem,
-                        appInstallListItem: appInstallListItem,
-                        otherPermissionsListItem: otherPermissionsListItem
-                      })
-                    }
-                  }.tabBar('权限')
-
-                  TabContent() {
-                    Scroll() {
-                      applicationItem({
-                        applicationListItem: applicationListItem,
-                      })
-                    }
-                  }.tabBar('应用')
-                }
-                .backgroundColor($r('app.color.background_color'))
-                .barWidth(744)
-                .barMode(BarMode.Scrollable)
-              }.height('100%')
-            }
-          }.width('100%')
-        }
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
         .useSizeType({
           xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
           md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
         })
-        .layoutWeight(1)
-        .width(360)
+        .height("100%")
+        Row() {
+          Column() {
+            Row() {
+              backBar( { title: JSON.stringify($r('app.string.authority_management')) })
+            }
+            Row() {
+              Column() {
+                Column() {
+                  Stack() {
+                    Tabs() {
+                      TabContent() {
+                        Scroll() {
+                          authorityItem({
+                            authorityListItem: authorityListItem,
+                            messageListItem: messageListItem
+                          })
+                        }
+                      }.tabBar('权限')
+
+                      TabContent() {
+                        Scroll() {
+                          applicationItem({
+                            applicationListItem: applicationListItem,
+                          })
+                        }
+                      }.tabBar('应用')
+                    }
+                    .backgroundColor($r('app.color.background_color'))
+                    .barWidth(744)
+                    .barMode(BarMode.Scrollable)
+                  }.height('100%')
+                }
+              }
+            }
+            .layoutWeight(1)
+          }
+        }
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+        .useSizeType({
+          xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+          md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+        })
+        .height("100%")
       }
+      .height('100%')
     }
   }
 }
@@ -98,9 +110,7 @@ struct authorityManagementPage {
 struct authorityItem {
   private authorityListItem: any[]
   private messageListItem: any[]
-  private appInstallListItem: any[]
-  private otherPermissionsListItem: any[]
-@Builder ListItemLayout(item, list) {
+  @Builder ListItemLayout(item, list) {
   ListItem() {
     Row() {
       Column() {
@@ -128,22 +138,14 @@ struct authorityItem {
           }
         }
       }.onClick(() => {
-        if (item.name === '其他权限') {
+        if (item.name === '日历') {
           router.push({
-            uri: 'pages/other-permissions',
-          })
-        }else if (item.name === '位置信息') {
-          router.push({
-            uri: 'pages/location-info',
-          })
-        }else if (item.name === '媒体和文件') {
-          router.push({
-            uri: 'pages/media-documents',
+            uri: 'pages/calendar',
             params: { routerData: item }
           })
-        }else{
+        } else {
           router.push({
-            uri: 'pages/media-documents',
+            uri: 'pages/location-info',
             params: { routerData: item }
           })
         }
@@ -152,6 +154,18 @@ struct authorityItem {
     }
   }.padding({ left: 12, right: 12 })
 }
+  aboutToAppear() {
+    console.info("start run testcase!!!!")
+//    bundle.getAllApplicationInfo(0x00000000,1)
+//      .then((Want) => {
+//        console.info( "yanxi" + JSON.stringify(Want));
+//        console.log( "yanxi" + JSON.stringify(Want));
+//      })
+//      .catch((error) => {
+//        console.error('Operation failed. Cause: ' + JSON.stringify(error));
+//      })
+
+  }
   build() {
     Row() {
       Column() {
@@ -169,26 +183,9 @@ struct authorityItem {
             }, item => item.toString())
           }.backgroundColor($r('app.color.default_background_color')).borderRadius(24).padding({ top: 4, bottom: 4 })
         }.margin({ top: 12 }).padding({ left: 12, right: 12 })
-        Row() {
-          List() {
-            ForEach(this.appInstallListItem, (item) => {
-              this.ListItemLayout(item, this.appInstallListItem)
-            }, item => item.toString())
-          }.backgroundColor($r('app.color.default_background_color')).borderRadius(24).padding({ top: 4, bottom: 4 })
-        }.margin({ top: 12 }).padding({ left: 12, right: 12 })
-        Row() {
-          List() {
-            ForEach(this.otherPermissionsListItem, (item) => {
-              this.ListItemLayout(item, this.otherPermissionsListItem)
-            }, item => item.toString())
-          }.backgroundColor($r('app.color.default_background_color')).borderRadius(24).padding({ top: 4, bottom: 4 })
-        }.margin({ top: 12 }).padding({ left: 12, right: 12 })
       }.width('100%')
       .backgroundColor($r('app.color.background_color'))
-    }.useSizeType({
-      xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-      md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-    })
+    }
   }
 }
 
@@ -242,7 +239,8 @@ struct applicationItem {
     Column() {
       Row() {
         textInput({ placeholder: '搜索应用' })
-      }.padding({ left: 12, top: 8 })
+//        .width("100%")
+      }.padding({ left: 12, top: 8, right: 4 })
       Scroll() {
         Row() {
           Flex({ alignItems: ItemAlign.Start }) {
@@ -265,12 +263,8 @@ struct applicationItem {
             }
             .margin({ top: 12 })
             .width(24)
-            .padding({ right: 0 })
           }
-        }.useSizeType({
-          xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-          md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-        })
+        }
       }
     }
   }

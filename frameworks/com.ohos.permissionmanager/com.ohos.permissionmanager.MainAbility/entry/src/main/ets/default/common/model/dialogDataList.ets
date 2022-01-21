@@ -14,7 +14,7 @@
  */
 
 export const dialogData: any[] = [
-  { 'name': '权限1', 'index': 1, 'message1': '内容1','message2': '内容一', 'icon': $r("app.media.ic_exercise") },
+  { 'name': '权限1', 'index': 1, 'message1': '是否允许"XX"访问健身运动','message2': '用于XXXX', 'icon': $r("app.media.ic_exercise") },
   { 'name': '权限2', 'index': 2, 'message1': '内容2','message2': '内容二', 'icon': $r("app.media.ic_exercise") },
   { 'name': '权限3', 'index': 3, 'message1': '内容3','message2': '内容三', 'icon': $r("app.media.ic_exercise") },
   { 'name': '权限4', 'index': 4, 'message1': '内容4','message2': '内容四', 'icon': $r("app.media.ic_exercise") }

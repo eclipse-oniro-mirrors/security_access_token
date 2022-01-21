@@ -14,6 +14,12 @@
  */
 
 export const mediaDocListItem: any[] = [
-  { 'name': '允许', 'index': 1, groupName: 'radio', checked: 1 },
-  { 'name': '禁止', 'index': 2, groupName: 'radio', checked: 0 }
+  { 'name': '允许', 'index': 1, groupName: 'radio' },
+  { 'name': '禁止', 'index': 2, groupName: 'radio' }
+]
+export const mediaListItem: any[] = [
+  { 'name': '相机', 'index': 2, 'image': $r('app.media.ic_public_camera'), 'icon': $r('app.media.rightarrow'), version: '1.1.1', use: '用途001' },
+  { 'name': '麦克风', 'index': 3, 'image': $r('app.media.ic_public_voice'), 'icon': $r('app.media.rightarrow'), version: '1.1.1', use: '用途001' },
+  { 'name': '媒体和文件', 'index': 5, 'image': $r('app.media.ic_public_folder'), 'icon': $r('app.media.rightarrow'), version: '1.1.1', use: '用途001' },
+  { 'name': '日历', 'index': 6, 'image': $r('app.media.ic_public_calendar'), 'icon': $r('app.media.rightarrow'), version: '1.1.1', use: '用途001' }
 ]

@@ -14,8 +14,6 @@
  */
 
 import { applicationListItem } from "../common/model/authorityManagementList.ets"
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
 import { backBar } from "../common/components/backBar.ets"
 import { alphabetIndexerComponent } from "../common/components/alphabeticalIndex.ets"
 import { textInput } from "../common/components/search.ets"
@@ -43,23 +41,44 @@ import router from '@system.router'
 @Entry
 @Component
 struct locationInfoPage {
+  private routerData = router.getParams().routerData
   build() {
-    Flex({ justifyContent: FlexAlign.Center }) {
-      Column() {
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
+            md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
+          })
+          .height("100%")
         Row() {
-          //        titleBar()
-          backBar({title: JSON.stringify($r("app.string.location_info"))})
-        }
-        Row() {
-          //        categoryPage()
           Column() {
-            applicationItem({
-              applicationListItem: applicationListItem
-            })
-          }.width(360)
+            Row() {
+              backBar({title: JSON.stringify(this.routerData.name)})
+            }
+            Row() {
+              Column() {
+                applicationItem({
+                  applicationListItem: applicationListItem
+                })
+              }.width("100%")
+            }
+            .layoutWeight(1)
+          }
         }
-        .layoutWeight(1)
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+            md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+          })
+          .height("100%")
       }
+      .height('100%')
     }
   }
 }
@@ -109,7 +128,7 @@ struct applicationItem {
     Column() {
       Row() {
         textInput({ placeholder: '搜索应用' })
-      }.padding({ left: 12 })
+      }.padding({ left: 12, right: 4 })
       .backgroundColor($r('app.color.background_color'))
       Row() {
         Flex({ alignItems:ItemAlign.Start, justifyContent: FlexAlign.Start }) {
@@ -137,14 +156,11 @@ struct applicationItem {
                     .padding({ top: 4, bottom: 4 })
                   }.margin({ top: 24 })
                 }.width('100%')
-                .height('89%')
+                .height('95%')
                 .backgroundColor($r('app.color.background_color'))
-              }.useSizeType({
-                xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-                md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-              })
+              }
             }
-          }.padding({ left: 12 }).width(336)
+          }.padding({ left: 12 })
           Column() {
             alphabetIndexerComponent({ page: 'location-info', applicationList: $applicationList })
           }.width(24).padding({ top: 16 })

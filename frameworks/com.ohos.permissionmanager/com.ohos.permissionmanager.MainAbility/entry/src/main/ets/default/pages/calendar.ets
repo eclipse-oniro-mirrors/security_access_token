@@ -14,12 +14,11 @@
  */
 
 import { backBar } from "../common/components/backBar.ets"
-import { calendarListItem, dynamicListItem } from "../common/model/appNameList.ets"
+import { calendarListItem } from "../common/model/appNameList.ets"
 import router from '@system.router'
 @Entry
 @Component
 struct appNamePage {
-  private routerData = router.getParams().routerData
   build() {
     GridContainer({ gutter: 0 }) {
       Row() {
@@ -32,18 +31,17 @@ struct appNamePage {
         Row() {
           Column() {
             Row() {
-              backBar({ title: JSON.stringify(this.routerData) })
+              backBar({title: JSON.stringify($r("app.string.calendar"))})
             }
             Row() {
               Column() {
                 Scroll() {
                   appNameItem({
                     calendarListItem: calendarListItem,
-                    dynamicListItem: dynamicListItem
                   })
                 }
               }
-            }.layoutWeight(1).width("100%")
+            }.layoutWeight(1)
           }
         }
         .useSizeType({
@@ -66,18 +64,10 @@ struct appNamePage {
 @Component
 struct appNameItem {
   private calendarListItem: any[]
-  private dynamicListItem: any[]
 
   build() {
     Row() {
       Column() {
-        Row() {
-          Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-            Text($r('app.string.calendar'))
-              .fontSize(14)
-              .margin({ top: 19.5, left: 48 })
-          }
-        }
         Row() {
           List() {
             ForEach(this.calendarListItem, (item) => {
@@ -90,12 +80,10 @@ struct appNameItem {
                           .fontSize(16)
                           .fontColor($r('app.color.text_color'))
                           .flexGrow(1)
-                        Toggle({ type: ToggleType.Switch, isOn: true })
-                          .selectedColor($r('app.color.toggle_color'))
-                          .width(36)
-                          .height(20)
-                          .onChange((isOn: boolean) => {
-                          })
+                        Image($r('app.media.rightarrow'))
+                          .objectFit(ImageFit.Contain)
+                          .height(24)
+                          .width(12)
                       }
                       .width('100%')
                       .height(48)
@@ -109,50 +97,10 @@ struct appNameItem {
                       }
                     }
                   }.onClick(() => {
-                  })
-                }
-              }.padding({ left: 24, right: 24 })
-            }, item => item.toString())
-          }.backgroundColor($r('app.color.default_background_color')).borderRadius(24).padding({ top: 4, bottom: 4 })
-        }.margin({ top: 9 }).padding({ left: 24, right: 24 })
-        Row() {
-          Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-            Text('xxx')
-              .fontSize(14)
-              .margin({ top: 19.5, left: 48 })
-          }
-        }
-        Row() {
-          List() {
-            ForEach(this.dynamicListItem, (item) => {
-              ListItem() {
-                Row() {
-                  Column() {
-                    Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                      Row() {
-                        Text(item.name)
-                          .fontSize(16)
-                          .fontColor($r('app.color.text_color'))
-                          .flexGrow(1)
-                        Toggle({ type: ToggleType.Switch, isOn: true })
-                          .selectedColor($r('app.color.toggle_color'))
-                          .width(36)
-                          .height(20)
-                          .onChange((isOn: boolean) => {
-                          })
-                      }
-                      .width('100%')
-                      .height(48)
-                    }
-                    if (item.index !== this.dynamicListItem.length) {
-                      Row() {
-                        Column()
-                          .backgroundColor($r('app.color.text_decoration_color'))
-                          .width('100%')
-                          .height('2vp')
-                      }
-                    }
-                  }.onClick(() => {
+                      router.push({
+                        uri: 'pages/location-info',
+                        params: { routerData: item }
+                      })
                   })
                 }
               }.padding({ left: 24, right: 24 })

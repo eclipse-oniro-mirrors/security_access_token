@@ -14,40 +14,12 @@
  */
 
 import { dialogData } from "../model/dialogDataList.ets"
+import { permissionGroups, groups } from "../model/permissionGroup.ets"
+import bundle from '@ohos.bundle';
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
   .fontColor($r('app.color.button_color'))
-}
-
-@CustomDialog
-export struct positionDialog {
-  @Link messageList: string[]
-  controller: CustomDialogController
-  cancel: () => void
-  confirm: () => void
-
-  build() {
-    Column() {
-      Text('是否开启定位服务？').width('45%').fontSize(16).margin({ top: 20, bottom: 10 })
-      Flex({ justifyContent: FlexAlign.SpaceAround }) {
-        Button('禁止')
-          .onClick(() => {
-            this.controller.close()
-            this.cancel()
-          }).customizeButton()
-        Text('|').fontSize(25).fontColor($r('app.color.divider_color')).margin({ top: 3 })
-        Button('允许')
-          .onClick(() => {
-            this.controller.close()
-            this.confirm()
-          }).customizeButton()
-      }.margin({ bottom: 10 })
-    }.backgroundColor($r('app.color.default_background_color'))
-    .borderRadius(24)
-    .height(100)
-    .width(336)
-  }
 }
 
 @CustomDialog
@@ -58,7 +30,7 @@ export struct spaceDialog {
 
   build() {
     Column() {
-      Image($r('app.media.ic_nearby'))
+      Image($r('app.media.ic_ssensor'))
         .width(24)
         .height(24)
         .margin({
@@ -67,7 +39,7 @@ export struct spaceDialog {
       Column() {
         Row() {
           Flex({ justifyContent: FlexAlign.Start }) {
-            Text('是否允许“XX”查找、连接附近设备？').fontSize(16)
+            Text('是否允许“XX”使用身体传感器？').fontSize(16)
               .margin({
                 top: 16,
                 left: 24
@@ -118,17 +90,18 @@ export struct privacyDialog {
   controller: CustomDialogController
   cancel: () => void
   confirm: () => void
+  @State permissionList: Array<any> = []
 
   build() {
     Column() {
-      if (this.count < dialogData.length) {
+      if (this.count < this.permissionList.length) {
         Image(dialogData[this.count].icon)
           .width(24)
           .height(24)
           .margin({
             top: 24
           })
-        Text(`${this.count + 1} / ${dialogData.length}`)
+        Text(`${this.count + 1} / ${this.permissionList.length}`)
           .fontSize(14)
           .fontColor($r('app.color.secondary_font_color'))
           .margin({
@@ -137,7 +110,7 @@ export struct privacyDialog {
         Column() {
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text(dialogData[this.count].message1).fontSize(16)
+              Text("是否允许该应用访问" + this.current().groupName).fontSize(16)
                 .margin({
                   top: 16,
                   left: 24
@@ -146,7 +119,7 @@ export struct privacyDialog {
           }
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text(dialogData[this.count].message2).fontSize(14)
+              Text("用于" + this.current().description).fontSize(14)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({
                   top: 2,
@@ -162,18 +135,22 @@ export struct privacyDialog {
             .fontSize(16)
             .onClick(() => {
               this.cancel()
-              if (this.count === dialogData.length) {
-                this.controller.close()
-              }
+              setTimeout(() => {
+                if (this.count === this.permissionList.length) {
+                  this.controller.close()
+                }
+              }, 1)
             }).customizeButton()
           Text('|').fontSize(30).fontColor($r('app.color.divider_color'))
           Button('允许')
             .fontSize(16)
             .onClick(() => {
               this.confirm()
-              if (this.count === dialogData.length) {
-                this.controller.close()
-              }
+              setTimeout(() => {
+                if (this.count === this.permissionList.length) {
+                  this.controller.close()
+                }
+              }, 1)
             }).customizeButton()
         }.margin({
           top: 8
@@ -184,5 +161,17 @@ export struct privacyDialog {
     .borderRadius(24)
     .height(186)
     .width(336)
+  }
+  current() {
+    var current = this.permissionList[this.count]
+    var permission = permissionGroups.filter(item => item.name == current)
+    var group = groups.filter(item => item.name == permission[0].group)
+    return group[0]
+  }
+
+  aboutToAppear() {
+    bundle.getApplicationInfo('com.example.myapplication', 0x00000000, 0).then(res => {
+      this.permissionList = res.permissions
+    })
   }
 }

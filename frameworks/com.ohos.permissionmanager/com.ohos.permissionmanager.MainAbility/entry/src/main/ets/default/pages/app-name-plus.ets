@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-import { titleBar } from "../common/components/titleBar.ets"
-import { categoryPage } from "../common/components/category.ets"
 import { backBar } from "../common/components/backBar.ets"
 import { allowedListItem, bannedListItem } from "../common/model/appNameList.ets"
 import router from '@system.router'
@@ -24,31 +22,52 @@ import router from '@system.router'
 struct appNamePlusPage {
   private routerData = router.getParams().routerData
   build() {
-     Flex({ justifyContent: FlexAlign.Center }) {
-       Column() {
-         Row() {
-           //        titleBar()
-           backBar({ title: JSON.stringify(this.routerData.name) })
-         }
-         Row() {
-           //        categoryPage()
-           Column() {
-             Scroll() {
-               appNameItem({
-                 allowedListItem: allowedListItem,
-                 bannedListItem: bannedListItem,
-//                 buttonListItem: buttonListItem
-               })
-             }
-           }.width('100%')
-         }.layoutWeight(1).width(360)
-       }
-     }
+    GridContainer({ gutter: 0 }) {
+      Row() {
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
+            md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
+          })
+          .height("100%")
+        Row() {
+          Column() {
+            Row() {
+              backBar({ title: JSON.stringify(this.routerData.name) })
+            }
+            Row() {
+              Column() {
+                Scroll() {
+                  appNameItem({
+                    allowedListItem: allowedListItem,
+                    bannedListItem: bannedListItem,
+                    //                 buttonListItem: buttonListItem
+                  })
+                }
+              }.width('100%')
+            }.layoutWeight(1).width("100%")
+          }
+        }
+        .useSizeType({
+          xs: { span: 1, offset: 1 }, sm: { span: 2, offset: 1 },
+          md: { span: 6, offset: 1 }, lg: { span: 8, offset: 2 }
+        })
+        .height("100%")
+        Row()
+          .useSizeType({
+            xs: { span: 1, offset: 2 }, sm: { span: 1, offset: 3 },
+            md: { span: 1, offset: 7 }, lg: { span: 2, offset: 10 }
+          })
+          .height("100%")
+      }
+      .height('100%')
+    }
   }
 }
 
 @Component
 struct appNameItem {
+  private routerData = router.getParams().routerData
   private allowedListItem: any[]
   private bannedListItem: any[]
 //  private buttonListItem: any[]
@@ -118,8 +137,8 @@ struct appNameItem {
                     }
                   }.onClick(() => {
                     router.push({
-                      uri: 'pages/app-name',
-                      params: { routerData: item }
+                      uri: 'pages/media-documents',
+                      params: { routerData: item}
                     })
                   })
                 }
@@ -164,7 +183,7 @@ struct appNameItem {
                     }
                   }.onClick(() => {
                     router.push({
-                      uri: 'pages/app-name',
+                      uri: 'pages/media-documents',
                       params: { routerData: item }
                     })
                   })
@@ -188,6 +207,10 @@ struct appNameItem {
                 if (event.type === TouchType.Down) {
                 }
                 if (event.type === TouchType.Up) {
+                  router.push({
+                    uri: 'pages/app-name',
+                    params: { routerData: this.routerData.name }
+                  })
                 }
                 if (event.type === TouchType.Move) {
                   if(event.touches[0].x < 0 || event.touches[0].x > 90 || event.touches[0].y > 0 || event.touches[0].y > 48) {
@@ -202,9 +225,6 @@ struct appNameItem {
       .height('100%')
       .backgroundColor($r('app.color.background_color'))
 
-    }.useSizeType({
-      xs: { span: 1, offset: 0 }, sm: { span: 1, offset: 0 },
-      md: { span: 1, offset: 0 }, lg: { span: 2, offset: 0 }
-    })
+    }
   }
 }

@@ -34,7 +34,7 @@ export struct alphabetIndexerComponent {
   }
 
   build() {
-    Flex({ justifyContent: FlexAlign.End }) {
+    Flex({ justifyContent: FlexAlign.Start }) {
       AlphabetIndexer({ ArrayValue: this.value, selected: this.alphabeticalIndex })
         .selectedColor(0xffffff) // 选中颜色
         .popupColor(0xFFFAF0) // 弹出框颜色
