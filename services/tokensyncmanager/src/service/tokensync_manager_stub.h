@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class TokenSyncManagerStub : public IRemoteStub<ITokenSyncManager> {
 public:
     TokenSyncManagerStub() = default;
@@ -34,7 +34,7 @@ public:
 private:
     void VerifyPermissionInner(MessageParcel& data, MessageParcel& reply);
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // TOKENSYNC_MANAGER_STUB_H

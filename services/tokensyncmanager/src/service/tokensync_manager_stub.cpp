@@ -22,7 +22,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerStub"};
 }
@@ -54,6 +54,6 @@ void TokenSyncManagerStub::VerifyPermissionInner(MessageParcel& data, MessagePar
     int result = this->VerifyPermission(bundleName, permissionName, userId);
     reply.WriteInt32(result);
 }
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

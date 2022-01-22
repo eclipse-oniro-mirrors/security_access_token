@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class ITokenSyncManager : public IRemoteBroker {
 public:
     static const int SA_ID_TOKENSYNC_MANAGER_SERVICE = 3504;
@@ -36,7 +36,7 @@ public:
         VERIFY_PERMISSION = 0xff01,
     };
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 

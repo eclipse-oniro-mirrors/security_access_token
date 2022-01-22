@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class TokenSyncManagerProxy : public IRemoteProxy<ITokenSyncManager> {
 public:
     explicit TokenSyncManagerProxy(const sptr<IRemoteObject>& impl);
@@ -35,7 +35,7 @@ public:
 private:
     static inline BrokerDelegator<TokenSyncManagerProxy> delegator_;
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // TOKENSYNC_MANAGER_PROXY_H

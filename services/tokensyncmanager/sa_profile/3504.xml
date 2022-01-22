@@ -13,10 +13,10 @@
      limitations under the License.
 -->
 <info>
-    <process>foundation</process>
+    <process>token_sync_service</process>
     <systemability>
         <name>3504</name>
-        <libpath>libtoken_manager_service.z.so</libpath>
+        <libpath>libtoken_sync_manager_service.z.so</libpath>
         <run-on-create>true</run-on-create>
         <distributed>true</distributed>
         <dump-level>1</dump-level>

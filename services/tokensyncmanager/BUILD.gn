@@ -13,33 +13,44 @@
 
 import("//build/ohos.gni")
 
-ohos_shared_library("tokensync_manager_service") {
+ohos_prebuilt_etc("token_sync.rc") {
+  source = "token_sync.cfg"
+  relative_install_dir = "init"
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+ohos_shared_library("token_sync_manager_service") {
   subsystem_name = "security"
   part_name = "access_token"
 
   include_dirs = [
-    "include",
+    "include/service",
+    "include/remote",
     "//utils/system/safwk/native/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/tokensync/include",
-    #"//base/security/permission/interfaces/innerkits/permission_standard/permissionsdk/main/cpp/include/permission",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//foundation/communication/dsoftbus/interfaces/kits/transport",
+    "//foundation/communication/dsoftbus/interfaces/kits/common",
+    "//foundation/communication/dsoftbus/interfaces/kits/bus_center",
   ]
 
   sources = [
-    "main/cpp/tokensync_manager_service.cpp",
-    "main/cpp/tokensync_manager_stub.cpp",
+    "src/remote/soft_bus_manager.cpp",
+    "src/service/tokensync_manager_service.cpp",
+    "src/service/tokensync_manager_stub.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
-    #"//base/security/accesstoken/frameworks/accesstooken/permissioncommunicationadapter:permission_standard_communication_adapter_cxx",
-    #"//base/security/accesstoken/frameworks/accesstooken/common:permission_standard_infrastructure_cxx",
-    #"//third_party/sqlite:sqlite",
+    "//base/security/access_token/services/tokensyncmanager:token_sync.rc",
     "//utils/native/base:utils",
   ]
 
   external_deps = [
+    "dsoftbus_standard:softbus_client",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

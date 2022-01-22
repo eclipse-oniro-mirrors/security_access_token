@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 using namespace std;
 
 namespace {
@@ -37,6 +37,6 @@ int TokenSyncKit::VerifyPermission(const string& bundleName, const string& permi
         bundleName.c_str(), permissionName.c_str(), userId);
     return TokenSyncManagerClient::GetInstance().VerifyPermission(bundleName, permissionName, userId);
 }
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

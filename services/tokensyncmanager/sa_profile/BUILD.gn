@@ -14,9 +14,7 @@
 import("//build/ohos/sa_profile/sa_profile.gni")
 
 ohos_sa_profile("tokensync_sa_profile_standard") {
-  part_name = "token_sync"
+  part_name = "access_token"
 
   sources = [ "3504.xml" ]
 }
-
-

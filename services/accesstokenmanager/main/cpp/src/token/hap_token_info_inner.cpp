@@ -118,7 +118,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             "%{public}s called, tokenID: 0x%{public}x apl is error, value %{public}d", __func__, tokenID_, aplNum);
         return RET_FAILED;
     }
-    ver_ = inGenericValues.GetInt(FIELD_TOKEN_VERSION);
+    ver_ = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
     if (ver_ != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "%{public}s called, tokenID: 0x%{public}x version is error, version %{public}d", __func__, tokenID_, ver_);
