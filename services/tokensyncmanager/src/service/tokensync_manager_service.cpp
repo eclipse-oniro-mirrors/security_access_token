@@ -15,11 +15,13 @@
 
 #include "tokensync_manager_service.h"
 
+#include <securec.h>
 #include "accesstoken_log.h"
+#include "soft_bus_manager.h"
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerService"};
 }
@@ -70,13 +72,16 @@ int TokenSyncManagerService::VerifyPermission(
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, packageName: %{public}s, permissionName: %{public}s, userId: %{public}d", __func__,
         bundleName.c_str(), permissionName.c_str(), userId);
-    return 0;
+    int ret = SoftBusManager::GetInstance().SendRequest();
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, ret %{public}d", __func__, ret);
+    return ret;
 }
 
 bool TokenSyncManagerService::Initialize() const
 {
+    SoftBusManager::GetInstance().Initialize();
     return true;
 }
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 }

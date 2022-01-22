@@ -22,7 +22,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerProxy"};
 }
@@ -69,6 +69,6 @@ int TokenSyncManagerProxy::VerifyPermission(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
     return result;
 }
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

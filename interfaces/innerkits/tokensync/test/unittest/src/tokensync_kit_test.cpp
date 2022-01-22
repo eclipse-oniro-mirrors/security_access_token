@@ -18,7 +18,7 @@
 #include "tokensync_kit.h"
 
 using namespace testing::ext;
-using namespace OHOS::Security::TokenSync;
+using namespace OHOS::Security::AccessToken;
 
 void TokenSyncKitTest::SetUpTestCase()
 {}

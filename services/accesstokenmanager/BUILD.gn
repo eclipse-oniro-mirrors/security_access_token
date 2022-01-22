@@ -34,7 +34,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//third_party/json/include",
-    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara/include/",
   ]
 
   sources = [
@@ -66,7 +65,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
-    "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]

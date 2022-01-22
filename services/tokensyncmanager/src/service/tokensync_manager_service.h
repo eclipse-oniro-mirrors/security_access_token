@@ -26,7 +26,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 enum class ServiceRunningState { STATE_NOT_START, STATE_RUNNING };
 class TokenSyncManagerService final : public SystemAbility, public TokenSyncManagerStub {
     DECLARE_DELAYED_SINGLETON(TokenSyncManagerService);
@@ -43,7 +43,7 @@ private:
 
     ServiceRunningState state_;
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // TOKENSYNC_MANAGER_SERVICE_H

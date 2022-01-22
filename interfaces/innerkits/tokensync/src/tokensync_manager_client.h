@@ -24,7 +24,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class TokenSyncManagerClient final {
 public:
     static TokenSyncManagerClient& GetInstance();
@@ -40,7 +40,7 @@ private:
 
     sptr<ITokenSyncManager> GetProxy() const;
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // ACCESSTOKEN_MANAGER_CLIENT_H

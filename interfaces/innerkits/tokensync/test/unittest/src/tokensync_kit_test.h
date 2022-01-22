@@ -20,7 +20,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class TokenSyncKitTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -31,7 +31,7 @@ public:
 
     void TearDown();
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // TOKENSYNC_KIT_TEST_H

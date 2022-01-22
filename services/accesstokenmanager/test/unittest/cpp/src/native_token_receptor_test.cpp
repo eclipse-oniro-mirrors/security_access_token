@@ -30,6 +30,7 @@
 #include "data_storage.h"
 #include "field_const.h"
 #define private public
+#include "nativetoken_kit.h"
 #include "native_token_receptor.h"
 #undef private
 #include "securec.h"
@@ -61,26 +62,6 @@ void NativeTokenReceptorTest::TearDown()
 }
 
 /**
- * @tc.name: Init001
- * @tc.desc: Verify socket init result.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(NativeTokenReceptorTest, Init001, TestSize.Level1)
-{
-    NativeTokenReceptor::GetInstance().socketPath_ = "/data/system/token_unix_socket.test.socket";
-    NativeTokenReceptor::GetInstance().Init();
-    NativeTokenReceptor::GetInstance().receptorThread_->detach();
-    ASSERT_LT(NativeTokenReceptor::GetInstance().listenSocket_, 0);
-    sleep(3);
-    char buffer[128] = {0};
-    int ret = GetParameter(SYSTEM_PROP_NATIVE_RECEPTOR.c_str(), "false", buffer, 127);
-    GTEST_LOG_(INFO) << "ret " << ret << " buffer " << buffer;
-    ASSERT_EQ(ret, strlen("true"));
-    ASSERT_EQ(strcmp(buffer, "true"), 0);
-}
-
-/**
  * @tc.name: ParserNativeRawData001
  * @tc.desc: Verify processing right native token json.
  * @tc.type: FUNC
@@ -89,11 +70,11 @@ HWTEST_F(NativeTokenReceptorTest, Init001, TestSize.Level1)
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData001!");
-    std::string testStr = R"({"NativeTokenInfo":[)"\
+    std::string testStr = R"([)"\
         R"({"processName":"process6","APL":3,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
         R"("dcaps":["AT_CAP","ST_CAP"]},)"\
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]}]})";
+        R"("dcaps":["AT_CAP","ST_CAP"]}])";
 
     NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
@@ -125,7 +106,7 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
 HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData002!");
-    std::string testStr = R"({"NativeTokenInfo":[{"processName":""}]})";
+    std::string testStr = R"([{"processName":""}])";
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
@@ -133,23 +114,39 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeTokenInfo":[{"processName":"", }]})";
+    testStr = R"([{"processName":"", }])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeTokenInfo":[{"processName":"process6"}, {}]})";
+    testStr = R"([{"processName":"process6"}, {}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeTokenInfo":[{"processName":""}, {"":"", ""}]})";
+    testStr = R"([{"processName":""}, {"":"", ""}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeTokenInfo":[{"processName":"process6", "tokenId":685266937, "APL":3, "version":new}]})";
+    testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":3, "version":new}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeTokenInfo":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}]})";
+    testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
+    receptor.ParserNativeRawData(testStr, tokenInfos);
+    ASSERT_EQ(0, tokenInfos.size());
+
+    testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}]})";
+    receptor.ParserNativeRawData(testStr, tokenInfos);
+    ASSERT_EQ(0, tokenInfos.size());
+
+    testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
+    receptor.ParserNativeRawData(testStr, tokenInfos);
+    ASSERT_EQ(0, tokenInfos.size());
+
+    testStr = R"(["NativeToken":])";
+    receptor.ParserNativeRawData(testStr, tokenInfos);
+    ASSERT_EQ(0, tokenInfos.size());
+
+    testStr = R"([)";
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 }
@@ -542,175 +539,34 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
-static int initClientSocket()
-{
-    struct sockaddr_un addr;
-    int fd = -1;
-
-    /* set socket */
-    fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
-        return -1;
-    }
-    (void)memset_s(&addr, sizeof(struct sockaddr_un), 0, sizeof(struct sockaddr_un));
-    addr.sun_family = AF_UNIX;
-    if (strncpy_s(addr.sun_path, sizeof(addr.sun_path),
-        "/data/system/token_unix_socket.test.socket", sizeof(addr.sun_path) - 1) != EOK) {
-        close(fd);
-        return -1;
-    }
-    int ret = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret != 0) {
-        close(fd);
-        return -1;
-    }
-    return fd;
-}
-
-void LibatConcurrencyTask(const char* syncMesg)
-{
-    int fd = initClientSocket();
-    if (fd <= 0) {
-        GTEST_LOG_(INFO) << "initClientSocket failed";
-        return;
-    }
-    int writtenSize;
-    int len = strlen(syncMesg);
-
-    writtenSize = write(fd, syncMesg, len);
-    ASSERT_EQ(writtenSize, len);
-    if (writtenSize != len) {
-        GTEST_LOG_(INFO) << "send mesg failed";
-    }
-    close(fd);
-}
-
 /**
- * @tc.name: ClientConnect001
- * @tc.desc: client connect and send a nativetoken, and close
+ * @tc.name: init001
+ * @tc.desc: test get native cfg
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require: Issue Number
  */
-HWTEST_F(NativeTokenReceptorTest, ClientConnect001, TestSize.Level1)
+HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ClientConnect001!");
-    // 672137216 = 0x28100000
-    std::string testStr = R"({"NativeTokenInfo":[)"\
-        R"({"processName":"process6","APL":3,"version":1,"tokenId":672137216,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]}]})";
+    ACCESSTOKEN_LOG_INFO(LABEL, "test init001!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
-    LibatConcurrencyTask(testStr.c_str());
-    sleep(5);
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    dcaps[0] = "AT_CAP_01";
+    int dcapNum = 1;
+    char processName[32];
+    strcpy(processName, "native_token_test7");
+    char apl[32];
+    strcpy(apl, "system_core");
 
+    uint64_t tokenId = ::GetAccessTokenId(processName, dcaps, dcapNum, apl);
+    ASSERT_NE(tokenId, 0);
+
+    NativeTokenReceptor::GetInstance().Init();
     NativeTokenInfo findInfo;
-    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(672137216, findInfo);
+    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenId, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, 3);
-    ASSERT_EQ(findInfo.ver, 1);
-    ASSERT_EQ(findInfo.processName, "process6");
-    ASSERT_EQ(findInfo.tokenID, 672137216);
-    ASSERT_EQ(findInfo.tokenAttr, 0);
-    std::vector<std::string> dcap = {"AT_CAP", "ST_CAP"};
-    ASSERT_EQ(findInfo.dcap, dcap);
+    ASSERT_EQ(findInfo.processName, processName);
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(672137216);
-    ASSERT_EQ(ret, RET_SUCCESS);
-}
-
-/**
- * @tc.name: ClientConnect002
- * @tc.desc: client connect and send two nativetokens at same time by two threads
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(NativeTokenReceptorTest, ClientConnect002, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ClientConnect002!");
-    std::string testStr1 = R"({"NativeTokenInfo":[)"\
-        R"({"processName":"process6","APL":3,"version":1,"tokenId":672137216,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]}]})";
-
-    std::string testStr2 = R"({"NativeTokenInfo":[)"\
-        R"({"processName":"process7","APL":3,"version":1,"tokenId":672137217,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]}]})";
-
-    std::thread threadClient1(LibatConcurrencyTask, testStr1.c_str());
-
-    std::thread threadClient2(LibatConcurrencyTask, testStr2.c_str());
-    threadClient1.join();
-    threadClient2.join();
-
-    sleep(5);
-
-    NativeTokenInfo findInfo;
-    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(672137216, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, 3);
-    ASSERT_EQ(findInfo.ver, 1);
-    ASSERT_EQ(findInfo.processName, "process6");
-    ASSERT_EQ(findInfo.tokenID, 672137216);
-    ASSERT_EQ(findInfo.tokenAttr, 0);
-    std::vector<std::string> dcap = {"AT_CAP", "ST_CAP"};
-    ASSERT_EQ(findInfo.dcap, dcap);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(672137216);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(672137217, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, 3);
-    ASSERT_EQ(findInfo.ver, 1);
-    ASSERT_EQ(findInfo.processName, "process7");
-    ASSERT_EQ(findInfo.tokenID, 672137217);
-    ASSERT_EQ(findInfo.tokenAttr, 0);
-    ASSERT_EQ(findInfo.dcap, dcap);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(672137217);
-    ASSERT_EQ(ret, RET_SUCCESS);
-}
-
-/**
- * @tc.name: ClientConnect003
- * @tc.desc: client connect and send two nativetokens at one time
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(NativeTokenReceptorTest, ClientConnect003, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ClientConnect003!");
-    std::string testStr = R"({"NativeTokenInfo":[)"\
-        R"({"processName":"process6","APL":3,"version":1,"tokenId":672137216,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]},)"\
-        R"({"processName":"process7","APL":3,"version":1,"tokenId":672137217,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"]}]})";
-
-    LibatConcurrencyTask(testStr.c_str());
-
-    sleep(5);
-
-    NativeTokenInfo findInfo;
-    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(672137216, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, 3);
-    ASSERT_EQ(findInfo.ver, 1);
-    ASSERT_EQ(findInfo.processName, "process6");
-    ASSERT_EQ(findInfo.tokenID, 672137216);
-    ASSERT_EQ(findInfo.tokenAttr, 0);
-    std::vector<std::string> dcap = {"AT_CAP", "ST_CAP"};
-    ASSERT_EQ(findInfo.dcap, dcap);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(672137216);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(672137217, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, 3);
-    ASSERT_EQ(findInfo.ver, 1);
-    ASSERT_EQ(findInfo.processName, "process7");
-    ASSERT_EQ(findInfo.tokenID, 672137217);
-    ASSERT_EQ(findInfo.tokenAttr, 0);
-    ASSERT_EQ(findInfo.dcap, dcap);
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(672137217);
+    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
 }

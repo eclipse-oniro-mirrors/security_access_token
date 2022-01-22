@@ -21,12 +21,12 @@
 
 namespace OHOS {
 namespace Security {
-namespace TokenSync {
+namespace AccessToken {
 class TokenSyncKit {
 public:
     static int VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId);
 };
-} // namespace TokenSync
+} // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 

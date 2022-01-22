@@ -30,8 +30,8 @@ group("tokensync_build_module") {
   if (is_standard_system) {
     deps = [
       "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
-      "//base/security/access_token/services/tokensyncmanager:tokensync_manager_service",
-      "//base/security/access_token/services/tokensyncmanager/main/sa_profile:tokensync_sa_profile_standard",
+      "//base/security/access_token/services/tokensyncmanager:token_sync_manager_service",
+      "//base/security/access_token/services/tokensyncmanager/sa_profile:tokensync_sa_profile_standard",
     ]
   }
 }
