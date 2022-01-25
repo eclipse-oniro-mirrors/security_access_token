@@ -34,7 +34,6 @@ void TokenLibKitTest::TearDownTestCase()
 void TokenLibKitTest::SetUp()
 {
     g_isNativeTokenInited = 0;
-    (void)remove(TOKEN_ID_CFG_FILE_PATH);
 }
 
 void TokenLibKitTest::TearDown()
@@ -221,15 +220,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
 HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
 {
     uint64_t tokenID;
-    NativeAtIdEx *tokenIdEx = (NativeAtIdEx *)(&tokenID);
     tokenID = Start("GetAccessTokenId006");
-
-    int ret = strcmp("GetAccessTokenId006", g_tokenListHead->next->processName);
-    ASSERT_EQ(ret, 0);
-    ASSERT_EQ(tokenIdEx->tokenId, g_tokenListHead->next->tokenId);
+    ASSERT_NE(tokenID, 0);
 
     char *fileBuff = nullptr;
-    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, ATRET_SUCCESS);
     string s = "GetAccessTokenId006";
     char *pos = strstr(fileBuff, s.c_str());
@@ -271,33 +266,6 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
 {
-    char *fileBuff = nullptr;
-    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
-    ASSERT_EQ(ret, 0);
-    if (fileBuff != nullptr) {
-        char *pos = strstr(fileBuff, "process1");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process2");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process3");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process4");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process5");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process6");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process7");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process8");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "process9");
-        ASSERT_EQ(pos, nullptr);
-        pos = strstr(fileBuff, "foundation");
-        ASSERT_EQ(pos, nullptr);
-        free(fileBuff);
-    }
-
     Start("process1");
     Start("process2");
     Start("process3");
@@ -315,9 +283,9 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     Start("process18");
     Start("process19");
 
-    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    char *fileBuff = nullptr;
+    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, 0);
-    GTEST_LOG_(INFO) << "fileBuff" << fileBuff;
     char *pos = strstr(fileBuff, "process1");
     ASSERT_NE(pos, nullptr);
     pos = strstr(fileBuff, "process2");
@@ -335,8 +303,6 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     pos = strstr(fileBuff, "process8");
     ASSERT_NE(pos, nullptr);
     pos = strstr(fileBuff, "process9");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "foundation");
     ASSERT_NE(pos, nullptr);
     free(fileBuff);
 }
