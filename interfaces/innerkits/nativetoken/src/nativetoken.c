@@ -230,7 +230,7 @@ int32_t AtlibInit(void)
     }
     g_tokenListHead->next = NULL;
 
-    int32_t ret = ParseTokenInfoFromCfg(TOKEN_ID_CFG_PATH);
+    int32_t ret = ParseTokenInfoFromCfg(TOKEN_ID_CFG_FILE_PATH);
     if (ret != ATRET_SUCCESS) {
         free(g_tokenListHead);
         g_tokenListHead = NULL;
@@ -294,6 +294,29 @@ int32_t GetAplLevel(const char *aplStr)
     ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:aplStr is invalid.", __func__);
     return 0;
 }
+int32_t NeedSetUidGid(int16_t *uid, int16_t *gid, int *needSet)
+{
+    struct stat buf;
+    if (stat(TOKEN_ID_CFG_FILE_PATH, &buf) == 0) {
+        *needSet = 0;
+        return ATRET_SUCCESS;
+    }
+    if (errno != ENOENT) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat %s is invalid %d.",
+                              __func__, TOKEN_ID_CFG_FILE_PATH, errno);
+        return ATRET_FAILED;
+    }
+    if (stat(TOKEN_ID_CFG_DIR_PATH, &buf) != 0) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat %s is invalid %d.",
+                              __func__, TOKEN_ID_CFG_DIR_PATH, errno);
+        return ATRET_FAILED;
+    }
+    *uid = buf.st_uid;
+    *gid = buf.st_gid;
+    *needSet = 1;
+    ACCESSTOKEN_LOG_INFO("[ATLIB-%s]:needSet is true.", __func__);
+    return ATRET_SUCCESS;
+}
 
 void WriteToFile(const cJSON *root)
 {
@@ -308,7 +331,14 @@ void WriteToFile(const cJSON *root)
     }
 
     do {
-        int32_t fd = open(TOKEN_ID_CFG_PATH, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        int16_t uid;
+        int16_t gid;
+        int needSet = 0;
+        if (NeedSetUidGid(&uid, &gid, &needSet) != ATRET_SUCCESS) {
+            break;
+        }
+        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
+                          S_IRUSR | S_IWUSR | S_IRGRP);
         if (fd < 0) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:open failed.", __func__);
             break;
@@ -318,6 +348,10 @@ void WriteToFile(const cJSON *root)
         close(fd);
         if (writtenLen != strLen) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %d.", __func__, writtenLen);
+            break;
+        }
+        if ((needSet == 1) && chown(TOKEN_ID_CFG_FILE_PATH, uid, gid) != 0) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:chown failed, errno is %d.", __func__, errno);
             break;
         }
     } while (0);
@@ -409,7 +443,7 @@ void SaveTokenIdToCfg(const NativeTokenList *curr)
     cJSON *record = NULL;
     int32_t ret;
 
-    ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
         return;
     }
@@ -627,7 +661,7 @@ int32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
     cJSON *record = NULL;
     char *fileBuff = NULL;
 
-    int32_t ret = GetFileBuff(TOKEN_ID_CFG_PATH, &fileBuff);
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     if (ret != ATRET_SUCCESS) {
         return ret;
     }
