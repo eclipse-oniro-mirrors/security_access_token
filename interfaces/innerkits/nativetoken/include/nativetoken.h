@@ -33,8 +33,7 @@ extern "C" {
 #endif
 
 #define MAX_PROCESS_NAME_LEN 256
-#define TOKEN_ID_CFG_PATH "/data/system/access_token/nativetoken.json"
-#define SOCKET_FILE "/data/system/token_unix_socket.socket"
+#define TOKEN_ID_CFG_PATH "/data/access_token/nativetoken.json"
 #define TOKEN_NATIVE_TYPE 1
 #define DEFAULT_AT_VERSION 1
 #define TRANSFER_KEY_WORDS "NativeTokenInfo"
