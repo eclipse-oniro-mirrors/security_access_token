@@ -105,7 +105,7 @@ int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
 {
     int32_t fd = open(NATIVE_TOKEN_CONFIG_FILE.c_str(), O_RDONLY);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: open failed.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: open failed errno %{public}d.", __func__, errno);
         return RET_FAILED;
     }
     struct stat statBuffer;

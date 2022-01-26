@@ -1,0 +1,88 @@
+{
+  "string": [
+    {
+      "name": "permissionmanager_MainAbility",
+      "value": "permissionmanager_MainAbility"
+    },
+    {
+      "name": "mainability_description",
+      "value": "eTS_Empty Ability"
+    },
+    {
+      "name": "entry_MainAbility",
+      "value": "entry_MainAbility"
+    },
+    {
+      "name": "mainability_description",
+      "value": "ETS_Category Ability"
+    },
+    {
+      "name": "permissionmanager_GrantAbility",
+      "value": "permissionmanager_GrantAbility"
+    },
+    {
+      "name": "permissionmanager_description",
+      "value": "eTS_Empty Ability"
+    },
+    {
+      "name": "settings",
+      "value": "设置"
+    },
+    {
+      "name": "permission_access_record",
+      "value": "权限访问记录"
+    },
+    {
+      "name": "authority_management",
+      "value": "权限管理"
+    },
+    {
+      "name": "privacy",
+      "value": "隐私"
+    },
+    {
+      "name": "authority_message",
+      "value": "近7天的应用访问权限"
+    },
+    {
+      "name": "other_permissions",
+      "value": "其它权限"
+    },
+    {
+      "name": "app_name",
+      "value": "应用名称"
+    },
+    {
+      "name": "location_info",
+      "value": "位置信息"
+    },
+    {
+      "name": "media_document",
+      "value": "媒体和文件"
+    },
+    {
+      "name": "calendar",
+      "value": "日历"
+    },
+    {
+      "name": "allowed",
+      "value": "已允许"
+    },
+    {
+      "name": "banned",
+      "value": "已禁止"
+    },
+    {
+      "name": "location_info_message",
+      "value": "系统定位服务开关开启时，已允许19个应用获取此设备的位置。"
+    },
+    {
+      "name": "grantability_description",
+      "value": "eTS_Empty Ability"
+    },
+    {
+      "name": "entry_GrantAbility",
+      "value": "entry_GrantAbility"
+    }
+  ]
+}
