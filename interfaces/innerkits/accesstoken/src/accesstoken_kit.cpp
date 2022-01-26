@@ -147,7 +147,14 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 int AccessTokenKit::VerifyAccessToken(
     AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName)
 {
-    return PERMISSION_DENIED;
+    int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName);
+    if (ret != PERMISSION_GRANTED) {
+        return ret;
+    }
+    if (firstTokenID == FIRSTCALLER_TOKENID_DEFAULT) {
+        return ret;
+    }
+    return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
