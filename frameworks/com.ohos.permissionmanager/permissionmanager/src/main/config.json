@@ -1,0 +1,75 @@
+{
+  "app": {
+    "bundleName": "com.ohos.permissionmanager",
+    "vendor": "ohos",
+    "version": {
+      "code": 1000000,
+      "name": "1.0.0"
+    }
+  },
+  "deviceConfig": {},
+  "module": {
+    "package": "com.ohos.permissionmanager",
+    "name": ".MyApplication",
+    "mainAbility": "com.ohos.permissionmanager.GrantAbility",
+    "deviceType": [
+      "phone"
+    ],
+    "distro": {
+      "deliveryWithInstall": true,
+      "moduleName": "permissionmanager",
+      "moduleType": "feature",
+      "installationFree": false
+    },
+    "abilities": [
+      {
+        "visible": true,
+        "name": "com.ohos.permissionmanager.GrantAbility",
+        "icon": "$media:icon",
+        "description": "$string:grantability_description",
+        "label": "$string:permissionmanager_GrantAbility",
+        "type": "page",
+        "launchType": "standard",
+        "srcPath": "dynamic"
+      }
+    ],
+    "js": [
+      {
+        "mode": {
+          "syntax": "ets",
+          "type": "pageAbility"
+        },
+        "pages": [
+          "pages/dialogPlus"
+        ],
+        "name": "dynamic",
+        "window": {
+          "designWidth": 720,
+          "autoDesignWidth": false
+        }
+      }
+    ],
+    "reqPermissions": [
+      {
+        "name": "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        "reason": "get sensitive permissions"
+      },
+      {
+        "name": "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+        "reason": "grant sensitive permissions"
+      },
+      {
+        "name": "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
+        "reason": "revoke sensitive permissions"
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
+        "reason": "get bundle previleged info"
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_INFO",
+        "reason": "get bundle default info"
+      }
+    ]
+  }
+}
