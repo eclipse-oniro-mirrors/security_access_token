@@ -25,7 +25,6 @@
       {
         "visible": true,
         "name": "com.ohos.permissionmanager.GrantAbility",
-        "icon": "$media:icon",
         "description": "$string:grantability_description",
         "label": "$string:permissionmanager_GrantAbility",
         "type": "page",
