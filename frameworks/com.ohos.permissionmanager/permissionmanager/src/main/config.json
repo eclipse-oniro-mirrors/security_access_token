@@ -61,14 +61,6 @@
       {
         "name": "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
         "reason": "revoke sensitive permissions"
-      },
-      {
-        "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",
-        "reason": "get bundle previleged info"
-      },
-      {
-        "name": "ohos.permission.GET_BUNDLE_INFO",
-        "reason": "get bundle default info"
       }
     ]
   }
