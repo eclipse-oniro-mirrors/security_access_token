@@ -108,12 +108,14 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
 {
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(tokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
-        VerifyAccessToken(tokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
-        VerifyAccessToken(tokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
+        VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
+        VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(DEFAULT_PERMISSION_FLAGS);
         return;
@@ -124,11 +126,13 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(tokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -139,11 +143,13 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageParcel& reply)
 {
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(tokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
+        VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
