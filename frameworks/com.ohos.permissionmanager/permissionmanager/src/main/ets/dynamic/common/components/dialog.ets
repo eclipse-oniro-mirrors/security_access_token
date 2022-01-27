@@ -130,8 +130,7 @@ export struct privacyDialog {
     featureAbility.getWant((err, want) => {
       this.reqPerms = want.parameters['ohos.user.grant.permission']
       this.accessTokenId = want.parameters['ohos.aafwk.param.callToken']
-      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = "
-        + this.accessTokenId + "want.parameters = " + JSON.stringify(want.parameters))
+      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = " + this.accessTokenId)
       this.reqPerms.forEach(item => {
         var group = getPermissionGroup(item)
         if(!group) {
