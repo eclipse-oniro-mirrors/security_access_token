@@ -14,8 +14,6 @@
  */
 
 import { getPermissionGroup } from "../utils/utils.ets"
-import { BundleFlag, userId } from "../model/bundle.ets"
-import bundle from '@ohos.bundle';
 import featureAbility from '@ohos.ability.featureAbility';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 
@@ -128,12 +126,12 @@ export struct privacyDialog {
 
   aboutToAppear() {
     this.count = 0;
+    this.hasPrepared = false;
     featureAbility.getWant((err, want) => {
-      this.reqPerms = want.parameters["ohos.user.grant.permission"]
-      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " bundleName=" + want.bundleName)
-      bundle.getApplicationInfo(want.bundleName, BundleFlag.GET_BUNDLE_DEFAULT, userId).then(res => {
-        this.accessTokenId = res.accessTokenId
-      })
+      this.reqPerms = want.parameters['ohos.user.grant.permission']
+      this.accessTokenId = want.parameters['ohos.aafwk.param.callToken']
+      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = "
+        + this.accessTokenId + "want.parameters = " + JSON.stringify(want.parameters))
       this.reqPerms.forEach(item => {
         var group = getPermissionGroup(item)
         if(!group) {
