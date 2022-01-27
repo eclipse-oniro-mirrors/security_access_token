@@ -132,9 +132,6 @@ export struct privacyDialog {
       this.accessTokenId = want.parameters['ohos.aafwk.param.callToken']
       console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = "
         + this.accessTokenId + "want.parameters = " + JSON.stringify(want.parameters))
-      bundle.getApplicationInfo(want.bundleName, BundleFlag.GET_BUNDLE_DEFAULT, userId).then(res => {
-        this.accessTokenId = res.accessTokenId
-      })
       this.reqPerms.forEach(item => {
         var group = getPermissionGroup(item)
         if(!group) {
