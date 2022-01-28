@@ -2029,3 +2029,50 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
     ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
     ASSERT_EQ(ret, RET_FAILED);
 }
+
+/**
+ * @tc.name: GetTokenTypeFlag001
+ * @tc.desc: cannot get token type with tokenID.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 0;
+    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
+    ASSERT_EQ(ret, TOKEN_INVALID);
+}
+
+/**
+ * @tc.name: GetTokenTypeFlag002
+ * @tc.desc: Get token type with native tokenID.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
+{
+    uint64_t tokenId01 = GetAccessTokenId("GetTokenTypeFlag002", nullptr, 0, "system_core");
+
+    AccessTokenID tokenID = tokenId01 & 0xffffffff;
+    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
+    ASSERT_EQ(ret, TOKEN_NATIVE);
+}
+
+/**
+ * @tc.name: GetTokenTypeFlag003
+ * @tc.desc: Get token type with hap tokenID.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TD
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+
+    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(ret, TOKEN_HAP);
+
+    int res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
