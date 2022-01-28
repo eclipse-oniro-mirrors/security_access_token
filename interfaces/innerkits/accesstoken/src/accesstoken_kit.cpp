@@ -82,6 +82,15 @@ ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
     return AccessTokenManagerClient::GetInstance().GetTokenType(tokenID);
 }
 
+ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
+{
+    if (tokenID == 0) {
+        return TOKEN_INVALID;
+    }
+    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&tokenID;
+    return (ATokenTypeEnum)(idInner->type);
+}
+
 int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
