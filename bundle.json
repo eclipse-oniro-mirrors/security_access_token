@@ -13,7 +13,7 @@
     "name": "access_token",
     "subsystem": "security",
     "syscap": [
-      "Systemcapability.Security.AccessToken"
+      "SystemCapability.Security.AccessToken"
     ],
     "adapted_system_type": [ "standard" ],
     "rom": "2048KB",
