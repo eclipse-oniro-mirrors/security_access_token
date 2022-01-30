@@ -34,19 +34,3 @@ void TokenSyncKitTest::SetUp()
 void TokenSyncKitTest::TearDown()
 {}
 
-/**
- * @tc.name: VerifyPermission001
- * @tc.desc: Verify user granted permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokenSyncKitTest, VerifyPermission001, TestSize.Level1)
-{
-    const std::string testBundleName = "ohos";
-    const std::string testPermissionNameAlpha = "ohos.permission.ALPHA";
-    const int testUserId = 0;
-    int ret = TokenSyncKit::VerifyPermission(testBundleName, testPermissionNameAlpha, testUserId);
-
-    ASSERT_EQ(0, ret);
-}
-
