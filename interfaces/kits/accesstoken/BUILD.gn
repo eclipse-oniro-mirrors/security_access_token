@@ -35,7 +35,6 @@ ohos_shared_library("libabilityaccessctrl") {
 
   deps = [
     "//base/notification/ans_standard/frameworks/ans/core:ans_core",
-    "//base/notification/ans_standard/frameworks/wantagent:wantagent_innerkits",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
     "//foundation/aafwk/standard/interfaces/innerkits/base:base",
@@ -48,6 +47,7 @@ ohos_shared_library("libabilityaccessctrl") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
     "ability_base:want",
+    "ability_runtime:wantagent_innerkits",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
