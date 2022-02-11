@@ -34,5 +34,5 @@ export const BundleFlag = {
       */
   GET_ABILITY_INFO_SYSTEMAPP_ONLY : 0x00000080
 }
-export const userId: number = 0
+export const userId: number = 100
 

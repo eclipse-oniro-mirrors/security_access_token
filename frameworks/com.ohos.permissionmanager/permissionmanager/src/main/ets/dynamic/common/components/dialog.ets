@@ -14,8 +14,11 @@
  */
 
 import { getPermissionGroup } from "../utils/utils.ets"
+import { BundleFlag, userId } from "../model/bundle.ets"
 import featureAbility from '@ohos.ability.featureAbility';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import bundle from '@ohos.bundle';
+import Resmgr from '@ohos.resourceManager';
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
@@ -34,6 +37,7 @@ export struct privacyDialog {
   @State reqPerms: Array<any> = []
   @State grantGroups: Array<any> = []
   @State userFixedFlag: number = 2 // means user fixed
+  @State appName: string = ""
 
   build() {
     Column() {
@@ -53,7 +57,7 @@ export struct privacyDialog {
         Column() {
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text("是否允许该应用访问" + this.grantGroups[this.count].groupName).fontSize(16)
+              Text("是否允许" + this.appName + "访问" + this.grantGroups[this.count].groupName).fontSize(16)
                 .margin({
                   top: 16,
                   left: 24
@@ -129,7 +133,7 @@ export struct privacyDialog {
     this.hasPrepared = false;
     featureAbility.getWant((err, want) => {
       this.reqPerms = want.parameters['ohos.user.grant.permission']
-      this.accessTokenId = want.parameters['ohos.aafwk.param.callToken']
+      this.accessTokenId = want.parameters['ohos.aafwk.param.callerToken']
       console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = " + this.accessTokenId)
       this.reqPerms.forEach(item => {
         var group = getPermissionGroup(item)
@@ -141,6 +145,29 @@ export struct privacyDialog {
         }
       })
       this.hasPrepared = true;
+      bundle.getNameForUid(want.parameters['ohos.aafwk.param.callerUid'], (err, data) => {
+        if(err) {
+          console.log("GrantAbility getNameForUid error :" + err)
+          return
+        }
+        console.log("GrantAbility getNameForUid data :" + data)
+        bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, userId).then(applicationInfo => {
+          console.log("GrantAbility applicationInfo :" + JSON.stringify(applicationInfo))
+          Resmgr.getResourceManager(data).then(item => {
+            item.getString(applicationInfo.labelId, (err, value) => {
+              if (value == undefined) {
+                console.log("GrantAbility label :" )
+                this.appName = applicationInfo.label.replace('$string:', '')
+              } else {
+                console.log("GrantAbility labelValue :" + value)
+                this.appName = value
+              }
+            })
+          })
+        }).catch(err => {
+          console.log("GrantAbility applicationInfo11 error :" + err)
+        })
+      })
     })
   }
 
