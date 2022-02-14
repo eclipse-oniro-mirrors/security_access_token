@@ -36,7 +36,7 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc)
         || !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl)
         || !DataValidator::IsDomainValid(policy.domain)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, input param failed", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return res;
     }
 
@@ -45,7 +45,8 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, remoteDeviceID.c_str(), remoteTokenID);
     return AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
@@ -54,7 +55,7 @@ int AccessTokenKit::UpdateHapToken(AccessTokenID tokenID, const std::string& app
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if ((tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc))
         || (!DataValidator::IsAplNumValid(policy.apl))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, input param failed", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return RET_FAILED;
     }
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenID, appIDDesc, policy);
@@ -64,7 +65,7 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
@@ -75,7 +76,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return TOKEN_INVALID;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
@@ -95,11 +96,11 @@ int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dc
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     if (!DataValidator::IsDcapValid(dcap)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: dcap is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "dcap is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, dcap=%{public}s", tokenID, dcap.c_str());
@@ -110,7 +111,7 @@ AccessTokenID AccessTokenKit::GetHapTokenID(int userID, const std::string& bundl
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (!DataValidator::IsUserIdValid(userID) || !DataValidator::IsBundleNameValid(bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, hap token param failed", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param failed");
         return 0;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "int userID=%{public}d, bundleName=%{public}s, instIndex=%{public}d",
@@ -122,7 +123,7 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
@@ -142,11 +143,11 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return PERMISSION_DENIED;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: permissionName is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return PERMISSION_DENIED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s", tokenID, permissionName.c_str());
@@ -170,7 +171,7 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: permissionName is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName=%{public}s", permissionName.c_str());
@@ -185,7 +186,7 @@ int AccessTokenKit::GetDefPermissions(AccessTokenID tokenID, std::vector<Permiss
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
@@ -198,7 +199,7 @@ int AccessTokenKit::GetReqPermissions(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, isSystemGrant=%{public}d", tokenID, isSystemGrant);
@@ -210,11 +211,11 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return DEFAULT_PERMISSION_FLAGS;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: permissionName is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return DEFAULT_PERMISSION_FLAGS;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s", tokenID, permissionName.c_str());
@@ -225,15 +226,15 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: permissionName is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return RET_FAILED;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: flag is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "flag is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
@@ -245,15 +246,15 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: permissionName is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return RET_FAILED;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: flag is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "flag is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
@@ -265,11 +266,64 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenID is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
+}
+
+int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    if (tokenID == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return RET_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
+
+    return AccessTokenManagerClient::GetInstance().GetHapTokenInfoFromRemote(tokenID, hapSync);
+}
+
+int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+
+    return AccessTokenManagerClient::GetInstance().GetAllNativeTokenInfo(nativeTokenInfosRes);
+}
+
+int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
+    const HapTokenInfoForSync& hapSync)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, deviceID.c_str(), hapSync.baseInfo.tokenID);
+    return AccessTokenManagerClient::GetInstance().SetRemoteHapTokenInfo(deviceID, hapSync);
+}
+
+int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
+    std::vector<NativeTokenInfo>& nativeTokenInfoList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__, deviceID.c_str());
+    return AccessTokenManagerClient::GetInstance()
+        .SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
+}
+
+int AccessTokenKit::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, deviceID.c_str(), tokenID);
+    return AccessTokenManagerClient::GetInstance().DeleteRemoteToken(deviceID, tokenID);
+}
+
+int AccessTokenKit::DeleteRemoteDeviceTokens(const std::string& deviceID)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__, deviceID.c_str());
+    return AccessTokenManagerClient::GetInstance().DeleteRemoteDeviceTokens(deviceID);
+}
+
+int AccessTokenKit::DumpToken(std::string& dumpInfo)
+{
+    return AccessTokenManagerClient::GetInstance().DumpToken(dumpInfo);
 }
 } // namespace AccessToken
 } // namespace Security

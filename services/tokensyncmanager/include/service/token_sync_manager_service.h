@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,16 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef TOKENSYNC_MANAGER_SERVICE_H
-#define TOKENSYNC_MANAGER_SERVICE_H
+#ifndef TOKEN_SYNC_MANAGER_SERVICE_H
+#define TOKEN_SYNC_MANAGER_SERVICE_H
 
 #include <string>
 
+#include "event_handler.h"
+#include "hap_token_info_for_sync_parcel.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "singleton.h"
 #include "system_ability.h"
-#include "tokensync_manager_stub.h"
+#include "token_sync_event_handler.h"
+#include "token_sync_manager_stub.h"
 
 namespace OHOS {
 namespace Security {
@@ -36,14 +39,22 @@ public:
     void OnStart() override;
     void OnStop() override;
 
-    int VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId) override;
+    std::shared_ptr<TokenSyncEventHandler> GetSendEventHandler();
+    std::shared_ptr<TokenSyncEventHandler> GetRecvEventHandler();
+    int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
+    int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
+    int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
 
 private:
-    bool Initialize() const;
+    bool Initialize();
 
+    std::shared_ptr<AppExecFwk::EventRunner> sendRunner_;
+    std::shared_ptr<AppExecFwk::EventRunner> recvRunner_;
+    std::shared_ptr<TokenSyncEventHandler> sendHandler_;
+    std::shared_ptr<TokenSyncEventHandler> recvHandler_;
     ServiceRunningState state_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // TOKENSYNC_MANAGER_SERVICE_H
+#endif // TOKEN_SYNC_MANAGER_SERVICE_H

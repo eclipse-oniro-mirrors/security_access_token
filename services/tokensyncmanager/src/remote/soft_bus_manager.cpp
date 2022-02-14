@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,8 +16,8 @@
 
 #include <securec.h>
 
-#include "accesstoken.h"
-#include "softbus_bus_center.h"
+#include "device_info_manager.h"
+#include "parameter.h"
 
 namespace OHOS {
 namespace Security {
@@ -25,27 +25,27 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusManager"};
 }
-
 namespace {
+static const std::string SESSION_GROUP_ID = "atm_dsoftbus_session_group_id";
 static const SessionAttribute SESSION_ATTR = {.dataType = TYPE_BYTES};
 
 static const int REASON_EXIST = -3;
-static const int OPENSESSION_RETRY_TIMES = 100;
+static const int OPENSESSION_RETRY_TIMES = 10 * 3;
 static const int OPENSESSION_RETRY_INTERVAL_MS = 100;
-static const int CREAT_SERVER_RETRY_INTERVAL_MS = 1000;
+static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
 } // namespace
 
 const std::string SoftBusManager::ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_access_token";
 const std::string SoftBusManager::SESSION_NAME = "ohos.security.atm_channel";
 
-SoftBusManager::SoftBusManager() : isSoftBusServiceBindSuccess_(false), inited_(false), mutex_()
+SoftBusManager::SoftBusManager() : isSoftBusServiceBindSuccess_(false), inited_(false), mutex_(), fulfillMutex_()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SoftBusManager()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SoftBusManager()");
 }
 
 SoftBusManager::~SoftBusManager()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "~SoftBusManager()");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "~SoftBusManager()");
 }
 
 SoftBusManager &SoftBusManager::GetInstance()
@@ -54,85 +54,65 @@ SoftBusManager &SoftBusManager::GetInstance()
     return instance;
 }
 
-int SoftBusManager::OnSessionOpend(int sessionId, int result)
-{
-    if (result != 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "session is open failed, result %{public}d", result);
-        return RET_FAILED;
-    }
-    SoftBusManager::GetInstance().ModifySessionStatus(sessionId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "session is open");
-    return 0;
-}
-
-void SoftBusManager::OnSessionClosed(int sessionId)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "session is closed");
-}
-
-void SoftBusManager::OnBytesReceived(int sessionId, const void *data, unsigned int dataLen)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "session receive data.");
-}
-
-void SoftBusManager::OnMessageReceived(int sessionId, const void *data, unsigned int dataLen)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "session receive message.");
-}
-
-bool SoftBusManager::IsSessionOpen(int sessionId)
-{
-    Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->sessIdLock_);
-    if (sessOpenSet_.count(sessionId) == 0) {
-        return true;
-    }
-    return false;
-}
-
-void SoftBusManager::ModifySessionStatus(int sessionId)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->sessIdLock_);
-    if (sessOpenSet_.count(sessionId) > 0) {
-        sessOpenSet_.erase(sessionId);
-    }
-}
-
-void SoftBusManager::SetSessionWaitingOpen(int sessionId)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->sessIdLock_);
-    sessOpenSet_.insert(sessionId);
-}
-
 void SoftBusManager::Initialize()
 {
     bool inited = false;
     // cas failed means already inited.
     if (!inited_.compare_exchange_strong(inited, true)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "already initialized, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "already initialized, skip");
         return;
     }
 
-    while (1) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        // register session listener
-        ISessionListener sessionListener;
-        sessionListener.OnSessionOpened = SoftBusManager::OnSessionOpend;
-        sessionListener.OnSessionClosed = SoftBusManager::OnSessionClosed;
-        sessionListener.OnBytesReceived = SoftBusManager::OnBytesReceived;
-        sessionListener.OnMessageReceived = SoftBusManager::OnMessageReceived;
+    std::function<void()> runner = [&]() {
+        auto sleepTime = std::chrono::milliseconds(1000);
+        while (1) {
+            std::unique_lock<std::mutex> lock(mutex_);
+            std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
+            std::shared_ptr<MyDmInitCallback> ptrDmInitCallback = std::make_shared<MyDmInitCallback>();
+            int ret =
+                DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+                std::this_thread::sleep_for(sleepTime);
+                continue;
+            }
 
-        int ret = ::CreateSessionServer(ACCESS_TOKEN_PACKAGE_NAME.c_str(), SESSION_NAME.c_str(), &sessionListener);
-        ACCESSTOKEN_LOG_INFO(LABEL, "Initialize: createSessionServer, result: %{public}d", ret);
-        // REASON_EXIST
-        if ((ret != 0) && (ret != REASON_EXIST)) {
-            auto sleepTime = std::chrono::milliseconds(CREAT_SERVER_RETRY_INTERVAL_MS);
-            std::this_thread::sleep_for(sleepTime);
-            continue;
+            std::string extra = "";
+            std::shared_ptr<SoftBusDeviceConnectionListener> ptrDeviceStateCallback =
+                std::make_shared<SoftBusDeviceConnectionListener>();
+            ret = DistributedHardware::DeviceManager::GetInstance().RegisterDevStateCallback(packageName, extra,
+                ptrDeviceStateCallback);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: RegisterDevStateCallback error, result: %{public}d", ret);
+                std::this_thread::sleep_for(sleepTime);
+                continue;
+            }
+
+            // register session listener
+            ISessionListener sessionListener;
+            sessionListener.OnSessionOpened = SoftBusSessionListener::OnSessionOpened;
+            sessionListener.OnSessionClosed = SoftBusSessionListener::OnSessionClosed;
+            sessionListener.OnBytesReceived = SoftBusSessionListener::OnBytesReceived;
+            sessionListener.OnMessageReceived = SoftBusSessionListener::OnMessageReceived;
+
+            ret = ::CreateSessionServer(ACCESS_TOKEN_PACKAGE_NAME.c_str(), SESSION_NAME.c_str(), &sessionListener);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Initialize: createSessionServer, result: %{public}d", ret);
+            // REASON_EXIST
+            if ((ret != Constant::SUCCESS) && (ret != REASON_EXIST)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: CreateSessionServer error, result: %{public}d", ret);
+
+                std::this_thread::sleep_for(sleepTime);
+                continue;
+            }
+
+            isSoftBusServiceBindSuccess_ = true;
+            this->FulfillLocalDeviceInfo();
+            return;
         }
-        isSoftBusServiceBindSuccess_ = true;
-        break;
-    }
+    };
 
+    std::thread initThread(runner);
+    initThread.detach();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Initialize thread started");
 }
 
@@ -142,20 +122,30 @@ void SoftBusManager::Destroy()
         isSoftBusServiceBindSuccess_);
 
     if (inited_.load() == false) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "not inited, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
         return;
     }
 
     std::unique_lock<std::mutex> lock(mutex_);
     if (inited_.load() == false) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "not inited, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
         return;
     }
 
     if (isSoftBusServiceBindSuccess_) {
         int32_t ret = ::RemoveSessionServer(ACCESS_TOKEN_PACKAGE_NAME.c_str(), SESSION_NAME.c_str());
-        ACCESSTOKEN_LOG_ERROR(LABEL, "destroy, RemoveSessionServer: %{public}d", ret);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, RemoveSessionServer: %{public}d", ret);
         isSoftBusServiceBindSuccess_ = false;
+    }
+
+    std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
+    int ret = DistributedHardware::DeviceManager::GetInstance().UnRegisterDevStateCallback(packageName);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnRegisterDevStateCallback failed, code: %{public}d", ret);
+    }
+    ret = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(packageName);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnInitDeviceManager failed, code: %{public}d", ret);
     }
 
     inited_.store(false);
@@ -163,33 +153,30 @@ void SoftBusManager::Destroy()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, done");
 }
 
-int32_t SoftBusManager::SendRequest()
+int32_t SoftBusManager::OpenSession(const std::string &deviceId)
 {
-    NodeBasicInfo *info = nullptr;
-    int32_t infoNum;
-    int ret = GetAllNodeDeviceInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), &info, &infoNum);
-    if (ret != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can not get node device");
-        return RET_FAILED;
+    DeviceInfo info;
+    bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
+    if (result == false) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{public}s", deviceId.c_str());
+        return Constant::FAILURE;
     }
+    std::string networkId = info.deviceId.networkId;
+    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId: %{public}s", networkId.c_str());
 
     // async open session, should waitting for OnSessionOpened event.
-    int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), info[0].networkId,
-        "0", &SESSION_ATTR);
-    if (sessionId < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "open session failed");
-        return RET_FAILED;
-    }
+    int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), networkId.c_str(),
+        SESSION_GROUP_ID.c_str(), &SESSION_ATTR);
 
-    SetSessionWaitingOpen(sessionId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "session info: sessionId: %{public}d, uuid: %{public}s, udid: %{public}s", sessionId,
+        info.deviceId.universallyUniqueId.c_str(), info.deviceId.uniqueDisabilityId.c_str());
 
     // wait session opening
     int retryTimes = 0;
     int logSpan = 10;
     auto sleepTime = std::chrono::milliseconds(OPENSESSION_RETRY_INTERVAL_MS);
-    bool isOpen = false;
     while (retryTimes++ < OPENSESSION_RETRY_TIMES) {
-        if (!IsSessionOpen(sessionId)) {
+        if (SoftBusSessionListener::GetSessionState(sessionId) < 0) {
             std::this_thread::sleep_for(sleepTime);
             if (retryTimes % logSpan == 0) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "openSession, waitting for: %{public}d ms",
@@ -197,18 +184,163 @@ int32_t SoftBusManager::SendRequest()
             }
             continue;
         }
-        isOpen = true;
         break;
     }
-    int cmd = 0;
-    ret = ::SendBytes(sessionId, &cmd, sizeof(int));
-    if (ret != 0) {
-        ::CloseSession(sessionId);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send cmd failed ret = %{public}d", ret);
-        return RET_FAILED;
+    int64_t state = SoftBusSessionListener::GetSessionState(sessionId);
+    if (state < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "openSession, timeout, session: %{public}" PRId64, state);
+        return Constant::FAILURE;
     }
+
+    SoftBusSessionListener::DeleteSessionIdFromMap(sessionId);
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "openSession, succeed, session: %{public}" PRId64, state);
+    return sessionId;
+}
+
+int SoftBusManager::CloseSession(int sessionId)
+{
+    if (sessionId < 0) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "closeSession: session is invalid");
+        return Constant::FAILURE;
+    }
+
     ::CloseSession(sessionId);
-    return RET_SUCCESS;
+    ACCESSTOKEN_LOG_INFO(LABEL, "closeSession ");
+    return Constant::SUCCESS;
+}
+
+
+std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
+{
+    if (!DataValidator::IsDeviceIdValid(nodeId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        return "";
+    }
+
+    std::string uuid = GetUuidByNodeId(nodeId);
+    if (uuid.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string [%{public}s]", uuid.c_str());
+        return "";
+    }
+
+    DeviceInfo info;
+    bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(uuid, DeviceIdType::UNIVERSALLY_UNIQUE_ID, info);
+    if (result == false) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s", uuid.c_str());
+    } else {
+        std::string dimUuid = info.deviceId.universallyUniqueId;
+        if (uuid == dimUuid) {
+            // refresh cache
+            std::function<void()> fulfillDeviceInfo = std::bind(&SoftBusManager::FulfillLocalDeviceInfo, this);
+            std::thread fulfill(fulfillDeviceInfo);
+            fulfill.detach();
+        }
+    }
+
+    return uuid;
+}
+
+std::string SoftBusManager::GetUniqueDisabilityIdByNodeId(const std::string &nodeId)
+{
+    if (!DataValidator::IsDeviceIdValid(nodeId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        return "";
+    }
+    std::string udid = GetUdidByNodeId(nodeId);
+    if (udid.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string: %{public}s", udid.c_str());
+        return "";
+    }
+    char localUdid[Constant::DEVICE_UUID_LENGTH] = {0};
+    ::GetDevUdid(localUdid, Constant::DEVICE_UUID_LENGTH);
+    if (udid == localUdid) {
+        // refresh cache
+        std::function<void()> fulfillDeviceInfo = std::bind(&SoftBusManager::FulfillLocalDeviceInfo, this);
+        std::thread fulfill(fulfillDeviceInfo);
+        fulfill.detach();
+    }
+    return udid;
+}
+
+std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
+{
+    uint8_t *info = (uint8_t *) malloc(UDID_MAX_LENGTH + 1);
+    if (info == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
+        return "";
+    }
+    memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
+    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
+        NodeDeviceInfoKey::NODE_KEY_UUID, info, UDID_MAX_LENGTH);
+    if (ret != Constant::SUCCESS) {
+        free(info);
+        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, return code: %{public}d", ret);
+        return "";
+    }
+    std::string uuid((char *) info);
+    free(info);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s", nodeId.c_str(),
+        uuid.c_str());
+    return uuid;
+}
+
+std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
+{
+    uint8_t *info = (uint8_t *) malloc(UDID_MAX_LENGTH + 1);
+    if (info == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
+        return "";
+    }
+    memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
+    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
+        NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
+    if (ret != Constant::SUCCESS) {
+        free(info);
+        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
+        return "";
+    }
+    std::string udid((char *) info);
+    free(info);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s, udid: %{public}s", nodeId.c_str(),
+        udid.c_str());
+    return udid;
+}
+
+int SoftBusManager::FulfillLocalDeviceInfo()
+{
+    // repeated task will just skip
+    if (!fulfillMutex_.try_lock()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "FulfillLocalDeviceInfo already running, skip.");
+        return Constant::SUCCESS;
+    }
+
+    NodeBasicInfo info;
+    int32_t ret = ::GetLocalNodeDeviceInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), &info);
+    if (ret != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetLocalNodeDeviceInfo error");
+        fulfillMutex_.unlock();
+        return Constant::FAILURE;
+    }
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished, networkId:%{public}s, name:%{public}s, type:%{public}d",
+        info.networkId, info.deviceName, info.deviceTypeId);
+
+    std::string uuid = GetUuidByNodeId(info.networkId);
+    std::string udid = GetUdidByNodeId(info.networkId);
+    if (uuid.empty() || udid.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "FulfillLocalDeviceInfo: uuid or udid is empty, abort.");
+        fulfillMutex_.unlock();
+        return Constant::FAILURE;
+    }
+
+    DeviceInfoManager::GetInstance().AddDeviceInfo(info.networkId, uuid, udid, info.deviceName,
+        std::to_string(info.deviceTypeId));
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished, networkId:%{public}s, uuid:%{public}s, udid:%{public}s",
+        info.networkId, uuid.c_str(), udid.c_str());
+
+    fulfillMutex_.unlock();
+    return Constant::SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

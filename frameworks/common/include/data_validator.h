@@ -14,6 +14,7 @@
  */
 
 #include <string>
+#include "access_token.h"
 
 #ifndef DATA_VALIDATOR_H
 #define DATA_VALIDATOR_H
@@ -43,6 +44,7 @@ public:
     static bool IsDescValid(const std::string& desc);
     static bool IsPermissionFlagValid(int flag);
     static bool IsDcapValid(const std::string& dcap);
+    static bool IsTokenIDValid(AccessTokenID id);
 private:
     const static int MAX_LENGTH = 256;
     const static int MAX_APPIDDESC_LENGTH = 10240;

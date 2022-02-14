@@ -44,8 +44,8 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info)
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(info.permissionName);
     if (it != permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: info for permission: %{public}s has been insert, please check!",
-            __func__, info.permissionName.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "info for permission: %{public}s has been insert, please check!",
+            info.permissionName.c_str());
         return false;
     }
     permissionDefinitionMap_[info.permissionName] = info;
@@ -77,7 +77,7 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(permissionName);
     if (it == permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: can not find definition info for permission: %{public}s", __func__,
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "can not find definition info for permission: %{public}s",
             permissionName.c_str());
         return RET_FAILED;
     }

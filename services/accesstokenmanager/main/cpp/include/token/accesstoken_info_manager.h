@@ -53,6 +53,17 @@ public:
     void Dump(std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
 
+    /* tokensync needed */
+    int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
+    int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
+        HapTokenInfoForSync& hapSync);
+    void GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes);
+    int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync);
+    int SetRemoteNativeTokenInfo(const std::string& deviceID,
+        std::vector<NativeTokenInfo>& nativeTokenInfoList);
+    int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
+    int DeleteRemoteDeviceTokens(const std::string& deviceID);
+
 private:
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);

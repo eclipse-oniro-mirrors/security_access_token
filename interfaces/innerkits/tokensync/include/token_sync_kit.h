@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,30 +13,26 @@
  * limitations under the License.
  */
 
-#include "tokensync_kit.h"
+#ifndef INTERFACES_INNER_KITS_TOKENSYNC_KIT_H
+#define INTERFACES_INNER_KITS_TOKENSYNC_KIT_H
 
 #include <string>
 #include <vector>
 
-#include "accesstoken_log.h"
-#include "tokensync_manager_client.h"
+#include "access_token.h"
+#include "hap_token_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using namespace std;
-
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncKit"};
-} // namespace
-
-int TokenSyncKit::VerifyPermission(const string& bundleName, const string& permissionName, int userId)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName=%{public}s, permissionName=%{public}s, userId=%{public}d",
-        bundleName.c_str(), permissionName.c_str(), userId);
-    return TokenSyncManagerClient::GetInstance().VerifyPermission(bundleName, permissionName, userId);
-}
+class TokenSyncKit {
+public:
+    static int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID);
+    static int DeleteRemoteHapTokenInfo(AccessTokenID tokenID);
+    static int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo);
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+
+#endif

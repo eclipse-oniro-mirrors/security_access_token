@@ -19,6 +19,7 @@
 #include "accesstoken_log.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
+#include "token_modify_notifier.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,7 +55,7 @@ void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tok
     permPolicySet->GetDefPermissions(permList);
     for (auto perm : permList) {
         if (!PermissionValidator::IsPermissionDefValid(perm)) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: invalid permission definition info: %{public}s", __func__,
+            ACCESSTOKEN_LOG_INFO(LABEL, "invalid permission definition info: %{public}s",
                 TransferPermissionDefToString(perm).c_str());
             continue;
         }
@@ -67,7 +68,7 @@ void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tok
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
             PermissionDefinitionCache::GetInstance().Insert(perm);
         } else {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: permission %{public}s has define", __func__,
+            ACCESSTOKEN_LOG_INFO(LABEL, "permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());
         }
     }
@@ -79,7 +80,7 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
     std::shared_ptr<HapTokenInfoInner> tokenInfo =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params(tokenID: 0x%{public}x)!", __func__, tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params(tokenID: 0x%{public}x)!", tokenID);
         return;
     }
     std::string bundleName = tokenInfo->GetBundleName();
@@ -91,18 +92,25 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
         tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return PERMISSION_DENIED;
     }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+    std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (tokenInfoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
+        return PERMISSION_DENIED;
+    }
+
+    if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: no definition for permission: %{public}s!", __func__, permissionName.c_str());
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return PERMISSION_DENIED;
     }
 
@@ -113,12 +121,12 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permissionName: %{public}s", __func__, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return RET_FAILED;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: no definition for permission: %{public}s!", __func__, permissionName.c_str());
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return RET_FAILED;
     }
     return PermissionDefinitionCache::GetInstance().FindByPermissionName(permissionName, permissionDefResult);
@@ -130,7 +138,7 @@ int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Perm
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return RET_FAILED;
     }
 
@@ -146,7 +154,7 @@ int PermissionManager::GetReqPermissions(
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return RET_FAILED;
     }
 
@@ -168,18 +176,18 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s",
         __func__, tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return DEFAULT_PERMISSION_FLAGS;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: no definition for permission: %{public}s!", __func__, permissionName.c_str());
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return DEFAULT_PERMISSION_FLAGS;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return DEFAULT_PERMISSION_FLAGS;
     }
     return permPolicySet->QueryPermissionFlag(permissionName);
@@ -191,11 +199,15 @@ void PermissionManager::UpdateTokenPermissionState(
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
 
     permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr != nullptr && !infoPtr->IsRemote()) {
+        TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
+    }
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
 }
 
@@ -205,16 +217,16 @@ void PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string
         "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: no definition for permission: %{public}s!", __func__, permissionName.c_str());
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
     UpdateTokenPermissionState(tokenID, permissionName, true, flag);
@@ -226,16 +238,16 @@ void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::strin
         "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "%{public}s: no definition for permission: %{public}s!", __func__, permissionName.c_str());
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
     UpdateTokenPermissionState(tokenID, permissionName, false, flag);
@@ -247,7 +259,7 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: invalid params!", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
 

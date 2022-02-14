@@ -167,7 +167,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, tokenIdEx);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, hap token info create failed", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "hap token info create failed");
     }
     return tokenIdEx;
 }
@@ -229,6 +229,74 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
+}
+
+int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
+    HapTokenInfoForSyncParcel& hapSyncParcel)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+
+    return AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenID,
+        hapSyncParcel.hapTokenInfoForSyncParams);
+}
+
+int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfosRes)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+
+    std::vector<NativeTokenInfo> nativeVec;
+    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
+    for (auto& native : nativeVec) {
+        NativeTokenInfoParcel nativeParcel;
+        nativeParcel.nativeTokenInfoParams = native;
+        nativeTokenInfosRes.emplace_back(nativeParcel);
+    }
+
+    return RET_SUCCESS;
+}
+
+int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
+    HapTokenInfoForSyncParcel& hapSyncParcel)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: 0x%{public}s", __func__, deviceID.c_str());
+
+    return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
+        hapSyncParcel.hapTokenInfoForSyncParams);
+}
+
+int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
+    std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: 0x%{public}s", __func__, deviceID.c_str());
+
+    std::vector<NativeTokenInfo> nativeList;
+
+    for (auto& nativeParcel : nativeTokenInfoParcel) {
+        nativeList.emplace_back(nativeParcel.nativeTokenInfoParams);
+    }
+
+    return AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
+}
+
+int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s, token id %{public}d",
+        __func__, deviceID.c_str(), tokenID);
+
+    return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
+}
+
+int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
+
+    return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
+}
+
+int AccessTokenManagerService::DumpToken(std::string& dumpInfo)
+{
+    AccessTokenInfoManager::GetInstance().Dump(dumpInfo);
+    return 0;
 }
 
 bool AccessTokenManagerService::Initialize() const

@@ -112,17 +112,17 @@ int SqliteStorage::Add(const DataType type, const std::vector<GenericValues>& va
         }
         int ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: failed, errorMsg: %{public}s", __func__, SpitError().c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", SpitError().c_str());
             isExecuteSuccessfully = false;
         }
         statement.Reset();
     }
     if (!isExecuteSuccessfully) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: rollback transaction.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: commit transaction.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "commit transaction.");
     CommitTransaction();
     return SUCCESS;
 }
@@ -190,17 +190,17 @@ int SqliteStorage::RefreshAll(const DataType type, const std::vector<GenericValu
         int ret = insertStatement.Step();
         if (ret != Statement::State::DONE) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "%{public}s: insert failed, errorMsg: %{public}s", __func__, SpitError().c_str());
+                LABEL, "insert failed, errorMsg: %{public}s", SpitError().c_str());
             canCommit = false;
         }
         insertStatement.Reset();
     }
     if (!canCommit) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: rollback transaction.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: commit transaction.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "commit transaction.");
     CommitTransaction();
     return SUCCESS;
 }

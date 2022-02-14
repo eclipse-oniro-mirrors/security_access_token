@@ -66,7 +66,7 @@ void SqliteHelper::Open()
 void SqliteHelper::Close()
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return;
     }
     int ret = sqlite3_close(db_);
@@ -80,14 +80,14 @@ void SqliteHelper::Close()
 int SqliteHelper::BeginTransaction() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return GENERAL_ERROR;
     }
     char* errorMessage = nullptr;
     int result = 0;
     int ret = sqlite3_exec(db_, "BEGIN;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: failed, errorMsg: %{public}s", __func__, errorMessage);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -97,14 +97,14 @@ int SqliteHelper::BeginTransaction() const
 int SqliteHelper::CommitTransaction() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return GENERAL_ERROR;
     }
     char* errorMessage = nullptr;
     int result = 0;
     int ret = sqlite3_exec(db_, "COMMIT;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: failed, errorMsg: %{public}s", __func__, errorMessage);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -114,14 +114,14 @@ int SqliteHelper::CommitTransaction() const
 int SqliteHelper::RollbackTransaction() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return GENERAL_ERROR;
     }
     int result = 0;
     char* errorMessage = nullptr;
     int ret = sqlite3_exec(db_, "ROLLBACK;", nullptr, nullptr, &errorMessage);
     if (ret != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: failed, errorMsg: %{public}s", __func__, errorMessage);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -136,14 +136,14 @@ Statement SqliteHelper::Prepare(const std::string& sql) const
 int SqliteHelper::ExecuteSql(const std::string& sql) const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return GENERAL_ERROR;
     }
     char* errorMessage = nullptr;
     int result = 0;
     int res = sqlite3_exec(db_, sql.c_str(), nullptr, nullptr, &errorMessage);
     if (res != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: failed, errorMsg: %{public}s", __func__, errorMessage);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", errorMessage);
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
@@ -153,7 +153,7 @@ int SqliteHelper::ExecuteSql(const std::string& sql) const
 int SqliteHelper::GetVersion() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return GENERAL_ERROR;
     }
     auto statement = Prepare(PRAGMA_VERSION_COMMAND);
@@ -161,14 +161,14 @@ int SqliteHelper::GetVersion() const
     while (statement.Step() == Statement::State::ROW) {
         version = statement.GetColumnInt(0);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: version: %{public}d", __func__, version);
+    ACCESSTOKEN_LOG_INFO(LABEL, "version: %{public}d", version);
     return version;
 }
 
 void SqliteHelper::SetVersion() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return;
     }
     auto statement = Prepare(PRAGMA_VERSION_COMMAND + " = " + std::to_string(currentVersion_));
@@ -178,7 +178,7 @@ void SqliteHelper::SetVersion() const
 std::string SqliteHelper::SpitError() const
 {
     if (db_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s: do open data base first!", __func__);
+        ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");
         return "";
     }
     return sqlite3_errmsg(db_);

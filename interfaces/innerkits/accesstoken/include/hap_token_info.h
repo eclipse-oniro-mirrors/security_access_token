@@ -53,6 +53,12 @@ public:
     AccessTokenID tokenID;
     AccessTokenAttr tokenAttr;
 };
+
+class HapTokenInfoForSync final {
+public:
+    HapTokenInfo baseInfo;
+    std::vector<PermissionStateFull> permStateList;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

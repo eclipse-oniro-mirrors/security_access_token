@@ -28,30 +28,51 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "HapTokenInfoInner"};
 }
 
+HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
+{
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenID = 0;
+    tokenInfoBasic_.tokenAttr = 0;
+    tokenInfoBasic_.userID = 0;
+    tokenInfoBasic_.instIndex = 0;
+    tokenInfoBasic_.apl = APL_NORMAL;
+}
+
+HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
+    const HapInfoParams &info, const HapPolicyParams &policy) : isRemote_(false)
+{
+    tokenInfoBasic_.tokenID = id;
+    tokenInfoBasic_.userID = info.userID;
+    tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
+    tokenInfoBasic_.tokenAttr = 0;
+    tokenInfoBasic_.bundleName = info.bundleName;
+    tokenInfoBasic_.instIndex = info.instIndex;
+    tokenInfoBasic_.appID = info.appIDDesc;
+    tokenInfoBasic_.deviceID = "0";
+    tokenInfoBasic_.apl = policy.apl;
+    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permList, policy.permStateList);
+}
+
+HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
+    const HapTokenInfo &info, const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
+{
+    tokenInfoBasic_ = info;
+    const std::vector<PermissionDef> permDefList;
+    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, permDefList, permStateList);
+}
+
 HapTokenInfoInner::~HapTokenInfoInner()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x destruction", __func__, tokenID_);
-}
-
-void HapTokenInfoInner::Init(AccessTokenID id, const HapInfoParams &info, const HapPolicyParams &policy)
-{
-    tokenID_ = id;
-    userID_ = info.userID;
-    bundleName_ = info.bundleName;
-    instIndex_ = info.instIndex;
-    appID_ = info.appIDDesc;
-    deviceID_ = "0";
-    apl_ = policy.apl;
-    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permList, policy.permStateList);
+        "tokenID: 0x%{public}x destruction", tokenInfoBasic_.tokenID);
 }
 
 void HapTokenInfoInner::Update(const std::string& appIDDesc, const HapPolicyParams& policy)
 {
-    appID_ = appIDDesc;
-    apl_ = policy.apl;
+    tokenInfoBasic_.appID = appIDDesc;
+    tokenInfoBasic_.apl = policy.apl;
     if (permPolicySet_ == nullptr) {
-        permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenID_,
+        permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
             policy.permList, policy.permStateList);
         return;
     }
@@ -62,69 +83,63 @@ void HapTokenInfoInner::Update(const std::string& appIDDesc, const HapPolicyPara
 
 void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const
 {
-    InfoParcel.apl = apl_;
-    InfoParcel.ver = ver_;
-    InfoParcel.userID = userID_;
-    InfoParcel.bundleName = bundleName_;
-    InfoParcel.instIndex = instIndex_;
-    InfoParcel.appID = appID_;
-    InfoParcel.deviceID = deviceID_;
-    InfoParcel.tokenID = tokenID_;
-    InfoParcel.tokenAttr = tokenAttr_;
+    InfoParcel = tokenInfoBasic_;
 }
 
 void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, tokenID_);
-    outGenericValues.Put(FIELD_USER_ID, userID_);
-    outGenericValues.Put(FIELD_BUNDLE_NAME, bundleName_);
-    outGenericValues.Put(FIELD_INST_INDEX, instIndex_);
-    outGenericValues.Put(FIELD_APP_ID, appID_);
-    outGenericValues.Put(FIELD_DEVICE_ID, deviceID_);
-    outGenericValues.Put(FIELD_APL, apl_);
-    outGenericValues.Put(FIELD_TOKEN_VERSION, ver_);
-    outGenericValues.Put(FIELD_TOKEN_ATTR, tokenAttr_);
+    outGenericValues.Put(FIELD_TOKEN_ID, tokenInfoBasic_.tokenID);
+    outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
+    outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
+    outGenericValues.Put(FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
+    outGenericValues.Put(FIELD_APP_ID, tokenInfoBasic_.appID);
+    outGenericValues.Put(FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
+    outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
+    outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
+    outGenericValues.Put(FIELD_TOKEN_ATTR, tokenInfoBasic_.tokenAttr);
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)
 {
-    userID_ = inGenericValues.GetInt(FIELD_USER_ID);
-    bundleName_ = inGenericValues.GetString(FIELD_BUNDLE_NAME);
-    if (!DataValidator::IsBundleNameValid(bundleName_)) {
+    tokenInfoBasic_.userID = inGenericValues.GetInt(FIELD_USER_ID);
+    tokenInfoBasic_.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
+    if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "%{public}s called, tokenID: 0x%{public}x bundle name is error", __func__, tokenID_);
+            "tokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
         return RET_FAILED;
     }
 
-    instIndex_ = inGenericValues.GetInt(FIELD_INST_INDEX);
-    appID_ = inGenericValues.GetString(FIELD_APP_ID);
-    if (!DataValidator::IsAppIDDescValid(appID_)) {
+    tokenInfoBasic_.instIndex = inGenericValues.GetInt(FIELD_INST_INDEX);
+    tokenInfoBasic_.appID = inGenericValues.GetString(FIELD_APP_ID);
+    if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "%{public}s called, tokenID: 0x%{public}x appID is error", __func__, tokenID_);
+            "tokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
         return RET_FAILED;
     }
 
-    deviceID_ = inGenericValues.GetString(FIELD_DEVICE_ID);
-    if (!DataValidator::IsDeviceIdValid(deviceID_)) {
+    tokenInfoBasic_.deviceID = inGenericValues.GetString(FIELD_DEVICE_ID);
+    if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "%{public}s called, tokenID: 0x%{public}x devId is error", __func__, tokenID_);
+            "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
         return RET_FAILED;
     }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
-        apl_ = (ATokenAplEnum)aplNum;
+        tokenInfoBasic_.apl = (ATokenAplEnum)aplNum;
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "%{public}s called, tokenID: 0x%{public}x apl is error, value %{public}d", __func__, tokenID_, aplNum);
+            "tokenID: 0x%{public}x apl is error, value %{public}d",
+            tokenInfoBasic_.tokenID, aplNum);
         return RET_FAILED;
     }
-    ver_ = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
-    if (ver_ != DEFAULT_TOKEN_VERSION) {
+    tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
+    if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "%{public}s called, tokenID: 0x%{public}x version is error, version %{public}d", __func__, tokenID_, ver_);
+            "tokenID: 0x%{public}x version is error, version %{public}d",
+            tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
         return RET_FAILED;
     }
-    tokenAttr_ = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
+    tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
     return RET_SUCCESS;
 }
 
@@ -132,7 +147,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     GenericValues& tokenValue, const std::vector<GenericValues>& permDefRes,
     const std::vector<GenericValues>& permStateRes)
 {
-    tokenID_ = tokenId;
+    tokenInfoBasic_.tokenID = tokenId;
     int ret = RestoreHapTokenBasicInfo(tokenValue);
     if (ret != RET_SUCCESS) {
         return RET_FAILED;
@@ -153,6 +168,11 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
     std::vector<GenericValues>& permDefValues,
     std::vector<GenericValues>& permStateValues) const
 {
+    if (isRemote_) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
+        return;
+    }
     StoreHapBasicInfo(hapInfoValues);
     if (permPolicySet_ != nullptr) {
         permPolicySet_->StorePermissionPolicySet(permDefValues, permStateValues);
@@ -166,35 +186,51 @@ std::shared_ptr<PermissionPolicySet> HapTokenInfoInner::GetHapInfoPermissionPoli
 
 int HapTokenInfoInner::GetUserID() const
 {
-    return userID_;
+    return tokenInfoBasic_.userID;
 }
 
 std::string HapTokenInfoInner::GetBundleName() const
 {
-    return bundleName_;
+    return tokenInfoBasic_.bundleName;
 }
 
 int HapTokenInfoInner::GetInstIndex() const
 {
-    return instIndex_;
+    return tokenInfoBasic_.instIndex;
 }
 
 AccessTokenID HapTokenInfoInner::GetTokenID() const
 {
-    return tokenID_;
+    return tokenInfoBasic_.tokenID;
+}
+
+HapTokenInfo HapTokenInfoInner::GetHapInfoBasic() const
+{
+    return tokenInfoBasic_;
+}
+
+bool HapTokenInfoInner::IsRemote() const
+{
+    return isRemote_;
+}
+
+void HapTokenInfoInner::SetRemote(bool isRemote)
+{
+    isRemote_ = isRemote;
 }
 
 void HapTokenInfoInner::ToString(std::string& info) const
 {
-    info.append(R"({"tokenID": )" + std::to_string(tokenID_));
-    info.append(R"(, "tokenAttr": )" + std::to_string(tokenAttr_));
-    info.append(R"(, "ver": )" + std::to_string(ver_));
-    info.append(R"(, "userId": )" + std::to_string(userID_));
-    info.append(R"(, "bundleName": ")" + bundleName_ + R"(")");
-    info.append(R"(, "instIndex": )" + std::to_string(instIndex_));
-    info.append(R"(, "appID": ")" + appID_ + R"(")");
-    info.append(R"(, "deviceID": ")" + deviceID_ + R"(")");
-    info.append(R"(, "apl": )" + std::to_string(apl_));
+    info.append(R"({"tokenID": )" + std::to_string(tokenInfoBasic_.tokenID));
+    info.append(R"(, "tokenAttr": )" + std::to_string(tokenInfoBasic_.tokenAttr));
+    info.append(R"(, "ver": )" + std::to_string(tokenInfoBasic_.ver));
+    info.append(R"(, "userId": )" + std::to_string(tokenInfoBasic_.userID));
+    info.append(R"(, "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")");
+    info.append(R"(, "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex));
+    info.append(R"(, "appID": ")" + tokenInfoBasic_.appID + R"(")");
+    info.append(R"(, "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")");
+    info.append(R"(, "apl": )" + std::to_string(tokenInfoBasic_.apl));
+    info.append(R"(, "isRemote": )" + std::to_string(isRemote_));
 
     if (permPolicySet_ != nullptr) {
         permPolicySet_->ToString(info);

@@ -105,24 +105,24 @@ int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
 {
     int32_t fd = open(NATIVE_TOKEN_CONFIG_FILE.c_str(), O_RDONLY);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: open failed errno %{public}d.", __func__, errno);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
         return RET_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: fstat failed.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed.");
         close(fd);
         return RET_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: config file size is invalid.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is invalid.");
         close(fd);
         return RET_FAILED;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: config file size is too large.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is too large.");
         close(fd);
         return RET_FAILED;
     }
@@ -144,14 +144,14 @@ int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
 int NativeTokenReceptor::Init()
 {
     if (ready_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: native token has been inited.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "native token has been inited.");
         return RET_SUCCESS;
     }
 
     std::string nativeRawData;
     int ret = ReadCfgFile(nativeRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: readCfgFile failed.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
         return RET_FAILED;
     }
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
@@ -159,7 +159,7 @@ int NativeTokenReceptor::Init()
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
     ready_ = true;
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: init ok.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "init ok.");
     return RET_SUCCESS;
 }
 

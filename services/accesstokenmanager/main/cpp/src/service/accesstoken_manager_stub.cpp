@@ -51,7 +51,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
 void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(RET_FAILED);
         return;
     }
@@ -98,7 +98,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     std::vector<PermissionStateFullParcel> permList;
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, (int) permList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}d", (int) permList.size());
     reply.WriteInt32((int32_t)permList.size());
     for (auto permDef : permList) {
         reply.WriteParcelable(&permDef);
@@ -116,7 +116,7 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(DEFAULT_PERMISSION_FLAGS);
         return;
     }
@@ -133,7 +133,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
         VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(RET_FAILED);
         return;
     }
@@ -150,7 +150,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
         VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(RET_FAILED);
         return;
     }
@@ -276,6 +276,111 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    AccessTokenID tokenID = data.ReadUint32();
+    HapTokenInfoForSyncParcel hapTokenParcel;
+
+    int result = this->GetHapTokenInfoFromRemote(tokenID, hapTokenParcel);
+    reply.WriteParcelable(&hapTokenParcel);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::vector<NativeTokenInfoParcel> nativeTokenInfosRes;
+    int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
+    reply.WriteUint32(nativeTokenInfosRes.size());
+    for (auto native : nativeTokenInfosRes) {
+        reply.WriteParcelable(&native);
+    }
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string deviceID = data.ReadString();
+    sptr<HapTokenInfoForSyncParcel> hapTokenParcel = data.ReadParcelable<HapTokenInfoForSyncParcel>();
+    int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string deviceID = data.ReadString();
+
+    std::vector<NativeTokenInfoParcel> nativeTokenInfoParcel;
+    uint32_t size = data.ReadUint32();
+
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<NativeTokenInfoParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoParcel>();
+        nativeTokenInfoParcel.emplace_back(*nativeParcel);
+    }
+
+    int result = this->SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoParcel);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string deviceID = data.ReadString();
+    AccessTokenID tokenID = data.ReadUint32();
+
+    int result = this->DeleteRemoteToken(deviceID, tokenID);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string deviceID = data.ReadString();
+
+    int result = this->DeleteRemoteDeviceTokens(deviceID);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::DumpTokenInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string dumpInfo;
+    int result = this->DumpToken(dumpInfo);
+    reply.WriteString(dumpInfo);
+    reply.WriteUint32(result);
+}
+
 bool AccessTokenManagerStub::IsAuthorizedCalling() const
 {
     int callingUid = IPCSkeleton::GetCallingUid();
@@ -319,6 +424,20 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
+        &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
+        &AccessTokenManagerStub::GetAllNativeTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::SET_REMOTE_HAP_TOKEN_INFO)] =
+        &AccessTokenManagerStub::SetRemoteHapTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO)] =
+        &AccessTokenManagerStub::SetRemoteNativeTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_TOKEN_INFO)] =
+        &AccessTokenManagerStub::DeleteRemoteTokenInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =
+        &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP)] =
+        &AccessTokenManagerStub::DumpTokenInner;
 }
 
 AccessTokenManagerStub::~AccessTokenManagerStub()

@@ -12,29 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef TOKENSYNC_MANAGER_STUB_H
-#define TOKENSYNC_MANAGER_STUB_H
-
-#include "i_tokensync_manager.h"
-
-#include "iremote_stub.h"
-#include "nocopyable.h"
+#include "constant.h"
+#include "parameter.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class TokenSyncManagerStub : public IRemoteStub<ITokenSyncManager> {
-public:
-    TokenSyncManagerStub() = default;
-    virtual ~TokenSyncManagerStub() = default;
+const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
+const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
 
-    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& options) override;
+std::string Constant::EncryptDevId(std::string deviceId)
+{
+    std::string result = deviceId;
+    if (deviceId.size() >= ENCRYPTLEN) {
+        result.replace(ENCRYPTBEGIN, ENCRYPTEND, "****");
+    } else {
+        result.replace(ENCRYPTBEGIN, result.size() - 1, "****");
+    }
+    return result;
+}
 
-private:
-    void VerifyPermissionInner(MessageParcel& data, MessageParcel& reply);
-};
+std::string Constant::GetLocalDeviceId()
+{
+    char deviceIdCharArray[Constant::DEVICE_UUID_LENGTH] = {0};
+    GetDevUdid(deviceIdCharArray, Constant::DEVICE_UUID_LENGTH);
+    return deviceIdCharArray;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // TOKENSYNC_MANAGER_STUB_H

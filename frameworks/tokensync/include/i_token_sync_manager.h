@@ -21,6 +21,9 @@
 #include "iremote_broker.h"
 #include "errors.h"
 
+#include "access_token.h"
+#include "hap_token_info_for_sync_parcel.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -30,10 +33,14 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.ITokenSyncManager");
 
-    virtual int VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId) = 0;
+    virtual int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) = 0;
+    virtual int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) = 0;
+    virtual int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) = 0;
 
     enum class InterfaceCode {
-        VERIFY_PERMISSION = 0xff01,
+        GET_REMOTE_HAP_TOKEN_INFO = 0xff01,
+        DELETE_REMOTE_HAP_TOKEN_INFO = 0xff02,
+        UPDATE_REMOTE_HAP_TOKEN_INFO = 0xff03
     };
 };
 } // namespace AccessToken

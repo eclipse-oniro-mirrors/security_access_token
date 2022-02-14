@@ -32,11 +32,12 @@ namespace Security {
 namespace AccessToken {
 class HapTokenInfoInner final {
 public:
-    HapTokenInfoInner() : ver_(DEFAULT_TOKEN_VERSION), tokenID_(0), tokenAttr_(0), userID_(0),
-        instIndex_(0), apl_(APL_NORMAL) {};
+    HapTokenInfoInner();
+    HapTokenInfoInner(AccessTokenID id, const HapInfoParams& info, const HapPolicyParams& policy);
+    HapTokenInfoInner(AccessTokenID id, const HapTokenInfo &info,
+        const std::vector<PermissionStateFull>& permStateList);
     virtual ~HapTokenInfoInner();
 
-    void Init(AccessTokenID id, const HapInfoParams& info, const HapPolicyParams& policy);
     void Update(const std::string& appIDDesc, const HapPolicyParams& policy);
     void TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
@@ -46,26 +47,25 @@ public:
         const std::vector<GenericValues>& permDefRes, const std::vector<GenericValues>& permStateRes);
 
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
+    HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
     std::string GetBundleName() const;
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
     void ToString(std::string& info) const;
+    bool IsRemote() const;
+    void SetRemote(bool isRemote);
 
 private:
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
 
-    char ver_;
-    AccessTokenID tokenID_;
-    AccessTokenAttr tokenAttr_;
-    int userID_;
-    std::string bundleName_;
-    int instIndex_;
-    std::string appID_;
-    std::string deviceID_;
-    ATokenAplEnum apl_;
+    HapTokenInfo tokenInfoBasic_;
+
+    // true means sync from remote.
+    bool isRemote_;
+
     std::shared_ptr<PermissionPolicySet> permPolicySet_;
 };
 } // namespace AccessToken

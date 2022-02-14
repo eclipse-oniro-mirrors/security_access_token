@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,34 +13,34 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_MANAGER_CLIENT_H
-#define ACCESSTOKEN_MANAGER_CLIENT_H
+#ifndef DEVICE_INFO_H
+#define DEVICE_INFO_H
 
 #include <string>
-
-#include "i_tokensync_manager.h"
-
-#include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class TokenSyncManagerClient final {
-public:
-    static TokenSyncManagerClient& GetInstance();
+enum DeviceIdType {
+    NETWORK_ID,
+    UNIVERSALLY_UNIQUE_ID,
+    UNIQUE_DISABILITY_ID,
+    UNKNOWN,
+};
 
-    virtual ~TokenSyncManagerClient();
+struct DeviceId {
+    std::string networkId;
+    std::string universallyUniqueId;
+    std::string uniqueDisabilityId;
+};
 
-    int VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId) const;
-
-private:
-    TokenSyncManagerClient();
-
-    DISALLOW_COPY_AND_MOVE(TokenSyncManagerClient);
-
-    sptr<ITokenSyncManager> GetProxy() const;
+struct DeviceInfo {
+    DeviceId deviceId;
+    std::string deviceName;
+    std::string deviceType;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ACCESSTOKEN_MANAGER_CLIENT_H
+
+#endif // DEVICE_INFO_H

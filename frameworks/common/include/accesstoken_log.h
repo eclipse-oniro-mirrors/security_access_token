@@ -22,19 +22,24 @@
 
 #ifndef __cplusplus
 
-#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) HILOG_DEBUG(LOG_CORE, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_INFO(fmt, ...) HILOG_INFO(LOG_CORE, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_WARN(fmt, ...) HILOG_WARN(LOG_CORE, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_ERROR(fmt, ...) HILOG_ERROR(LOG_CORE, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_FATAL(fmt, ...) HILOG_FATAL(LOG_CORE, fmt, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) HILOG_DEBUG(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_INFO(fmt, ...) HILOG_INFO(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_WARN(fmt, ...) HILOG_WARN(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_ERROR(fmt, ...) HILOG_ERROR(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_FATAL(fmt, ...) HILOG_FATAL(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
 
 #else
 
-#define ACCESSTOKEN_LOG_DEBUG(label, fmt, ...) OHOS::HiviewDFX::HiLog::Debug(label, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_INFO(label, fmt, ...) OHOS::HiviewDFX::HiLog::Info(label, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_WARN(label, fmt, ...) OHOS::HiviewDFX::HiLog::Warn(label, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_ERROR(label, fmt, ...) OHOS::HiviewDFX::HiLog::Error(label, fmt, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_FATAL(label, fmt, ...) OHOS::HiviewDFX::HiLog::Fatal(label, fmt, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_DEBUG(label, fmt, ...) \
+    OHOS::HiviewDFX::HiLog::Debug(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_INFO(label, fmt, ...) \
+    OHOS::HiviewDFX::HiLog::Info(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_WARN(label, fmt, ...) \
+    OHOS::HiviewDFX::HiLog::Warn(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_ERROR(label, fmt, ...) \
+    OHOS::HiviewDFX::HiLog::Error(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
+#define ACCESSTOKEN_LOG_FATAL(label, fmt, ...) \
+    OHOS::HiviewDFX::HiLog::Fatal(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
 
 #endif // __cplusplus
 

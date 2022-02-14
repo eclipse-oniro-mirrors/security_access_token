@@ -65,7 +65,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type) const
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, get random failed", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "get random failed");
         return 0;
     }
 
@@ -85,7 +85,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
         tokenId = CreateTokenId(type);
         if (tokenId == 0) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s called, create tokenId failed", __func__);
+            ACCESSTOKEN_LOG_WARN(LABEL, "create tokenId failed");
             return 0;
         }
 
@@ -93,9 +93,9 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i == MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, reigster tokenId failed, maybe repeat, retry", __func__);
+            ACCESSTOKEN_LOG_INFO(LABEL, "reigster tokenId failed, maybe repeat, retry");
         } else {
-            ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s called, reigster tokenId finally failed", __func__);
+            ACCESSTOKEN_LOG_WARN(LABEL, "reigster tokenId finally failed");
         }
     }
     return tokenId;
@@ -105,7 +105,7 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
     if (tokenIdSet_.count(id) == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, id %{public}x is not exist", __func__, id);
+        ACCESSTOKEN_LOG_INFO(LABEL, "id %{public}x is not exist", id);
         return;
     }
     tokenIdSet_.erase(id);
