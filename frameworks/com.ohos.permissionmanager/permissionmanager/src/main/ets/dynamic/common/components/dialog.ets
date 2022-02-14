@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 
-import { getPermissionGroup } from "../utils/utils.ets"
-import { BundleFlag, userId } from "../model/bundle.ets"
-import featureAbility from '@ohos.ability.featureAbility';
-import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import bundle from '@ohos.bundle';
-import Resmgr from '@ohos.resourceManager';
+import { getPermissionGroup } from '../utils/utils.ets'
+import { BundleFlag, userId } from '../model/bundle.ets'
+import Constants from '../utils/constant.ets'
+import featureAbility from '@ohos.ability.featureAbility'
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
+import bundle from '@ohos.bundle'
+import Resmgr from '@ohos.resourceManager'
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
@@ -28,13 +29,13 @@ import Resmgr from '@ohos.resourceManager';
 @CustomDialog
 export struct privacyDialog {
   @Link count: number
-  @Link result: Array<any>
+  @Link result: Array<number>
   controller: CustomDialogController
   cancel: (group, accessTokenId, permissionList, userFixedFlag) => void
   confirm: (group, accessTokenId, permissionList, userFixedFlag) => void
   @State accessTokenId: number = 0
   @State hasPrepared: boolean = false
-  @State reqPerms: Array<any> = []
+  @State reqPerms: Array<string> = []
   @State grantGroups: Array<any> = []
   @State userFixedFlag: number = 2 // means user fixed
   @State appName: string = ""
@@ -43,34 +44,35 @@ export struct privacyDialog {
     Column() {
       if (this.hasPrepared && this.verify(this.reqPerms[this.count])) {
         Image(this.grantGroups[this.count].icon)
-          .width(24)
-          .height(24)
+          .width(Constants.DIALOG_ICON_WIDTH)
+          .height(Constants.DIALOG_ICON_HEIGHT)
           .margin({
-            top: 24
+            top: Constants.DIALOG_ICON_MARGIN_TOP
           })
         Text(`${this.count + 1} / ${this.reqPerms.length}`)
-          .fontSize(14)
+          .fontSize(Constants.DIALOG_LABEL_FONT_SIZE)
           .fontColor($r('app.color.secondary_font_color'))
           .margin({
-            top: 2
+            top: Constants.DIALOG_LABEL_MARGIN_TOP
           })
         Column() {
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text("是否允许" + this.appName + "访问" + this.grantGroups[this.count].groupName).fontSize(16)
+              Text("是否允许" + this.appName + "访问" +
+                this.grantGroups[this.count].groupName).fontSize(Constants.DIALOG_REQ_FONT_SIZE)
                 .margin({
-                  top: 16,
-                  left: 24
+                  top: Constants.DIALOG_REQ_MARGIN_TOP,
+                  left: Constants.DIALOG_REQ_MARGIN_LEFT
                 })
             }
           }
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text("用于" + this.grantGroups[this.count].description).fontSize(14)
+              Text("用于" + this.grantGroups[this.count].description).fontSize(Constants.DIALOG_DESP_FONT_SIZE)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({
-                  top: 2,
-                  left: 24
+                  top: Constants.DIALOG_DESP_MARGIN_TOP,
+                  left: Constants.DIALOG_DESP_MARGIN_LEFT
                 })
             }
           }
@@ -79,16 +81,16 @@ export struct privacyDialog {
       Row() {
         Flex({ justifyContent: FlexAlign.SpaceAround }) {
           Button('禁止')
-            .fontSize(16)
+            .fontSize(Constants.BUTTON_FONT_SIZE)
             .onClick(() => {
               this.cancel(this.grantGroups[this.count], this.accessTokenId, this.reqPerms, this.userFixedFlag)
               if (this.count === this.reqPerms.length) {
                 this.controller.close()
               }
             }).customizeButton()
-          Text('|').fontSize(30).fontColor($r('app.color.divider_color'))
+          Text('|').fontSize(Constants.BUTTON_DIVIDER_FONT_SIZE).fontColor($r('app.color.divider_color'))
           Button('允许')
-            .fontSize(16)
+            .fontSize(Constants.BUTTON_FONT_SIZE)
             .onClick(() => {
               this.confirm(this.grantGroups[this.count], this.accessTokenId, this.reqPerms, this.userFixedFlag)
               if (this.count === this.reqPerms.length) {
@@ -96,14 +98,14 @@ export struct privacyDialog {
               }
             }).customizeButton()
         }.margin({
-          top: 8
+          top: Constants.BUTTON_MARGIN_TOP
         })
       }
     }
     .backgroundColor($r('app.color.default_background_color'))
-    .borderRadius(24)
-    .height(186)
-    .width(336)
+    .borderRadius(Constants.DIALOG_BORDER_RADIUS)
+    .height(Constants.DIALOG_HEIGHT)
+    .width(Constants.DIALOG_WIDTH)
   }
   async verify(permission) {
     if(this.count >= this.grantGroups.length) {
