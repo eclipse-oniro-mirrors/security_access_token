@@ -25,6 +25,7 @@
 #include "singleton.h"
 #include "system_ability.h"
 #include "hap_token_info.h"
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -57,7 +58,15 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& InfoParcel) override;
     int UpdateHapToken(AccessTokenID tokenID,
         const std::string& appIDDesc, const HapPolicyParcel& policyParcel) override;
+    int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
+    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfosRes) override;
+    int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
+    int SetRemoteNativeTokenInfo(const std::string& deviceID,
+        std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel) override;
+    int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
+    int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
 
+    int DumpToken(std::string& dumpInfo) override;
 private:
     bool Initialize() const;
 

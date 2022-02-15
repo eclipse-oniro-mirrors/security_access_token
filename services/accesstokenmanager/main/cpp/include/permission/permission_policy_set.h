@@ -48,6 +48,7 @@ public:
     int QueryPermissionFlag(const std::string& permissionName);
     void UpdatePermissionStatus(const std::string& permissionName, bool isGranted, int flag);
     void ToString(std::string& info);
+    void GetPermissionStateList(std::vector<PermissionStateFull>& stateList);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,

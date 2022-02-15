@@ -96,7 +96,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     if (policySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenId 0x%{public}x new failed.", __func__, tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x new failed.", tokenId);
         return nullptr;
     }
     policySet->tokenId_ = tokenId;
@@ -108,7 +108,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
             if (ret == RET_SUCCESS) {
                 policySet->permList_.emplace_back(def);
             } else {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenId 0x%{public}x permDef is wrong.", __func__, tokenId);
+                ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x permDef is wrong.", tokenId);
             }
         }
     }
@@ -120,8 +120,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
             if (ret == RET_SUCCESS) {
                 MergePermissionStateFull(policySet->permStateList_, state);
             } else {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: tokenId 0x%{public}x permState is wrong.",
-                    __func__, tokenId);
+                ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x permState is wrong.", tokenId);
             }
         }
     }
@@ -238,6 +237,14 @@ void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionNa
     }
 }
 
+void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull>& stateList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (auto& state : permStateList_) {
+        stateList.emplace_back(state);
+    }
+}
+
 void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string& info) const
 {
     info.append(R"({"permissionName": ")" + def.permissionName + R"(")");
@@ -288,8 +295,10 @@ void PermissionPolicySet::PermStateFullToString(const PermissionStateFull& state
 void PermissionPolicySet::ToString(std::string& info)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    info.append(R"(, "permDefList": [)");
+    info.append(",\n\t");
+    info.append(R"("permDefList": [)");
     for (auto iter = permList_.begin(); iter != permList_.end(); iter++) {
+        info.append("\n\t\t");
         PermDefToString(*iter, info);
         if (iter != (permList_.end() - 1)) {
             info.append(",");
@@ -297,8 +306,10 @@ void PermissionPolicySet::ToString(std::string& info)
     }
     info.append("]");
 
-    info.append(R"(, "permStateList": [)");
+    info.append(",\n\t");
+    info.append(R"("permStateList": [)");
     for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
+        info.append("\n\t\t");
         PermStateFullToString(*iter, info);
         if (iter != (permStateList_.end() - 1)) {
             info.append(",");

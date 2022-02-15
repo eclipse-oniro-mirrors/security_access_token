@@ -33,6 +33,7 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/include",
     "//third_party/json/include",
   ]
 
@@ -52,9 +53,11 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/src/service/accesstoken_manager_stub.cpp",
     "main/cpp/src/token/accesstoken_id_manager.cpp",
     "main/cpp/src/token/accesstoken_info_manager.cpp",
+    "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
     "main/cpp/src/token/hap_token_info_inner.cpp",
     "main/cpp/src/token/native_token_info_inner.cpp",
     "main/cpp/src/token/native_token_receptor.cpp",
+    "main/cpp/src/token/token_modify_notifier.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -64,6 +67,7 @@ ohos_shared_library("accesstoken_manager_service") {
     #"//base/security/accesstoken/frameworks/accesstooken/common:permission_standard_infrastructure_cxx",
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",

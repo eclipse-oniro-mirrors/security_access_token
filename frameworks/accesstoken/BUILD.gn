@@ -39,6 +39,7 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   sources = [
     "src/hap_info_parcel.cpp",
     "src/hap_policy_parcel.cpp",
+    "src/hap_token_info_for_sync_parcel.cpp",
     "src/hap_token_info_parcel.cpp",
     "src/native_token_info_parcel.cpp",
     "src/permission_def_parcel.cpp",

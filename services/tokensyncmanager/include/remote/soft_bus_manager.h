@@ -19,13 +19,15 @@
 #include <functional>
 #include <inttypes.h>
 #include <memory>
-#include <set>
 #include <string>
 #include <thread>
 
 #include "accesstoken_log.h"
-#include "rwlock.h"
+#include "device_manager.h"
+#include "remote_command_executor.h"
 #include "session.h"
+#include "soft_bus_device_connection_listener.h"
+#include "soft_bus_session_listener.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,23 +35,71 @@ namespace AccessToken {
 class SoftBusManager final {
 public:
     virtual ~SoftBusManager();
+
+    /**
+     * @brief Get instance of SoftBusManager
+     *
+     * @return SoftBusManager's instance.
+     * @since 1.0
+     * @version 1.0
+     */
     static SoftBusManager &GetInstance();
+
+    /**
+     * @brief Bind soft bus service.
+     *
+     * @since 1.0
+     * @version 1.0
+     */
     void Initialize();
+
+    /**
+     * @brief Unbind soft bus service when DPMS has been destroyed.
+     *
+     * @since 1.0
+     * @version 1.0
+     */
     void Destroy();
 
-    static int OnSessionOpend(int sessionId, int result);
-    static void OnSessionClosed(int sessionId);
-    static void OnBytesReceived(int sessionId, const void *data, unsigned int dataLen);
-    static void OnMessageReceived(int sessionId, const void *data, unsigned int dataLen);
-    static void isSessionRespond(int sessionId);
+    /**
+     * @brief Open session with the peer device sychronized.
+     *
+     * @param deviceUdid The udid of peer device.
+     * @return Session id if open successfully, otherwise return -1(Constant::FAILURE).
+     * @since 1.0
+     * @version 1.0
+     */
+    int OpenSession(const std::string &deviceUdid);
 
-    void InsertSessionRespondStatus(int sessionId);
-    bool IsSessionRespond(int sessionId);
-    int32_t SendRequest();
-    bool IsSessionWaitingOpen(int sessionId);
-    bool IsSessionOpen(int sessionId);
-    void ModifySessionStatus(int sessionId);
-    void SetSessionWaitingOpen(int sessionId);
+    /**
+     * @brief Close session with the peer device.
+     *
+     * @param session The session id need to close.
+     * @return 0 if close successfully, otherwise return -1(Constant::FAILURE).
+     * @since 1.0
+     * @version 1.0
+     */
+    int CloseSession(int sessionId);
+
+    /**
+     * @brief Get UUID(networkId) by deviceNodeId.
+     *
+     * @param deviceNodeId The valid networkId or deviceId(UDID) or deviceUuid.
+     * @return uuid if deviceManager is ready, empty string otherwise.
+     * @since 1.0
+     * @version 1.0
+     */
+    std::string GetUniversallyUniqueIdByNodeId(const std::string &deviceNodeId);
+
+    /**
+     *  @brief Get deviceId(UDID) by deviceNodeId.
+     *
+     * @param deviceNodeId The valid networkId or deviceId(UDID) or deviceUuid.
+     * @return udid if deviceManager work correctly, empty string otherwise.
+     * @since 1.0
+     * @version 1.0
+     */
+    std::string GetUniqueDisabilityIdByNodeId(const std::string &deviceNodeId);
 
 public:
     static const std::string SESSION_NAME;
@@ -57,7 +107,18 @@ public:
 private:
     SoftBusManager();
 
-    static const std::string ACCESS_TOKEN_PACKAGE_NAME;
+    /**
+     * @brief Fulfill local device info
+     *
+     * @return 0 if operate successfully, otherwise return -1(Constant::FAILURE).
+     * @since 1.0
+     * @version 1.0
+     */
+    int FulfillLocalDeviceInfo();
+    std::string GetUuidByNodeId(const std::string &nodeId) const;
+    std::string GetUdidByNodeId(const std::string &nodeId) const;
+
+    const static std::string ACCESS_TOKEN_PACKAGE_NAME;
 
     // soft bus session server opened flag
     bool isSoftBusServiceBindSuccess_;
@@ -66,8 +127,8 @@ private:
     // init mutex
     std::mutex mutex_;
 
-    OHOS::Utils::RWLock sessIdLock_;
-    std::set<int32_t> sessOpenSet_;
+    // fulfill thread mutex
+    std::mutex fulfillMutex_;
 };
 }  // namespace AccessToken
 }  // namespace Security

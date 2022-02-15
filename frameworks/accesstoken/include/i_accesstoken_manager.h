@@ -18,16 +18,16 @@
 
 #include <string>
 
-#include "iremote_broker.h"
-#include "errors.h"
-
 #include "access_token.h"
+#include "errors.h"
+#include "hap_info_parcel.h"
+#include "hap_policy_parcel.h"
+#include "hap_token_info_for_sync_parcel.h"
+#include "hap_token_info_parcel.h"
+#include "iremote_broker.h"
+#include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
 #include "permission_state_full_parcel.h"
-#include "hap_policy_parcel.h"
-#include "hap_token_info_parcel.h"
-#include "hap_info_parcel.h"
-#include "native_token_info_parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -58,6 +58,18 @@ public:
     virtual int UpdateHapToken(
         AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParcel& policyParcel) = 0;
 
+    virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
+        HapTokenInfoForSyncParcel& hapSyncParcel)  = 0;
+    virtual int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes)  = 0;
+    virtual int SetRemoteHapTokenInfo(const std::string& deviceID,
+        HapTokenInfoForSyncParcel& hapSyncParcel)  = 0;
+    virtual int SetRemoteNativeTokenInfo(const std::string& deviceID,
+        std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)  = 0;
+    virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)  = 0;
+    virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
+
+    virtual int DumpToken(std::string& dumpInfo) = 0;
+
     enum class InterfaceCode {
         VERIFY_ACCESSTOKEN = 0xff10,
         GET_DEF_PERMISSION = 0xff11,
@@ -76,6 +88,15 @@ public:
         GET_NATIVE_TOKENINFO = 0xff24,
         GET_HAP_TOKENINFO = 0xff25,
         UPDATE_HAP_TOKEN = 0xff26,
+
+        GET_HAP_TOKEN_FROM_REMOTE = 0xff27,
+        GET_ALL_NATIVE_TOKEN_FROM_REMOTE = 0xff28,
+        SET_REMOTE_HAP_TOKEN_INFO = 0xff29,
+        SET_REMOTE_NATIVE_TOKEN_INFO = 0xff2a,
+        DELETE_REMOTE_TOKEN_INFO = 0xff2b,
+        DELETE_REMOTE_DEVICE_TOKEN = 0xff2c,
+
+        DUMP = 0xff30,
     };
 };
 } // namespace AccessToken

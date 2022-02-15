@@ -39,11 +39,11 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return PERMISSION_DENIED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PERMISSION_DENIED;
     }
 
@@ -51,18 +51,18 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return PERMISSION_DENIED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::VERIFY_ACCESSTOKEN), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return PERMISSION_DENIED;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -72,7 +72,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return RET_FAILED;
     }
 
@@ -80,24 +80,24 @@ int AccessTokenManagerProxy::GetDefPermission(
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     sptr<PermissionDefParcel> resultSptr = reply.ReadParcelable<PermissionDefParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s ReadParcelable fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read permission def parcel fail");
         return RET_FAILED;
     }
     permissionDefResult = *resultSptr;
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -107,7 +107,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
 
@@ -115,13 +115,13 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSIONS), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
@@ -133,7 +133,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
         }
     }
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -143,11 +143,11 @@ int AccessTokenManagerProxy::GetReqPermissions(
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
     if (!data.WriteInt32(isSystemGrant)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write isSystemGrant", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isSystemGrant");
         return RET_FAILED;
     }
 
@@ -155,13 +155,13 @@ int AccessTokenManagerProxy::GetReqPermissions(
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_REQ_PERMISSIONS), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
@@ -173,7 +173,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
         }
     }
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -182,11 +182,11 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return DEFAULT_PERMISSION_FLAGS;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return DEFAULT_PERMISSION_FLAGS;
     }
 
@@ -194,18 +194,18 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return DEFAULT_PERMISSION_FLAGS;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_FLAG), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return DEFAULT_PERMISSION_FLAGS;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -214,15 +214,15 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return RET_FAILED;
     }
     if (!data.WriteInt32(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write flag", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
         return RET_FAILED;
     }
 
@@ -230,18 +230,18 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GRANT_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -250,15 +250,15 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return RET_FAILED;
     }
     if (!data.WriteInt32(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write flag", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
         return RET_FAILED;
     }
 
@@ -266,18 +266,18 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::REVOKE_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -286,7 +286,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
 
@@ -294,18 +294,18 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::CLEAR_USER_GRANT_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -329,20 +329,20 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         res.tokenIDEx = 0;
         return res;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::ALLOC_TOKEN_HAP), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         res.tokenIDEx = 0;
         return res;
     }
 
     unsigned long long result = reply.ReadUint64();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}llu", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}llu", result);
     res.tokenIDEx = result;
     return res;
 }
@@ -353,7 +353,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
 
@@ -361,18 +361,18 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::TOKEN_DELETE), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -382,7 +382,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
 
@@ -390,18 +390,18 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_TOKEN_TYPE), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -411,29 +411,29 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return RET_FAILED;
     }
     if (!data.WriteString(dcap)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write dcap", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
         return RET_FAILED;
     }
     MessageParcel reply;
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::CHECK_NATIVE_DCAP), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -443,33 +443,33 @@ AccessTokenID AccessTokenManagerProxy::GetHapTokenID(int userID, const std::stri
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteInt32(userID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write tokenID", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return 0;
     }
     if (!data.WriteString(bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write dcap", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
         return 0;
     }
     if (!data.WriteInt32(instIndex)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write dcap", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
         return 0;
     }
     MessageParcel reply;
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return 0;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return 0;
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
@@ -480,29 +480,29 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteString(remoteDeviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write dcap", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
         return 0;
     }
     if (!data.WriteUint32(remoteTokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write dcap", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
         return 0;
     }
     MessageParcel reply;
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return 0;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::ALLOC_LOCAL_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return 0;
     }
 
     AccessTokenID result = reply.ReadUint32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
     return result;
 }
 
@@ -511,7 +511,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return RET_FAILED;
     }
 
@@ -519,24 +519,24 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_TOKENINFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     sptr<NativeTokenInfoParcel> resultSptr = reply.ReadParcelable<NativeTokenInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s ReadParcelable fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
         return RET_FAILED;
     }
     nativeTokenInfoRes = *resultSptr;
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
     return result;
 }
 
@@ -545,7 +545,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: Failed to write permissionName", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return RET_FAILED;
     }
 
@@ -553,24 +553,24 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKENINFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     sptr<HapTokenInfoParcel> resultSptr = reply.ReadParcelable<HapTokenInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s ReadParcelable fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
         return RET_FAILED;
     }
     hapTokenInfoRes = *resultSptr;
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
     return result;
 }
 
@@ -593,18 +593,236 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenID tokenID,
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
         return RET_FAILED;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return RET_FAILED;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server data = %{public}d", __func__, result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
+    HapTokenInfoForSyncParcel& hapSyncParcel)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteUint32(tokenID)) {
+        return RET_FAILED;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    sptr<HapTokenInfoForSyncParcel> hapResult = reply.ReadParcelable<HapTokenInfoForSyncParcel>();
+    if (hapResult == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
+        return RET_FAILED;
+    }
+    hapSyncParcel = *hapResult;
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE),
+        data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t size = reply.ReadInt32();
+    for (int i = 0; i < size; i++) {
+        sptr<NativeTokenInfoParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoParcel>();
+        if (nativeResult != nullptr) {
+            nativeTokenInfoRes.emplace_back(*nativeResult);
+        }
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
+    HapTokenInfoForSyncParcel& hapSyncParcel)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteString(deviceID)) {
+        return RET_FAILED;
+    }
+    if (!data.WriteParcelable(&hapSyncParcel)) {
+        return RET_FAILED;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::SET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceID,
+    std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteString(deviceID)) {
+        return RET_FAILED;
+    }
+    if (!data.WriteUint32(nativeTokenInfoParcel.size())) {
+        return RET_FAILED;
+    }
+    for (NativeTokenInfoParcel& parcel : nativeTokenInfoParcel) {
+        if (!data.WriteParcelable(&parcel)) {
+            return RET_FAILED;
+        }
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteString(deviceID)) {
+        return RET_FAILED;
+    }
+
+    if (!data.WriteUint32(tokenID)) {
+        return RET_FAILED;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_TOKEN_INFO), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceID)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteString(deviceID)) {
+        return RET_FAILED;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_DEVICE_TOKEN), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
+int AccessTokenManagerProxy::DumpToken(std::string& dumpInfo)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    dumpInfo = reply.ReadString();
+    AccessTokenID result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
     return result;
 }
 } // namespace AccessToken

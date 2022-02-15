@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "tokensync_kit_test.h"
+#include "token_sync_kit_test.h"
 
-#include "tokensync_kit.h"
+#include "token_sync_kit.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;

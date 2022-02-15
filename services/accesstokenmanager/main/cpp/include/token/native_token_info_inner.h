@@ -34,7 +34,7 @@ static const std::string JSON_DCAPS = "dcaps";
 
 class NativeTokenInfoInner final {
 public:
-    NativeTokenInfoInner() : ver_(DEFAULT_TOKEN_VERSION), tokenID_(0), tokenAttr_(0), apl_(APL_NORMAL) {};
+    NativeTokenInfoInner();
     NativeTokenInfoInner(NativeTokenInfo& info);
     virtual ~NativeTokenInfoInner();
 
@@ -51,18 +51,17 @@ public:
     std::vector<std::string> GetDcap() const;
     AccessTokenID GetTokenID() const;
     std::string GetProcessName() const;
-    bool FromJsonString(const std::string& jsonString);
+    NativeTokenInfo GetNativeTokenInfo() const;
+    bool IsRemote() const;
+    void SetRemote(bool isRemote);
 
 private:
     int TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     std::string DcapToString(const std::vector<std::string>& dcap) const;
 
-    char ver_;
-    AccessTokenID tokenID_;
-    AccessTokenAttr tokenAttr_;
-    std::string processName_;
-    ATokenAplEnum apl_;
-    std::vector<std::string> dcap_;
+    // true means sync from remote.
+    bool isRemote_;
+    NativeTokenInfo tokenInfoBasic_;
 };
 } // namespace AccessToken
 } // namespace Security

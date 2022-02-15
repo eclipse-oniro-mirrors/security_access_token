@@ -81,6 +81,11 @@ bool DataValidator::IsPermissionFlagValid(int flag)
     flag == PermissionFlag::PERMISSION_USER_FIXED ||
     flag == PermissionFlag::PERMISSION_SYSTEM_FIXED;
 }
+
+bool DataValidator::IsTokenIDValid(AccessTokenID id)
+{
+    return id != 0;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

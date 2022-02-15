@@ -23,6 +23,7 @@
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
+#include "hap_token_info_for_sync_parcel.h"
 #include "i_accesstoken_manager.h"
 #include "iremote_proxy.h"
 #include "native_token_info_parcel.h"
@@ -56,6 +57,16 @@ public:
         const HapPolicyParcel& policyPar) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
+
+    int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
+    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes) override;
+    int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
+    int SetRemoteNativeTokenInfo(const std::string& deviceID,
+        std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel) override;
+    int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
+    int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
+
+    int DumpToken(std::string& dumpInfo) override;
 private:
     static inline BrokerDelegator<AccessTokenManagerProxy> delegator_;
 };

@@ -21,12 +21,13 @@ ohos_unittest("libtokensync_sdk_test") {
   include_dirs = [
     "//utils/native/base/include",
     "//third_party/googletest/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/include",
 
     #"//base/security/permission/interfaces/innerkits/permission_standard/permissionsdk/main/cpp/include/permission/",
-    "//base/security/access_token/interfaces/innerkits/tokensync/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
   ]
 
-  sources = [ "unittest/src/tokensync_kit_test.cpp" ]
+  sources = [ "unittest/src/token_sync_kit_test.cpp" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 

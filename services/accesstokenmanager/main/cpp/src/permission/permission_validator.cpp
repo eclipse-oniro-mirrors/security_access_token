@@ -116,8 +116,6 @@ void PermissionValidator::DeduplicateResDevID(const PermissionStateFull& permSta
         result.resDeviceID.emplace_back(*it);
         result.grantStatus.emplace_back(*stateIter);
         result.grantFlags.emplace_back(*flagIter);
-        ++stateIter;
-        ++flagIter;
     }
     result.permissionName = permState.permissionName;
     result.isGeneral = permState.isGeneral;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,7 +18,9 @@
 
 #include <string>
 
-#include "i_tokensync_manager.h"
+#include "access_token.h"
+#include "hap_token_info_for_sync_parcel.h"
+#include "i_token_sync_manager.h"
 #include "iremote_broker.h"
 #include "iremote_proxy.h"
 
@@ -30,7 +32,9 @@ public:
     explicit TokenSyncManagerProxy(const sptr<IRemoteObject>& impl);
     virtual ~TokenSyncManagerProxy() override;
 
-    int VerifyPermission(const std::string& packageName, const std::string& permissionName, int userId) override;
+    int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
+    int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
+    int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
 
 private:
     static inline BrokerDelegator<TokenSyncManagerProxy> delegator_;

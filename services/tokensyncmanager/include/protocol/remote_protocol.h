@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,21 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNER_KITS_TOKENSYNC_KIT_H
-#define INTERFACES_INNER_KITS_TOKENSYNC_KIT_H
-
-#include <string>
-#include <vector>
+#ifndef REMOTE_PROTOCOL_H
+#define REMOTE_PROTOCOL_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class TokenSyncKit {
-public:
-    static int VerifyPermission(const std::string& bundleName, const std::string& permissionName, int userId);
+struct RemoteProtocol {
+    std::string commandName;
+    std::string uniqueId;
+    int32_t requestVersion;
+    std::string srcDeviceId;
+    std::string srcDeviceLevel;
+    std::string dstDeviceId;
+    std::string dstDeviceLevel;
+    int32_t statusCode;
+    std::string message;
+    int32_t responseVersion;
+    std::string responseDeviceId;
 };
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
 #endif

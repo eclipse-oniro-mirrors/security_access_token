@@ -53,6 +53,15 @@ private:
     void CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply);
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
 
+    void GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply);
+    void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void  DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
+    void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
+    void GetRemoteHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
+    void DumpTokenInner(MessageParcel& data, MessageParcel& reply);
+
     bool IsAuthorizedCalling() const;
     static const int SYSTEM_UID = 1000;
     static const int ROOT_UID = 0;
