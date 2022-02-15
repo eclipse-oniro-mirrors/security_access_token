@@ -14,7 +14,7 @@
  */
 
 import { getPermissionGroup } from '../utils/utils.ets'
-import { BundleFlag, userId } from '../model/bundle.ets'
+import { BundleFlag, USER_ID } from '../model/bundle.ets'
 import Constants from '../utils/constant.ets'
 import featureAbility from '@ohos.ability.featureAbility'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
@@ -34,7 +34,7 @@ export struct privacyDialog {
   cancel: (group, accessTokenId, permissionList, userFixedFlag) => void
   confirm: (group, accessTokenId, permissionList, userFixedFlag) => void
   @State accessTokenId: number = 0
-  @State hasPrepared: boolean = false
+  @State initStatus: number = Constants.INIT_NEED_TO_WAIT
   @State reqPerms: Array<string> = []
   @State grantGroups: Array<any> = []
   @State userFixedFlag: number = 2 // means user fixed
@@ -42,7 +42,7 @@ export struct privacyDialog {
 
   build() {
     Column() {
-      if (this.hasPrepared && this.verify(this.reqPerms[this.count])) {
+      if ((this.initStatus != Constants.INIT_NEED_TO_WAIT) && this.verify(this.reqPerms[this.count])) {
         Image(this.grantGroups[this.count].icon)
           .width(Constants.DIALOG_ICON_WIDTH)
           .height(Constants.DIALOG_ICON_HEIGHT)
@@ -60,6 +60,7 @@ export struct privacyDialog {
             Flex({ justifyContent: FlexAlign.Start }) {
               Text("是否允许" + this.appName + "访问" +
                 this.grantGroups[this.count].groupName).fontSize(Constants.DIALOG_REQ_FONT_SIZE)
+                .fontColor($r('app.color.secondary_font_color'))
                 .margin({
                   top: Constants.DIALOG_REQ_MARGIN_TOP,
                   left: Constants.DIALOG_REQ_MARGIN_LEFT
@@ -108,7 +109,7 @@ export struct privacyDialog {
     .width(Constants.DIALOG_WIDTH)
   }
   async verify(permission) {
-    if(this.count >= this.grantGroups.length) {
+    if((this.initStatus == Constants.INIT_NEED_TO_TERMINATED) || (this.count >= this.grantGroups.length)) {
       this.controller.close()
       this.aboutToDisappear()
       return false
@@ -119,10 +120,15 @@ export struct privacyDialog {
       return false
     }
     var acManager = abilityAccessCtrl.createAtManager()
-    var ret = await acManager.verifyAccessToken(this.accessTokenId, permission)
-    if(ret == 0) {
-      console.log("GrantAbility permission has already been granted:" + permission)
-      this.result[this.count] = 0
+    var flag = await acManager.getPermissionFlags(this.accessTokenId, permission)
+    if(flag == this.userFixedFlag) {
+      console.log("GrantAbility permission has been fixed:" + permission)
+      var ret = await acManager.verifyAccessToken(this.accessTokenId, permission)
+      if (ret == 0) {
+        this.result[this.count] = 0
+      } else {
+        this.result[this.count] = -1
+      }
       this.count ++
       return false
     }
@@ -130,13 +136,48 @@ export struct privacyDialog {
     return true
   }
 
+  getApplicationName(uid) {
+    bundle.getNameForUid(uid).then((data) => {
+      console.log("GrantAbility getApplicationName bundleName:" + data)
+      bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, USER_ID).then(applicationInfo => {
+        Resmgr.getResourceManager(data).then(item => {
+          item.getString(applicationInfo.labelId, (err, value) => {
+            if (value == undefined) {
+              this.appName = applicationInfo.label
+            } else {
+              this.appName = value
+            }
+            console.log("GrantAbility hap label:" + applicationInfo.label + ", value:"+this.appName)
+          })
+        })
+      }).catch(err => {
+        console.log("GrantAbility applicationInfo error :" + err)
+        this.initStatus = Constants.INIT_NEED_TO_TERMINATED
+      })
+    }).catch(err => {
+      console.log("GrantAbility getNameForUid error :" + JSON.stringify(err))
+      this.initStatus = Constants.INIT_NEED_TO_TERMINATED
+    })
+  }
+
   aboutToAppear() {
     this.count = 0;
-    this.hasPrepared = false;
+    this.initStatus = Constants.INIT_NEED_TO_WAIT
+    this.result = []
     featureAbility.getWant((err, want) => {
+      if (err.code != 0) {
+        console.log("GrantAbility featureAbility.getWant err:" + err)
+        this.initStatus = Constants.INIT_NEED_TO_TERMINATED
+        return
+      }
       this.reqPerms = want.parameters['ohos.user.grant.permission']
       this.accessTokenId = want.parameters['ohos.aafwk.param.callerToken']
-      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + " tokenId = " + this.accessTokenId)
+      if (this.reqPerms == undefined || this.accessTokenId == undefined || this.reqPerms.length == 0) {
+        console.log("GrantAbility invalid parameters")
+        this.initStatus = Constants.INIT_NEED_TO_TERMINATED
+        return
+      }
+      console.log("GrantAbility request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
       this.reqPerms.forEach(item => {
         var group = getPermissionGroup(item)
         if(!group) {
@@ -146,37 +187,19 @@ export struct privacyDialog {
           this.grantGroups.push(group)
         }
       })
-      this.hasPrepared = true;
-      bundle.getNameForUid(want.parameters['ohos.aafwk.param.callerUid'], (err, data) => {
-        if(err) {
-          console.log("GrantAbility getNameForUid error :" + err)
-          return
-        }
-        console.log("GrantAbility getNameForUid data :" + data)
-        bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, userId).then(applicationInfo => {
-          console.log("GrantAbility applicationInfo :" + JSON.stringify(applicationInfo))
-          Resmgr.getResourceManager(data).then(item => {
-            item.getString(applicationInfo.labelId, (err, value) => {
-              if (value == undefined) {
-                console.log("GrantAbility label :" )
-                this.appName = applicationInfo.label.replace('$string:', '')
-              } else {
-                console.log("GrantAbility labelValue :" + value)
-                this.appName = value
-              }
-            })
-          })
-        }).catch(err => {
-          console.log("GrantAbility applicationInfo11 error :" + err)
-        })
-      })
+      this.initStatus = Constants.INIT_NEED_TO_VERIFY
+      this.getApplicationName(want.parameters['ohos.aafwk.param.callerUid'])
     })
   }
 
   aboutToDisappear() {
-    console.log("GrantAbility result=" + JSON.stringify(this.result))
+    var ret: number = Constants.RESULT_SUCCESS
+    if (this.initStatus == Constants.INIT_NEED_TO_TERMINATED) {
+      ret = Constants.RESULT_FAILURE
+    }
+    console.log("GrantAbility code:" + ret + ", result=" + JSON.stringify(this.result))
     featureAbility.terminateSelfWithResult({
-      resultCode: 1,
+      resultCode: ret,
       want: {
         parameters: {
           "ohos.user.grant.permission": this.reqPerms,

@@ -300,7 +300,7 @@ export const groups: any[] = [
     "name": "OTHER",
     "groupName": "其他权限",
     "icon": $r('app.media.ic_more'),
-    "description": "访问您的位置信息",
+    "description": "访问您的其他权限",
     "permissions": [
       "ohos.permission.DISTRIBUTED_DATASYNC"
     ]
