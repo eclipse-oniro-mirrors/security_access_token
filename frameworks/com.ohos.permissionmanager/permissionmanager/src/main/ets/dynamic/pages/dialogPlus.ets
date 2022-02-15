@@ -33,13 +33,14 @@ struct dialogPlusPage {
       const result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
       var index = permissionList.indexOf(permission)
       if (index == -1) {
-        return;
-      }
-      if (result == 0) {
-        this.result[index] = 0
         console.log("GrantAbility grant permission:" + permission)
-      } else {
-        console.log("GrantAbility failed to grant permission:" + permission + " ret:" + result)
+      }else {
+        if (result == 0) {
+          this.result[index] = 0
+          console.log("GrantAbility grant permission:" + permission)
+        } else {
+          console.log("GrantAbility failed to grant permission:" + permission + " ret:" + result)
+        }
       }
     })
     this.count ++
@@ -65,3 +66,4 @@ struct dialogPlusPage {
   build() {
   }
 }
+
