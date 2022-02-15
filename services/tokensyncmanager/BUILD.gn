@@ -76,8 +76,6 @@ ohos_shared_library("token_sync_manager_service") {
     "//base/security/access_token/services/tokensyncmanager:token_sync.rc",
     "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
     "//foundation/aafwk/standard/interfaces/innerkits/base:base",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_base:appexecfwk_base",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core:appexecfwk_core",
     "//foundation/appexecfwk/standard/interfaces/innerkits/libeventhandler:libeventhandler",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
     "//third_party/zlib:libz",

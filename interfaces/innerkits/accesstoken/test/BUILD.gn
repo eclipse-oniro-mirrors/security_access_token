@@ -23,6 +23,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "//third_party/googletest/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
+    "//base/security/access_token/frameworks/common/include",
   ]
 
   sources = [ "unittest/src/accesstoken_kit_test.cpp" ]
@@ -34,6 +35,8 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
     "//utils/native/base:utils",
   ]
+
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
 }
 
 group("unittest") {

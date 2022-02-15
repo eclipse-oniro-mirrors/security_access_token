@@ -209,6 +209,11 @@ HapTokenInfo HapTokenInfoInner::GetHapInfoBasic() const
     return tokenInfoBasic_;
 }
 
+void HapTokenInfoInner::SetPermissionPolicySet(std::shared_ptr<PermissionPolicySet>& policySet)
+{
+    permPolicySet_ = policySet;
+}
+
 bool HapTokenInfoInner::IsRemote() const
 {
     return isRemote_;

@@ -196,19 +196,24 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
 void PermissionManager::UpdateTokenPermissionState(
     AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag)
 {
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return;
+    }
+    if (infoPtr->IsRemote()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
+        return;
+    }
+
+    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
 
     permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (infoPtr != nullptr && !infoPtr->IsRemote()) {
-        TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
-    }
-    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 }
 
 void PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
@@ -256,8 +261,17 @@ void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::strin
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return;
+    }
+    if (infoPtr->IsRemote()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not clear.");
+        return;
+    }
+
+    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
@@ -272,7 +286,6 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         isGranted = (permDef.grantMode == SYSTEM_GRANT) ? true : false;
         permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, DEFAULT_PERMISSION_FLAGS);
     }
-    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
 }
 
 std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)
