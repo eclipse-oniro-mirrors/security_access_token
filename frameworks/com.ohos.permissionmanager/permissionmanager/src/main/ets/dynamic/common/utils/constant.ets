@@ -39,5 +39,13 @@ export default class Constants {
 
   static DIALOG_BORDER_RADIUS = 24;
   static DIALOG_HEIGHT = 186;
-  static DIALOG_WIDTH = 336;
+  static DIALOG_WIDTH = "100%";
+
+  // initial check status
+  static INIT_NEED_TO_WAIT = 0
+  static INIT_NEED_TO_VERIFY = 1
+  static INIT_NEED_TO_TERMINATED = 2
+
+  static RESULT_SUCCESS = 1
+  static RESULT_FAILURE = 0
 }
