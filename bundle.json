@@ -20,6 +20,7 @@
     "ram": "5102KB",
     "deps": {
       "components": [
+        "ability_base",
         "hiviewdfx_hilog_native",
         "ipc_core",
         "ans_standard",
