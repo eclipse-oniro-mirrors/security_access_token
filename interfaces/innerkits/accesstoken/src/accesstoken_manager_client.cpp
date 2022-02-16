@@ -184,7 +184,7 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return TOKEN_INVALID;
     }
-    return (ATokenTypeEnum)(proxy->GetTokenType(tokenID));
+    return static_cast<ATokenTypeEnum>(proxy->GetTokenType(tokenID));
 }
 
 int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
@@ -389,12 +389,11 @@ sptr<IAccessTokenManager> AccessTokenManagerClient::GetProxy()
                 return nullptr;
             }
 
-            auto proxy = iface_cast<IAccessTokenManager>(accesstokenSa);
-            if (proxy == nullptr) {
+            proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
+            if (proxy_ == nullptr) {
                 ACCESSTOKEN_LOG_DEBUG(LABEL, "iface_cast get null");
                 return nullptr;
             }
-            proxy_ = proxy;
         }
     }
     return proxy_;
