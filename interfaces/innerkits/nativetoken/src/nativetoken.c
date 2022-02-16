@@ -83,7 +83,7 @@ void FreeDcaps(char *dcaps[MAX_DCAPS_NUM], int32_t num)
     }
 }
 
-int32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+uint32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
     if (cJSON_IsString(processNameJson) == 0 || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
@@ -98,7 +98,7 @@ int32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-int32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+uint32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *tokenIdJson = cJSON_GetObjectItem(cjsonItem, TOKENID_KEY_NAME);
     if ((cJSON_IsNumber(tokenIdJson) == 0) || (cJSON_GetNumberValue(tokenIdJson) <= 0)) {
@@ -109,7 +109,7 @@ int32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-int32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *aplJson = cJSON_GetObjectItem(cjsonItem, APL_KEY_NAME);
     if (cJSON_IsNumber(aplJson) == 0) {
@@ -125,7 +125,7 @@ int32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-int32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+uint32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *dcapsJson = cJSON_GetObjectItem(cjsonItem, DCAPS_KEY_NAME);
     int32_t dcapSize = cJSON_GetArraySize(dcapsJson);
@@ -161,7 +161,7 @@ int32_t GetTokenList(const cJSON *object)
 {
     int32_t arraySize;
     int32_t i;
-    int ret;
+    uint32_t ret;
     NativeTokenList *tmp = NULL;
 
     if (object == NULL) {
@@ -186,7 +186,7 @@ int32_t GetTokenList(const cJSON *object)
         ret |= GetDcapsInfoFromJson(cjsonItem, tmp);
         if (ret != ATRET_SUCCESS) {
             free(tmp);
-            return ret;
+            return ATRET_FAILED;
         }
 
         tmp->next = g_tokenListHead->next;
@@ -302,13 +302,13 @@ int32_t NeedSetUidGid(int16_t *uid, int16_t *gid, int *needSet)
         return ATRET_SUCCESS;
     }
     if (errno != ENOENT) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat %s is invalid %d.",
-                              __func__, TOKEN_ID_CFG_FILE_PATH, errno);
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat file path is invalid %d.",
+                              __func__, errno);
         return ATRET_FAILED;
     }
     if (stat(TOKEN_ID_CFG_DIR_PATH, &buf) != 0) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat %s is invalid %d.",
-                              __func__, TOKEN_ID_CFG_DIR_PATH, errno);
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat folder path is invalid %d.",
+                              __func__, errno);
         return ATRET_FAILED;
     }
     *uid = buf.st_uid;
@@ -474,8 +474,8 @@ void SaveTokenIdToCfg(const NativeTokenList *curr)
     return;
 }
 
-int32_t CheckProcessInfo(const char *processname, const char **dcaps,
-                         int32_t dacpNum, const char *aplStr, int32_t *aplRet)
+uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
+                          int32_t dacpNum, const char *aplStr, int32_t *aplRet)
 {
     if ((processname == NULL) || strlen(processname) > MAX_PROCESS_NAME_LEN
         || strlen(processname) == 0) {
@@ -514,8 +514,8 @@ int32_t NativeTokenIdCheck(NativeAtId tokenId)
     return 0;
 }
 
-static int32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
-                                           int32_t dacpNumIn, int32_t aplIn, NativeAtId *tokenId)
+static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
+                                            int32_t dacpNumIn, int32_t aplIn, NativeAtId *tokenId)
 {
     NativeTokenList *tokenNode;
     NativeAtId id;
@@ -575,7 +575,7 @@ int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int
     return 0;
 }
 
-int32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
+uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
 {
     tokenNode->apl = aplIn;
 
@@ -597,7 +597,7 @@ int32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, 
     return ATRET_SUCCESS;
 }
 
-int32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *record)
+uint32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *record)
 {
     cJSON *itemApl =  cJSON_CreateNumber(tokenNode->apl);
     if (itemApl == NULL) {
@@ -634,7 +634,7 @@ int32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *record)
     return ATRET_SUCCESS;
 }
 
-int32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *record)
+uint32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *record)
 {
     int32_t arraySize = cJSON_GetArraySize(record);
     for (int32_t i = 0; i < arraySize; i++) {
@@ -656,14 +656,14 @@ int32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *record
     return ATRET_FAILED;
 }
 
-int32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
+uint32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
 {
     cJSON *record = NULL;
     char *fileBuff = NULL;
+    uint32_t ret;
 
-    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
-    if (ret != ATRET_SUCCESS) {
-        return ret;
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+        return ATRET_FAILED;
     }
 
     if (fileBuff == NULL) {
@@ -702,7 +702,7 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
         return 0;
     }
 
-    int32_t ret = CheckProcessInfo(processname, dcaps, dacpNum, aplStr, &apl);
+    uint32_t ret = CheckProcessInfo(processname, dcaps, dacpNum, aplStr, &apl);
     if (ret != ATRET_SUCCESS) {
         return 0;
     }
