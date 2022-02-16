@@ -16,11 +16,11 @@
 #ifndef ACCESSTOKEN_NATIVE_TOKEN_INFO_INNER_H
 #define ACCESSTOKEN_NATIVE_TOKEN_INFO_INNER_H
 
-#include "access_token.h"
-#include "native_token_info.h"
 #include <string>
 #include <vector>
+#include "access_token.h"
 #include "generic_values.h"
+#include "native_token_info.h"
 
 namespace OHOS {
 namespace Security {

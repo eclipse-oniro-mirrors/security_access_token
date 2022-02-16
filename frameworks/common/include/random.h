@@ -22,7 +22,7 @@ extern "C" {
 #endif
 #endif
 
-unsigned int GetRandomUint32();
+unsigned int GetRandomUint32(void);
 
 #ifdef __cplusplus
 #if __cplusplus
