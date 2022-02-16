@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
+#ifndef DATA_VALIDATOR_H
+#define DATA_VALIDATOR_H
+
 #include <string>
 #include "access_token.h"
 
-#ifndef DATA_VALIDATOR_H
-#define DATA_VALIDATOR_H
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

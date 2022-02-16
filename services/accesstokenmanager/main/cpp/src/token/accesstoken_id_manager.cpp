@@ -14,9 +14,6 @@
  */
 
 #include "accesstoken_id_manager.h"
-
-#include <fstream>
-
 #include "accesstoken_log.h"
 #include "data_validator.h"
 #include "random.h"
