@@ -2,7 +2,7 @@
   "color": [
     {
       "name": "text_color",
-      "value": "#182331"
+      "value": "#E5000000"
     },
     {
       "name": "background_color",
@@ -10,7 +10,7 @@
     },
     {
       "name": "title_text_color",
-      "value": "#182431"
+      "value": "#E5000000"
     },
     {
       "name": "active_background_color",
@@ -38,11 +38,43 @@
     },
     {
       "name": "secondary_font_color",
-      "value": "#808080"
+      "value": "#66000000"
     },
     {
       "name": "toggle_color",
       "value": "#409eff"
+    },
+    {
+      "name": "color_Primary",
+      "value": "#E5000000"
+    },
+    {
+      "name": "color_Secondary",
+      "value": "#99000000"
+    },
+    {
+      "name": "color_Tertiary",
+      "value": "#66000000"
+    },
+    {
+      "name": "color_Fourth",
+      "value": "#33000000"
+    },
+    {
+      "name": "selected_Color",
+      "value": "#ffffff"
+    },
+    {
+      "name": "popup_Color",
+      "value": "#FFFAF0"
+    },
+    {
+      "name": "selected_Background_Color",
+      "value": "#CCCCCC"
+    },
+    {
+      "name": "popup_Background_Color",
+      "value": "#D2B48C"
     }
   ]
 }

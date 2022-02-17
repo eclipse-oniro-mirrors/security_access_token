@@ -181,8 +181,15 @@ export const permissionGroups: any[] = [
     "label": "允许不同设备间数据交换",
     "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
     "groupId": 11
+  },
+  {
+    "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
+    "groupName": "OTHERA",
+    "label": "允许不同设备间数据交换A",
+    "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
+    "groupId": 11
   }
-]
+];
 
 export const groups: any[] = [
   {
@@ -300,12 +307,40 @@ export const groups: any[] = [
     "name": "OTHER",
     "groupName": "其他权限",
     "icon": $r('app.media.ic_more'),
-    "description": "访问您的其他权限",
+    "description": "访问您的其它权限",
     "permissions": [
       "ohos.permission.DISTRIBUTED_DATASYNC"
+    ],
+    "children":[
+      {
+        "name": "OTHER",
+        "groupName": "其他权限A",
+        "icon": $r('app.media.ic_more'),
+        "description": "访问您的其它权限",
+        "permissions": [
+          "ohos.permission.DISTRIBUTED_DATASYNC",
+          "ohos.permission.DISTRIBUTED_DATASYNC"
+        ]
+      }
     ]
   }
-]
+];
+
+export const permissionGroupPermissions: object = {
+  "LOCATION": ["ohos.permission.LOCATION_IN_BACKGROUND","ohos.permission.LOCATION"],
+  "CAMERA": ["ohos.permission.CAMERA"],
+  "MICROPHONE": ["ohos.permission.MICROPHONE"],
+  "PHONE": ["ohos.permission.ANSWER_CALL","ohos.permission.MANAGE_VOICEMAIL"],
+  "SMS": ["ohos.permission.READ_CELL_MESSAGES", "ohos.permission.READ_MESSAGES", "ohos.permission.RECEIVE_MMS", "ohos.permission.RECEIVE_SMS", "ohos.permission.RECEIVE_WAP_MESSAGES", "ohos.permission.SEND_MESSAGES"],
+  "CONTACTS": ["ohos.permission.READ_CONTACTS", "ohos.permission.WRITE_CONTACTS"],
+  "CALL_LOG": ["ohos.permission.READ_CALL_LOG", "ohos.permission.WRITE_CALL_LOG"],
+  "MEDIA": ["ohos.permission.MEDIA_LOCATION", "ohos.permission.READ_MEDIA", "ohos.permission.WRITE_MEDIA"],
+  "CALENDAR": ["ohos.permission.READ_CALENDAR", "ohos.permission.WRITE_CALENDAR"],
+  "SPORT": ["ohos.permission.ACTIVITY_MOTION"],
+  "HEALTH": ["ohos.permission.READ_HEALTH_DATA"],
+  "OTHER": ["ohos.permission.DISTRIBUTED_DATASYNCC","ohos.permission.DISTRIBUTED_DATASYNCD"]
+};
+
 
 export const userGrantPermissions: string[] = [
   "ohos.permission.LOCATION_IN_BACKGROUND",
@@ -332,4 +367,88 @@ export const userGrantPermissions: string[] = [
   "ohos.permission.ACTIVITY_MOTION",
   "ohos.permission.READ_HEALTH_DATA",
   "ohos.permission.DISTRIBUTED_DATASYNC"
-]
+];
+
+export const permissionDescriptions: object = {
+  "位置信息": "允许应用在后台运行时获取位置信息。" ,
+  "相机": "允许应用拍摄照片和视频。" ,
+  "麦克风": "允许应用打开或关闭录音通路。" ,
+  "电话": "允许应用接听电话。" ,
+  "信息": "允许应用发送短彩信。" ,
+  "通讯录": "允许应用新建/修改/删除设备上存储的联系人信息。" ,
+  "通话记录": "允许新建/修改/删除设备上的通话记录信息。" ,
+  "媒体和文件": "允许应用访问户媒体文件，如视频、音频、图片等。" ,
+  "日历": "允许应用修建/修改/删除日历。" ,
+  "健身运动": "允许应用程序读取用户的运动状态。" ,
+  "身体传感器": "允许应用程序读取用户的健康数据。" ,
+  "其他权限": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。"
+};
+
+export const permissionPermissionGroup: object = {
+  "ohos.permission.LOCATION_IN_BACKGROUND": "LOCATION",
+  "ohos.permission.LOCATION": "LOCATION",
+  "ohos.permission.CAMERA": "CAMERA",
+  "ohos.permission.MICROPHONE": "MICROPHONE",
+  "ohos.permission.ANSWER_CALL": "PHONE",
+  "ohos.permission.MANAGE_VOICEMAIL": "PHONE",
+  "ohos.permission.READ_CELL_MESSAGES": "SMS",
+  "ohos.permission.READ_MESSAGES": "SMS",
+  "ohos.permission.RECEIVE_MMS": "SMS",
+  "ohos.permission.RECEIVE_SMS": "SMS",
+  "ohos.permission.RECEIVE_WAP_MESSAGES": "SMS",
+  "ohos.permission.SEND_MESSAGES": "SMS",
+  "ohos.permission.READ_CONTACTS": "CONTACTS",
+  "ohos.permission.WRITE_CONTACTS": "CONTACTS",
+  "ohos.permission.READ_CALL_LOG": "CALL_LOG",
+  "ohos.permission.WRITE_CALL_LOG": "CALL_LOG",
+  "ohos.permission.MEDIA_LOCATION": "MEDIA",
+  "ohos.permission.READ_MEDIA": "MEDIA",
+  "ohos.permission.WRITE_MEDIA": "MEDIA",
+  "ohos.permission.READ_CALENDAR": "CALENDAR",
+  "ohos.permission.WRITE_CALENDAR": "CALENDAR",
+  "ohos.permission.ACTIVITY_MOTION": "SPORT",
+  "ohos.permission.READ_HEALTH_DATA": "HEALTH",
+  "ohos.permission.DISTRIBUTED_DATASYNC": "OTHER"
+};
+
+export const permissionGroupIds: object = {
+  "ohos.permission.LOCATION_IN_BACKGROUND": "0",
+  "ohos.permission.LOCATION": "0",
+  "ohos.permission.CAMERA": "1",
+  "ohos.permission.MICROPHONE": "2",
+  "ohos.permission.ANSWER_CALL": "3",
+  "ohos.permission.MANAGE_VOICEMAIL": "3",
+  "ohos.permission.READ_CELL_MESSAGES": "4",
+  "ohos.permission.READ_MESSAGES": "4",
+  "ohos.permission.RECEIVE_MMS": "4",
+  "ohos.permission.RECEIVE_SMS": "4",
+  "ohos.permission.RECEIVE_WAP_MESSAGES": "4",
+  "ohos.permission.SEND_MESSAGES": "4",
+  "ohos.permission.READ_CONTACTS": "5",
+  "ohos.permission.WRITE_CONTACTS": "5",
+  "ohos.permission.READ_CALL_LOG": "6",
+  "ohos.permission.WRITE_CALL_LOG": "6",
+  "ohos.permission.MEDIA_LOCATION": "7",
+  "ohos.permission.READ_MEDIA": "7",
+  "ohos.permission.WRITE_MEDIA": "7",
+  "ohos.permission.READ_CALENDAR": "8",
+  "ohos.permission.WRITE_CALENDAR": "8",
+  "ohos.permission.ACTIVITY_MOTION": "9",
+  "ohos.permission.READ_HEALTH_DATA": "10",
+  "ohos.permission.DISTRIBUTED_DATASYNC": "11"
+};
+
+export const orderGroup: string[] = [
+  "位置信息",
+  "相机",
+  "麦克风",
+  "电话",
+  "信息",
+  "通讯录",
+  "通话记录",
+  "媒体和文件",
+  "日历",
+  "健身运动",
+  "身体传感器",
+  "其他权限"
+];

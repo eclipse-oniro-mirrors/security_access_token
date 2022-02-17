@@ -24,6 +24,15 @@
     "abilities": [
       {
         "visible": true,
+        "name": "com.ohos.permissionmanager.MainAbility",
+        "description": "$string:mainability_description",
+        "label": "$string:permissionmanager_MainAbility",
+        "type": "page",
+        "launchType": "standard",
+        "srcPath": "default"
+      },
+      {
+        "visible": true,
         "name": "com.ohos.permissionmanager.GrantAbility",
         "description": "$string:grantability_description",
         "label": "$string:permissionmanager_GrantAbility",
@@ -33,6 +42,25 @@
       }
     ],
     "js": [
+      {
+        "mode": {
+          "syntax": "ets",
+          "type": "pageAbility"
+        },
+        "pages": [
+          "pages/authority-management",
+          "pages/application-secondary",
+          "pages/authority-secondary",
+          "pages/authority-tertiary",
+          "pages/application-tertiary",
+          "pages/other-permissions"
+        ],
+        "name": "default",
+        "window": {
+          "designWidth": 720,
+          "autoDesignWidth": false
+        }
+      },
       {
         "mode": {
           "syntax": "ets",
