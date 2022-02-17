@@ -48,7 +48,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -77,7 +77,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -112,7 +112,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -152,7 +152,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -191,7 +191,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -227,7 +227,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -263,7 +263,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -291,7 +291,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -326,7 +326,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -358,7 +358,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -387,7 +387,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -419,7 +419,7 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
         return RET_FAILED;
     }
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -455,7 +455,7 @@ AccessTokenID AccessTokenManagerProxy::GetHapTokenID(int userID, const std::stri
         return 0;
     }
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -488,7 +488,7 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
         return 0;
     }
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -516,7 +516,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -550,7 +550,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -590,7 +590,7 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenID tokenID,
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -618,7 +618,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -649,7 +649,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoPa
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -689,7 +689,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -725,7 +725,7 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -756,7 +756,7 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -783,7 +783,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -807,7 +807,7 @@ int AccessTokenManagerProxy::DumpToken(std::string& dumpInfo)
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");

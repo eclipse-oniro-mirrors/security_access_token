@@ -46,7 +46,7 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -74,7 +74,7 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
@@ -106,7 +106,7 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
     }
 
     MessageParcel reply;
-    MessageOption option;
+    MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
