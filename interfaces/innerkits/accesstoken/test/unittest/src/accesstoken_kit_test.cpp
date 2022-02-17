@@ -26,14 +26,14 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitTest"};
 
-static PermissionStateFull g_grantPermissionReq = {
+PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
     .resDeviceID = {"device"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
-static PermissionStateFull g_revokePermissionReq = {
+PermissionStateFull g_revokePermissionReq = {
     .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
     .resDeviceID = {"device"},
@@ -41,7 +41,7 @@ static PermissionStateFull g_revokePermissionReq = {
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 
-static PermissionDef g_infoManagerTestPermDef1 = {
+PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
@@ -52,7 +52,7 @@ static PermissionDef g_infoManagerTestPermDef1 = {
     .availableLevel = APL_NORMAL
 };
 
-static PermissionDef g_infoManagerTestPermDef2 = {
+PermissionDef g_infoManagerTestPermDef2 = {
     .permissionName = "ohos.permission.test2",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
@@ -63,7 +63,7 @@ static PermissionDef g_infoManagerTestPermDef2 = {
     .availableLevel = APL_NORMAL
 };
 
-static PermissionStateFull g_infoManagerTestState1 = {
+PermissionStateFull g_infoManagerTestState1 = {
     .grantFlags = {1},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .isGeneral = true,
@@ -71,7 +71,7 @@ static PermissionStateFull g_infoManagerTestState1 = {
     .resDeviceID = {"local"}
 };
 
-static PermissionStateFull g_infoManagerTestState2 = {
+PermissionStateFull g_infoManagerTestState2 = {
     .permissionName = "ohos.permission.test2",
     .isGeneral = false,
     .grantFlags = {1, 2},
@@ -79,28 +79,28 @@ static PermissionStateFull g_infoManagerTestState2 = {
     .resDeviceID = {"device 1", "device 2"}
 };
 
-static HapInfoParams g_infoManagerTestInfoParms = {
+HapInfoParams g_infoManagerTestInfoParms = {
     .bundleName = "accesstoken_test",
     .userID = 1,
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPrams = {
+HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
 
-static HapInfoParams g_infoManagerTestInfoParmsBak = {
+HapInfoParams g_infoManagerTestInfoParmsBak = {
     .bundleName = "accesstoken_test",
     .userID = 1,
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPramsBak = {
+HapPolicyParams g_infoManagerTestPolicyPramsBak = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},

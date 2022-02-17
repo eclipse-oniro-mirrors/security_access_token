@@ -38,7 +38,10 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenAttr));
 
-    int dcapSize = (int)(this->nativeTokenInfoParams.dcap).size();
+    if ((this->nativeTokenInfoParams.dcap).size() > INT32_MAX) {
+        return false;
+    }
+    int dcapSize = static_cast<int>((this->nativeTokenInfoParams.dcap).size());
     RETURN_IF_FALSE(out.WriteInt32(dcapSize));
 
     for (auto dcapItem : this->nativeTokenInfoParams.dcap) {
