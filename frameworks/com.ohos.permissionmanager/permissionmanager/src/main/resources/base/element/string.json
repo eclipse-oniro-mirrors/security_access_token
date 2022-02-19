@@ -25,8 +25,16 @@
       "value": "eTS_Empty Ability"
     },
     {
-      "name": "settings",
-      "value": "设置"
+      "name": "no_permission",
+      "value": "暂无权限"
+    },
+    {
+      "name": "no_data",
+      "value": "暂无数据"
+    },
+    {
+      "name": "access_permission",
+      "value": "访问权限"
     },
     {
       "name": "permission_access_record",
@@ -37,8 +45,8 @@
       "value": "权限管理"
     },
     {
-      "name": "privacy",
-      "value": "隐私"
+      "name": "authority_tertiary_description",
+      "value": "个应用获取此权限"
     },
     {
       "name": "authority_message",
@@ -49,20 +57,20 @@
       "value": "其它权限"
     },
     {
-      "name": "app_name",
-      "value": "应用名称"
+      "name": "application",
+      "value": "应用"
     },
     {
-      "name": "location_info",
-      "value": "位置信息"
+      "name": "authority",
+      "value": "权限"
     },
     {
       "name": "media_document",
       "value": "媒体和文件"
     },
     {
-      "name": "calendar",
-      "value": "日历"
+      "name": "textInput_placeholder",
+      "value": "搜索应用"
     },
     {
       "name": "allowed",
@@ -83,6 +91,10 @@
     {
       "name": "entry_GrantAbility",
       "value": "entry_GrantAbility"
+    },
+    {
+      "name": "Authorization_failed",
+      "value": "授权失败！"
     }
   ]
 }
