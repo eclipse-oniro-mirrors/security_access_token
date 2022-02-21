@@ -37,7 +37,7 @@ NativeTokenInfoInner::NativeTokenInfoInner() : isRemote_(false)
     tokenInfoBasic_.apl = APL_NORMAL;
 }
 
-NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native)
+NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native) : isRemote_(false)
 {
     tokenInfoBasic_ = native;
 }
@@ -190,7 +190,7 @@ void NativeTokenInfoInner::ToString(std::string& info) const
     info.append(R"(, "processName": ")" + tokenInfoBasic_.processName + R"(")");
     info.append(R"(, "apl": )" + std::to_string(tokenInfoBasic_.apl));
     info.append(R"(, "dcap": ")" + DcapToString(tokenInfoBasic_.dcap) + R"(")");
-    info.append(R"(, "isRemote": )" + std::to_string(isRemote_));
+    info.append(R"(, "isRemote": )" + std::to_string(isRemote_? 1 : 0));
     info.append("}");
 }
 } // namespace AccessToken

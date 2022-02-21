@@ -347,6 +347,19 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
     return res;
 }
 
+AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return RET_FAILED;
+    }
+
+    AccessTokenID res = proxy->GetRemoteNativeTokenID(deviceID, tokenID);
+    return res;
+}
+
 int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
@@ -372,29 +385,46 @@ int AccessTokenManagerClient::DumpToken(std::string& dumpInfo)
     return res;
 }
 
+void AccessTokenManagerClient::InitProxy()
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    if (proxy_ == nullptr) {
+        auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (sam == nullptr) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
+            return;
+        }
+        auto accesstokenSa = sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
+        if (accesstokenSa == nullptr) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null",
+                IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
+            return;
+        }
+
+        serviceDeathObserver_ = new (std::nothrow) AccessTokenDeathRecipient();
+        if (serviceDeathObserver_ != nullptr) {
+            accesstokenSa->AddDeathRecipient(serviceDeathObserver_);
+        }
+        proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
+        if (proxy_ == nullptr) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "iface_cast get null");
+        }
+    }
+}
+
+void AccessTokenManagerClient::OnRemoteDiedHandle()
+{
+    {
+        std::lock_guard<std::mutex> lock(proxyMutex_);
+        proxy_ = nullptr;
+    }
+    InitProxy();
+}
+
 sptr<IAccessTokenManager> AccessTokenManagerClient::GetProxy()
 {
     if (proxy_ == nullptr) {
-        std::lock_guard<std::mutex> lock(proxyMutex_);
-        if (proxy_ == nullptr) {
-            auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-            if (sam == nullptr) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
-                return nullptr;
-            }
-            auto accesstokenSa = sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
-            if (accesstokenSa == nullptr) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null",
-                    IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
-                return nullptr;
-            }
-
-            proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
-            if (proxy_ == nullptr) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "iface_cast get null");
-                return nullptr;
-            }
-        }
+        InitProxy();
     }
     return proxy_;
 }

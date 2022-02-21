@@ -69,6 +69,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         mapPtr = &device.MappingTokenIDPairMap_;
     } else {
         AccessTokenRemoteDevice device;
+        device.DeviceID_ = deviceID;
         remoteDeviceMap_[deviceID] = device;
         mapPtr = &remoteDeviceMap_[deviceID].MappingTokenIDPairMap_;
     }

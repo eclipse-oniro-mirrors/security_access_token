@@ -355,6 +355,20 @@ void AccessTokenManagerStub::DeleteRemoteTokenInner(MessageParcel& data, Message
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAuthorizedCalling()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::string deviceID = data.ReadString();
+    AccessTokenID tokenID = data.ReadUint32();
+
+    AccessTokenID result = this->GetRemoteNativeTokenID(deviceID, tokenID);
+    reply.WriteUint32(result);
+}
+
 void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAuthorizedCalling()) {
@@ -436,6 +450,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::DeleteRemoteTokenInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =
         &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
+        &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP)] =
         &AccessTokenManagerStub::DumpTokenInner;
 }

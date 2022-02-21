@@ -321,6 +321,13 @@ int AccessTokenKit::DeleteRemoteDeviceTokens(const std::string& deviceID)
     return AccessTokenManagerClient::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
 
+AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, deviceID.c_str(), tokenID);
+    return AccessTokenManagerClient::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
+}
+
 int AccessTokenKit::DumpToken(std::string& dumpInfo)
 {
     return AccessTokenManagerClient::GetInstance().DumpToken(dumpInfo);

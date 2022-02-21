@@ -100,7 +100,6 @@ void SoftBusManager::Initialize()
             // REASON_EXIST
             if ((ret != Constant::SUCCESS) && (ret != REASON_EXIST)) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: CreateSessionServer error, result: %{public}d", ret);
-
                 std::this_thread::sleep_for(sleepTime);
                 continue;
             }

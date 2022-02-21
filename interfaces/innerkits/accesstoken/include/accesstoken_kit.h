@@ -59,6 +59,7 @@ public:
     static int SetRemoteNativeTokenInfo(const std::string& deviceID,
         std::vector<NativeTokenInfo>& nativeTokenInfoList);
     static int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
+    static AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);
     static int DumpToken(std::string& dumpInfo);
 };

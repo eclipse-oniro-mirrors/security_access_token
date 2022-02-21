@@ -59,6 +59,7 @@ private:
     void SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void  DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
+    void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void DumpTokenInner(MessageParcel& data, MessageParcel& reply);
 
