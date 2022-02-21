@@ -52,6 +52,7 @@ public:
     std::string GetBundleName() const;
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;
+    void SetTokenBaseInfo(const HapTokenInfo& baseInfo);
     void SetPermissionPolicySet(std::shared_ptr<PermissionPolicySet>& policySet);
     void ToString(std::string& info) const;
     bool IsRemote() const;

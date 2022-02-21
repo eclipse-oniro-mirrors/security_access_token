@@ -209,6 +209,11 @@ HapTokenInfo HapTokenInfoInner::GetHapInfoBasic() const
     return tokenInfoBasic_;
 }
 
+void HapTokenInfoInner::SetTokenBaseInfo(const HapTokenInfo& baseInfo)
+{
+    tokenInfoBasic_ = baseInfo;
+}
+
 void HapTokenInfoInner::SetPermissionPolicySet(std::shared_ptr<PermissionPolicySet>& policySet)
 {
     permPolicySet_ = policySet;

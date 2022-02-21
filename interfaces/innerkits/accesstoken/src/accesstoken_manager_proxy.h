@@ -64,6 +64,7 @@ public:
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
         std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel) override;
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
+    AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
 
     int DumpToken(std::string& dumpInfo) override;

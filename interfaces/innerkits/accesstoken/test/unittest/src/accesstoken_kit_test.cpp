@@ -2936,7 +2936,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 
 /**
  * @tc.name: GetHapTokenInfoFromRemote002
- * @tc.desc: get normal mapping tokenInfo
+ * @tc.desc: get remote mapping tokenInfo
  * @tc.type: FUNC
  * @tc.require:AR000GK6TA
  */
@@ -2986,7 +2986,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
 
 /**
  * @tc.name: GetHapTokenInfoFromRemote003
- * @tc.desc: get normal mapping tokenInfo
+ * @tc.desc: get wrong tokenInfo
  * @tc.type: FUNC
  * @tc.require:AR000GK6TA
  */
@@ -2996,4 +2996,70 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote003, TestSize.Level1)
     HapTokenInfoForSync infoSync;
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(0, infoSync);
     ASSERT_NE(ret, RET_SUCCESS);
+}
+
+/**
+ * @tc.name: AllocLocalTokenID001
+ * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T5
+ */
+HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "AllocLocalTokenID001 start.");
+    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
+    HapTokenInfo baseInfo = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .userID = 1,
+        .bundleName = "com.ohos.access_token",
+        .instIndex = 1,
+        .appID = "testtesttesttest",
+        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .tokenID = 0x20100000,
+        .tokenAttr = 0
+    };
+
+    PermissionStateFull infoManagerTestState = {
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.test1",
+        .resDeviceID = {"local"}};
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(infoManagerTestState);
+
+    HapTokenInfoForSync remoteTokenInfo = {
+        .baseInfo = baseInfo,
+        .permStateList =permStateList
+    };
+
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    ASSERT_NE(mapID, 0);
+}
+
+/**
+ * @tc.name: GetAllNativeTokenInfo001
+ * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T6
+ */
+HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
+}
+
+/**
+ * @tc.name: SetRemoteNativeTokenInfo001
+ * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T6
+ */
+HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
 }

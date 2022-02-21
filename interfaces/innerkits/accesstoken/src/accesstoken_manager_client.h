@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "accesstoken_death_recipient.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info.h"
@@ -63,8 +64,10 @@ public:
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
         std::vector<NativeTokenInfo>& nativeTokenInfoList);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
+    AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
     int DumpToken(std::string& dumpInfo);
+    void OnRemoteDiedHandle();
 
 private:
     AccessTokenManagerClient();
@@ -72,6 +75,8 @@ private:
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
     sptr<IAccessTokenManager> proxy_ = nullptr;
+    sptr<AccessTokenDeathRecipient> serviceDeathObserver_ = nullptr;
+    void InitProxy();
     sptr<IAccessTokenManager> GetProxy();
 };
 } // namespace AccessToken

@@ -39,6 +39,7 @@ ohos_shared_library("libaccesstoken_sdk") {
   ]
 
   sources = [
+    "src/accesstoken_death_recipient.cpp",
     "src/accesstoken_kit.cpp",
     "src/accesstoken_manager_client.cpp",
     "src/accesstoken_manager_proxy.cpp",

@@ -774,6 +774,37 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     return result;
 }
 
+AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteString(deviceID)) {
+        return 0;
+    }
+
+    if (!data.WriteUint32(tokenID)) {
+        return 0;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return 0;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_REMOTE_TOKEN), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        return 0;
+    }
+
+    AccessTokenID result = reply.ReadUint32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     MessageParcel data;

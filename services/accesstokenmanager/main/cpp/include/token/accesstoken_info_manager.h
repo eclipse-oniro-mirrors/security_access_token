@@ -62,6 +62,7 @@ public:
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
         std::vector<NativeTokenInfo>& nativeTokenInfoList);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
+    AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
 
 private:

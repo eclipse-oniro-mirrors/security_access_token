@@ -59,15 +59,15 @@ public:
         AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParcel& policyParcel) = 0;
 
     virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
-        HapTokenInfoForSyncParcel& hapSyncParcel)  = 0;
+        HapTokenInfoForSyncParcel& hapSyncParcel) = 0;
     virtual int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes)  = 0;
     virtual int SetRemoteHapTokenInfo(const std::string& deviceID,
-        HapTokenInfoForSyncParcel& hapSyncParcel)  = 0;
+        HapTokenInfoForSyncParcel& hapSyncParcel) = 0;
     virtual int SetRemoteNativeTokenInfo(const std::string& deviceID,
         std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)  = 0;
-    virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)  = 0;
+    virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) = 0;
+    virtual AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
-
     virtual int DumpToken(std::string& dumpInfo) = 0;
 
     enum class InterfaceCode {
@@ -95,6 +95,7 @@ public:
         SET_REMOTE_NATIVE_TOKEN_INFO = 0xff2a,
         DELETE_REMOTE_TOKEN_INFO = 0xff2b,
         DELETE_REMOTE_DEVICE_TOKEN = 0xff2c,
+        GET_NATIVE_REMOTE_TOKEN = 0xff2f,
 
         DUMP = 0xff30,
     };
