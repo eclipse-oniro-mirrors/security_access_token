@@ -34,6 +34,7 @@ namespace AccessToken {
 #define ACCESSTOKEN_PERMISSION_REVOKE_SUCC 0
 #define VALUE_BUFFER_SIZE 128
 
+static thread_local napi_ref atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
 
 struct AtManagerAsyncContext {
@@ -74,8 +75,6 @@ private:
     static void RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionFlagsExcute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
-
-    static napi_ref constructorRef_;
 };
 }  // namespace AccessToken
 }  // namespace Security
