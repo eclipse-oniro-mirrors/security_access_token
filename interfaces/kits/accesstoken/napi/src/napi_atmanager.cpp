@@ -33,8 +33,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 } // namespace
 
-napi_ref NapiAtManager::constructorRef_;
-
 napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "enter init.");
@@ -55,7 +53,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     NAPI_CALL(env, napi_define_class(env, ATMANAGER_CLASS_NAME.c_str(), ATMANAGER_CLASS_NAME.size(),
         JsConstructor, nullptr, sizeof(properties) / sizeof(napi_property_descriptor), properties, &cons));
 
-    NAPI_CALL(env, napi_create_reference(env, cons, 1, &constructorRef_));
+    NAPI_CALL(env, napi_create_reference(env, cons, 1, &atManagerRef_));
     NAPI_CALL(env, napi_set_named_property(env, exports, ATMANAGER_CLASS_NAME.c_str(), cons));
 
     return exports;
@@ -79,11 +77,11 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     napi_value instance = nullptr;
     napi_value cons = nullptr;
 
-    if (napi_get_reference_value(env, constructorRef_, &cons) != napi_ok) {
+    if (napi_get_reference_value(env, atManagerRef_, &cons) != napi_ok) {
         return nullptr;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable constructorRef_ complete");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable atManagerRef_ complete");
 
     if (napi_new_instance(env, cons, 0, nullptr, &instance) != napi_ok) {
         return nullptr;
