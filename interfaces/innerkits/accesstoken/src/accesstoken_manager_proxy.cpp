@@ -66,6 +66,38 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     return result;
 }
 
+int AccessTokenManagerProxy::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return PERMISSION_DENIED;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
+        return PERMISSION_DENIED;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return PERMISSION_DENIED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::VERIFY_NATIVETOKEN), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+        return PERMISSION_DENIED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {

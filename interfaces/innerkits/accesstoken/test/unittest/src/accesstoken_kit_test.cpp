@@ -3063,3 +3063,35 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
 }
+
+HWTEST_F(AccessTokenKitTest, VerifyNativeToken001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyNativeToken001 start.");
+
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    dcaps[0] = "AT_CAP_01";
+    int dcapNum = 1;
+
+    char apl3[32];
+    strcpy(apl3, "system_core");
+    char apl2[32];
+    strcpy(apl2, "system_basic");
+    char apl1[32];
+    strcpy(apl1, "normal");
+
+    uint64_t tokenIdApl3 = GetAccessTokenId("ProcessNativeTokenInfos007_003", dcaps, dcapNum, apl3);
+    ASSERT_NE(tokenIdApl3, 0);
+    uint64_t tokenIdApl2 = GetAccessTokenId("ProcessNativeTokenInfos007_002", dcaps, dcapNum, apl2);
+    ASSERT_NE(tokenIdApl2, 0);
+    uint64_t tokenIdApl1 = GetAccessTokenId("ProcessNativeTokenInfos007_001", dcaps, dcapNum, apl1);
+    ASSERT_NE(tokenIdApl1, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenIdApl1 = %{public}llu.", tokenIdApl1);
+
+    const std::string permissionName = "ohos.permission.SEND_MESSAGES";
+    int ret = AccessTokenKit::VerifyNativeToken(tokenIdApl3, permissionName);
+    ASSERT_EQ(ret, PERMISSION_GRANTED);
+    ret = AccessTokenKit::VerifyNativeToken(tokenIdApl2, permissionName);
+    ASSERT_EQ(ret, PERMISSION_GRANTED);
+    ret = AccessTokenKit::VerifyNativeToken(tokenIdApl1, permissionName);
+    ASSERT_EQ(ret, PERMISSION_DENIED);
+}
