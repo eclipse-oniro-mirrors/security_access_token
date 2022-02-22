@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -832,29 +832,27 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     return result;
 }
 
-int AccessTokenManagerProxy::DumpToken(std::string& dumpInfo)
+void AccessTokenManagerProxy::DumpTokenInfo(std::string& dumpInfo)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
+    MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return RET_FAILED;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: remote service null.", __func__);
+        return;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP), data, reply, option);
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP_TOKENINFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return RET_FAILED;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s send request fail, result: %{public}d", __func__, requestResult);
+        return;
     }
 
     dumpInfo = reply.ReadString();
-    AccessTokenID result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
-    return result;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s get result from server dumpInfo = %{public}s", __func__, dumpInfo.c_str());
 }
 } // namespace AccessToken
 } // namespace Security

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -373,16 +373,15 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     return res;
 }
 
-int AccessTokenManagerClient::DumpToken(std::string& dumpInfo)
+void AccessTokenManagerClient::DumpTokenInfo(std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: proxy is null", __func__);
+        return;
     }
-    AccessTokenID res = proxy->DumpToken(dumpInfo);
-    return res;
+    proxy->DumpTokenInfo(dumpInfo);
 }
 
 void AccessTokenManagerClient::InitProxy()

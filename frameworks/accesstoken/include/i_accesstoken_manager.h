@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -68,7 +68,8 @@ public:
     virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
-    virtual int DumpToken(std::string& dumpInfo) = 0;
+
+    virtual void DumpTokenInfo(std::string& tokenInfo) = 0;
 
     enum class InterfaceCode {
         VERIFY_ACCESSTOKEN = 0xff10,
@@ -97,7 +98,7 @@ public:
         DELETE_REMOTE_DEVICE_TOKEN = 0xff2c,
         GET_NATIVE_REMOTE_TOKEN = 0xff2f,
 
-        DUMP = 0xff30,
+        DUMP_TOKENINFO = 0xff30,
     };
 };
 } // namespace AccessToken

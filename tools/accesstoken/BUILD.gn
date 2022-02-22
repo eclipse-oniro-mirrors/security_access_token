@@ -1,0 +1,62 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+ohos_source_set("tools_atm_source_set") {
+  include_dirs = [
+    "//base/security/access_token/tools/accesstoken/include",
+    "//base/security/access_token/frameworks/common/include",
+    "//foundation/aafwk/standard/tools/aa/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core/include/bundlemgr",
+    "//foundation/aafwk/standard/services/common/include",
+  ]
+
+  sources = [
+    "//foundation/aafwk/standard/tools/aa/src/shell_command.cpp",
+    "src/atm_command.cpp",
+    "src/atm_receiver_impl.cpp",
+    "src/main.cpp",
+  ]
+
+  deps = [
+    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//foundation/aafwk/standard/tools/aa:aa",
+    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core:appexecfwk_core",
+    "//utils/native/base:utils",
+  ]
+
+  cflags = [ "-DHILOG_ENABLE" ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  external_deps = [
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+  ]
+}
+
+ohos_executable("atm") {
+  deps = [ ":tools_atm_source_set" ]
+
+  install_enable = true
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
+group("tools_atm") {
+  deps = [ ":atm" ]
+}

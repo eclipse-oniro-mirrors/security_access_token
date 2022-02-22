@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -101,7 +101,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
 {
     AccessTokenInfoManager::GetInstance().Init();
     std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().Dump(dumpInfo);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(dumpInfo);
     GTEST_LOG_(INFO) << "dump all:" << dumpInfo.c_str();
 
     // delete test token

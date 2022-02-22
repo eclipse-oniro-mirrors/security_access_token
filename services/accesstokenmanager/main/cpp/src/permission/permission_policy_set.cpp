@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -247,75 +247,82 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull
 
 void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string& info) const
 {
-    info.append(R"({"permissionName": ")" + def.permissionName + R"(")");
-    info.append(R"(, "bundleName": ")" + def.bundleName + R"(")");
-    info.append(R"(, "grantMode": )" + std::to_string(def.grantMode));
-    info.append(R"(, "availableLevel": )" + std::to_string(def.availableLevel));
-    info.append(R"(, "provisionEnable": )" + std::to_string(def.provisionEnable));
-    info.append(R"(, "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable));
-    info.append(R"(, "label": ")" + def.label + R"(")");
-    info.append(R"(, "labelId": )" + std::to_string(def.labelId));
-    info.append(R"(, "description": ")" + def.description + R"(")");
-    info.append(R"(, "descriptionId": )" + std::to_string(def.descriptionId));
-    info.append(R"(})");
+    info.append(R"(    {)");
+    info.append("\n");
+    info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
+    info.append(R"(      "bundleName": ")" + def.bundleName + R"(")" + ",\n");
+    info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
+    info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
+    info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
+    info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");
+    info.append(R"(      "label": ")" + def.label + R"(")" + ",\n");
+    info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
+    info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
+    info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
+    info.append(R"(    })");
 }
 
 void PermissionPolicySet::PermStateFullToString(const PermissionStateFull& state, std::string& info) const
 {
-    info.append(R"({"permissionName": ")" + state.permissionName + R"(")");
-    info.append(R"(, "isGeneral": )" + std::to_string(state.isGeneral));
-
-    info.append(R"(, "resDeviceIDList": [ )");
+    info.append(R"(    {)");
+    info.append("\n");
+    info.append(R"(      "permissionName": ")" + state.permissionName + R"(")" + ",\n");
+    info.append(R"(      "isGeneral": )" + std::to_string(state.isGeneral) + ",\n");
+    info.append(R"(      "resDeviceIDList": [ )");
     for (auto iter = state.resDeviceID.begin(); iter != state.resDeviceID.end(); iter++) {
-        info.append(R"({"resDeviceID": ")" + *iter + R"("})");
+        info.append("\n");
+        info.append(R"(        { "resDeviceID": ")" + *iter + R"(")" + " }");
         if (iter != (state.resDeviceID.end() - 1)) {
             info.append(",");
         }
     }
+    info.append("\n      ],\n");
 
-    info.append(R"(], "grantStatusList": [)");
+    info.append(R"(      "grantStatusList": [)");
     for (auto iter = state.grantStatus.begin(); iter != state.grantStatus.end(); iter++) {
-        info.append(R"({"grantStatus": )" + std::to_string(*iter) + "}");
+        info.append("\n");
+        info.append(R"(        { "grantStatus": )" + std::to_string(*iter) + " }");
         if (iter != (state.grantStatus.end() - 1)) {
             info.append(",");
         }
     }
+    info.append("\n      ],\n");
 
-    info.append(R"(], "grantFlagsList": [)");
+    info.append(R"(      "grantFlagsList": [)");
     for (auto iter = state.grantFlags.begin(); iter != state.grantFlags.end(); iter++) {
-        info.append(R"({"grantFlag": )" + std::to_string(*iter) + "}");
+        info.append("\n");
+        info.append(R"(        { "grantFlag": )" + std::to_string(*iter) + " }");
         if (iter != (state.grantFlags.end() - 1)) {
             info.append(",");
         }
     }
+    info.append("\n      ],\n");
 
-    info.append(R"(]})");
+    info.append(R"(    })");
 }
 
 void PermissionPolicySet::ToString(std::string& info)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    info.append(",\n\t");
-    info.append(R"("permDefList": [)");
+    info.append(R"(  "permDefList": [)");
+    info.append("\n");
     for (auto iter = permList_.begin(); iter != permList_.end(); iter++) {
-        info.append("\n\t\t");
         PermDefToString(*iter, info);
         if (iter != (permList_.end() - 1)) {
-            info.append(",");
+            info.append(",\n");
         }
     }
-    info.append("]");
+    info.append("\n  ],\n");
 
-    info.append(",\n\t");
-    info.append(R"("permStateList": [)");
+    info.append(R"(  "permStateList": [)");
+    info.append("\n");
     for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
-        info.append("\n\t\t");
         PermStateFullToString(*iter, info);
         if (iter != (permStateList_.end() - 1)) {
-            info.append(",");
+            info.append(",\n");
         }
     }
-    info.append("]");
+    info.append("\n  ]\n");
 }
 } // namespace AccessToken
 } // namespace Security

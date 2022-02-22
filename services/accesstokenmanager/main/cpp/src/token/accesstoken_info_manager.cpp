@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -843,25 +843,28 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
     });
 }
 
-void AccessTokenInfoManager::Dump(std::string& dumpInfo)
+void AccessTokenInfoManager::DumpTokenInfo(std::string& dumpInfo)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "get hapTokenInfo");
+
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
-            dumpInfo.append("\n");
             iter->second->ToString(dumpInfo);
             dumpInfo.append("\n");
         }
     }
 
+    ACCESSTOKEN_LOG_INFO(LABEL, "get nativeTokenInfo");
     Utils::UniqueReadGuard<Utils::RWLock> nativeInfoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
-            dumpInfo.append("\n");
             iter->second->ToString(dumpInfo);
             dumpInfo.append("\n");
         }
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "get tokeninfo: %{public}s", dumpInfo.c_str());
 }
 } // namespace AccessToken
 } // namespace Security

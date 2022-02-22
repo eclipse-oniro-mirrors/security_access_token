@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -382,17 +382,15 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::DumpTokenInner(MessageParcel& data, MessageParcel& reply)
+void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAuthorizedCalling()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
         return;
     }
-    std::string dumpInfo;
-    int result = this->DumpToken(dumpInfo);
+    std::string dumpInfo = "";
+    this->DumpTokenInfo(dumpInfo);
     reply.WriteString(dumpInfo);
-    reply.WriteUint32(result);
 }
 
 bool AccessTokenManagerStub::IsAuthorizedCalling() const
@@ -452,8 +450,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
         &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP)] =
-        &AccessTokenManagerStub::DumpTokenInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP_TOKENINFO)] =
+        &AccessTokenManagerStub::DumpTokenInfoInner;
 }
 
 AccessTokenManagerStub::~AccessTokenManagerStub()
