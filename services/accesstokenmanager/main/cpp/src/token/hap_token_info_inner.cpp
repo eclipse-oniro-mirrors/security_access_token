@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -231,16 +231,18 @@ void HapTokenInfoInner::SetRemote(bool isRemote)
 
 void HapTokenInfoInner::ToString(std::string& info) const
 {
-    info.append(R"({"tokenID": )" + std::to_string(tokenInfoBasic_.tokenID));
-    info.append(R"(, "tokenAttr": )" + std::to_string(tokenInfoBasic_.tokenAttr));
-    info.append(R"(, "ver": )" + std::to_string(tokenInfoBasic_.ver));
-    info.append(R"(, "userId": )" + std::to_string(tokenInfoBasic_.userID));
-    info.append(R"(, "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")");
-    info.append(R"(, "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex));
-    info.append(R"(, "appID": ")" + tokenInfoBasic_.appID + R"(")");
-    info.append(R"(, "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")");
-    info.append(R"(, "apl": )" + std::to_string(tokenInfoBasic_.apl));
-    info.append(R"(, "isRemote": )" + std::to_string(isRemote_));
+    info.append(R"({)");
+    info.append("\n");
+    info.append(R"(  "tokenID": )" + std::to_string(tokenInfoBasic_.tokenID) + ",\n");
+    info.append(R"(  "tokenAttr": )" + std::to_string(tokenInfoBasic_.tokenAttr) + ",\n");
+    info.append(R"(  "ver": )" + std::to_string(tokenInfoBasic_.ver) + ",\n");
+    info.append(R"(  "userId": )" + std::to_string(tokenInfoBasic_.userID) + ",\n");
+    info.append(R"(  "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")" + ",\n");
+    info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
+    info.append(R"(  "appID": ")" + tokenInfoBasic_.appID + R"(")" + ",\n");
+    info.append(R"(  "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")" + ",\n");
+    info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
+    info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
 
     if (permPolicySet_ != nullptr) {
         permPolicySet_->ToString(info);
