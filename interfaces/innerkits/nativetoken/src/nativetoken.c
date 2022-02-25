@@ -258,19 +258,44 @@ int GetRandomTokenId(uint32_t *randNum)
     return ATRET_SUCCESS;
 }
 
+static int32_t IsTokenUniqueIdExist(uint32_t tokenUniqueId)
+{
+    NativeTokenList *tokenNode = g_tokenListHead->next;
+    while (tokenNode != NULL) {
+        AtInnerInfo *existToken = (AtInnerInfo *)&(tokenNode->tokenId);
+        if (tokenUniqueId == existToken->tokenUniqueId) {
+            return 1;
+        }
+        tokenNode = tokenNode->next;
+    }
+    return 0;
+}
+
 NativeAtId CreateNativeTokenId(void)
 {
     uint32_t rand;
     NativeAtId tokenId;
+    int32_t ret;
     AtInnerInfo *innerId = (AtInnerInfo *)(&tokenId);
+    int32_t retry = MAX_RETRY_TIMES;
 
-    int ret = GetRandomTokenId(&rand);
-    if (ret != ATRET_SUCCESS) {
-        return 0;
+    while (retry > 0) {
+        ret = GetRandomTokenId(&rand);
+        if (ret != ATRET_SUCCESS) {
+            return INVALID_TOKEN_ID;
+        }
+        if (IsTokenUniqueIdExist(rand & (TOKEN_RANDOM_MASK)) == 0) {
+            break;
+        }
+        retry--;
+    }
+    if (retry == 0) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:retry times is 0.", __func__);
+        return INVALID_TOKEN_ID;
     }
 
     innerId->reserved = 0;
-    innerId->tokenUniqueId = rand & (0xFFFFFF);
+    innerId->tokenUniqueId = rand & (TOKEN_RANDOM_MASK);
     innerId->type = TOKEN_NATIVE_TYPE;
     innerId->version = 1;
     return tokenId;
@@ -501,29 +526,16 @@ uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
     return ATRET_SUCCESS;
 }
 
-int32_t NativeTokenIdCheck(NativeAtId tokenId)
-{
-    NativeTokenList *tokenNode = g_tokenListHead;
-    while (tokenNode != NULL) {
-        if (tokenNode->tokenId == tokenId) {
-            return 1;
-        }
-        tokenNode = tokenNode->next;
-    }
-    return 0;
-}
-
 static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
                                             int32_t dacpNumIn, int32_t aplIn, NativeAtId *tokenId)
 {
     NativeTokenList *tokenNode;
     NativeAtId id;
-    int32_t repeat;
 
-    do {
-        id = CreateNativeTokenId();
-        repeat = NativeTokenIdCheck(id);
-    } while (repeat == 1);
+    id = CreateNativeTokenId();
+    if (id == INVALID_TOKEN_ID) {
+        return ATRET_FAILED;
+    }
 
     tokenNode = (NativeTokenList *)malloc(sizeof(NativeTokenList));
     if (tokenNode == NULL) {

@@ -44,6 +44,8 @@ extern "C" {
 #define MAX_PARAMTER_LEN 128
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
 #define PATH_MAX_LEN 4096
+#define MAX_RETRY_TIMES 1000
+#define TOKEN_RANDOM_MASK ((1 << 20) - 1)
 
 #define ATRET_FAILED 1
 #define ATRET_SUCCESS 0
@@ -59,12 +61,13 @@ extern "C" {
 #define SYSTEM_BASIC 2
 #define NORMAL 1
 
+#define INVALID_TOKEN_ID 0
 typedef unsigned int NativeAtId;
 typedef unsigned int NativeAtAttr;
 
 typedef struct {
-    unsigned int tokenUniqueId : 24;
-    unsigned int reserved : 3;
+    unsigned int tokenUniqueId : 20;
+    unsigned int reserved : 7;
     unsigned int type : 2;
     unsigned int version : 3;
 } AtInnerInfo;

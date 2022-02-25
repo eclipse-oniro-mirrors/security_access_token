@@ -31,8 +31,8 @@ enum AccessTokenKitRet {
 };
 
 typedef struct {
-    unsigned int tokenUniqueID : 24;
-    unsigned int res : 3;
+    unsigned int tokenUniqueID : 20;
+    unsigned int res : 7;
     unsigned int type : 2;
     unsigned int version : 3;
 } AccessTokenIDInner;
