@@ -22,7 +22,7 @@ group("accesstoken_build_module") {
       "//base/security/access_token/interfaces/kits:napi_packages",
       "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
       "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
-      "//base/security/access_token/tools/accesstoken:tools_atm",
+      "//base/security/access_token/tools:tools_atm",
     ]
   }
 }

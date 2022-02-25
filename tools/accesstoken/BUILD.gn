@@ -56,7 +56,3 @@ ohos_executable("atm") {
   subsystem_name = "security"
   part_name = "access_token"
 }
-
-group("tools_atm") {
-  deps = [ ":atm" ]
-}
