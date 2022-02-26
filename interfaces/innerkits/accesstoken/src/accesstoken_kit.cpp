@@ -167,6 +167,21 @@ int AccessTokenKit::VerifyAccessToken(
     return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
+int AccessTokenKit::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    if (tokenID == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d is invalid", tokenID);
+        return PERMISSION_DENIED;
+    }
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        return PERMISSION_DENIED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s", tokenID, permissionName.c_str());
+    return AccessTokenManagerClient::GetInstance().VerifyNativeToken(tokenID, permissionName);
+}
+
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);

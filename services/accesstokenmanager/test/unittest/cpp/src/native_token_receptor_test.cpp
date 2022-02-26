@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "accesstoken_info_manager.h"
+#include "permission_manager.h"
 #include "data_storage.h"
 #include "field_const.h"
 #define private public
@@ -568,5 +569,52 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     ASSERT_EQ(findInfo.processName, processName);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId);
+    ASSERT_EQ(ret, RET_SUCCESS);
+}
+
+/**
+ * @tc.name: init001
+ * @tc.desc: test get native cfg
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos007!");
+
+    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    dcaps[0] = "AT_CAP_01";
+    int dcapNum = 1;
+
+    char apl3[32];
+    strcpy(apl3, "system_core");
+    char apl2[32];
+    strcpy(apl2, "system_basic");
+    char apl1[32];
+    strcpy(apl1, "normal");
+
+    uint64_t tokenIdApl3 = ::GetAccessTokenId("ProcessNativeTokenInfos007_003", dcaps, dcapNum, apl3);
+    ASSERT_NE(tokenIdApl3, 0);
+    uint64_t tokenIdApl2 = ::GetAccessTokenId("ProcessNativeTokenInfos007_002", dcaps, dcapNum, apl2);
+    ASSERT_NE(tokenIdApl2, 0);
+    uint64_t tokenIdApl1 = ::GetAccessTokenId("ProcessNativeTokenInfos007_001", dcaps, dcapNum, apl1);
+    ASSERT_NE(tokenIdApl1, 0);
+
+    NativeTokenReceptor::GetInstance().Init();
+    const std::string permission = "ohos.permission.SEND_MESSAGES";
+    int ret = PermissionManager::GetInstance().VerifyNativeToken(tokenIdApl3, permission);
+    ASSERT_EQ(ret, PERMISSION_GRANTED);
+
+    ret = PermissionManager::GetInstance().VerifyNativeToken(tokenIdApl2, permission);
+    ASSERT_EQ(ret, PERMISSION_GRANTED);
+
+    ret = PermissionManager::GetInstance().VerifyNativeToken(tokenIdApl1, permission);
+    ASSERT_EQ(ret, PERMISSION_DENIED);
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenIdApl3);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenIdApl2);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenIdApl1);
     ASSERT_EQ(ret, RET_SUCCESS);
 }

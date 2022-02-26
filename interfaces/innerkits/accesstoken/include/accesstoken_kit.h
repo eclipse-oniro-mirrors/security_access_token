@@ -43,6 +43,7 @@ public:
     static int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     static int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
     static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    static int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName);
     static int VerifyAccessToken(
         AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
     static int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);

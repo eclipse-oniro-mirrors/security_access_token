@@ -117,6 +117,30 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     return permPolicySet->VerifyPermissStatus(permissionName);
 }
 
+int PermissionManager::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
+        tokenID, permissionName.c_str());
+
+    PermissionDef permissionInfo;
+    NativeTokenInfo nativeTokenInfo;
+    int res = PermissionManager::GetDefPermission(permissionName, permissionInfo);
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetDefPermission in %{public}s failed", __func__);
+        return PERMISSION_DENIED;
+    }
+    res = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfo);
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetNativeTokenInfo in %{public}s failed", __func__);
+        return PERMISSION_DENIED;
+    }
+    if (permissionInfo.availableLevel > nativeTokenInfo.apl) {
+        return PERMISSION_DENIED;
+    }
+    return PERMISSION_GRANTED;
+}
+
 int PermissionManager::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permissionName: %{public}s", __func__, permissionName.c_str());

@@ -39,6 +39,7 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
@@ -96,6 +97,7 @@ public:
         SET_REMOTE_NATIVE_TOKEN_INFO = 0xff2a,
         DELETE_REMOTE_TOKEN_INFO = 0xff2b,
         DELETE_REMOTE_DEVICE_TOKEN = 0xff2c,
+        VERIFY_NATIVETOKEN = 0xff2d,
         GET_NATIVE_REMOTE_TOKEN = 0xff2f,
 
         DUMP_TOKENINFO = 0xff30,
