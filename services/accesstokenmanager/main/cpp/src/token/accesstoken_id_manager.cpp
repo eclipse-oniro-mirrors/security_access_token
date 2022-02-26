@@ -50,10 +50,14 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
-    if (tokenIdSet_.count(id) != 0) {
-        return RET_FAILED;
-    }
 
+    for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
+        AccessTokenID tokenId = *it;
+        AccessTokenIDInner *idInnerExist = (AccessTokenIDInner *)&tokenId;
+        if (idInnerExist->tokenUniqueID == idInner->tokenUniqueID) {
+            return RET_FAILED;
+        }
+    }
     tokenIdSet_.insert(id);
     return RET_SUCCESS;
 }
