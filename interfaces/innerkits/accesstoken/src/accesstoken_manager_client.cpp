@@ -43,7 +43,7 @@ AccessTokenManagerClient::AccessTokenManagerClient()
 AccessTokenManagerClient::~AccessTokenManagerClient()
 {}
 
-int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
+PermissionState AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -51,10 +51,10 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return PERMISSION_DENIED;
     }
-    return proxy->VerifyAccessToken(tokenID, permissionName);
+    return static_cast<PermissionState>(proxy->VerifyAccessToken(tokenID, permissionName));
 }
 
-int AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
+PermissionState AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -62,7 +62,7 @@ int AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return PERMISSION_DENIED;
     }
-    return proxy->VerifyNativeToken(tokenID, permissionName);
+    return static_cast<PermissionState>(proxy->VerifyNativeToken(tokenID, permissionName));
 }
 
 int AccessTokenManagerClient::GetDefPermission(

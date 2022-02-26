@@ -20,6 +20,7 @@
 #include <cstring>
 #include <unistd.h>
 
+#include "accesstoken_kit.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -43,6 +44,7 @@ struct AtManagerAsyncContext {
     char     permissionName[ VALUE_BUFFER_SIZE ] = { 0 };
     size_t   pNameLen = 0;
     int      flag = 0;
+    PermissionState grantState = PERMISSION_DENIED;
     int      result = 0; // callback or promise return result
     int      status = ASYN_THREAD_EXEC_FAIL; // napi_create_async_work-execute function exec result, default failure
 
@@ -75,6 +77,7 @@ private:
     static void RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionFlagsExcute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
+    static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
 };
 }  // namespace AccessToken
 }  // namespace Security

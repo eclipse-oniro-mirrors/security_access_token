@@ -49,7 +49,7 @@ ATM模块主要提供如下功能：
 | AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex); | 查询指定应用的tokenId |
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | 查询指定tokenID对应的hap包的tokenInfo信息 |
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | 查询指定tokenID对应的native的tokenInfo信息 |
-| int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |
+| PermissionState VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |
 | int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult); | 查询指定权限的权限定义信息 |
 | int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList); | 查询指定tokenID对应的hap包的权限定义集合 |
 | int GetReqPermissions(AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant); | 查询指定tokenID对应的hap包申请的权限状态集合 |
