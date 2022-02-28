@@ -75,6 +75,7 @@ private:
     static void RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionFlagsExcute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
+    static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
 };
 }  // namespace AccessToken
 }  // namespace Security

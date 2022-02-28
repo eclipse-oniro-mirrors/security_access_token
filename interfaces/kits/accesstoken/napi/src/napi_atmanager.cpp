@@ -33,6 +33,13 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 } // namespace
 
+void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
+{
+    napi_value prop = nullptr;
+    napi_create_int32(env, objValue, &prop);
+    napi_set_named_property(env, dstObj, propName, prop);
+}
+
 napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "enter init.");
@@ -55,6 +62,17 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 
     NAPI_CALL(env, napi_create_reference(env, cons, 1, &atManagerRef_));
     NAPI_CALL(env, napi_set_named_property(env, exports, ATMANAGER_CLASS_NAME.c_str(), cons));
+
+    napi_value GrantStatus = nullptr;
+    napi_create_object(env, &GrantStatus);
+
+    SetNamedProperty(env, GrantStatus, PERMISSION_DENIED, "PERMISSION_DENIED");
+    SetNamedProperty(env, GrantStatus, PERMISSION_GRANTED, "PERMISSION_GRANTED");
+
+    napi_property_descriptor exportFuncs[] = {
+        DECLARE_NAPI_PROPERTY("GrantStatus", GrantStatus),
+    };
+    napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 
     return exports;
 }
