@@ -28,27 +28,39 @@ struct dialogPlusPage {
     alignment: DialogAlignment.Center
   })
   async privacyAccept(group, accessTokenId, permissionList, userFixedFlag) {
-    var acManager = abilityAccessCtrl.createAtManager()
-    group.permissions.forEach(async permission => {
-      const result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
-      var index = permissionList.indexOf(permission)
-      if (index == -1) {
+    try {
+      var acManager = abilityAccessCtrl.createAtManager()
+      var num = 0
+      group.permissions.forEach(async permission => {
         console.log("GrantAbility grant permission:" + permission)
-      }else {
-        if (result == 0) {
-          this.result[index] = 0
-          console.log("GrantAbility grant permission:" + permission)
-        } else {
-          console.log("GrantAbility failed to grant permission:" + permission + " ret:" + result)
+        const result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+        num ++
+        console.log("GrantAbility grant permission result:" + result)
+        var index = permissionList.indexOf(permission)
+        if (index == -1) {
+          console.log("GrantAbility grant permission index err:" + permission)
+        }else {
+          if (result == 0) {
+            this.result[index] = 0
+            console.log("GrantAbility grant permission success:" + permission)
+          } else {
+            console.log("GrantAbility failed to grant permission:" + permission + " ret:" + result)
+          }
         }
-      }
-    })
-    this.count ++
+        if(num == group.permissions.length) {
+          this.count ++
+        }
+      })
+    }catch {
+      this.count ++
+    }
   }
   async privacyCancel(group, accessTokenId, permissionList, userFixedFlag) {
     var acManager = abilityAccessCtrl.createAtManager()
     group.permissions.forEach(async permission => {
+      console.log("GrantAbility revoke permission:" + permission)
       const result = await acManager.revokeUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+      console.log("GrantAbility revoke permission result:" + result)
       var index = permissionList.indexOf(permission)
       if (index != -1 && result == 0) {
         this.result[index] = -1

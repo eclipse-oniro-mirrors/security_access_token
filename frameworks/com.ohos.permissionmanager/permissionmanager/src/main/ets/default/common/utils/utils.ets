@@ -29,7 +29,8 @@ export function getAppLabel(labelId, bundleName) {
       item.getString(labelId, (error, value) => {
         resolve(value);
       })
-    }).catch(e => {
+    }).catch(error => {
+      console.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
     })
   })
 }
@@ -45,7 +46,8 @@ export function getAppIcon(iconId, bundleName) {
       item.getMediaBase64(iconId, (error, value) => {
         resolve(value);
       })
-    }).catch(e => {
+    }).catch(error => {
+      console.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
     })
   })
 }
@@ -59,6 +61,9 @@ export function verifyAccessToken(accessTokenId, permission) {
   return new Promise((resolve) => {
     abilityAccessCtrl.createAtManager().verifyAccessToken(accessTokenId, permission).then((res) => {
       return resolve(res);
+    })
+    .catch((error) => {
+      console.error('verifyAccessToken failed. Cause: ' + JSON.stringify(error));
     })
   })
 }

@@ -9,8 +9,8 @@
       "value": "#f1f3f5"
     },
     {
-      "name": "title_text_color",
-      "value": "#E5000000"
+      "name": "text_secondary_color",
+      "value": "#99000000"
     },
     {
       "name": "active_background_color",
@@ -23,10 +23,6 @@
     {
       "name": "text_decoration_color",
       "value": "#f3f4f6"
-    },
-    {
-      "name": "icon_color",
-      "value": "#18233199"
     },
     {
       "name": "default_background_color",

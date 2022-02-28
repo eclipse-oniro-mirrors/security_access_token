@@ -36,7 +36,7 @@ export struct backBar {
             router.back();
           })
         Text(JSON.parse(this.title))
-          .fontColor($r('app.color.title_text_color'))
+          .fontColor($r('app.color.text_color'))
           .fontSize(Constants.BACKBAR_TEXT_FONT_SIZE)
           .flexGrow(Constants.BACKBAR_TEXT_FLEX_GROW)
           .margin({ top: Constants.BACKBAR_TEXT_MARGIN_TOP })

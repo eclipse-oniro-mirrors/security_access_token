@@ -17,14 +17,14 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.LOCATION_IN_BACKGROUND",
     "groupName": "LOCATION",
-    "label": "定位权限",
+    "label": "后台定位权限",
     "description": "允许应用在后台运行时获取位置信息。",
     "groupId": 0
   },
   {
     "permissionName": "ohos.permission.LOCATION",
     "groupName": "LOCATION",
-    "label": "定位权限",
+    "label": "前台定位权限",
     "description": "允许应用在前台运行时获取位置信息。",
     "groupId": 0
   },
@@ -181,13 +181,6 @@ export const permissionGroups: any[] = [
     "label": "允许不同设备间数据交换",
     "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
     "groupId": 11
-  },
-  {
-    "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
-    "groupName": "OTHERA",
-    "label": "允许不同设备间数据交换A",
-    "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
-    "groupId": 11
   }
 ];
 
@@ -310,18 +303,6 @@ export const groups: any[] = [
     "description": "访问您的其它权限",
     "permissions": [
       "ohos.permission.DISTRIBUTED_DATASYNC"
-    ],
-    "children":[
-      {
-        "name": "OTHER",
-        "groupName": "其他权限A",
-        "icon": $r('app.media.ic_more'),
-        "description": "访问您的其它权限",
-        "permissions": [
-          "ohos.permission.DISTRIBUTED_DATASYNC",
-          "ohos.permission.DISTRIBUTED_DATASYNC"
-        ]
-      }
     ]
   }
 ];
@@ -338,7 +319,7 @@ export const permissionGroupPermissions: object = {
   "CALENDAR": ["ohos.permission.READ_CALENDAR", "ohos.permission.WRITE_CALENDAR"],
   "SPORT": ["ohos.permission.ACTIVITY_MOTION"],
   "HEALTH": ["ohos.permission.READ_HEALTH_DATA"],
-  "OTHER": ["ohos.permission.DISTRIBUTED_DATASYNCC","ohos.permission.DISTRIBUTED_DATASYNCD"]
+  "OTHER": ["ohos.permission.DISTRIBUTED_DATASYNC"]
 };
 
 
@@ -452,3 +433,7 @@ export const orderGroup: string[] = [
   "身体传感器",
   "其他权限"
 ];
+
+export const otherPermissionsLabel: object = {
+  "ohos.permission.DISTRIBUTED_DATASYNC": "允许不同设备间数据交换"
+};

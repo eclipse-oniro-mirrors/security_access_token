@@ -87,31 +87,33 @@ struct authorityManagementPage {
             }
           }
         }.onClick(() => {
-          if (item.group == "OTHER") {
+          if (item.groupName === '其他权限') {
             router.push({
-              uri: 'pages/other-permissions',
+              uri: 'pages/authority-secondary',
               params: { routerData: this.allPermissionApplications, backTitle: item.groupName }
-            });
+            })
           } else {
-            // 1: Indicates that there is a permission in the permission group
             if (item.permissions.length > 1) {
               router.push({
                 uri: 'pages/authority-secondary',
                 params: { routerData: this.allPermissionApplications, backTitle: item.groupName }
-              });
+              })
             } else {
               var dataList = this.allPermissionApplications.filter((ele) => {
                 return ele.permission === item.permissions[0]
-              });
+              })
+              var tertiaryLabel = permissionGroups.filter((ele) => {
+                return ele.permissionName === item.permissions[0]
+              })[0].label
               router.push({
                 uri: 'pages/authority-tertiary',
-                params: { routerData: dataList, backTitle:  item.groupName }
-              });
+                params: { routerData: dataList, backTitle:  tertiaryLabel }
+              })
             }
           }
         })
       }
-    }.padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT, right: Constants.MANAGEMENT_ROW_PADDING_RIGHT })
+    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.MANAGEMENT_ROW_PADDING_RIGHT })
   }
 
   @State allApplicationPermissions: applicationPermissions[] = []; // All permissions apply
@@ -166,6 +168,7 @@ struct authorityManagementPage {
       const bundleInfos = res;
       var count = bundleInfos.length;
       if (count <= 0) {
+        console.info('bundle.getAllBundleInfo result.length less than or equal to zero');
         return;
       }
       var infoIndex = 0;
@@ -199,6 +202,9 @@ struct authorityManagementPage {
         }
       })
     })
+      .catch((error) => {
+        console.error('bundle.getAllBundleInfo failed. Cause: ' + JSON.stringify(error));
+      })
   }
 
   /**
@@ -342,7 +348,8 @@ struct authorityManagementPage {
           info['labelId'] = value;
         }
       })
-    }).catch(e => {
+    }).catch(error => {
+      console.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
     })
   }
 
@@ -360,7 +367,8 @@ struct authorityManagementPage {
       item.getMediaBase64(info['iconId'], (error, value) => {
         info['iconId'] = value;
       })
-    }).catch(e => {
+    }).catch(error => {
+      console.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
     })
   }
 
@@ -393,56 +401,41 @@ struct authorityManagementPage {
                   Stack() {
                     Tabs() {
                       TabContent() {
-                        Scroll() {
-                          if(!this.allGroupPermission.length){
-                            Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }){
-                              Row(){
-                                Column() {
-                                  Image($r('app.media.loading'))
-                                    .customizeImage(Constants.MANAGEMENT_LODING_IMAGE_WIDTH,
-                                      Constants.MANAGEMENT_LODING_IMAGE_HEIGHT)
-                                }.width(Constants.FULL_WIDTH)
-                                .backgroundColor($r('app.color.background_color'))
-                              }.height(Constants.MANAGEMENT_LODING_ROW_HEIGHT)
-                            }
-                          }else{
-                            Row() {
-                              Column() {
+                        Row() {
+                            Column() {
+                              Scroll() {
                                 Row() {
                                   List() {
                                     ForEach(this.allGroupPermission.slice(Constants.SLICE_START,
-                                    this.allGroupPermission.length - 1), (item) => {
+                                      this.allGroupPermission.length - 1), (item) => {
                                       this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                                     }, item => item.toString())
                                     ForEach(this.allGroupPermission.slice(Constants.SLICE_END), (item, index) => {
                                       this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                                     }, item => item.toString())
                                   }.backgroundColor($r('app.color.default_background_color'))
-                                   .borderRadius(Constants.BORDER_RADIUS)
-                                   .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                  .borderRadius(Constants.BORDER_RADIUS)
+                                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
                                 }.padding({
                                   left: Constants.MANAGEMENT_ROW_PADDING_LEFT,
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
                                   top: Constants.MANAGEMENT_ROW_PADDING_TOP
                                 })
-                              }.width(Constants.FULL_WIDTH)
-                              .backgroundColor($r('app.color.background_color'))
-                            }
+                              }
+                            }.width(Constants.FULL_WIDTH)
+                            .backgroundColor($r('app.color.background_color'))
                           }
-                        }
                       }.tabBar($r('app.string.authority'))
                       TabContent() {
-                        Scroll() {
-                          applicationItem({
-                            applicationItem: bundleInfosList,
-                            oldApplicationItem: bundleInfosList
-                          })
-                        }
+                        applicationItem({
+                          applicationItem: bundleInfosList,
+                          oldApplicationItem: bundleInfosList
+                        })
                       }.tabBar($r('app.string.application'))
                     }
                     .backgroundColor($r('app.color.background_color'))
                     .barWidth(Constants.BAR_WIDTH)
-                    .barMode(BarMode.Scrollable)
+                    .barMode(BarMode.Fixed)
                   }.height(Constants.FULL_HEIGHT)
                 }
               }
@@ -492,7 +485,7 @@ struct applicationItem {
                 .flexGrow(Constants.FLEX_GROW)
               Text(item.permissions.length + '项权限')
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                .fontColor($r('app.color.icon_color'))
+                .fontColor($r('app.color.text_secondary_color'))
                 .margin({ right: Constants.APPLICATION_TEXT_MARGIN_RIGHT })
               Image($r('app.media.rightarrow'))
                 .customizeImage(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT)
@@ -500,6 +493,7 @@ struct applicationItem {
             .width(Constants.FULL_WIDTH)
             .height(Constants.AUTHORITY_ROW_HEIGHT)
             .constraintSize({ minHeight: Constants.AUTHORITY_CONSTRAINTSIZE_MINHEIGHT })
+            .padding({ left: Constants.APPLICATION_LIST_PADDING_LEFT})
           }
           if (!index) {
             Row() {

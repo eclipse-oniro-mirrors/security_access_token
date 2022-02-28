@@ -121,6 +121,7 @@ export struct privacyDialog {
     }
     var acManager = abilityAccessCtrl.createAtManager()
     var flag = await acManager.getPermissionFlags(this.accessTokenId, permission)
+    console.log("GrantAbility permission: " + permission + " flag : " + flag)
     if(flag == this.userFixedFlag) {
       console.log("GrantAbility permission has been fixed:" + permission)
       var ret = await acManager.verifyAccessToken(this.accessTokenId, permission)
@@ -139,7 +140,8 @@ export struct privacyDialog {
   getApplicationName(uid) {
     bundle.getNameForUid(uid).then((data) => {
       console.log("GrantAbility getApplicationName bundleName:" + data)
-      bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, USER_ID).then(applicationInfo => {
+      console.log("GrantAbility getApplicationName userId:" + Math.floor(uid/200000))
+      bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, Math.floor(uid/200000)).then(applicationInfo => {
         Resmgr.getResourceManager(data).then(item => {
           item.getString(applicationInfo.labelId, (err, value) => {
             if (value == undefined) {

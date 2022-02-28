@@ -14,24 +14,25 @@
  */
 
 import { backBar } from "../common/components/backBar.ets";
-import { groups } from "../common/model/permissionGroup.ets";
 import router from '@system.router';
 import Constants from '../common/utils/constant.ets';
+import { otherPermissionsLabel } from '../common/model/permissionGroup.ets'
 
-class OtherPermissionObj {
-  groupName: string
-  permissions: string
-  constructor(groupName: string, permissions: string) {
-    this.groupName = groupName
-    this.permissions = permissions
-  }
-} // Other permission interface data classes
+let routerData = router.getParams().routerData; // Routing jump data
+let backTitle = router.getParams().backTitle; // return title name
+let status = router.getParams().status; // Status: Allowed, Forbidden
+let permissions = router.getParams().permission; // permissions name
+let otherPermissionList = []; // otherPermission List
+for (let i = 0; i < permissions.length; i++) {
+  otherPermissionList.push({
+    permissionLabel: otherPermissionsLabel[permissions[i]],
+    permission: permissions[i]
+  })
+}
 
 @Entry
 @Component
 struct appNamePage {
-  private backTitle = router.getParams().backTitle; // return title name
-
   build() {
     GridContainer({ gutter: Constants.GUTTER }) {
       Row() {
@@ -46,7 +47,7 @@ struct appNamePage {
         Row() {
           Column() {
             Row() {
-              backBar({ title: JSON.stringify(this.backTitle) })
+              backBar({ title: JSON.stringify(backTitle) })
             }
             Row() {
               Column() {
@@ -80,17 +81,14 @@ struct appNamePage {
 
 @Component
 struct appNameItem {
-  @State otherPermissionListItem: OtherPermissionObj[] = []; // Other permission interface data array
-  private backTitle = router.getParams().backTitle;  // return title name
-  private allPermissionApplications = router.getParams().routerData; // Routing jump data
-
+  @State otherPermissionListItem: string[] = otherPermissionList; // Other permission interface data array
   @Builder ListItemLayout(item, index) {
     ListItem() {
       Row() {
         Column() {
           Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
             Row() {
-              Text(item.groupName)
+              Text(item.permissionLabel)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
                 .fontColor($r('app.color.text_color'))
                 .flexGrow(Constants.FLEX_GROW)
@@ -111,36 +109,18 @@ struct appNameItem {
             }
           }
         }.onClick(() => {
-          // 1: Indicates that there is a permission in the permission group
-          if (item.permissions.length > 1) {
             router.push({
-              uri: 'pages/authority-secondary',
-              params: { routerData: this.allPermissionApplications, backTitle: item.groupName }
+              uri: 'pages/application-tertiary',
+              params: {
+                routerData: routerData,
+                backTitle: backTitle,
+                permission: [item.permission],
+                status: status
+              }
             });
-          }
-          else {
-            router.push({
-              uri: 'pages/authority-tertiary',
-              params: { routerData: this.allPermissionApplications, backTitle:  item.groupName }
-            });
-          }
         })
       }
     }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
-  }
-
-  /**
-   * Lifecycle function, executed when the page is initialized
-   */
-  aboutToAppear() {
-    var permissionsList = groups.filter((item) => {
-      return item.groupName === this.backTitle;
-    })
-    for (let i = 0; i < permissionsList[0].children.length; i++) {
-      this.otherPermissionListItem.push(
-        new OtherPermissionObj(permissionsList[0].children[i].groupName, permissionsList[0].children[i].permissions)
-      );
-    }
   }
 
   build() {
@@ -158,7 +138,7 @@ struct appNameItem {
           }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)
            .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
         }.margin({ top: Constants.ROW_MARGIN_TOP })
-         .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+         .padding({ left: Constants.LIST_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
       }
       .width(Constants.FULL_WIDTH)
       .height(Constants.FULL_HEIGHT)
