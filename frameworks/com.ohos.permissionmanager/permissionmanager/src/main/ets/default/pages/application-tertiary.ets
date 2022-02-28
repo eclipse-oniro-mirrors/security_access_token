@@ -16,34 +16,38 @@
 import { backBar } from "../common/components/backBar.ets";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
-import { getAppLabel, getAppIcon } from "../common/utils/utils";
+import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { authorizeDialog } from "../common/components/dialog.ets";
-import { permissionDescriptions } from "../common/model/permissionGroup.ets";
+import { permissionDescriptions, permissionGroups } from "../common/model/permissionGroup.ets";
 import Constants from '../common/utils/constant.ets';
 
 let routerData = router.getParams().routerData; // Routing jump data
 let backTitle = router.getParams().backTitle; // return title name
 let status = router.getParams().status; // Status: Allowed, Forbidden
-let permission = router.getParams().permission; // permission name
+let permissions = router.getParams().permission; // permissions name
+let nowGrantResult = Constants.PERMISSION_NUM; // Authorization results now
+let nowRevokeResult = Constants.PERMISSION_NUM; // Now deauthorize results
+let GrantResultFlag = []; // Authorization result Flag
+let RevokeResultFlag = []; // Cancel authorization result Flag
 class MeidaDocObj {
   name: string
   index: number
   groupName: string
   accessTokenId: string
-  permission: string
+  permissions: []
   constructor(
     name: string,
     index: number,
     groupName: string,
     accessTokenId: string,
-    permission: string
+    permissions: []
   ) {
     this.name = name
     this.index = index
     this.groupName = groupName
     this.accessTokenId = accessTokenId
-    this.permission = permission
+    this.permissions = permissions
   }
 }; // permission information class
 class MediaListObj {
@@ -83,7 +87,11 @@ struct mediaDocumentPage {
           Row() {
             Column() {
               Row() {
-                backBar({ title: JSON.stringify(backTitle) })
+                if(backTitle == "其他权限"){
+                  backBar({ title: JSON.stringify($r("app.string.othet_permission_label")) })
+                }else {
+                  backBar({ title: JSON.stringify(backTitle) })
+                }
               }
               Row() {
                 Column() {
@@ -138,21 +146,13 @@ struct mediaDocumentItem {
    * @param {Number} accessTokenId
    * @param {String} permission permission name
    */
-  async grantUserGrantedPermission(accessTokenId, permission) {
-    var permissionFlag =  await abilityAccessCtrl.createAtManager().
-    getPermissionFlags(accessTokenId, permission);
+  grantUserGrantedPermission(accessTokenId, permission) {
     abilityAccessCtrl.createAtManager().grantUserGrantedPermission(
-      accessTokenId, permission, permissionFlag).then(result => {
-      // result: 0 Authorization succeeded; result: -1 Authorization failed
-      if (result !== Constants.PERMISSION_INDEX) {
-        this.authorizeDialogController.open();
-        setTimeout(()=> {
-          this.authorizeDialogController.close();
-        }, Constants.DELAY_TIME)
-      } else {
-        this.isCheckList = [true, false];
-      }
-    }).catch(error => {
+      accessTokenId, permission, Constants.PERMISSION_FLAG).then((result) => {
+      nowGrantResult = result;
+    })
+    .catch((error) => {
+      console.error('grantUserGrantedPermission failed. Cause: ' + JSON.stringify(error));
     })
   }
 
@@ -161,21 +161,14 @@ struct mediaDocumentItem {
    * @param {Number} accessTokenId
    * @param {String} permission permission name
    */
-  async revokeUserGrantedPermission(accessTokenId, permission) {
-    var permissionFlag =  await abilityAccessCtrl.createAtManager().
-    getPermissionFlags(accessTokenId, permission);
+  revokeUserGrantedPermission(accessTokenId, permission) {
     abilityAccessCtrl.createAtManager().revokeUserGrantedPermission(
-      accessTokenId, permission, permissionFlag).then(result => {
-      // result: 0 successfully cancel the authorization; result: -1 cancel the authorization failed
-      if (result !== Constants.PERMISSION_INDEX) {
-        this.authorizeDialogController.open();
-        setTimeout(()=> {
-          this.authorizeDialogController.close();
-        }, Constants.DELAY_TIME)
-      } else {
-        this.isCheckList = [false, true];
-      }
+      accessTokenId, permission, Constants.PERMISSION_FLAG).then((result) => {
+      nowRevokeResult = result;
     })
+      .catch((error) => {
+        console.error('revokeUserGrantedPermission failed. Cause: ' + JSON.stringify(error));
+      })
   }
 
   /**
@@ -196,7 +189,7 @@ struct mediaDocumentItem {
           Constants.RADIO_ALLOW_INDEX,
           Constants.RADIO_ALLOW_GROUP_NAME,
           res.appInfo.accessTokenId,
-          permission
+          permissions
         )
       );
       this.mediaDocListItem.push(
@@ -205,18 +198,19 @@ struct mediaDocumentItem {
           Constants.RADIO_BAN_INDEX,
           Constants.RADIO_BAN_GROUP_NAME,
           res.appInfo.accessTokenId,
-          permission
+          permissions
         )
       );
-    }).catch(() => {
+    }).catch((error) => {
+      console.error('bundle.getBundleInfo failed. Cause: ' + JSON.stringify(error));
       this.mediaListItem = new MediaListObj('', '', '', permissionDescription);
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_ALLOW_NAME, Constants.RADIO_ALLOW_INDEX,
-          Constants.RADIO_ALLOW_GROUP_NAME, '', permission)
+          Constants.RADIO_ALLOW_GROUP_NAME, '', permissions)
       );
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_BAN_NAME, Constants.RADIO_BAN_INDEX,
-          Constants.RADIO_BAN_GROUP_NAME, '', permission)
+          Constants.RADIO_BAN_GROUP_NAME, '', permissions)
       );
     })
     // Get permission status
@@ -239,7 +233,7 @@ struct mediaDocumentItem {
             Row() {
               Text(this.mediaListItem.labelId)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .fontColor($r('app.color.title_text_color'))
+                .fontColor($r('app.color.text_color'))
                 .textAlign(TextAlign.Start)
             }
             .width(Constants.TERTIARY_HALF_WIDTH)
@@ -255,7 +249,7 @@ struct mediaDocumentItem {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
-            Text(this.mediaListItem.description)
+            Text()
               .fontSize(Constants.TEXT_SMALLER_FONT_SIZE)
               .textAlign(TextAlign.Start)
           }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
@@ -265,9 +259,15 @@ struct mediaDocumentItem {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
-            Text(backTitle + '访问权限')
-              .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-              .textAlign(TextAlign.Start)
+            if (backTitle === "其他权限") {
+              Text($r("app.string.othet_permission_label_description"))
+                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+                .textAlign(TextAlign.Start)
+            } else {
+              Text(backTitle + "访问权限")
+                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+                .textAlign(TextAlign.Start)
+            }
           }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
         }
       }
@@ -305,13 +305,46 @@ struct mediaDocumentItem {
                     .width(Constants.FULL_WIDTH)
                     .height(Constants.LISTITEM_ROW_HEIGHT)
                     .onClick(() => {
-                      if (item.accessTokenId !== '' || item.permission !== ''){
+                        item.permissions.forEach((permission) => {
+                          if (!item.index) {
+                            this.grantUserGrantedPermission(item.accessTokenId, permission)
+                            if (nowGrantResult != Constants.PERMISSION_INDEX) {
+                              GrantResultFlag.push(-1)
+                            }else{
+                              GrantResultFlag.push(0)
+                            }
+                          } else {
+                            this.revokeUserGrantedPermission(item.accessTokenId, permission)
+                            if (nowRevokeResult != Constants.PERMISSION_INDEX) {
+                              RevokeResultFlag.push(-1)
+                              this.authorizeDialogController.open();
+                              setTimeout(()=> {
+                                this.authorizeDialogController.close();
+                              }, Constants.DELAY_TIME)
+                            }else{
+                              RevokeResultFlag.push(0)
+                            }
+                          }
+                        })
                         if (!item.index) {
-                          this.grantUserGrantedPermission(item.accessTokenId, item.permission);
-                        } else {
-                          this.revokeUserGrantedPermission(item.accessTokenId, item.permission);
+                          if(GrantResultFlag.indexOf(-1) > -1){
+                            this.authorizeDialogController.open();
+                            setTimeout(()=> {
+                              this.authorizeDialogController.close();
+                            }, Constants.DELAY_TIME)
+                          }else{
+                            this.isCheckList = [true, false];
+                          }
+                        }else{
+                          if (RevokeResultFlag.indexOf(-1) > -1){
+                            this.authorizeDialogController.open();
+                            setTimeout(()=> {
+                              this.authorizeDialogController.close();
+                            }, Constants.DELAY_TIME)
+                          }else{
+                            this.isCheckList = [false, true];
+                          }
                         }
-                      }
                     })
                   }
                 }
@@ -337,11 +370,13 @@ struct mediaDocumentItem {
         .borderRadius(Constants.BORDER_RADIUS)
         .backgroundColor($r('app.color.default_background_color'))
         .padding({
-          left: Constants.TERTIARY_LIST_PADDING_LEFT, right: Constants.TERTIARY_LIST_PADDING_RIGHT,
           top: Constants.TERTIARY_LIST_PADDING_TOP, bottom: Constants.TERTIARY_LIST_PADDING_BOTTOM
         })
       }
-      .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+      .padding({
+        left: Constants.LIST_PADDING_LEFT,
+        right: Constants.LIST_PADDING_LEFT
+      })
       .width(Constants.FULL_WIDTH)
       .height(Constants.FULL_HEIGHT)
       .backgroundColor($r('app.color.background_color'))

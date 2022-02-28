@@ -23,11 +23,13 @@ class CalendarObj {
   groupName: string
   description: string
   label: string
-  constructor(permissionName: string, groupName: string, description: string, label: string) {
+  index: number
+  constructor(permissionName: string, groupName: string, description: string, label: string, index: number) {
     this.permissionName = permissionName
     this.groupName = groupName
     this.description = description
     this.label = label
+    this.index = index
   }
 } // Permission management secondary interface data class
 
@@ -121,7 +123,7 @@ struct appNameItem {
           })
           router.push({
             uri: 'pages/authority-tertiary',
-            params: { routerData: dataList, backTitle: item.label }
+            params: { routerData: [dataList[item.index]], backTitle: item.label }
           });
         })
       }
@@ -132,33 +134,14 @@ struct appNameItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    var permissionsListNomal = groups.filter((item) => {
-      return item.groupName === this.backTitle;
-    });
-    var permissionsListOther = groups.filter((item) => {
-      return  item.children !== undefined;
-    })[0].children.filter((item) => {
-      return  item.groupName === this.backTitle;
-    });
-    var arraySort = [];
-    for (let i = 0; i < permissionsListOther[0].permissions.length; i++) {
-      if (arraySort.indexOf(permissionsListOther[0].permissions[i]) === -1) {
-        arraySort.push(permissionsListOther[0].permissions[i]);
-      }
-    }
-    permissionsListOther[0].permissions = arraySort;
-    var permissionsList;
-    if (permissionsListNomal.length) {
-      permissionsList = permissionsListNomal;
-    }
-    if (permissionsListOther.length) {
-      permissionsList = permissionsListOther;
-    }
+    var permissionsList = groups.filter((item) => {
+      return item.groupName === this.backTitle
+    })
     for (let i = 0; i < permissionsList[0].permissions.length; i++) {
       permissionGroups.forEach((item) => {
         if (item.permissionName === permissionsList[0].permissions[i]) {
           this.calendarListItem.push(
-            new CalendarObj(item.permissionName, item.groupName, item.description, item.label)
+            new CalendarObj(item.permissionName, item.groupName, item.description, item.label, i)
           )
         }
       })
@@ -168,39 +151,7 @@ struct appNameItem {
   build() {
     Row() {
       Column() {
-        if (!this.calendarListItem.length) {
-          Row() {
-            List() {
-              ListItem() {
-                Row() {
-                  Column() {
-                    Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                      Row() {
-                        Column() {
-                          Row() {
-                            Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                              Text($r('app.string.no_data'))
-                                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                                .fontColor($r('app.color.text_color'))
-                            }.margin({ top: Constants.FLEX_MARGIN_TOP, bottom: Constants.FLEX_MARGIN_BOTTOM })
-                          }.height(Constants.FULL_HEIGHT)
-                        }.flexGrow(Constants.FLEX_GROW)
-                        .constraintSize({minHeight: Constants.CONSTRAINTSIZE_MINHEIGHT })
-                      }
-                      .width(Constants.FULL_WIDTH)
-                      .height(Constants.LISTITEM_ROW_HEIGHT)
-                    }
-                  }
-                }
-              }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
-            }
-            .backgroundColor($r('app.color.default_background_color'))
-            .borderRadius(Constants.BORDER_RADIUS)
-            .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-          }.margin({ top: Constants.ROW_MARGIN_TOP })
-          .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
-        } else {
-          Row() {
+        Row() {
             List() {
               ForEach(this.calendarListItem.slice(Constants.SLICE_START, this.calendarListItem.length - 1), (item) => {
                 this.ListItemLayout(item, Constants.SLICE_START_INDEX)
@@ -211,8 +162,7 @@ struct appNameItem {
             }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)
             .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
           }.margin({ top: Constants.ROW_MARGIN_TOP })
-          .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
-        }
+        .padding({ left: Constants.LIST_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
       }
       .width(Constants.FULL_WIDTH)
       .height(Constants.FULL_HEIGHT)

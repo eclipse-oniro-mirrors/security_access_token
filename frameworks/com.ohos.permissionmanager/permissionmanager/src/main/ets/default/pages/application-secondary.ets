@@ -78,26 +78,50 @@ struct appNamePlusPage {
           }
         }.onClick(() => {
           if (status === 'allow') {
-            router.push({
-              uri: 'pages/application-tertiary',
-              params: {
-                routerData: this.routerData.bundleName,
-                backTitle: item.groupName,
-                permission: item.permission,
-                status: allowedStatus
-              }
-            });
+            if (item.groupName == "其他权限") {
+              router.push({
+                uri: 'pages/other-permissions',
+                params: {
+                  routerData: this.routerData.bundleName,
+                  backTitle: item.groupName,
+                  permission: item.permission,
+                  status: allowedStatus
+                }
+              });
+            } else {
+              router.push({
+                uri: 'pages/application-tertiary',
+                params: {
+                  routerData: this.routerData.bundleName,
+                  backTitle: item.groupName,
+                  permission: item.permission,
+                  status: allowedStatus
+                }
+              });
+            }
           }
           else if (status === 'banned') {
-            router.push({
-              uri: 'pages/application-tertiary',
-              params: {
-                routerData: this.routerData.bundleName,
-                backTitle: item.groupName,
-                permission: item.permission,
-                status: bannedStatus
-              }
-            });
+            if (item.groupName == "其他权限") {
+              router.push({
+                uri: 'pages/other-permissions',
+                params: {
+                  routerData: this.routerData.bundleName,
+                  backTitle: item.groupName,
+                  permission: item.permission,
+                  status: bannedStatus
+                }
+              });
+            } else {
+              router.push({
+                uri: 'pages/application-tertiary',
+                params: {
+                  routerData: this.routerData.bundleName,
+                  backTitle: item.groupName,
+                  permission: item.permission,
+                  status: bannedStatus
+                }
+              });
+            }
           }
         })
       }
@@ -127,9 +151,9 @@ struct appNamePlusPage {
         }
       }
       if (isGranted) {
-        this.allowedListItem.push(new AllowedObj(groups[ids[i]].groupName, reqPermissions[0]));
+        this.allowedListItem.push(new AllowedObj(groups[ids[i]].groupName, reqPermissions));
       } else {
-        this.bannedListItem.push(new BannedObj(groups[ids[i]].groupName, reqPermissions[0]));
+        this.bannedListItem.push(new BannedObj(groups[ids[i]].groupName, reqPermissions));
       }
     }
   }
@@ -201,7 +225,7 @@ struct appNamePlusPage {
                       .borderRadius(Constants.BORDER_RADIUS)
                       .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
                     }.margin({ top: Constants.ROW_MARGIN_TOP })
-                     .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+                     .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
                   } else {
                     if (this.allowedListItem.length) {
                       Row() {
@@ -210,7 +234,7 @@ struct appNamePlusPage {
                             .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                             .margin({
                               top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                              left: Constants.SECONDARY_TEXT_MARGIN_LEFT
+                              left: Constants.SECONDARY_LIST_PADDING_RIGHT
                             })
                         }
                       }
@@ -228,7 +252,7 @@ struct appNamePlusPage {
                         .borderRadius(Constants.BORDER_RADIUS)
                         .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
                       }.margin({ top: Constants.ROW_MARGIN_TOP })
-                       .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+                       .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
                     }
                     if (this.bannedListItem.length) {
                       Row() {
@@ -237,7 +261,7 @@ struct appNamePlusPage {
                             .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                             .margin({
                               top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                              left: Constants.SECONDARY_TEXT_MARGIN_LEFT
+                              left: Constants.SECONDARY_LIST_PADDING_RIGHT
                             })
                         }
                       }
@@ -255,7 +279,7 @@ struct appNamePlusPage {
                         .borderRadius(Constants.BORDER_RADIUS)
                         .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
                       }.margin({ top: Constants.ROW_MARGIN_TOP })
-                       .padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+                       .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
                     }
                   }
                 }

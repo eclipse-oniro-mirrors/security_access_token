@@ -19,7 +19,7 @@ import { textInput } from "../common/components/search.ets";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import { getAppLabel, getAppIcon, verifyAccessToken, changeIndexValue } from "../common/utils/utils";
+import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
 import { makePy } from "../common/utils/utils.ets";
 import { authorizeDialog } from "../common/components/dialog.ets";
 import Constants from '../common/utils/constant.ets';
@@ -106,7 +106,8 @@ struct locationInfoPage {
 
 @Component
 struct applicationItem {
-  @State toggleIsOn: boolean[] = []; // toggle switch state array
+  @State permissionNum: number = Constants.PERMISSION_NUM; // permission num
+  @State toggleIsOn: object = {}; // toggle switch state array
   @State applicationList: ApplicationObj[] = []; // application info array
   @State oldApplicationItem: ApplicationObj[] = []; // Original application information array
   @State searchResult: boolean = true; // search results
@@ -153,14 +154,15 @@ struct applicationItem {
             Row() {
               Column()
                 .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.FULL_WIDTH)
+                .width(Constants.AUTHORITY_TEXT_DECORATION_WIDTH)
                 .height(Constants.TEXT_DECORATION_HEIGHT)
+                .margin({ left: Constants.AUTHORITY_TEXT_DECORATION_MARGIN_LEFT })
             }
           }
         }.onClick(() => {
         })
       }
-    }.padding({ left: Constants.AUTHORITY_LISTITEM_PADDING_LEFT, right: Constants.AUTHORITY_LISTITEM_PADDING_RIGHT })
+    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.AUTHORITY_LISTITEM_PADDING_RIGHT })
   }
 
   /**
@@ -169,22 +171,28 @@ struct applicationItem {
    * @param {String} permission permission name
    * @param {Number} index Array index to modify permission status
    */
-  async grantUserGrantedPermission(accessTokenId, permission, index) {
-    var permissionFlag =  await abilityAccessCtrl.createAtManager().
-      getPermissionFlags(accessTokenId, permission);
+  grantUserGrantedPermission(accessTokenId, permission, index) {
     abilityAccessCtrl.createAtManager().grantUserGrantedPermission(
-      accessTokenId, permission, permissionFlag).then(result => {
+      accessTokenId, permission, Constants.PERMISSION_FLAG).then(result => {
       // result: 0 Authorization succeeded; result: -1 Authorization failed
       if (result !== Constants.PERMISSION_INDEX) {
         this.authorizeDialogController.open();
-        this.toggleIsOn = changeIndexValue(this.toggleIsOn, [[index, false]]);
+        this.toggleIsOn[index] = false;
         setTimeout(()=> {
           this.authorizeDialogController.close();
         }, Constants.DELAY_TIME)
       } else {
-        this.toggleIsOn = changeIndexValue(this.toggleIsOn, [[index, true]]);
+        this.toggleIsOn[index] = true;
       }
+      let num = Constants.PERMISSION_NUM;
+      for(let key in this.toggleIsOn){
+        if(this.toggleIsOn[key]){
+          num++;
+        }
+      }
+      this.permissionNum = num;
     }).catch(error => {
+      console.error('abilityAccessCtrl.createAtManager.grantUserGrantedPermission failed. Cause: ' + JSON.stringify(error));
     })
   }
 
@@ -194,21 +202,26 @@ struct applicationItem {
    * @param {String} permission permission name
    * @param {Number} index Array index to modify permission status
    */
-  async revokeUserGrantedPermission(accessTokenId, permission, index) {
-    var permissionFlag =  await abilityAccessCtrl.createAtManager().
-    getPermissionFlags(accessTokenId, permission);
+  revokeUserGrantedPermission(accessTokenId, permission, index) {
     abilityAccessCtrl.createAtManager().revokeUserGrantedPermission(
-      accessTokenId, permission, permissionFlag).then(result => {
+      accessTokenId, permission, Constants.PERMISSION_FLAG).then(result => {
       // result: 0 successfully cancel the authorization; result: -1 cancel the authorization failed
       if (result !== Constants.PERMISSION_INDEX) {
         this.authorizeDialogController.open();
-        this.toggleIsOn = changeIndexValue(this.toggleIsOn, [index, false]);
+        this.toggleIsOn[index] = true;
         setTimeout(()=> {
           this.authorizeDialogController.close();
         }, Constants.DELAY_TIME)
       } else {
-        this.toggleIsOn = changeIndexValue(this.toggleIsOn, [index, true]);
+        this.toggleIsOn[index] = false;
       }
+      let num = Constants.PERMISSION_NUM;
+      for(let key in this.toggleIsOn){
+        if(this.toggleIsOn[key]){
+          num++;
+        }
+      }
+      this.permissionNum = num;
     })
   }
 
@@ -241,11 +254,14 @@ struct applicationItem {
               routerData[0].permission,
               makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
           );
+          this.applicationList.sort((a,b) => a.index - b.index)
+          this.oldApplicationItem.sort((a,b) => a.index - b.index)
           // 0: have permission; -1: no permission
           if (values[2] === Constants.PERMISSION_INDEX) {
-            this.toggleIsOn.push(true);
+            this.toggleIsOn[i] = true;
+            this.permissionNum++;
           } else {
-            this.toggleIsOn.push(false);
+            this.toggleIsOn[i] = false;
           }
           });
       }).catch(() => {
@@ -277,7 +293,7 @@ struct applicationItem {
         Flex({ alignItems:ItemAlign.Start, justifyContent: FlexAlign.Start }) {
           Column() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text(this.applicationList.length + '个应用获取此权限')
+              Text(this.permissionNum + '个应用获取此权限')
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({ top: Constants.AUTHORITY_TEXT_MARGIN_TOP, left: Constants.AUTHORITY_TEXT_MARGIN_LEFT })

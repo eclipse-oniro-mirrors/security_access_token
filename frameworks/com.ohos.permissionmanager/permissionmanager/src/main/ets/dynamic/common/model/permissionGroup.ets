@@ -17,14 +17,14 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.LOCATION_IN_BACKGROUND",
     "groupName": "LOCATION",
-    "label": "定位权限",
+    "label": "后台定位权限",
     "description": "允许应用在后台运行时获取位置信息。",
     "groupId": 0
   },
   {
     "permissionName": "ohos.permission.LOCATION",
     "groupName": "LOCATION",
-    "label": "定位权限",
+    "label": "前台定位权限",
     "description": "允许应用在前台运行时获取位置信息。",
     "groupId": 0
   },
