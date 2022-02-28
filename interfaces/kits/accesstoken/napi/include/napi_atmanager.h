@@ -20,7 +20,6 @@
 #include <cstring>
 #include <unistd.h>
 
-#include "accesstoken_kit.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -44,7 +43,6 @@ struct AtManagerAsyncContext {
     char     permissionName[ VALUE_BUFFER_SIZE ] = { 0 };
     size_t   pNameLen = 0;
     int      flag = 0;
-    PermissionState grantState = PERMISSION_DENIED;
     int      result = 0; // callback or promise return result
     int      status = ASYN_THREAD_EXEC_FAIL; // napi_create_async_work-execute function exec result, default failure
 

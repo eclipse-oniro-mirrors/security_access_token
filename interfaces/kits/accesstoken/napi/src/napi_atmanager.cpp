@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -135,7 +136,7 @@ void NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
                 VALUE_BUFFER_SIZE, &(asyncContext.pNameLen)); // get permissionName
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Type matching failed");
-            asyncContext.status = ASYN_THREAD_EXEC_FAIL;
+            asyncContext.result = -1;
         }
     }
 
@@ -148,11 +149,11 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext *)data;
 
     // use innerkit class method to verify permission
-    asyncContext->grantState = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
+    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
         asyncContext->permissionName);
 
     // set status according to the innerkit class method return
-    if ((asyncContext->grantState == PERMISSION_GRANTED) || (asyncContext->grantState == PERMISSION_DENIED)) {
+    if ((asyncContext->result == PERMISSION_GRANTED) || (asyncContext->result == PERMISSION_DENIED)) {
         asyncContext->status = ASYN_THREAD_EXEC_SUCC; // granted and denied regard as function exec success
     } else {
         asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
@@ -169,7 +170,7 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
 
     if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
         // execute succ, use resolve to return result by the deferred create before
-        napi_create_int32(env, asyncContext->grantState, &result); // verify result
+        napi_create_int32(env, asyncContext->result, &result); // verify result
         napi_resolve_deferred(env, asyncContext->deferred, result);
     } else {
         // execute fail, use reject to return default PERMISSION_DENIED by the deferred create before
@@ -193,7 +194,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     }
 
     ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->status == ASYN_THREAD_EXEC_FAIL) {
+    if (asyncContext->result == -1) {
         delete asyncContext;
         return nullptr;
     }

@@ -139,7 +139,7 @@ int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& n
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
 }
 
-PermissionState AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
@@ -154,10 +154,10 @@ PermissionState AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const s
     return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
-PermissionState AccessTokenKit::VerifyAccessToken(
+int AccessTokenKit::VerifyAccessToken(
     AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName)
 {
-    PermissionState ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName);
+    int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName);
     if (ret != PERMISSION_GRANTED) {
         return ret;
     }
@@ -167,7 +167,7 @@ PermissionState AccessTokenKit::VerifyAccessToken(
     return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
-PermissionState AccessTokenKit::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenKit::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {

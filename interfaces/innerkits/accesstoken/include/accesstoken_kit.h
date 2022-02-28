@@ -42,9 +42,9 @@ public:
     static AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
     static int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     static int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
-    static PermissionState VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
-    static PermissionState VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName);
-    static PermissionState VerifyAccessToken(
+    static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    static int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName);
+    static int VerifyAccessToken(
         AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
     static int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     static int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
