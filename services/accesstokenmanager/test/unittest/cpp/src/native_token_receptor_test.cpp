@@ -573,7 +573,7 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
 }
 
 /**
- * @tc.name: init001
+ * @tc.name: ProcessNativeTokenInfos007
  * @tc.desc: test get native cfg
  * @tc.type: FUNC
  * @tc.require: Issue Number
@@ -600,7 +600,13 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
     uint64_t tokenIdApl1 = ::GetAccessTokenId("ProcessNativeTokenInfos007_001", dcaps, dcapNum, apl1);
     ASSERT_NE(tokenIdApl1, 0);
 
-    NativeTokenReceptor::GetInstance().Init();
+    NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
+    receptor.ready_ = false;
+
+    receptor.Init();
+    // wait fresh tokens to sql.
+    sleep(3);
+
     const std::string permission = "ohos.permission.SEND_MESSAGES";
     int ret = PermissionManager::GetInstance().VerifyNativeToken(tokenIdApl3, permission);
     ASSERT_EQ(ret, PERMISSION_GRANTED);
