@@ -3044,22 +3044,58 @@ HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
 
 /**
  * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.desc: get all native token with dcaps
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
 HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
+
+    std::vector<NativeTokenInfo> nativeTokenInfosRes;
+    int ret = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes);
+    ASSERT_EQ(ret, RET_SUCCESS);
 }
 
 /**
  * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.desc: set already mapping tokenInfo
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
 HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteNativeTokenInfo001 start.");
+    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+
+    NativeTokenInfo native1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_test1",
+        .dcap = {"SYSDCAP", "DMSDCAP"},
+        .tokenID = 0x28000000,
+        .tokenAttr = 0
+    };
+
+    std::vector<NativeTokenInfo> nativeTokenInfoList;
+    nativeTokenInfoList.emplace_back(native1);
+
+    int ret = AccessTokenKit::SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(deviceID, 0x28000000);
+    ASSERT_NE(mapID, 0);
+
+    NativeTokenInfo resultInfo;
+    ret = AccessTokenKit::GetNativeTokenInfo(mapID, resultInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    ASSERT_EQ(resultInfo.apl, native1.apl);
+    ASSERT_EQ(resultInfo.ver, native1.ver);
+    ASSERT_EQ(resultInfo.processName, native1.processName);
+    ASSERT_EQ(resultInfo.dcap.size(), 2);
+    ASSERT_EQ(resultInfo.dcap[0], "SYSDCAP");
+    ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
+    ASSERT_EQ(resultInfo.tokenID, mapID);
+    ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
 }

@@ -184,7 +184,9 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
 void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes, int length)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "HandleDataReceived");
-
+#ifdef DEBUG_API_PERFORMANCE
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:recieve message from softbus");
+#endif
     if (session <= 0 || length <= 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params: session: %{public}d, data length: %{public}d", session, length);
         return;
@@ -294,6 +296,9 @@ int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytes
     }
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send len (after compress len)= %{public}d", bytesLength);
+#ifdef DEBUG_API_PERFORMANCE
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:send command to softbus");
+#endif
     int result = ::SendBytes(session_, bytes, bytesLength);
     if (result != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to send! result= %{public}d", result);
