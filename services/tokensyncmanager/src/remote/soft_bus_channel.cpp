@@ -134,15 +134,15 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
 
     int len = RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length();
-    unsigned char *buf = (unsigned char *) malloc(len + 1);
+    unsigned char *buf = new unsigned char[len + 1];
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
         return "";
     }
-    memset_s(buf, len + 1, 0, len + 1);
+    (void)memset_s(buf, len + 1, 0, len + 1);
     int result = PrepareBytes(REQUEST_TYPE, uuid, commandName, jsonPayload, buf, len);
     if (result != Constant::SUCCESS) {
-        free(buf);
+        delete[] buf;
         return "";
     }
 
@@ -159,7 +159,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     lock.unlock();
 
     int retCode = SendRequestBytes(buf, len);
-    free(buf);
+    delete[] buf;
 
     std::unique_lock<std::mutex> lock2(sessionMutex_);
     if (retCode != Constant::SUCCESS) {
@@ -259,23 +259,23 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "input length: %{public}d", length);
     uLong len = RPC_TRANSFER_BYTES_MAX_LENGTH;
-    unsigned char *buf = (unsigned char *) malloc(len + 1);
+    unsigned char *buf = new unsigned char[len + 1];
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory!");
         return "";
     }
-    memset_s(buf, len + 1, 0, len + 1);
+    (void)memset_s(buf, len + 1, 0, len + 1);
     int result = uncompress(buf, &len, (unsigned char *) bytes, length);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
             (int) len, length);
-        free(buf);
+        delete[] buf;
         return "";
     }
     buf[len] = '\0';
     std::string str((char *) buf);
-    free(buf);
+    delete[] buf;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
     return str;
 }
@@ -348,19 +348,19 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
             jsonPayload.c_str());
 
         int sendlen = RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length();
-        unsigned char *sendbuf = (unsigned char *) malloc(sendlen + 1);
+        unsigned char *sendbuf = new unsigned char[sendlen + 1];
         if (sendbuf == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", sendlen);
             return;
         }
-        memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
+        (void)memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
         int sendResult = PrepareBytes(RESPONSE_TYPE, id, commandName, jsonPayload, sendbuf, sendlen);
         if (sendResult != Constant::SUCCESS) {
-            free(sendbuf);
+            delete[] sendbuf;
             return;
         }
         int sendResultCode = SendResponseBytes(session, sendbuf, sendlen);
-        free(sendbuf);
+        delete[] sendbuf;
         ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d ", sendResultCode);
         return;
     }
@@ -374,19 +374,19 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
     // send result back
     std::string resultJsonPayload = command->ToJsonPayload();
     int len = RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length();
-    unsigned char *buf = (unsigned char *) malloc(len + 1);
+    unsigned char *buf = new unsigned char[len + 1];
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
         return;
     }
-    memset_s(buf, len + 1, 0, len + 1);
+    (void)memset_s(buf, len + 1, 0, len + 1);
     int result = PrepareBytes(RESPONSE_TYPE, id, commandName, resultJsonPayload, buf, len);
     if (result != Constant::SUCCESS) {
-        free(buf);
+        delete[] buf;
         return;
     }
     int retCode = SendResponseBytes(session, buf, len);
-    free(buf);
+    delete[] buf;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d", retCode);
 }
 

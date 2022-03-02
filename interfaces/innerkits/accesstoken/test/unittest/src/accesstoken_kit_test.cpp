@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -348,7 +348,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
     int ret = RET_FAILED;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionDef> permDefList;
-        ret = ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
+        ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
         ASSERT_EQ(RET_SUCCESS, ret);
         ASSERT_EQ(2, permDefList.size());
     }
@@ -464,7 +464,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
     int ret = RET_FAILED;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionStateFull> permStatList;
-        ret = ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
+        ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
         ASSERT_EQ(1, permStatList.size());
         ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
@@ -533,7 +533,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
         ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
         ASSERT_EQ(RET_SUCCESS, ret);
 
-        ret = ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA);
+        ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA);
         ASSERT_EQ(PERMISSION_USER_FIXED, ret);
     }
 }

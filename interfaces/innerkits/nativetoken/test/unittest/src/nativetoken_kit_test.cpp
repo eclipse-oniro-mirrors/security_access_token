@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -49,13 +49,13 @@ void TokenLibKitTest::TearDown()
 int Start(const char *processName)
 {
     const char *processname = processName;
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
     uint64_t tokenId;
     tokenId = GetAccessTokenId(processname, dcaps, dcapNum, "system_core");
-    free(dcaps);
+    delete[] dcaps;
     return tokenId;
 }
 
@@ -67,7 +67,7 @@ int Start(const char *processName)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
 {
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
@@ -91,7 +91,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     const std::string validProcName02 (256, 'x');
     tokenId = GetAccessTokenId(validProcName02.c_str(), dcaps, dcapNum, "system_core");
     ASSERT_NE(tokenId, 0);
-    free(dcaps);
+    delete[] dcaps;
 }
 
 /**
@@ -102,7 +102,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
 {
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 32);
+    const char **dcaps = new const char *[32];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int dcapNum = -1;
@@ -127,8 +127,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     dcapNum = 31;
     tokenId = GetAccessTokenId("GetAccessTokenId002_02", dcaps, dcapNum, "system_core");
     ASSERT_NE(tokenId, 0);
-    
-    free(dcaps);
+
+    delete[] dcaps;
 }
 
 /**
@@ -139,7 +139,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
 {
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
@@ -170,7 +170,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     tokenId = GetAccessTokenId("GetAccessTokenId003_04", dcaps, dcapNum, "system_core");
     ASSERT_NE(tokenId, 0);
 
-    free(dcaps);
+    delete[] dcaps;
 }
 
 /**
@@ -181,7 +181,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
 {
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 2);
+    const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
@@ -192,7 +192,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
     tokenId = GetAccessTokenId("GetAccessTokenId003", dcaps, dcapNum, "system_invalid");
     ASSERT_EQ(tokenId, 0);
 
-    free(dcaps);
+    delete[] dcaps;
 }
 
 /**

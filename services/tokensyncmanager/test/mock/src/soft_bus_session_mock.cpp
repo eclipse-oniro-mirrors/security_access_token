@@ -160,7 +160,7 @@ void DecompressMock(const unsigned char *bytes, const int length)
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory!");
         return;
     }
-    memset_s(buf, len + 1, 0, len + 1);
+    (void)memset_s(buf, len + 1, 0, len + 1);
     int result = uncompress(buf, &len, (unsigned char *) bytes, length);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL,

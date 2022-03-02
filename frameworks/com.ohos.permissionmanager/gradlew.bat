@@ -1,5 +1,5 @@
 @rem
-@rem Copyright (c) 2021 Huawei Device Co., Ltd.
+@rem Copyright (c) 2021-2022 Huawei Device Co., Ltd.
 @rem
 @rem Licensed under the Apache License, Version 2.0 (the "License");
 @rem you may not use this file except in compliance with the License.
