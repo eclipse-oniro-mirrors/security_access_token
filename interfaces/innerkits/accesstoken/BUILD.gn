@@ -57,5 +57,8 @@ ohos_shared_library("libaccesstoken_sdk") {
     "samgr_standard:samgr_proxy",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
+  ]
 }

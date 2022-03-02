@@ -154,6 +154,10 @@ void SoftBusManager::Destroy()
 
 int32_t SoftBusManager::OpenSession(const std::string &deviceId)
 {
+#ifdef DEBUG_API_PERFORMANCE
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start open session");
+#endif
+
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (result == false) {
@@ -185,6 +189,9 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
         }
         break;
     }
+#ifdef DEBUG_API_PERFORMANCE
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start open session success");
+#endif
     int64_t state = SoftBusSessionListener::GetSessionState(sessionId);
     if (state < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "openSession, timeout, session: %{public}" PRId64, state);

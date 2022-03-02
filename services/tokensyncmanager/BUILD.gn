@@ -61,7 +61,10 @@ ohos_shared_library("token_sync_manager_service") {
     "src/service/token_sync_manager_stub.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
+  ]
 
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",

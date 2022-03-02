@@ -266,7 +266,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: 0x%{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -275,7 +275,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: 0x%{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
 
     std::vector<NativeTokenInfo> nativeList;
 

@@ -47,7 +47,14 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
         __func__, remoteDeviceID.c_str(), remoteTokenID);
+#ifdef DEBUG_API_PERFORMANCE
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start call");
+    AccessTokenID resID = AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:end call");
+    return resID;
+#else
     return AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+#endif
 }
 
 int AccessTokenKit::UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy)

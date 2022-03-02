@@ -3044,54 +3044,58 @@ HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
 
 /**
  * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.desc: get all native token with dcaps
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
 HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
+
+    std::vector<NativeTokenInfo> nativeTokenInfosRes;
+    int ret = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes);
+    ASSERT_EQ(ret, RET_SUCCESS);
 }
 
 /**
  * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: get already mapping tokenInfo, makesure ipc right
+ * @tc.desc: set already mapping tokenInfo
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
 HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
-}
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteNativeTokenInfo001 start.");
+    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
 
-HWTEST_F(AccessTokenKitTest, VerifyNativeToken001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "VerifyNativeToken001 start.");
+    NativeTokenInfo native1 = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_test1",
+        .dcap = {"SYSDCAP", "DMSDCAP"},
+        .tokenID = 0x28000000,
+        .tokenAttr = 0
+    };
 
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
-    dcaps[0] = "AT_CAP_01";
-    int dcapNum = 1;
+    std::vector<NativeTokenInfo> nativeTokenInfoList;
+    nativeTokenInfoList.emplace_back(native1);
 
-    char apl3[32];
-    strcpy(apl3, "system_core");
-    char apl2[32];
-    strcpy(apl2, "system_basic");
-    char apl1[32];
-    strcpy(apl1, "normal");
+    int ret = AccessTokenKit::SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
+    ASSERT_EQ(ret, RET_SUCCESS);
 
-    uint64_t tokenIdApl3 = GetAccessTokenId("ProcessNativeTokenInfos007_003", dcaps, dcapNum, apl3);
-    ASSERT_NE(tokenIdApl3, 0);
-    uint64_t tokenIdApl2 = GetAccessTokenId("ProcessNativeTokenInfos007_002", dcaps, dcapNum, apl2);
-    ASSERT_NE(tokenIdApl2, 0);
-    uint64_t tokenIdApl1 = GetAccessTokenId("ProcessNativeTokenInfos007_001", dcaps, dcapNum, apl1);
-    ASSERT_NE(tokenIdApl1, 0);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenIdApl1 = %{public}llu.", tokenIdApl1);
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(deviceID, 0x28000000);
+    ASSERT_NE(mapID, 0);
 
-    const std::string permissionName = "ohos.permission.SEND_MESSAGES";
-    int ret = AccessTokenKit::VerifyNativeToken(tokenIdApl3, permissionName);
-    ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyNativeToken(tokenIdApl2, permissionName);
-    ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyNativeToken(tokenIdApl1, permissionName);
-    ASSERT_EQ(ret, PERMISSION_DENIED);
+    NativeTokenInfo resultInfo;
+    ret = AccessTokenKit::GetNativeTokenInfo(mapID, resultInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    ASSERT_EQ(resultInfo.apl, native1.apl);
+    ASSERT_EQ(resultInfo.ver, native1.ver);
+    ASSERT_EQ(resultInfo.processName, native1.processName);
+    ASSERT_EQ(resultInfo.dcap.size(), 2);
+    ASSERT_EQ(resultInfo.dcap[0], "SYSDCAP");
+    ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
+    ASSERT_EQ(resultInfo.tokenID, mapID);
+    ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
 }
