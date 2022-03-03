@@ -51,13 +51,3 @@ group("accesstoken_build_module_test") {
     ]
   }
 }
-#group("distributed_permission") {
-#  if (is_standard_system) {
-#    deps = [
-#      "${distributed_permission_innerkits_distributed_path}:distributed_permission_innerkits",
-#      "${distributed_permission_record_database_path}:permission_standard_infrastructure_record_database",
-#      "${distributed_permission_services_path}:distributed_permission_services",
-#      "${distributed_permission_services_path}/main/sa_profile:distributed_permission_sa_profile_standard",
-#    ]
-#  }
-#}

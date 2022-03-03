@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -551,13 +551,13 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "test init001!");
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    const char *dcaps[1];
     dcaps[0] = "AT_CAP_01";
     int dcapNum = 1;
     char processName[32];
-    strcpy(processName, "native_token_test7");
+    (void)strcpy_s(processName, sizeof(processName), "native_token_test7");
     char apl[32];
-    strcpy(apl, "system_core");
+    (void)strcpy_s(apl, sizeof(apl), "system_core");
 
     uint64_t tokenId = ::GetAccessTokenId(processName, dcaps, dcapNum, apl);
     ASSERT_NE(tokenId, 0);
@@ -582,16 +582,16 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos007!");
 
-    const char **dcaps = (const char **)malloc(sizeof(char *) * 1);
+    const char *dcaps[1];
     dcaps[0] = "AT_CAP_01";
     int dcapNum = 1;
 
     char apl3[32];
-    strcpy(apl3, "system_core");
+    (void)strcpy_s(apl3, sizeof(apl3), "system_core");
     char apl2[32];
-    strcpy(apl2, "system_basic");
+    (void)strcpy_s(apl2, sizeof(apl2), "system_basic");
     char apl1[32];
-    strcpy(apl1, "normal");
+    (void)strcpy_s(apl1, sizeof(apl1), "normal");
 
     uint64_t tokenIdApl3 = ::GetAccessTokenId("ProcessNativeTokenInfos007_003", dcaps, dcapNum, apl3);
     ASSERT_NE(tokenIdApl3, 0);

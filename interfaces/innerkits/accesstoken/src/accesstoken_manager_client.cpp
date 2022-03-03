@@ -169,7 +169,7 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
         return res;
     }
     HapInfoParcel hapInfoParcel;
-    HapPolicyParcel  hapPolicyParcel;
+    HapPolicyParcel hapPolicyParcel;
     hapInfoParcel.hapInfoParameter = info;
     hapPolicyParcel.hapPolicyParameter = policy;
 
