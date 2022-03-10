@@ -230,7 +230,8 @@ void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParc
 
 void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((!IsAuthorizedCalling()) && (this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -272,7 +273,8 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((!IsAuthorizedCalling()) && (this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
