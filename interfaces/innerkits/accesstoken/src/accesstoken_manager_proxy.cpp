@@ -241,6 +241,56 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     return result;
 }
 
+PermissionOper AccessTokenManagerProxy::GetPermissionsState(
+    AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return INVALID_OPER;
+    }
+    if (!data.WriteUint32(permListParcel.size())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel size");
+        return INVALID_OPER;
+    }
+    for (auto permission : permListParcel) {
+        if (!data.WriteParcelable(&permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel");
+            return INVALID_OPER;
+        }
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return INVALID_OPER;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_OPER_STATE), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+        return INVALID_OPER;
+    }
+
+    int32_t size = reply.ReadInt32();
+    if (size != permListParcel.size()) {
+        return INVALID_OPER;
+    }
+    for (int i = 0; i < size; i++) {
+        sptr<PermissionListStateParcel> permissionReq = reply.ReadParcelable<PermissionListStateParcel>();
+        if (permissionReq != nullptr) {
+            permListParcel[i].permsState.state = permissionReq->permsState.state;
+        }
+    }
+
+    PermissionOper result = static_cast<PermissionOper>(reply.ReadInt32());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
     MessageParcel data;

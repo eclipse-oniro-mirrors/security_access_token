@@ -195,6 +195,39 @@ int PermissionManager::GetReqPermissions(
     return RET_SUCCESS;
 }
 
+int PermissionManager::NeedDynamicPop(std::vector<PermissionStateFull> permsList,
+    PermissionListState &permState, bool &res)
+{
+    bool foundGoal = false;
+    int32_t goalGrantStatus;
+    int32_t goalGrantFlags;
+    for (auto& perm : permsList) {
+        if (perm.permissionName == permState.permissionName) {
+            foundGoal = true;
+            goalGrantStatus = perm.grantStatus[0];
+            goalGrantFlags = perm.grantFlags[0];
+            break;
+        }
+    }
+    if (foundGoal == false) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "can not find permission: %{public}s!", permState.permissionName.c_str());
+        return RET_FAILED;
+    }
+
+    if (goalGrantStatus == PERMISSION_DENIED) {
+        if ((goalGrantFlags == DEFAULT_PERMISSION_FLAGS) ||
+            (goalGrantFlags == PERMISSION_USER_SET)) {
+            permState.state = 1;
+            res = true;
+            return RET_SUCCESS;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "do not need dynamic pop");
+    permState.state = 0;
+    return RET_SUCCESS;
+}
+
 int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s",

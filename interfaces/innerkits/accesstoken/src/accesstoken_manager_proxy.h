@@ -28,6 +28,7 @@
 #include "iremote_proxy.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
+#include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
 
 namespace OHOS {
@@ -47,6 +48,8 @@ public:
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;
+    PermissionOper GetPermissionsState(
+        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permList) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;

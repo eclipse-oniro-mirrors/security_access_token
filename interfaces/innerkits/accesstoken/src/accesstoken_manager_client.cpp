@@ -126,6 +126,42 @@ int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std
     return proxy->GetPermissionFlag(tokenID, permissionName);
 }
 
+PermissionOper AccessTokenManagerClient::GetPermissionsState(
+    AccessTokenID tokenID, std::vector<PermissionListState>& permList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
+        return INVALID_OPER;
+    }
+
+    size_t len = permList.size();
+    if (len == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "len is zero.");
+        return INVALID_OPER;
+    }
+
+    std::vector<PermissionListStateParcel> parcelList;
+
+    for (auto perm : permList) {
+        PermissionListStateParcel permParcel;
+        permParcel.permsState = perm;
+        parcelList.emplace_back(permParcel);
+    }
+
+    PermissionOper result = proxy->GetPermissionsState(tokenID, parcelList);
+
+    if (len != parcelList.size()) {
+        return INVALID_OPER;
+    }
+    for (uint32_t i = 0; i < len; i++) {
+        PermissionListState perm = parcelList[i].permsState;
+        permList[i].state = perm.state;
+    }
+    return result;
+}
+
 int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);

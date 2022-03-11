@@ -23,6 +23,7 @@
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
+#include "permission_list_state.h"
 #include "permission_manager.h"
 
 namespace OHOS {
@@ -127,6 +128,31 @@ int AccessTokenManagerService::GetReqPermissions(
         reqPermList.emplace_back(permPrcel);
     }
     return ret;
+}
+
+PermissionOper AccessTokenManagerService::GetPermissionsState(
+    AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, id: 0x%{public}x", __func__, tokenID);
+    bool needRes = false;
+    std::vector<PermissionStateFull> permsList;
+    int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
+    if (ret != RET_SUCCESS) {
+        return INVALID_OPER;
+    }
+
+    int32_t size = reqPermList.size();
+    ACCESSTOKEN_LOG_INFO(LABEL, "reqPermList size: 0x%{public}x", size);
+    for (int32_t i = 0; i < size; i++) {
+        ret = PermissionManager::GetInstance().NeedDynamicPop(permsList, reqPermList[i].permsState, needRes);
+        if (ret != RET_SUCCESS) {
+            return INVALID_OPER;
+        }
+    }
+    if (needRes) {
+        return DYNAMIC_OPER;
+    }
+    return PASS_OPER;
 }
 
 int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)

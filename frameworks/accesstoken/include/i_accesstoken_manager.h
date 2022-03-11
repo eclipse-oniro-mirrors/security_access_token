@@ -27,6 +27,7 @@
 #include "iremote_broker.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
+#include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
 
 namespace OHOS {
@@ -45,6 +46,8 @@ public:
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual PermissionOper GetPermissionsState(
+        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) = 0;
     virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;
@@ -101,6 +104,7 @@ public:
         GET_NATIVE_REMOTE_TOKEN = 0xff2f,
 
         DUMP_TOKENINFO = 0xff30,
+        GET_PERMISSION_OPER_STATE = 0xff31,
     };
 };
 } // namespace AccessToken

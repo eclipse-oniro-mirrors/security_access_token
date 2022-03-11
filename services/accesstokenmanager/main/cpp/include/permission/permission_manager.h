@@ -22,6 +22,7 @@
 #include "access_token.h"
 #include "hap_token_info_inner.h"
 #include "permission_def.h"
+#include "permission_list_state.h"
 #include "permission_state_full.h"
 
 #include "rwlock.h"
@@ -47,6 +48,8 @@ public:
     void GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int NeedDynamicPop(std::vector<PermissionStateFull> permsList,
+        PermissionListState &permState, bool &res);
 private:
     PermissionManager();
     void UpdateTokenPermissionState(

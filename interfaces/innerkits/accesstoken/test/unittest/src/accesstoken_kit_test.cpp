@@ -157,8 +157,46 @@ void AccessTokenKitTest::SetUp()
         .provisionEnable = false,
         .distributedSceneEnable = false
     };
+    PermissionDef testPermDef1 = {
+        .permissionName = "ohos.permission.testPermDef1",
+        .bundleName = TEST_BUNDLE_NAME,
+        .grantMode = GrantMode::USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false
+    };
+
+    PermissionDef testPermDef2 = {
+        .permissionName = "ohos.permission.testPermDef2",
+        .bundleName = TEST_BUNDLE_NAME,
+        .grantMode = GrantMode::USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false
+    };
+
+    PermissionDef testPermDef3 = {
+        .permissionName = "ohos.permission.testPermDef3",
+        .bundleName = TEST_BUNDLE_NAME,
+        .grantMode = GrantMode::USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false
+    };
+    PermissionDef testPermDef4 = {
+        .permissionName = "ohos.permission.testPermDef4",
+        .bundleName = TEST_BUNDLE_NAME,
+        .grantMode = GrantMode::USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false
+    };
     policy.permList.emplace_back(permissionDefAlpha);
     policy.permList.emplace_back(permissionDefBeta);
+    policy.permList.emplace_back(testPermDef1);
+    policy.permList.emplace_back(testPermDef2);
+    policy.permList.emplace_back(testPermDef3);
+    policy.permList.emplace_back(testPermDef4);
 
     PermissionStateFull permStatAlpha = {
         .permissionName = TEST_PERMISSION_NAME_ALPHA,
@@ -174,11 +212,47 @@ void AccessTokenKitTest::SetUp()
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
         .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
     };
+    PermissionStateFull permTestState1 = {
+        .grantFlags = {0},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.testPermDef1",
+        .resDeviceID = {"local"}
+    };
+
+    PermissionStateFull permTestState2 = {
+        .grantFlags = {1},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.testPermDef2",
+        .resDeviceID = {"local"}
+    };
+
+    PermissionStateFull permTestState3 = {
+        .grantFlags = {2},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.testPermDef3",
+        .resDeviceID = {"local"}
+    };
+
+    PermissionStateFull permTestState4 = {
+        .grantFlags = {1},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.testPermDef4",
+        .resDeviceID = {"local"}
+    };
+
     policy.permStateList.emplace_back(permStatAlpha);
     policy.permStateList.emplace_back(permStatBeta);
     policy.permStateList.emplace_back(g_grantPermissionReq);
     policy.permStateList.emplace_back(g_revokePermissionReq);
-
+    policy.permStateList.emplace_back(permTestState1);
+    policy.permStateList.emplace_back(permTestState1);
+    policy.permStateList.emplace_back(permTestState2);
+    policy.permStateList.emplace_back(permTestState3);
+    policy.permStateList.emplace_back(permTestState4);
     AccessTokenKit::AllocHapToken(info, policy);
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
@@ -285,7 +359,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(2, permDefList.size());
+    ASSERT_EQ(6, permDefList.size());
 }
 
 /**
@@ -350,7 +424,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
         std::vector<PermissionDef> permDefList;
         ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(2, permDefList.size());
+        ASSERT_EQ(6, permDefList.size());
     }
 }
 
@@ -367,7 +441,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(1, permStatList.size());
+    ASSERT_EQ(5, permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
@@ -466,7 +540,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
         std::vector<PermissionStateFull> permStatList;
         ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(1, permStatList.size());
+        ASSERT_EQ(5, permStatList.size());
         ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
     }
 }
@@ -3098,4 +3172,64 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
+}
+
+/**
+ * @tc.name: GetPermissionsState001
+ * @tc.desc: get permission list state
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T6
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionsState001, TestSize.Level1)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    PermissionListState perm1 = {
+        .permissionName = "ohos.permission.testPermDef1",
+        .state = -1,
+    };
+    PermissionListState perm2 = {
+        .permissionName = "ohos.permission.testPermDef2",
+        .state = -1,
+    };
+    PermissionListState perm3 = {
+        .permissionName = "ohos.permission.testPermDef3",
+        .state = -1,
+    };
+    PermissionListState perm4 = {
+        .permissionName = "ohos.permission.testPermDef4",
+        .state = -1,
+    };
+
+    std::vector<PermissionListState> permsList1;
+    permsList1.emplace_back(perm1);
+    permsList1.emplace_back(perm2);
+    permsList1.emplace_back(perm3);
+    permsList1.emplace_back(perm4);
+
+    PermissionOper ret = AccessTokenKit::GetPermissionsState(tokenID, permsList1);
+    ASSERT_EQ(DYNAMIC_OPER, ret);
+    ASSERT_EQ(4, permsList1.size());
+    ASSERT_EQ(1, permsList1[0].state);
+    ASSERT_EQ(1, permsList1[1].state);
+    ASSERT_EQ(0, permsList1[2].state);
+    ASSERT_EQ(0, permsList1[3].state);
+    ASSERT_EQ("ohos.permission.testPermDef1", permsList1[0].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef2", permsList1[1].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef3", permsList1[2].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef4", permsList1[3].permissionName);
+
+    PermissionListState perm5 = {
+        .permissionName = "ohos.permission.testPermDef5",
+        .state = -1,
+    };
+    permsList1.emplace_back(perm5);
+    ret = AccessTokenKit::GetPermissionsState(tokenID, permsList1);
+    ASSERT_EQ(INVALID_OPER, ret);
+
+    std::vector<PermissionListState> permsList2;
+    permsList2.emplace_back(perm3);
+    permsList2.emplace_back(perm4);
+    ret = AccessTokenKit::GetPermissionsState(tokenID, permsList2);
+    ASSERT_EQ(PASS_OPER, ret);
 }
