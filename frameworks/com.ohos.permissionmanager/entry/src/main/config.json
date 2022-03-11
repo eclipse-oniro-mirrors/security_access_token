@@ -11,10 +11,10 @@
   "module": {
     "package": "com.ohos.permissionmanager",
     "name": ".MyApplication",
-    "mainAbility": "com.ohos.permissionmanager.MainAbility",
+    "mainAbility": ".MainAbility",
+    "srcPath": "",
     "deviceType": [
-      "phone",
-      "tablet"
+      "phone"
     ],
     "distro": {
       "deliveryWithInstall": true,
@@ -34,10 +34,14 @@
             ]
           }
         ],
+        "orientation": "unspecified",
         "visible": true,
-        "name": "com.ohos.permissionmanager.MainAbility",
+        "srcPath": "MainAbility",
+        "name": ".MainAbility",
+        "srcLanguage": "ets",
         "icon": "$media:icon",
-        "description": "$string:mainability_description",
+        "description": "$string:description_mainability",
+        "formsEnabled": false,
         "label": "$string:entry_MainAbility",
         "type": "page",
         "launchType": "standard"
@@ -50,9 +54,10 @@
           "type": "pageAbility"
         },
         "pages": [
-          "pages/index"
+          "pages/index",
+          "pages/second"
         ],
-        "name": "default",
+        "name": ".MainAbility",
         "window": {
           "designWidth": 720,
           "autoDesignWidth": false
