@@ -5,7 +5,7 @@
       "value": "permissionmanager_MainAbility"
     },
     {
-      "name": "mainability_description",
+      "name": "description_mainability",
       "value": "eTS_Empty Ability"
     },
     {
@@ -81,7 +81,7 @@
       "value": "系统定位服务开关开启时，已允许19个应用获取此设备的位置。"
     },
     {
-      "name": "grantability_description",
+      "name": "description_grantability",
       "value": "eTS_Empty Ability"
     },
     {
