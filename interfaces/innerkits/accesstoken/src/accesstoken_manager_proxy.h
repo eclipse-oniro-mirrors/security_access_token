@@ -48,8 +48,7 @@ public:
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;
-    PermissionOper GetPermissionsState(
-        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permList) override;
+    PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permList) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;

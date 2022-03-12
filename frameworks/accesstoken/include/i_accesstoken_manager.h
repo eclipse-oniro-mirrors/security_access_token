@@ -46,8 +46,8 @@ public:
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) = 0;
-    virtual PermissionOper GetPermissionsState(
-        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) = 0;
+    virtual PermissionOper GetSelfPermissionsState(
+        std::vector<PermissionListStateParcel>& permListParcel) = 0;
     virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;

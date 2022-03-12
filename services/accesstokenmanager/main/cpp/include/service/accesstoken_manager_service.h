@@ -46,8 +46,8 @@ public:
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
-    PermissionOper GetPermissionsState(
-        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
+    PermissionOper GetSelfPermissionsState(
+        std::vector<PermissionListStateParcel>& reqPermList) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) override;

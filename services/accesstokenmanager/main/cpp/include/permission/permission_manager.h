@@ -48,8 +48,8 @@ public:
     void GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
-    int NeedDynamicPop(std::vector<PermissionStateFull> permsList,
-        PermissionListState &permState, bool &res);
+    void GetSelfPermissionState(
+        std::vector<PermissionStateFull> permsList, PermissionListState &permState);
 private:
     PermissionManager();
     void UpdateTokenPermissionState(

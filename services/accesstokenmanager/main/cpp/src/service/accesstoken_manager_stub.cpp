@@ -114,11 +114,11 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::GetPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
+void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
+
     std::vector<PermissionListStateParcel> permList;
-    AccessTokenID tokenID = data.ReadUint32();
     uint32_t size = data.ReadUint32();
     for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionListStateParcel> permissionParcel = data.ReadParcelable<PermissionListStateParcel>();
@@ -127,13 +127,14 @@ void AccessTokenManagerStub::GetPermissionsStateInner(MessageParcel& data, Messa
         }
     }
 
-    PermissionOper result = this->GetPermissionsState(tokenID, permList);
+    PermissionOper result = this->GetSelfPermissionsState(permList);
+
+    reply.WriteInt32(result);
 
     reply.WriteUint32(permList.size());
     for (auto perm : permList) {
         reply.WriteParcelable(&perm);
     }
-    reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
@@ -485,7 +486,7 @@ AccessTokenManagerStub::AccessTokenManagerStub()
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_OPER_STATE)] =
-        &AccessTokenManagerStub::GetPermissionsStateInner;
+        &AccessTokenManagerStub::GetSelfPermissionsStateInner;
 }
 
 AccessTokenManagerStub::~AccessTokenManagerStub()

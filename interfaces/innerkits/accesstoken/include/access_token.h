@@ -74,9 +74,9 @@ typedef enum TypePermissionFlag {
 } PermissionFlag;
 
 typedef enum TypePermissionOper {
-    DYNAMIC_OPER = -1,
+    SETTING_OPER = -1,
     PASS_OPER = 0,
-    SETTING_OPER = 1,
+    DYNAMIC_OPER = 1,
     INVALID_OPER = 2,
 } PermissionOper;
 } // namespace AccessToken

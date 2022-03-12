@@ -21,6 +21,7 @@
 #include "accesstoken_log.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
 #include "permission_list_state.h"
@@ -130,13 +131,15 @@ int AccessTokenManagerService::GetReqPermissions(
     return ret;
 }
 
-PermissionOper AccessTokenManagerService::GetPermissionsState(
-    AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList)
+PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
+    std::vector<PermissionListStateParcel>& reqPermList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, id: 0x%{public}x", __func__, tokenID);
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
+
     bool needRes = false;
     std::vector<PermissionStateFull> permsList;
-    int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
+    int ret = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, false);
     if (ret != RET_SUCCESS) {
         return INVALID_OPER;
     }
@@ -144,9 +147,10 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(
     int32_t size = reqPermList.size();
     ACCESSTOKEN_LOG_INFO(LABEL, "reqPermList size: 0x%{public}x", size);
     for (int32_t i = 0; i < size; i++) {
-        ret = PermissionManager::GetInstance().NeedDynamicPop(permsList, reqPermList[i].permsState, needRes);
-        if (ret != RET_SUCCESS) {
-            return INVALID_OPER;
+        PermissionManager::GetInstance().GetSelfPermissionState(
+            permsList, reqPermList[i].permsState);
+        if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
+            needRes = true;
         }
     }
     if (needRes) {

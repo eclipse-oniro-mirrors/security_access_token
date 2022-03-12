@@ -126,8 +126,8 @@ int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std
     return proxy->GetPermissionFlag(tokenID, permissionName);
 }
 
-PermissionOper AccessTokenManagerClient::GetPermissionsState(
-    AccessTokenID tokenID, std::vector<PermissionListState>& permList)
+PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(
+    std::vector<PermissionListState>& permList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -138,8 +138,8 @@ PermissionOper AccessTokenManagerClient::GetPermissionsState(
 
     size_t len = permList.size();
     if (len == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "len is zero.");
-        return INVALID_OPER;
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "len is zero.");
+        return PASS_OPER;
     }
 
     std::vector<PermissionListStateParcel> parcelList;
@@ -150,7 +150,7 @@ PermissionOper AccessTokenManagerClient::GetPermissionsState(
         parcelList.emplace_back(permParcel);
     }
 
-    PermissionOper result = proxy->GetPermissionsState(tokenID, parcelList);
+    PermissionOper result = proxy->GetSelfPermissionsState(parcelList);
 
     if (len != parcelList.size()) {
         return INVALID_OPER;

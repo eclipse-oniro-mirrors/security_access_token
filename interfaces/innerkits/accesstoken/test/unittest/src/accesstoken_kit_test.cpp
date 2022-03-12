@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_log.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -2136,6 +2137,71 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSelfPermissionsState001
+ * @tc.desc: get permission list state
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T6
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    ASSERT_EQ(0, SetSelfTokenID(tokenID));
+
+    PermissionListState perm1 = {
+        .permissionName = "ohos.permission.testPermDef1",
+        .state = -1,
+    };
+    PermissionListState perm2 = {
+        .permissionName = "ohos.permission.testPermDef2",
+        .state = -1,
+    };
+    PermissionListState perm3 = {
+        .permissionName = "ohos.permission.testPermDef3",
+        .state = -1,
+    };
+    PermissionListState perm4 = {
+        .permissionName = "ohos.permission.testPermDef4",
+        .state = -1,
+    };
+
+    std::vector<PermissionListState> permsList1;
+    permsList1.emplace_back(perm1);
+    permsList1.emplace_back(perm2);
+    permsList1.emplace_back(perm3);
+    permsList1.emplace_back(perm4);
+
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList1);
+    ASSERT_EQ(DYNAMIC_OPER, ret);
+    ASSERT_EQ(4, permsList1.size());
+    ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList1[1].state);
+    ASSERT_EQ(SETTING_OPER, permsList1[2].state);
+    ASSERT_EQ(PASS_OPER, permsList1[3].state);
+    ASSERT_EQ("ohos.permission.testPermDef1", permsList1[0].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef2", permsList1[1].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef3", permsList1[2].permissionName);
+    ASSERT_EQ("ohos.permission.testPermDef4", permsList1[3].permissionName);
+
+    PermissionListState perm5 = {
+        .permissionName = "ohos.permission.testPermDef5",
+        .state = -1,
+    };
+    permsList1.emplace_back(perm5);
+    ret = AccessTokenKit::GetSelfPermissionsState(permsList1);
+    ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, ret);
+
+    std::vector<PermissionListState> permsList2;
+    permsList2.emplace_back(perm3);
+    permsList2.emplace_back(perm4);
+    ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
+    ASSERT_EQ(SETTING_OPER, permsList2[0].state);
+    ASSERT_EQ(PASS_OPER, permsList2[1].state);
+    ASSERT_EQ(PASS_OPER, ret);
+}
+
+/**
  * @tc.name: GetTokenTypeFlag003
  * @tc.desc: Get token type with hap tokenID.
  * @tc.type: FUNC
@@ -3172,64 +3238,4 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
-}
-
-/**
- * @tc.name: GetPermissionsState001
- * @tc.desc: get permission list state
- * @tc.type: FUNC
- * @tc.require:AR000GK6T6
- */
-HWTEST_F(AccessTokenKitTest, GetPermissionsState001, TestSize.Level1)
-{
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
-    PermissionListState perm1 = {
-        .permissionName = "ohos.permission.testPermDef1",
-        .state = -1,
-    };
-    PermissionListState perm2 = {
-        .permissionName = "ohos.permission.testPermDef2",
-        .state = -1,
-    };
-    PermissionListState perm3 = {
-        .permissionName = "ohos.permission.testPermDef3",
-        .state = -1,
-    };
-    PermissionListState perm4 = {
-        .permissionName = "ohos.permission.testPermDef4",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList1;
-    permsList1.emplace_back(perm1);
-    permsList1.emplace_back(perm2);
-    permsList1.emplace_back(perm3);
-    permsList1.emplace_back(perm4);
-
-    PermissionOper ret = AccessTokenKit::GetPermissionsState(tokenID, permsList1);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(4, permsList1.size());
-    ASSERT_EQ(1, permsList1[0].state);
-    ASSERT_EQ(1, permsList1[1].state);
-    ASSERT_EQ(0, permsList1[2].state);
-    ASSERT_EQ(0, permsList1[3].state);
-    ASSERT_EQ("ohos.permission.testPermDef1", permsList1[0].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef2", permsList1[1].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef3", permsList1[2].permissionName);
-    ASSERT_EQ("ohos.permission.testPermDef4", permsList1[3].permissionName);
-
-    PermissionListState perm5 = {
-        .permissionName = "ohos.permission.testPermDef5",
-        .state = -1,
-    };
-    permsList1.emplace_back(perm5);
-    ret = AccessTokenKit::GetPermissionsState(tokenID, permsList1);
-    ASSERT_EQ(INVALID_OPER, ret);
-
-    std::vector<PermissionListState> permsList2;
-    permsList2.emplace_back(perm3);
-    permsList2.emplace_back(perm4);
-    ret = AccessTokenKit::GetPermissionsState(tokenID, permsList2);
-    ASSERT_EQ(PASS_OPER, ret);
 }
