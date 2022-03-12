@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -271,21 +271,21 @@ std::string SoftBusManager::GetUniqueDisabilityIdByNodeId(const std::string &nod
 
 std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
 {
-    uint8_t *info = (uint8_t *) malloc(UDID_MAX_LENGTH + 1);
+    uint8_t *info = new uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
     }
-    memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
+    (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
     int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
         NodeDeviceInfoKey::NODE_KEY_UUID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
-        free(info);
+        delete[] info;
         ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, return code: %{public}d", ret);
         return "";
     }
     std::string uuid((char *) info);
-    free(info);
+    delete[] info;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s", nodeId.c_str(),
         uuid.c_str());
     return uuid;
@@ -293,21 +293,21 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
 
 std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
 {
-    uint8_t *info = (uint8_t *) malloc(UDID_MAX_LENGTH + 1);
+    uint8_t *info = new uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
     }
-    memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
+    (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
     int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
         NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
-        free(info);
+        delete[] info;
         ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
         return "";
     }
     std::string udid((char *) info);
-    free(info);
+    delete[] info;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s, udid: %{public}s", nodeId.c_str(),
         udid.c_str());
     return udid;

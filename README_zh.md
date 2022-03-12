@@ -72,10 +72,9 @@ ATM提供了统一的应用权限访问控制功能，支持应用程序或者SA
 -  在应用卸载时，需要调用DeleteToken函数删除系统中管理的对应Accesstoken信息。
 
 ## 相关仓<a name="section1371113476307"></a>
-安全子系统
 
-[startup\_init\_lite](https://gitee.com/openharmony/startup_init_lite/blob/master/README.md)
+[startup\_init\_lite](https://gitee.com/openharmony/startup_init_lite/blob/master/README_zh.md)
 
-[security\_deviceauth](https://gitee.com/openharmony/security_deviceauth/blob/master/README.md)
+[security\_deviceauth](https://gitee.com/openharmony/security_deviceauth/blob/master/README_zh.md)
 
-**[security\_access\_token](https://gitee.com/openharmony-sig/security_access_token/blob/master/README.md)**
+**[security\_access\_token](https://gitee.com/openharmony/security_access_token/blob/master/README_zh.md)**

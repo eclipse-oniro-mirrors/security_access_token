@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -9,7 +9,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing ACCESSTOKENs and
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 #include "nativetoken.h"
@@ -43,7 +43,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         return ATRET_FAILED;
     }
 
-    int32_t fileSize = (int32_t)fileStat.st_size;
+    size_t fileSize = fileStat.st_size;
 
     FILE *cfgFd = fopen(filePath, "r");
     if (cfgFd == NULL) {
@@ -84,7 +84,7 @@ void FreeDcaps(char *dcaps[MAX_DCAPS_NUM], int32_t num)
 uint32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
-    if (cJSON_IsString(processNameJson) == 0 || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
+    if (!cJSON_IsString(processNameJson) || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processNameJson is invalid.", __func__);
         return ATRET_FAILED;
     }
@@ -99,7 +99,7 @@ uint32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 uint32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *tokenIdJson = cJSON_GetObjectItem(cjsonItem, TOKENID_KEY_NAME);
-    if ((cJSON_IsNumber(tokenIdJson) == 0) || (cJSON_GetNumberValue(tokenIdJson) <= 0)) {
+    if ((!cJSON_IsNumber(tokenIdJson)) || (cJSON_GetNumberValue(tokenIdJson) <= 0)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenIdJson is invalid.", __func__);
         return ATRET_FAILED;
     }
@@ -110,7 +110,7 @@ uint32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *aplJson = cJSON_GetObjectItem(cjsonItem, APL_KEY_NAME);
-    if (cJSON_IsNumber(aplJson) == 0) {
+    if (!cJSON_IsNumber(aplJson)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:aplJson is invalid.", __func__);
         return ATRET_FAILED;
     }
@@ -136,7 +136,7 @@ uint32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
             return ATRET_FAILED;
         }
         size_t length = strlen(dcapItem->valuestring);
-        if (cJSON_IsString(dcapItem) == 0 || (length > MAX_DCAP_LEN)) {
+        if (!cJSON_IsString(dcapItem) || (length > MAX_DCAP_LEN)) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcapItem is invalid.", __func__);
             return ATRET_FAILED;
         }
@@ -499,7 +499,7 @@ void SaveTokenIdToCfg(const NativeTokenList *curr)
 }
 
 uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
-                          int32_t dacpNum, const char *aplStr, int32_t *aplRet)
+                          int32_t dcapNum, const char *aplStr, int32_t *aplRet)
 {
     if ((processname == NULL) || strlen(processname) > MAX_PROCESS_NAME_LEN
         || strlen(processname) == 0) {
@@ -507,11 +507,11 @@ uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
         return ATRET_FAILED;
     }
 
-    if (((dcaps == NULL) && (dacpNum != 0)) || dacpNum > MAX_DCAPS_NUM || dacpNum < 0) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is null or dacpNum is invalid.", __func__);
+    if (((dcaps == NULL) && (dcapNum != 0)) || dcapNum > MAX_DCAPS_NUM || dcapNum < 0) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is null or dcapNum is invalid.", __func__);
         return ATRET_FAILED;
     }
-    for (int32_t i = 0; i < dacpNum; i++) {
+    for (int32_t i = 0; i < dcapNum; i++) {
         if (strlen(dcaps[i]) > MAX_DCAP_LEN) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcap length is invalid.", __func__);
             return ATRET_FAILED;
@@ -527,7 +527,7 @@ uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
 }
 
 static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
-                                            int32_t dacpNumIn, int32_t aplIn, NativeAtId *tokenId)
+                                            int32_t dcapNumIn, int32_t aplIn, NativeAtId *tokenId)
 {
     NativeTokenList *tokenNode;
     NativeAtId id;
@@ -549,9 +549,9 @@ static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char 
         free(tokenNode);
         return ATRET_FAILED;
     }
-    tokenNode->dcapsNum = dacpNumIn;
+    tokenNode->dcapsNum = dcapNumIn;
 
-    for (int32_t i = 0; i < dacpNumIn; i++) {
+    for (int32_t i = 0; i < dcapNumIn; i++) {
         tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * (strlen(dcapsIn[i]) + 1));
         if (tokenNode->dcaps[i] != NULL &&
             (strcpy_s(tokenNode->dcaps[i], strlen(dcapsIn[i]) + 1, dcapsIn[i]) != EOK)) {
@@ -570,15 +570,15 @@ static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char 
     return ATRET_SUCCESS;
 }
 
-int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
+int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
 {
     if (tokenNode->apl != aplIn) {
         return 1;
     }
-    if (tokenNode->dcapsNum != dacpNumIn) {
+    if (tokenNode->dcapsNum != dcapNumIn) {
         return 1;
     }
-    for (int32_t i = 0; i < dacpNumIn; i++) {
+    for (int32_t i = 0; i < dcapNumIn; i++) {
         if (strcmp(tokenNode->dcaps[i], dcapsIn[i]) != 0) {
             return 1;
         }
@@ -586,7 +586,7 @@ int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int
     return 0;
 }
 
-uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dacpNumIn, int32_t aplIn)
+uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
 {
     tokenNode->apl = aplIn;
 
@@ -595,8 +595,8 @@ uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, const char **dcapsIn,
         tokenNode->dcaps[i] = NULL;
     }
 
-    tokenNode->dcapsNum = dacpNumIn;
-    for (int32_t i = 0; i < dacpNumIn; i++) {
+    tokenNode->dcapsNum = dcapNumIn;
+    for (int32_t i = 0; i < dcapNumIn; i++) {
         int32_t len = strlen(dcapsIn[i]) + 1;
         tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * len);
         if (tokenNode->dcaps[i] != NULL && (strcpy_s(tokenNode->dcaps[i], len, dcapsIn[i]) != EOK)) {
@@ -702,7 +702,7 @@ uint32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t dacpNum, const char *aplStr)
+uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t dcapNum, const char *aplStr)
 {
     NativeAtId tokenId = 0;
     uint64_t result = 0;
@@ -710,15 +710,15 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
     NativeAtIdEx *atPoint = (NativeAtIdEx *)(&result);
 
     if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
-        return 0;
+        return INVALID_TOKEN_ID;
     }
 
-    uint32_t ret = CheckProcessInfo(processname, dcaps, dacpNum, aplStr, &apl);
+    uint32_t ret = CheckProcessInfo(processname, dcaps, dcapNum, aplStr, &apl);
     if (ret != ATRET_SUCCESS) {
-        return 0;
+        return INVALID_TOKEN_ID;
     }
 
-    NativeTokenList *tokenNode = g_tokenListHead;
+    NativeTokenList *tokenNode = g_tokenListHead->next;
     while (tokenNode != NULL) {
         if (strcmp(tokenNode->processName, processname) == 0) {
             tokenId = tokenNode->tokenId;
@@ -728,16 +728,16 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
     }
 
     if (tokenNode == NULL) {
-        ret = AddNewTokenToListAndCfgFile(processname, dcaps, dacpNum, apl, &tokenId);
+        ret = AddNewTokenToListAndCfgFile(processname, dcaps, dcapNum, apl, &tokenId);
     } else {
-        int32_t needUpdate = CompareProcessInfo(tokenNode, dcaps, dacpNum, apl);
+        int32_t needUpdate = CompareProcessInfo(tokenNode, dcaps, dcapNum, apl);
         if (needUpdate != 0) {
-            ret = UpdateTokenInfoInList(tokenNode, dcaps, dacpNum, apl);
+            ret = UpdateTokenInfoInList(tokenNode, dcaps, dcapNum, apl);
             ret |= UpdateTokenInfoInCfgFile(tokenNode);
         }
     }
     if (ret != ATRET_SUCCESS) {
-        return 0;
+        return INVALID_TOKEN_ID;
     }
 
     atPoint->tokenId = tokenId;
