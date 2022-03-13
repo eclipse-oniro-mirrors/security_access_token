@@ -59,6 +59,7 @@ public:
     virtual int UpdateHapToken(
         AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParcel& policyParcel) = 0;
 
+#ifdef TOKEN_SYNC_ENABLE
     virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSyncParcel& hapSyncParcel) = 0;
     virtual int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes)  = 0;
@@ -69,6 +70,7 @@ public:
     virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
+#endif
 
     virtual void DumpTokenInfo(std::string& tokenInfo) = 0;
 

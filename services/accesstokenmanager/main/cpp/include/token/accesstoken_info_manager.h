@@ -53,6 +53,7 @@ public:
     void DumpTokenInfo(std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
 
+#ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
     int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
@@ -64,6 +65,7 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
+#endif
 
 private:
     AccessTokenInfoManager();

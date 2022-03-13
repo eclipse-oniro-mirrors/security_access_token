@@ -640,6 +640,7 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenID tokenID,
     return result;
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
@@ -863,6 +864,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
     return result;
 }
+#endif
 
 void AccessTokenManagerProxy::DumpTokenInfo(std::string& dumpInfo)
 {

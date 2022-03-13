@@ -286,6 +286,7 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
     reply.WriteInt32(result);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAuthorizedCalling()) {
@@ -391,6 +392,7 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
     int result = this->DeleteRemoteDeviceTokens(deviceID);
     reply.WriteInt32(result);
 }
+#endif
 
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -448,6 +450,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
+
+#ifdef TOKEN_SYNC_ENABLE
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
@@ -462,6 +466,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
         &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
+#endif
+
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
 }

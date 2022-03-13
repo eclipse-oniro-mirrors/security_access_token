@@ -295,6 +295,7 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
@@ -349,6 +350,7 @@ AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID
         __func__, deviceID.c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
+#endif
 
 void AccessTokenKit::DumpTokenInfo(std::string& dumpInfo)
 {

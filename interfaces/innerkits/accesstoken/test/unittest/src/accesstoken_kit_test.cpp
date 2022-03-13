@@ -185,6 +185,8 @@ void AccessTokenKitTest::SetUp()
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
     (void)remove("/data/token.json");
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void AccessTokenKitTest::TearDown()
@@ -2080,6 +2082,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, res);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: set remote hap token info success
@@ -3099,3 +3102,4 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
 }
+#endif

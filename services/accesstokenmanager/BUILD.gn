@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 
 ohos_prebuilt_etc("access_token.rc") {
@@ -33,7 +34,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/include",
     "//third_party/json/include",
   ]
 
@@ -53,25 +53,35 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/src/service/accesstoken_manager_stub.cpp",
     "main/cpp/src/token/accesstoken_id_manager.cpp",
     "main/cpp/src/token/accesstoken_info_manager.cpp",
-    "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
     "main/cpp/src/token/hap_token_info_inner.cpp",
     "main/cpp/src/token/native_token_info_inner.cpp",
     "main/cpp/src/token/native_token_receptor.cpp",
-    "main/cpp/src/token/token_modify_notifier.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
-    #"//base/security/accesstoken/frameworks/accesstooken/permissioncommunicationadapter:permission_standard_communication_adapter_cxx",
-    #"//base/security/accesstoken/frameworks/accesstooken/common:permission_standard_infrastructure_cxx",
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
+
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+
+    sources += [
+      "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
+      "main/cpp/src/token/token_modify_notifier.cpp",
+    ]
+
+    include_dirs += [
+      "//base/security/access_token/interfaces/innerkits/tokensync/include",
+    ]
+
+    deps += [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
+  }
 
   external_deps = [
     "hiviewdfx_hilog_native:libhilog",

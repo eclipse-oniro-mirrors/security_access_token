@@ -59,6 +59,8 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& InfoParcel) override;
     int UpdateHapToken(AccessTokenID tokenID,
         const std::string& appIDDesc, const HapPolicyParcel& policyParcel) override;
+
+#ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
     int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfosRes) override;
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
@@ -67,6 +69,7 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
+#endif
 
     void DumpTokenInfo(std::string& dumpInfo) override;
 private:
