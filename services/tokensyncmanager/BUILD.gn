@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 
 ohos_prebuilt_etc("token_sync.rc") {
@@ -74,6 +75,10 @@ ohos_shared_library("token_sync_manager_service") {
     "//third_party/zlib:libz",
     "//utils/native/base:utils",
   ]
+
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
 
   external_deps = [
     "device_manager_base:devicemanagersdk",

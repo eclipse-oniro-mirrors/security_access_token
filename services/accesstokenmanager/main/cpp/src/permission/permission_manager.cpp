@@ -19,7 +19,9 @@
 #include "accesstoken_log.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
+#ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -237,7 +239,9 @@ void PermissionManager::UpdateTokenPermissionState(
     }
 
     permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+#ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
+#endif
 }
 
 void PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)

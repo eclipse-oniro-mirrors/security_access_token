@@ -275,6 +275,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     return res;
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
@@ -383,6 +384,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     int res = proxy->DeleteRemoteDeviceTokens(deviceID);
     return res;
 }
+#endif
 
 void AccessTokenManagerClient::DumpTokenInfo(std::string& dumpInfo)
 {

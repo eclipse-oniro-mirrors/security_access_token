@@ -54,6 +54,7 @@ private:
     void CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply);
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
 
+#ifdef TOKEN_SYNC_ENABLE
     void GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply);
     void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
@@ -62,6 +63,8 @@ private:
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
+#endif
+
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsAuthorizedCalling() const;

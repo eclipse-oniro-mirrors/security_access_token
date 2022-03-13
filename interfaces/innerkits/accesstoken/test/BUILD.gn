@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
 ohos_unittest("libaccesstoken_sdk_test") {
@@ -37,6 +38,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
   ]
 
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
 }
 
 group("unittest") {

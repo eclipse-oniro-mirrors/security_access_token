@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 
 config("accesstoken") {
@@ -58,4 +59,7 @@ ohos_shared_library("libaccesstoken_sdk") {
     "-DHILOG_ENABLE",
     "-DDEBUG_API_PERFORMANCE",
   ]
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
 }
