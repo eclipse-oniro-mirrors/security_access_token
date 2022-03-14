@@ -116,10 +116,9 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
-
     std::vector<PermissionListStateParcel> permList;
     uint32_t size = data.ReadUint32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "permList size read from client data is %{public}d.", size);
     for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionListStateParcel> permissionParcel = data.ReadParcelable<PermissionListStateParcel>();
         if (permissionParcel != nullptr) {
