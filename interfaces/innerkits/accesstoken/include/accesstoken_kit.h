@@ -54,6 +54,8 @@ public:
     static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     static int ClearUserGrantedPermissionState(AccessTokenID tokenID);
+
+#ifdef TOKEN_SYNC_ENABLE
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     static int GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes);
     static int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
@@ -62,6 +64,7 @@ public:
     static int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     static AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);
+#endif
     static void DumpTokenInfo(std::string& dumpInfo);
 };
 } // namespace AccessToken

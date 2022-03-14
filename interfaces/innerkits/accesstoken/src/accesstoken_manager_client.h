@@ -59,6 +59,8 @@ public:
     int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+
+#ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
@@ -67,6 +69,8 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
+#endif
+
     void DumpTokenInfo(std::string& dumpInfo);
     void OnRemoteDiedHandle();
 
