@@ -11,7 +11,7 @@
   "module": {
     "package": "com.ohos.permissionmanager",
     "name": ".MyApplication",
-    "mainAbility": "com.ohos.permissionmanager.GrantAbility",
+    "mainAbility": ".MainAbility",
     "deviceType": [
       "phone"
     ],
@@ -24,21 +24,23 @@
     "abilities": [
       {
         "visible": true,
-        "name": "com.ohos.permissionmanager.MainAbility",
-        "description": "$string:mainability_description",
+        "srcPath": "MainAbility",
+        "name": ".MainAbility",
+        "srcLanguage": "ets",
+        "description": "$string:description_mainability",
         "label": "$string:permissionmanager_MainAbility",
         "type": "page",
-        "launchType": "standard",
-        "srcPath": "default"
+        "launchType": "standard"
       },
       {
         "visible": true,
-        "name": "com.ohos.permissionmanager.GrantAbility",
-        "description": "$string:grantability_description",
+        "srcPath": "GrantAbility",
+        "name": ".GrantAbility",
+        "srcLanguage": "ets",
+        "description": "$string:description_grantability",
         "label": "$string:permissionmanager_GrantAbility",
         "type": "page",
-        "launchType": "standard",
-        "srcPath": "dynamic"
+        "launchType": "standard"
       }
     ],
     "js": [
@@ -53,9 +55,10 @@
           "pages/authority-secondary",
           "pages/authority-tertiary",
           "pages/application-tertiary",
-          "pages/other-permissions"
+          "pages/other-permissions",
+          "pages/authority-tertiary-groups"
         ],
-        "name": "default",
+        "name": ".MainAbility",
         "window": {
           "designWidth": 720,
           "autoDesignWidth": false
@@ -69,7 +72,7 @@
         "pages": [
           "pages/dialogPlus"
         ],
-        "name": "dynamic",
+        "name": ".GrantAbility",
         "window": {
           "designWidth": 720,
           "autoDesignWidth": false
