@@ -12,7 +12,6 @@
     "package": "com.ohos.permissionmanager",
     "name": ".MyApplication",
     "mainAbility": ".MainAbility",
-    "srcPath": "",
     "deviceType": [
       "phone"
     ],
@@ -53,11 +52,11 @@
         "pages": [
           "pages/authority-management",
           "pages/application-secondary",
+          "pages/application-tertiary",
           "pages/authority-secondary",
           "pages/authority-tertiary",
-          "pages/application-tertiary",
-          "pages/other-permissions",
-          "pages/authority-tertiary-groups"
+          "pages/authority-tertiary-groups",
+          "pages/other-permissions"
         ],
         "name": ".MainAbility",
         "window": {
