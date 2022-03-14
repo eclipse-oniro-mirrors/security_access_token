@@ -38,6 +38,11 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         return ATRET_FAILED;
     }
 
+    if (fileStat.st_size == 0) {
+        *retBuff = NULL;
+        return ATRET_SUCCESS;
+    }
+
     if (fileStat.st_size > MAX_JSON_FILE_LEN) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:stat file size is invalid.", __func__);
         return ATRET_FAILED;
