@@ -114,6 +114,28 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
+{
+    std::vector<PermissionListStateParcel> permList;
+    uint32_t size = data.ReadUint32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "permList size read from client data is %{public}d.", size);
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<PermissionListStateParcel> permissionParcel = data.ReadParcelable<PermissionListStateParcel>();
+        if (permissionParcel != nullptr) {
+            permList.emplace_back(*permissionParcel);
+        }
+    }
+
+    PermissionOper result = this->GetSelfPermissionsState(permList);
+
+    reply.WriteInt32(result);
+
+    reply.WriteUint32(permList.size());
+    for (auto perm : permList) {
+        reply.WriteParcelable(&perm);
+    }
+}
+
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
@@ -470,6 +492,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
 
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_OPER_STATE)] =
+        &AccessTokenManagerStub::GetSelfPermissionsStateInner;
 }
 
 AccessTokenManagerStub::~AccessTokenManagerStub()
