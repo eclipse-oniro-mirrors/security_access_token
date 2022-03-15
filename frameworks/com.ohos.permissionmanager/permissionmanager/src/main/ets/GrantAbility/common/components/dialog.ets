@@ -163,18 +163,12 @@ export struct privacyDialog {
     })
   }
 
-  getgrantGroups() {
-    var acManager = abilityAccessCtrl.createAtManager()
-    var num =0
-    this.reqPerms.forEach(async (permission, idx) => {
-      var flag = await acManager.getPermissionFlags(this.accessTokenId, permission)
-      if(flag == this.userFixedFlag) {
+  getgrantGroups(stateGroup) {
+    this.reqPerms.forEach((permission, idx) => {
+      if(stateGroup[idx] == Constants.PASS_OPER) {
         console.log(TAG + "permission has been fixed:" + permission)
-        var ret = await acManager.verifyAccessToken(this.accessTokenId, permission)
-        if(ret == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
-          this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
-        }
-      }else {
+        this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
+      }else if(stateGroup[idx] == Constants.DYNAMIC_OPER) {
         var group = getPermissionGroup(permission)
         if(!group) {
           console.log(TAG + "permission not find:" + permission)
@@ -185,15 +179,8 @@ export struct privacyDialog {
           }
         }
       }
-      num ++
-      if(num == this.reqPerms.length) {
-        if(this.grantGroups.length == 0) {
-          this.initStatus = Constants.INIT_NEED_TO_TERMINATED
-        }else {
-          this.initStatus = Constants.INIT_NEED_TO_VERIFY
-        }
-      }
     })
+    this.initStatus = Constants.INIT_NEED_TO_VERIFY
   }
 
   aboutToAppear() {
@@ -214,8 +201,9 @@ export struct privacyDialog {
         return
       }
       console.log(TAG + "request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
+      console.log(TAG + "permission state=" + JSON.stringify(want.parameters['ohos.user.grant.permission.state']));
       this.result = new Array(this.reqPerms.length).fill(-1);
-      this.getgrantGroups();
+      this.getgrantGroups(want.parameters['ohos.user.grant.permission.state']);
       this.getApplicationName(want.parameters['ohos.aafwk.param.callerUid'])
     })
   }
