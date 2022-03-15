@@ -25,8 +25,11 @@
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
 #include "permission_manager.h"
+
+#ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #include "token_sync_kit.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -308,7 +311,9 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token 0x%{public}x ok!", id);
     RefreshTokenInfoIfNeeded();
+#ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
+#endif
 
     return RET_SUCCESS;
 }
@@ -511,11 +516,14 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
     }
 
     PermissionManager::GetInstance().AddDefPermissions(infoPtr, true);
+#ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
+#endif
     RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 int AccessTokenInfoManager::GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
@@ -791,6 +799,14 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
 
     return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteDeviceID, remoteTokenID);
 }
+#else
+AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
+    AccessTokenID remoteTokenID)
+{
+    ACCESSTOKEN_LOG_ERROR(LABEL, "tokensync is disable, check dependent components");
+    return 0;
+}
+#endif
 
 AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
 {

@@ -239,6 +239,7 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
@@ -309,6 +310,7 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
+#endif
 
 void AccessTokenManagerService::DumpTokenInfo(std::string& dumpInfo)
 {
