@@ -12,7 +12,6 @@
     "package": "com.ohos.permissionmanager",
     "name": ".MyApplication",
     "mainAbility": ".MainAbility",
-    "srcPath": "",
     "deviceType": [
       "phone"
     ],
