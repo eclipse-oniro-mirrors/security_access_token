@@ -23,18 +23,19 @@ var TAG = 'PermissionManager_MainAbility:'
 
 const allowedStatus = 0; // Status: Allowed
 const bannedStatus = 1; // Status: Banned
+
 class AllowedObj {
   groupName: string;
-  permission: string;
-  constructor(groupName: string, permission: string) {
+  permission: string[];
+  constructor(groupName: string, permission: string[]) {
     this.groupName = groupName;
     this.permission = permission;
   }
 } // Class Allowed
 class BannedObj {
   groupName: string;
-  permission: string;
-  constructor(groupName: string, permission: string) {
+  permission: string[];
+  constructor(groupName: string, permission: string[]) {
     this.groupName = groupName;
     this.permission = permission;
   }
@@ -134,28 +135,39 @@ struct appNamePlusPage {
    * Initialize permission status information and group permission information
    */
   async initialPermissions() {
-    var reqGroups = this.routerData.permissions;
-    if (!reqGroups.length) {
+    var reqPermissions = this.routerData.permissions;
+    var reqGroupIds = this.routerData.groupId;
+
+    if (!reqGroupIds.length) {
       this.allowedListItem = [];
       this.bannedListItem = [];
       return;
     }
-    var ids = this.routerData.groupId;
-    for (var i = 0; i < reqGroups.length; i++) {
-      var isGranted = true;
-      var reqPermissions = groups[ids[i]].permissions;
-      for (var j = 0; j < reqPermissions.length; j++) {
-        var res = await abilityAccessCtrl.createAtManager().verifyAccessToken(
-          this.routerData.tokenId, reqPermissions[j]);
-        if (res != 0) {
-          isGranted = false;
-          break;
+
+    for (let i = 0; i < reqGroupIds.length; i++) {
+      let id = reqGroupIds[i];
+      let groupName = groups[id].groupName;
+      let groupReqPermissons = [];
+      for (let j = 0; j < reqPermissions.length; j++) {
+        let permission = reqPermissions[j];
+        if (groups[id].permissions.indexOf(permission) != -1) {
+          groupReqPermissons.push(permission)
         }
       }
+      let isGranted = true;
+      for (let i = 0; i < groupReqPermissons.length; i++) {
+        let permission = groupReqPermissons[i]
+        let res = await abilityAccessCtrl.createAtManager().verifyAccessToken(
+          this.routerData.tokenId, permission);
+        if (res != 0) {
+          isGranted = false;
+        }
+      }
+
       if (isGranted) {
-        this.allowedListItem.push(new AllowedObj(groups[ids[i]].groupName, reqPermissions));
+        this.allowedListItem.push(new AllowedObj(groupName, groupReqPermissons));
       } else {
-        this.bannedListItem.push(new BannedObj(groups[ids[i]].groupName, reqPermissions));
+        this.bannedListItem.push(new BannedObj(groupName, groupReqPermissons));
       }
     }
   }
@@ -164,6 +176,7 @@ struct appNamePlusPage {
    * Lifecycle function, triggered once when this page is displayed
    */
   onPageShow() {
+    console.log(TAG + 'onPageShow')
     this.initialPermissions();
   }
 
@@ -171,6 +184,7 @@ struct appNamePlusPage {
    * Lifecycle function, triggered once when this page disappears
    */
   onPageHide() {
+    console.log(TAG + 'onPageHide')
     setTimeout(()=> {
       this.allowedListItem = [];
       this.bannedListItem = [];

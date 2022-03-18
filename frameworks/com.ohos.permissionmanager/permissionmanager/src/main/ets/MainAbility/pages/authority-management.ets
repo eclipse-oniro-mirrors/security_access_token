@@ -90,27 +90,22 @@ struct authorityManagementPage {
             }
           }
         }.onClick(() => {
-          if (item.groupName === '其他权限') {
+          if (item.groupName === Constants.PERMISSION_GROUP_OTHER || item.groupName === Constants.PERMISSION_GROUP_PHONE || 
+              item.groupName === Constants.PERMISSION_GROUP_CONTACTS || item.groupName === Constants.PERMISSION_GROUP_SMS ||
+              item.groupName === Constants.PERMISSION_GROUP_CALL_LOG || item.groupName === Constants.PERMISSION_GROUP_CALENDAR) {
             router.push({
               uri: 'pages/authority-secondary',
               params: { routerData: this.allPermissionApplications, backTitle: item.groupName }
             })
-          }else if((item.groupName === '电话' || item.groupName === '通讯录' || item.groupName === '信息'
-          || item.groupName === '通话记录' || item.groupName === '日历')){
-            router.push({
-              uri: 'pages/authority-secondary',
-              params: { routerData: this.allPermissionApplications, backTitle: item.groupName }
+          } else {
+            var dataList = this.allPermissionApplications.filter((ele) => {
+              return ele.groupName === item.group
             })
-          }else {
 
-              var dataList = this.allPermissionApplications.filter((ele) => {
-                return ele.groupName === item.group
-              })
-
-              router.push({
-                uri: 'pages/authority-tertiary-groups',
-                params: { routerData: dataList, backTitle: item.groupName  }
-              })
+            router.push({
+              uri: 'pages/authority-tertiary-groups',
+              params: { routerData: dataList, backTitle: item.groupName  }
+            })
           }
         })
       }
@@ -183,6 +178,7 @@ struct authorityManagementPage {
             entities: ["entity.system.home"]
           }, bundle.BundleFlag.GET_ABILITY_INFO_WITH_APPLICATION, Constants.USERID);
         } catch(e) {
+          console.log(TAG + 'queryAbilityByWant catch error: ' + JSON.stringify(e))
           continue;
         }
         this.deduplicationPermissions(info, allPermissions, allApplicationPermissions);
@@ -241,7 +237,7 @@ struct authorityManagementPage {
       var icon: string = permissionGroup.icon;
       var bundleNames: string[] = [];
       for (let j = 0; j < this_.allApplicationPermissions.length; j++) {
-        if (this_.allApplicationPermissions[j].permissions.indexOf(permissionGroup.name) != -1) {
+        if (this_.allApplicationPermissions[j].permissions.indexOf(this_.allUserPermissions[i]) != -1) {
           bundleNames.push(this_.allApplicationPermissions[j].bundleName);
         }
       }
@@ -363,7 +359,7 @@ struct authorityManagementPage {
       'tokenId': info.appInfo.accessTokenId,
       'iconId': info.appInfo.iconId,
       'labelId': info.appInfo.labelId,
-      'permissions': dePermissions,
+      'permissions': reqUserPermissions,
       'groupId': groupIds
     };
     allApplicationPermissions.push(ap);
@@ -416,6 +412,7 @@ struct authorityManagementPage {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
+    console.log(TAG + 'on aboutToAppear, version 1.01');
     this.getAllBundlePermissions(this.allPermissions, this.allApplicationPermissions);
   }
 

@@ -21,7 +21,7 @@ import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 import bundle from '@ohos.bundle'
 import Resmgr from '@ohos.resourceManager'
 
-var TAG = "PermissionManager_GrantAbility"
+var TAG = "PermissionManager_GrantAbility:"
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
@@ -110,10 +110,20 @@ export struct privacyDialog {
     .height(Constants.DIALOG_HEIGHT)
     .width(Constants.DIALOG_WIDTH)
   }
+
+  answerRequest() {
+    var ret: number = Constants.RESULT_SUCCESS
+    if (this.initStatus == Constants.INIT_NEED_TO_TERMINATED) {
+      ret = Constants.RESULT_FAILURE
+    }
+    this.answer(ret, this.reqPerms)
+  }
+
   verify() {
     if((this.initStatus == Constants.INIT_NEED_TO_TERMINATED) || (this.count >= this.grantGroups.length)) {
       this.controller.close()
-      this.aboutToDisappear()
+      this.answerRequest()
+      this.initStatus = Constants.INIT_NEED_TO_WAIT
       return false
     }
     return true
@@ -121,8 +131,8 @@ export struct privacyDialog {
 
   getApplicationName(uid) {
     bundle.getNameForUid(uid).then((data) => {
-      console.log(TAG + "GrantAbility getApplicationName bundleName:" + data)
-      console.log(TAG + "GrantAbility getApplicationName userId:" + Math.floor(uid/200000))
+      console.log(TAG + "getApplicationName bundleName:" + data)
+      console.log(TAG + "getApplicationName userId:" + Math.floor(uid/200000))
       bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, Math.floor(uid/200000)).then(applicationInfo => {
         Resmgr.getResourceManager(data).then(item => {
           item.getString(applicationInfo.labelId, (err, value) => {
@@ -131,15 +141,15 @@ export struct privacyDialog {
             } else {
               this.appName = value
             }
-            console.log(TAG + "GrantAbility hap label:" + applicationInfo.label + ", value:"+this.appName)
+            console.log(TAG + "hap label:" + applicationInfo.label + ", value:"+this.appName)
           })
         })
       }).catch(err => {
-        console.log(TAG + "GrantAbility applicationInfo error :" + err)
+        console.log(TAG + "applicationInfo error :" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
       })
     }).catch(err => {
-      console.log(TAG + "GrantAbility getNameForUid error :" + JSON.stringify(err))
+      console.log(TAG + "getNameForUid error :" + JSON.stringify(err))
       this.initStatus = Constants.INIT_NEED_TO_TERMINATED
     })
   }
@@ -150,7 +160,7 @@ export struct privacyDialog {
     this.reqPerms.forEach(async (permission, idx) => {
       var flag = await acManager.getPermissionFlags(this.accessTokenId, permission)
       if(flag == this.userFixedFlag) {
-        console.log(TAG + "GrantAbility permission has been fixed:" + permission)
+        console.log(TAG + "permission has been fixed:" + permission)
         var ret = await acManager.verifyAccessToken(this.accessTokenId, permission)
         if(ret == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
           this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
@@ -158,7 +168,7 @@ export struct privacyDialog {
       }else {
         var group = getPermissionGroup(permission)
         if(!group) {
-          console.log(TAG + "GrantAbility permission not find:" + permission)
+          console.log(TAG + "permission not find:" + permission)
         }else {
           var exist = this.grantGroups.find(grantGroup => grantGroup.name == group.name)
           if(!exist) {
@@ -168,10 +178,27 @@ export struct privacyDialog {
       }
       num ++
       if(num == this.reqPerms.length) {
-        if(this.grantGroups.length == 0) {
-          this.initStatus = Constants.INIT_NEED_TO_TERMINATED
-        }else {
-          this.initStatus = Constants.INIT_NEED_TO_VERIFY
+        this.initStatus = Constants.INIT_NEED_TO_VERIFY
+      }
+    })
+  }
+
+  answer(ret, reqPerms) {
+    console.log(TAG + "code:" + ret + ", perms="+ JSON.stringify(reqPerms) +", result=" + JSON.stringify(this.result))
+    var perms = []
+    var results = []
+    reqPerms.forEach(perm => {
+      perms.push(perm)
+    })
+    this.result.forEach(result => {
+      results.push(result)
+    })
+    featureAbility.terminateSelfWithResult({
+      resultCode: ret,
+      want: {
+        parameters: {
+          "ohos.user.grant.permission": perms,
+          "ohos.user.grant.permission.result": results
         }
       }
     })
@@ -183,18 +210,18 @@ export struct privacyDialog {
     this.result = []
     featureAbility.getWant((err, want) => {
       if (err.code != 0) {
-        console.log(TAG + "GrantAbility featureAbility.getWant err:" + err)
+        console.log(TAG + "featureAbility.getWant err:" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
         return
       }
       this.reqPerms = want.parameters['ohos.user.grant.permission']
       this.accessTokenId = want.parameters['ohos.aafwk.param.callerToken']
       if (this.reqPerms == undefined || this.accessTokenId == undefined || this.reqPerms.length == 0) {
-        console.log(TAG + "GrantAbility invalid parameters")
+        console.log(TAG + "invalid parameters")
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
         return
       }
-      console.log(TAG + "GrantAbility request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
+      console.log(TAG + "request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
       this.result = new Array(this.reqPerms.length).fill(-1);
       this.getgrantGroups();
       this.getApplicationName(want.parameters['ohos.aafwk.param.callerUid'])
@@ -202,19 +229,6 @@ export struct privacyDialog {
   }
 
   aboutToDisappear() {
-    var ret: number = Constants.RESULT_SUCCESS
-    if (this.initStatus == Constants.INIT_NEED_TO_TERMINATED) {
-      ret = Constants.RESULT_FAILURE
-    }
-    console.log(TAG + "GrantAbility code:" + ret + ", result=" + JSON.stringify(this.result))
-    featureAbility.terminateSelfWithResult({
-      resultCode: ret,
-      want: {
-        parameters: {
-          "ohos.user.grant.permission": this.reqPerms,
-          "ohos.user.grant.permission.result": this.result
-        }
-      }
-    })
+    console.log(TAG + "aboutToDisappear")
   }
 }

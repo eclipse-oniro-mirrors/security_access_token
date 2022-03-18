@@ -254,62 +254,71 @@ struct applicationItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    for (let i = 0; i < routerData[0].bundleNames.length; i++) {
+    var bundleNames = []
+    routerData.forEach(permissionmanager => {
+      permissionmanager.bundleNames.forEach( bundleName => {
+        if (bundleNames.indexOf(bundleName) == -1) {
+          bundleNames.push(bundleName)
+        }
+      })
+    })
+    for (let i = 0; i < bundleNames.length; i++) {
       // Get BundleInfo based on bundle name
-        bundle.getBundleInfo(routerData[0].bundleNames[i], Constants.PARMETER_BUNDLE_FLAG).then(res => {
-          Promise.all([getAppLabel(res.appInfo.labelId, res.name),
-          getAppIcon(res.appInfo.iconId, res.name),
-          verifyAccessToken(res.appInfo.accessTokenId, routerData[0].permission)
-          ])
-            .then((values) => {
-              this.applicationList.push(
-                new ApplicationObj(
-                String(values[0]),
-                String(values[1]),
-                  i,
-                  res.appInfo.accessTokenId,
-                  routerData[0].permission,
-                makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
-              );
-              this.oldApplicationItem.push(
-                new ApplicationObj(
-                String(values[0]),
-                String(values[1]),
-                  i,
-                  res.appInfo.accessTokenId,
-                  routerData[0].permission,
-                makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
-              );
-              this.applicationList.sort((a,b) => a.index - b.index)
-              this.oldApplicationItem.sort((a,b) => a.index - b.index)
-            });
-          // 0: have permission; -1: no permission
-          var boole = true;
-          this.permissionNum++;
-          for (let j = 0; j < routerData.length; j++) {
-            verifyAccessToken(res.appInfo.accessTokenId, routerData[j].permission).then((access) => {
-              if (Number(access) === Constants.PERMISSION_INDEX) {
-                if(boole){
-                  this.toggleIsOn[i] = true;
-                }
-              } else {
-                if(boole){
-                  this.permissionNum--
-                }
-                boole = false;
-                this.toggleIsOn[i] = false;
-              }
-            });
+      bundle.getBundleInfo(bundleNames[i], Constants.PARMETER_BUNDLE_FLAG).then(res => {
+        Promise.all([getAppLabel(res.appInfo.labelId, res.name),
+        getAppIcon(res.appInfo.iconId, res.name)
+        ])
+          .then((values) => {
+            this.applicationList.push(
+              new ApplicationObj(
+              String(values[0]),
+              String(values[1]),
+                i,
+                res.appInfo.accessTokenId,
+                routerData[0].permission,
+              makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
+            );
+            this.oldApplicationItem.push(
+              new ApplicationObj(
+              String(values[0]),
+              String(values[1]),
+                i,
+                res.appInfo.accessTokenId,
+                routerData[0].permission,
+              makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
+            );
+            this.applicationList.sort((a,b) => a.index - b.index)
+            this.oldApplicationItem.sort((a,b) => a.index - b.index)
+          });
+        // 0: have permission; -1: no permission
+        var boole = true;
+        this.permissionNum++;
+        for (let j = 0; j < routerData.length; j++) {
+          if (res.reqPermissions.indexOf(routerData[j].permission) == -1) {
+            continue
           }
-        }).catch(() => {
-          this.applicationList.push(
-            new ApplicationObj('', '', 0, '', '', '')
-          );
-          this.oldApplicationItem.push(
-            new ApplicationObj('', '', 0, '', '', '')
-          );
-        })
-
+          verifyAccessToken(res.appInfo.accessTokenId, routerData[j].permission).then((access) => {
+            if (Number(access) === Constants.PERMISSION_INDEX) {
+              if(boole){
+                this.toggleIsOn[i] = true;
+              }
+            } else {
+              if(boole){
+                this.permissionNum--
+              }
+              boole = false;
+              this.toggleIsOn[i] = false;
+            }
+          });
+        }
+      }).catch(() => {
+        this.applicationList.push(
+          new ApplicationObj('', '', 0, '', '', '')
+        );
+        this.oldApplicationItem.push(
+          new ApplicationObj('', '', 0, '', '', '')
+        );
+      })
     }
   }
 
