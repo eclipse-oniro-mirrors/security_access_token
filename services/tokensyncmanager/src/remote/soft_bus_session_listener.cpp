@@ -82,6 +82,7 @@ void SoftBusSessionListener::OnSessionClosed(int32_t session)
 
 void SoftBusSessionListener::OnMessageReceived(int32_t sessionId, const void *data, uint32_t dataLen)
 {
+    (void)data;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnMessageReceived: data length = %{public}u", dataLen);
 }
 

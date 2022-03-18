@@ -37,7 +37,7 @@ public:
     int Init();
 
 private:
-    NativeTokenReceptor() : ready_(false) {};
+    NativeTokenReceptor() : ready_(false) {}
     DISALLOW_COPY_AND_MOVE(NativeTokenReceptor);
     int ReadCfgFile(std::string &nativeRawData);
     void FromJson(const nlohmann::json &jsonObject,

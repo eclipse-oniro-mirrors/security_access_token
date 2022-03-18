@@ -371,4 +371,4 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
 }
 } // namespace AccessToken
 } // namespace Security
-}
+} // namespace OHOS

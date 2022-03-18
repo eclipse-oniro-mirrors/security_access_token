@@ -27,11 +27,11 @@ class RandomMbedtls {
 public:
     static RandomMbedtls& GetInstance();
     int GenerateRandomArray(unsigned char *randStr, unsigned int len);
-    ~RandomMbedtls() {};
+    ~RandomMbedtls() {}
     static unsigned int GetRandomUint32();
 
 private:
-    RandomMbedtls() : initFlag_(false) {};
+    RandomMbedtls() : initFlag_(false) {}
     mbedtls_entropy_context entropy_;
     mbedtls_ctr_drbg_context ctrDrbg_;
     OHOS::Utils::RWLock randomLock_;

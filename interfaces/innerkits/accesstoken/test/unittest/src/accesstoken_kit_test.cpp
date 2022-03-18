@@ -2257,7 +2257,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2325,7 +2325,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = wrongBaseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2392,7 +2392,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2443,7 +2443,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2501,7 +2501,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2558,7 +2558,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2615,7 +2615,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2666,7 +2666,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2719,7 +2719,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2775,7 +2775,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2816,7 +2816,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2870,7 +2870,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -2944,7 +2944,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -3006,7 +3006,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -3111,7 +3111,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
@@ -3175,7 +3175,7 @@ HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
 
     HapTokenInfoForSync remoteTokenInfo = {
         .baseInfo = baseInfo,
-        .permStateList =permStateList
+        .permStateList = permStateList
     };
 
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);

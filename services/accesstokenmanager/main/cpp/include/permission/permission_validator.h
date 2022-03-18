@@ -23,8 +23,8 @@ namespace Security {
 namespace AccessToken {
 struct PermissionValidator final {
 public:
-    PermissionValidator() {};
-    ~PermissionValidator() {};
+    PermissionValidator() {}
+    ~PermissionValidator() {}
 
     static bool IsPermissionNameValid(const std::string& permissionName);
     static bool IsPermissionFlagValid(int flag);
