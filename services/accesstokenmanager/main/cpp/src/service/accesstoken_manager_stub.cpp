@@ -119,6 +119,11 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
     std::vector<PermissionListStateParcel> permList;
     uint32_t size = data.ReadUint32();
     ACCESSTOKEN_LOG_INFO(LABEL, "permList size read from client data is %{public}d.", size);
+    if (size > MAX_PERMISSION_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permList size %{public}d is invalid", size);
+        reply.WriteInt32(INVALID_OPER);
+        return;
+    }
     for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionListStateParcel> permissionParcel = data.ReadParcelable<PermissionListStateParcel>();
         if (permissionParcel != nullptr) {
@@ -206,7 +211,11 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
 
     sptr<HapInfoParcel> hapInfoParcel = data.ReadParcelable<HapInfoParcel>();
     sptr<HapPolicyParcel> hapPolicyParcel = data.ReadParcelable<HapPolicyParcel>();
-
+    if (hapInfoParcel == nullptr || hapPolicyParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read hapPolicyParcel or hapInfoParcel fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     res = this->AllocHapToken(*hapInfoParcel, *hapPolicyParcel);
     reply.WriteUint64(res.tokenIDEx);
 }
@@ -267,14 +276,18 @@ void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, Message
 void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAuthorizedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string appIDDesc = data.ReadString();
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
-
+    if (policyParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "policyParcel read faild");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     int32_t result = this->UpdateHapToken(tokenID, appIDDesc, *policyParcel);
     reply.WriteInt32(result);
 }
@@ -349,6 +362,11 @@ void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, Mes
     }
     std::string deviceID = data.ReadString();
     sptr<HapTokenInfoForSyncParcel> hapTokenParcel = data.ReadParcelable<HapTokenInfoForSyncParcel>();
+    if (hapTokenParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hapTokenParcel read faild");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
     reply.WriteInt32(result);
 }
@@ -364,9 +382,18 @@ void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, 
 
     std::vector<NativeTokenInfoParcel> nativeTokenInfoParcel;
     uint32_t size = data.ReadUint32();
-
+    if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size %{public}u is invalid", size);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     for (uint32_t i = 0; i < size; i++) {
         sptr<NativeTokenInfoParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoParcel>();
+        if (nativeParcel == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "nativeParcel read faild");
+            reply.WriteInt32(RET_FAILED);
+            return;
+        }
         nativeTokenInfoParcel.emplace_back(*nativeParcel);
     }
 
