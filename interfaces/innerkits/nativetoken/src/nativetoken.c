@@ -469,7 +469,7 @@ static cJSON *CreateNativeTokenJsonObject(const NativeTokenList *curr)
     }
     return object;
 }
- 
+
 static void SaveTokenIdToCfg(const NativeTokenList *curr)
 {
     char *fileBuff = NULL;

@@ -73,4 +73,3 @@ HapTokenInfoForSyncParcel* HapTokenInfoForSyncParcel::Unmarshalling(Parcel& in)
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-

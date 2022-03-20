@@ -195,4 +195,4 @@ bool TokenSyncManagerService::Initialize()
 }
 } // namespace AccessToken
 } // namespace Security
-}
+} // namespace OHOS

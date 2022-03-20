@@ -116,4 +116,3 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-

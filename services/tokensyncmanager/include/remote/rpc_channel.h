@@ -71,7 +71,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    virtual void Release() {};
+    virtual void Release() {}
 };
 }  // namespace AccessToken
 }  // namespace Security
