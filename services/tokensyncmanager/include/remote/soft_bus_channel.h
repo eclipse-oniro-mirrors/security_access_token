@@ -29,6 +29,7 @@
 #include "nlohmann/json.hpp"
 #include "rpc_channel.h"
 #include "session.h"
+#include "random.h"
 
 namespace OHOS {
 namespace Security {
@@ -227,7 +228,7 @@ private:
         int n;
 
         for (n = 0; n < uuidlen; ++n) {
-            int b = rand() % bbase;
+            int b = (int)(GetRandomUint32() % bbase);
             switch (n) {
                 case index6:
                     if (sprintf_s(p, bufSize, "4%x", b % xbase) < 0) {
@@ -235,7 +236,7 @@ private:
                     }
                     break;
                 case index8:
-                    if (sprintf_s(p, bufSize, "%c%x", c[rand() % strlen(c)], b % xbase) < 0) {
+                    if (sprintf_s(p, bufSize, "%c%x", c[GetRandomUint32() % strlen(c)], b % xbase) < 0) {
                         return;
                     }
                     break;

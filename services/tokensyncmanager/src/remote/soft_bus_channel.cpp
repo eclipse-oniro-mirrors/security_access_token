@@ -133,7 +133,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     std::string uuid(uuidbuf);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
 
-    int len = RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length();
+    int len = (signed)(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
     unsigned char *buf = new unsigned char[len + 1];
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
@@ -253,7 +253,7 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "compress complete. compress %{public}d bytes to %{public}d", compressedLength,
         (int)len);
-    compressedLength = len;
+    compressedLength = (signed)len;
     return Constant::SUCCESS;
 }
 
@@ -349,7 +349,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
         ACCESSTOKEN_LOG_WARN(LABEL, "command %{public}s cannot get from json %{public}s", commandName.c_str(),
             jsonPayload.c_str());
 
-        int sendlen = RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length();
+        int sendlen = (signed)(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
         unsigned char *sendbuf = new unsigned char[sendlen + 1];
         if (sendbuf == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", sendlen);
@@ -375,7 +375,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
 
     // send result back
     std::string resultJsonPayload = command->ToJsonPayload();
-    int len = RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length();
+    int len = (signed)(RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length());
     unsigned char *buf = new unsigned char[len + 1];
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
