@@ -129,7 +129,7 @@ int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std
 PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(
     std::vector<PermissionListState>& permList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList.size() : %{public}d.", permList.size());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList.size() : %{public}d.", (int)permList.size());
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
