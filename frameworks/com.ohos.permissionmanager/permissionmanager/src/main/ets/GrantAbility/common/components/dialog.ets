@@ -117,15 +117,7 @@ export struct privacyDialog {
       ret = Constants.RESULT_FAILURE
     }
     console.log(TAG + "code:" + ret + ", result=" + JSON.stringify(this.result))
-    featureAbility.terminateSelfWithResult({
-      resultCode: ret,
-      want: {
-        parameters: {
-          "ohos.user.grant.permission": this.reqPerms,
-          "ohos.user.grant.permission.result": this.result
-        }
-      }
-    })
+    this.answer(ret, this.reqPerms)
   }
 
   verify() {
@@ -181,6 +173,27 @@ export struct privacyDialog {
       }
     })
     this.initStatus = Constants.INIT_NEED_TO_VERIFY
+  }
+
+  answer(ret, reqPerms) {
+    console.log(TAG + "code:" + ret + ", perms="+ JSON.stringify(reqPerms) +", result=" + JSON.stringify(this.result))
+    var perms = []
+    var results = []
+    reqPerms.forEach(perm => {
+      perms.push(perm)
+    })
+    this.result.forEach(result => {
+      results.push(result)
+    })
+    featureAbility.terminateSelfWithResult({
+      resultCode: ret,
+      want: {
+        parameters: {
+          "ohos.user.grant.permission": perms,
+          "ohos.user.grant.permission.result": results
+        }
+      }
+    })
   }
 
   aboutToAppear() {
