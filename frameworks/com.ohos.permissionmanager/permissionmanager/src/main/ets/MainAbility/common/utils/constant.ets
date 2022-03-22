@@ -187,6 +187,12 @@ export default class Constants {
   static APPLICATION_ALPHABETINDEX_WIDTH = 24;
   static APPLICATION_TEXT_DECORATION_WIDTH = '83%';
   static APPLICATION_TEXT_DECORATION_MARGIN_LEFT = 68;
+  static PERMISSION_GROUP_OTHER = '其他权限';
+  static PERMISSION_GROUP_PHONE = '电话';
+  static PERMISSION_GROUP_CONTACTS = '通讯录';
+  static PERMISSION_GROUP_SMS = '信息';
+  static PERMISSION_GROUP_CALL_LOG = '通话记录';
+  static PERMISSION_GROUP_CALENDAR = '日历';
 
   // slice
   static SLICE_START = 0;
