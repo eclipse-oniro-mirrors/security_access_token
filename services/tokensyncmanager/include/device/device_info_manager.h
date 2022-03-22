@@ -37,7 +37,8 @@ public:
      *
      * @param nodeId Device id.
      * @param deviceIdType Device id type {@link DeviceIdType}
-     * @return Optional deviceInfo
+     * @param deviceInfo Optional deviceInfo.
+     * @return True for success, false otherwise.
      */
     bool GetDeviceInfo(const std::string &nodeId, DeviceIdType deviceIdType, DeviceInfo &deviceInfo) const;
 
@@ -55,12 +56,12 @@ public:
      *
      * @param networkId Device networkId.
      * @param universallyUniqueId Device uuid.
-     * @param uniqueDisabilityId Device udid.
+     * @param uniqueDeviceId Device udid.
      * @param deviceName Device name.
      * @param deviceType Device type.
      */
     void AddDeviceInfo(const std::string &networkId, const std::string &universallyUniqueId,
-        const std::string &uniqueDisabilityId, const std::string &deviceName, const std::string &deviceType);
+        const std::string &uniqueDeviceId, const std::string &deviceName, const std::string &deviceType);
 
     /**
      * Remote all device info.
@@ -71,6 +72,7 @@ public:
      * Remove one device info.
      *
      * @param nodeId Device id.
+     * @param deviceIdType Device id type {@link DeviceIdType}
      */
     void RemoveRemoteDeviceInfo(const std::string &nodeId, DeviceIdType deviceIdType);
 
@@ -88,7 +90,7 @@ public:
      * @param nodeId which is considered as indefinite id, maybe deviceId(UDID) or networkId.
      * @return The deviceId if local or device online, otherwise return empty string.
      */
-    std::string ConvertToUniqueDisabilityIdOrFetch(const std::string &nodeId) const;
+    std::string ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId) const;
 
     /**
      * Check nodeId is uuid or not.

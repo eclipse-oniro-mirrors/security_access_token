@@ -99,7 +99,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    std::string GetUniqueDisabilityIdByNodeId(const std::string &deviceNodeId);
+    std::string GetUniqueDeviceIdByNodeId(const std::string &deviceNodeId);
 
 public:
     static const std::string SESSION_NAME;

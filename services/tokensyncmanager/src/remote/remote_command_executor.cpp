@@ -39,7 +39,6 @@ RemoteCommandExecutor::~RemoteCommandExecutor()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "~RemoteCommandExecutor() begin");
     running_ = false;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "~RemoteCommandExecutor() end");
 }
 
 const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std::string &targetNodeId)
