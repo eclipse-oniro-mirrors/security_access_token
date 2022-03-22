@@ -55,7 +55,7 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
 void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     std::string deviceID = data.ReadString();
-    int tokenID = data.ReadUint32();
+    AccessTokenID tokenID = data.ReadUint32();
 
     HapTokenInfoForSync tokenInfo;
     int result = this->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -65,7 +65,7 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     std::string deviceID = data.ReadString();
-    int tokenID = data.ReadUint32();
+    AccessTokenID tokenID = data.ReadUint32();
     int result = this->DeleteRemoteHapTokenInfo(tokenID);
     reply.WriteInt32(result);
 }

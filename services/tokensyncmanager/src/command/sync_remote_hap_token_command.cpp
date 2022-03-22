@@ -49,6 +49,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
 
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 {
+    requestTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
     if (jsonObject.find("requestTokenId") != jsonObject.end() && jsonObject.at("requestTokenId").is_number()) {

@@ -34,7 +34,7 @@ extern "C" unsigned int GetRandomUint32()
 
 int RandomMbedtls::GenerateRandomArray(unsigned char *randStr, unsigned int len)
 {
-    if (randStr == NULL || len == 0) {
+    if (randStr == nullptr || len == 0) {
         return RET_FAILED;
     }
     int ret;

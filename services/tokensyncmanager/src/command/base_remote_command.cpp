@@ -99,7 +99,7 @@ void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const Per
         return;
     }
     nlohmann::json permConfigsJson;
-    int size = state.resDeviceID.size();
+    int size = (signed)state.resDeviceID.size();
     for (int i = 0; i < size; i++) {
         nlohmann::json permConfigJson = nlohmann::json {
             {"resDeviceID", state.resDeviceID[i]},
@@ -142,7 +142,8 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
     HapTokenInfo& hapTokenBasicInfo)
 {
     if (hapTokenJson.find("version") != hapTokenJson.end() && hapTokenJson.at("version").is_number()) {
-        hapTokenJson.at("version").get_to(hapTokenBasicInfo.ver);    }
+        hapTokenJson.at("version").get_to(hapTokenBasicInfo.ver);
+    }
     if (hapTokenJson.find("tokenID") != hapTokenJson.end() && hapTokenJson.at("tokenID").is_number()) {
         hapTokenJson.at("tokenID").get_to(hapTokenBasicInfo.tokenID);
     }
@@ -186,7 +187,7 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
                 || permissionJson.find("isGeneral") == permissionJson.end()
                 || !permissionJson.at("isGeneral").is_boolean()
                 || permissionJson.find("grantConfig") == permissionJson.end()
-                || !permissionJson.at("grantConfig").is_array()
+                || !permissionJson.at("grantConfig").is_array()
                 || permissionJson.at("grantConfig").size() == 0) {
                 continue;
             }
@@ -196,7 +197,7 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
             for (auto grantConfigJson :grantConfigsJson) {
                 if (grantConfigJson.find("resDeviceID") == grantConfigJson.end()
                     || !grantConfigJson.at("resDeviceID").is_string()
-                    || grantConfigJson.find("grantStatus") == grantConfigJson.end()
+                    || grantConfigJson.find("grantStatus") == grantConfigJson.end()
                     || !grantConfigJson.at("grantStatus").is_number()
                     || grantConfigJson.find("grantFlags") == grantConfigJson.end()
                     || !grantConfigJson.at("grantFlags").is_number()) {
@@ -241,13 +242,13 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeToke
         }
     }
     if (nativeTokenJson.find("version") != nativeTokenJson.end() && nativeTokenJson.at("version").is_number()) {
-        nativeTokenInfo.ver = nativeTokenJson.at("version").get<int32_t>();
+        nativeTokenInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenId") != nativeTokenJson.end() && nativeTokenJson.at("tokenId").is_number()) {
-        nativeTokenInfo.tokenID = nativeTokenJson.at("tokenId").get<int32_t>();
+        nativeTokenInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenAttr") != nativeTokenJson.end() && nativeTokenJson.at("tokenAttr").is_number()) {
-        nativeTokenInfo.tokenAttr = nativeTokenJson.at("tokenAttr").get<int32_t>();
+        nativeTokenInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
     }
     if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
         && nativeTokenJson.at("dcaps").size() > 0 && (nativeTokenJson.at("dcaps"))[0].is_string()) {
