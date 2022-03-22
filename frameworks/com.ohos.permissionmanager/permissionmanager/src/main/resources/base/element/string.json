@@ -45,10 +45,6 @@
       "value": "个应用获取此权限"
     },
     {
-      "name": "authority_message",
-      "value": "近 7 天的应用访问权限"
-    },
-    {
       "name": "other_permissions",
       "value": "其它权限"
     },
@@ -75,10 +71,6 @@
     {
       "name": "banned",
       "value": "已禁止"
-    },
-    {
-      "name": "location_info_message",
-      "value": "系统定位服务开关开启时，已允许 19 个应用获取此设备的位置。"
     },
     {
       "name": "description_grantability",
