@@ -241,6 +241,7 @@ static int32_t CreateCfgFile(void)
         return ATRET_FAILED;
     }
     close(fd);
+    fd = -1;
 
     struct stat buf;
     if (stat(TOKEN_ID_CFG_DIR_PATH, &buf) != 0) {
@@ -292,6 +293,7 @@ static int GetRandomTokenId(uint32_t *randNum)
     }
     len = read(fd, &random, sizeof(random));
     (void)close(fd);
+
     if (len != sizeof(random)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
         return ATRET_FAILED;

@@ -42,7 +42,7 @@ private:
     int ReadCfgFile(std::string &nativeRawData);
     void FromJson(const nlohmann::json &jsonObject,
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    void ParserNativeRawData(const std::string& nativeRawData,
+    int32_t ParserNativeRawData(const std::string& nativeRawData,
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     void from_json(const nlohmann::json& j, NativeTokenInfo& p);
 

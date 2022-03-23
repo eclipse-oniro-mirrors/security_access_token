@@ -38,7 +38,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
-    std::string udid = SoftBusManager::GetInstance().GetUniqueDisabilityIdByNodeId(networkId);
+    std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
 
     ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
@@ -60,7 +60,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDisabilityIdOrFetch(networkId);
+    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
     ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",

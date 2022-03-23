@@ -96,6 +96,7 @@ public:
 
     static const int64_t STATE_OPENING = -1;
     static const int64_t STATE_NOTFOUND = -2;
+    static const int64_t MAX_ONBYTES_RECEIVED_DATA_LEN = 1024 * 1024 * 10;
 
 private:
     /**

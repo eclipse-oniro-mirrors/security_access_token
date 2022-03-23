@@ -31,7 +31,7 @@ enum DeviceIdType {
 struct DeviceId {
     std::string networkId;
     std::string universallyUniqueId;
-    std::string uniqueDisabilityId;
+    std::string uniqueDeviceId;
 };
 
 struct DeviceInfo {

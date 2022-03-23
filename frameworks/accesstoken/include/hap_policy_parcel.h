@@ -20,7 +20,6 @@
 #include "permission_def_parcel.h"
 #include "permission_state_full_parcel.h"
 
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

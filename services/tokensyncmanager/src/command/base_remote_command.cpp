@@ -223,7 +223,7 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
 {
     FromHapTokenBasicInfoJson(hapTokenJson, hapTokenInfo.baseInfo);
     if (hapTokenInfo.baseInfo.tokenID == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Hap token basic info is error.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token basic info is error.");
         return;
     }
     FromPermStateListJson(hapTokenJson, hapTokenInfo.permStateList);

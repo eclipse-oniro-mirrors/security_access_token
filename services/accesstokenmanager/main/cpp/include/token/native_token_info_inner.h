@@ -31,6 +31,7 @@ static const std::string JSON_VERSION = "version";
 static const std::string JSON_TOKEN_ID = "tokenId";
 static const std::string JSON_TOKEN_ATTR = "tokenAttr";
 static const std::string JSON_DCAPS = "dcaps";
+static const int MAX_DCAPS_NUM = 32;
 
 class NativeTokenInfoInner final {
 public:

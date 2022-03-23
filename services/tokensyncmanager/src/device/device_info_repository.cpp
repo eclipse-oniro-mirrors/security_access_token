@@ -58,13 +58,13 @@ bool DeviceInfoRepository::FindDeviceIdByNodeIdLocked(
     } else if (type == DeviceIdType::UNIVERSALLY_UNIQUE_ID) {
         return FindDeviceIdByUniversallyUniqueIdLocked(nodeId, deviceId);
     } else if (type == DeviceIdType::UNIQUE_DISABILITY_ID) {
-        return FindDeviceIdByUniqueDisabilityIdLocked(nodeId, deviceId);
+        return FindDeviceIdByUniqueDeviceIdLocked(nodeId, deviceId);
     } else if (type == DeviceIdType::UNKNOWN) {
         if (FindDeviceIdByNetworkIdLocked(nodeId, deviceId)) {
             return true;
         } else if (FindDeviceIdByUniversallyUniqueIdLocked(nodeId, deviceId)) {
             return true;
-        } else if (FindDeviceIdByUniqueDisabilityIdLocked(nodeId, deviceId)) {
+        } else if (FindDeviceIdByUniqueDeviceIdLocked(nodeId, deviceId)) {
             return true;
         }
         return false;
@@ -75,7 +75,7 @@ bool DeviceInfoRepository::FindDeviceIdByNodeIdLocked(
 
 bool DeviceInfoRepository::FindDeviceInfoByDeviceIdLocked(const DeviceId deviceId, DeviceInfo &deviceInfo) const
 {
-    std::string deviceInfoKey = deviceId.networkId + deviceId.universallyUniqueId + deviceId.uniqueDisabilityId;
+    std::string deviceInfoKey = deviceId.networkId + deviceId.universallyUniqueId + deviceId.uniqueDeviceId;
     if (deviceInfoMap_.count(deviceInfoKey) > 0) {
         deviceInfo = deviceInfoMap_.at(deviceInfoKey);
         return true;
@@ -102,11 +102,11 @@ bool DeviceInfoRepository::FindDeviceIdByUniversallyUniqueIdLocked(
     return false;
 }
 
-bool DeviceInfoRepository::FindDeviceIdByUniqueDisabilityIdLocked(
-    const std::string &uniqueDisabilityId, DeviceId &deviceId) const
+bool DeviceInfoRepository::FindDeviceIdByUniqueDeviceIdLocked(
+    const std::string &uniqueDeviceId, DeviceId &deviceId) const
 {
-    if (deviceIdMapByUniqueDisabilityId_.count(uniqueDisabilityId) > 0) {
-        deviceId = deviceIdMapByUniqueDisabilityId_.at(uniqueDisabilityId);
+    if (deviceIdMapByUniqueDeviceId_.count(uniqueDeviceId) > 0) {
+        deviceId = deviceIdMapByUniqueDeviceId_.at(uniqueDeviceId);
         return true;
     }
     return false;
@@ -117,7 +117,7 @@ void DeviceInfoRepository::DeleteAllDeviceInfoExceptOne(const DeviceInfo deviceI
     std::lock_guard<std::recursive_mutex> guard(stackLock_);
     deviceIdMapByNetworkId_.clear();
     deviceIdMapByUniversallyUniqueId_.clear();
-    deviceIdMapByUniqueDisabilityId_.clear();
+    deviceIdMapByUniqueDeviceId_.clear();
     deviceInfoMap_.clear();
     SaveDeviceInfo(deviceInfo);
 }
@@ -131,32 +131,32 @@ void DeviceInfoRepository::SaveDeviceInfo(
     const DeviceId deviceId, const std::string &deviceName, const std::string &deviceType)
 {
     SaveDeviceInfo(
-        deviceId.networkId, deviceId.universallyUniqueId, deviceId.uniqueDisabilityId, deviceName, deviceType);
+        deviceId.networkId, deviceId.universallyUniqueId, deviceId.uniqueDeviceId, deviceName, deviceType);
 }
 
 void DeviceInfoRepository::SaveDeviceInfo(const std::string &networkId, const std::string &universallyUniqueId,
-    const std::string &uniqueDisabilityId, const std::string &deviceName, const std::string &deviceType)
+    const std::string &uniqueDeviceId, const std::string &deviceName, const std::string &deviceType)
 {
     std::lock_guard<std::recursive_mutex> guard(stackLock_);
 
     DeleteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
     DeleteDeviceInfo(universallyUniqueId, DeviceIdType::UNIVERSALLY_UNIQUE_ID);
-    DeleteDeviceInfo(uniqueDisabilityId, DeviceIdType::UNIQUE_DISABILITY_ID);
+    DeleteDeviceInfo(uniqueDeviceId, DeviceIdType::UNIQUE_DISABILITY_ID);
 
     DeviceId deviceId;
     deviceId.networkId = networkId;
     deviceId.universallyUniqueId = universallyUniqueId;
-    deviceId.uniqueDisabilityId = uniqueDisabilityId;
+    deviceId.uniqueDeviceId = uniqueDeviceId;
 
     DeviceInfo deviceInfo;
     deviceInfo.deviceId = deviceId;
     deviceInfo.deviceName = deviceName;
     deviceInfo.deviceType = deviceType;
 
-    const std::string deviceInfoKey = networkId + universallyUniqueId + uniqueDisabilityId;
+    const std::string deviceInfoKey = networkId + universallyUniqueId + uniqueDeviceId;
     deviceIdMapByNetworkId_.insert(std::pair<std::string, DeviceId>(networkId, deviceId));
     deviceIdMapByUniversallyUniqueId_.insert(std::pair<std::string, DeviceId>(universallyUniqueId, deviceId));
-    deviceIdMapByUniqueDisabilityId_.insert(std::pair<std::string, DeviceId>(uniqueDisabilityId, deviceId));
+    deviceIdMapByUniqueDeviceId_.insert(std::pair<std::string, DeviceId>(uniqueDeviceId, deviceId));
     deviceInfoMap_.insert(std::pair<std::string, DeviceInfo>(deviceInfoKey, deviceInfo));
 }
 
@@ -173,8 +173,8 @@ void DeviceInfoRepository::DeleteDeviceInfoByDeviceIdLocked(const DeviceId devic
 {
     deviceIdMapByNetworkId_.erase(deviceId.networkId);
     deviceIdMapByUniversallyUniqueId_.erase(deviceId.universallyUniqueId);
-    deviceIdMapByUniqueDisabilityId_.erase(deviceId.uniqueDisabilityId);
-    const std::string deviceInfoKey = deviceId.networkId + deviceId.universallyUniqueId + deviceId.uniqueDisabilityId;
+    deviceIdMapByUniqueDeviceId_.erase(deviceId.uniqueDeviceId);
+    const std::string deviceInfoKey = deviceId.networkId + deviceId.universallyUniqueId + deviceId.uniqueDeviceId;
     deviceInfoMap_.erase(deviceInfoKey);
 }
 
@@ -183,7 +183,7 @@ void DeviceInfoRepository::Clear()
     std::lock_guard<std::recursive_mutex> guard(stackLock_);
     deviceIdMapByNetworkId_.clear();
     deviceIdMapByUniversallyUniqueId_.clear();
-    deviceIdMapByUniqueDisabilityId_.clear();
+    deviceIdMapByUniqueDeviceId_.clear();
     deviceInfoMap_.clear();
 }
 } // namespace AccessToken
