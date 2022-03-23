@@ -43,11 +43,12 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
 
 DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
 {
+    deleteTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if (jsonObject.find("tokenId") != jsonObject.end() && jsonObject.at("tokenId").is_number()) {
-        deleteTokenId_ = jsonObject.at("tokenId").get<int>();
+        deleteTokenId_ = (AccessTokenID)jsonObject.at("tokenId").get<int>();
     }
 }
 

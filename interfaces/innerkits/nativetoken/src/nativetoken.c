@@ -43,7 +43,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         return ATRET_FAILED;
     }
 
-    size_t fileSize = fileStat.st_size;
+    size_t fileSize = (unsigned)fileStat.st_size;
 
     FILE *cfgFd = fopen(filePath, "r");
     if (cfgFd == NULL) {
