@@ -48,4 +48,10 @@ export default class Constants {
 
   static RESULT_SUCCESS = 1
   static RESULT_FAILURE = 0
+
+  //
+  static SETTING_OPER = -1
+  static PASS_OPER = 0
+  static DYNAMIC_OPER = 1
+  static INVALID_OPER = 2
 }
