@@ -93,10 +93,11 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         int ret = RegisterTokenId(tokenId, type);
         if (ret == RET_SUCCESS) {
             break;
-        } else if (i == MAX_CREATE_TOKEN_ID_RETRY - 1) {
+        } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
             ACCESSTOKEN_LOG_INFO(LABEL, "reigster tokenId failed, maybe repeat, retry");
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "reigster tokenId finally failed");
+            tokenId = 0;
         }
     }
     return tokenId;

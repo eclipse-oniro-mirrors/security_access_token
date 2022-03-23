@@ -74,6 +74,13 @@ typedef enum TypePermissionFlag {
     PERMISSION_USER_FIXED = 1 << 1,
     PERMISSION_SYSTEM_FIXED = 1 << 2,
 } PermissionFlag;
+
+typedef enum TypePermissionOper {
+    SETTING_OPER = -1,
+    PASS_OPER = 0,
+    DYNAMIC_OPER = 1,
+    INVALID_OPER = 2,
+} PermissionOper;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

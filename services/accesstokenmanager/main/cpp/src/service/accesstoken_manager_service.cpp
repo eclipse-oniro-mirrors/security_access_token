@@ -21,8 +21,10 @@
 #include "accesstoken_log.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
+#include "permission_list_state.h"
 #include "permission_manager.h"
 
 namespace OHOS {
@@ -127,6 +129,34 @@ int AccessTokenManagerService::GetReqPermissions(
         reqPermList.emplace_back(permPrcel);
     }
     return ret;
+}
+
+PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
+    std::vector<PermissionListStateParcel>& reqPermList)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
+
+    bool needRes = false;
+    std::vector<PermissionStateFull> permsList;
+    int ret = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, false);
+    if (ret != RET_SUCCESS) {
+        return INVALID_OPER;
+    }
+
+    int32_t size = reqPermList.size();
+    ACCESSTOKEN_LOG_INFO(LABEL, "reqPermList size: 0x%{public}x", size);
+    for (int32_t i = 0; i < size; i++) {
+        PermissionManager::GetInstance().GetSelfPermissionState(
+            permsList, reqPermList[i].permsState);
+        if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
+            needRes = true;
+        }
+    }
+    if (needRes) {
+        return DYNAMIC_OPER;
+    }
+    return PASS_OPER;
 }
 
 int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
