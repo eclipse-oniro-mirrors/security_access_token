@@ -40,15 +40,16 @@ bool DeviceInfoManager::ExistDeviceInfo(const std::string &nodeId, DeviceIdType 
 }
 
 void DeviceInfoManager::AddDeviceInfo(const std::string &networkId, const std::string &universallyUniqueId,
-    const std::string &uniqueDisabilityId, const std::string &deviceName, const std::string &deviceType)
+    const std::string &uniqueDeviceId, const std::string &deviceName, const std::string &deviceType)
 {
     if (!DataValidator::IsDeviceIdValid(networkId) ||
         !DataValidator::IsDeviceIdValid(universallyUniqueId) ||
-        !DataValidator::IsDeviceIdValid(uniqueDisabilityId) || deviceName.empty() || deviceType.empty()) {
+        !DataValidator::IsDeviceIdValid(uniqueDeviceId) || deviceName.empty() || deviceType.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "addDeviceInfo: input param is invalid");
+        return;
     }
     DeviceInfoRepository::GetInstance().SaveDeviceInfo(
-        networkId, universallyUniqueId, uniqueDisabilityId, deviceName, deviceType);
+        networkId, universallyUniqueId, uniqueDeviceId, deviceName, deviceType);
 }
 
 void DeviceInfoManager::RemoveAllRemoteDeviceInfo()
@@ -71,7 +72,7 @@ void DeviceInfoManager::RemoveRemoteDeviceInfo(const std::string &nodeId, Device
         char deviceIdCharArray[Constant::DEVICE_UUID_LENGTH] = {0};
         GetDevUdid(deviceIdCharArray, Constant::DEVICE_UUID_LENGTH);
         if (DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, deviceIdType, deviceInfo)) {
-            if (deviceInfo.deviceId.uniqueDisabilityId != deviceIdCharArray) {
+            if (deviceInfo.deviceId.uniqueDeviceId != deviceIdCharArray) {
                 DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, deviceIdType);
             }
         }
@@ -86,32 +87,33 @@ std::string DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch(const std::st
         return result;
     }
     DeviceInfo deviceInfo;
-    if (DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, DeviceIdType::UNKNOWN, deviceInfo)) {
-        std::string universallyUniqueId = deviceInfo.deviceId.universallyUniqueId;
-        if (universallyUniqueId.empty()) {
-            std::string udid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(nodeId);
-            if (!udid.empty()) {
-                result = udid;
-            }
-        } else {
-            result = universallyUniqueId;
-        }
+    if (!(DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, DeviceIdType::UNKNOWN, deviceInfo))) {
+        return result;
+    }
+    std::string universallyUniqueId = deviceInfo.deviceId.universallyUniqueId;
+    if (!universallyUniqueId.empty()) {
+        result = universallyUniqueId;
+        return result;
+    }
+    std::string udid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(nodeId);
+    if (!udid.empty()) {
+        result = udid;
     }
     return result;
 }
 
-std::string DeviceInfoManager::ConvertToUniqueDisabilityIdOrFetch(const std::string &nodeId) const
+std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string &nodeId) const
 {
     std::string result;
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertToUniqueDisabilityIdOrFetch: nodeId is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertToUniqueDeviceIdOrFetch: nodeId is invalid.");
         return result;
     }
     DeviceInfo deviceInfo;
     if (DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, DeviceIdType::UNKNOWN, deviceInfo)) {
-        std::string uniqueDisabilityId = deviceInfo.deviceId.uniqueDisabilityId;
-        if (uniqueDisabilityId.empty()) {
-            std::string udid = SoftBusManager::GetInstance().GetUniqueDisabilityIdByNodeId(nodeId);
+        std::string uniqueDeviceId = deviceInfo.deviceId.uniqueDeviceId;
+        if (uniqueDeviceId.empty()) {
+            std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(nodeId);
             if (!udid.empty()) {
                 result = udid;
             } else {
@@ -123,7 +125,7 @@ std::string DeviceInfoManager::ConvertToUniqueDisabilityIdOrFetch(const std::str
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 "FindDeviceInfo succeed, udid is empty, nodeId(%{public}s) ",
                 Constant::EncryptDevId(nodeId).c_str());
-            result = uniqueDisabilityId;
+            result = uniqueDeviceId;
         }
     } else {
         ACCESSTOKEN_LOG_DEBUG(
@@ -141,7 +143,7 @@ std::string DeviceInfoManager::ConvertToUniqueDisabilityIdOrFetch(const std::str
                 Constant::EncryptDevId(info.deviceId.networkId).c_str());
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 ">>> DeviceInfoRepository device udid: %{public}s",
-                Constant::EncryptDevId(info.deviceId.uniqueDisabilityId).c_str());
+                Constant::EncryptDevId(info.deviceId.uniqueDeviceId).c_str());
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 ">>> DeviceInfoRepository device uuid: %{public}s",
                 Constant::EncryptDevId(info.deviceId.universallyUniqueId).c_str());

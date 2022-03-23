@@ -385,7 +385,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos003, TestSize.Level1)
 
 /**
  * @tc.name: ProcessNativeTokenInfos004
- * @tc.desc: test add repeat id, but process doesnt
+ * @tc.desc: test add repeat id, but process doesn't
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -436,7 +436,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
 
 /**
  * @tc.name: ProcessNativeTokenInfos005
- * @tc.desc: test add repeat process, but id doesnt
+ * @tc.desc: test add repeat process, but id doesn't
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */

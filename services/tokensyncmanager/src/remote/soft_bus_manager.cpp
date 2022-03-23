@@ -172,7 +172,7 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
         SESSION_GROUP_ID.c_str(), &SESSION_ATTR);
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "session info: sessionId: %{public}d, uuid: %{public}s, udid: %{public}s", sessionId,
-        info.deviceId.universallyUniqueId.c_str(), info.deviceId.uniqueDisabilityId.c_str());
+        info.deviceId.universallyUniqueId.c_str(), info.deviceId.uniqueDeviceId.c_str());
 
     // wait session opening
     int retryTimes = 0;
@@ -216,7 +216,6 @@ int SoftBusManager::CloseSession(int sessionId)
     return Constant::SUCCESS;
 }
 
-
 std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
@@ -247,7 +246,7 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
     return uuid;
 }
 
-std::string SoftBusManager::GetUniqueDisabilityIdByNodeId(const std::string &nodeId)
+std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());

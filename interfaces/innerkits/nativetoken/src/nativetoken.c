@@ -250,6 +250,8 @@ int GetRandomTokenId(uint32_t *randNum)
     }
     len = read(fd, &random, sizeof(random));
     (void)close(fd);
+    fd = -1;
+
     if (len != sizeof(random)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
         return ATRET_FAILED;

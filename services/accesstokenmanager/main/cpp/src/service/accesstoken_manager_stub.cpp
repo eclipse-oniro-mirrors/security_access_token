@@ -117,7 +117,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}u", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     if (!IsAuthorizedCalling() &&

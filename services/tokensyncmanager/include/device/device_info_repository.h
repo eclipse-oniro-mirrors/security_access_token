@@ -42,7 +42,7 @@ public:
     void SaveDeviceInfo(const DeviceId deviceId, const std::string &deviceName, const std::string &deviceType);
 
     void SaveDeviceInfo(const std::string &networkId, const std::string &universallyUniqueId,
-        const std::string &uniqueDisabilityId, const std::string &deviceName, const std::string &deviceType);
+        const std::string &uniqueDeviceId, const std::string &deviceName, const std::string &deviceType);
 
     void DeleteDeviceInfo(const std::string &nodeId, const DeviceIdType type);
 
@@ -57,7 +57,7 @@ private:
 
     bool FindDeviceIdByUniversallyUniqueIdLocked(const std::string &universallyUniqueId, DeviceId &deviceId) const;
 
-    bool FindDeviceIdByUniqueDisabilityIdLocked(const std::string &uniqueDisabilityId, DeviceId &deviceId) const;
+    bool FindDeviceIdByUniqueDeviceIdLocked(const std::string &uniqueDeviceId, DeviceId &deviceId) const;
 
     void DeleteDeviceInfoByDeviceIdLocked(const DeviceId deviceId);
 
@@ -65,7 +65,7 @@ private:
 
     std::map<std::string, DeviceId> deviceIdMapByUniversallyUniqueId_;
 
-    std::map<std::string, DeviceId> deviceIdMapByUniqueDisabilityId_;
+    std::map<std::string, DeviceId> deviceIdMapByUniqueDeviceId_;
 
     std::map<std::string, DeviceInfo> deviceInfoMap_;
 

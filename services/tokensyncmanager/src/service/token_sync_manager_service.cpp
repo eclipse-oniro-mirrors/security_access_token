@@ -70,12 +70,12 @@ void TokenSyncManagerService::OnStop()
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
-std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetSendEventHandler()
+std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetSendEventHandler() const
 {
     return sendHandler_;
 }
 
-std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetRecvEventHandler()
+std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetRecvEventHandler() const
 {
     return recvHandler_;
 }
@@ -92,7 +92,7 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
         ACCESSTOKEN_LOG_INFO(LABEL, "FindDeviceInfo failed");
         return Constant::FAILURE;
     }
-    std::string udid = devInfo.deviceId.uniqueDisabilityId;
+    std::string udid = devInfo.deviceId.uniqueDeviceId;
     const std::shared_ptr<SyncRemoteHapTokenCommand> syncRemoteHapTokenCommand =
         RemoteCommandFactory::GetInstance().NewSyncRemoteHapTokenCommand(Constant::GetLocalDeviceId(),
         deviceID, tokenID);
@@ -117,7 +117,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
     std::string localUdid = Constant::GetLocalDeviceId();
     for (DeviceInfo device : devices) {
-        if (device.deviceId.uniqueDisabilityId == localUdid) {
+        if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
             continue;
         }
@@ -126,7 +126,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
             device.deviceId.networkId, tokenID);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
-            device.deviceId.uniqueDisabilityId, deleteRemoteTokenCommand);
+            device.deviceId.uniqueDeviceId, deleteRemoteTokenCommand);
         if (resultCode != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "RemoteExecutorManager executeCommand DeleteRemoteTokenCommand failed, return %d", resultCode);
@@ -142,7 +142,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
     std::string localUdid = Constant::GetLocalDeviceId();
     for (DeviceInfo device : devices) {
-        if (device.deviceId.uniqueDisabilityId == localUdid) {
+        if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
             continue;
         }
@@ -152,7 +152,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
             device.deviceId.networkId, tokenInfo);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
-            device.deviceId.uniqueDisabilityId, updateRemoteHapTokenCommand);
+            device.deviceId.uniqueDeviceId, updateRemoteHapTokenCommand);
         if (resultCode != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "RemoteExecutorManager executeCommand updateRemoteHapTokenCommand failed, return %d", resultCode);
