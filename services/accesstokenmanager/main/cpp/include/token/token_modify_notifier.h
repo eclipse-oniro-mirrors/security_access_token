@@ -53,4 +53,3 @@ private:
 } // namespace Security
 } // namespace OHOS
 #endif // TOKEN_MODIFY_NOTIFIER_H
-

@@ -37,12 +37,6 @@ ErrCode AtmCommand::CreateCommandMap()
 ErrCode AtmCommand::CreateMessageMap()
 {
     messageMap_ = {
-        // error + message
-        // currently there is no error to use
-        // {
-        //     AppExecFwk::IStatusReceiver::ERR_USER_REMOVE_FALIED,
-        //     "error: user remove failed.",
-        // },
     };
 
     return OHOS::ERR_OK;

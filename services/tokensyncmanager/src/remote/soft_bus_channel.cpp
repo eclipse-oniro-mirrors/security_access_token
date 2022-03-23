@@ -252,7 +252,7 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
         return result;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "compress complete. compress %{public}d bytes to %{public}d", compressedLength,
-        (int) len);
+        (int)len);
     compressedLength = len;
     return Constant::SUCCESS;
 }
@@ -271,7 +271,7 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
-            (int) len, length);
+            (int)len, length);
         delete[] buf;
         return "";
     }
@@ -324,9 +324,6 @@ int SoftBusChannel::CheckSessionMayReopenLocked()
 
 bool SoftBusChannel::IsSessionAvailable()
 {
-    if (session_ == Constant::INVALID_SESSION) {
-        return false;
-    }
     return session_ > Constant::INVALID_SESSION;
 }
 

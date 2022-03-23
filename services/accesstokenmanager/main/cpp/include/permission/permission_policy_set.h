@@ -31,7 +31,7 @@ namespace Security {
 namespace AccessToken {
 struct PermissionPolicySet final {
 public:
-    PermissionPolicySet() : tokenId_(0) {};
+    PermissionPolicySet() : tokenId_(0) {}
     virtual ~PermissionPolicySet();
 
     static std::shared_ptr<PermissionPolicySet> BuildPermissionPolicySet(AccessTokenID tokenId,

@@ -30,7 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 int32_t AccessTokenManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}d", __func__, code);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}u", __func__, code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IAccessTokenManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
