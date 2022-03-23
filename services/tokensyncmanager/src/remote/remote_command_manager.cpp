@@ -268,7 +268,7 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId:%{public}s", nodeId.c_str());
-    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDisabilityIdOrFetch(nodeId);
+    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid, nodeId:%{public}s, udid: %{public}s", nodeId.c_str(), udid.c_str());
     if (!DataValidator::IsDeviceIdValid(udid)) {
         ACCESSTOKEN_LOG_WARN(

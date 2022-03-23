@@ -149,7 +149,7 @@ private:
     std::mutex mutex_;
 
     /**
-     * @brief Fetch a executor from executors buffer. If not found, create one and cache it to buffer.
+     * @brief Fetch an executor from executors buffer. If not found, create one and cache it to buffer.
      *
      * @param nodeId The udid of a device which you want to get executor.
      * @see void

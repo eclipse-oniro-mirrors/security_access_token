@@ -60,15 +60,17 @@ std::shared_ptr<BaseRemoteCommand> RemoteCommandFactory::NewRemoteCommandFromJso
 
     if (commandName == SYNC_HAP_COMMAND_NAME) {
         return std::make_shared<SyncRemoteHapTokenCommand>(commandJsonString);
-    } else if (commandName == DELETE_TOKEN_COMMAND_NAME) {
-        return std::make_shared<DeleteRemoteTokenCommand>(commandJsonString);
-    } else if (commandName == UPDATE_HAP_COMMAND_NAME) {
-        return std::make_shared<UpdateRemoteHapTokenCommand>(commandJsonString);
-    } else if (commandName == SYNC_NATIVE_COMMAND_NAME) {
-        return std::make_shared<SyncRemoteNativeTokenCommand>(commandJsonString);
-    } else {
-        return nullptr;
     }
+    if (commandName == DELETE_TOKEN_COMMAND_NAME) {
+        return std::make_shared<DeleteRemoteTokenCommand>(commandJsonString);
+    }
+    if (commandName == UPDATE_HAP_COMMAND_NAME) {
+        return std::make_shared<UpdateRemoteHapTokenCommand>(commandJsonString);
+    }
+    if (commandName == SYNC_NATIVE_COMMAND_NAME) {
+        return std::make_shared<SyncRemoteNativeTokenCommand>(commandJsonString);
+    }
+    return nullptr;
 }
 }  // namespace AccessToken
 }  // namespace Security

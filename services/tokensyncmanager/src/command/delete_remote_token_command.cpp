@@ -43,17 +43,22 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(
 
 DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
 {
+    deleteTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if (jsonObject.find("tokenId") != jsonObject.end() && jsonObject.at("tokenId").is_number()) {
-        deleteTokenId_ = jsonObject.at("tokenId").get<int>();
+        deleteTokenId_ = (AccessTokenID)jsonObject.at("tokenId").get<int>();
     }
 }
 
 std::string DeleteRemoteTokenCommand::ToJsonPayload()
 {
     nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
+    if (j.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "j is invalid.");
+        return "";
+    }
     j["tokenId"] = deleteTokenId_;
     return j.dump();
 }
@@ -62,7 +67,7 @@ void DeleteRemoteTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "end as: DeleteRemoteTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "end as: DeleteRemoteTokenCommand");
 }
 
 void DeleteRemoteTokenCommand::Execute()

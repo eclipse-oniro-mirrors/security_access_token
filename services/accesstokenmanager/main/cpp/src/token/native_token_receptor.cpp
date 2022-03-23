@@ -83,22 +83,30 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
 
     if (j.find(JSON_DCAPS) != j.end()) {
         native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
+        if (native.dcap.size() > MAX_DCAPS_NUM) {
+            return;
+        }
     } else {
         return;
     }
     p = std::make_shared<NativeTokenInfoInner>(native);
 }
 
-void NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawData,
+int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawData,
     std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
     nlohmann::json jsonRes = nlohmann::json::parse(nativeRawData, nullptr, false);
+    if (jsonRes.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
+        return RET_FAILED;
+    }
     for (auto it = jsonRes.begin(); it != jsonRes.end(); it++) {
         auto token = it->get<std::shared_ptr<NativeTokenInfoInner>>();
         if (token != nullptr) {
             tokenInfos.emplace_back(token);
         }
     }
+    return RET_SUCCESS;
 }
 
 int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
@@ -155,7 +163,11 @@ int NativeTokenReceptor::Init()
         return RET_FAILED;
     }
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
-    ParserNativeRawData(nativeRawData, tokenInfos);
+    ret = ParserNativeRawData(nativeRawData, tokenInfos);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParserNativeRawData failed.");
+        return RET_FAILED;
+    }
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
     ready_ = true;

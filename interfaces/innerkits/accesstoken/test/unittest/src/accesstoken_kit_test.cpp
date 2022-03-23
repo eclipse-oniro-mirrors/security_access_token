@@ -1780,7 +1780,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
 
     PermissionDef permDefResult;
-    /* check permission define befor update */
+    /* check permission define before update */
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
     ASSERT_EQ(RET_FAILED, ret);
 
@@ -1822,7 +1822,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
 
     PermissionDef permDefResult;
-    /* check permission define befor update */
+    /* check permission define before update */
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
     ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult.permissionName);
     ASSERT_EQ("label", permDefResult.label);

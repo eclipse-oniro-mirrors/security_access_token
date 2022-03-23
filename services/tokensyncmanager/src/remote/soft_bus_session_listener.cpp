@@ -88,8 +88,9 @@ void SoftBusSessionListener::OnMessageReceived(int32_t sessionId, const void *da
 
 void SoftBusSessionListener::OnBytesReceived(int32_t sessionId, const void *data, uint32_t dataLen)
 {
-    if (sessionId == Constant::INVALID_SESSION || dataLen == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid, data length: %{public}d", dataLen);
+    if ((sessionId == Constant::INVALID_SESSION) || (dataLen == 0) ||
+        (dataLen > MAX_ONBYTES_RECEIVED_DATA_LEN) || (data == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid, data length: %{public}u", dataLen);
         return;
     }
 
@@ -118,7 +119,7 @@ int64_t SoftBusSessionListener::GetSessionState(int32_t sessionId)
     if (iter == g_SessionOpenedMap_.end()) {
         return STATE_NOTFOUND;
     }
-    return (iter->second);
+    return iter->second;
 }
 
 void SoftBusSessionListener::DeleteSessionIdFromMap(int32_t sessionID)

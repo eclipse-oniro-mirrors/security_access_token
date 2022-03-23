@@ -43,7 +43,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         return ATRET_FAILED;
     }
 
-    size_t fileSize = fileStat.st_size;
+    size_t fileSize = (unsigned)fileStat.st_size;
 
     FILE *cfgFd = fopen(filePath, "r");
     if (cfgFd == NULL) {
@@ -250,6 +250,8 @@ int GetRandomTokenId(uint32_t *randNum)
     }
     len = read(fd, &random, sizeof(random));
     (void)close(fd);
+    fd = -1;
+
     if (len != sizeof(random)) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
         return ATRET_FAILED;

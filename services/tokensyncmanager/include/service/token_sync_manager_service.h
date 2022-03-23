@@ -39,8 +39,8 @@ public:
     void OnStart() override;
     void OnStop() override;
 
-    std::shared_ptr<TokenSyncEventHandler> GetSendEventHandler();
-    std::shared_ptr<TokenSyncEventHandler> GetRecvEventHandler();
+    std::shared_ptr<TokenSyncEventHandler> GetSendEventHandler() const;
+    std::shared_ptr<TokenSyncEventHandler> GetRecvEventHandler() const;
     int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
     int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
