@@ -72,6 +72,7 @@ public:
 #endif
 
     void DumpTokenInfo(std::string& dumpInfo) override;
+
 private:
     bool Initialize() const;
 

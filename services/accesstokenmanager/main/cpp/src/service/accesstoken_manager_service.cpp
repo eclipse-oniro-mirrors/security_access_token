@@ -327,4 +327,4 @@ bool AccessTokenManagerService::Initialize() const
 }
 } // namespace AccessToken
 } // namespace Security
-}
+} // namespace OHOS

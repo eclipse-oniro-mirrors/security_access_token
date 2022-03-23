@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "native_token_receptor_test.h"
 
 #include <fcntl.h>

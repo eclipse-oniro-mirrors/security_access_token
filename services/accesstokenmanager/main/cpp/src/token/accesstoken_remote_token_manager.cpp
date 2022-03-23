@@ -152,4 +152,3 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-

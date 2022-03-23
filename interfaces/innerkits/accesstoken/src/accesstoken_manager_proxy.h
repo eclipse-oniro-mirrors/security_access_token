@@ -71,6 +71,7 @@ public:
 #endif
 
     void DumpTokenInfo(std::string& dumpInfo) override;
+
 private:
     static inline BrokerDelegator<AccessTokenManagerProxy> delegator_;
 };
