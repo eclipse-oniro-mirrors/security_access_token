@@ -75,7 +75,8 @@ export struct privacyDialog {
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({
                   top: Constants.DIALOG_DESP_MARGIN_TOP,
-                  left: Constants.DIALOG_DESP_MARGIN_LEFT
+                  left: Constants.DIALOG_DESP_MARGIN_LEFT,
+                  right: Constants.DIALOG_DESP_MARGIN_RIGHT
                 })
             }
           }
