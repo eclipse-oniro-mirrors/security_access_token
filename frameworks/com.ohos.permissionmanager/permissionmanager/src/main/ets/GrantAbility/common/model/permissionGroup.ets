@@ -178,7 +178,7 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
     "groupName": "OTHER",
-    "label": "允许不同设备间数据交换",
+    "label": "不同设备间数据交换",
     "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
     "groupId": 11
   }
