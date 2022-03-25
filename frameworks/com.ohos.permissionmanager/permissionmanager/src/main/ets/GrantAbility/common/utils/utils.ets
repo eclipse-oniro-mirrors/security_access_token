@@ -20,8 +20,9 @@ export function getPermissionGroup(permission: string) {
       if(permissionGroups[i].groupName == 'OTHER') {
         return {
           "name": permissionGroups[i].groupName,
-          "groupName": permissionGroups[i].label,
-          "icon": $r('app.media.ic_more'),
+          "groupName": permissionGroups[i].groupName,
+          "label": permissionGroups[i].label,
+          "icon": permissionGroups[i].icon,
           "description": permissionGroups[i].description,
           "permissions": [
             permissionGroups[i].permissionName

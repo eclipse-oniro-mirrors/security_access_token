@@ -178,8 +178,9 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
     "groupName": "OTHER",
-    "label": "不同设备间数据交换",
-    "description": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。",
+    "icon": $r("app.media.ic_multi_device_vector"),
+    "label": "使用多设备协同",
+    "description": "发现并访问其他设备。",
     "groupId": 11
   }
 ]
@@ -189,7 +190,8 @@ export const groups: any[] = [
     "name": "LOCATION",
     "groupName": "位置信息",
     "icon": $r('app.media.ic_public_gps'),
-    "description": "访问您的位置信息",
+    "label": "访问位置信息",
+    "description": "",
     "permissions": [
       "ohos.permission.LOCATION_IN_BACKGROUND",
       "ohos.permission.LOCATION"
@@ -199,7 +201,8 @@ export const groups: any[] = [
     "name": "CAMERA",
     "groupName": "相机",
     "icon": $r('app.media.ic_public_camera'),
-    "description": "访问您的相机",
+    "label": "使用相机",
+    "description": "",
     "permissions": [
       "ohos.permission.CAMERA"
     ]
@@ -208,7 +211,8 @@ export const groups: any[] = [
     "name": "MICROPHONE",
     "groupName": "麦克风",
     "icon": $r('app.media.ic_public_voice'),
-    "description": "访问您的麦克风",
+    "label": "使用麦克风",
+    "description": "",
     "permissions": [
       "ohos.permission.MICROPHONE"
     ]
@@ -217,7 +221,8 @@ export const groups: any[] = [
     "name": "PHONE",
     "groupName": "电话",
     "icon": $r('app.media.ic_public_phone'),
-    "description": "拨打电话和管理通话",
+    "label": "使用拨打电话",
+    "description": "包括拨打电话等权限。",
     "permissions": [
       "ohos.permission.ANSWER_CALL",
       "ohos.permission.MANAGE_VOICEMAIL"
@@ -227,7 +232,8 @@ export const groups: any[] = [
     "name": "SMS",
     "groupName": "信息",
     "icon": $r('app.media.ic_public_message'),
-    "description": "发送和查看短信",
+    "label": "访问信息",
+    "description": "包括读取短信/彩信、接受短信、发送短信等权限。",
     "permissions": [
       "ohos.permission.READ_CELL_MESSAGES",
       "ohos.permission.READ_MESSAGES",
@@ -241,7 +247,8 @@ export const groups: any[] = [
     "name": "CONTACTS",
     "groupName": "通讯录",
     "icon": $r('app.media.ic_public_contacts_group'),
-    "description": "访问您的通讯录",
+    "label": "访问通讯录",
+    "description": "包括新建/修改/删除联系人、读取联系人等权限。",
     "permissions": [
       "ohos.permission.READ_CONTACTS",
       "ohos.permission.WRITE_CONTACTS"
@@ -251,7 +258,8 @@ export const groups: any[] = [
     "name": "CALL_LOG",
     "groupName": "通话记录",
     "icon": $r('app.media.ic_call_logs'),
-    "description": "读取和写入手机通话记录",
+    "label": "访问通话记录",
+    "description": "包括读取通话记录、新建/修改/删除通话记录等权限。",
     "permissions": [
       "ohos.permission.READ_CALL_LOG",
       "ohos.permission.WRITE_CALL_LOG"
@@ -261,7 +269,8 @@ export const groups: any[] = [
     "name": "MEDIA",
     "groupName": "媒体和文件",
     "icon": $r('app.media.ic_public_folder'),
-    "description": "访问您的媒体和文件",
+    "label": "访问媒体和文件",
+    "description": "",
     "permissions": [
       "ohos.permission.MEDIA_LOCATION",
       "ohos.permission.READ_MEDIA",
@@ -272,7 +281,8 @@ export const groups: any[] = [
     "name": "CALENDAR",
     "groupName": "日历",
     "icon": $r('app.media.ic_public_calendar'),
-    "description": "访问日历和活动",
+    "label": "访问日历",
+    "description": "包括读取日历和新建/修改/删除日历。",
     "permissions": [
       "ohos.permission.READ_CALENDAR",
       "ohos.permission.WRITE_CALENDAR"
@@ -282,7 +292,8 @@ export const groups: any[] = [
     "name": "SPORT",
     "groupName": "健身运动",
     "icon": $r('app.media.ic_sport'),
-    "description": "访问您的运动状态",
+    "label": "访问健身运动",
+    "description": "",
     "permissions": [
       "ohos.permission.ACTIVITY_MOTION"
     ]
@@ -291,7 +302,8 @@ export const groups: any[] = [
     "name": "HEALTH",
     "groupName": "身体传感器",
     "icon": $r('app.media.ic_ssensor'),
-    "description": "访问您的健康数据",
+    "label": "使用身体传感器",
+    "description": "",
     "permissions": [
       "ohos.permission.READ_HEALTH_DATA"
     ]
@@ -300,7 +312,7 @@ export const groups: any[] = [
     "name": "OTHER",
     "groupName": "其他权限",
     "icon": $r('app.media.ic_more'),
-    "description": "访问您的其他权限",
+    "description": "",
     "permissions": [
       "ohos.permission.DISTRIBUTED_DATASYNC"
     ]
