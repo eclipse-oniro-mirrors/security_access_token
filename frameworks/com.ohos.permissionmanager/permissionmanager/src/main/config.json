@@ -30,7 +30,7 @@
         "description": "$string:description_mainability",
         "label": "$string:permissionmanager_MainAbility",
         "type": "page",
-        "launchType": "standard"
+        "launchType": "singleton"
       },
       {
         "visible": true,
