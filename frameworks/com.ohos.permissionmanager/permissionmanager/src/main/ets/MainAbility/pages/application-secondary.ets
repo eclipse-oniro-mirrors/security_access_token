@@ -88,7 +88,8 @@ struct appNamePlusPage {
                   routerData: this.routerData.bundleName,
                   backTitle: item.groupName,
                   permission: item.permission,
-                  status: allowedStatus
+                  status: allowedStatus,
+                  tokenId: this.routerData.tokenId
                 }
               });
             } else {
@@ -98,7 +99,8 @@ struct appNamePlusPage {
                   routerData: this.routerData.bundleName,
                   backTitle: item.groupName,
                   permission: item.permission,
-                  status: allowedStatus
+                  status: allowedStatus,
+                  tokenId: this.routerData.tokenId
                 }
               });
             }
@@ -176,7 +178,7 @@ struct appNamePlusPage {
    * Lifecycle function, triggered once when this page is displayed
    */
   onPageShow() {
-    console.log(TAG + 'onPageShow')
+    console.log(TAG + 'onPageShow application-secondary')
     this.initialPermissions();
   }
 
@@ -184,7 +186,7 @@ struct appNamePlusPage {
    * Lifecycle function, triggered once when this page disappears
    */
   onPageHide() {
-    console.log(TAG + 'onPageHide')
+    console.log(TAG + 'onPageHide application-secondary')
     setTimeout(()=> {
       this.allowedListItem = [];
       this.bannedListItem = [];

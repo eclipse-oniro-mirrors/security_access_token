@@ -85,16 +85,12 @@
       "value": "授权失败！"
     },
     {
-      "name": "othet_permission_label",
-      "value": "允许不同设备间数据交换权限"
+      "name": "other_permission_label",
+      "value": "多设备协同"
     },
     {
-      "name": "othet_permission_label_description",
-      "value": "允许不同设备间数据交换访问权限"
-    },
-    {
-      "name": "othet_permission",
-      "value": "其他权限"
+      "name": "other_permission_label_description",
+      "value": "多设备协同访问权限"
     }
   ]
 }

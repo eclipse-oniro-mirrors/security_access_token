@@ -32,6 +32,7 @@ export default class Constants {
   static DIALOG_DESP_FONT_SIZE = 14;
   static DIALOG_DESP_MARGIN_TOP = 2;
   static DIALOG_DESP_MARGIN_LEFT = 24;
+  static DIALOG_DESP_MARGIN_RIGHT = 12;
 
   static BUTTON_FONT_SIZE = 16;
   static BUTTON_DIVIDER_FONT_SIZE = 30;
