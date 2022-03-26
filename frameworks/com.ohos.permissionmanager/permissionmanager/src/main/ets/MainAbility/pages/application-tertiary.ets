@@ -89,7 +89,7 @@ struct mediaDocumentPage {
             Column() {
               Row() {
                 if(backTitle == "其他权限"){
-                  backBar({ title: JSON.stringify($r("app.string.othet_permission_label")) })
+                  backBar({ title: JSON.stringify($r("app.string.other_permission_label")) })
                 }else {
                   backBar({ title: JSON.stringify(backTitle) })
                 }
@@ -263,7 +263,7 @@ struct mediaDocumentItem {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
             if (backTitle === "其他权限") {
-              Text($r("app.string.othet_permission_label_description"))
+              Text($r("app.string.other_permission_label_description"))
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
                 .textAlign(TextAlign.Start)
             } else {

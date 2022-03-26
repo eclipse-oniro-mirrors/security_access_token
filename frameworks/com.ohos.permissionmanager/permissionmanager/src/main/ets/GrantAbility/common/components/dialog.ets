@@ -60,8 +60,8 @@ export struct privacyDialog {
         Column() {
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text("是否允许" + this.appName + "访问" +
-                this.grantGroups[this.count].groupName).fontSize(Constants.DIALOG_REQ_FONT_SIZE)
+              Text("是否允许" + this.appName +
+              this.grantGroups[this.count].label).fontSize(Constants.DIALOG_REQ_FONT_SIZE)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({
                   top: Constants.DIALOG_REQ_MARGIN_TOP,
@@ -71,11 +71,12 @@ export struct privacyDialog {
           }
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text("用于" + this.grantGroups[this.count].description).fontSize(Constants.DIALOG_DESP_FONT_SIZE)
+              Text(this.grantGroups[this.count].description).fontSize(Constants.DIALOG_DESP_FONT_SIZE)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({
                   top: Constants.DIALOG_DESP_MARGIN_TOP,
-                  left: Constants.DIALOG_DESP_MARGIN_LEFT
+                  left: Constants.DIALOG_DESP_MARGIN_LEFT,
+                  right: Constants.DIALOG_DESP_MARGIN_RIGHT
                 })
             }
           }

@@ -520,7 +520,7 @@ struct applicationItem {
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
                 .fontColor($r('app.color.text_color'))
                 .flexGrow(Constants.FLEX_GROW)
-              Text(item.permissions.length + '项权限')
+              Text(item.groupId.length + '项权限')
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                 .fontColor($r('app.color.text_secondary_color'))
                 .margin({ right: Constants.APPLICATION_TEXT_MARGIN_RIGHT })

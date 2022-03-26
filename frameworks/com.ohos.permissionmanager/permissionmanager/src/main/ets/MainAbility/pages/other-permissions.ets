@@ -17,10 +17,12 @@ import { backBar } from "../common/components/backBar.ets";
 import router from '@system.router';
 import Constants from '../common/utils/constant.ets';
 import { otherPermissionsLabel } from '../common/model/permissionGroup.ets'
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 
 var TAG = 'PermissionManager_MainAbility:'
 
 let routerData = router.getParams().routerData; // Routing jump data
+let tokenId = router.getParams().tokenId; // tokenId for verify permission
 let backTitle = router.getParams().backTitle; // return title name
 let status = router.getParams().status; // Status: Allowed, Forbidden
 let permissions = router.getParams().permission; // permissions name
@@ -81,6 +83,22 @@ struct appNamePage {
       .backgroundColor($r("sys.color.ohos_id_color_sub_background"))
       .opacity(Constants.MANAGEMENT_TRANSPARENCY)
     }
+  }
+
+/**
+   * Lifecycle function, triggered once when this page is displayed
+   */
+  onPageShow() {
+    console.log(TAG + 'onPageShow other-permissions')
+    let isGranted = true;
+    permissions.forEach(permission => {
+      abilityAccessCtrl.createAtManager().verifyAccessToken(tokenId, permission).then(res => {
+        status = res;
+      })
+        .catch(err => {
+          console.error(TAG + 'verifyAccessToken occure error: ' + JSON.stringify(err))
+        })
+    })
   }
 }
 
