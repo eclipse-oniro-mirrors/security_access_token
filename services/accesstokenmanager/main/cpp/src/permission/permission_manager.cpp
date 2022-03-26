@@ -205,6 +205,8 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     int32_t goalGrantFlags;
     for (auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
+            ACCESSTOKEN_LOG_INFO(LABEL,
+                "find goal permission: %{public}s!", permState.permissionName.c_str());
             foundGoal = true;
             goalGrantStatus = perm.grantStatus[0];
             goalGrantFlags = perm.grantFlags[0];
@@ -214,7 +216,13 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     if (foundGoal == false) {
         ACCESSTOKEN_LOG_WARN(LABEL,
             "can not find permission: %{public}s define!", permState.permissionName.c_str());
-        permState.state = DYNAMIC_OPER;
+        permState.state = INVALID_OPER;
+        return;
+    }
+    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permState.permissionName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL,
+            "no definition for permission: %{public}s!", permState.permissionName.c_str());
+        permState.state = INVALID_OPER;
         return;
     }
 

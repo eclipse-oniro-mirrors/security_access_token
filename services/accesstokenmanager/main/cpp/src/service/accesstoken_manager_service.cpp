@@ -139,14 +139,18 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
 
     bool needRes = false;
     std::vector<PermissionStateFull> permsList;
-    int ret = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, false);
-    if (ret != RET_SUCCESS) {
+    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, false);
+    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, true);
+    if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "GetReqPermissions failed, retUserGrant:%{public}d, retSysGrant:%{public}d",
+            retUserGrant, retSysGrant);
         return INVALID_OPER;
     }
 
-    int32_t size = reqPermList.size();
+    uint32_t size = reqPermList.size();
     ACCESSTOKEN_LOG_INFO(LABEL, "reqPermList size: 0x%{public}x", size);
-    for (int32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         PermissionManager::GetInstance().GetSelfPermissionState(
             permsList, reqPermList[i].permsState);
         if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
