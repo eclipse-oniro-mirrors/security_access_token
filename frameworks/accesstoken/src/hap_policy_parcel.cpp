@@ -36,7 +36,7 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->hapPolicyParameter.domain));
 
     const std::vector<PermissionDef>& permList = this->hapPolicyParameter.permList;
-    int32_t permListSize = (int32_t)permList.size();
+    int32_t permListSize = static_cast<int32_t>(permList.size());
     RETURN_IF_FALSE(out.WriteInt32(permListSize));
 
     for (int i = 0; i < permListSize; i++) {

@@ -512,8 +512,8 @@ static void SaveTokenIdToCfg(const NativeTokenList *curr)
 static uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
                                  int32_t dcapNum, const char *aplStr, int32_t *aplRet)
 {
-    if ((processname == NULL) || strlen(processname) > MAX_PROCESS_NAME_LEN
-        || strlen(processname) == 0) {
+    if ((processname == NULL) || strlen(processname) > MAX_PROCESS_NAME_LEN ||
+        strlen(processname) == 0) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processname is invalid.", __func__);
         return ATRET_FAILED;
     }

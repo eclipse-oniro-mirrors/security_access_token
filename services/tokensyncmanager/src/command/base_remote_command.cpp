@@ -182,25 +182,25 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
         nlohmann::json permissionsJson = hapTokenJson.at("permState").get<nlohmann::json>();
         for (auto permissionJson : permissionsJson) {
             PermissionStateFull permission;
-            if (permissionJson.find("permissionName") == permissionJson.end()
-                || !permissionJson.at("permissionName").is_string()
-                || permissionJson.find("isGeneral") == permissionJson.end()
-                || !permissionJson.at("isGeneral").is_boolean()
-                || permissionJson.find("grantConfig") == permissionJson.end()
-                || !permissionJson.at("grantConfig").is_array()
-                || permissionJson.at("grantConfig").size() == 0) {
+            if (permissionJson.find("permissionName") == permissionJson.end() ||
+                !permissionJson.at("permissionName").is_string() ||
+                permissionJson.find("isGeneral") == permissionJson.end() ||
+                !permissionJson.at("isGeneral").is_boolean() ||
+                permissionJson.find("grantConfig") == permissionJson.end() ||
+                !permissionJson.at("grantConfig").is_array() ||
+                permissionJson.at("grantConfig").size() == 0) {
                 continue;
             }
             permissionJson.at("permissionName").get_to(permission.permissionName);
             permissionJson.at("isGeneral").get_to(permission.isGeneral);
             nlohmann::json grantConfigsJson = permissionJson.at("grantConfig").get<nlohmann::json>();
             for (auto grantConfigJson :grantConfigsJson) {
-                if (grantConfigJson.find("resDeviceID") == grantConfigJson.end()
-                    || !grantConfigJson.at("resDeviceID").is_string()
-                    || grantConfigJson.find("grantStatus") == grantConfigJson.end()
-                    || !grantConfigJson.at("grantStatus").is_number()
-                    || grantConfigJson.find("grantFlags") == grantConfigJson.end()
-                    || !grantConfigJson.at("grantFlags").is_number()) {
+                if (grantConfigJson.find("resDeviceID") == grantConfigJson.end() ||
+                    !grantConfigJson.at("resDeviceID").is_string() ||
+                    grantConfigJson.find("grantStatus") == grantConfigJson.end() ||
+                    !grantConfigJson.at("grantStatus").is_number() ||
+                    grantConfigJson.find("grantFlags") == grantConfigJson.end() ||
+                    !grantConfigJson.at("grantFlags").is_number()) {
                     continue;
                 }
                 std::string deviceID;

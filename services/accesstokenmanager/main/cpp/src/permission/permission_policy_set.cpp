@@ -185,7 +185,7 @@ int PermissionPolicySet::VerifyPermissStatus(const std::string& permissionName)
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto perm : permStateList_) {
         if (perm.permissionName == permissionName) {
-            if (perm.isGeneral == true) {
+            if (perm.isGeneral) {
                 return perm.grantStatus[0];
             } else {
                 return PERMISSION_DENIED;
@@ -212,7 +212,7 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto perm : permStateList_) {
         if (perm.permissionName == permissionName) {
-            if (perm.isGeneral == true) {
+            if (perm.isGeneral) {
                 return perm.grantFlags[0];
             } else {
                 return DEFAULT_PERMISSION_FLAGS;
@@ -227,7 +227,7 @@ void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionNa
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
-            if (perm.isGeneral == true) {
+            if (perm.isGeneral) {
                 perm.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
                 perm.grantFlags[0] = flag;
             } else {

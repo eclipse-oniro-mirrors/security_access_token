@@ -146,7 +146,7 @@ void NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
 
 void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext *)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
 
     // use innerkit class method to verify permission
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
@@ -162,7 +162,7 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext*)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     napi_value result;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
@@ -208,7 +208,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
 
     napi_create_async_work( // define work
         env, nullptr, resource, VerifyAccessTokenExecute, VerifyAccessTokenComplete,
-        (void *)asyncContext, &(asyncContext->work));
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
@@ -257,7 +257,7 @@ void NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 
 void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext *)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     PermissionDef permissionDef;
 
     // struct init, can not use = { 0 } or memset otherwise program crashdump
@@ -289,8 +289,8 @@ void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
             asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
 
         // set status according to the innerkit class method return
-        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_SUCC)
-            || (asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_FAIL)) {
+        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_SUCC) ||
+            (asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_FAIL)) {
             asyncContext->status = ASYN_THREAD_EXEC_SUCC; // success or failure regard as function exec success
         } else {
             asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
@@ -300,7 +300,7 @@ void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext*)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     napi_value result = nullptr;
 
     if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
@@ -370,7 +370,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
 
     napi_create_async_work( // define work
         env, nullptr, resource, GrantUserGrantedPermissionExcute, GrantUserGrantedPermissionComplete,
-        (void *)asyncContext, &(asyncContext->work));
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
 
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
@@ -381,7 +381,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
 
 void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext *)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     PermissionDef permissionDef;
 
     // struct init, can not use = { 0 } or memset otherwise program crashdump
@@ -412,8 +412,8 @@ void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
             asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
 
         // set status according to the innerkit class method return
-        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_SUCC)
-            || (asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_FAIL)) {
+        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_SUCC) ||
+            (asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_FAIL)) {
             asyncContext->status = ASYN_THREAD_EXEC_SUCC; // success or failure regard as function exec success
         } else {
             asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
@@ -423,7 +423,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
 
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext*)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     napi_value result = nullptr;
 
     if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
@@ -493,7 +493,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 
     napi_create_async_work( // define work
         env, nullptr, resource, RevokeUserGrantedPermissionExcute, RevokeUserGrantedPermissionComplete,
-        (void *)asyncContext, &(asyncContext->work));
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
 
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
@@ -504,7 +504,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 
 void NapiAtManager::GetPermissionFlagsExcute(napi_env env, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext *)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
     // use innerkit class method to get permission flag
     asyncContext->flag = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
@@ -514,7 +514,7 @@ void NapiAtManager::GetPermissionFlagsExcute(napi_env env, void *data)
 
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
 {
-    AtManagerAsyncContext* asyncContext = (AtManagerAsyncContext*)data;
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
     napi_value result;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, tokenId = %{public}d, flag = %{public}d.",
@@ -560,7 +560,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 
     napi_create_async_work( // define work
         env, nullptr, resource, GetPermissionFlagsExcute, GetPermissionFlagsComplete,
-        (void *)asyncContext, &(asyncContext->work));
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags end.");

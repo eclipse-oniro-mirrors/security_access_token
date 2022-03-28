@@ -152,7 +152,7 @@ int RemoteCommandExecutor::ProcessBufferedCommands(bool standalone)
     running_ = true;
     while (true) {
         // interrupt
-        if (running_ == false) {
+        if (!running_) {
             ACCESSTOKEN_LOG_INFO(
                 LABEL, "end with running flag == false, targetNodeId: %{public}s", targetNodeId_.c_str());
             return Constant::FAILURE;
@@ -222,7 +222,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
         return;
     }
     bool result = handler->ProxyPostTask(runner, TASK_NAME);
-    if (result == false) {
+    if (!result) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "post task failed, targetNodeId: %{public}s", targetNodeId_.c_str());
     }
     ACCESSTOKEN_LOG_INFO(LABEL,
