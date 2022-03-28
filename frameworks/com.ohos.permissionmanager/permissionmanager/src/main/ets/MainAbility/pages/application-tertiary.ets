@@ -88,11 +88,7 @@ struct mediaDocumentPage {
           Row() {
             Column() {
               Row() {
-                if(backTitle == "其他权限"){
-                  backBar({ title: JSON.stringify($r("app.string.other_permission_label")) })
-                }else {
-                  backBar({ title: JSON.stringify(backTitle) })
-                }
+                backBar({ title: JSON.stringify(backTitle) })
               }
               Row() {
                 Column() {
@@ -262,15 +258,9 @@ struct mediaDocumentItem {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
-            if (backTitle === "其他权限") {
-              Text($r("app.string.other_permission_label_description"))
-                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .textAlign(TextAlign.Start)
-            } else {
-              Text(backTitle + "访问权限")
-                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .textAlign(TextAlign.Start)
-            }
+            Text(backTitle + "访问权限")
+              .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+              .textAlign(TextAlign.Start)
           }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
         }
       }
