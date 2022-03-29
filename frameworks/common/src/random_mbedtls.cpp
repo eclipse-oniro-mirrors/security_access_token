@@ -40,7 +40,7 @@ int RandomMbedtls::GenerateRandomArray(unsigned char *randStr, unsigned int len)
     int ret;
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->randomLock_);
-    if (initFlag_ == false) {
+    if (!initFlag_) {
         mbedtls_ctr_drbg_init(&ctrDrbg_);
         mbedtls_entropy_init(&entropy_);
         ret = mbedtls_ctr_drbg_seed(&ctrDrbg_, mbedtls_entropy_func, &entropy_, NULL, 0);

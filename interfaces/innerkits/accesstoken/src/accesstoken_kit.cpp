@@ -33,9 +33,9 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 {
     AccessTokenIDEx res = {0};
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc)
-        || !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl)
-        || !DataValidator::IsDomainValid(policy.domain)) {
+    if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
+        !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
+        !DataValidator::IsDomainValid(policy.domain)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return res;
     }
@@ -60,8 +60,8 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int AccessTokenKit::UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    if ((tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc))
-        || (!DataValidator::IsAplNumValid(policy.apl))) {
+    if ((tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
+        (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return RET_FAILED;
     }
@@ -95,7 +95,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
     if (tokenID == 0) {
         return TOKEN_INVALID;
     }
-    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&tokenID;
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
     return (ATokenTypeEnum)(idInner->type);
 }
 

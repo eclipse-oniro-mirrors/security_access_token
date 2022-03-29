@@ -120,13 +120,13 @@ void SoftBusManager::Destroy()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, init: %{public}d, isSoftBusServiceBindSuccess: %{public}d", inited_.load(),
         isSoftBusServiceBindSuccess_);
 
-    if (inited_.load() == false) {
+    if (!inited_.load()) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
         return;
     }
 
     std::unique_lock<std::mutex> lock(mutex_);
-    if (inited_.load() == false) {
+    if (!inited_.load()) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
         return;
     }
@@ -160,7 +160,7 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
-    if (result == false) {
+    if (!result) {
         ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{public}s", deviceId.c_str());
         return Constant::FAILURE;
     }
@@ -231,7 +231,7 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(uuid, DeviceIdType::UNIVERSALLY_UNIQUE_ID, info);
-    if (result == false) {
+    if (!result) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s", uuid.c_str());
     } else {
         std::string dimUuid = info.deviceId.universallyUniqueId;
@@ -283,7 +283,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
         ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, return code: %{public}d", ret);
         return "";
     }
-    std::string uuid((char *) info);
+    std::string uuid(reinterpret_cast<char *>(info));
     delete[] info;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s", nodeId.c_str(),
         uuid.c_str());
@@ -305,7 +305,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
         ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
         return "";
     }
-    std::string udid((char *) info);
+    std::string udid(reinterpret_cast<char *>(info));
     delete[] info;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s, udid: %{public}s", nodeId.c_str(),
         udid.c_str());

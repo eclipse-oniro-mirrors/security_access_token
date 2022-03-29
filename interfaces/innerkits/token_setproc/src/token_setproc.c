@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define    ACCESS_TOKEN_ID_IOCTL_BASE    'A'
 
@@ -32,13 +33,13 @@ enum {
 };
 
 #define    ACCESS_TOKENID_GET_TOKENID \
-    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_TOKEN_ID, unsigned long long)
+    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_TOKEN_ID, uint64_t)
 #define    ACCESS_TOKENID_SET_TOKENID \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_TOKEN_ID, unsigned long long)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_TOKEN_ID, uint64_t)
 #define    ACCESS_TOKENID_GET_FTOKENID \
-    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_FTOKEN_ID, unsigned long long)
+    _IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_FTOKEN_ID, uint64_t)
 #define    ACCESS_TOKENID_SET_FTOKENID \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_FTOKEN_ID, unsigned long long)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_FTOKEN_ID, uint64_t)
 
 #define ACCESS_TOKEN_OK 0
 #define ACCESS_TOKEN_ERROR (-1)
@@ -48,7 +49,7 @@ enum {
 
 #define TOKENID_DEVNODE "/dev/access_token_id"
 
-uint64_t GetSelfTokenID()
+uint64_t GetSelfTokenID(void)
 {
     uint64_t token = INVAL_TOKEN_ID;
     int fd = open(TOKENID_DEVNODE, O_RDWR);
@@ -81,7 +82,7 @@ int SetSelfTokenID(uint64_t tokenID)
     return ACCESS_TOKEN_OK;
 }
 
-uint64_t GetFirstCallerTokenID()
+uint64_t GetFirstCallerTokenID(void)
 {
     uint64_t token = INVAL_TOKEN_ID;
     int fd = open(TOKENID_DEVNODE, O_RDWR);

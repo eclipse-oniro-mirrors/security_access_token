@@ -67,8 +67,8 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
 int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPermissionState,
     const unsigned int grantIndex, GenericValues& outGenericValues)
 {
-    if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size()
-        || grantIndex >= inPermissionState.grantFlags.size()) {
+    if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
+        grantIndex >= inPermissionState.grantFlags.size()) {
         ACCESSTOKEN_LOG_WARN(LABEL, "perm status grant size is wrong");
         return RET_FAILED;
     }
