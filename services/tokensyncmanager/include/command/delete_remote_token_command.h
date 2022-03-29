@@ -34,7 +34,7 @@ public:
 
     std::string ToJsonPayload() override;
 
-    DeleteRemoteTokenCommand(const std::string &json);
+    explicit DeleteRemoteTokenCommand(const std::string &json);
     DeleteRemoteTokenCommand(const std::string &srcDeviceId, const std::string &dstDeviceId,
         AccessTokenID deleteID);
     virtual ~DeleteRemoteTokenCommand() = default;

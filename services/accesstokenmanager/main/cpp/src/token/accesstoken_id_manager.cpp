@@ -27,7 +27,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
 {
-    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&id;
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
     return (ATokenTypeEnum)idInner->type;
 }
 
@@ -44,7 +44,7 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 
 int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 {
-    AccessTokenIDInner *idInner = (AccessTokenIDInner *)&id;
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
     if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
         return RET_FAILED;
     }
@@ -53,7 +53,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
         AccessTokenID tokenId = *it;
-        AccessTokenIDInner *idInnerExist = (AccessTokenIDInner *)&tokenId;
+        AccessTokenIDInner *idInnerExist = reinterpret_cast<AccessTokenIDInner *>(&tokenId);
         if (idInnerExist->tokenUniqueID == idInner->tokenUniqueID) {
             return RET_FAILED;
         }

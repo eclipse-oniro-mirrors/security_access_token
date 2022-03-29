@@ -37,7 +37,7 @@ namespace AccessToken {
 class AccessTokenManagerProxy : public IRemoteProxy<IAccessTokenManager> {
 public:
     explicit AccessTokenManagerProxy(const sptr<IRemoteObject>& impl);
-    virtual ~AccessTokenManagerProxy() override;
+    ~AccessTokenManagerProxy() override;
 
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
     int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName) override;

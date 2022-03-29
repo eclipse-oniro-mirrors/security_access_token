@@ -39,7 +39,7 @@ public:
 
     std::string ToJsonPayload() override;
 
-    SyncRemoteHapTokenCommand(const std::string &json);
+    explicit SyncRemoteHapTokenCommand(const std::string &json);
     SyncRemoteHapTokenCommand(const std::string &srcDeviceId,
         const std::string &dstDeviceId, AccessTokenID id);
     virtual ~SyncRemoteHapTokenCommand() = default;
