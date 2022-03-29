@@ -136,7 +136,7 @@ struct appNameItem {
               uri: 'pages/application-tertiary',
               params: {
                 routerData: routerData,
-                backTitle: backTitle,
+                backTitle: item.permissionLabel,
                 permission: [item.permission],
                 status: status
               }
