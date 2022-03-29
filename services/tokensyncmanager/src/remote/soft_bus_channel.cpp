@@ -32,8 +32,8 @@ namespace {
 static const std::string REQUEST_TYPE = "request";
 static const std::string RESPONSE_TYPE = "response";
 static const std::string TASK_NAME_CLOSE_SESSION = "atm_soft_bus_channel_close_session";
-static const long EXECUTE_COMMAND_TIME_OUT = 3000;
-static const long WAIT_SESSION_CLOSE_MILLISECONDS = 5 * 1000;
+static const int32_t EXECUTE_COMMAND_TIME_OUT = 3000;
+static const int32_t WAIT_SESSION_CLOSE_MILLISECONDS = 5 * 1000;
 // send buf size for header
 static const int RPC_TRANSFER_HEAD_BYTES_LENGTH = 1024 * 256;
 // decompress buf size
@@ -101,7 +101,7 @@ void SoftBusChannel::CloseConnection()
         thisPtr->isDelayClosing_ = false;
     });
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "close session after %{public}ld ms", WAIT_SESSION_CLOSE_MILLISECONDS);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "close session after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
     handler->ProxyPostTask(delayed, TASK_NAME_CLOSE_SESSION, WAIT_SESSION_CLOSE_MILLISECONDS);
 
     isDelayClosing_ = true;
@@ -276,7 +276,7 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
         return "";
     }
     buf[len] = '\0';
-    std::string str((char *) buf);
+    std::string str(reinterpret_cast<char *>(buf));
     delete[] buf;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
     return str;

@@ -30,7 +30,7 @@ namespace AccessToken {
 class TokenSyncManagerProxy : public IRemoteProxy<ITokenSyncManager> {
 public:
     explicit TokenSyncManagerProxy(const sptr<IRemoteObject>& impl);
-    virtual ~TokenSyncManagerProxy() override;
+    ~TokenSyncManagerProxy() override;
 
     int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;

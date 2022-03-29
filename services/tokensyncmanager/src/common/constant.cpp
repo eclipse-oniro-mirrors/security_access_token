@@ -18,6 +18,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static const std::string REPLACE_TARGET = "****";
+} // namespace
 const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
 const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
 
@@ -25,9 +28,9 @@ std::string Constant::EncryptDevId(std::string deviceId)
 {
     std::string result = deviceId;
     if (deviceId.size() >= ENCRYPTLEN) {
-        result.replace(ENCRYPTBEGIN, ENCRYPTEND, "****");
+        result.replace(ENCRYPTBEGIN, ENCRYPTEND, REPLACE_TARGET);
     } else {
-        result.replace(ENCRYPTBEGIN, result.size() - 1, "****");
+        result.replace(ENCRYPTBEGIN, result.size() - 1, REPLACE_TARGET);
     }
     return result;
 }
