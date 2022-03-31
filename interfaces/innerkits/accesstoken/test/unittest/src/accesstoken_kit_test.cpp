@@ -2191,7 +2191,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     };
     permsList1.emplace_back(perm5);
     ret = AccessTokenKit::GetSelfPermissionsState(permsList1);
-    ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
+    ASSERT_EQ(INVALID_OPER, permsList1[4].state);
     ASSERT_EQ(DYNAMIC_OPER, ret);
 
     std::vector<PermissionListState> permsList2;
@@ -2200,6 +2200,19 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
     ASSERT_EQ(SETTING_OPER, permsList2[0].state);
     ASSERT_EQ(PASS_OPER, permsList2[1].state);
+    ASSERT_EQ(PASS_OPER, ret);
+
+    permsList2.emplace_back(perm5);
+    ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
+    ASSERT_EQ(SETTING_OPER, permsList2[0].state);
+    ASSERT_EQ(PASS_OPER, permsList2[1].state);
+    ASSERT_EQ(INVALID_OPER, permsList2[2].state);
+    ASSERT_EQ(PASS_OPER, ret);
+
+    std::vector<PermissionListState> permsList3;
+    permsList3.emplace_back(perm5);
+    ret = AccessTokenKit::GetSelfPermissionsState(permsList3);
+    ASSERT_EQ(INVALID_OPER, permsList3[0].state);
     ASSERT_EQ(PASS_OPER, ret);
 }
 
