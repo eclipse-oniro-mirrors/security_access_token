@@ -99,8 +99,7 @@ struct appNamePlusPage {
                   routerData: this.routerData.bundleName,
                   backTitle: item.groupName,
                   permission: item.permission,
-                  status: allowedStatus,
-                  tokenId: this.routerData.tokenId
+                  status: allowedStatus
                 }
               });
             }
@@ -113,7 +112,8 @@ struct appNamePlusPage {
                   routerData: this.routerData.bundleName,
                   backTitle: item.groupName,
                   permission: item.permission,
-                  status: bannedStatus
+                  status: bannedStatus,
+                  tokenId: this.routerData.tokenId
                 }
               });
             } else {
