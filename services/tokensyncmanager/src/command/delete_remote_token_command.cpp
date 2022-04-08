@@ -48,7 +48,7 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if (jsonObject.find("tokenId") != jsonObject.end() && jsonObject.at("tokenId").is_number()) {
-        deleteTokenId_ = (signed)jsonObject.at("tokenId").get<int>();
+        deleteTokenId_ = (AccessTokenID)jsonObject.at("tokenId").get<int>();
     }
 }
 
