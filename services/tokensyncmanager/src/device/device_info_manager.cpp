@@ -141,12 +141,6 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 ">>> DeviceInfoRepository device network id: %{public}s",
                 Constant::EncryptDevId(info.deviceId.networkId).c_str());
-            ACCESSTOKEN_LOG_DEBUG(LABEL,
-                ">>> DeviceInfoRepository device udid: %{public}s",
-                Constant::EncryptDevId(info.deviceId.uniqueDeviceId).c_str());
-            ACCESSTOKEN_LOG_DEBUG(LABEL,
-                ">>> DeviceInfoRepository device uuid: %{public}s",
-                Constant::EncryptDevId(info.deviceId.universallyUniqueId).c_str());
         }
     }
     return result;
