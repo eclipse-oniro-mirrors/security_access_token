@@ -240,11 +240,11 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d, permissionName=%{public}s", tokenID, permissionName.c_str());
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName);

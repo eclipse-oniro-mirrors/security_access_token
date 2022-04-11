@@ -577,22 +577,22 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
     ASSERT_NE(0, tokenID);
 
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_GAMMA);
-    ASSERT_EQ(DEFAULT_PERMISSION_FLAGS, ret);
+    ASSERT_EQ(PERMISSION_DEFAULT_FLAG, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "");
-    ASSERT_EQ(DEFAULT_PERMISSION_FLAGS, ret);
+    ASSERT_EQ(PERMISSION_DEFAULT_FLAG, ret);
 
     std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
     ret = AccessTokenKit::GetPermissionFlag(tokenID, invalidPerm);
-    ASSERT_EQ(DEFAULT_PERMISSION_FLAGS, ret);
+    ASSERT_EQ(PERMISSION_DEFAULT_FLAG, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(TEST_TOKENID_INVALID, TEST_PERMISSION_NAME_ALPHA);
-    ASSERT_EQ(DEFAULT_PERMISSION_FLAGS, ret);
+    ASSERT_EQ(PERMISSION_DEFAULT_FLAG, ret);
 
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA);
-    ASSERT_EQ(DEFAULT_PERMISSION_FLAGS, ret);
+    ASSERT_EQ(PERMISSION_DEFAULT_FLAG, ret);
 }
 
 /**

@@ -223,11 +223,11 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
 
     MessageParcel reply;
@@ -235,13 +235,13 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_FLAG), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
 
     int32_t result = reply.ReadInt32();

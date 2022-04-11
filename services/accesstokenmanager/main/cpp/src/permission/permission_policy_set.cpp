@@ -215,11 +215,11 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
             if (perm.isGeneral) {
                 return perm.grantFlags[0];
             } else {
-                return DEFAULT_PERMISSION_FLAGS;
+                return PERMISSION_DEFAULT_FLAG;
             }
         }
     }
-    return DEFAULT_PERMISSION_FLAGS;
+    return PERMISSION_DEFAULT_FLAG;
 }
 
 void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, int flag)
