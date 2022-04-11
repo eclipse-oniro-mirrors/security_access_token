@@ -54,11 +54,11 @@ void RemoteCommandManager::Init()
 int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command)
 {
     if (udid.empty() || command == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s, or null command", udid.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid, or null command");
         return Constant::FAILURE;
     }
     std::string uniqueId = command->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "udid: %{public}s, add uniqueId: %{public}s", udid.c_str(), uniqueId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "add uniqueId");
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
@@ -67,13 +67,13 @@ int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_
     }
 
     int result = executor->AddCommand(command);
-    ACCESSTOKEN_LOG_INFO(LABEL, "udid: %{public}s, add command result: %{public}d ", udid.c_str(), result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "add command result: %{public}d ", result);
     return result;
 }
 
 void RemoteCommandManager::RemoveCommand(const std::string &udid)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "remove command, udid: %{public}s", udid.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "remove command");
     executors_.erase(udid);
 }
 
@@ -269,10 +269,9 @@ std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId:%{public}s", nodeId.c_str());
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid, nodeId:%{public}s, udid: %{public}s", nodeId.c_str(), udid.c_str());
     if (!DataValidator::IsDeviceIdValid(udid)) {
         ACCESSTOKEN_LOG_WARN(
-            LABEL, "converted udid is invalid, nodeId:%{public}s, udid: %{public}s", nodeId.c_str(), udid.c_str());
+            LABEL, "converted udid is invalid, nodeId:%{public}s", nodeId.c_str());
         return nullptr;
     }
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>>::iterator iter = executors_.find(udid);
