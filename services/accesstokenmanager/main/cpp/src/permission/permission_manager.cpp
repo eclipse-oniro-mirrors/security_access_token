@@ -227,7 +227,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     }
 
     if (goalGrantStatus == PERMISSION_DENIED) {
-        if ((goalGrantFlags == DEFAULT_PERMISSION_FLAGS) ||
+        if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
             (goalGrantFlags == PERMISSION_USER_SET)) {
             permState.state = DYNAMIC_OPER;
             return;
@@ -248,18 +248,18 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         __func__, tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     return permPolicySet->QueryPermissionFlag(permissionName);
 }
@@ -357,7 +357,7 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         bool isGranted = false;
         GetDefPermission(perm.permissionName, permDef);
         isGranted = (permDef.grantMode == SYSTEM_GRANT) ? true : false;
-        permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, DEFAULT_PERMISSION_FLAGS);
+        permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, PERMISSION_DEFAULT_FLAG);
     }
 }
 

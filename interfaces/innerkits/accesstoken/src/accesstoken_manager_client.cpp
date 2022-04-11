@@ -121,7 +121,7 @@ int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return DEFAULT_PERMISSION_FLAGS;
+        return PERMISSION_DEFAULT_FLAG;
     }
     return proxy->GetPermissionFlag(tokenID, permissionName);
 }

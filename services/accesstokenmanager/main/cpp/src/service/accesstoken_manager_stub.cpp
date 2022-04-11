@@ -152,7 +152,7 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(DEFAULT_PERMISSION_FLAGS);
+        reply.WriteInt32(PERMISSION_DEFAULT_FLAG);
         return;
     }
     int result = this->GetPermissionFlag(tokenID, permissionName);
