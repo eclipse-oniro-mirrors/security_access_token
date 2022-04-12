@@ -294,7 +294,8 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
 
 void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsAuthorizedCalling()) {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((!IsAuthorizedCalling()) && (this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
