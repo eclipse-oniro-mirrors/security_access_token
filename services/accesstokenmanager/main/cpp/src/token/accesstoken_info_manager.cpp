@@ -76,15 +76,20 @@ void AccessTokenInfoManager::InitHapTokenInfos()
 
     for (GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
+        int32_t dlpFlag = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(tokenId);
+        if (dlpFlag != DLP_COMMON) {
+            ACCESSTOKEN_LOG_WARN(LABEL, "tokenId %{public}u is not a common hap.", tokenId);
+            continue;
+        }
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x add id failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add id failed.", tokenId);
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
         if (hap == nullptr) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x alloc failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
             continue;
         }
         ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permDefRes, permStateRes);
@@ -358,12 +363,13 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
 {
     if (!DataValidator::IsUserIdValid(info.userID) || !DataValidator::IsBundleNameValid(info.bundleName)
-        || !DataValidator::IsAppIDDescValid(info.appIDDesc) || !DataValidator::IsDomainValid(policy.domain)) {
+        || !DataValidator::IsAppIDDescValid(info.appIDDesc) || !DataValidator::IsDomainValid(policy.domain) ||
+        (!DataValidator::IsDlpTypeValid(info.dlpType))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param failed");
         return RET_FAILED;
     }
 
-    AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP);
+    AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, info.dlpType);
     if (tokenId == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
         return RET_FAILED;
@@ -378,7 +384,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         return RET_FAILED;
     }
@@ -615,6 +621,7 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
         || !DataValidator::IsTokenIDValid(hapSync.baseInfo.tokenID)
         || !DataValidator::IsAppIDDescValid(hapSync.baseInfo.appID)
         || !DataValidator::IsDeviceIdValid(hapSync.baseInfo.deviceID)
+        || !DataValidator::IsDlpTypeValid(hapSync.baseInfo.dlpType)
         || hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION
         || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());

@@ -46,6 +46,7 @@ public:
     static bool IsPermissionFlagValid(int flag);
     static bool IsDcapValid(const std::string& dcap);
     static bool IsTokenIDValid(AccessTokenID id);
+    static bool IsDlpTypeValid(int dlpType);
 
 private:
     const static int MAX_LENGTH = 256;

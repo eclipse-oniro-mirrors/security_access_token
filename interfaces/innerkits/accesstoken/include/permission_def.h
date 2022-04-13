@@ -28,6 +28,7 @@ public:
     std::string permissionName;
     std::string bundleName;
     int grantMode;
+    int isDlpAvailable;
     TypeATokenAplEnum availableLevel;
     bool provisionEnable;
     bool distributedSceneEnable;

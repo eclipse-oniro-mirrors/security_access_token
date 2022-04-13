@@ -252,6 +252,7 @@ void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string&
     info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
     info.append(R"(      "bundleName": ")" + def.bundleName + R"(")" + ",\n");
     info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
+    info.append(R"(      "dlpAvailable": )" + std::to_string(def.isDlpAvailable) + ",\n");
     info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
     info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
     info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");

@@ -35,6 +35,7 @@ HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
     tokenInfoBasic_.tokenAttr = 0;
     tokenInfoBasic_.userID = 0;
     tokenInfoBasic_.instIndex = 0;
+    tokenInfoBasic_.dlpType = 0;
     tokenInfoBasic_.apl = APL_NORMAL;
 }
 
@@ -47,6 +48,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.tokenAttr = 0;
     tokenInfoBasic_.bundleName = info.bundleName;
     tokenInfoBasic_.instIndex = info.instIndex;
+    tokenInfoBasic_.dlpType = info.dlpType;
     tokenInfoBasic_.appID = info.appIDDesc;
     tokenInfoBasic_.deviceID = "0";
     tokenInfoBasic_.apl = policy.apl;
@@ -92,6 +94,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
     outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
     outGenericValues.Put(FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
+    outGenericValues.Put(FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
     outGenericValues.Put(FIELD_APP_ID, tokenInfoBasic_.appID);
     outGenericValues.Put(FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
     outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
@@ -110,6 +113,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
 
     tokenInfoBasic_.instIndex = inGenericValues.GetInt(FIELD_INST_INDEX);
+    tokenInfoBasic_.dlpType = inGenericValues.GetInt(FIELD_DLP_TYPE);
     tokenInfoBasic_.appID = inGenericValues.GetString(FIELD_APP_ID);
     if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
@@ -189,6 +193,11 @@ int HapTokenInfoInner::GetUserID() const
     return tokenInfoBasic_.userID;
 }
 
+int HapTokenInfoInner::GetDlpType() const
+{
+    return tokenInfoBasic_.dlpType;
+}
+
 std::string HapTokenInfoInner::GetBundleName() const
 {
     return tokenInfoBasic_.bundleName;
@@ -239,6 +248,7 @@ void HapTokenInfoInner::ToString(std::string& info) const
     info.append(R"(  "userId": )" + std::to_string(tokenInfoBasic_.userID) + ",\n");
     info.append(R"(  "bundleName": ")" + tokenInfoBasic_.bundleName + R"(")" + ",\n");
     info.append(R"(  "instIndex": )" + std::to_string(tokenInfoBasic_.instIndex) + ",\n");
+    info.append(R"(  "dlpType": )" + std::to_string(tokenInfoBasic_.dlpType) + ",\n");
     info.append(R"(  "appID": ")" + tokenInfoBasic_.appID + R"(")" + ",\n");
     info.append(R"(  "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")" + ",\n");
     info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");

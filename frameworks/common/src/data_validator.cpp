@@ -86,6 +86,11 @@ bool DataValidator::IsTokenIDValid(AccessTokenID id)
 {
     return id != 0;
 }
+
+bool DataValidator::IsDlpTypeValid(int dlpType)
+{
+    return ((dlpType == DLP_COMMON) || (dlpType == DPL_READ) || (dlpType == DLP_FULL_CONTROL));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -262,6 +262,7 @@ void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
 
     // struct init, can not use = { 0 } or memset otherwise program crashdump
     permissionDef.grantMode = 0;
+    permissionDef.isDlpAvailable = 0;
     permissionDef.availableLevel = APL_NORMAL;
     permissionDef.provisionEnable = false;
     permissionDef.distributedSceneEnable = false;
@@ -386,6 +387,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
 
     // struct init, can not use = { 0 } or memset otherwise program crashdump
     permissionDef.grantMode = 0;
+    permissionDef.isDlpAvailable = 0;
     permissionDef.availableLevel = APL_NORMAL;
     permissionDef.provisionEnable = false;
     permissionDef.distributedSceneEnable = false;

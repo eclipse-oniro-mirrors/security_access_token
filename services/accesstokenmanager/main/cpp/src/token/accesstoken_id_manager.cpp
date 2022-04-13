@@ -31,6 +31,12 @@ ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
     return (ATokenTypeEnum)idInner->type;
 }
 
+int AccessTokenIDManager::GetTokenIdDlpFlag(AccessTokenID id)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    return idInner->dlpFlag;
+}
+
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
 {
     {
@@ -62,7 +68,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     return RET_SUCCESS;
 }
 
-AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type) const
+AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpType) const
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
@@ -74,19 +80,20 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type) const
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
     innerId.res = 0;
+    innerId.dlpFlag = (dlpType == 0) ? 0 : 1;
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
     AccessTokenID tokenId = *(AccessTokenID *)&innerId;
     return tokenId;
 }
 
-AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type)
+AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type, int dlpType)
 {
     AccessTokenID tokenId = 0;
     // random maybe repeat, retry twice.
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
-        tokenId = CreateTokenId(type);
+        tokenId = CreateTokenId(type, dlpType);
         if (tokenId == 0) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "create tokenId failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "create tokenId failed");
             return 0;
         }
 
@@ -96,7 +103,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
             ACCESSTOKEN_LOG_INFO(LABEL, "reigster tokenId failed, maybe repeat, retry");
         } else {
-            ACCESSTOKEN_LOG_WARN(LABEL, "reigster tokenId finally failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "reigster tokenId finally failed");
             tokenId = 0;
         }
     }

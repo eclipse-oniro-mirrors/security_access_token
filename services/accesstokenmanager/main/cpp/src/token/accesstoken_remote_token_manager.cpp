@@ -53,6 +53,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
             LABEL, "token %{public}x type is invalid.", remoteID);
         return 0;
     }
+    int dlpType = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(remoteID);
 
     AccessTokenID mapID = 0;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
@@ -74,7 +75,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         mapPtr = &remoteDeviceMap_[deviceID].MappingTokenIDPairMap_;
     }
 
-    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType);
+    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpType);
     if (mapID == 0) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "device %{public}s token %{public}x map local Token failed.",

@@ -367,6 +367,7 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
     infos.append(R"({"permissionName": ")" + inPermissionDef.permissionName + R"(")");
     infos.append(R"(, "bundleName": ")" + inPermissionDef.bundleName + R"(")");
     infos.append(R"(, "grantMode": )" + std::to_string(inPermissionDef.grantMode));
+    infos.append(R"(, "dlpAvailable": )" + std::to_string(inPermissionDef.isDlpAvailable));
     infos.append(R"(, "availableLevel": )" + std::to_string(inPermissionDef.availableLevel));
     infos.append(R"(, "provisionEnable": )" + std::to_string(inPermissionDef.provisionEnable));
     infos.append(R"(, "distributedSceneEnable": )" + std::to_string(inPermissionDef.distributedSceneEnable));
