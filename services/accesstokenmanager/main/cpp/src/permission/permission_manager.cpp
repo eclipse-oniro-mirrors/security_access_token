@@ -15,6 +15,7 @@
 
 #include "permission_manager.h"
 #include "access_token.h"
+#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
 #include "permission_definition_cache.h"
@@ -89,14 +90,9 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
     PermissionDefinitionCache::GetInstance().DeleteByBundleName(bundleName);
 }
 
-int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
+int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
-        tokenID, permissionName.c_str());
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return PERMISSION_DENIED;
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "called");
     std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfoPtr == nullptr) {
@@ -117,6 +113,50 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     }
 
     return permPolicySet->VerifyPermissStatus(permissionName);
+}
+
+int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
+{
+    std::shared_ptr<NativeTokenInfoInner> tokenInfoPtr =
+        AccessTokenInfoManager::GetInstance().GetNativeTokenInfoInner(tokenID);
+    if (tokenInfoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
+        return PERMISSION_DENIED;
+    }
+
+    if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
+        return PERMISSION_DENIED;
+    }
+    std::shared_ptr<PermissionPolicySet> permPolicySet =
+        AccessTokenInfoManager::GetInstance().GetNativePermissionPolicySet(tokenID);
+    if (permPolicySet == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return PERMISSION_DENIED;
+    }
+
+    return permPolicySet->VerifyPermissStatus(permissionName);
+}
+
+int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
+        tokenID, permissionName.c_str());
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return PERMISSION_DENIED;
+    }
+
+    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID);
+    if (tokenType == TOKEN_NATIVE) {
+        return VerifyNativeAccessToken(tokenID, permissionName);
+    }
+    if (tokenType == TOKEN_HAP) {
+        return VerifyHapAccessToken(tokenID, permissionName);
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenType!");
+    return PERMISSION_DENIED;
 }
 
 int PermissionManager::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)

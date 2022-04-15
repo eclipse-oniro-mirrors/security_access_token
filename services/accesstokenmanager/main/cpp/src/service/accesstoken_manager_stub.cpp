@@ -344,7 +344,7 @@ void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, Mes
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    std::vector<NativeTokenInfoParcel> nativeTokenInfosRes;
+    std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
     int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
     reply.WriteUint32(nativeTokenInfosRes.size());
     for (auto native : nativeTokenInfosRes) {
@@ -380,7 +380,7 @@ void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, 
     }
     std::string deviceID = data.ReadString();
 
-    std::vector<NativeTokenInfoParcel> nativeTokenInfoParcel;
+    std::vector<NativeTokenInfoForSyncParcel> nativeParcelList;
     uint32_t size = data.ReadUint32();
     if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size %{public}u is invalid", size);
@@ -388,16 +388,16 @@ void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, 
         return;
     }
     for (uint32_t i = 0; i < size; i++) {
-        sptr<NativeTokenInfoParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoParcel>();
+        sptr<NativeTokenInfoForSyncParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoForSyncParcel>();
         if (nativeParcel == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "nativeParcel read faild");
             reply.WriteInt32(RET_FAILED);
             return;
         }
-        nativeTokenInfoParcel.emplace_back(*nativeParcel);
+        nativeParcelList.emplace_back(*nativeParcel);
     }
 
-    int result = this->SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoParcel);
+    int result = this->SetRemoteNativeTokenInfo(deviceID, nativeParcelList);
     reply.WriteInt32(result);
 }
 

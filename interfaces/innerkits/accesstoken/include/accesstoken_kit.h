@@ -59,10 +59,10 @@ public:
 
 #ifdef TOKEN_SYNC_ENABLE
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
-    static int GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes);
+    static int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     static int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
     static int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfo>& nativeTokenInfoList);
+        std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     static int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     static AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);

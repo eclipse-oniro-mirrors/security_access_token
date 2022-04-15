@@ -47,7 +47,7 @@ private:
      * The command name. Should be equal to class name.
      */
     const std::string COMMAND_NAME = "SyncRemoteNativeTokenCommand";
-    std::vector<NativeTokenInfo> nativeTokenInfo_;
+    std::vector<NativeTokenInfoForSync> nativeTokenInfo_;
 };
 }  // namespace AccessToken
 }  // namespace Security

@@ -47,7 +47,7 @@ SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(const std::string &js
     if (jsonObject.find("NativeTokenInfos") != jsonObject.end() && jsonObject.at("NativeTokenInfos").is_array()) {
         nlohmann::json nativeTokenListJson = jsonObject.at("NativeTokenInfos");
         for (auto& tokenJson : nativeTokenListJson) {
-            NativeTokenInfo token;
+            NativeTokenInfoForSync token;
             BaseRemoteCommand::FromNativeTokenInfoJson(tokenJson, token);
             nativeTokenInfo_.emplace_back(token);
         }

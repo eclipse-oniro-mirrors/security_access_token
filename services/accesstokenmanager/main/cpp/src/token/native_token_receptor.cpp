@@ -32,6 +32,29 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
 }
 
+int32_t NativeReqPermsGet(
+    const nlohmann::json& j, std::vector<PermissionStateFull> &permStateList)
+{
+    std::vector<std::string> permReqList;
+    if (j.find(JSON_PERMS) == j.end()) {
+        return RET_FAILED;
+    }
+    permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
+    if (permReqList.size() > MAX_REQ_PERM_NUM) {
+        return RET_FAILED;
+    }
+    for (auto permReq : permReqList) {
+        PermissionStateFull permState;
+        permState.permissionName = permReq;
+        permState.isGeneral = 1;
+        permState.resDeviceID.push_back("");
+        permState.grantStatus.push_back(PERMISSION_GRANTED);
+        permState.grantFlags.push_back(PERMISSION_SYSTEM_FIXED);
+        permStateList.push_back(permState);
+    }
+    return RET_SUCCESS;
+}
+
 // nlohmann json need the function named from_json to parse NativeTokenInfo
 void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p)
 {
@@ -89,7 +112,13 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     } else {
         return;
     }
-    p = std::make_shared<NativeTokenInfoInner>(native);
+
+    std::vector<PermissionStateFull> permStateList;
+    if (NativeReqPermsGet(j, permStateList) != RET_SUCCESS) {
+        return;
+    }
+
+    p = std::make_shared<NativeTokenInfoInner>(native, permStateList);
 }
 
 int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawData,

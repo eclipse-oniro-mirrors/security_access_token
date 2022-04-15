@@ -314,7 +314,7 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfoFromRemote(tokenID, hapSync);
 }
 
-int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes)
+int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
 
@@ -330,7 +330,7 @@ int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
 }
 
 int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfo>& nativeTokenInfoList)
+    std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__, deviceID.c_str());
     return AccessTokenManagerClient::GetInstance()

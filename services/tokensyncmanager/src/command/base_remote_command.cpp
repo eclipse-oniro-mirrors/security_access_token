@@ -78,16 +78,24 @@ nlohmann::json BaseRemoteCommand::ToRemoteProtocolJson()
     return j;
 }
 
-nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfo& tokenInfo)
+nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoForSync& tokenInfo)
 {
-    nlohmann::json DcapsJson = nlohmann::json(tokenInfo.dcap);
+    nlohmann::json permStatesJson;
+    for (auto& permState : tokenInfo.permStateList) {
+        nlohmann::json permStateJson;
+        ToPermStateJson(permStateJson, permState);
+        permStatesJson.emplace_back(permStateJson);
+    }
+
+    nlohmann::json DcapsJson = nlohmann::json(tokenInfo.baseInfo.dcap);
     nlohmann::json nativeTokenJson = nlohmann::json {
-        {"processName", tokenInfo.processName},
-        {"apl", tokenInfo.apl},
-        {"version", tokenInfo.ver},
-        {"tokenId", tokenInfo.tokenID},
-        {"tokenAttr", tokenInfo.tokenAttr},
+        {"processName", tokenInfo.baseInfo.processName},
+        {"apl", tokenInfo.baseInfo.apl},
+        {"version", tokenInfo.baseInfo.ver},
+        {"tokenId", tokenInfo.baseInfo.tokenID},
+        {"tokenAttr", tokenInfo.baseInfo.tokenAttr},
         {"dcaps", DcapsJson},
+        {"permState", permStatesJson},
     };
     return nativeTokenJson;
 }
@@ -230,30 +238,32 @@ void BaseRemoteCommand::FromHapTokenInfoJson(const nlohmann::json& hapTokenJson,
 }
 
 void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson,
-    NativeTokenInfo& nativeTokenInfo)
+    NativeTokenInfoForSync& nativeTokenInfo)
 {
     if (nativeTokenJson.find("processName") != nativeTokenJson.end() && nativeTokenJson.at("processName").is_string()) {
-        nativeTokenInfo.processName = nativeTokenJson.at("processName").get<std::string>();
+        nativeTokenInfo.baseInfo.processName = nativeTokenJson.at("processName").get<std::string>();
     }
     if (nativeTokenJson.find("apl") != nativeTokenJson.end() && nativeTokenJson.at("apl").is_number()) {
         int apl = nativeTokenJson.at("apl").get<int>();
         if (DataValidator::IsAplNumValid(apl)) {
-            nativeTokenInfo.apl = (ATokenAplEnum)apl;
+            nativeTokenInfo.baseInfo.apl = (ATokenAplEnum)apl;
         }
     }
     if (nativeTokenJson.find("version") != nativeTokenJson.end() && nativeTokenJson.at("version").is_number()) {
-        nativeTokenInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
+        nativeTokenInfo.baseInfo.ver = (unsigned)nativeTokenJson.at("version").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenId") != nativeTokenJson.end() && nativeTokenJson.at("tokenId").is_number()) {
-        nativeTokenInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
+        nativeTokenInfo.baseInfo.tokenID = (unsigned)nativeTokenJson.at("tokenId").get<int32_t>();
     }
     if (nativeTokenJson.find("tokenAttr") != nativeTokenJson.end() && nativeTokenJson.at("tokenAttr").is_number()) {
-        nativeTokenInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
+        nativeTokenInfo.baseInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
     }
     if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
         && nativeTokenJson.at("dcaps").size() > 0 && (nativeTokenJson.at("dcaps"))[0].is_string()) {
-        nativeTokenInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
+        nativeTokenInfo.baseInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
     }
+
+    FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);
 }
 }  // namespace AccessToken
 }  // namespace Security

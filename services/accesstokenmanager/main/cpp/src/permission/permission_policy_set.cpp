@@ -19,6 +19,7 @@
 #include "data_storage.h"
 #include "data_translator.h"
 #include "field_const.h"
+#include "permission_definition_cache.h"
 #include "permission_validator.h"
 
 namespace OHOS {
@@ -324,6 +325,38 @@ void PermissionPolicySet::ToString(std::string& info)
     }
     info.append("\n  ]\n");
 }
+
+void PermissionPolicySet::PermStateToString(std::string& info)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+
+    std::vector<std::string> invaildPermList = {};
+    info.append(R"(  "permStateList": [)");
+    info.append("\n");
+    for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
+        if (!PermissionDefinitionCache::GetInstance().HasDefinition(iter->permissionName)) {
+            invaildPermList.emplace_back(iter->permissionName);
+            continue;
+        }
+        PermStateFullToString(*iter, info);
+        if (iter != (permStateList_.end() - 1)) {
+            info.append(",\n");
+        }
+    }
+    info.append("\n  ]\n");
+
+    if (invaildPermList.size() == 0) {
+        return;
+    }
+
+    info.append(R"(  "invaildPermList": [)");
+    info.append("\n");
+    for (auto iter = invaildPermList.begin(); iter != invaildPermList.end(); iter++) {
+        info.append(R"(      "permissionName": ")" + *iter + R"(")" + ",\n");
+    }
+    info.append("\n  ]\n");
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

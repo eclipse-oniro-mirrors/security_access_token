@@ -25,7 +25,16 @@
 extern "C" {
 #endif
 
-extern uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr);
+typedef struct NativeProcInfo {
+    int dcapsNum;
+    int permNum;
+    const char **dcaps;
+    const char **perm;
+    const char *processname;
+    const char *aplStr;
+} NativeInfo;
+
+extern uint64_t GetAccessTokenId(NativeInfo *nativeProcInfo);
 
 #ifdef __cplusplus
 }

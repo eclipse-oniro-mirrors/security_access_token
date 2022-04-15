@@ -26,6 +26,7 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "i_accesstoken_manager.h"
 #include "iremote_proxy.h"
+#include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
 #include "permission_list_state_parcel.h"
@@ -63,10 +64,10 @@ public:
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
-    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes) override;
+    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoRes) override;
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel) override;
+        std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel) override;
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;

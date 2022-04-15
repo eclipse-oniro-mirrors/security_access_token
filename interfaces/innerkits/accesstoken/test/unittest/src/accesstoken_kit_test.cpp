@@ -2131,7 +2131,15 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 {
-    uint64_t tokenId01 = GetAccessTokenId("GetTokenTypeFlag002", nullptr, 0, "system_core");
+    NativeInfo infoInstance = {
+        .dcapsNum = 0,
+        .permNum = 0,
+        .dcaps = nullptr,
+        .perm = nullptr,
+        .processname = "GetTokenTypeFlag002",
+        .aplStr = "system_core",
+    };
+    uint64_t tokenId01 = GetAccessTokenId(&infoInstance);
 
     AccessTokenID tokenID = tokenId01 & 0xffffffff;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
@@ -3208,7 +3216,7 @@ HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001 start.");
 
-    std::vector<NativeTokenInfo> nativeTokenInfosRes;
+    std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
     int ret = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
@@ -3224,16 +3232,16 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteNativeTokenInfo001 start.");
     std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
 
-    NativeTokenInfo native1 = {
-        .apl = APL_NORMAL,
-        .ver = 1,
-        .processName = "native_test1",
-        .dcap = {"SYSDCAP", "DMSDCAP"},
-        .tokenID = 0x28000000,
-        .tokenAttr = 0
+    NativeTokenInfoForSync native1 = {
+        .baseInfo.apl = APL_NORMAL,
+        .baseInfo.ver = 1,
+        .baseInfo.processName = "native_test1",
+        .baseInfo.dcap = {"SYSDCAP", "DMSDCAP"},
+        .baseInfo.tokenID = 0x28000000,
+        .baseInfo.tokenAttr = 0
     };
 
-    std::vector<NativeTokenInfo> nativeTokenInfoList;
+    std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
     nativeTokenInfoList.emplace_back(native1);
 
     int ret = AccessTokenKit::SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
@@ -3246,13 +3254,13 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ret = AccessTokenKit::GetNativeTokenInfo(mapID, resultInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    ASSERT_EQ(resultInfo.apl, native1.apl);
-    ASSERT_EQ(resultInfo.ver, native1.ver);
-    ASSERT_EQ(resultInfo.processName, native1.processName);
+    ASSERT_EQ(resultInfo.apl, native1.baseInfo.apl);
+    ASSERT_EQ(resultInfo.ver, native1.baseInfo.ver);
+    ASSERT_EQ(resultInfo.processName, native1.baseInfo.processName);
     ASSERT_EQ(resultInfo.dcap.size(), 2);
     ASSERT_EQ(resultInfo.dcap[0], "SYSDCAP");
     ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
     ASSERT_EQ(resultInfo.tokenID, mapID);
-    ASSERT_EQ(resultInfo.tokenAttr, native1.tokenAttr);
+    ASSERT_EQ(resultInfo.tokenAttr, native1.baseInfo.tokenAttr);
 }
 #endif

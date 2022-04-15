@@ -41,6 +41,7 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& InfoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& InfoParcel);
+    std::shared_ptr<PermissionPolicySet> GetNativePermissionPolicySet(AccessTokenID id);
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
@@ -58,10 +59,10 @@ public:
     int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSync& hapSync);
-    void GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes);
+    void GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync);
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfo>& nativeTokenInfoList);
+        std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);

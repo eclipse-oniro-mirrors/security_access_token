@@ -19,10 +19,13 @@
 #include <memory>
 #include <string>
 
+#include "native_token_info_inner.h"
+
 #include "access_token.h"
 #include "nlohmann/json.hpp"
-#include "native_token_info_inner.h"
 #include "nocopyable.h"
+#include "permission_policy_set.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
@@ -45,7 +48,6 @@ private:
     int32_t ParserNativeRawData(const std::string& nativeRawData,
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     void from_json(const nlohmann::json& j, NativeTokenInfo& p);
-
     bool ready_;
 };
 } // namespace AccessToken

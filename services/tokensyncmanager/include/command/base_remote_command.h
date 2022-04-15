@@ -57,8 +57,8 @@ public:
 
     nlohmann::json ToHapTokenInfosJson(const HapTokenInfoForSync &tokenInfo);
     void FromHapTokenInfoJson(const nlohmann::json& hapTokenJson, HapTokenInfoForSync& hapTokenInfo);
-    nlohmann::json ToNativeTokenInfoJson(const NativeTokenInfo& tokenInfo);
-    void FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson, NativeTokenInfo& nativeTokenInfo);
+    nlohmann::json ToNativeTokenInfoJson(const NativeTokenInfoForSync& tokenInfo);
+    void FromNativeTokenInfoJson(const nlohmann::json& nativeTokenJson, NativeTokenInfoForSync& nativeTokenInfo);
     RemoteProtocol remoteProtocol_;
 };
 }  // namespace AccessToken
