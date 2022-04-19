@@ -34,7 +34,6 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissi
     outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionDef.permissionName);
     outGenericValues.Put(FIELD_BUNDLE_NAME, inPermissionDef.bundleName);
     outGenericValues.Put(FIELD_GRANT_MODE, inPermissionDef.grantMode);
-    outGenericValues.Put(FIELD_DLP_AVAILABLE, inPermissionDef.isDlpAvailable);
     outGenericValues.Put(FIELD_AVAILABLE_LEVEL, inPermissionDef.availableLevel);
     outGenericValues.Put(FIELD_PROVISION_ENABLE, inPermissionDef.provisionEnable ? 1 : 0);
     outGenericValues.Put(FIELD_DISTRIBUTED_SCENE_ENABLE, inPermissionDef.distributedSceneEnable ? 1 : 0);
@@ -50,7 +49,6 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
     outPermissionDef.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
     outPermissionDef.grantMode = inGenericValues.GetInt(FIELD_GRANT_MODE);
-    outPermissionDef.isDlpAvailable = (inGenericValues.GetInt(FIELD_DLP_AVAILABLE));
     int aplNum = inGenericValues.GetInt(FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");

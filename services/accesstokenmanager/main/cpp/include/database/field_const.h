@@ -35,7 +35,6 @@ const std::string FIELD_PROCESS_NAME = "process_name";
 const std::string FIELD_DCAP = "dcap";
 const std::string FIELD_PERMISSION_NAME = "permission_name";
 const std::string FIELD_GRANT_MODE = "grant_mode";
-const std::string FIELD_DLP_AVAILABLE = "dlp_available";
 const std::string FIELD_AVAILABLE_LEVEL = "available_level";
 const std::string FIELD_PROVISION_ENABLE = "provision_enable";
 const std::string FIELD_DISTRIBUTED_SCENE_ENABLE = "distributed_scene_enable";

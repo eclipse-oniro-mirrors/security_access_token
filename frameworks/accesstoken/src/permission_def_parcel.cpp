@@ -37,7 +37,6 @@ bool PermissionDefParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->permissionDef.permissionName));
     RETURN_IF_FALSE(out.WriteString(this->permissionDef.bundleName));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.grantMode));
-    RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.isDlpAvailable));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.availableLevel));
     RETURN_IF_FALSE(out.WriteBool(this->permissionDef.provisionEnable));
     RETURN_IF_FALSE(out.WriteBool(this->permissionDef.distributedSceneEnable));
@@ -55,7 +54,6 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
     permissionDefParcel->permissionDef.permissionName = in.ReadString();
     permissionDefParcel->permissionDef.bundleName = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.grantMode), permissionDefParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.isDlpAvailable), permissionDefParcel);
 
     int level;
     RELEASE_IF_FALSE(in.ReadInt32(level), permissionDefParcel);
