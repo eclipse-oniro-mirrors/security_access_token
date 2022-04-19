@@ -33,8 +33,8 @@ enum AccessTokenKitRet {
 
 typedef struct {
     unsigned int tokenUniqueID : 20;
-    unsigned int dlpFlag : 1;
     unsigned int res : 6;
+    unsigned int dlpFlag : 1;
     unsigned int type : 2;
     unsigned int version : 3;
 } AccessTokenIDInner;
@@ -85,7 +85,7 @@ typedef enum TypePermissionOper {
 
 typedef enum DlpType {
     DLP_COMMON = 0,
-    DPL_READ = 1,
+    DLP_READ = 1,
     DLP_FULL_CONTROL = 2,
 } HapDlpType;
 } // namespace AccessToken

@@ -76,11 +76,6 @@ void AccessTokenInfoManager::InitHapTokenInfos()
 
     for (GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
-        int32_t dlpFlag = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(tokenId);
-        if (dlpFlag != DLP_COMMON) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "tokenId %{public}u is not a common hap.", tokenId);
-            continue;
-        }
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add id failed.", tokenId);
