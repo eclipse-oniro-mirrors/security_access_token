@@ -449,3 +449,7 @@ export const orderGroup: string[] = [
 export const otherPermissionsLabel: object = {
   "ohos.permission.DISTRIBUTED_DATASYNC": "多设备协同"
 };
+
+export const noNeedDisplayApp: string[] = [
+  "com.ohos.launcher"
+];

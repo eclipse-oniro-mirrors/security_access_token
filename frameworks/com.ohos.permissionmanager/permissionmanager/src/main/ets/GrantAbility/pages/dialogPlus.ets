@@ -26,7 +26,7 @@ struct dialogPlusPage {
   privacyDialogController: CustomDialogController = new CustomDialogController({
     builder: privacyDialog({ cancel: this.privacyCancel, confirm: this.privacyAccept, count:$count, result: $result }),
     cancel: this.privacyExist,
-    autoCancel: true,
+    autoCancel: false,
     alignment: DialogAlignment.Center
   })
   async privacyAccept(group, accessTokenId, permissionList, userFixedFlag) {

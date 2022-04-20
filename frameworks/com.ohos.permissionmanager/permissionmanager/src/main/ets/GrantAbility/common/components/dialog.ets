@@ -150,6 +150,25 @@ export struct privacyDialog {
         console.log(TAG + "applicationInfo error :" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
       })
+      bundle.getBundleInfo(data, Constants.PARMETER_BUNDLE_FLAG).then(bundleInfo => {
+        var indexGroup = new Array(this.grantGroups.length).fill(Constants.INITIAL_INDEX);
+        this.grantGroups.forEach((group, idx) => {
+          bundleInfo.reqPermissionDetails.forEach(reqPermissionDetail => {
+            var index = group.permissions.indexOf(reqPermissionDetail.name)
+            if(index !== -1 && index < indexGroup[idx]) {
+              Resmgr.getResourceManager(data).then(item => {
+                item.getString(reqPermissionDetail.reasonId, (err, value) => {
+                  this.initStatus = Constants.INIT_NEED_TO_VERIFY
+                  if (value !== undefined) {
+                    group.description = value
+                  }
+                })
+              })
+              indexGroup[idx] = index
+            }
+          })
+        })
+      })
     }).catch(err => {
       console.log(TAG + "getNameForUid error :" + JSON.stringify(err))
       this.initStatus = Constants.INIT_NEED_TO_TERMINATED
@@ -173,7 +192,6 @@ export struct privacyDialog {
         }
       }
     })
-    this.initStatus = Constants.INIT_NEED_TO_VERIFY
   }
 
   answer(ret, reqPerms) {
