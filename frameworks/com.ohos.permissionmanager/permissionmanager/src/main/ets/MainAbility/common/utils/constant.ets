@@ -222,4 +222,5 @@ export default class Constants {
   static PERMISSION_NUM = 0;
 
   static PERMISSION_FLAG = 2;
+  static API_VERSION_SUPPORT_STAGE = 9;
 }

@@ -55,4 +55,8 @@ export default class Constants {
   static PASS_OPER = 0
   static DYNAMIC_OPER = 1
   static INVALID_OPER = 2
+
+  //
+  static PARMETER_BUNDLE_FLAG = 16
+  static INITIAL_INDEX = 10
 }

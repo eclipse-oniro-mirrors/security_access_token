@@ -19,7 +19,7 @@ import { textInput } from "../common/components/search.ets";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
 import Resmgr from '@ohos.resourceManager';
-import { groups, userGrantPermissions,permissionGroupPermissions } from "../common/model/permissionGroup.ets";
+import { groups, userGrantPermissions, permissionGroupPermissions, noNeedDisplayApp } from "../common/model/permissionGroup.ets";
 import { permissionGroups, permissionPermissionGroup, permissionGroupIds } from "../common/model/permissionGroup.ets";
 import { makePy } from "../common/utils/utils.ets";
 import Constants from '../common/utils/constant.ets';
@@ -178,6 +178,10 @@ struct authorityManagementPage {
           }, bundle.BundleFlag.GET_ABILITY_INFO_WITH_APPLICATION, Constants.USERID);
         } catch(e) {
           console.log(TAG + 'queryAbilityByWant catch error: ' + JSON.stringify(e))
+          continue;
+        }
+
+        if (noNeedDisplayApp.indexOf(info.name) != -1) {
           continue;
         }
         this.deduplicationPermissions(info, allPermissions, allApplicationPermissions);
@@ -353,6 +357,12 @@ struct authorityManagementPage {
         groupIds.push(permissionGroupIds[reqUserPermissions[i]]);
       }
     }
+
+    // adapt different api
+    if (info.compatibleVersion >= Constants.API_VERSION_SUPPORT_STAGE) {
+      info.appInfo.iconId = info.hapModuleInfos[0].abilityInfo[0].iconId;
+    }
+
     var ap: applicationPermissions = {
       'bundleName': info.name,
       'tokenId': info.appInfo.accessTokenId,
