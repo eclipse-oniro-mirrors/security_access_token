@@ -43,14 +43,14 @@ class ApplicationObj {
   labelId: string
   iconId: string
   index: number
-  accessTokenId: string
+  accessTokenId: number
   permission: string
   alphabeticalIndex: string
   constructor(
     labelId: string,
     iconId: string,
     index: number,
-    accessTokenId: string,
+    accessTokenId: number,
     permission: string,
     alphabeticalIndex: string) {
     this.labelId = labelId
@@ -262,6 +262,15 @@ struct applicationItem {
         }
       })
     })
+
+    // initial then fill values when sync return which may cause sync panic
+    for (let i = 0; i < bundleNames.length; i++) {
+      this.applicationList.push(
+        new ApplicationObj('', '', i, 0, '', ''));
+      this.oldApplicationItem.push(
+        new ApplicationObj('', '', i, 0, '', ''));
+    }
+
     for (let i = 0; i < bundleNames.length; i++) {
       // Get BundleInfo based on bundle name
       bundle.getBundleInfo(bundleNames[i], Constants.PARMETER_BUNDLE_FLAG).then(res => {
@@ -269,7 +278,7 @@ struct applicationItem {
         getAppIcon(res.appInfo.iconId, res.name)
         ])
           .then((values) => {
-            this.applicationList.push(
+            this.applicationList[i] = (
               new ApplicationObj(
               String(values[0]),
               String(values[1]),
@@ -278,7 +287,7 @@ struct applicationItem {
                 routerData[0].permission,
               makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
             );
-            this.oldApplicationItem.push(
+            this.oldApplicationItem[i] = (
               new ApplicationObj(
               String(values[0]),
               String(values[1]),
@@ -287,8 +296,6 @@ struct applicationItem {
                 routerData[0].permission,
               makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
             );
-            this.applicationList.sort((a,b) => a.index - b.index)
-            this.oldApplicationItem.sort((a,b) => a.index - b.index)
           });
         // 0: have permission; -1: no permission
         var boole = true;
@@ -311,13 +318,8 @@ struct applicationItem {
             }
           });
         }
-      }).catch(() => {
-        this.applicationList.push(
-          new ApplicationObj('', '', 0, '', '', '')
-        );
-        this.oldApplicationItem.push(
-          new ApplicationObj('', '', 0, '', '', '')
-        );
+      }).catch(error => {
+        console.log(TAG + bundleNames[i] + "getBundleInfo failed, cause: " + JSON.stringify(error));
       })
     }
   }
