@@ -55,7 +55,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     hapTokenInfoTable.tableName_ = HAP_TOKEN_INFO_TABLE;
     hapTokenInfoTable.tableColumnNames_ = {
         FIELD_TOKEN_ID, FIELD_USER_ID,
-        FIELD_BUNDLE_NAME, FIELD_INST_INDEX,
+        FIELD_BUNDLE_NAME, FIELD_INST_INDEX, FIELD_DLP_TYPE,
         FIELD_APP_ID, FIELD_DEVICE_ID,
         FIELD_APL, FIELD_TOKEN_VERSION,
         FIELD_TOKEN_ATTR
@@ -293,6 +293,7 @@ int SqliteStorage::CreateHapTokenInfoTable() const
         .append(FIELD_USER_ID + " integer not null,")
         .append(FIELD_BUNDLE_NAME + " text not null,")
         .append(FIELD_INST_INDEX + " integer not null,")
+        .append(FIELD_DLP_TYPE + " integer not null,")
         .append(FIELD_APP_ID + " text not null,")
         .append(FIELD_DEVICE_ID + " text not null,")
         .append(FIELD_APL + " integer not null,")

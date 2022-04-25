@@ -1606,6 +1606,102 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken017, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AllocHapToken018
+ * @tc.desc: alloc a tokenId with vaild dlptype.
+ * @tc.type: FUNC
+ * @tc.require:AR000H4SAB
+ */
+HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {}
+    };
+    HapInfoParams infoManagerTestInfoParms1 = {
+        .bundleName = "dlp_test1",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "testtesttesttest"
+    };
+    HapInfoParams infoManagerTestInfoParms2 = {
+        .bundleName = "dlp_test2",
+        .userID = 1,
+        .instIndex = 1,
+        .dlpType = DLP_READ,
+        .appIDDesc = "testtesttesttest"
+    };
+    HapInfoParams infoManagerTestInfoParms3 = {
+        .bundleName = "dlp_test3",
+        .userID = 1,
+        .instIndex = 2,
+        .dlpType = DLP_FULL_CONTROL,
+        .appIDDesc = "testtesttesttest"
+    };
+    HapTokenInfo hapTokenInfoRes;
+
+    tokenIdEx= AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
+    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    int ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_COMMON);
+    ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_FAILED);
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms2, infoManagerTestPolicyPrams);
+    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_READ);
+    ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_FAILED);
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms3, infoManagerTestPolicyPrams);
+    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_FULL_CONTROL);
+    ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ASSERT_EQ(ret, RET_FAILED);
+}
+
+/**
+ * @tc.name: AllocHapToken019
+ * @tc.desc: cannot alloc a tokenId with invaild dlptype.
+ * @tc.type: FUNC
+ * @tc.require:AR000H4SAB
+ */
+HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {}
+    };
+    HapInfoParams infoManagerTestInfoParms1 = {
+        .bundleName = "accesstoken_test",
+        .userID = 1,
+        .instIndex = 4,
+        .dlpType = INVALID_DLP_TYPE,
+        .appIDDesc = "testtesttesttest"
+    };
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
+    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
  * @tc.name: UpdateHapToken001
  * @tc.desc: alloc a tokenId successfully, update it successfully and verify it.
  * @tc.type: FUNC

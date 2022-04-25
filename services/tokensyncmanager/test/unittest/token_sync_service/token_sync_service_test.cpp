@@ -117,7 +117,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
     g_jsonAfter =
         "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
         "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
+        "\\\"111111\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,\\\"permState\\\":"
+        "null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
@@ -716,7 +717,7 @@ HWTEST_F(TokenSyncServiceTest, UpdateRemoteHapTokenCommand001, TestSize.Level1)
     std::string recvJson =
         "{\"commandName\":\"UpdateRemoteHapTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
         "\"{\\\"HapTokenInfos\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"testtesttesttest\\\","
-        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,"
+        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,"
         "\\\"permState\\\":[{\\\"grantConfig\\\":[{\\\"grantFlags\\\":2,\\\"grantStatus\\\":0,"
         "\\\"resDeviceID\\\":\\\"local\\\"}],\\\"isGeneral\\\":true,"
         "\\\"permissionName\\\":\\\"ohos.permission.CAMERA\\\"},{\\\"grantConfig\\\":[{\\\"grantFlags\\\":1,"
@@ -745,7 +746,7 @@ HWTEST_F(TokenSyncServiceTest, UpdateRemoteHapTokenCommand001, TestSize.Level1)
     recvJson =
         "{\"commandName\":\"UpdateRemoteHapTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
         "\"{\\\"HapTokenInfos\\\":{\\\"apl\\\":2,\\\"appID\\\":\\\"testtesttesttest\\\","
-        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,"
+        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,"
         "\\\"permState\\\":[{\\\"grantConfig\\\":[{\\\"grantFlags\\\":2,\\\"grantStatus\\\":0,"
         "\\\"resDeviceID\\\":\\\"local\\\"}],\\\"isGeneral\\\":true,"
         "\\\"permissionName\\\":\\\"ohos.permission.CAMERA\\\"},{\\\"grantConfig\\\":[{\\\"grantFlags\\\":1,"

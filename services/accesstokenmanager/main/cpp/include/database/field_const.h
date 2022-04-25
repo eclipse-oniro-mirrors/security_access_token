@@ -25,6 +25,7 @@ const std::string FIELD_TOKEN_ID = "token_id";
 const std::string FIELD_USER_ID = "user_id";
 const std::string FIELD_BUNDLE_NAME = "bundle_name";
 const std::string FIELD_INST_INDEX = "inst_index";
+const std::string FIELD_DLP_TYPE = "dlp_type";
 const std::string FIELD_APP_ID = "app_id";
 const std::string FIELD_DEVICE_ID = "device_id";
 const std::string FIELD_APL = "apl";

@@ -35,16 +35,17 @@ public:
     virtual ~AccessTokenIDManager() = default;
 
     int AddTokenId(AccessTokenID id, ATokenTypeEnum type);
-    AccessTokenID CreateAndRegisterTokenId(ATokenTypeEnum type);
+    AccessTokenID CreateAndRegisterTokenId(ATokenTypeEnum type, int dlpType);
     int RegisterTokenId(AccessTokenID id, ATokenTypeEnum type);
     void ReleaseTokenId(AccessTokenID id);
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
+    int GetTokenIdDlpFlag(AccessTokenID id);
     static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
 
 private:
     AccessTokenIDManager() = default;
     DISALLOW_COPY_AND_MOVE(AccessTokenIDManager);
-    AccessTokenID CreateTokenId(ATokenTypeEnum type) const;
+    AccessTokenID CreateTokenId(ATokenTypeEnum type, int dlpType) const;
 
     OHOS::Utils::RWLock tokenIdLock_;
     std::set<AccessTokenID> tokenIdSet_;
