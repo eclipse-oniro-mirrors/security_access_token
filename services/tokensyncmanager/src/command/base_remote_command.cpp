@@ -130,6 +130,7 @@ nlohmann::json BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync&
         {"userID", tokenInfo.baseInfo.userID},
         {"bundleName", tokenInfo.baseInfo.bundleName},
         {"instIndex", tokenInfo.baseInfo.instIndex},
+        {"dlpType", tokenInfo.baseInfo.dlpType},
         {"appID", tokenInfo.baseInfo.appID},
         {"deviceID", tokenInfo.baseInfo.deviceID},
         {"apl", tokenInfo.baseInfo.apl},
@@ -158,6 +159,9 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
     }
     if (hapTokenJson.find("instIndex") != hapTokenJson.end() && hapTokenJson.at("instIndex").is_number()) {
         hapTokenJson.at("instIndex").get_to(hapTokenBasicInfo.instIndex);
+    }
+    if (hapTokenJson.find("dlpType") != hapTokenJson.end() && hapTokenJson.at("dlpType").is_number()) {
+        hapTokenJson.at("dlpType").get_to(hapTokenBasicInfo.dlpType);
     }
     if (hapTokenJson.find("appID") != hapTokenJson.end() && hapTokenJson.at("appID").is_string()) {
         hapTokenJson.at("appID").get_to(hapTokenBasicInfo.appID);

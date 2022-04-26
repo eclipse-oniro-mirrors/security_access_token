@@ -33,7 +33,8 @@ enum AccessTokenKitRet {
 
 typedef struct {
     unsigned int tokenUniqueID : 20;
-    unsigned int res : 7;
+    unsigned int res : 6;
+    unsigned int dlpFlag : 1;
     unsigned int type : 2;
     unsigned int version : 3;
 } AccessTokenIDInner;
@@ -81,6 +82,12 @@ typedef enum TypePermissionOper {
     DYNAMIC_OPER = 1,
     INVALID_OPER = 2,
 } PermissionOper;
+
+typedef enum DlpType {
+    DLP_COMMON = 0,
+    DLP_READ = 1,
+    DLP_FULL_CONTROL = 2,
+} HapDlpType;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

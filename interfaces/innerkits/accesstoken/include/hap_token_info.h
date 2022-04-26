@@ -30,6 +30,7 @@ public:
     int userID;
     std::string bundleName;
     int instIndex;
+    int dlpType;
     std::string appIDDesc;
 };
 
@@ -48,6 +49,7 @@ public:
     int userID;
     std::string bundleName;
     int instIndex;
+    int dlpType;
     std::string appID;
     std::string deviceID;
     AccessTokenID tokenID;

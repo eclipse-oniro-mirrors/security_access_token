@@ -35,7 +35,7 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
-        !DataValidator::IsDomainValid(policy.domain)) {
+        !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return res;
     }

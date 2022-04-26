@@ -41,6 +41,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
     hapTokenInfo_.baseInfo.bundleName = "";
     hapTokenInfo_.baseInfo.deviceID = "";
     hapTokenInfo_.baseInfo.instIndex = 0;
+    hapTokenInfo_.baseInfo.dlpType = 0;
     hapTokenInfo_.baseInfo.tokenAttr = 0;
     hapTokenInfo_.baseInfo.tokenID = 0;
     hapTokenInfo_.baseInfo.userID = 0;

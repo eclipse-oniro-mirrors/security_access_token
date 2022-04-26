@@ -49,6 +49,7 @@ public:
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
+    int GetDlpType() const;
     std::string GetBundleName() const;
     int GetInstIndex() const;
     AccessTokenID GetTokenID() const;

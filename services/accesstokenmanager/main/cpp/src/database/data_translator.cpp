@@ -51,7 +51,7 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.grantMode = inGenericValues.GetInt(FIELD_GRANT_MODE);
     int aplNum = inGenericValues.GetInt(FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Apl is wrong.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
         return RET_FAILED;
     }
     outPermissionDef.availableLevel = (ATokenAplEnum)aplNum;
@@ -69,7 +69,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
 {
     if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
         grantIndex >= inPermissionState.grantFlags.size()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "perm status grant size is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "perm status grant size is wrong");
         return RET_FAILED;
     }
     outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionState.permissionName);
@@ -86,27 +86,27 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
     outPermissionState.isGeneral = ((inGenericValues.GetInt(FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
     outPermissionState.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "permission name is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission name is wrong");
         return RET_FAILED;
     }
 
     std::string devID = inGenericValues.GetString(FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(devID)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "devID is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "devID is wrong");
         return RET_FAILED;
     }
     outPermissionState.resDeviceID.push_back(devID);
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "grantStatus is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus is wrong");
         return RET_FAILED;
     }
     outPermissionState.grantStatus.push_back(grantStatus);
 
     int grantFlag = (PermissionState)inGenericValues.GetInt(FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "grantFlag is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "grantFlag is wrong");
         return RET_FAILED;
     }
     outPermissionState.grantFlags.push_back(grantFlag);
