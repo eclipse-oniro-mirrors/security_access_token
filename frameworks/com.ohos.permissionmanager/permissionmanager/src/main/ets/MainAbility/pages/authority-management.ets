@@ -19,6 +19,7 @@ import { textInput } from "../common/components/search.ets";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
 import Resmgr from '@ohos.resourceManager';
+import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { groups, userGrantPermissions, permissionGroupPermissions, noNeedDisplayApp } from "../common/model/permissionGroup.ets";
 import { permissionGroups, permissionPermissionGroup, permissionGroupIds } from "../common/model/permissionGroup.ets";
 import { makePy } from "../common/utils/utils.ets";
@@ -184,7 +185,7 @@ struct authorityManagementPage {
         if (noNeedDisplayApp.indexOf(info.name) != -1) {
           continue;
         }
-        this.deduplicationPermissions(info, allPermissions, allApplicationPermissions);
+        await this.deduplicationPermissions(info, allPermissions, allApplicationPermissions);
         this.updateAppLabel(infoIndex, info.name, info.appInfo.label);
         this.updateAppIcon(infoIndex, info.name);
         infoIndex = infoIndex + 1;
@@ -333,12 +334,18 @@ struct authorityManagementPage {
    * @param {Array} allPermissions All permissions
    * @param {Array} allApplicationPermissions All permissions apply
    */
-  deduplicationPermissions(info, allPermissions, allApplicationPermissions) {
+  async deduplicationPermissions(info, allPermissions, allApplicationPermissions) {
     var reqPermissionsLen = info.reqPermissions.length;
     var reqUserPermissions: string[] = [];
+    var acManager = abilityAccessCtrl.createAtManager()
     if (reqPermissionsLen > 0) {
       for (let j = 0; j < info.reqPermissions.length; j++) {
         var permission = info.reqPermissions[j];
+        var flag = await acManager.getPermissionFlags(info.appInfo.accessTokenId, permission)
+        console.log(TAG + "flag:" + flag + "  permission:" + permission + "  bundleName" + info.name)
+        if(flag == Constants.PRE_AUTHORIZATION_NOT_MODIFIED) {
+          continue
+        }
         if (allPermissions.indexOf(permission) == -1) {
           allPermissions.push(permission);
         }
