@@ -326,7 +326,21 @@ void PermissionPolicySet::ToString(std::string& info)
     info.append("\n  ]\n");
 }
 
-void PermissionPolicySet::PermStateToString(std::string& info)
+bool PermissionPolicySet::IsPermissionReqValid(int32_t tokenApl, const std::string &permissionName)
+{
+    PermissionDef permissionDef;
+    int ret = PermissionDefinitionCache::GetInstance().FindByPermissionName(
+        permissionName, permissionDef);
+    if (ret != RET_SUCCESS) {
+        return false;
+    }
+    if (tokenApl < permissionDef.availableLevel) {
+        return false;
+    }
+    return true;
+}
+
+void PermissionPolicySet::PermStateToString(int32_t tokenApl, std::string& info)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
 
@@ -334,7 +348,7 @@ void PermissionPolicySet::PermStateToString(std::string& info)
     info.append(R"(  "permStateList": [)");
     info.append("\n");
     for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
-        if (!PermissionDefinitionCache::GetInstance().HasDefinition(iter->permissionName)) {
+        if (!IsPermissionReqValid(tokenApl, iter->permissionName)) {
             invaildPermList.emplace_back(iter->permissionName);
             continue;
         }
@@ -356,7 +370,6 @@ void PermissionPolicySet::PermStateToString(std::string& info)
     }
     info.append("\n  ]\n");
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

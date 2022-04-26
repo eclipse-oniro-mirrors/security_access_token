@@ -78,30 +78,30 @@ void AccessTokenInfoManager::InitHapTokenInfos()
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u add id failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add id failed.", tokenId);
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
         if (hap == nullptr) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u alloc failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
             continue;
         }
         ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permDefRes, permStateRes);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u restore failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u restore failed.", tokenId);
             continue;
         }
 
         ret = AddHapTokenInfo(hap);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u add failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
             continue;
         }
         ACCESSTOKEN_LOG_INFO(LABEL,
-            " restore hap token 0x%{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
+            " restore hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
             tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex());
     }
 }
@@ -117,31 +117,31 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u add failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
             continue;
         }
         std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
         if (native == nullptr) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u alloc failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
             continue;
         }
 
         ret = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u restore failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u restore failed.", tokenId);
             continue;
         }
 
         ret = AddNativeTokenInfo(native);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}u add failed.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
             continue;
         }
         ACCESSTOKEN_LOG_INFO(LABEL,
-            "restore native token 0x%{public}u process name %{public}s ok!",
+            "restore native token %{public}u process name %{public}s ok!",
             tokenId, native->GetProcessName().c_str());
     }
 }
@@ -325,7 +325,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     }
 
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-    ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token 0x%{public}u ok!", id);
+    ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token %{public}u ok!", id);
     RefreshTokenInfoIfNeeded();
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
@@ -363,7 +363,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
         nativeTokenInfoMap_.erase(id);
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
-    ACCESSTOKEN_LOG_INFO(LABEL, "remove native token 0x%{public}u ok!", id);
+    ACCESSTOKEN_LOG_INFO(LABEL, "remove native token %{public}u ok!", id);
     if (!isRemote) {
         RefreshTokenInfoIfNeeded();
     }
@@ -399,7 +399,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         return RET_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "create hap token 0x%{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
+        "create hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
 
     tokenIdEx.tokenIdExStruct.tokenID = tokenId;
@@ -485,7 +485,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
         bool isUpdated = TryUpdateExistNativeToken(infoPtr);
         if (!isUpdated) {
             ACCESSTOKEN_LOG_INFO(LABEL,
-                "token 0x%{public}u process name %{public}s is new, add to manager!",
+                "token %{public}u process name %{public}s is new, add to manager!",
                 infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
             AccessTokenID id = infoPtr->GetTokenID();
             int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_NATIVE);
@@ -497,7 +497,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
             if (ret != RET_SUCCESS) {
                 AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
                 ACCESSTOKEN_LOG_ERROR(LABEL,
-                    "token 0x%{public}u process name %{public}s add to manager failed!",
+                    "token %{public}u process name %{public}s add to manager failed!",
                     infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
             }
         }
@@ -509,17 +509,17 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
     const std::string& appIDDesc, const HapPolicyParams& policy)
 {
     if (!DataValidator::IsAppIDDescValid(appIDDesc)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "token 0x%{public}u parm format error!", tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u parm format error!", tokenID);
         return RET_FAILED;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "token 0x%{public}u is null, can not update!", tokenID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u is null, can not update!", tokenID);
         return RET_FAILED;
     }
 
     if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote hap token 0x%{public}u can not update!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote hap token %{public}u can not update!", tokenID);
         return RET_FAILED;
     }
 
@@ -527,7 +527,7 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         infoPtr->Update(appIDDesc, policy);
         ACCESSTOKEN_LOG_INFO(LABEL,
-            "token 0x%{public}u bundle name %{public}s user %{public}d inst %{public}d update ok!",
+            "token %{public}u bundle name %{public}s user %{public}d inst %{public}d update ok!",
             tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());
     }
 
@@ -598,7 +598,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(mapID);
     if (infoPtr == nullptr || !infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "token 0x%{public}u is null or not remote, can not update!", mapID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u is null or not remote, can not update!", mapID);
         return RET_FAILED;
     }
 
@@ -726,7 +726,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
             std::make_shared<NativeTokenInfoInner>(nativeToken.baseInfo, nativeToken.permStateList);
         if (nativePtr == nullptr) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}u alloc local token failed.",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u alloc local token failed.",
                 deviceID.c_str(), remoteID);
             continue;
         }
@@ -734,7 +734,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         int ret = AddNativeTokenInfo(nativePtr);
         if (ret != RET_SUCCESS) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}u add local token failed.",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u add local token failed.",
                 deviceID.c_str(), remoteID);
             continue;
         }
@@ -753,7 +753,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
     }
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}u is not mapped",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u is not mapped",
             deviceID.c_str(), tokenID);
         return RET_FAILED;
     }
@@ -775,7 +775,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
         }
         nativeTokenInfoMap_.erase(mapID);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "mapping tokenId 0x%{public}u type is unknown", mapID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "mapping tokenId %{public}u type is unknown", mapID);
     }
 
     return AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, tokenID);

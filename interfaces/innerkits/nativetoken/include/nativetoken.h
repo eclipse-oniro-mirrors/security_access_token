@@ -41,8 +41,8 @@ extern "C" {
 #define MAX_JSON_FILE_LEN 102400
 #define MAX_DCAPS_NUM 32
 #define MAX_DCAP_LEN 1024
-#define MAX_PERM_NUM 32
-#define MAX_PERM_LEN 128
+#define MAX_PERM_NUM 64
+#define MAX_PERM_LEN 256
 #define MAX_PARAMTER_LEN 128
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
 #define PATH_MAX_LEN 4096
@@ -84,16 +84,16 @@ typedef struct TokenList {
     NativeAtId tokenId;
     int32_t apl;
     char *dcaps[MAX_DCAPS_NUM];
-    char *perm[MAX_PERM_NUM];
+    char *perms[MAX_PERM_NUM];
     int dcapsNum;
-    int permNum;
+    int permsNum;
     char processName[MAX_PROCESS_NAME_LEN + 1];
     struct TokenList *next;
 } NativeTokenList;
 
 typedef struct StrArrayAttribute {
-    int maxStrNum;
-    int maxStrLen;
+    int32_t maxStrNum;
+    uint32_t maxStrLen;
     const char *strKey;
 } StrArrayAttr;
 

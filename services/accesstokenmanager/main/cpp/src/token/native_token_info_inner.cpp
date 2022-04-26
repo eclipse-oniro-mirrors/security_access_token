@@ -219,7 +219,7 @@ void NativeTokenInfoInner::ToString(std::string& info) const
     info.append(R"(  "dcap": ")" + DcapToString(tokenInfoBasic_.dcap) + R"(")" + ",\n");
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_? 1 : 0) + ",\n");
     if (permPolicySet_ != nullptr) {
-        permPolicySet_->PermStateToString(info);
+        permPolicySet_->PermStateToString(tokenInfoBasic_.apl, info);
     }
     info.append("}");
 }

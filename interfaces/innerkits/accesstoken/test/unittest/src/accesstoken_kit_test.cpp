@@ -2131,12 +2131,12 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 {
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
-        .permNum = 0,
+        .permsNum = 0,
         .dcaps = nullptr,
-        .perm = nullptr,
-        .processname = "GetTokenTypeFlag002",
+        .perms = nullptr,
+        .processName = "GetTokenTypeFlag002",
         .aplStr = "system_core",
     };
     uint64_t tokenId01 = GetAccessTokenId(&infoInstance);

@@ -340,22 +340,31 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState1 = {
-    .grantFlags = {0},
-    .grantStatus = {0},
-    .isGeneral = true,
-    .permissionName = "ohos.permission.ACCESS_PIN_AUTH",
-    .resDeviceID = {"local"}
-};
+        .grantFlags = {0},
+        .grantStatus = {0},
+        .isGeneral = true,
+        .permissionName = "ohos.permission.ACCELEROMETER",
+        .resDeviceID = {"local"}
+    };
 
     PermissionStateFull infoManagerTestState2 = {
-    .permissionName = "ohos.permission.MANAGE_USER_IDM",
-    .isGeneral = true,
-    .grantFlags = {0, 2},
-    .grantStatus = {0, 0},
-    .resDeviceID = {"device 1", "device 2"}
-};
+        .permissionName = "ohos.permission.MANAGE_USER_IDM",
+        .isGeneral = true,
+        .grantFlags = {0, 2},
+        .grantStatus = {0, 0},
+        .resDeviceID = {"device 1", "device 2"}
+    };
 
-    std::vector<PermissionStateFull> permStateList = {infoManagerTestState1, infoManagerTestState2};
+    PermissionStateFull infoManagerTestState3 = {
+        .permissionName = "ohos.permission.USER_TEAT",
+        .isGeneral = true,
+        .grantFlags = {0, 2},
+        .grantStatus = {0, 0},
+        .resDeviceID = {"device 1", "device 2"}
+    };
+
+    std::vector<PermissionStateFull> permStateList = {
+        infoManagerTestState1, infoManagerTestState2, infoManagerTestState3};
     std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
 
     std::shared_ptr<PermissionPolicySet> permPolicySet =
@@ -387,7 +396,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 
     ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.MANAGE_USER_IDM");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.ACCESS_PIN_AUTH");
+    ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.ACCELEROMETER");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
     ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.DISCOVER_BLUETOOTH");
     ASSERT_EQ(ret, PERMISSION_DENIED);
@@ -406,7 +415,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 
     ret = PermissionManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.MANAGE_USER_IDM");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.ACCESS_PIN_AUTH");
+    ret = PermissionManager::GetInstance().VerifyAccessToken(info2.tokenID, "ohos.permission.ACCELEROMETER");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info2.tokenID);
@@ -603,12 +612,12 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     const char *perms[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
-        .permNum = 2,
+        .permsNum = 2,
         .dcaps = dcaps,
-        .perm = perms,
-        .processname = "native_token_test7",
+        .perms = perms,
+        .processName = "native_token_test7",
         .aplStr = "system_core",
     };
     uint64_t tokenId = ::GetAccessTokenId(&infoInstance);
@@ -618,7 +627,7 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     NativeTokenInfo findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenId, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.processName, infoInstance.processname);
+    ASSERT_EQ(findInfo.processName, infoInstance.processName);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -645,24 +654,24 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
     char apl1[32];
     (void)strcpy_s(apl1, sizeof(apl1), "normal");
 
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
-        .permNum = 0,
+        .permsNum = 0,
         .dcaps = dcaps,
-        .perm = nullptr,
+        .perms = nullptr,
     };
     infoInstance.aplStr = apl3;
-    infoInstance.processname = "ProcessNativeTokenInfos007_003";
+    infoInstance.processName = "ProcessNativeTokenInfos007_003";
     uint64_t tokenIdApl3 = ::GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenIdApl3, 0);
 
     infoInstance.aplStr = apl2;
-    infoInstance.processname = "ProcessNativeTokenInfos007_002";
+    infoInstance.processName = "ProcessNativeTokenInfos007_002";
     uint64_t tokenIdApl2 = ::GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenIdApl2, 0);
 
     infoInstance.aplStr = apl1;
-    infoInstance.processname = "ProcessNativeTokenInfos007_001";
+    infoInstance.processName = "ProcessNativeTokenInfos007_001";
     uint64_t tokenIdApl1 = ::GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenIdApl1, 0);
 

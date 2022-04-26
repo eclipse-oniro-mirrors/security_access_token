@@ -55,12 +55,12 @@ int Start(const char *processName)
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,
-        .permNum = 2,
+        .permsNum = 2,
         .dcaps = dcaps,
-        .perm = perms,
-        .processname = processName,
+        .perms = perms,
+        .processName = processName,
         .aplStr = "system_core",
     };
     tokenId = GetAccessTokenId(&infoInstance);
@@ -84,35 +84,35 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
-        .permNum = 2,
+        .permsNum = 2,
         .dcaps = dcaps,
-        .perm = perms,
+        .perms = perms,
         .aplStr = "system_core",
     };
-    infoInstance.processname = "";
+    infoInstance.processName = "";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
-    infoInstance.processname = nullptr;
+    infoInstance.processName = nullptr;
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
     /* 257 is invalid processName length */
     const std::string invalidProcName (257, 'x');
-    infoInstance.processname = invalidProcName.c_str();
+    infoInstance.processName = invalidProcName.c_str();
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
     /* 255 is valid processName length */
     const std::string validProcName01 (255, 'x');
-    infoInstance.processname = validProcName01.c_str();
+    infoInstance.processName = validProcName01.c_str();
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
     /* 256 is valid processName length */
     const std::string validProcName02 (256, 'x');
-    infoInstance.processname = validProcName02.c_str();
+    infoInstance.processName = validProcName02.c_str();
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
     delete[] dcaps;
@@ -132,21 +132,21 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     dcaps[1] = "ST_CAP";
     int dcapNum = -1;
     uint64_t tokenId;
-    NativeInfo infoInstance = {
-        .permNum = 0,
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0,
         .dcaps = dcaps,
-        .perm = nullptr,
+        .perms = nullptr,
         .aplStr = "system_core",
     };
     infoInstance.dcapsNum = dcapNum;
-    infoInstance.processname = "GetAccessTokenId002";
+    infoInstance.processName = "GetAccessTokenId002";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
     /* 33 is invalid dcapNum */
     dcapNum = 33;
     infoInstance.dcapsNum = dcapNum;
-    infoInstance.processname = "GetAccessTokenId002_00";
+    infoInstance.processName = "GetAccessTokenId002_00";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
@@ -156,14 +156,14 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     /* 32 is valid dcapNum */
     dcapNum = 32;
     infoInstance.dcapsNum = dcapNum;
-    infoInstance.processname = "GetAccessTokenId002_01";
+    infoInstance.processName = "GetAccessTokenId002_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
     /* 31 is valid dcapNum */
     dcapNum = 31;
     infoInstance.dcapsNum = dcapNum;
-    infoInstance.processname = "GetAccessTokenId002_02";
+    infoInstance.processName = "GetAccessTokenId002_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
@@ -183,22 +183,22 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
     uint64_t tokenId;
-    NativeInfo infoInstance = {
-        .permNum = 0,
+    NativeTokenInfoParams infoInstance = {
+        .permsNum = 0,
         .dcaps = dcaps,
-        .perm = nullptr,
+        .perms = nullptr,
         .aplStr = "system_core",
     };
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = nullptr;
-    infoInstance.processname = "GetAccessTokenId003";
+    infoInstance.processName = "GetAccessTokenId003";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
     dcapNum = 0;
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = nullptr;
-    infoInstance.processname = "GetAccessTokenId003_01";
+    infoInstance.processName = "GetAccessTokenId003_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
@@ -208,7 +208,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     dcaps[0] = invalidDcap.c_str();
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = dcaps;
-    infoInstance.processname = "GetAccessTokenId003_02";
+    infoInstance.processName = "GetAccessTokenId003_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
@@ -217,7 +217,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     dcaps[0] = validDcap01.c_str();
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = dcaps;
-    infoInstance.processname = "GetAccessTokenId003_03";
+    infoInstance.processName = "GetAccessTokenId003_03";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
@@ -226,7 +226,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     dcaps[0] = validDcap02.c_str();
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = dcaps;
-    infoInstance.processname = "GetAccessTokenId003_04";
+    infoInstance.processName = "GetAccessTokenId003_04";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
@@ -246,12 +246,12 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
     dcaps[1] = "ST_CAP";
     int dcapNum = 2;
     uint64_t tokenId;
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
-        .permNum = 0,
+        .permsNum = 0,
         .dcaps = dcaps,
-        .perm = nullptr,
-        .processname = "GetAccessTokenId003",
+        .perms = nullptr,
+        .processName = "GetAccessTokenId003",
     };
 
     infoInstance.aplStr = nullptr,
@@ -312,23 +312,23 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
     const char **perms = new const char *[MAX_PERM_NUM];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    int permNum = -1;
+    int permsNum = -1;
     uint64_t tokenId;
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
         .dcaps = nullptr,
-        .perm = perms,
+        .perms = perms,
         .aplStr = "system_core",
     };
 
-    infoInstance.permNum = permNum;
-    infoInstance.processname = "GetAccessTokenId007";
+    infoInstance.permsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId007";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
-    permNum = MAX_PERM_NUM + 1;
-    infoInstance.permNum = permNum;
-    infoInstance.processname = "GetAccessTokenId007_00";
+    permsNum = MAX_PERM_NUM + 1;
+    infoInstance.permsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId007_00";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
@@ -336,15 +336,15 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
         perms[i] = "ohos.permission.test";
     }
 
-    permNum = MAX_PERM_NUM;
-    infoInstance.permNum = permNum;
-    infoInstance.processname = "GetAccessTokenId007_01";
+    permsNum = MAX_PERM_NUM;
+    infoInstance.permsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId007_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
-    permNum = MAX_PERM_NUM - 1;
-    infoInstance.permNum = permNum;
-    infoInstance.processname = "GetAccessTokenId007_02";
+    permsNum = MAX_PERM_NUM - 1;
+    infoInstance.permsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId007_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
@@ -366,12 +366,12 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,
-        .permNum = 2,
+        .permsNum = 2,
         .dcaps = dcaps,
-        .perm = perms,
-        .processname = "GetAccessTokenId008",
+        .perms = perms,
+        .processName = "GetAccessTokenId008",
         .aplStr = "system_core",
     };
     tokenId = GetAccessTokenId(&infoInstance);
@@ -386,57 +386,57 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
 {
-    const char **perm = new const char *[2];
-    perm[0] = "AT_CAP";
-    perm[1] = "ST_CAP";
-    int permNum = 2;
+    const char **perms = new const char *[2];
+    perms[0] = "AT_CAP";
+    perms[1] = "ST_CAP";
+    int permsNum = 2;
     uint64_t tokenId;
-    NativeInfo infoInstance = {
+    NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
         .dcaps = nullptr,
         .aplStr = "system_core",
     };
 
-    infoInstance.permNum = permNum;
-    infoInstance.perm = nullptr;
-    infoInstance.processname = "GetAccessTokenId009";
+    infoInstance.permsNum = permsNum;
+    infoInstance.perms = nullptr;
+    infoInstance.processName = "GetAccessTokenId009";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
-    permNum = 0;
-    infoInstance.permNum = permNum;
-    infoInstance.perm = nullptr;
-    infoInstance.processname = "GetAccessTokenId009_01";
+    permsNum = 0;
+    infoInstance.permsNum = permsNum;
+    infoInstance.perms = nullptr;
+    infoInstance.processName = "GetAccessTokenId009_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
-    permNum = 2;
+    permsNum = 2;
     /* 1025 is invalid dcap length */
     const std::string invalidDcap (MAX_PERM_LEN + 1, 'x');
-    perm[0] = invalidDcap.c_str();
-    infoInstance.permNum = permNum;
-    infoInstance.perm = perm;
-    infoInstance.processname = "GetAccessTokenId009_02";
+    perms[0] = invalidDcap.c_str();
+    infoInstance.permsNum = permsNum;
+    infoInstance.perms = perms;
+    infoInstance.processName = "GetAccessTokenId009_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
     const std::string validDcap01 (MAX_PERM_LEN, 'x');
-    perm[0] = validDcap01.c_str();
-    infoInstance.permNum = permNum;
-    infoInstance.perm = perm;
-    infoInstance.processname = "GetAccessTokenId009_03";
+    perms[0] = validDcap01.c_str();
+    infoInstance.permsNum = permsNum;
+    infoInstance.perms = perms;
+    infoInstance.processName = "GetAccessTokenId009_03";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
     const std::string validDcap02 (MAX_PERM_LEN - 1, 'x');
-    perm[0] = validDcap02.c_str();
-    infoInstance.permNum = permNum;
-    infoInstance.perm = perm;
-    infoInstance.processname = "GetAccessTokenId009_04";
+    perms[0] = validDcap02.c_str();
+    infoInstance.permsNum = permsNum;
+    infoInstance.perms = perms;
+    infoInstance.processName = "GetAccessTokenId009_04";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
 
-    delete[] perm;
+    delete[] perms;
 }
 
 /**
