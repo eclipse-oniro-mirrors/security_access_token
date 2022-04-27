@@ -19,7 +19,6 @@ ohos_source_set("tools_atm_source_set") {
     "//base/security/access_token/frameworks/common/include",
     "//foundation/aafwk/standard/tools/aa/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core/include/bundlemgr",
     "//foundation/aafwk/standard/services/common/include",
   ]
 
@@ -33,7 +32,6 @@ ohos_source_set("tools_atm_source_set") {
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//foundation/aafwk/standard/tools/aa:aa",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_core:appexecfwk_core",
     "//utils/native/base:utils",
   ]
 
@@ -44,6 +42,7 @@ ohos_source_set("tools_atm_source_set") {
   }
 
   external_deps = [
+    "bundle_framework:appexecfwk_core",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
