@@ -66,11 +66,8 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "//foundation/communication/dsoftbus/interfaces/kits/transport",
     "//foundation/communication/dsoftbus/interfaces/kits/common",
     "//foundation/communication/dsoftbus/interfaces/kits/bus_center",
-
-    #"//foundation/appexecfwk/standard/interfaces/innerkits/appexecfwk_base/include",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/libeventhandler/include",
   ]
 
   deps = [
@@ -79,7 +76,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
     "//foundation/aafwk/standard/interfaces/innerkits/base:base",
-    "//foundation/appexecfwk/standard/interfaces/innerkits/libeventhandler:libeventhandler",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
     "//third_party/zlib:libz",
     "//utils/native/base:utils",
@@ -92,6 +88,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
   }
 
   external_deps = [
+    "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
