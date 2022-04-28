@@ -30,7 +30,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
     "//third_party/json/include",
-    "//third_party/cJSON",
   ]
 
   sources = [

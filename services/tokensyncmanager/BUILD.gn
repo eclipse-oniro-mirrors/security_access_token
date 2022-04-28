@@ -32,13 +32,11 @@ ohos_shared_library("token_sync_manager_service") {
     "include/common",
     "include/device",
     "include/protocol",
-    "//third_party/json/include",
-    "//utils/system/safwk/native/include",
-    "//third_party/json/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//third_party/json/include",
   ]
 
   sources = [
