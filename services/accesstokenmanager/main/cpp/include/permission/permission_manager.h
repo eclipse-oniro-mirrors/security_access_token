@@ -38,6 +38,8 @@ public:
 
     void AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tokenInfo, bool updateFlag);
     void RemoveDefPermissions(AccessTokenID tokenID);
+    int VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);

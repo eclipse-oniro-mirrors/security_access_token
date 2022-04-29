@@ -19,6 +19,7 @@
 #include "access_token.h"
 #include <string>
 #include <vector>
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +32,12 @@ public:
     std::vector<std::string> dcap;
     AccessTokenID tokenID;
     AccessTokenAttr tokenAttr;
+};
+
+class NativeTokenInfoForSync final {
+public:
+    NativeTokenInfo baseInfo;
+    std::vector<PermissionStateFull> permStateList;
 };
 } // namespace AccessToken
 } // namespace Security

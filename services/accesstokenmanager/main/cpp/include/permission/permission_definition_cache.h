@@ -47,6 +47,8 @@ public:
 
     bool HasDefinition(const std::string& permissionName);
 
+    bool IsPermissionDefEmpty();
+
 private:
     PermissionDefinitionCache();
 

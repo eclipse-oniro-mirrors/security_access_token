@@ -111,6 +111,12 @@ bool PermissionDefinitionCache::HasDefinition(const std::string& permissionName)
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     return permissionDefinitionMap_.count(permissionName) == 1;
 }
+
+bool PermissionDefinitionCache::IsPermissionDefEmpty()
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    return permissionDefinitionMap_.empty();
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

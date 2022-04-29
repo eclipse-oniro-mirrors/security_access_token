@@ -76,17 +76,17 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     return ATRET_SUCCESS;
 }
 
-static void FreeDcaps(char *dcaps[MAX_DCAPS_NUM], int32_t num)
+static void FreeStrArray(char **arr, int32_t num)
 {
     for (int32_t i = 0; i <= num; i++) {
-        if (dcaps[i] != NULL) {
-            free(dcaps[i]);
-            dcaps[i] = NULL;
+        if (arr[i] != NULL) {
+            free(arr[i]);
+            arr[i] = NULL;
         }
     }
 }
 
-static uint32_t GetprocessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+static uint32_t GetProcessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
     if (!cJSON_IsString(processNameJson) || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
@@ -135,35 +135,35 @@ static uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-static uint32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
+static uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int *strNum, StrArrayAttr *attr)
 {
-    cJSON *dcapsJson = cJSON_GetObjectItem(cjsonItem, DCAPS_KEY_NAME);
-    int32_t dcapSize = cJSON_GetArraySize(dcapsJson);
-
-    tokenNode->dcapsNum = dcapSize;
-    if (dcapSize > MAX_DCAPS_NUM) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcapSize = %d is invalid.", __func__, dcapSize);
+    cJSON *strArrJson = cJSON_GetObjectItem(cjsonItem, attr->strKey);
+    int32_t size = cJSON_GetArraySize(strArrJson);
+    if (size > attr->maxStrNum) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:size = %d is invalid.", __func__, size);
         return ATRET_FAILED;
     }
-    for (int32_t i = 0; i < dcapSize; i++) {
-        cJSON *dcapItem = cJSON_GetArrayItem(dcapsJson, i);
-        if (dcapItem == NULL || !cJSON_IsString(dcapItem) || dcapItem->valuestring == NULL) {
+    *strNum = size;
+
+    for (int32_t i = 0; i < size; i++) {
+        cJSON *item = cJSON_GetArrayItem(strArrJson, i);
+        if ((item == NULL) || (!cJSON_IsString(item)) || (item->valuestring == NULL)) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
-        size_t length = strlen(dcapItem->valuestring);
-        if (length > MAX_DCAP_LEN) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcapItem is invalid.", __func__);
+        size_t length = strlen(item->valuestring);
+        if (length > attr->maxStrLen) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:item length %zu is invalid.", __func__, length);
             return ATRET_FAILED;
         }
-        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * (length + 1));
-        if (tokenNode->dcaps[i] == NULL) {
-            FreeDcaps(tokenNode->dcaps, i - 1);
+        strArr[i] = (char *)malloc(sizeof(char) * (length + 1));
+        if (strArr[i] == NULL) {
+            FreeStrArray(strArr, i - 1);
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:malloc invalid.", __func__);
             return ATRET_FAILED;
         }
-        if (strcpy_s(tokenNode->dcaps[i], length + 1, dcapItem->valuestring) != EOK) {
-            FreeDcaps(tokenNode->dcaps, i);
+        if (strcpy_s(strArr[i], length + 1, item->valuestring) != EOK) {
+            FreeStrArray(strArr, i);
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
             return ATRET_FAILED;
         }
@@ -173,17 +173,17 @@ static uint32_t GetDcapsInfoFromJson(cJSON *cjsonItem, NativeTokenList *tokenNod
 
 static int32_t GetTokenList(const cJSON *object)
 {
-    int32_t arraySize;
-    int32_t i;
     uint32_t ret;
     NativeTokenList *tmp = NULL;
+    StrArrayAttr attr;
 
     if (object == NULL) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:object is null.", __func__);
         return ATRET_FAILED;
     }
-    arraySize = cJSON_GetArraySize(object);
-    for (i = 0; i < arraySize; i++) {
+    int32_t arraySize = cJSON_GetArraySize(object);
+
+    for (int32_t i = 0; i < arraySize; i++) {
         tmp = (NativeTokenList *)malloc(sizeof(NativeTokenList));
         if (tmp == NULL) {
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
@@ -195,12 +195,28 @@ static int32_t GetTokenList(const cJSON *object)
             ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
-        ret = GetprocessNameFromJson(cjsonItem, tmp);
+        ret = GetProcessNameFromJson(cjsonItem, tmp);
         ret |= GetTokenIdFromJson(cjsonItem, tmp);
         ret |= GetAplFromJson(cjsonItem, tmp);
-        ret |= GetDcapsInfoFromJson(cjsonItem, tmp);
+
+        attr.maxStrLen = MAX_DCAP_LEN;
+        attr.maxStrNum = MAX_DCAPS_NUM;
+        attr.strKey = DCAPS_KEY_NAME;
+        ret |= GetInfoArrFromJson(cjsonItem, tmp->dcaps, &(tmp->dcapsNum), &attr);
         if (ret != ATRET_SUCCESS) {
             free(tmp);
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:GetInfoArrFromJson failed for dcaps.", __func__);
+            return ATRET_FAILED;
+        }
+
+        attr.maxStrLen = MAX_PERM_LEN;
+        attr.maxStrNum = MAX_PERM_NUM;
+        attr.strKey = PERMS_KEY_NAME;
+        ret = GetInfoArrFromJson(cjsonItem, tmp->perms, &(tmp->permsNum), &attr);
+        if (ret != ATRET_SUCCESS) {
+            free(tmp);
+            FreeStrArray(tmp->dcaps, tmp->dcapsNum - 1);
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:GetInfoArrFromJson failed for perms.", __func__);
             return ATRET_FAILED;
         }
 
@@ -395,24 +411,25 @@ static void WriteToFile(const cJSON *root)
     return;
 }
 
-static int32_t AddDcapsArray(cJSON *object, const NativeTokenList *curr)
+static int32_t AddStrArrayInfo(cJSON *object, char * const strArray[], int strNum, const char *strKey)
 {
-    cJSON *dcapsArr = cJSON_CreateArray();
-    if (dcapsArr == NULL) {
+    cJSON *strJsonArr = cJSON_CreateArray();
+    if (strJsonArr == NULL) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:CreateArray failed, strKey :%s.", __func__, strKey);
         return ATRET_FAILED;
     }
-    for (int32_t i = 0; i < curr->dcapsNum; i++) {
-        cJSON *item =  cJSON_CreateString(curr->dcaps[i]);
-        if (item == NULL || !cJSON_AddItemToArray(dcapsArr, item)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:tokenAttr cJSON_AddItemToArray failed.", __func__);
+    for (int32_t i = 0; i < strNum; i++) {
+        cJSON *item =  cJSON_CreateString(strArray[i]);
+        if (item == NULL || !cJSON_AddItemToArray(strJsonArr, item)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:AddItemToArray failed, strKey : %s.", __func__, strKey);
             cJSON_Delete(item);
-            cJSON_Delete(dcapsArr);
+            cJSON_Delete(strJsonArr);
             return ATRET_FAILED;
         }
     }
-    if (!cJSON_AddItemToObject(object, DCAPS_KEY_NAME, dcapsArr)) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps cJSON_AddItemToObject failed.", __func__);
-        cJSON_Delete(dcapsArr);
+    if (!cJSON_AddItemToObject(object, strKey, strJsonArr)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:AddItemToObject failed, strKey : %s.", __func__, strKey);
+        cJSON_Delete(strJsonArr);
         return ATRET_FAILED;
     }
     return ATRET_SUCCESS;
@@ -465,7 +482,13 @@ static cJSON *CreateNativeTokenJsonObject(const NativeTokenList *curr)
         cJSON_Delete(object);
         return NULL;
     }
-    int ret = AddDcapsArray(object, curr);
+
+    int ret = AddStrArrayInfo(object, curr->dcaps, curr->dcapsNum, DCAPS_KEY_NAME);
+    if (ret != ATRET_SUCCESS) {
+        cJSON_Delete(object);
+    }
+
+    ret = AddStrArrayInfo(object, curr->perms, curr->permsNum, PERMS_KEY_NAME);
     if (ret != ATRET_SUCCESS) {
         cJSON_Delete(object);
     }
@@ -498,7 +521,6 @@ static void SaveTokenIdToCfg(const NativeTokenList *curr)
 
     cJSON *node = CreateNativeTokenJsonObject(curr);
     if (node == NULL) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:CreateNativeTokenJsonObject failed.", __func__);
         cJSON_Delete(record);
         return;
     }
@@ -509,27 +531,41 @@ static void SaveTokenIdToCfg(const NativeTokenList *curr)
     return;
 }
 
-static uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
-                                 int32_t dcapNum, const char *aplStr, int32_t *aplRet)
+static uint32_t CheckStrArray(const char **strArray, int32_t strNum, int maxNum, uint32_t maxInfoLen)
 {
-    if ((processname == NULL) || strlen(processname) > MAX_PROCESS_NAME_LEN ||
-        strlen(processname) == 0) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processname is invalid.", __func__);
+    if (((strArray == NULL) && (strNum != 0)) ||
+        (strNum > maxNum) || (strNum < 0)) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strArray is null or strNum is invalid.", __func__);
         return ATRET_FAILED;
     }
-
-    if (((dcaps == NULL) && (dcapNum != 0)) || dcapNum > MAX_DCAPS_NUM || dcapNum < 0) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is null or dcapNum is invalid.", __func__);
-        return ATRET_FAILED;
-    }
-    for (int32_t i = 0; i < dcapNum; i++) {
-        if ((dcaps[i] == NULL) || (strlen(dcaps[i]) > MAX_DCAP_LEN)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcap length is invalid.", __func__);
+    for (int32_t i = 0; i < strNum; i++) {
+        if ((strArray[i] == NULL) || (strlen(strArray[i]) > maxInfoLen) || (strlen(strArray[i]) == 0)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strArray[%d] length is invalid.", __func__, i);
             return ATRET_FAILED;
         }
     }
+    return ATRET_SUCCESS;
+}
 
-    int32_t apl = GetAplLevel(aplStr);
+static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplRet)
+{
+    if ((tokenInfo->processName == NULL) || strlen(tokenInfo->processName) > MAX_PROCESS_NAME_LEN ||
+        strlen(tokenInfo->processName) == 0) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processName is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+    int retDcap = CheckStrArray(tokenInfo->dcaps, tokenInfo->dcapsNum, MAX_DCAPS_NUM, MAX_DCAP_LEN);
+    if (retDcap != ATRET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+    int retPerm = CheckStrArray(tokenInfo->perms, tokenInfo->permsNum, MAX_PERM_NUM, MAX_PERM_LEN);
+    if (retPerm != ATRET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:perms is invalid.", __func__);
+        return ATRET_FAILED;
+    }
+
+    int32_t apl = GetAplLevel(tokenInfo->aplStr);
     if (apl == 0) {
         return ATRET_FAILED;
     }
@@ -537,8 +573,21 @@ static uint32_t CheckProcessInfo(const char *processname, const char **dcaps,
     return ATRET_SUCCESS;
 }
 
-static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char **dcapsIn,
-                                            int32_t dcapNumIn, int32_t aplIn, NativeAtId *tokenId)
+static uint32_t CreateStrArray(int num, const char **strArr, char **strArrRes)
+{
+    for (int32_t i = 0; i < num; i++) {
+        strArrRes[i] = (char *)malloc(sizeof(char) * (strlen(strArr[i]) + 1));
+        if (strArrRes[i] == NULL ||
+            (strcpy_s(strArrRes[i], strlen(strArr[i]) + 1, strArr[i]) != EOK)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy strArr[%d] failed.", __func__, i);
+            FreeStrArray(strArrRes, i);
+            return ATRET_FAILED;
+        }
+    }
+    return ATRET_SUCCESS;
+}
+
+static uint32_t AddNewTokenToListAndFile(NativeTokenInfoParams *tokenInfo, int32_t aplIn, NativeAtId *tokenId)
 {
     NativeTokenList *tokenNode;
     NativeAtId id;
@@ -555,23 +604,24 @@ static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char 
     }
     tokenNode->tokenId = id;
     tokenNode->apl = aplIn;
-    if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, processname) != EOK) {
+    if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, tokenInfo->processName) != EOK) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
         free(tokenNode);
         return ATRET_FAILED;
     }
-    tokenNode->dcapsNum = dcapNumIn;
+    tokenNode->dcapsNum = tokenInfo->dcapsNum;
+    tokenNode->permsNum = tokenInfo->permsNum;
 
-    for (int32_t i = 0; i < dcapNumIn; i++) {
-        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * (strlen(dcapsIn[i]) + 1));
-        if (tokenNode->dcaps[i] == NULL ||
-            (strcpy_s(tokenNode->dcaps[i], strlen(dcapsIn[i]) + 1, dcapsIn[i]) != EOK)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy dcapsIn[%d] failed.", __func__, i);
-            FreeDcaps(tokenNode->dcaps, i);
-            free(tokenNode);
-            return ATRET_FAILED;
-        }
+    if (CreateStrArray(tokenInfo->dcapsNum, tokenInfo->dcaps, tokenNode->dcaps) != ATRET_SUCCESS) {
+        free(tokenNode);
+        return ATRET_FAILED;
     }
+    if (CreateStrArray(tokenInfo->permsNum, tokenInfo->perms, tokenNode->perms) != ATRET_SUCCESS) {
+        FreeStrArray(tokenNode->dcaps, tokenInfo->dcapsNum - 1);
+        free(tokenNode);
+        return ATRET_FAILED;
+    }
+
     tokenNode->next = g_tokenListHead->next;
     g_tokenListHead->next = tokenNode;
 
@@ -581,7 +631,7 @@ static uint32_t AddNewTokenToListAndCfgFile(const char *processname, const char 
     return ATRET_SUCCESS;
 }
 
-static int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
+static int32_t CompareTokenInfo(NativeTokenList *tokenNode, const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
 {
     if (tokenNode->apl != aplIn) {
         return 1;
@@ -597,26 +647,92 @@ static int32_t CompareProcessInfo(NativeTokenList *tokenNode, const char **dcaps
     return 0;
 }
 
-static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
-    const char **dcapsIn, int32_t dcapNumIn, int32_t aplIn)
+static int32_t ComparePermsInfo(NativeTokenList *tokenNode, const char **permsIn, int32_t permsNumIn)
 {
-    tokenNode->apl = aplIn;
+    if (tokenNode->permsNum != permsNumIn) {
+        return 1;
+    }
+    for (int32_t i = 0; i < permsNumIn; i++) {
+        if (strcmp(tokenNode->perms[i], permsIn[i]) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
-    for (int32_t i = 0; i < tokenNode->dcapsNum; i++) {
-        free(tokenNode->dcaps[i]);
-        tokenNode->dcaps[i] = NULL;
+static uint32_t UpdateStrArrayInList(char *strArr[], int *strNum,
+    const char **strArrNew, int strNumNew)
+{
+    for (int32_t i = 0; i < *strNum; i++) {
+        free(strArr[i]);
+        strArr[i] = NULL;
     }
 
-    tokenNode->dcapsNum = dcapNumIn;
-    for (int32_t i = 0; i < dcapNumIn; i++) {
-        int32_t len = strlen(dcapsIn[i]) + 1;
-        tokenNode->dcaps[i] = (char *)malloc(sizeof(char) * len);
-        if (tokenNode->dcaps[i] == NULL || (strcpy_s(tokenNode->dcaps[i], len, dcapsIn[i]) != EOK)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy dcapsIn[%d] failed.", __func__, i);
-            FreeDcaps(tokenNode->dcaps, i);
+    *strNum = strNumNew;
+    for (int32_t i = 0; i < strNumNew; i++) {
+        int32_t len = strlen(strArrNew[i]) + 1;
+        strArr[i] = (char *)malloc(sizeof(char) * len);
+        if (strArr[i] == NULL || (strcpy_s(strArr[i], len, strArrNew[i]) != EOK)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:copy strArr[%d] failed.", __func__, i);
+            FreeStrArray(strArr, i);
             return ATRET_FAILED;
         }
     }
+    return ATRET_SUCCESS;
+}
+
+static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode, NativeTokenInfoParams *tokenInfo)
+{
+    tokenNode->apl = GetAplLevel(tokenInfo->aplStr);
+
+    uint32_t ret = UpdateStrArrayInList(tokenNode->dcaps, &(tokenNode->dcapsNum),
+        tokenInfo->dcaps, tokenInfo->dcapsNum);
+    if (ret != ATRET_SUCCESS) {
+        return ret;
+    }
+    ret = UpdateStrArrayInList(tokenNode->perms, &(tokenNode->permsNum),
+        tokenInfo->perms, tokenInfo->permsNum);
+    if (ret != ATRET_SUCCESS) {
+        FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum);
+    }
+    return ret;
+}
+
+static uint32_t UpdateStrArrayType(char * const strArr[], int strNum, const char *strKey, cJSON *record)
+{
+    cJSON *strArrJson = cJSON_CreateArray();
+    if (strArrJson == NULL) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateArray failed.", __func__);
+        return ATRET_FAILED;
+    }
+    for (int32_t i = 0; i < strNum; i++) {
+        cJSON *item =  cJSON_CreateString(strArr[i]);
+        if (item == NULL) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateString failed.", __func__);
+            cJSON_Delete(strArrJson);
+            return ATRET_FAILED;
+        }
+        if (!cJSON_AddItemToArray(strArrJson, item)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_AddItemToArray failed.", __func__);
+            cJSON_Delete(item);
+            cJSON_Delete(strArrJson);
+            return ATRET_FAILED;
+        }
+    }
+    if (cJSON_GetObjectItem(record, strKey) != NULL) {
+        if (!cJSON_ReplaceItemInObject(record, strKey, strArrJson)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_ReplaceItemInObject failed.", __func__);
+            cJSON_Delete(strArrJson);
+            return ATRET_FAILED;
+        }
+    } else {
+        if (!cJSON_AddItemToObject(record, strKey, strArrJson)) {
+            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_AddItemToObject failed.", __func__);
+            cJSON_Delete(strArrJson);
+            return ATRET_FAILED;
+        }
+    }
+
     return ATRET_SUCCESS;
 }
 
@@ -632,26 +748,15 @@ static uint32_t UpdateItemcontent(const NativeTokenList *tokenNode, cJSON *recor
         return ATRET_FAILED;
     }
 
-    cJSON *dcapsArr = cJSON_CreateArray();
-    if (dcapsArr == NULL) {
+    uint32_t ret = UpdateStrArrayType(tokenNode->dcaps, tokenNode->dcapsNum, DCAPS_KEY_NAME, record);
+    if (ret != ATRET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps update failed.", __func__);
         return ATRET_FAILED;
     }
-    for (int32_t i = 0; i < tokenNode->dcapsNum; i++) {
-        cJSON *item =  cJSON_CreateString(tokenNode->dcaps[i]);
-        if (item == NULL) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_CreateString failed.", __func__);
-            cJSON_Delete(dcapsArr);
-            return ATRET_FAILED;
-        }
-        if (!cJSON_AddItemToArray(dcapsArr, item)) {
-            ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:cJSON_AddItemToArray failed.", __func__);
-            cJSON_Delete(item);
-            return ATRET_FAILED;
-        }
-    }
-    if (!cJSON_ReplaceItemInObject(record, DCAPS_KEY_NAME, dcapsArr)) {
-        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps update failed.", __func__);
-        cJSON_Delete(dcapsArr);
+
+    ret = UpdateStrArrayType(tokenNode->perms, tokenNode->permsNum, PERMS_KEY_NAME, record);
+    if (ret != ATRET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:perms update failed.", __func__);
         return ATRET_FAILED;
     }
     return ATRET_SUCCESS;
@@ -679,7 +784,7 @@ static uint32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON
     return ATRET_FAILED;
 }
 
-static uint32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
+static uint32_t UpdateInfoInCfgFile(NativeTokenList *tokenNode)
 {
     cJSON *record = NULL;
     char *fileBuff = NULL;
@@ -714,7 +819,7 @@ static uint32_t UpdateTokenInfoInCfgFile(NativeTokenList *tokenNode)
     return ATRET_SUCCESS;
 }
 
-uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t dcapNum, const char *aplStr)
+uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo)
 {
     NativeAtId tokenId = 0;
     uint64_t result = 0;
@@ -725,14 +830,14 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
         return INVALID_TOKEN_ID;
     }
 
-    uint32_t ret = CheckProcessInfo(processname, dcaps, dcapNum, aplStr, &apl);
+    uint32_t ret = CheckProcessInfo(tokenInfo, &apl);
     if (ret != ATRET_SUCCESS) {
         return INVALID_TOKEN_ID;
     }
 
     NativeTokenList *tokenNode = g_tokenListHead->next;
     while (tokenNode != NULL) {
-        if (strcmp(tokenNode->processName, processname) == 0) {
+        if (strcmp(tokenNode->processName, tokenInfo->processName) == 0) {
             tokenId = tokenNode->tokenId;
             break;
         }
@@ -740,12 +845,13 @@ uint64_t GetAccessTokenId(const char *processname, const char **dcaps, int32_t d
     }
 
     if (tokenNode == NULL) {
-        ret = AddNewTokenToListAndCfgFile(processname, dcaps, dcapNum, apl, &tokenId);
+        ret = AddNewTokenToListAndFile(tokenInfo, apl, &tokenId);
     } else {
-        int32_t needUpdate = CompareProcessInfo(tokenNode, dcaps, dcapNum, apl);
-        if (needUpdate != 0) {
-            ret = UpdateTokenInfoInList(tokenNode, dcaps, dcapNum, apl);
-            ret |= UpdateTokenInfoInCfgFile(tokenNode);
+        int32_t needTokenUpdate = CompareTokenInfo(tokenNode, tokenInfo->dcaps, tokenInfo->dcapsNum, apl);
+        int32_t needPermUpdate = ComparePermsInfo(tokenNode, tokenInfo->perms, tokenInfo->permsNum);
+        if ((needTokenUpdate != 0) || (needPermUpdate != 0)) {
+            ret = UpdateTokenInfoInList(tokenNode, tokenInfo);
+            ret |= UpdateInfoInCfgFile(tokenNode);
         }
     }
     if (ret != ATRET_SUCCESS) {

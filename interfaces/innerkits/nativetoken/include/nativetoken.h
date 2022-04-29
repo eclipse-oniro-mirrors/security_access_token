@@ -41,6 +41,8 @@ extern "C" {
 #define MAX_JSON_FILE_LEN 102400
 #define MAX_DCAPS_NUM 32
 #define MAX_DCAP_LEN 1024
+#define MAX_PERM_NUM 64
+#define MAX_PERM_LEN 256
 #define MAX_PARAMTER_LEN 128
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
 #define PATH_MAX_LEN 4096
@@ -51,6 +53,7 @@ extern "C" {
 #define ATRET_SUCCESS 0
 
 #define DCAPS_KEY_NAME  "dcaps"
+#define PERMS_KEY_NAME  "permissions"
 #define TOKENID_KEY_NAME "tokenId"
 #define TOKEN_ATTR_KEY_NAME "tokenAttr"
 #define APL_KEY_NAME "APL"
@@ -81,10 +84,18 @@ typedef struct TokenList {
     NativeAtId tokenId;
     int32_t apl;
     char *dcaps[MAX_DCAPS_NUM];
+    char *perms[MAX_PERM_NUM];
     int dcapsNum;
+    int permsNum;
     char processName[MAX_PROCESS_NAME_LEN + 1];
     struct TokenList *next;
 } NativeTokenList;
+
+typedef struct StrArrayAttribute {
+    int32_t maxStrNum;
+    uint32_t maxStrLen;
+    const char *strKey;
+} StrArrayAttr;
 
 extern int32_t GetFileBuff(const char *cfg, char **retBuff);
 #ifdef __cplusplus

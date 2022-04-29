@@ -20,6 +20,7 @@
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
+#include "native_token_info_for_sync_parcel.h"
 #include "native_token_info.h"
 
 namespace OHOS {
@@ -326,7 +327,7 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
     return res;
 }
 
-int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTokenInfosRes)
+int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -335,10 +336,10 @@ int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfo>
         return RET_FAILED;
     }
 
-    std::vector<NativeTokenInfoParcel> parcelList;
+    std::vector<NativeTokenInfoForSyncParcel> parcelList;
     int result = proxy->GetAllNativeTokenInfo(parcelList);
     for (auto nativeTokenParcel : parcelList) {
-        NativeTokenInfo native = nativeTokenParcel.nativeTokenInfoParams;
+        NativeTokenInfoForSync native = nativeTokenParcel.nativeTokenInfoForSyncParams;
         nativeTokenInfosRes.emplace_back(native);
     }
 
@@ -362,7 +363,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
 }
 
 int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfo>& nativeTokenInfoList)
+    std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -370,14 +371,14 @@ int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& device
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return RET_FAILED;
     }
-    std::vector<NativeTokenInfoParcel> hapTokenInfoParcels;
+    std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfoParcels;
     for (auto native : nativeTokenInfoList) {
-        NativeTokenInfoParcel nativeTokenInfoParcel;
-        nativeTokenInfoParcel.nativeTokenInfoParams = native;
-        hapTokenInfoParcels.emplace_back(nativeTokenInfoParcel);
+        NativeTokenInfoForSyncParcel nativeTokenInfoForSyncParcel;
+        nativeTokenInfoForSyncParcel.nativeTokenInfoForSyncParams = native;
+        nativeTokenInfoParcels.emplace_back(nativeTokenInfoForSyncParcel);
     }
     PermissionStateFullParcel permStateParcel;
-    int res = proxy->SetRemoteNativeTokenInfo(deviceID, hapTokenInfoParcels);
+    int res = proxy->SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoParcels);
     return res;
 }
 

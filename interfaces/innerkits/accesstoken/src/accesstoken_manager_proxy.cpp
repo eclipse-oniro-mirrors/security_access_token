@@ -735,7 +735,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     return result;
 }
 
-int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoParcel>& nativeTokenInfoRes)
+int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoRes)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -761,7 +761,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoPa
         return RET_FAILED;
     }
     for (int i = 0; i < size; i++) {
-        sptr<NativeTokenInfoParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoParcel>();
+        sptr<NativeTokenInfoForSyncParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoForSyncParcel>();
         if (nativeResult != nullptr) {
             nativeTokenInfoRes.emplace_back(*nativeResult);
         }
@@ -804,17 +804,17 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
 }
 
 int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfoParcel>& nativeTokenInfoParcel)
+    std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
         return RET_FAILED;
     }
-    if (!data.WriteUint32(nativeTokenInfoParcel.size())) {
+    if (!data.WriteUint32(nativeTokenInfoForSyncParcel.size())) {
         return RET_FAILED;
     }
-    for (NativeTokenInfoParcel& parcel : nativeTokenInfoParcel) {
+    for (NativeTokenInfoForSyncParcel& parcel : nativeTokenInfoForSyncParcel) {
         if (!data.WriteParcelable(&parcel)) {
             return RET_FAILED;
         }
