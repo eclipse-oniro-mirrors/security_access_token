@@ -46,6 +46,7 @@ typedef enum TypeATokenTypeEnum {
 } ATokenTypeEnum;
 
 typedef enum TypeATokenAplEnum {
+    APL_INVALID = 0,
     APL_NORMAL = 1,
     APL_SYSTEM_BASIC = 2,
     APL_SYSTEM_CORE = 3,

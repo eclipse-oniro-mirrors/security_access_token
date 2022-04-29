@@ -51,6 +51,17 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(
 SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 {
     requestTokenId_ = 0;
+    hapTokenInfo_.baseInfo.apl = APL_INVALID;
+    hapTokenInfo_.baseInfo.appID = "";
+    hapTokenInfo_.baseInfo.bundleName = "";
+    hapTokenInfo_.baseInfo.deviceID = "";
+    hapTokenInfo_.baseInfo.instIndex = 0;
+    hapTokenInfo_.baseInfo.dlpType = 0;
+    hapTokenInfo_.baseInfo.tokenAttr = 0;
+    hapTokenInfo_.baseInfo.tokenID = 0;
+    hapTokenInfo_.baseInfo.userID = 0;
+    hapTokenInfo_.baseInfo.ver = DEFAULT_TOKEN_VERSION;
+
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
     if (jsonObject.find("requestTokenId") != jsonObject.end() && jsonObject.at("requestTokenId").is_number()) {
