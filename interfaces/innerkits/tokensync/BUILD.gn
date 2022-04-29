@@ -32,25 +32,17 @@ ohos_shared_library("libtokensync_sdk") {
     "src",
     "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/frameworks/accesstoken/include",
-
-    #"//base/security/permission/interfaces/innerkits/permission_standard/permissionsdk/main/cpp/include/permission",
   ]
 
   sources = [
-    #"main/cpp/src/permission/permission_kit.cpp",
-    #"main/cpp/src/permission/permission_manager_client.cpp",
-    #"main/cpp/src/permission/permission_manager_proxy.cpp",
     "src/token_sync_kit.cpp",
     "src/token_sync_manager_client.cpp",
     "src/token_sync_manager_proxy.cpp",
   ]
 
   deps = [
-    #"//base/security/permission/frameworks/permission_standard/permissioncommunicationadapter:permission_standard_communication_adapter_cxx",
-    #"//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//utils/native/base:utils",
   ]

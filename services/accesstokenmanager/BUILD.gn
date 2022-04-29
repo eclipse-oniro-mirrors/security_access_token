@@ -30,7 +30,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/include/token",
     "main/cpp/include/permission",
     "main/cpp/include/database",
-    "//utils/system/safwk/native/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
