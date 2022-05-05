@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2021-2022 Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <benchmark/benchmark.h>
+#include <gtest/gtest.h>
+#include <string>
+#include <vector>
+#include <thread>
+#undef private
+#include "accesstoken_kit.h"
+#include "accesstoken_log.h"
+#include "permission_def.h"
+
+using namespace std;
+using namespace testing::ext;
+using namespace OHOS;
+using namespace OHOS::Security::AccessToken;
+
+namespace {
+int32_t TOKENID = 0;
+
+static const std::string BENCHMARK_TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
+PermissionDef PERMISSIONDEF = {
+    .permissionName = "ohos.permission.test1",
+    .bundleName = "accesstoken_test",
+    .grantMode = 1,
+    .label = "label",
+    .labelId = 1,
+    .description = "open the door",
+    .descriptionId = 1,
+    .availableLevel = APL_NORMAL
+};
+
+class AccessTokenNapiBenchmarkTest : public benchmark::Fixture {
+public:
+    void SetUp(const ::benchmark::State &state)
+    {}
+    void TearDown(const ::benchmark::State &state)
+    {}
+};
+
+/**
+ * @tc.name: VerifyAccessTokenTestCase001
+ * @tc.desc: VerifyAccessToken
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+BENCHMARK_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)(
+    benchmark::State &st)
+{
+    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest VerifyAccessTokenTestCase001 start!";
+    for (auto _ : st) {
+        EXPECT_EQ(AccessTokenKit::VerifyAccessToken(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA),-1);
+    }
+}
+
+BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)->Iterations(100)->
+    Repetitions(3)->ReportAggregatesOnly();
+
+/**
+ * @tc.name: GetPermissionFlagsTestCase002
+ * @tc.desc: GetPermissionFlags
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+BENCHMARK_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002)(
+    benchmark::State &st)
+{
+    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetPermissionFlagsTestCase002 start!";
+    for (auto _ : st) {
+        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA),0);
+    }
+}
+
+BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002)->Iterations(100)->
+    Repetitions(3)->ReportAggregatesOnly();
+
+/**
+ * @tc.name: GetDefPermissionTestCase003
+ * @tc.desc: GetDefPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+BENCHMARK_F(AccessTokenNapiBenchmarkTest,GetDefPermissionTestCase003)(
+    benchmark::State &st)
+{
+    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetDefPermissionTestCase003 start!";
+    for (auto _ : st) {
+        EXPECT_EQ(AccessTokenKit::GetDefPermission(BENCHMARK_TEST_PERMISSION_NAME_ALPHA,PERMISSIONDEF),-1);
+    }
+}
+
+BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)->Iterations(100)->
+    Repetitions(3)->ReportAggregatesOnly();
+
+/**
+ * @tc.name: RevokeUserGrantedPermissionTestCase004
+ * @tc.desc: RevokeUserGrantedPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+BENCHMARK_F(AccessTokenNapiBenchmarkTest,RevokeUserGrantedPermissionTestCase004)(
+    benchmark::State &st)
+{
+    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest RevokeUserGrantedPermissionTestCase004 start!";
+    for (auto _ : st) {
+        EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA,0), -1);
+    }
+}
+
+BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, RevokeUserGrantedPermissionTestCase004)->Iterations(100)->
+    Repetitions(3)->ReportAggregatesOnly();
+
+/**
+ * @tc.name: GrantPermissionTestCase005
+ * @tc.desc: GrantPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+BENCHMARK_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)(
+    benchmark::State &st)
+{
+    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GrantPermissionTestCase005 start!";
+    for (auto _ : st) {
+        EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA,0),-1);
+    }
+}
+
+BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)->Iterations(100)->
+    Repetitions(3)->ReportAggregatesOnly();
+
+ } //namespace
+
+// Run the benchmark
+BENCHMARK_MAIN();
