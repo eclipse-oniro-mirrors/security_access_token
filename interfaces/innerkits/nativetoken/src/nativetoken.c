@@ -554,12 +554,12 @@ static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplR
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:processName is invalid.", __func__);
         return ATRET_FAILED;
     }
-    int retDcap = CheckStrArray(tokenInfo->dcaps, tokenInfo->dcapsNum, MAX_DCAPS_NUM, MAX_DCAP_LEN);
+    uint32_t retDcap = CheckStrArray(tokenInfo->dcaps, tokenInfo->dcapsNum, MAX_DCAPS_NUM, MAX_DCAP_LEN);
     if (retDcap != ATRET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:dcaps is invalid.", __func__);
         return ATRET_FAILED;
     }
-    int retPerm = CheckStrArray(tokenInfo->perms, tokenInfo->permsNum, MAX_PERM_NUM, MAX_PERM_LEN);
+    uint32_t retPerm = CheckStrArray(tokenInfo->perms, tokenInfo->permsNum, MAX_PERM_NUM, MAX_PERM_LEN);
     if (retPerm != ATRET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR("[ATLIB-%s]:perms is invalid.", __func__);
         return ATRET_FAILED;
