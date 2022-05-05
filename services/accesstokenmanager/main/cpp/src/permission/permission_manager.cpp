@@ -123,9 +123,16 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
         ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
         return PERMISSION_DENIED;
     }
+
+    NativeTokenInfo info;
+    tokenInfoPtr->TranslateToNativeTokenInfo(info);
     if (PermissionDefinitionCache::GetInstance().IsPermissionDefEmpty()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission definition set has not been installed!");
-        return PERMISSION_GRANTED;
+        if (info.apl >= APL_SYSTEM_BASIC) {
+            return PERMISSION_GRANTED;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "native process apl is %{public}d!", info.apl);
+        return PERMISSION_DENIED;
     }
     if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(

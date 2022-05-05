@@ -46,7 +46,7 @@ void TokenLibKitTest::TearDown()
     }
 }
 
-int Start(const char *processName)
+int32_t Start(const char *processName)
 {
     const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
@@ -55,16 +55,21 @@ int Start(const char *processName)
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
+    const char **acls = new const char *[1];
+    acls[0] = "ohos.permission.test1";
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,
         .permsNum = 2,
+        .aclsNum = 1,
         .dcaps = dcaps,
         .perms = perms,
+        .acls = acls,
         .processName = processName,
         .aplStr = "system_core",
     };
     tokenId = GetAccessTokenId(&infoInstance);
     delete[] dcaps;
+    delete[] perms;
     return tokenId;
 }
 
@@ -79,7 +84,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
-    int dcapNum = 2;
+    int32_t dcapNum = 2;
     uint64_t tokenId;
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
@@ -87,8 +92,10 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
         .permsNum = 2,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = perms,
+        .acls = nullptr,
         .aplStr = "system_core",
     };
     infoInstance.processName = "";
@@ -130,10 +137,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     const char **dcaps = new const char *[32];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
-    int dcapNum = -1;
+    int32_t dcapNum = -1;
     uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .permsNum = 0,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = nullptr,
         .aplStr = "system_core",
@@ -181,10 +189,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
-    int dcapNum = 2;
+    int32_t dcapNum = 2;
     uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .permsNum = 0,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = nullptr,
         .aplStr = "system_core",
@@ -244,11 +253,12 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
     const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
-    int dcapNum = 2;
+    int32_t dcapNum = 2;
     uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
         .permsNum = 0,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = nullptr,
         .processName = "GetAccessTokenId003",
@@ -294,7 +304,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
     ASSERT_NE(tokenID, 0);
 
     char *fileBuff = nullptr;
-    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, ATRET_SUCCESS);
     string s = "GetAccessTokenId006";
     char *pos = strstr(fileBuff, s.c_str());
@@ -312,10 +322,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
     const char **perms = new const char *[MAX_PERM_NUM];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    int permsNum = -1;
+    int32_t permsNum = -1;
     uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
+        .aclsNum = 0,
         .dcaps = nullptr,
         .perms = perms,
         .aplStr = "system_core",
@@ -363,19 +374,28 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     uint64_t tokenId;
+    const char **acls = new const char *[2];
+    acls[0] = "ohos.permission.test1";
+    acls[1] = "ohos.permission.test2";
     const char **perms = new const char *[2];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,
         .permsNum = 2,
+        .aclsNum = 2,
         .dcaps = dcaps,
         .perms = perms,
+        .acls = acls,
         .processName = "GetAccessTokenId008",
         .aplStr = "system_core",
     };
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+
+    delete[] perms;
+    delete[] dcaps;
+    delete[] acls;
 }
 
 /**
@@ -389,7 +409,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     const char **perms = new const char *[2];
     perms[0] = "AT_CAP";
     perms[1] = "ST_CAP";
-    int permsNum = 2;
+    int32_t permsNum = 2;
     uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
@@ -451,13 +471,13 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
     /* enable 200 process before fondation is prepared */
     for (int32_t i = 0; i < 200; i++) {
         processName[i][0] = '\0';
-        int ret = sprintf_s(processName[i], MAX_PROCESS_NAME_LEN, "processName_%d", i);
+        int32_t ret = sprintf_s(processName[i], MAX_PROCESS_NAME_LEN, "processName_%d", i);
         ASSERT_NE(ret, 0);
         uint64_t tokenId = Start(processName[i]);
         ASSERT_NE(tokenId, 0);
     }
     char *fileBuff = nullptr;
-    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, 0);
     for (int32_t i = 0; i < 200; i++) {
         char *pos = strstr(fileBuff, processName[i]);
@@ -492,7 +512,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
     Start("process19");
 
     char *fileBuff = nullptr;
-    int ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
     ASSERT_EQ(ret, 0);
     char *pos = strstr(fileBuff, "process1");
     ASSERT_NE(pos, nullptr);
@@ -513,4 +533,202 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
     pos = strstr(fileBuff, "process9");
     ASSERT_NE(pos, nullptr);
     free(fileBuff);
+}
+
+/**
+ * @tc.name: GetAccessTokenId012
+ * @tc.desc: Get AccessTokenId with valid acls.
+ * @tc.type: FUNC
+ * @tc.require:AR000H09K6
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
+{
+    const char **dcaps = new const char *[2];
+    dcaps[0] = "AT_CAP";
+    dcaps[1] = "ST_CAP";
+    uint64_t tokenId;
+    const char **acls = new const char *[2];
+    acls[0] = "ohos.permission.test1";
+    acls[1] = "ohos.permission.test2";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 2,
+        .permsNum = 0,
+        .aclsNum = 2,
+        .dcaps = dcaps,
+        .perms = nullptr,
+        .acls = acls,
+        .processName = "GetAccessTokenId008",
+        .aplStr = "system_core",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    infoInstance.acls = nullptr;
+    infoInstance.aclsNum = 0;
+
+    delete[] dcaps;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenId013
+ * @tc.desc: cannot getAccessTokenId with invalid acls.
+ * @tc.type: FUNC
+ * @tc.require:AR000H09K6
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
+{
+    const char **acls = new const char *[2];
+    acls[0] = "AT_CAP";
+    acls[1] = "ST_CAP";
+    int32_t aclsNum = 2;
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 2,
+        .dcaps = nullptr,
+        .perms = acls,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.aclsNum = aclsNum;
+    infoInstance.acls = nullptr;
+    infoInstance.processName = "GetAccessTokenId013";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    aclsNum = 0;
+    infoInstance.aclsNum = aclsNum;
+    infoInstance.acls = nullptr;
+    infoInstance.processName = "GetAccessTokenId013_01";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    aclsNum = 1;
+    const std::string invalidAcl (MAX_PERM_LEN + 1, 'x');
+    acls[0] = invalidAcl.c_str();
+    infoInstance.aclsNum = aclsNum;
+    infoInstance.acls = acls;
+    infoInstance.processName = "GetAccessTokenId013_02";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    const std::string validcAcl01 (MAX_PERM_LEN, 'x');
+    acls[0] = validcAcl01.c_str();
+    infoInstance.aclsNum = aclsNum;
+    infoInstance.acls = acls;
+    infoInstance.processName = "GetAccessTokenId013_03";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    const std::string validcAcl02 (MAX_PERM_LEN - 1, 'x');
+    acls[0] = validcAcl02.c_str();
+    infoInstance.aclsNum = aclsNum;
+    infoInstance.acls = acls;
+    infoInstance.processName = "GetAccessTokenId013_04";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenId014
+ * @tc.desc: getAccessTokenId success with perms and acls.
+ * @tc.type: FUNC
+ * @tc.require:AR000H09K7
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
+{
+    uint64_t tokenId;
+    const char **acls = new const char *[1];
+    acls[0] = "ohos.permission.PERMISSION_USED_STATS";
+    const char **perms = new const char *[3];
+    perms[0] = "ohos.permission.PERMISSION_USED_STATS"; // system_core
+    perms[1] = "ohos.permission.PLACE_CALL"; // system_basic
+    perms[2] = "ohos.permission.unknown"; // invalid
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 3,
+        .dcaps = nullptr,
+        .perms = perms,
+        .aplStr = "system_basic",
+    };
+
+    infoInstance.acls = nullptr;
+    infoInstance.aclsNum = 0;
+    infoInstance.processName = "GetAccessTokenId014_01";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    infoInstance.acls = acls;
+    infoInstance.aclsNum = 1;
+    infoInstance.processName = "GetAccessTokenId014_02";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    delete[] perms;
+    delete[] acls;
+}
+
+/**
+ * @tc.name: GetAccessTokenId015
+ * @tc.desc: cannot getAccessTokenId with invalid aclsNum.
+ * @tc.type: FUNC
+ * @tc.require:AR000H09K6
+ */
+HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
+{
+    const char **perms = new const char *[MAX_PERM_NUM];
+    perms[0] = "ohos.permission.test1";
+    perms[1] = "ohos.permission.test2";
+    int32_t permsNum = 2;
+    uint64_t tokenId;
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = perms,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = -1;
+    infoInstance.processName = "GetAccessTokenId015";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    infoInstance.permsNum = MAX_PERM_NUM;
+    infoInstance.aclsNum = MAX_PERM_NUM + 1;
+    infoInstance.processName = "GetAccessTokenId015_00";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    for (int32_t i = 0; i < MAX_PERM_NUM; i++) {
+        perms[i] = "ohos.permission.test";
+    }
+
+    permsNum = MAX_PERM_NUM;
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId015_01";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    permsNum = MAX_PERM_NUM - 1;
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = permsNum;
+    infoInstance.processName = "GetAccessTokenId015_02";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_NE(tokenId, 0);
+
+    permsNum = MAX_PERM_NUM - 1;
+    infoInstance.permsNum = permsNum;
+    infoInstance.aclsNum = permsNum + 1;
+    infoInstance.processName = "GetAccessTokenId015_03";
+    tokenId = GetAccessTokenId(&infoInstance);
+    ASSERT_EQ(tokenId, 0);
+
+    delete[] perms;
 }

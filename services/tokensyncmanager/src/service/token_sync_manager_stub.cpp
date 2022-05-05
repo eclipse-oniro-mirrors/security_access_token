@@ -17,8 +17,8 @@
 
 #include "accesstoken_log.h"
 #include "hap_token_info_for_sync_parcel.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "ipc_skeleton.h"
+#include "native_token_info_for_sync_parcel.h"
 #include "string_ex.h"
 
 namespace OHOS {

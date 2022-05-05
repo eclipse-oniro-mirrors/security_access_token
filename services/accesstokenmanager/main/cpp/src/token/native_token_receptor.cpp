@@ -33,7 +33,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 }
 
 int32_t NativeReqPermsGet(
-    const nlohmann::json& j, std::vector<PermissionStateFull> &permStateList)
+    const nlohmann::json& j, std::vector<PermissionStateFull>& permStateList)
 {
     std::vector<std::string> permReqList;
     if (j.find(JSON_PERMS) == j.end()) {
@@ -46,7 +46,7 @@ int32_t NativeReqPermsGet(
     for (auto permReq : permReqList) {
         PermissionStateFull permState;
         permState.permissionName = permReq;
-        permState.isGeneral = 1;
+        permState.isGeneral = true;
         permState.resDeviceID.push_back("");
         permState.grantStatus.push_back(PERMISSION_GRANTED);
         permState.grantFlags.push_back(PERMISSION_SYSTEM_FIXED);
@@ -107,6 +107,15 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     if (j.find(JSON_DCAPS) != j.end()) {
         native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
         if (native.dcap.size() > MAX_DCAPS_NUM) {
+            return;
+        }
+    } else {
+        return;
+    }
+
+    if (j.find(JSON_ACLS) != j.end()) {
+        native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
+        if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
             return;
         }
     } else {

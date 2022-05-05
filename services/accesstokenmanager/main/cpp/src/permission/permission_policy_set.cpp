@@ -326,7 +326,8 @@ void PermissionPolicySet::ToString(std::string& info)
     info.append("\n  ]\n");
 }
 
-bool PermissionPolicySet::IsPermissionReqValid(int32_t tokenApl, const std::string &permissionName)
+bool PermissionPolicySet::IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
+    const std::vector<std::string>& nativeAcls)
 {
     PermissionDef permissionDef;
     int ret = PermissionDefinitionCache::GetInstance().FindByPermissionName(
@@ -334,22 +335,28 @@ bool PermissionPolicySet::IsPermissionReqValid(int32_t tokenApl, const std::stri
     if (ret != RET_SUCCESS) {
         return false;
     }
-    if (tokenApl < permissionDef.availableLevel) {
-        return false;
+    if (tokenApl >= permissionDef.availableLevel) {
+        return true;
     }
-    return true;
+
+    auto iter = std::find(nativeAcls.begin(), nativeAcls.end(), permissionName);
+    if (iter != nativeAcls.end()) {
+        return true;
+    }
+    return false;
 }
 
-void PermissionPolicySet::PermStateToString(int32_t tokenApl, std::string& info)
+void PermissionPolicySet::PermStateToString(int32_t tokenApl,
+    const std::vector<std::string>& nativeAcls, std::string& info)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
 
-    std::vector<std::string> invaildPermList = {};
+    std::vector<std::string> invalidPermList = {};
     info.append(R"(  "permStateList": [)");
     info.append("\n");
     for (auto iter = permStateList_.begin(); iter != permStateList_.end(); iter++) {
-        if (!IsPermissionReqValid(tokenApl, iter->permissionName)) {
-            invaildPermList.emplace_back(iter->permissionName);
+        if (!IsPermissionReqValid(tokenApl, iter->permissionName, nativeAcls)) {
+            invalidPermList.emplace_back(iter->permissionName);
             continue;
         }
         PermStateFullToString(*iter, info);
@@ -359,13 +366,13 @@ void PermissionPolicySet::PermStateToString(int32_t tokenApl, std::string& info)
     }
     info.append("\n  ]\n");
 
-    if (invaildPermList.size() == 0) {
+    if (invalidPermList.size() == 0) {
         return;
     }
 
-    info.append(R"(  "invaildPermList": [)");
+    info.append(R"(  "invalidPermList": [)");
     info.append("\n");
-    for (auto iter = invaildPermList.begin(); iter != invaildPermList.end(); iter++) {
+    for (auto iter = invalidPermList.begin(); iter != invalidPermList.end(); iter++) {
         info.append(R"(      "permissionName": ")" + *iter + R"(")" + ",\n");
     }
     info.append("\n  ]\n");

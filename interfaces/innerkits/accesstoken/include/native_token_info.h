@@ -32,6 +32,7 @@ public:
     std::vector<std::string> dcap;
     AccessTokenID tokenID;
     AccessTokenAttr tokenAttr;
+    std::vector<std::string> nativeAcls;
 };
 
 class NativeTokenInfoForSync final {

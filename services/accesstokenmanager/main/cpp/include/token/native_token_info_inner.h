@@ -34,6 +34,7 @@ static const std::string JSON_TOKEN_ID = "tokenId";
 static const std::string JSON_TOKEN_ATTR = "tokenAttr";
 static const std::string JSON_DCAPS = "dcaps";
 static const std::string JSON_PERMS = "permissions";
+static const std::string JSON_ACLS = "nativeAcls";
 static const int MAX_DCAPS_NUM = 32;
 static const int MAX_REQ_PERM_NUM = 32;
 
@@ -41,23 +42,27 @@ class NativeTokenInfoInner final {
 public:
     NativeTokenInfoInner();
     NativeTokenInfoInner(NativeTokenInfo& info,
-        const std::vector<PermissionStateFull> &permStateList);
+        const std::vector<PermissionStateFull>& permStateList);
     virtual ~NativeTokenInfoInner();
 
     int Init(AccessTokenID id, const std::string& processName, int apl,
         const std::vector<std::string>& dcap,
-        const std::vector<PermissionStateFull> &permStateList);
+        const std::vector<std::string>& nativeAcls,
+        const std::vector<PermissionStateFull>& permStateList);
     void StoreNativeInfo(std::vector<GenericValues>& valueList,
         std::vector<GenericValues>& permStateValues) const;
     void TranslateToNativeTokenInfo(NativeTokenInfo& InfoParcel) const;
     void SetDcaps(const std::string& dcapStr);
+    void SetNativeAcls(const std::string& AclsStr);
     void ToString(std::string& info) const;
     int RestoreNativeTokenInfo(AccessTokenID tokenId, const GenericValues& inGenericValues,
         const std::vector<GenericValues>& permStateRes);
     void Update(AccessTokenID tokenId, const std::string& processName,
-        int apl, const std::vector<std::string>& dcap);
+        int apl, const std::vector<std::string>& dcap,
+        const std::vector<std::string>& nativeAcls);
 
     std::vector<std::string> GetDcap() const;
+    std::vector<std::string> GetNativeAcls() const;
     AccessTokenID GetTokenID() const;
     std::string GetProcessName() const;
     NativeTokenInfo GetNativeTokenInfo() const;
@@ -68,6 +73,7 @@ public:
 private:
     int TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     std::string DcapToString(const std::vector<std::string>& dcap) const;
+    std::string NativeAclsToString(const std::vector<std::string>& nativeAcls) const;
 
     // true means sync from remote.
     bool isRemote_;

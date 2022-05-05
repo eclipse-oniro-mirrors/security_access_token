@@ -33,6 +33,7 @@ const std::string FIELD_TOKEN_VERSION = "token_version";
 const std::string FIELD_TOKEN_ATTR = "token_attr";
 const std::string FIELD_PROCESS_NAME = "process_name";
 const std::string FIELD_DCAP = "dcap";
+const std::string FIELD_NATIVE_ACLS = "native_acls";
 const std::string FIELD_PERMISSION_NAME = "permission_name";
 const std::string FIELD_GRANT_MODE = "grant_mode";
 const std::string FIELD_AVAILABLE_LEVEL = "available_level";

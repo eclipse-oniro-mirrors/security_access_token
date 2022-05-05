@@ -26,10 +26,12 @@ extern "C" {
 #endif
 
 typedef struct TokenInfoParams {
-    int dcapsNum;
-    int permsNum;
+    int32_t dcapsNum;
+    int32_t permsNum;
+    int32_t aclsNum;
     const char **dcaps;
     const char **perms;
+    const char **acls;
     const char *processName;
     const char *aplStr;
 } NativeTokenInfoParams;

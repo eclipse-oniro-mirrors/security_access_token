@@ -36,7 +36,7 @@ bool NativeTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 {
     NativeTokenInfoParcel baseInfoParcel;
     baseInfoParcel.nativeTokenInfoParams = this->nativeTokenInfoForSyncParams.baseInfo;
-    out.WriteParcelable(&baseInfoParcel);
+    RETURN_IF_FALSE(out.WriteParcelable(&baseInfoParcel));
 
     const std::vector<PermissionStateFull>& permStateList = this->nativeTokenInfoForSyncParams.permStateList;
     int32_t permStateListSize = static_cast<int32_t>(permStateList.size());
@@ -45,7 +45,7 @@ bool NativeTokenInfoForSyncParcel::Marshalling(Parcel& out) const
     for (int i = 0; i < permStateListSize; i++) {
         PermissionStateFullParcel permStateParcel;
         permStateParcel.permStatFull = permStateList[i];
-        out.WriteParcelable(&permStateParcel);
+        RETURN_IF_FALSE(out.WriteParcelable(&permStateParcel));
     }
 
     return true;

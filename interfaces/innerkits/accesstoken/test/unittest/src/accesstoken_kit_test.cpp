@@ -2230,8 +2230,10 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
         .permsNum = 0,
+        .aclsNum = 0,
         .dcaps = nullptr,
         .perms = nullptr,
+        .acls = nullptr,
         .processName = "GetTokenTypeFlag002",
         .aplStr = "system_core",
     };
@@ -3334,7 +3336,8 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
         .baseInfo.processName = "native_test1",
         .baseInfo.dcap = {"SYSDCAP", "DMSDCAP"},
         .baseInfo.tokenID = 0x28000000,
-        .baseInfo.tokenAttr = 0
+        .baseInfo.tokenAttr = 0,
+        .baseInfo.nativeAcls = {"ohos.permission.DISTRIBUTED_DATASYNC"},
     };
 
     std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
@@ -3356,6 +3359,8 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.dcap.size(), 2);
     ASSERT_EQ(resultInfo.dcap[0], "SYSDCAP");
     ASSERT_EQ(resultInfo.dcap[1], "DMSDCAP");
+    ASSERT_EQ(resultInfo.nativeAcls.size(), 1);
+    ASSERT_EQ(resultInfo.nativeAcls[0], "ohos.permission.DISTRIBUTED_DATASYNC");
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.baseInfo.tokenAttr);
 }
