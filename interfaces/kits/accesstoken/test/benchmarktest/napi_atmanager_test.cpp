@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Device Co., Ltd.
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -62,7 +62,7 @@ BENCHMARK_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)(
 {
     GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest VerifyAccessTokenTestCase001 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::VerifyAccessToken(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA),-1);
+        EXPECT_EQ(AccessTokenKit::VerifyAccessToken(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), -1);
     }
 }
 
@@ -80,7 +80,7 @@ BENCHMARK_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002)(
 {
     GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetPermissionFlagsTestCase002 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA),0);
+        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), 0);
     }
 }
 
@@ -93,12 +93,12 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest,GetDefPermissionTestCase003)(
+BENCHMARK_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)(
     benchmark::State &st)
 {
     GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetDefPermissionTestCase003 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GetDefPermission(BENCHMARK_TEST_PERMISSION_NAME_ALPHA,PERMISSIONDEF),-1);
+        EXPECT_EQ(AccessTokenKit::GetDefPermission(BENCHMARK_TEST_PERMISSION_NAME_ALPHA, PERMISSIONDEF), -1);
     }
 }
 
@@ -111,12 +111,12 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)-
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest,RevokeUserGrantedPermissionTestCase004)(
+BENCHMARK_F(AccessTokenNapiBenchmarkTest, RevokeUserGrantedPermissionTestCase004)(
     benchmark::State &st)
 {
     GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest RevokeUserGrantedPermissionTestCase004 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA,0), -1);
+        EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), -1);
     }
 }
 
@@ -134,14 +134,13 @@ BENCHMARK_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)(
 {
     GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GrantPermissionTestCase005 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID,BENCHMARK_TEST_PERMISSION_NAME_ALPHA,0),-1);
+        EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), -1);
     }
 }
 
 BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 
- } //namespace
-
+ } // namespace
 // Run the benchmark
 BENCHMARK_MAIN();
