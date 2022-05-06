@@ -34,7 +34,7 @@ config("access_token_kits_config_benchmarktest") {
   }
 }
 
-ohos_benchmarktest("napi_atmanager_test") {
+ohos_benchmarktest("NapiAtmanagerTest") {
   module_out_path = module_output_path
 
   sources = [ "napi_atmanager_test.cpp" ]
@@ -49,5 +49,5 @@ ohos_benchmarktest("napi_atmanager_test") {
 
 group("benchmarktest") {
   testonly = true
-  deps = [ ":napi_atmanager_test" ]
+  deps = [ ":NapiAtmanagerTest" ]
 }

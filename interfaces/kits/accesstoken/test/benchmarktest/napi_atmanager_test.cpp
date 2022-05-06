@@ -43,7 +43,7 @@ PermissionDef PERMISSIONDEF = {
     .availableLevel = APL_NORMAL
 };
 
-class AccessTokenNapiBenchmarkTest : public benchmark::Fixture {
+class NapiAtmanagerTest : public benchmark::Fixture {
 public:
     void SetUp(const ::benchmark::State &state)
     {}
@@ -57,16 +57,16 @@ public:
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)(
+BENCHMARK_F(NapiAtmanagerTest, VerifyAccessTokenTestCase001)(
     benchmark::State &st)
 {
-    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest VerifyAccessTokenTestCase001 start!";
+    GTEST_LOG_(INFO) << "NapiAtmanagerTest VerifyAccessTokenTestCase001 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::VerifyAccessToken(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), -1);
     }
 }
 
-BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)->Iterations(100)->
+BENCHMARK_REGISTER_F(NapiAtmanagerTest, VerifyAccessTokenTestCase001)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 
 /**
@@ -75,16 +75,16 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, VerifyAccessTokenTestCase001)
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002)(
+BENCHMARK_F(NapiAtmanagerTest, GetPermissionFlagsTestCase002)(
     benchmark::State &st)
 {
-    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetPermissionFlagsTestCase002 start!";
+    GTEST_LOG_(INFO) << "NapiAtmanagerTest GetPermissionFlagsTestCase002 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), 0);
     }
 }
 
-BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002)->Iterations(100)->
+BENCHMARK_REGISTER_F(NapiAtmanagerTest, GetPermissionFlagsTestCase002)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 
 /**
@@ -93,16 +93,16 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetPermissionFlagsTestCase002
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)(
+BENCHMARK_F(NapiAtmanagerTest, GetDefPermissionTestCase003)(
     benchmark::State &st)
 {
-    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GetDefPermissionTestCase003 start!";
+    GTEST_LOG_(INFO) << "NapiAtmanagerTest GetDefPermissionTestCase003 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::GetDefPermission(BENCHMARK_TEST_PERMISSION_NAME_ALPHA, PERMISSIONDEF), -1);
     }
 }
 
-BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)->Iterations(100)->
+BENCHMARK_REGISTER_F(NapiAtmanagerTest, GetDefPermissionTestCase003)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 
 /**
@@ -111,16 +111,16 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GetDefPermissionTestCase003)-
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest, RevokeUserGrantedPermissionTestCase004)(
+BENCHMARK_F(NapiAtmanagerTest, RevokeUserGrantedPermissionTestCase004)(
     benchmark::State &st)
 {
-    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest RevokeUserGrantedPermissionTestCase004 start!";
+    GTEST_LOG_(INFO) << "NapiAtmanagerTest RevokeUserGrantedPermissionTestCase004 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), -1);
     }
 }
 
-BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, RevokeUserGrantedPermissionTestCase004)->Iterations(100)->
+BENCHMARK_REGISTER_F(NapiAtmanagerTest, RevokeUserGrantedPermissionTestCase004)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 
 /**
@@ -129,16 +129,16 @@ BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, RevokeUserGrantedPermissionTe
  * @tc.type: FUNC
  * @tc.require:
  */
-BENCHMARK_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)(
+BENCHMARK_F(NapiAtmanagerTest, GrantPermissionTestCase005)(
     benchmark::State &st)
 {
-    GTEST_LOG_(INFO) << "AccessTokenNapiBenchmarkTest GrantPermissionTestCase005 start!";
+    GTEST_LOG_(INFO) << "NapiAtmanagerTest GrantPermissionTestCase005 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), -1);
     }
 }
 
-BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)->Iterations(100)->
+BENCHMARK_REGISTER_F(NapiAtmanagerTest, GrantPermissionTestCase005)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
 } // namespace
 
