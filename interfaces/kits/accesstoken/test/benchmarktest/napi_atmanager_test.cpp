@@ -140,7 +140,6 @@ BENCHMARK_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)(
 
 BENCHMARK_REGISTER_F(AccessTokenNapiBenchmarkTest, GrantPermissionTestCase005)->Iterations(100)->
     Repetitions(3)->ReportAggregatesOnly();
+} // namespace
 
- } // namespace
-// Run the benchmark
 BENCHMARK_MAIN();
