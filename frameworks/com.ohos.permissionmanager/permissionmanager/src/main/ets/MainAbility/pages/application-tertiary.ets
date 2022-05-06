@@ -18,6 +18,7 @@ import router from '@system.router';
 import bundle from "@ohos.bundle";
 import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import Resmgr from '@ohos.resourceManager'
 import { authorizeDialog } from "../common/components/dialog.ets";
 import { permissionDescriptions, permissionGroups } from "../common/model/permissionGroup.ets";
 import Constants from '../common/utils/constant.ets';
@@ -32,6 +33,7 @@ let nowGrantResult = Constants.PERMISSION_NUM; // Authorization results now
 let nowRevokeResult = Constants.PERMISSION_NUM; // Now deauthorize results
 let GrantResultFlag = []; // Authorization result Flag
 let RevokeResultFlag = []; // Cancel authorization result Flag
+let reason = ""  // Authorized reason
 class MeidaDocObj {
   name: string
   index: number
@@ -176,6 +178,17 @@ struct mediaDocumentItem {
   aboutToAppear() {
     let permissionDescription = permissionDescriptions[backTitle];
     bundle.getBundleInfo(routerData, Constants.PARMETER_BUNDLE_FLAG).then(res => {
+      res.reqPermissionDetails.forEach(reqPermissionDetail => {
+        if(reqPermissionDetail.name == permissions[0]) {
+          Resmgr.getResourceManager(routerData).then(item => {
+            item.getString(reqPermissionDetail.reasonId, (err, value) => {
+              if (value !== undefined) {
+                reason = value
+              }
+            })
+          })
+        }
+      })
       Promise.all([getAppLabel(res.appInfo.labelId, res.name),
       getAppIcon(res.appInfo.iconId, res.name)])
         .then((values) => {
@@ -258,7 +271,7 @@ struct mediaDocumentItem {
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
-            Text(backTitle + "访问权限")
+            Text(reason != "" ? reason : (backTitle + "访问权限"))
               .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
               .textAlign(TextAlign.Start)
           }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })

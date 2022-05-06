@@ -54,15 +54,10 @@ struct appNamePlusPage {
         Column() {
           Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
             Row() {
-              Column() {
-                Row() {
-                  Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                    Text(item.groupName)
-                      .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                      .fontColor($r('app.color.text_color'))
-                  }.margin({ top: Constants.FLEX_MARGIN_TOP, bottom: Constants.FLEX_MARGIN_BOTTOM })
-                }.height(Constants.FULL_HEIGHT)
-              }.flexGrow(Constants.FLEX_GROW).constraintSize({ minHeight: Constants.CONSTRAINTSIZE_MINHEIGHT })
+              Text(item.groupName)
+                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+                .fontColor($r('app.color.text_color'))
+                .flexGrow(Constants.FLEX_GROW)
               Image($r('app.media.rightarrow'))
                 .objectFit(ImageFit.Contain)
                 .height(Constants.IMAGE_HEIGHT)
