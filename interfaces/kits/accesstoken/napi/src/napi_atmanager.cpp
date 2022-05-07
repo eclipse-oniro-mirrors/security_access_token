@@ -113,9 +113,9 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
 void NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = 2;
+    size_t argc = VERIFY_OR_FLAG_INPUT_MAX_VALUES;
 
-    napi_value argv[2] = { 0 };
+    napi_value argv[VERIFY_OR_FLAG_INPUT_MAX_VALUES] = { 0 };
     napi_value thisVar = nullptr;
 
     void *data = nullptr;
@@ -133,15 +133,17 @@ void NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
             napi_get_value_uint32(env, argv[i], &(asyncContext.tokenId)); // get tokenId
         } else if (valueType == napi_string) {
             napi_get_value_string_utf8(env, argv[i], asyncContext.permissionName,
-                VALUE_BUFFER_SIZE, &(asyncContext.pNameLen)); // get permissionName
+                VALUE_BUFFER_SIZE + 1, &(asyncContext.pNameLen)); // get permissionName
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Type matching failed");
-            asyncContext.result = -1;
+            return;
         }
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d", asyncContext.tokenId);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s", asyncContext.permissionName);
+    asyncContext.result = AT_PERM_OPERA_SUCC;
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
+        asyncContext.permissionName);
 }
 
 void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
@@ -151,13 +153,6 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     // use innerkit class method to verify permission
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
         asyncContext->permissionName);
-
-    // set status according to the innerkit class method return
-    if ((asyncContext->result == PERMISSION_GRANTED) || (asyncContext->result == PERMISSION_DENIED)) {
-        asyncContext->status = ASYN_THREAD_EXEC_SUCC; // granted and denied regard as function exec success
-    } else {
-        asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
-    }
 }
 
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
@@ -168,15 +163,9 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName, asyncContext->result);
 
-    if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-        // execute succ, use resolve to return result by the deferred create before
-        napi_create_int32(env, asyncContext->result, &result); // verify result
-        napi_resolve_deferred(env, asyncContext->deferred, result);
-    } else {
-        // execute fail, use reject to return default PERMISSION_DENIED by the deferred create before
-        napi_create_int32(env, PERMISSION_DENIED, &result); // verify result
-        napi_reject_deferred(env, asyncContext->deferred, result);
-    }
+    // only resolve, no reject currently
+    napi_create_int32(env, asyncContext->result, &result); // verify result
+    napi_resolve_deferred(env, asyncContext->deferred, result);
 
     // after return the result, free resources
     napi_delete_async_work(env, asyncContext->work);
@@ -194,13 +183,15 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     }
 
     ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->result == -1) {
+    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
         delete asyncContext;
         return nullptr;
     }
 
-    napi_value result = nullptr;
+    // after get input, keep result default failed
+    asyncContext->result = AT_PERM_OPERA_FAIL;
 
+    napi_value result = nullptr;
     napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
 
     napi_value resource = nullptr; // resource name
@@ -219,9 +210,9 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
 void NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = 4;
+    size_t argc = GRANT_OR_REVOKE_INPUT_MAX_VALUES;
 
-    napi_value argv[4] = { 0 };
+    napi_value argv[GRANT_OR_REVOKE_INPUT_MAX_VALUES] = {nullptr};
     napi_value thisVar = nullptr;
 
     void *data = nullptr;
@@ -239,20 +230,21 @@ void NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
             napi_get_value_uint32(env, argv[i], &(asyncContext.tokenId)); // get tokenId
         } else if (valueType == napi_string) {
             napi_get_value_string_utf8(env, argv[i], asyncContext.permissionName,
-                VALUE_BUFFER_SIZE, &(asyncContext.pNameLen)); // get permissionName
+                VALUE_BUFFER_SIZE + 1, &(asyncContext.pNameLen)); // get permissionName
         } else if (valueType == napi_number) {
             napi_get_value_int32(env, argv[i], &(asyncContext.flag)); // get flag
         } else if (valueType == napi_function) {
             napi_create_reference(env, argv[i], 1, &asyncContext.callbackRef); // get probably callback
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Type matching failed");
-            asyncContext.result = -1;
+            return;
         }
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d", asyncContext.tokenId);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s", asyncContext.permissionName);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "flag = %{public}d", asyncContext.flag);
+    asyncContext.result = AT_PERM_OPERA_SUCC;
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d",
+        asyncContext.tokenId, asyncContext.permissionName, asyncContext.flag);
 }
 
 void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
@@ -269,57 +261,37 @@ void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
     permissionDef.descriptionId = 0;
 
     // use innerkit class method to check if the permission grantmode is USER_GRANT-0
-    AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    int ret = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    if (ret) {
+        // this means permission is undefined, return failed
+        return;
+    }
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.", asyncContext->permissionName,
         permissionDef.grantMode);
 
-    if (permissionDef.grantMode != USER_GRANT) {
-        // system_grant permission, return fail directly
-        asyncContext->result = ACCESSTOKEN_PERMISSION_GRANT_FAIL;
-        asyncContext->status = ASYN_THREAD_EXEC_SUCC;
-    } else {
-        // user_grant permission, use innerkit class method to grant permission
-        asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId,
-                                                               asyncContext->permissionName,
-                                                               asyncContext->flag);
+    // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
+    if (permissionDef.grantMode == USER_GRANT) {
+        asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
+            asyncContext->flag);
 
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
             asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
-
-        // set status according to the innerkit class method return
-        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_SUCC) ||
-            (asyncContext->result == ACCESSTOKEN_PERMISSION_GRANT_FAIL)) {
-            asyncContext->status = ASYN_THREAD_EXEC_SUCC; // success or failure regard as function exec success
-        } else {
-            asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
-        }
     }
 }
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    napi_value result = nullptr;
+    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
-    if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-        // execute succ, consider asyncContext->result as return result
-        napi_create_int32(env, asyncContext->result, &result);
-    } else {
-        // execute fail, set default failure result
-        napi_create_int32(env, ACCESSTOKEN_PERMISSION_GRANT_FAIL, &result);
-    }
+    // no err, results[0] remain nullptr
+    napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
 
     if (asyncContext->deferred) {
-        // promise type
-        if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-            // innerkit class methon exec success, use resolve to return result
-            napi_resolve_deferred(env, asyncContext->deferred, result);
-        } else {
-            // innerkit class methon exec failure, use reject to return result
-            napi_reject_deferred(env, asyncContext->deferred, result);
-        }
+        // promise type, no reject currently
+        napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
     } else {
         // callback type
         napi_value callback = nullptr;
@@ -330,7 +302,7 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
         napi_get_undefined(env, &thisValue); // can not null otherwise js code can not get return
         napi_create_int32(env, 0, &thatValue); // can not null otherwise js code can not get return
         napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-        napi_call_function(env, thisValue, callback, 1, &result, &thatValue);
+        napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue);
         napi_delete_reference(env, asyncContext->callbackRef); // release callback handle
     }
 
@@ -350,10 +322,13 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     }
 
     ParseInputGrantOrRevokePermission(env, info, *asyncContext);
-    if (asyncContext->result == -1) {
+    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
         delete asyncContext;
         return nullptr;
     }
+
+    // after get input, keep result default failed
+    asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
 
@@ -393,56 +368,37 @@ void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
     permissionDef.descriptionId = 0;
 
     // use innerkit class method to check if the permission grantmode is USER_GRANT-0
-    AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    int ret = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    if (ret) {
+        // this means permission is undefined, return failed
+        return;
+    }
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.", asyncContext->permissionName,
         permissionDef.grantMode);
 
-    if (permissionDef.grantMode != USER_GRANT) {
-        // system_grant permission, return fail directly
-        asyncContext->result = ACCESSTOKEN_PERMISSION_REVOKE_FAIL;
-        asyncContext->status = ASYN_THREAD_EXEC_SUCC;
-    } else {
-        // user_grant permission, use innerkit class method to grant permission
-        asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId,
-            asyncContext->permissionName, asyncContext->flag);
+    // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
+    if (permissionDef.grantMode == USER_GRANT) {
+        asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
+            asyncContext->flag);
 
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
             asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
-
-        // set status according to the innerkit class method return
-        if ((asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_SUCC) ||
-            (asyncContext->result == ACCESSTOKEN_PERMISSION_REVOKE_FAIL)) {
-            asyncContext->status = ASYN_THREAD_EXEC_SUCC; // success or failure regard as function exec success
-        } else {
-            asyncContext->status = ASYN_THREAD_EXEC_FAIL; // other regard as function exec failure
-        }
     }
 }
 
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    napi_value result = nullptr;
+    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
-    if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-        // execute succ, consider asyncContext->result as return result
-        napi_create_int32(env, asyncContext->result, &result);
-    } else {
-        // execute fail, set default failure result
-        napi_create_int32(env, ACCESSTOKEN_PERMISSION_GRANT_FAIL, &result);
-    }
+    // no err, results[0] remain nullptr
+    napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
 
     if (asyncContext->deferred) {
-        // promise type
-        if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-            // innerkit class methon exec success, use resolve to return result
-            napi_resolve_deferred(env, asyncContext->deferred, result);
-        } else {
-            // innerkit class methon exec failure, use reject to return result
-            napi_reject_deferred(env, asyncContext->deferred, result);
-        }
+        // promise type, no reject currently
+        napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
     } else {
         // callback type
         napi_value callback = nullptr;
@@ -453,7 +409,7 @@ void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_statu
         napi_get_undefined(env, &thisValue); // can not null otherwise js code can not get return
         napi_create_int32(env, 0, &thatValue); // can not null otherwise js code can not get return
         napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-        napi_call_function(env, thisValue, callback, 1, &result, &thatValue);
+        napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue);
         napi_delete_reference(env, asyncContext->callbackRef); // release callback handle
     }
 
@@ -473,10 +429,13 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
     }
 
     ParseInputGrantOrRevokePermission(env, info, *asyncContext);
-    if (asyncContext->result == -1) {
+    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
         delete asyncContext;
         return nullptr;
     }
+
+    // after get input, keep result default failed
+    asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
 
@@ -509,7 +468,6 @@ void NapiAtManager::GetPermissionFlagsExcute(napi_env env, void *data)
     // use innerkit class method to get permission flag
     asyncContext->flag = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
         asyncContext->permissionName);
-    asyncContext->status = ASYN_THREAD_EXEC_SUCC; // status default failure
 }
 
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
@@ -520,15 +478,9 @@ void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status,
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, tokenId = %{public}d, flag = %{public}d.",
         asyncContext->permissionName, asyncContext->tokenId, asyncContext->flag);
 
-    if (asyncContext->status == ASYN_THREAD_EXEC_SUCC) {
-        // execute succ, use resolve to return result by the deferred create before
-        napi_create_int32(env, asyncContext->flag, &result);
-        napi_resolve_deferred(env, asyncContext->deferred, result);
-    } else {
-        // execute fail, this way may not match, but for code strict, still keep
-        napi_create_int32(env, asyncContext->flag, &result);
-        napi_reject_deferred(env, asyncContext->deferred, result);
-    }
+    // only resolve, no reject currently
+    napi_create_int32(env, asyncContext->flag, &result);
+    napi_resolve_deferred(env, asyncContext->deferred, result);
 
     // after return the result, free resources
     napi_delete_async_work(env, asyncContext->work);
@@ -546,13 +498,15 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     }
 
     ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->result == -1) {
+    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
         delete asyncContext;
         return nullptr;
     }
 
-    napi_value result = nullptr;
+    // after get input, keep result default failed
+    asyncContext->result = AT_PERM_OPERA_FAIL;
 
+    napi_value result = nullptr;
     napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
 
     napi_value resource = nullptr; // resource name

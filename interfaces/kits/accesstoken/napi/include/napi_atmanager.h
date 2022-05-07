@@ -26,13 +26,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const int ASYN_THREAD_EXEC_SUCC = 0;
-const int ASYN_THREAD_EXEC_FAIL = -1;
-const int ACCESSTOKEN_PERMISSION_GRANT_FAIL = -1;
-const int ACCESSTOKEN_PERMISSION_GRANT_SUCC = 0;
-const int ACCESSTOKEN_PERMISSION_REVOKE_FAIL = -1;
-const int ACCESSTOKEN_PERMISSION_REVOKE_SUCC = 0;
-const int VALUE_BUFFER_SIZE = 128;
+const int AT_PERM_OPERA_FAIL = -1;
+const int AT_PERM_OPERA_SUCC = 0;
+const int VALUE_BUFFER_SIZE = 256;
+const int ASYNC_CALL_BACK_VALUES_NUM = 2;
+const int VERIFY_OR_FLAG_INPUT_MAX_VALUES = 2;
+const int GRANT_OR_REVOKE_INPUT_MAX_VALUES = 4;
 
 static thread_local napi_ref atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
@@ -43,8 +42,7 @@ struct AtManagerAsyncContext {
     char     permissionName[ VALUE_BUFFER_SIZE ] = { 0 };
     size_t   pNameLen = 0;
     int      flag = 0;
-    int      result = 0; // callback or promise return result
-    int      status = ASYN_THREAD_EXEC_FAIL; // napi_create_async_work-execute function exec result, default failure
+    int      result = AT_PERM_OPERA_FAIL; // default failed
 
     napi_deferred   deferred = nullptr; // promise handle
     napi_ref        callbackRef = nullptr; // callback handle
