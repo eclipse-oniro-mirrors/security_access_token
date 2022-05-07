@@ -342,7 +342,6 @@ struct authorityManagementPage {
       for (let j = 0; j < info.reqPermissions.length; j++) {
         var permission = info.reqPermissions[j];
         var flag = await acManager.getPermissionFlags(info.appInfo.accessTokenId, permission)
-        console.log(TAG + "flag:" + flag + "  permission:" + permission + "  bundleName" + info.name)
         if(flag == Constants.PRE_AUTHORIZATION_NOT_MODIFIED) {
           continue
         }
