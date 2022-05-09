@@ -88,6 +88,7 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
     }
 
     nlohmann::json DcapsJson = nlohmann::json(tokenInfo.baseInfo.dcap);
+    nlohmann::json NativeAclsJson = nlohmann::json(tokenInfo.baseInfo.nativeAcls);
     nlohmann::json nativeTokenJson = nlohmann::json {
         {"processName", tokenInfo.baseInfo.processName},
         {"apl", tokenInfo.baseInfo.apl},
@@ -95,6 +96,7 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
         {"tokenId", tokenInfo.baseInfo.tokenID},
         {"tokenAttr", tokenInfo.baseInfo.tokenAttr},
         {"dcaps", DcapsJson},
+        {"nativeAcls", NativeAclsJson},
         {"permState", permStatesJson},
     };
     return nativeTokenJson;
@@ -265,6 +267,10 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeToke
     if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
         && nativeTokenJson.at("dcaps").size() > 0 && (nativeTokenJson.at("dcaps"))[0].is_string()) {
         nativeTokenInfo.baseInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
+    }
+    if (nativeTokenJson.find("nativeAcls") != nativeTokenJson.end() && nativeTokenJson.at("nativeAcls").is_array()
+        && nativeTokenJson.at("nativeAcls").size() > 0 && (nativeTokenJson.at("nativeAcls"))[0].is_string()) {
+        nativeTokenInfo.baseInfo.nativeAcls = nativeTokenJson.at("nativeAcls").get<std::vector<std::string>>();
     }
 
     FromPermStateListJson(nativeTokenJson, nativeTokenInfo.permStateList);

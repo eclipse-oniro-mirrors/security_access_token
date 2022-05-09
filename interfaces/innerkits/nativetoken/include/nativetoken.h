@@ -54,6 +54,7 @@ extern "C" {
 
 #define DCAPS_KEY_NAME  "dcaps"
 #define PERMS_KEY_NAME  "permissions"
+#define ACLS_KEY_NAME  "nativeAcls"
 #define TOKENID_KEY_NAME "tokenId"
 #define TOKEN_ATTR_KEY_NAME "tokenAttr"
 #define APL_KEY_NAME "APL"
@@ -85,8 +86,10 @@ typedef struct TokenList {
     int32_t apl;
     char *dcaps[MAX_DCAPS_NUM];
     char *perms[MAX_PERM_NUM];
-    int dcapsNum;
-    int permsNum;
+    char *acls[MAX_PERM_NUM];
+    int32_t dcapsNum;
+    int32_t permsNum;
+    int32_t aclsNum;
     char processName[MAX_PROCESS_NAME_LEN + 1];
     struct TokenList *next;
 } NativeTokenList;

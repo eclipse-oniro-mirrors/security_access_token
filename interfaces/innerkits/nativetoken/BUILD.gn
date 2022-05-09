@@ -34,7 +34,10 @@ ohos_static_library("libnativetoken") {
     "//third_party/bounds_checking_function/include",
   ]
 
-  sources = [ "src/nativetoken.c" ]
+  sources = [
+    "src/nativetoken.c",
+    "src/nativetoken_json_oper.c",
+  ]
 
   deps = [
     "//third_party/bounds_checking_function:libsec_static",

@@ -66,7 +66,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     NativeTokenInfoTable.tableColumnNames_ = {
         FIELD_TOKEN_ID, FIELD_PROCESS_NAME,
         FIELD_TOKEN_VERSION, FIELD_TOKEN_ATTR,
-        FIELD_DCAP, FIELD_APL
+        FIELD_DCAP, FIELD_NATIVE_ACLS, FIELD_APL
     };
 
     SqliteTable permissionDefTable;
@@ -317,6 +317,7 @@ int SqliteStorage::CreateNativeTokenInfoTable() const
         .append(FIELD_TOKEN_VERSION + " integer not null,")
         .append(FIELD_TOKEN_ATTR + " integer not null,")
         .append(FIELD_DCAP + " text not null,")
+        .append(FIELD_NATIVE_ACLS + " text not null,")
         .append(FIELD_APL + " integer not null,")
         .append("primary key(" + FIELD_TOKEN_ID)
         .append("))");

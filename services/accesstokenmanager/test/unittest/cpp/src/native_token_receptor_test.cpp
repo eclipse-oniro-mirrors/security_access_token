@@ -74,9 +74,9 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "test ParserNativeRawData001!");
     std::string testStr = R"([)"\
         R"({"processName":"process6","APL":3,"version":1,"tokenId":685266937,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[]},)"\
+        R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]},)"\
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
-        R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[]}])";
+        R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]}])";
 
     NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
@@ -177,7 +177,8 @@ HWTEST_F(NativeTokenReceptorTest, from_json001, TestSize.Level1)
         {"tokenId", 685266937},
         {"tokenAttr", 0},
         {"dcaps", {"AT_CAP", "ST_CAP"}},
-        {"permissions", {"ohos.permission.PLACE_CALL"}}};
+        {"permissions", {"ohos.permission.PLACE_CALL"}},
+        {"nativeAcls", {"ohos.permission.PLACE_CALL"}}};
     std::shared_ptr<NativeTokenInfoInner> p;
     from_json(j, p);
     ASSERT_NE((p == nullptr), true);
@@ -331,7 +332,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     };
 
     NativeTokenInfo info2 = {
-        .apl = APL_NORMAL,
+        .apl = APL_SYSTEM_BASIC,
         .ver = 1,
         .processName = "native_token_test2",
         .tokenID = 0x28100002,
@@ -615,8 +616,10 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
         .permsNum = 2,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = perms,
+        .acls = nullptr,
         .processName = "native_token_test7",
         .aplStr = "system_core",
     };
@@ -657,8 +660,10 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos007, TestSize.Level1)
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = dcapNum,
         .permsNum = 0,
+        .aclsNum = 0,
         .dcaps = dcaps,
         .perms = nullptr,
+        .acls = nullptr,
     };
     infoInstance.aplStr = apl3;
     infoInstance.processName = "ProcessNativeTokenInfos007_003";
