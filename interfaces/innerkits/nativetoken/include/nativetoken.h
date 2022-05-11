@@ -95,7 +95,7 @@ typedef struct TokenList {
 } NativeTokenList;
 
 typedef struct StrArrayAttribute {
-    int32_t maxStrNum;
+    uint32_t maxStrNum;
     uint32_t maxStrLen;
     const char *strKey;
 } StrArrayAttr;
