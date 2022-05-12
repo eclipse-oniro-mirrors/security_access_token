@@ -83,7 +83,7 @@ uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int32_t *strNum, S
     }
     *strNum = size;
 
-    for (int32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         cJSON *item = cJSON_GetArrayItem(strArrJson, i);
         if ((item == NULL) || (!cJSON_IsString(item)) || (item->valuestring == NULL)) {
             AT_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);

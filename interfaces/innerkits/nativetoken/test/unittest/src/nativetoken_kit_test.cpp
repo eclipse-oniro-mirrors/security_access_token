@@ -680,7 +680,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
 {
-    const char **perms = new const char *[MAX_PERM_NUM];
+    const char **perms = new const char *[MAX_PERM_NUM + 1];
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     int32_t permsNum = 2;
@@ -699,15 +699,15 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
+    for (int32_t i = 0; i < MAX_PERM_NUM + 1; i++) {
+        perms[i] = "ohos.permission.test";
+    }
+
     infoInstance.permsNum = MAX_PERM_NUM;
     infoInstance.aclsNum = MAX_PERM_NUM + 1;
     infoInstance.processName = "GetAccessTokenId015_00";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
-
-    for (int32_t i = 0; i < MAX_PERM_NUM; i++) {
-        perms[i] = "ohos.permission.test";
-    }
 
     permsNum = MAX_PERM_NUM;
     infoInstance.permsNum = permsNum;
