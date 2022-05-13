@@ -32,7 +32,7 @@ namespace OHOS {
             return result;
         }
         if (size > 0) {
-            AccessTokenID TOKENID = 1;
+            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             result = AccessTokenKit::GetPermissionFlag(TOKENID, reinterpret_cast<const char*>(data));
         }
         return result;
