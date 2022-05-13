@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
-AccessTokenID TOKENID = 1;
 
 namespace OHOS {
     bool GetPermissionFlagsFuzzTest(const uint8_t* data, size_t size)
@@ -33,6 +32,7 @@ namespace OHOS {
             return result;
         }
         if (size > 0) {
+            AccessTokenID TOKENID = 1;
             result = AccessTokenKit::GetPermissionFlag(TOKENID, reinterpret_cast<const char*>(data));
         }
         return result;

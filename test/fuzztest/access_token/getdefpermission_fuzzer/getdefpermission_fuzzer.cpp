@@ -35,12 +35,12 @@ namespace OHOS {
         }
         if (size > 0) {
             PermissionDef PERMISSIONDEF = {
-            .permissionName = "ohos.permission.test1",
-            .bundleName = "accesstoken_test",
+            .permissionName = reinterpret_cast<const char*>(data),
+            .bundleName = reinterpret_cast<const char*>(data),
             .grantMode = 1,
-            .label = "label",
+            .label = reinterpret_cast<const char*>(data),
             .labelId = 1,
-            .description = "open the door",
+            .description = reinterpret_cast<const char*>(data),
             .availableLevel = APL_NORMAL,
             .descriptionId = 1
             };
