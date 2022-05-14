@@ -80,7 +80,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
 static void StrAttrSet(StrArrayAttr *attr, uint32_t maxStrLen, int32_t maxStrNum, const char *strKey)
 {
     attr->maxStrLen = maxStrLen;
-    attr->maxStrNum = maxStrLen;
+    attr->maxStrNum = maxStrNum;
     attr->strKey = strKey;
 }
 

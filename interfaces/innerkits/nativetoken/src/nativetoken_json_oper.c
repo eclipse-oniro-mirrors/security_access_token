@@ -76,14 +76,14 @@ uint32_t GetAplFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 uint32_t GetInfoArrFromJson(cJSON *cjsonItem, char *strArr[], int32_t *strNum, StrArrayAttr *attr)
 {
     cJSON *strArrJson = cJSON_GetObjectItem(cjsonItem, attr->strKey);
-    uint32_t size = (uint32_t)cJSON_GetArraySize(strArrJson);
+    int32_t size = cJSON_GetArraySize(strArrJson);
     if (size > attr->maxStrNum) {
         AT_LOG_ERROR("[ATLIB-%s]:size = %d is invalid.", __func__, size);
         return ATRET_FAILED;
     }
     *strNum = size;
 
-    for (uint32_t i = 0; i < size; i++) {
+    for (int32_t i = 0; i < size; i++) {
         cJSON *item = cJSON_GetArrayItem(strArrJson, i);
         if ((item == NULL) || (!cJSON_IsString(item)) || (item->valuestring == NULL)) {
             AT_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);

@@ -70,6 +70,7 @@ int32_t Start(const char *processName)
     tokenId = GetAccessTokenId(&infoInstance);
     delete[] dcaps;
     delete[] perms;
+    delete[] acls;
     return tokenId;
 }
 
