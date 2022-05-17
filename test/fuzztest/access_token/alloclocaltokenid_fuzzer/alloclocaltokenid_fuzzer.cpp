@@ -13,42 +13,30 @@
  * limitations under the License.
  */
 
-#include "getdefpermission_fuzzer.h"
+#include "alloclocaltokenid_fuzzer.h"
 
 #include <string>
 #include <vector>
 #include <thread>
 #undef private
 #include "accesstoken_kit.h"
-#include "permission_def.h"
 
 using namespace std;
-using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetDefPermissionFuzzTest(const uint8_t* data, size_t size)
+    bool AllocLocalTokenIDFuzzTest(const uint8_t* data, size_t size)
     {
         bool result = false;
-        std::string testdata;
+        AccessTokenID TOKENID = 0;
         if ((data == nullptr) || (size <= 0)) {
             return result;
         }
         if (size > 0) {
-            testdata = reinterpret_cast<const char*>(data);
-            PermissionDef PERMISSIONDEF = {
-            .permissionName = testdata,
-            .bundleName = testdata,
-            .grantMode = 1,
-            .label = testdata,
-            .labelId = 1,
-            .description = testdata,
-            .availableLevel = APL_NORMAL,
-            .descriptionId = 1
-            };
-            result = AccessTokenKit::GetDefPermission(testdata, PERMISSIONDEF);
+            AccessTokenID REMOTETOKENID = static_cast<AccessTokenID>(size);
+            TOKENID = AccessTokenKit::AllocLocalTokenID(reinterpret_cast<const char*>(data), REMOTETOKENID);
         }
-        return result;
+        return TOKENID != 0;
     }
 }
 
@@ -56,7 +44,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetDefPermissionFuzzTest(data, size);
+    OHOS::AllocLocalTokenIDFuzzTest(data, size);
     return 0;
 }
- 

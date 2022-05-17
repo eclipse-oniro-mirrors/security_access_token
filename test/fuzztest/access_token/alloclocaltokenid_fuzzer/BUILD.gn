@@ -16,9 +16,9 @@ import("//build/test.gni")
 
 module_output_path = "access_token/access_token"
 
-ohos_fuzztest("GetPermissionFlagsFuzzTest") {
+ohos_fuzztest("AllocLocalTokenIDFuzzTest") {
   module_out_path = module_output_path
-  fuzz_config_file = "//base/security/access_token/test/fuzztest/access_token/getpermissionflags_fuzzer"
+  fuzz_config_file = "//base/security/access_token/test/fuzztest/access_token/alloclocaltokenid_fuzzer"
 
   include_dirs = [
     "//utils/native/base/include",
@@ -30,7 +30,7 @@ ohos_fuzztest("GetPermissionFlagsFuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "getpermissionflags_fuzzer.cpp" ]
+  sources = [ "alloclocaltokenid_fuzzer.cpp" ]
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
