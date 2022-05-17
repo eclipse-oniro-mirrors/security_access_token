@@ -75,7 +75,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
-    "//foundation/aafwk/standard/interfaces/innerkits/base:base",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
     "//third_party/zlib:libz",
     "//utils/native/base:utils",
