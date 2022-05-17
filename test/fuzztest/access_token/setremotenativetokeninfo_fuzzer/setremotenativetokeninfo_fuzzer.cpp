@@ -13,41 +13,49 @@
  * limitations under the License.
  */
 
-#include "getdefpermission_fuzzer.h"
+#include "setremotenativetokeninfo_fuzzer.h"
 
 #include <string>
 #include <vector>
 #include <thread>
 #undef private
 #include "accesstoken_kit.h"
-#include "permission_def.h"
 
 using namespace std;
-using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetDefPermissionFuzzTest(const uint8_t* data, size_t size)
+    bool SetRemoteNativeTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
         bool result = false;
+
+#ifdef TOKEN_SYNC_ENABLE
+
         std::string testdata;
         if ((data == nullptr) || (size <= 0)) {
             return result;
         }
         if (size > 0) {
             testdata = reinterpret_cast<const char*>(data);
-            PermissionDef PERMISSIONDEF = {
-            .permissionName = testdata,
-            .bundleName = testdata,
-            .grantMode = 1,
-            .label = testdata,
-            .labelId = 1,
-            .description = testdata,
-            .availableLevel = APL_NORMAL,
-            .descriptionId = 1
+            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+            NativeTokenInfoForSync native1 = {
+                .baseInfo.apl = APL_NORMAL,
+                .baseInfo.ver = 1,
+                .baseInfo.processName = testdata,
+                .baseInfo.dcap = {testdata, testdata},
+                .baseInfo.tokenID = TOKENID,
+                .baseInfo.tokenAttr = 0,
+                .baseInfo.nativeAcls = {testdata},
             };
-            result = AccessTokenKit::GetDefPermission(testdata, PERMISSIONDEF);
+
+            std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
+            nativeTokenInfoList.emplace_back(native1);
+
+            result = AccessTokenKit::SetRemoteNativeTokenInfo(reinterpret_cast<const char*>(data), nativeTokenInfoList);
         }
+
+#endif
+
         return result;
     }
 }
@@ -56,7 +64,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetDefPermissionFuzzTest(data, size);
+    OHOS::SetRemoteNativeTokenInfoFuzzTest(data, size);
     return 0;
 }
- 

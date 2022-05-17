@@ -44,13 +44,3 @@ ohos_fuzztest("GetDefPermissionFuzzTest") {
     "LOG_DOMAIN = 0xD001B00",
   ]
 }
-
-group("fuzztest") {
-  testonly = true
-  deps = []
-
-  deps += [
-    # deps file
-    ":GetDefPermissionFuzzTest",
-  ]
-}

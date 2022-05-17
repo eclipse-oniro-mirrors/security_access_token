@@ -13,21 +13,19 @@
  * limitations under the License.
  */
 
-#include "getdefpermission_fuzzer.h"
+#include "updatehaptoken_fuzzer.h"
 
 #include <string>
 #include <vector>
 #include <thread>
 #undef private
 #include "accesstoken_kit.h"
-#include "permission_def.h"
 
 using namespace std;
-using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetDefPermissionFuzzTest(const uint8_t* data, size_t size)
+    bool UpdateHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
         bool result = false;
         std::string testdata;
@@ -35,18 +33,33 @@ namespace OHOS {
             return result;
         }
         if (size > 0) {
+            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             testdata = reinterpret_cast<const char*>(data);
-            PermissionDef PERMISSIONDEF = {
-            .permissionName = testdata,
-            .bundleName = testdata,
-            .grantMode = 1,
-            .label = testdata,
-            .labelId = 1,
-            .description = testdata,
-            .availableLevel = APL_NORMAL,
-            .descriptionId = 1
+            PermissionDef TestPermDef = {
+                .permissionName = testdata,
+                .bundleName = testdata,
+                .grantMode = 1,
+                .availableLevel = APL_NORMAL,
+                .label = testdata,
+                .labelId = 1,
+                .description = testdata,
+                .descriptionId = 1
             };
-            result = AccessTokenKit::GetDefPermission(testdata, PERMISSIONDEF);
+            PermissionStateFull TestState = {
+                .permissionName = testdata,
+                .isGeneral = true,
+                .resDeviceID = {testdata},
+                .grantStatus = {PermissionState::PERMISSION_GRANTED},
+                .grantFlags = {1},
+            };
+            HapPolicyParams TestPolicyPrams = {
+                .apl = APL_NORMAL,
+                .domain = testdata,
+                .permList = {TestPermDef},
+                .permStateList = {TestState}
+            };
+
+            result = AccessTokenKit::UpdateHapToken(TOKENID, testdata, TestPolicyPrams);
         }
         return result;
     }
@@ -56,7 +69,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetDefPermissionFuzzTest(data, size);
+    OHOS::UpdateHapTokenFuzzTest(data, size);
     return 0;
 }
- 
