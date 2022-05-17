@@ -35,7 +35,7 @@ namespace OHOS {
         }
         if (size > 0) {
             testdata = reinterpret_cast<const char*>(data);
-            PermissionDef TestPermDef1 = {
+            PermissionDef TestPermDef = {
                 .permissionName = testdata,
                 .bundleName = testdata,
                 .grantMode = 1,
@@ -45,33 +45,12 @@ namespace OHOS {
                 .description = testdata,
                 .descriptionId = 1
             };
-
-            PermissionDef TestPermDef2 = {
-                .permissionName = testdata,
-                .bundleName = testdata,
-                .grantMode = 1,
-                .availableLevel = APL_NORMAL,
-                .label = testdata,
-                .labelId = 1,
-                .description = testdata,
-                .descriptionId = 1,
-
-            };
-
-            PermissionStateFull TestState1 = {
+            PermissionStateFull TestState = {
                 .permissionName = testdata,
                 .isGeneral = true,
                 .resDeviceID = {testdata},
                 .grantStatus = {PermissionState::PERMISSION_GRANTED},
                 .grantFlags = {1},
-            };
-
-            PermissionStateFull TestState2 = {
-                .permissionName = testdata,
-                .isGeneral = false,
-                .resDeviceID = {testdata, testdata},
-                .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
-                .grantFlags = {1, 2}
             };
             HapInfoParams TestInfoParms = {
                 .userID = 1,
@@ -82,8 +61,8 @@ namespace OHOS {
             HapPolicyParams TestPolicyPrams = {
                 .apl = APL_NORMAL,
                 .domain = testdata,
-                .permList = {TestPermDef1, TestPermDef2},
-                .permStateList = {TestState1, TestState2}
+                .permList = {TestPermDef},
+                .permStateList = {TestState}
             };
 
             tokenIdEx = AccessTokenKit::AllocHapToken(TestInfoParms, TestPolicyPrams);

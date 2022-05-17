@@ -24,8 +24,6 @@
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
-
-
 namespace OHOS {
     bool DeleteRemoteTokenFuzzTest(const uint8_t* data, size_t size)
     {

@@ -31,7 +31,7 @@ group("fuzztest") {
     "setremotehaptokeninfo_fuzzer:SetRemoteHapTokenInfoFuzzTest",
     "setremotenativetokeninfo_fuzzer:SetRemoteNativeTokenInfoFuzzTest",
     "updatehaptoken_fuzzer:UpdateHapTokenFuzzTest",
-    "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
     "verifyaccesstoken001_fuzzer:VerifyAccessToken001FuzzTest",
+    "verifyaccesstoken_fuzzer:VerifyAccessTokenFuzzTest",
   ]
 }
