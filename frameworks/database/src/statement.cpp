@@ -56,6 +56,11 @@ int Statement::GetColumnInt(const int column) const
     return sqlite3_column_int(statement_, column);
 }
 
+int Statement::GetColumnInt64(const int column) const
+{
+    return sqlite3_column_int64(statement_, column);
+}
+
 std::string Statement::GetColumnString(const int column) const
 {
     return std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement_, column)));
@@ -108,12 +113,16 @@ int Statement::GetColumnCount() const
     return sqlite3_column_count(statement_);
 }
 
-VariantValue Statement::GetValue(const int column) const
+VariantValue Statement::GetValue(const int column, const bool flagInt64) const
 {
     int type = sqlite3_column_type(statement_, column);
     switch (type) {
         case SQLITE_INTEGER:
-            return VariantValue(GetColumnInt(column));
+            if (flagInt64) {
+                return VariantValue(GetColumnInt64(column));
+            } else {
+                return VariantValue(GetColumnInt(column));
+            }
         case SQLITE_TEXT:
             return VariantValue(GetColumnString(column));
         default:

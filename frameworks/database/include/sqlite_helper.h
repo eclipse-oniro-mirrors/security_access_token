@@ -17,6 +17,7 @@
 #define SQLITE_HELPER_H
 
 #include <string>
+#include <vector>
 
 #include "statement.h"
 
