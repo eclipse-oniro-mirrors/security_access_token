@@ -222,7 +222,7 @@ export const groups: any[] = [
     "groupName": "电话",
     "icon": $r('app.media.ic_public_phone'),
     "label": "使用拨打电话",
-    "description": "包括拨打电话等权限。",
+    "description": "",
     "permissions": [
       "ohos.permission.ANSWER_CALL",
       "ohos.permission.MANAGE_VOICEMAIL"
@@ -233,7 +233,7 @@ export const groups: any[] = [
     "groupName": "信息",
     "icon": $r('app.media.ic_public_message'),
     "label": "访问信息",
-    "description": "包括读取短信/彩信、接受短信、发送短信等权限。",
+    "description": "",
     "permissions": [
       "ohos.permission.READ_CELL_MESSAGES",
       "ohos.permission.READ_MESSAGES",
@@ -248,7 +248,7 @@ export const groups: any[] = [
     "groupName": "通讯录",
     "icon": $r('app.media.ic_public_contacts_group'),
     "label": "访问通讯录",
-    "description": "包括新建/修改/删除联系人、读取联系人等权限。",
+    "description": "",
     "permissions": [
       "ohos.permission.READ_CONTACTS",
       "ohos.permission.WRITE_CONTACTS"
@@ -259,7 +259,7 @@ export const groups: any[] = [
     "groupName": "通话记录",
     "icon": $r('app.media.ic_call_logs'),
     "label": "访问通话记录",
-    "description": "包括读取通话记录、新建/修改/删除通话记录等权限。",
+    "description": "",
     "permissions": [
       "ohos.permission.READ_CALL_LOG",
       "ohos.permission.WRITE_CALL_LOG"
@@ -282,7 +282,7 @@ export const groups: any[] = [
     "groupName": "日历",
     "icon": $r('app.media.ic_public_calendar'),
     "label": "访问日历",
-    "description": "包括读取日历和新建/修改/删除日历。",
+    "description": "",
     "permissions": [
       "ohos.permission.READ_CALENDAR",
       "ohos.permission.WRITE_CALENDAR"
@@ -345,3 +345,11 @@ export const userGrantPermissions: string[] = [
   "ohos.permission.READ_HEALTH_DATA",
   "ohos.permission.DISTRIBUTED_DATASYNC"
 ]
+
+export const showSubpermissionsGrop: string[] = [
+  "电话",
+  "日历",
+  "信息",
+  "通讯录",
+  "通话记录"
+];

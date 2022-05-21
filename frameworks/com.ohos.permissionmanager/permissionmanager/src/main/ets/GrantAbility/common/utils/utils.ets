@@ -23,7 +23,7 @@ export function getPermissionGroup(permission: string) {
           "groupName": permissionGroups[i].groupName,
           "label": permissionGroups[i].label,
           "icon": permissionGroups[i].icon,
-          "description": permissionGroups[i].description,
+          "description": "",
           "permissions": [
             permissionGroups[i].permissionName
           ]

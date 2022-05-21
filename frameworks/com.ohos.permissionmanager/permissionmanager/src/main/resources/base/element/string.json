@@ -91,6 +91,14 @@
     {
       "name": "other_permission_label_description",
       "value": "多设备协同访问权限"
+    },
+    {
+      "name": "reason_suffix",
+      "value": "等权限。"
+    },
+    {
+      "name": "separator",
+      "value": "、"
     }
   ]
 }

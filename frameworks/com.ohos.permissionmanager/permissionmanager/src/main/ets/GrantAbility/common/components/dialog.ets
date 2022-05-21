@@ -20,6 +20,7 @@ import featureAbility from '@ohos.ability.featureAbility'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 import bundle from '@ohos.bundle'
 import Resmgr from '@ohos.resourceManager'
+import { permissionGroups, showSubpermissionsGrop } from "../model/permissionGroup.ets";
 
 var TAG = "PermissionManager_GrantAbility:"
 
@@ -108,7 +109,9 @@ export struct privacyDialog {
     }
     .backgroundColor($r('app.color.default_background_color'))
     .borderRadius(Constants.DIALOG_BORDER_RADIUS)
-    .height(Constants.DIALOG_HEIGHT)
+    .constraintSize({
+      minHeight: Constants.DIALOG_HEIGHT
+    })
     .width(Constants.DIALOG_WIDTH)
   }
 
@@ -151,22 +154,20 @@ export struct privacyDialog {
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
       })
       bundle.getBundleInfo(data, Constants.PARMETER_BUNDLE_FLAG).then(bundleInfo => {
-        var indexGroup = new Array(this.grantGroups.length).fill(Constants.INITIAL_INDEX);
         this.grantGroups.forEach((group, idx) => {
-          bundleInfo.reqPermissionDetails.forEach(reqPermissionDetail => {
-            var index = group.permissions.indexOf(reqPermissionDetail.name)
-            if(index !== -1 && index < indexGroup[idx]) {
-              Resmgr.getResourceManager(data).then(item => {
-                item.getString(reqPermissionDetail.reasonId, (err, value) => {
-                  this.initStatus = Constants.INIT_NEED_TO_VERIFY
-                  if (value !== undefined) {
-                    group.description = value
-                  }
+          if(group.description) {
+            Resmgr.getResourceManager(Constants.BUNDLE_NAME).then(item => {
+              Promise.all([item.getString($r("app.string.separator").id),
+                item.getString($r("app.string.reason_suffix").id)])
+                .then(values => {
+                  group.description = group.description.join(values[0])
+                  group.description += values[1]
+                  this.getReason(group, bundleInfo, data)
                 })
-              })
-              indexGroup[idx] = index
-            }
-          })
+            })
+          }else {
+            this.getReason(group, bundleInfo, data)
+          }
         })
       })
     }).catch(err => {
@@ -175,19 +176,61 @@ export struct privacyDialog {
     })
   }
 
+  getReason(group, bundleInfo, bundleName) {
+    group.permissions.forEach(permission => {
+      if(this.reqPerms.indexOf(permission) != -1) {
+        bundleInfo.reqPermissionDetails.forEach(reqPermissionDetail => {
+          if(reqPermissionDetail.name == permission) {
+            Resmgr.getResourceManager(bundleName).then(item => {
+              item.getString(reqPermissionDetail.reasonId, (err, value) => {
+                this.initStatus = Constants.INIT_NEED_TO_VERIFY
+                if (value !== undefined && !group.hasReason) {
+                  group.description += value
+                  group.hasReason = true
+                }
+              })
+            })
+          }
+        })
+      }
+    })
+  }
+
   getgrantGroups(stateGroup) {
     this.reqPerms.forEach((permission, idx) => {
+      //已授权
       if(stateGroup[idx] == Constants.PASS_OPER) {
         console.log(TAG + "permission has been fixed:" + permission)
         this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
+        //待授权
       }else if(stateGroup[idx] == Constants.DYNAMIC_OPER) {
         var group = getPermissionGroup(permission)
         if(!group) {
           console.log(TAG + "permission not find:" + permission)
         }else {
           var exist = this.grantGroups.find(grantGroup => grantGroup.name == group.name)
-          if(!exist) {
-            this.grantGroups.push(group)
+          //判断是否为需要展示子权限的权限组
+          if(showSubpermissionsGrop.indexOf(group.groupName) != -1) {
+            var permissionDetail
+            permissionGroups.forEach(permissionGroup => {
+              if(permissionGroup.permissionName == permission) {
+                //获取授权的权限信息
+                permissionDetail = permissionGroup
+              }
+            })
+            //权限组已存在的情况
+            if(!exist) {
+              group.description = [permissionDetail.label]
+              this.grantGroups.push(group)
+            }else {
+              if(exist.description.indexOf(permissionDetail.label) == -1) {
+                exist.description.push(permissionDetail.label)
+              }
+            }
+          }else {
+            if(!exist) {
+              this.grantGroups.push(group)
+            }
           }
         }
       }
