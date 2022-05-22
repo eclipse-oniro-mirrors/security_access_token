@@ -25,6 +25,7 @@ namespace AccessToken {
 enum class ValueType {
     TYPE_NULL,
     TYPE_INT,
+    TYPE_INT64,
     TYPE_STRING,
 };
 
@@ -38,6 +39,7 @@ public:
 
     ValueType GetType() const;
     int GetInt() const;
+    int64_t GetInt64() const;
     std::string GetString() const;
 
     static const int DEFAULT_VALUE = -1;

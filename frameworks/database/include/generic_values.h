@@ -42,6 +42,8 @@ public:
 
     int GetInt(const std::string& key) const;
 
+    int64_t GetInt64(const std::string& key) const;
+
     std::string GetString(const std::string& key) const;
 
 private:

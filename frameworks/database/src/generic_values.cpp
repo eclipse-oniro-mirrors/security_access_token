@@ -51,6 +51,15 @@ int GenericValues::GetInt(const std::string& key) const
     return it->second.GetInt();
 }
 
+int64_t GenericValues::GetInt64(const std::string& key) const
+{
+    auto it = map_.find(key);
+    if (it == map_.end()) {
+        return VariantValue::DEFAULT_VALUE;
+    }
+    return it->second.GetInt64();
+}
+
 std::string GenericValues::GetString(const std::string& key) const
 {
     auto it = map_.find(key);
