@@ -100,6 +100,8 @@ void Statement::Bind(const std::string& tableColumnName, const VariantValue& val
         Bind(index, value.GetString());
     } else if (value.GetType() == ValueType::TYPE_INT) {
         Bind(index, value.GetInt());
+    } else if (value.GetType() == ValueType::TYPE_INT64) {
+        Bind(index, value.GetInt64());
     }
 }
 

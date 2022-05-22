@@ -77,6 +77,13 @@ std::vector<std::string> GenericValues::GetAllKeys() const
     }
     return keys;
 }
+
+void GenericValues::Remove(const std::string& key)
+{
+    if (map_.count(key) > 0) {
+        map_.erase(key);
+    }
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

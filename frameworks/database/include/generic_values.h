@@ -46,6 +46,7 @@ public:
 
     std::string GetString(const std::string& key) const;
 
+    void Remove(const std::string& key);
 private:
     std::map<std::string, VariantValue> map_;
 };

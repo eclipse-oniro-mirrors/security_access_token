@@ -47,7 +47,6 @@ const std::string FIELD_GRANT_STATE = "grant_state";
 const std::string FIELD_GRANT_FLAG = "grant_flag";
 const std::string FIELD_GRANT_IS_GENERAL = "is_general";
 
-/* permission visitor */
 const std::string FIELD_ID = "id";
 const std::string FIELD_IS_REMOTE_DEVICE = "is_remote_device";
 
