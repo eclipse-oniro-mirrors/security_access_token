@@ -29,6 +29,11 @@ VariantValue::VariantValue(int value) : type_(ValueType::TYPE_INT)
     value_ = value;
 }
 
+VariantValue::VariantValue(int64_t value) : type_(ValueType::TYPE_INT64)
+{
+    value_ = value;
+}
+
 VariantValue::VariantValue(const std::string& value) : type_(ValueType::TYPE_STRING)
 {
     value_ = value;

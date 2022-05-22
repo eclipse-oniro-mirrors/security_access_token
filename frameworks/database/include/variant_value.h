@@ -35,6 +35,7 @@ public:
     virtual ~VariantValue();
 
     explicit VariantValue(int value);
+    explicit VariantValue(int64_t value);
     explicit VariantValue(const std::string& value);
 
     ValueType GetType() const;
@@ -46,7 +47,7 @@ public:
 
 private:
     ValueType type_;
-    std::variant<int, std::string> value_;
+    std::variant<int, int64_t, std::string> value_;
 };
 } // namespace AccessToken
 } // namespace Security
