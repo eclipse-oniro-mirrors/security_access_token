@@ -27,6 +27,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
+    "//base/security/access_token/frameworks/database/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
     "//third_party/json/include",
@@ -42,6 +43,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/security/access_token/frameworks/database:accesstoken_database_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
     "//base/security/access_token/services/accesstokenmanager/:accesstoken_manager_service",
