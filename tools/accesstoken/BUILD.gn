@@ -12,26 +12,27 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("//foundation/aafwk/standard/aafwk.gni")
 
 ohos_source_set("tools_atm_source_set") {
   include_dirs = [
     "//base/security/access_token/tools/accesstoken/include",
     "//base/security/access_token/frameworks/common/include",
-    "//foundation/aafwk/standard/tools/aa/include",
+    "${aafwk_path}/tools/aa/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
-    "//foundation/aafwk/standard/services/common/include",
+    "${services_path}/common/include",
   ]
 
   sources = [
-    "//foundation/aafwk/standard/tools/aa/src/shell_command.cpp",
+    "${aafwk_path}/tools/aa/src/shell_command.cpp",
     "src/atm_command.cpp",
     "src/atm_receiver_impl.cpp",
     "src/main.cpp",
   ]
 
   deps = [
+    "${aafwk_path}/tools/aa:aa",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "//foundation/aafwk/standard/tools/aa:aa",
     "//utils/native/base:utils",
   ]
 
