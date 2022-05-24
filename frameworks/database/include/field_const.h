@@ -46,6 +46,21 @@ const std::string FIELD_DESCRIPTION_ID = "description_id";
 const std::string FIELD_GRANT_STATE = "grant_state";
 const std::string FIELD_GRANT_FLAG = "grant_flag";
 const std::string FIELD_GRANT_IS_GENERAL = "is_general";
+
+const std::string FIELD_ID = "id";
+const std::string FIELD_IS_REMOTE_DEVICE = "is_remote_device";
+
+const std::string FIELD_VISITOR_ID = "visitor_id";
+const std::string FIELD_OP_CODE = "op_code";
+const std::string FIELD_IS_FOREGROUND = "is_foreground";
+const std::string FIELD_TIMESTAMP = "timestamp";
+const std::string FIELD_ACCESS_DURATION = "access_duration";
+const std::string FIELD_ACCESS_COUNT = "access_count";
+const std::string FIELD_REJECT_COUNT = "reject_count";
+
+const std::string FIELD_TIMESTAMP_BEGIN = "timestamp_begin";
+const std::string FIELD_TIMESTAMP_END = "timestamp_begin";
+const std::string FIELD_FLAG = "flag";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

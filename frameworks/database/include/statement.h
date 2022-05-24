@@ -41,10 +41,11 @@ public:
 
     std::string GetColumnString(const int column) const;
     int GetColumnInt(const int column) const;
+    int GetColumnInt64(const int column) const;
     std::string GetColumnName(const int column) const;
     int GetParameterIndex(const std::string& name) const;
     int GetColumnCount() const;
-    VariantValue GetValue(const int column) const;
+    VariantValue GetValue(const int column, const bool flagInt64) const;
 
 private:
     sqlite3* db_;

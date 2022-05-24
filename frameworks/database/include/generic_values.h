@@ -13,40 +13,44 @@
  * limitations under the License.
  */
 
-#ifndef VARIANT_VALUE_H
-#define VARIANT_VALUE_H
+#ifndef GENERIC_VALUES_H
+#define GENERIC_VALUES_H
 
+#include <map>
+#include <vector>
 #include <string>
-#include <variant>
+
+#include "variant_value.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class ValueType {
-    TYPE_NULL,
-    TYPE_INT,
-    TYPE_STRING,
-};
-
-class VariantValue final {
+class GenericValues final {
 public:
-    VariantValue();
-    virtual ~VariantValue();
+    GenericValues() = default;
+    virtual ~GenericValues() = default;
 
-    explicit VariantValue(int value);
-    explicit VariantValue(const std::string& value);
+    void Put(const std::string& key, int value);
 
-    ValueType GetType() const;
-    int GetInt() const;
-    std::string GetString() const;
+    void Put(const std::string& key, const std::string& value);
 
-    static const int DEFAULT_VALUE = -1;
+    void Put(const std::string& key, const VariantValue& value);
 
+    std::vector<std::string> GetAllKeys() const;
+
+    VariantValue Get(const std::string& key) const;
+
+    int GetInt(const std::string& key) const;
+
+    int64_t GetInt64(const std::string& key) const;
+
+    std::string GetString(const std::string& key) const;
+
+    void Remove(const std::string& key);
 private:
-    ValueType type_;
-    std::variant<int, std::string> value_;
+    std::map<std::string, VariantValue> map_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // VARIANT_VALUE_H
+#endif // GENERIC_VALUES_H

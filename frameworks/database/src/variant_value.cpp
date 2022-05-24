@@ -29,6 +29,11 @@ VariantValue::VariantValue(int value) : type_(ValueType::TYPE_INT)
     value_ = value;
 }
 
+VariantValue::VariantValue(int64_t value) : type_(ValueType::TYPE_INT64)
+{
+    value_ = value;
+}
+
 VariantValue::VariantValue(const std::string& value) : type_(ValueType::TYPE_STRING)
 {
     value_ = value;
@@ -46,6 +51,15 @@ int VariantValue::GetInt() const
     }
 
     return std::get<int>(value_);
+}
+
+int64_t VariantValue::GetInt64() const
+{
+    if (type_ != ValueType::TYPE_INT64) {
+        return DEFAULT_VALUE;
+    }
+
+    return std::get<int64_t>(value_);
 }
 
 std::string VariantValue::GetString() const

@@ -166,7 +166,7 @@ int SqliteStorage::Find(const DataType type, std::vector<GenericValues>& results
         int columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int i = 0; i < columnCount; i++) {
-            value.Put(statement.GetColumnName(i), statement.GetValue(i));
+            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
         }
         results.emplace_back(value);
     }
