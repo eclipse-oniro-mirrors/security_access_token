@@ -453,3 +453,11 @@ export const otherPermissionsLabel: object = {
 export const noNeedDisplayApp: string[] = [
   "com.ohos.launcher"
 ];
+
+export const showSubpermissionsGrop: string[] = [
+  "电话",
+  "日历",
+  "信息",
+  "通讯录",
+  "通话记录"
+];
