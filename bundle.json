@@ -24,6 +24,7 @@
         "ability_runtime",
         "hiviewdfx_hilog_native",
         "ipc_core",
+        "ipc_single",
         "aafwk_standard",
         "system_ability_fwk",
         "samgr_proxy",

@@ -47,5 +47,5 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
 
   deps = [ "//utils/native/base:utils" ]
 
-  external_deps = [ "ipc:ipc_core" ]
+  external_deps = [ "ipc:ipc_single" ]
 }
