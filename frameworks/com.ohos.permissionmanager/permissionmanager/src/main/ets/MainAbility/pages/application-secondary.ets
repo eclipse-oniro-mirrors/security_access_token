@@ -239,59 +239,79 @@ struct appNamePlusPage {
                     }.margin({ top: Constants.ROW_MARGIN_TOP })
                      .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
                   } else {
-                    if (this.allowedListItem.length) {
-                      Row() {
-                        Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                          Text($r('app.string.allowed'))
-                            .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                            .margin({
-                              top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                              left: Constants.SECONDARY_LIST_PADDING_RIGHT
+                    Scroll() {
+                      List() {
+                        if (this.allowedListItem.length) {
+                          ListItem() {
+                            Row() {
+                              Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
+                                Text($r('app.string.allowed'))
+                                  .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                  .margin({
+                                    top: Constants.SECONDARY_TEXT_MARGIN_TOP,
+                                    left: Constants.SECONDARY_LIST_PADDING_RIGHT
+                                  })
+                              }
+                            }
+                          }
+
+                          ListItem() {
+                            Row() {
+                              List() {
+                                ForEach(this.allowedListItem.slice(Constants.SLICE_START, this.allowedListItem.length - 1),
+                                  (item) => {
+                                    this.ListItemLayout(item, Constants.SLICE_START_INDEX, 'allow')
+                                  }, item => item.toString())
+                                ForEach(this.allowedListItem.slice(Constants.SLICE_END), (item, index) => {
+                                  this.ListItemLayout(item, Constants.SLICE_END_INDEX, 'allow')
+                                }, item => item.toString())
+                              }
+                              .backgroundColor($r('app.color.default_background_color'))
+                              .borderRadius(Constants.BORDER_RADIUS)
+                              .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                            }.margin({ top: Constants.ROW_MARGIN_TOP })
+                            .padding({
+                              left: Constants.SECONDARY_LIST_PADDING_LEFT,
+                              right: Constants.SECONDARY_LIST_PADDING_RIGHT
                             })
+                          }
+                        }
+                        if (this.bannedListItem.length) {
+                          ListItem() {
+                            Row() {
+                              Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
+                                Text($r('app.string.banned'))
+                                  .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                  .margin({
+                                    top: Constants.SECONDARY_TEXT_MARGIN_TOP,
+                                    left: Constants.SECONDARY_LIST_PADDING_RIGHT
+                                  })
+                              }
+                            }
+                          }
+
+                          ListItem() {
+                            Row() {
+                              List() {
+                                ForEach(this.bannedListItem.slice(Constants.SLICE_START, this.bannedListItem.length - 1),
+                                  (item) => {
+                                    this.ListItemLayout(item, Constants.SLICE_START_INDEX, 'banned')
+                                  }, item => item.toString())
+                                ForEach(this.bannedListItem.slice(Constants.SLICE_END), (item) => {
+                                  this.ListItemLayout(item, Constants.SLICE_END_INDEX, 'banned')
+                                }, item => item.toString())
+                              }
+                              .backgroundColor($r('app.color.default_background_color'))
+                              .borderRadius(Constants.BORDER_RADIUS)
+                              .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                            }.margin({ top: Constants.ROW_MARGIN_TOP })
+                            .padding({
+                              left: Constants.SECONDARY_LIST_PADDING_LEFT,
+                              right: Constants.SECONDARY_LIST_PADDING_RIGHT
+                            })
+                          }
                         }
                       }
-                      Row() {
-                        List() {
-                          ForEach(this.allowedListItem.slice(Constants.SLICE_START, this.allowedListItem.length - 1),
-                          (item) => {
-                            this.ListItemLayout(item, Constants.SLICE_START_INDEX, 'allow')
-                          }, item => item.toString())
-                          ForEach(this.allowedListItem.slice(Constants.SLICE_END), (item, index) => {
-                            this.ListItemLayout(item, Constants.SLICE_END_INDEX, 'allow')
-                          }, item => item.toString())
-                        }
-                        .backgroundColor($r('app.color.default_background_color'))
-                        .borderRadius(Constants.BORDER_RADIUS)
-                        .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                      }.margin({ top: Constants.ROW_MARGIN_TOP })
-                       .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
-                    }
-                    if (this.bannedListItem.length) {
-                      Row() {
-                        Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                          Text($r('app.string.banned'))
-                            .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                            .margin({
-                              top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                              left: Constants.SECONDARY_LIST_PADDING_RIGHT
-                            })
-                        }
-                      }
-                      Row() {
-                        List() {
-                          ForEach(this.bannedListItem.slice(Constants.SLICE_START, this.bannedListItem.length - 1),
-                          (item) => {
-                            this.ListItemLayout(item, Constants.SLICE_START_INDEX, 'banned')
-                          }, item => item.toString())
-                          ForEach(this.bannedListItem.slice(Constants.SLICE_END), (item) => {
-                            this.ListItemLayout(item, Constants.SLICE_END_INDEX, 'banned')
-                          }, item => item.toString())
-                        }
-                        .backgroundColor($r('app.color.default_background_color'))
-                        .borderRadius(Constants.BORDER_RADIUS)
-                        .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                      }.margin({ top: Constants.ROW_MARGIN_TOP })
-                       .padding({ left: Constants.SECONDARY_LIST_PADDING_LEFT, right: Constants.SECONDARY_LIST_PADDING_RIGHT })
                     }
                   }
                 }
