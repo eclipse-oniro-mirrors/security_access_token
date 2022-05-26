@@ -257,7 +257,6 @@ private:
         if (p - buf == bufSize) {
             return;
         }
-        n = 0;
     }
 
     // bind device id for this channel
