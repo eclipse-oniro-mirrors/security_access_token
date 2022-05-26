@@ -55,6 +55,12 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
 
 void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
 
@@ -65,6 +71,12 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 
 void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->DeleteRemoteHapTokenInfo(tokenID);
@@ -73,6 +85,12 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
 
 void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     sptr<HapTokenInfoForSyncParcel> tokenInfoParcelPtr = data.ReadParcelable<HapTokenInfoForSyncParcel>();
     int result = RET_FAILED;
     if (tokenInfoParcelPtr != nullptr) {
