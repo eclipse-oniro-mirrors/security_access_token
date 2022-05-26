@@ -19,6 +19,7 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
+#include "token_sync_load_callback.h"
 
 namespace OHOS {
 namespace Security {
@@ -39,9 +40,9 @@ TokenSyncManagerClient::TokenSyncManagerClient()
 TokenSyncManagerClient::~TokenSyncManagerClient()
 {}
 
-int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const
+int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -50,9 +51,9 @@ int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, A
     return proxy->GetRemoteHapTokenInfo(deviceID, tokenID);
 }
 
-int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const
+int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -61,9 +62,9 @@ int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) cons
     return proxy->DeleteRemoteHapTokenInfo(tokenID);
 }
 
-int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const
+int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -72,23 +73,69 @@ int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& 
     return proxy->UpdateRemoteHapTokenInfo(tokenInfo);
 }
 
-sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy() const
+void TokenSyncManagerClient::LoadTokenSync()
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "remoteObject_ is %{public}d", remoteObject_ == nullptr);
+
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
-        return nullptr;
-    }
-    auto tokensyncSa = sam->GetSystemAbility(ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE);
-    if (tokensyncSa == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null",
-            ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE);
-        return nullptr;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager return null");
+        return;
     }
 
-    auto proxy = iface_cast<ITokenSyncManager>(tokensyncSa);
+    sptr<TokenSyncLoadCallback> ptrTokenSyncLoadCallback = new (std::nothrow) TokenSyncLoadCallback();
+    if (ptrTokenSyncLoadCallback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new ptrTokenSyncLoadCallback fail.");
+        return;
+    }
+
+    int32_t result = sam->LoadSystemAbility(ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE,
+        ptrTokenSyncLoadCallback);
+    if (result != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "LoadSystemAbility %{public}d failed",
+            ITokenSyncManager::SA_ID_TOKENSYNC_MANAGER_SERVICE);
+        return;
+    }
+
+    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+    // wait_for release lock and block until time out(60s) or match the condition with notice
+    auto waitStatus = tokenSyncCon_.wait_for(lock, std::chrono::milliseconds(TOKEN_SYNC_LOAD_SA_TIMEOUT_MS),
+        [this]() { return remoteObject_ != nullptr; });
+    if (!waitStatus) {
+        // time out or loadcallback fail
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokensync load sa timeout");
+        return;
+    }
+}
+
+void TokenSyncManagerClient::FinishStartSASuccess(const sptr<IRemoteObject> &remoteObject)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get tokensync sa success.");
+
+    remoteObject_ = remoteObject;
+
+    // get lock which wait_for release and send a notice so that wait_for can out of block
+    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+
+    tokenSyncCon_.notify_one();
+}
+
+void TokenSyncManagerClient::FinishStartSAFailed()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get tokensync sa failed.");
+
+    // get lock which wait_for release and send a notice
+    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+    tokenSyncCon_.notify_one();
+}
+
+sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy()
+{
+    LoadTokenSync();
+
+    auto proxy = iface_cast<ITokenSyncManager>(remoteObject_);
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
         return nullptr;
     }
     return proxy;

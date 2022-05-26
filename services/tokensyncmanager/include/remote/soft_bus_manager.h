@@ -106,6 +106,8 @@ public:
 
 private:
     SoftBusManager();
+    int DeviceInit();
+    int SessionInit();
 
     /**
      * @brief Fulfill local device info
@@ -115,10 +117,19 @@ private:
      * @version 1.0
      */
     int FulfillLocalDeviceInfo();
+
+    /**
+     * @brief add all trusted device info.
+     *
+     * @since 1.0
+     * @version 1.0
+     */
+    int AddTrustedDeviceInfo();
+
     std::string GetUuidByNodeId(const std::string &nodeId) const;
     std::string GetUdidByNodeId(const std::string &nodeId) const;
 
-    const static std::string ACCESS_TOKEN_PACKAGE_NAME;
+    const static std::string TOKEN_SYNC_PACKAGE_NAME;
 
     // soft bus session server opened flag
     bool isSoftBusServiceBindSuccess_;

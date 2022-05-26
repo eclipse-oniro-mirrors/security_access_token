@@ -72,8 +72,29 @@ void TokenSyncServiceTest::TearDown()
     threads_.clear();
 
     if (g_ptrDeviceStateCallback != nullptr) {
-        g_ptrDeviceStateCallback->OnDeviceOffline(g_devInfo);
+        OnDeviceOffline(g_devInfo);
         sleep(1);
+    }
+}
+
+void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
+{
+    std::string networkId = info.deviceId;
+    std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
+    std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
+        networkId.c_str(),
+        uuid.c_str(),
+        udid.c_str());
+
+    if (uuid != "" && udid != "") {
+        RemoteCommandManager::GetInstance().NotifyDeviceOffline(uuid);
+        RemoteCommandManager::GetInstance().NotifyDeviceOffline(udid);
+        DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(networkId, DeviceIdType::NETWORK_ID);
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, offline failed.");
     }
 }
 
@@ -835,7 +856,7 @@ HWTEST_F(TokenSyncServiceTest, DeviceOffline001, TestSize.Level1)
     ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    g_ptrDeviceStateCallback->OnDeviceOffline(g_devInfo);
+    OnDeviceOffline(g_devInfo);
     sleep(1);
 
     ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);

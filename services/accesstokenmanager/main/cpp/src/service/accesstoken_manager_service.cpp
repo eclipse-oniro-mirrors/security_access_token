@@ -15,10 +15,13 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <thread>
+
 #include "access_token.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "device_manager.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -38,6 +41,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
+const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
+const int32_t RETRY_SLEEP_TIME_MS = 1000;
 
 AccessTokenManagerService::AccessTokenManagerService()
     : SystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
@@ -74,20 +79,19 @@ void AccessTokenManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
+    DestroyDeviceListenner();
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().VerifyNativeToken(tokenID, permissionName);
 }
@@ -95,15 +99,13 @@ int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const st
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, permissionName: %{public}s", __func__, permissionName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, permissionName: %{public}s", permissionName.c_str());
     return PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult.permissionDef);
 }
 
 int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (auto perm : permVec) {
@@ -117,8 +119,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, isSystemGrant: %{public}d", __func__, tokenID, isSystemGrant);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
 
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
@@ -165,16 +166,14 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
 
 int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s", __func__,
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d", __func__,
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -183,8 +182,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d", __func__,
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -193,8 +191,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
@@ -202,7 +199,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
 
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = 0LL;
 
@@ -216,44 +213,43 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
 int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x, dcap: %{public}s",
-        __func__, tokenID, dcap.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, dcap: %{public}s",
+        tokenID, dcap.c_str());
     return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
 AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, userID: %{public}d, bundleName: %{public}s, instIndex: %{public}d",
-        __func__, userID, bundleName.c_str(), instIndex);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, userID: %{public}d, bundleName: %{public}s, instIndex: %{public}d",
+        userID, bundleName.c_str(), instIndex);
     return AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
 
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
-        __func__, remoteDeviceID.c_str(), remoteTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+        remoteDeviceID.c_str(), remoteTokenID);
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
 int AccessTokenManagerService::UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc,
     const HapPolicyParcel& policyParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenID, appIDDesc,
         policyParcel.hapPolicyParameter);
@@ -261,14 +257,14 @@ int AccessTokenManagerService::UpdateHapToken(AccessTokenID tokenID, const std::
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& InfoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, InfoParcel.hapTokenInfoParams);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& InfoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
 }
@@ -277,7 +273,7 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: 0x%{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -285,7 +281,7 @@ int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
 
 int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfosRes)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called");
 
     std::vector<NativeTokenInfoForSync> nativeVec;
     AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
@@ -301,7 +297,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -310,7 +306,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
 
@@ -323,8 +319,8 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s, token id %{public}d",
-        __func__, deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        deviceID.c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
@@ -332,15 +328,15 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s, token id %{public}d",
-        __func__, deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        deviceID.c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID: %{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
@@ -348,15 +344,89 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
 
 void AccessTokenManagerService::DumpTokenInfo(std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called");
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(dumpInfo);
 }
 
-bool AccessTokenManagerService::Initialize() const
+void AccessTokenManagerService::CreateDeviceListenner()
+{
+    std::function<void()> runner = [&]() {
+        auto retrySleepTime = std::chrono::milliseconds(RETRY_SLEEP_TIME_MS);
+        while (1) {
+            std::unique_lock<std::mutex> lock(mutex_);
+
+            std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
+            std::shared_ptr<AtmDmInitCallback> ptrDmInitCallback = std::make_shared<AtmDmInitCallback>();
+
+            int32_t ret =
+                DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
+            if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+                std::this_thread::sleep_for(retrySleepTime);
+                continue;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "device manager init success.");
+
+            std::string extra = "";
+            std::shared_ptr<AtmDeviceStateCallback> ptrAtmDeviceStateCallback =
+                std::make_shared<AtmDeviceStateCallback>();
+            ret = DistributedHardware::DeviceManager::GetInstance().RegisterDevStateCallback(packageName, extra,
+                ptrAtmDeviceStateCallback);
+            if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: RegisterDevStateCallback error, result: %{public}d", ret);
+                std::this_thread::sleep_for(retrySleepTime);
+                continue;
+            }
+
+            isListened_ = true;
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner register success.");
+
+            return;
+        }
+    };
+
+    std::thread initThread(runner);
+    initThread.detach();
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "start a thread to listen device state.");
+}
+
+void AccessTokenManagerService::DestroyDeviceListenner()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, init: %{public}d", isListened_);
+
+    std::unique_lock<std::mutex> lock(mutex_);
+
+    if (!isListened_) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "not listened, skip");
+        return;
+    }
+
+    std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
+
+    int32_t ret = DistributedHardware::DeviceManager::GetInstance().UnRegisterDevStateCallback(packageName);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnRegisterDevStateCallback failed, code: %{public}d", ret);
+    }
+
+    ret = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(packageName);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnInitDeviceManager failed, code: %{public}d", ret);
+    }
+
+    isListened_ = false;
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner unregister success.");
+}
+
+bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
+    CreateDeviceListenner(); // for start tokensync when remote devivce online
     return true;
 }
 } // namespace AccessToken

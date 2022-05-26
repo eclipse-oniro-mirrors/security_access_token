@@ -17,7 +17,7 @@
     <systemability>
         <name>3504</name>
         <libpath>libtoken_sync_manager_service.z.so</libpath>
-        <run-on-create>true</run-on-create>
+        <run-on-create>false</run-on-create>
         <distributed>true</distributed>
         <dump-level>1</dump-level>
     </systemability>

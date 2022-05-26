@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "accesstoken_manager_stub.h"
 #include "iremote_object.h"
@@ -26,6 +27,7 @@
 #include "system_ability.h"
 #include "hap_token_info.h"
 #include "access_token.h"
+#include "atm_device_state_callback.h"
 
 namespace OHOS {
 namespace Security {
@@ -76,9 +78,13 @@ public:
     void DumpTokenInfo(std::string& dumpInfo) override;
 
 private:
-    bool Initialize() const;
+    bool Initialize();
+    void CreateDeviceListenner();
+    void DestroyDeviceListenner();
 
     ServiceRunningState state_;
+    std::mutex mutex_;
+    bool isListened_ = false;
 };
 } // namespace AccessToken
 } // namespace Security
