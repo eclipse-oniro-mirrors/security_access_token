@@ -127,6 +127,7 @@ void AccessTokenKitTest::TearDownTestCase()
 
 void AccessTokenKitTest::SetUp()
 {
+    selfTokenId_ = GetSelfTokenID();
     g_infoManagerTestInfoParms = g_infoManagerTestInfoParmsBak;
     g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPramsBak;
     HapInfoParams info = {
@@ -268,6 +269,7 @@ void AccessTokenKitTest::TearDown()
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
+    SetSelfTokenID(selfTokenId_);
 }
 
 unsigned int AccessTokenKitTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)

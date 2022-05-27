@@ -24,6 +24,7 @@
 #include "field_const.h"
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
+#include "permission_definition_cache.h"
 #include "permission_manager.h"
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -87,7 +88,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
             continue;
         }
-        ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permDefRes, permStateRes);
+        ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u restore failed.", tokenId);
@@ -104,6 +105,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
             " restore hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
             tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex());
     }
+    PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes);
 }
 
 void AccessTokenInfoManager::InitNativeTokenInfos()
@@ -184,9 +186,6 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
             hapTokenIdMap_[HapUniqueKey] = id;
         }
         hapTokenInfoMap_[id] = info;
-    }
-    if (!info->IsRemote()) {
-        PermissionManager::GetInstance().AddDefPermissions(info, false);
     }
     return RET_SUCCESS;
 }
@@ -399,6 +398,8 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         return RET_FAILED;
     }
+    PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
+
     ACCESSTOKEN_LOG_INFO(LABEL,
         "create hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
@@ -532,7 +533,7 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
             tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());
     }
 
-    PermissionManager::GetInstance().AddDefPermissions(infoPtr, true);
+    PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenID, true);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
@@ -603,9 +604,8 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
         return RET_FAILED;
     }
 
-    std::vector<PermissionDef> permList = {};
     std::shared_ptr<PermissionPolicySet> newPermPolicySet =
-        PermissionPolicySet::BuildPermissionPolicySet(mapID, permList, hapSync.permStateList);
+        PermissionPolicySet::BuildPermissionPolicySet(mapID, hapSync.permStateList);
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
@@ -857,7 +857,7 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
             if (iter->second != nullptr) {
-                iter->second->StoreHapInfo(hapInfoValues, permDefValues, permStateValues);
+                iter->second->StoreHapInfo(hapInfoValues, permStateValues);
             }
         }
     }
@@ -870,6 +870,8 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
             }
         }
     }
+
+    PermissionDefinitionCache::GetInstance().StorePermissionDef(permDefValues);
 
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValues);
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);

@@ -45,18 +45,13 @@ PermissionManager::~PermissionManager()
 {
 }
 
-void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tokenInfo, bool updateFlag)
+void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
+    bool updateFlag)
 {
-    if (tokenInfo == nullptr) {
-        return;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfo->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        return;
-    }
-    std::vector<PermissionDef> permList;
-    permPolicySet->GetDefPermissions(permList);
-    for (auto perm : permList) {
+    std::vector<PermissionDef> permFilterList;
+    PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
+
+    for (auto perm : permFilterList) {
         if (!PermissionValidator::IsPermissionDefValid(perm)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "invalid permission definition info: %{public}s",
                 TransferPermissionDefToString(perm).c_str());
@@ -69,7 +64,7 @@ void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tok
         }
 
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
-            PermissionDefinitionCache::GetInstance().Insert(perm);
+            PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
         } else {
             ACCESSTOKEN_LOG_INFO(LABEL, "permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());

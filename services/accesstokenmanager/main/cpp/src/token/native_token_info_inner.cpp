@@ -41,9 +41,8 @@ NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native,
     const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
 {
     tokenInfoBasic_ = native;
-    std::vector<PermissionDef> permDefList = {};
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(native.tokenID,
-        permDefList, permStateList);
+        permStateList);
 }
 
 NativeTokenInfoInner::~NativeTokenInfoInner()
@@ -74,9 +73,8 @@ int NativeTokenInfoInner::Init(AccessTokenID id, const std::string& processName,
     tokenInfoBasic_.dcap = dcap;
     tokenInfoBasic_.nativeAcls = nativeAcls;
 
-    std::vector<PermissionDef> permDefList = {};
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id,
-        permDefList, permStateList);
+        permStateList);
     return RET_SUCCESS;
 }
 
@@ -149,7 +147,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
 
     std::vector<GenericValues> permDefRes = {};
     permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permDefRes, permStateRes);
+        permStateRes);
     return RET_SUCCESS;
 }
 
@@ -175,8 +173,7 @@ void NativeTokenInfoInner::StoreNativeInfo(std::vector<GenericValues>& valueList
     valueList.emplace_back(genericValues);
 
     if (permPolicySet_ != nullptr) {
-        std::vector<GenericValues> permDefValues;
-        permPolicySet_->StorePermissionPolicySet(permDefValues, permStateValues);
+        permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
 }
 

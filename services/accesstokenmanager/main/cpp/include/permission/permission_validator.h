@@ -30,9 +30,9 @@ public:
     static bool IsPermissionFlagValid(int flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
     static bool IsPermissionStateValid(const PermissionStateFull& permState);
-    static void FilterInvalidPermisionDef(
+    static void FilterInvalidPermissionDef(
         const std::vector<PermissionDef>& permList, std::vector<PermissionDef>& result);
-    static void FilterInvalidPermisionState(
+    static void FilterInvalidPermissionState(
         const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result);
     static bool IsGrantModeValid(int grantMode);
     static bool IsGrantStatusValid(int grantStaus);

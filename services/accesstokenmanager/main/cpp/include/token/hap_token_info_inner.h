@@ -41,10 +41,9 @@ public:
     void Update(const std::string& appIDDesc, const HapPolicyParams& policy);
     void TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
-        std::vector<GenericValues>& permDefValues,
         std::vector<GenericValues>& permStateValues) const;
     int RestoreHapTokenInfo(AccessTokenID tokenId, GenericValues& tokenValue,
-        const std::vector<GenericValues>& permDefRes, const std::vector<GenericValues>& permStateRes);
+        const std::vector<GenericValues>& permStateRes);
 
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
     HapTokenInfo GetHapInfoBasic() const;

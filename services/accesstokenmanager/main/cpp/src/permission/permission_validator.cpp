@@ -89,7 +89,7 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& perm
 }
 
 
-void PermissionValidator::FilterInvalidPermisionDef(
+void PermissionValidator::FilterInvalidPermissionDef(
     const std::vector<PermissionDef>& permList, std::vector<PermissionDef>& result)
 {
     std::set<std::string> permDefSet;
@@ -121,7 +121,7 @@ void PermissionValidator::DeduplicateResDevID(const PermissionStateFull& permSta
     result.isGeneral = permState.isGeneral;
 }
 
-void PermissionValidator::FilterInvalidPermisionState(
+void PermissionValidator::FilterInvalidPermissionState(
     const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result)
 {
     std::set<std::string> permStateSet;

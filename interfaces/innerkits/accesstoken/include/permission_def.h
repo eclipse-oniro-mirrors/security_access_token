@@ -36,6 +36,12 @@ public:
     std::string description;
     int descriptionId;
 };
+
+class PermissionDefData final {
+public:
+    AccessTokenID tokenId;
+    PermissionDef permDef;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

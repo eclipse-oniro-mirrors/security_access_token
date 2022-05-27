@@ -52,15 +52,14 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.appID = info.appIDDesc;
     tokenInfoBasic_.deviceID = "0";
     tokenInfoBasic_.apl = policy.apl;
-    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permList, policy.permStateList);
+    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permStateList);
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfo &info, const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
 {
     tokenInfoBasic_ = info;
-    const std::vector<PermissionDef> permDefList;
-    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, permDefList, permStateList);
+    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, permStateList);
 }
 
 HapTokenInfoInner::~HapTokenInfoInner()
@@ -75,11 +74,11 @@ void HapTokenInfoInner::Update(const std::string& appIDDesc, const HapPolicyPara
     tokenInfoBasic_.apl = policy.apl;
     if (permPolicySet_ == nullptr) {
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
-            policy.permList, policy.permStateList);
+            policy.permStateList);
         return;
     }
 
-    permPolicySet_->Update(policy.permList, policy.permStateList);
+    permPolicySet_->Update(policy.permStateList);
     return;
 }
 
@@ -148,7 +147,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 }
 
 int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
-    GenericValues& tokenValue, const std::vector<GenericValues>& permDefRes,
+    GenericValues& tokenValue,
     const std::vector<GenericValues>& permStateRes)
 {
     tokenInfoBasic_.tokenID = tokenId;
@@ -156,8 +155,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     if (ret != RET_SUCCESS) {
         return RET_FAILED;
     }
-    permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permDefRes, permStateRes);
+    permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId, permStateRes);
     return RET_SUCCESS;
 }
 
@@ -169,7 +167,6 @@ void HapTokenInfoInner::StoreHapBasicInfo(std::vector<GenericValues>& valueList)
 }
 
 void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
-    std::vector<GenericValues>& permDefValues,
     std::vector<GenericValues>& permStateValues) const
 {
     if (isRemote_) {
@@ -179,7 +176,7 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
     }
     StoreHapBasicInfo(hapInfoValues);
     if (permPolicySet_ != nullptr) {
-        permPolicySet_->StorePermissionPolicySet(permDefValues, permStateValues);
+        permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
 }
 
