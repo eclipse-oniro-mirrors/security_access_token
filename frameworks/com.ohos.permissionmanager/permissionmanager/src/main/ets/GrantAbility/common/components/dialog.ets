@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { getPermissionGroup } from '../utils/utils.ets'
+import { getPermissionGroup, Log } from '../utils/utils.ets'
 import { BundleFlag, USER_ID } from '../model/bundle.ets'
 import Constants from '../utils/constant.ets'
 import featureAbility from '@ohos.ability.featureAbility'
@@ -21,8 +21,6 @@ import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 import bundle from '@ohos.bundle'
 import Resmgr from '@ohos.resourceManager'
 import { permissionGroups, showSubpermissionsGrop } from "../model/permissionGroup.ets";
-
-var TAG = "PermissionManager_GrantAbility:"
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
@@ -120,7 +118,7 @@ export struct privacyDialog {
     if (this.initStatus == Constants.INIT_NEED_TO_TERMINATED) {
       ret = Constants.RESULT_FAILURE
     }
-    console.log(TAG + "code:" + ret + ", result=" + JSON.stringify(this.result))
+    Log.info("code:" + ret + ", result=" + JSON.stringify(this.result))
     this.answer(ret, this.reqPerms)
   }
 
@@ -136,8 +134,8 @@ export struct privacyDialog {
 
   getApplicationName(uid) {
     bundle.getNameForUid(uid).then((data) => {
-      console.log(TAG + "getApplicationName bundleName:" + data)
-      console.log(TAG + "getApplicationName userId:" + Math.floor(uid/200000))
+      Log.info("getApplicationName bundleName:" + data)
+      Log.info("getApplicationName userId:" + Math.floor(uid/200000))
       bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, Math.floor(uid/200000)).then(applicationInfo => {
         Resmgr.getResourceManager(data).then(item => {
           item.getString(applicationInfo.labelId, (err, value) => {
@@ -146,11 +144,11 @@ export struct privacyDialog {
             } else {
               this.appName = value
             }
-            console.log(TAG + "hap label:" + applicationInfo.label + ", value:"+this.appName)
+            Log.info("hap label:" + applicationInfo.label + ", value:"+this.appName)
           })
         })
       }).catch(err => {
-        console.log(TAG + "applicationInfo error :" + err)
+        Log.error("applicationInfo error :" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
       })
       bundle.getBundleInfo(data, Constants.PARMETER_BUNDLE_FLAG).then(bundleInfo => {
@@ -171,7 +169,7 @@ export struct privacyDialog {
         })
       })
     }).catch(err => {
-      console.log(TAG + "getNameForUid error :" + JSON.stringify(err))
+      Log.error("getNameForUid error :" + JSON.stringify(err))
       this.initStatus = Constants.INIT_NEED_TO_TERMINATED
     })
   }
@@ -200,13 +198,13 @@ export struct privacyDialog {
     this.reqPerms.forEach((permission, idx) => {
       //已授权
       if(stateGroup[idx] == Constants.PASS_OPER) {
-        console.log(TAG + "permission has been fixed:" + permission)
+        Log.info("permission has been fixed:" + permission)
         this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
         //待授权
       }else if(stateGroup[idx] == Constants.DYNAMIC_OPER) {
         var group = getPermissionGroup(permission)
         if(!group) {
-          console.log(TAG + "permission not find:" + permission)
+          Log.info("permission not find:" + permission)
         }else {
           var exist = this.grantGroups.find(grantGroup => grantGroup.name == group.name)
           //判断是否为需要展示子权限的权限组
@@ -238,7 +236,7 @@ export struct privacyDialog {
   }
 
   answer(ret, reqPerms) {
-    console.log(TAG + "code:" + ret + ", perms="+ JSON.stringify(reqPerms) +", result=" + JSON.stringify(this.result))
+    Log.info("code:" + ret + ", perms="+ JSON.stringify(reqPerms) +", result=" + JSON.stringify(this.result))
     var perms = []
     var results = []
     reqPerms.forEach(perm => {
@@ -264,19 +262,19 @@ export struct privacyDialog {
     this.result = []
     featureAbility.getWant((err, want) => {
       if (err.code != 0) {
-        console.log(TAG + "featureAbility.getWant err:" + err)
+        Log.error("featureAbility.getWant err:" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
         return
       }
       this.reqPerms = want.parameters['ohos.user.grant.permission']
       this.accessTokenId = want.parameters['ohos.aafwk.param.callerToken']
       if (this.reqPerms == undefined || this.accessTokenId == undefined || this.reqPerms.length == 0) {
-        console.log(TAG + "invalid parameters")
+        Log.info("invalid parameters")
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
         return
       }
-      console.log(TAG + "request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
-      console.log(TAG + "permission state=" + JSON.stringify(want.parameters['ohos.user.grant.permission.state']));
+      Log.info("request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
+      Log.info("permission state=" + JSON.stringify(want.parameters['ohos.user.grant.permission.state']));
       this.result = new Array(this.reqPerms.length).fill(-1);
       this.getgrantGroups(want.parameters['ohos.user.grant.permission.state']);
       this.getApplicationName(want.parameters['ohos.aafwk.param.callerUid'])
@@ -284,6 +282,6 @@ export struct privacyDialog {
   }
 
   aboutToDisappear() {
-    console.log(TAG + "aboutToDisappear")
+    Log.info("aboutToDisappear")
   }
 }

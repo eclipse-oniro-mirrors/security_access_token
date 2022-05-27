@@ -14,6 +14,8 @@
  */
 import { permissionGroups, groups } from "../model/permissionGroup.ets"
 
+const TAG = 'PermissionManager_Log';
+
 export function getPermissionGroup(permission: string) {
   for (var i = 0; i < permissionGroups.length; i++) {
     if (permissionGroups[i].permissionName == permission) {
@@ -32,5 +34,15 @@ export function getPermissionGroup(permission: string) {
         return groups[permissionGroups[i].groupId]
       }
     }
+  }
+}
+
+export class Log {
+  static info(log) {
+    console.info(`Info: ${TAG}  ${log}`)
+  }
+
+  static error(log) {
+    console.info(`Error: ${TAG}  ${log}`)
   }
 }

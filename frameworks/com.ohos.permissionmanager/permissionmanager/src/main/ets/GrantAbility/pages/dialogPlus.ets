@@ -15,8 +15,7 @@
 
 import { privacyDialog } from "../common/components/dialog.ets"
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-
-var TAG = "PermissionManager_GrantAbility:"
+import { Log } from '../common/utils/utils.ets'
 
 @Entry
 @Component
@@ -35,16 +34,16 @@ struct dialogPlusPage {
     group.permissions.forEach(async permission => {
       const result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
       num ++
-      console.log(TAG + "grant permission result:" + result + "permission" + permission)
+      Log.info("grant permission result:" + result + "permission" + permission)
       if (result == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
         permissionList.forEach((req, idx) => {
           if(req == permission) {
             this.result[idx] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
           }
         })
-        console.log(TAG + "grant permission success:" + permission)
+        Log.info("grant permission success:" + permission)
       } else {
-        console.log(TAG + "failed to grant permission:" + permission + " ret:" + result)
+        Log.error("failed to grant permission:" + permission + " ret:" + result)
       }
       if(num == group.permissions.length) {
         this.count ++
@@ -55,12 +54,12 @@ struct dialogPlusPage {
     var acManager = abilityAccessCtrl.createAtManager()
     group.permissions.forEach(async permission => {
       const result = await acManager.revokeUserGrantedPermission(accessTokenId, permission, userFixedFlag)
-      console.log(TAG + "revoke permission result:" + result + "permission" + permission);
+      Log.info("revoke permission result:" + result + "permission" + permission);
     })
     this.count ++
   }
   privacyExist() {
-    console.info(TAG + "exist")
+    Log.info("exist")
   }
   aboutToAppear() {
     this.privacyDialogController.open()
