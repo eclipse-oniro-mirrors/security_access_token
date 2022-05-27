@@ -857,7 +857,7 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
             if (iter->second != nullptr) {
-                iter->second->StoreHapInfo(hapInfoValues, permDefValues, permStateValues);
+                iter->second->StoreHapInfo(hapInfoValues,permStateValues);
             }
         }
     }
@@ -870,6 +870,8 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
             }
         }
     }
+
+    PermissionDefinitionCache::GetInstance().StorePermissionDef(permDefValues);
 
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValues);
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);

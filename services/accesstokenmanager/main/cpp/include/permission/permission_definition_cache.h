@@ -33,7 +33,7 @@ public:
 
     virtual ~PermissionDefinitionCache();
 
-    bool Insert(const PermissionDef& info);
+    bool Insert(const PermissionDef& info, AccessTokenID tokenId);
 
     bool Update(const PermissionDef& info);
 
@@ -49,6 +49,9 @@ public:
 
     bool IsPermissionDefEmpty();
 
+    void StorePermissionDef(std::vector<GenericValues>& valueList);
+
+    GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList, AccessTokenID tokenId);
 private:
     PermissionDefinitionCache();
 
@@ -58,9 +61,9 @@ private:
 
     /**
      * key: the permission name.
-     * value: the object of PermissionDef.
+     * value: the object of PermissionDefData.
      */
-    std::map<std::string, PermissionDef> permissionDefinitionMap_;
+    std::map<std::string, PermissionDefData> permissionDefinitionMap_;
 
     OHOS::Utils::RWLock cacheLock_;
 };

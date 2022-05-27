@@ -39,7 +39,7 @@ PermissionDefinitionCache::PermissionDefinitionCache()
 PermissionDefinitionCache::~PermissionDefinitionCache()
 {}
 
-bool PermissionDefinitionCache::Insert(const PermissionDef& info)
+bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID tokenId)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(info.permissionName);
@@ -48,14 +48,15 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info)
             info.permissionName.c_str());
         return false;
     }
-    permissionDefinitionMap_[info.permissionName] = info;
+    permissionDefinitionMap_[info.permissionName].permDef = info;
+    permissionDefinitionMap_[info.permissionName].tokenId= tokenId;
     return true;
 }
 
 bool PermissionDefinitionCache::Update(const PermissionDef& info)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    permissionDefinitionMap_[info.permissionName] = info;
+    permissionDefinitionMap_[info.permissionName].permDef = info;
     return true;
 }
 
@@ -64,7 +65,7 @@ void PermissionDefinitionCache::DeleteByBundleName(const std::string& bundleName
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
-        if (bundleName == it->second.bundleName) {
+        if (bundleName == it->second.permDef.bundleName) {
             permissionDefinitionMap_.erase(it++);
         } else {
             ++it;
@@ -81,7 +82,7 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
             permissionName.c_str());
         return RET_FAILED;
     }
-    info = it->second;
+    info = it->second.permDef;
     return RET_SUCCESS;
 }
 
@@ -103,7 +104,7 @@ bool PermissionDefinitionCache::IsGrantedModeEqualInner(const std::string& permi
     if (it == permissionDefinitionMap_.end()) {
         return false;
     }
-    return it->second.grantMode == grantMode;
+    return it->second.permDef.grantMode == grantMode;
 }
 
 bool PermissionDefinitionCache::HasDefinition(const std::string& permissionName)
@@ -117,6 +118,31 @@ bool PermissionDefinitionCache::IsPermissionDefEmpty()
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     return permissionDefinitionMap_.empty();
 }
+
+void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& valueList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.begin();
+    while (it != permissionDefinitionMap_.end()) {
+        GenericValues genericValues;
+        genericValues.Put(FIELD_TOKEN_ID, it->second.tokenId);
+        DataTranslator::TranslationIntoGenericValues(it->second.permDef, genericValues);
+        valueList.emplace_back(genericValues);
+    }
+}
+
+void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList,
+    AccessTokenID tokenId)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.begin();
+    while (it != permissionDefinitionMap_.end()) {
+        if (tokenId == it->second.tokenId) {
+            permList.emplace_back(it->second.permDef);
+        }
+    }
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

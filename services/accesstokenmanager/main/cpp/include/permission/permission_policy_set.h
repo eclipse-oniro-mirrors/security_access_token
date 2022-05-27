@@ -38,8 +38,7 @@ public:
         const std::vector<PermissionDef>& permList, const std::vector<PermissionStateFull>& permStateList);
     static std::shared_ptr<PermissionPolicySet> RestorePermissionPolicy(AccessTokenID tokenId,
         const std::vector<GenericValues>& permDefRes, const std::vector<GenericValues>& permStateRes);
-    void StorePermissionPolicySet(std::vector<GenericValues>& permDefValueList,
-        std::vector<GenericValues>& permStateValueList);
+    void StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList);
     void Update(const std::vector<PermissionDef>& permList, const std::vector<PermissionStateFull>& permStateList);
 
     int VerifyPermissStatus(const std::string& permissionName);
@@ -63,7 +62,6 @@ private:
     void PermStateFullToString(const PermissionStateFull& state, std::string& info) const;
 
     OHOS::Utils::RWLock permPolicySetLock_;
-    std::vector<PermissionDef> permList_;
     std::vector<PermissionStateFull> permStateList_;
     AccessTokenID tokenId_;
 };

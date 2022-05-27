@@ -169,7 +169,6 @@ void HapTokenInfoInner::StoreHapBasicInfo(std::vector<GenericValues>& valueList)
 }
 
 void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
-    std::vector<GenericValues>& permDefValues,
     std::vector<GenericValues>& permStateValues) const
 {
     if (isRemote_) {
@@ -179,7 +178,7 @@ void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
     }
     StoreHapBasicInfo(hapInfoValues);
     if (permPolicySet_ != nullptr) {
-        permPolicySet_->StorePermissionPolicySet(permDefValues, permStateValues);
+        permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
 }
 

@@ -54,6 +54,7 @@ void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tok
     if (permPolicySet == nullptr) {
         return;
     }
+
     std::vector<PermissionDef> permList;
     permPolicySet->GetDefPermissions(permList);
     for (auto perm : permList) {
@@ -69,7 +70,7 @@ void PermissionManager::AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tok
         }
 
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
-            PermissionDefinitionCache::GetInstance().Insert(perm);
+            PermissionDefinitionCache::GetInstance().Insert(perm, tokenInfo->GetTokenID());
         } else {
             ACCESSTOKEN_LOG_INFO(LABEL, "permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());
