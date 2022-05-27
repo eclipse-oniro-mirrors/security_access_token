@@ -60,7 +60,7 @@ private:
     void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
-    void  DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
+    void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
@@ -69,8 +69,10 @@ private:
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsAuthorizedCalling() const;
-    static const int SYSTEM_UID = 1000;
-    static const int ROOT_UID = 0;
+    bool IsAccessTokenCalling() const;
+    static const int32_t SYSTEM_UID = 1000;
+    static const int32_t ROOT_UID = 0;
+    static const int32_t ACCESSTOKEN_UID = 3020;
 
     using RequestFuncType = void (AccessTokenManagerStub::*)(MessageParcel &data, MessageParcel &reply);
     std::map<uint32_t, RequestFuncType> requestFuncMap_;
