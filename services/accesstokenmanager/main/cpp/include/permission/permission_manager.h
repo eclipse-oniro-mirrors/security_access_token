@@ -36,7 +36,8 @@ public:
     static PermissionManager& GetInstance();
     virtual ~PermissionManager();
 
-    void AddDefPermissions(std::shared_ptr<HapTokenInfoInner> tokenInfo, bool updateFlag);
+    void AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
+        bool updateFlag);
     void RemoveDefPermissions(AccessTokenID tokenID);
     int VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);

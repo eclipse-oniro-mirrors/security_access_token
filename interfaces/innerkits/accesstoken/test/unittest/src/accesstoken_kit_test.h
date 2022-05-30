@@ -49,6 +49,7 @@ public:
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
     void DeleteTestToken() const;
     void AllocTestToken() const;
+    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security

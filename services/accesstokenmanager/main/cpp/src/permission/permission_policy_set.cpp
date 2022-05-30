@@ -36,13 +36,11 @@ PermissionPolicySet::~PermissionPolicySet()
 }
 
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicySet(
-    AccessTokenID tokenId, const std::vector<PermissionDef>& permList,
-    const std::vector<PermissionStateFull>& permStateList)
+    AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     if (policySet != nullptr) {
-        PermissionValidator::FilterInvalidPermisionDef(permList, policySet->permList_);
-        PermissionValidator::FilterInvalidPermisionState(permStateList, policySet->permStateList_);
+        PermissionValidator::FilterInvalidPermissionState(permStateList, policySet->permStateList_);
         policySet->tokenId_ = tokenId;
     }
     return policySet;
@@ -57,30 +55,12 @@ void PermissionPolicySet::UpdatePermStateFull(const PermissionStateFull& permOld
     }
 }
 
-void PermissionPolicySet::Update(const std::vector<PermissionDef>& permList,
-    const std::vector<PermissionStateFull>& permStateList)
+void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permStateList)
 {
-    std::vector<PermissionDef> permFilterList;
     std::vector<PermissionStateFull> permStateFilterList;
-
-    PermissionValidator::FilterInvalidPermisionDef(permList, permFilterList);
-    PermissionValidator::FilterInvalidPermisionState(permStateList, permStateFilterList);
+    PermissionValidator::FilterInvalidPermissionState(permStateList, permStateFilterList);
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const PermissionDef& permNew : permFilterList) {
-        bool found = false;
-        for (PermissionDef& permOld : permList_) {
-            if (permNew.permissionName == permOld.permissionName) {
-                permOld = permNew;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            permList_.emplace_back(permNew);
-        }
-    }
-
     for (PermissionStateFull& permStateNew : permStateFilterList) {
         for (const PermissionStateFull& permStateOld : permStateList_) {
             if (permStateNew.permissionName == permStateOld.permissionName) {
@@ -93,7 +73,7 @@ void PermissionPolicySet::Update(const std::vector<PermissionDef>& permList,
 }
 
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolicy(AccessTokenID tokenId,
-    const std::vector<GenericValues>& permDefRes, const std::vector<GenericValues>& permStateRes)
+    const std::vector<GenericValues>& permStateRes)
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     if (policySet == nullptr) {
@@ -101,18 +81,6 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
         return nullptr;
     }
     policySet->tokenId_ = tokenId;
-
-    for (GenericValues defValue : permDefRes) {
-        if ((AccessTokenID)defValue.GetInt(FIELD_TOKEN_ID) == tokenId) {
-            PermissionDef def;
-            int ret = DataTranslator::TranslationIntoPermissionDef(defValue, def);
-            if (ret == RET_SUCCESS) {
-                policySet->permList_.emplace_back(def);
-            } else {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x permDef is wrong.", tokenId);
-            }
-        }
-    }
 
     for (GenericValues stateValue : permStateRes) {
         if ((AccessTokenID)stateValue.GetInt(FIELD_TOKEN_ID) == tokenId) {
@@ -142,16 +110,6 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
     permStateList.emplace_back(state);
 }
 
-void PermissionPolicySet::StorePermissionDef(std::vector<GenericValues>& valueList) const
-{
-    for (auto permissionDef : permList_) {
-        GenericValues genericValues;
-        genericValues.Put(FIELD_TOKEN_ID, tokenId_);
-        DataTranslator::TranslationIntoGenericValues(permissionDef, genericValues);
-        valueList.emplace_back(genericValues);
-    }
-}
-
 void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& valueList) const
 {
     for (auto permissionState : permStateList_) {
@@ -173,11 +131,9 @@ void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& value
     }
 }
 
-void PermissionPolicySet::StorePermissionPolicySet(std::vector<GenericValues>& permDefValueList,
-    std::vector<GenericValues>& permStateValueList)
+void PermissionPolicySet::StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    StorePermissionDef(permDefValueList);
     StorePermissionState(permStateValueList);
 }
 
@@ -198,8 +154,7 @@ int PermissionPolicySet::VerifyPermissStatus(const std::string& permissionName)
 
 void PermissionPolicySet::GetDefPermissions(std::vector<PermissionDef>& permList)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    permList.assign(permList_.begin(), permList_.end());
+    PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenId_);
 }
 
 void PermissionPolicySet::GetPermissionStateFulls(std::vector<PermissionStateFull>& permList)
@@ -307,9 +262,11 @@ void PermissionPolicySet::ToString(std::string& info)
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     info.append(R"(  "permDefList": [)");
     info.append("\n");
-    for (auto iter = permList_.begin(); iter != permList_.end(); iter++) {
+    std::vector<PermissionDef> permList;
+    PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenId_);
+    for (auto iter = permList.begin(); iter != permList.end(); iter++) {
         PermDefToString(*iter, info);
-        if (iter != (permList_.end() - 1)) {
+        if (iter != (permList.end() - 1)) {
             info.append(",\n");
         }
     }
