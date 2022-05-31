@@ -32,6 +32,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
+static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
+
 class AccessTokenInfoManager final {
 public:
     static AccessTokenInfoManager& GetInstance();
@@ -66,6 +69,7 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
+    std::string GetUdidByNodeId(const std::string &nodeId);
 #endif
 
 private:

@@ -129,43 +129,6 @@ void SendTaskThread()
     free(sendBuffer);
 }
 
-/**
- * @tc.name: GetRemoteHapTokenInfo001
- * @tc.desc: test remote hap send func
- * @tc.type: FUNC
- * @tc.require:AR000GK6T5 AR000GK6T9
- */
-HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo001 start.");
-    g_jsonBefore = "{\"commandName\":\"SyncRemoteHapTokenCommand\", \"id\":\"";
-    g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":"
-        "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
-        "\\\"111111\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,\\\"permState\\\":"
-        "null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
-        "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
-        ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
-        "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
-
-    threads_.emplace_back(std::thread(SendTaskThread));
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    int ret = OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_UDID, 0x20100000);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
-    ASSERT_NE(mapID, (AccessTokenID)0);
-
-    HapTokenInfo tokeInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, tokeInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-}
-
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
     .bundleName = "accesstoken_test",
@@ -287,7 +250,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
         "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
         "\\\"111111\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
+        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -319,7 +283,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
         "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
         "\\\"111111\\\",\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
+        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -352,7 +317,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":\\\"aaa\\\","
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
+        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -385,7 +351,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
+        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -502,7 +469,8 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
         "{\\\"apl\\\":3,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
         "\\\"version\\\":1,\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]}],"
         "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
+        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
         "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
@@ -712,158 +680,4 @@ HapTokenInfoForSync g_remoteHapInfo = {
     .baseInfo = g_remoteHapInfoBasic,
     .permStateList = {g_infoManagerTestUpdateState1, g_infoManagerTestUpdateState2}
 };
-}
-
-/**
- * @tc.name: UpdateRemoteHapTokenCommand001
- * @tc.desc: recv mapping hap token update message
- * @tc.type: FUNC
- * @tc.require:AR000GK6TB
- */
-HWTEST_F(TokenSyncServiceTest, UpdateRemoteHapTokenCommand001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenCommand001 start.");
-    sleep(1);
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    sleep(6);
-
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
-    ASSERT_NE(mapID, 0);
-
-    HapTokenInfo mapInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
-    ASSERT_EQ(ret, PERMISSION_DENIED);
-
-    std::string recvJson =
-        "{\"commandName\":\"UpdateRemoteHapTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfos\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"testtesttesttest\\\","
-        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,"
-        "\\\"permState\\\":[{\\\"grantConfig\\\":[{\\\"grantFlags\\\":2,\\\"grantStatus\\\":0,"
-        "\\\"resDeviceID\\\":\\\"local\\\"}],\\\"isGeneral\\\":true,"
-        "\\\"permissionName\\\":\\\"ohos.permission.CAMERA\\\"},{\\\"grantConfig\\\":[{\\\"grantFlags\\\":1,"
-        "\\\"grantStatus\\\":-1,\\\"resDeviceID\\\":\\\"device 1\\\"},{\\\"grantFlags\\\":2,\\\"grantStatus\\\":-1,"
-        "\\\"resDeviceID\\\":\\\"device 2\\\"}],\\\"isGeneral\\\":false,"
-        "\\\"permissionName\\\":\\\"ohos.permission.ANSWER_CALL\\\"}],\\\"tokenAttr\\\":0,\\\"tokenID\\\":536870913,"
-        "\\\"userID\\\":1,\\\"version\\\":1},\\\"commandName\\\":\\\"UpdateRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestTokenId\\\":536870913,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\","
-        "\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
-        "\\\"uniqueId\\\":\\\"UpdateRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
-    int recvLen = 0x1000;
-    CompressMock(recvJson, recvBuffer, recvLen);
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-    sleep(2);
-
-    free(recvBuffer);
-
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
-
-    ASSERT_EQ(ret, PERMISSION_GRANTED);
-
-    recvJson =
-        "{\"commandName\":\"UpdateRemoteHapTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
-        "\"{\\\"HapTokenInfos\\\":{\\\"apl\\\":2,\\\"appID\\\":\\\"testtesttesttest\\\","
-        "\\\"bundleName\\\":\\\"accesstoken_test\\\",\\\"deviceID\\\":\\\"0\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,"
-        "\\\"permState\\\":[{\\\"grantConfig\\\":[{\\\"grantFlags\\\":2,\\\"grantStatus\\\":0,"
-        "\\\"resDeviceID\\\":\\\"local\\\"}],\\\"isGeneral\\\":true,"
-        "\\\"permissionName\\\":\\\"ohos.permission.CAMERA\\\"},{\\\"grantConfig\\\":[{\\\"grantFlags\\\":1,"
-        "\\\"grantStatus\\\":-1,\\\"resDeviceID\\\":\\\"device 1\\\"},{\\\"grantFlags\\\":2,\\\"grantStatus\\\":-1,"
-        "\\\"resDeviceID\\\":\\\"device 2\\\"}],\\\"isGeneral\\\":false,"
-        "\\\"permissionName\\\":\\\"ohos.permission.ANSWER_CALL\\\"}],\\\"tokenAttr\\\":0,\\\"tokenID\\\":536870913,"
-        "\\\"userID\\\":1,\\\"version\\\":1},\\\"commandName\\\":\\\"UpdateRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestTokenId\\\":536870913,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\","
-        "\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
-        "\\\"uniqueId\\\":\\\"UpdateRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    recvBuffer = (unsigned char *)malloc(0x1000);
-    recvLen = 0x1000;
-    CompressMock(recvJson, recvBuffer, recvLen);
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-    sleep(2);
-    free(recvBuffer);
-
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(mapInfo.apl, 2);
-}
-
-/**
- * @tc.name: DeleteRemoteTokenCommand001
- * @tc.desc: recv delete mapping hap token update message
- * @tc.type: FUNC
- * @tc.require:AR000GK6TC
- */
-HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteTokenCommand001 start.");
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
-    ASSERT_NE(mapID, 0);
-
-    HapTokenInfo mapInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    // create recv message
-    std::string recvJson =
-        "{\"commandName\":\"DeleteRemoteTokenCommand\",\"id\":\"9ff19cdf-\",\"jsonPayload\":"
-        "\"{\\\"commandName\\\":\\\"DeleteRemoteTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestTokenId\\\":536870913,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\","
-        "\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
-        "\\\"tokenId\\\":536870913,\\\"uniqueId\\\":\\\"DeleteRemoteTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
-    int recvLen = 0x1000;
-    CompressMock(recvJson, recvBuffer, recvLen);
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-    sleep(2);
-    free(recvBuffer);
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_FAILED);
-}
-
-/**
- * @tc.name: DeviceOffline001
- * @tc.desc: test device offline, will delete
- * @tc.type: FUNC
- * @tc.require:AR000GK6TB
- */
-HWTEST_F(TokenSyncServiceTest, DeviceOffline001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceOffline001 start.");
-
-    // device online
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
-    ASSERT_NE(mapID, 0);
-
-    HapTokenInfo mapInfo;
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    OnDeviceOffline(g_devInfo);
-    sleep(1);
-
-    ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
-    ASSERT_EQ(ret, RET_FAILED);
-
 }

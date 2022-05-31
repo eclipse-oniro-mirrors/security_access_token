@@ -20,6 +20,7 @@
 #include "nativetoken_kit.h"
 #include "accesstoken_log.h"
 #include "token_setproc.h"
+#include "softbus_bus_center.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -262,6 +263,16 @@ void AccessTokenKitTest::SetUp()
     AccessTokenKit::DeleteToken(tokenID);
     (void)remove("/data/token.json");
 
+    NodeBasicInfo deviceInfo;
+    int32_t res = ::GetLocalNodeDeviceInfo(TEST_PKG_NAME.c_str(), &deviceInfo);
+    ASSERT_EQ(res, RET_SUCCESS);
+    char udid[128] = {0}; // 128 is udid length
+    ::GetNodeKeyInfo(TEST_PKG_NAME.c_str(), deviceInfo.networkId,
+        NodeDeviceInfoKey::NODE_KEY_UDID, (uint8_t *)udid, 128); // 128 is udid length
+
+    udid_.append(udid);
+    networkId_.append(deviceInfo.networkId);
+
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
@@ -270,6 +281,8 @@ void AccessTokenKitTest::TearDown()
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
     SetSelfTokenID(selfTokenId_);
+    udid_.clear();
+    networkId_.clear();
 }
 
 unsigned int AccessTokenKitTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
@@ -2353,7 +2366,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo001 start.");
-    std::string deviceID = "deviceid-1:udid-001";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2385,7 +2398,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     // check local map token
@@ -2418,7 +2431,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo002 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo rightBaseInfo = {
         .apl = APL_NORMAL,
@@ -2427,7 +2440,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2488,7 +2501,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo003 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2497,7 +2510,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2520,7 +2533,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
@@ -2539,7 +2552,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo004 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2548,7 +2561,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2571,7 +2584,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
@@ -2597,7 +2610,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo005 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2606,7 +2619,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2629,7 +2642,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
@@ -2654,7 +2667,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo006 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2663,7 +2676,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2686,7 +2699,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
@@ -2711,7 +2724,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo007 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2720,7 +2733,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2743,7 +2756,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::DeleteToken(mapID);
@@ -2762,7 +2775,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo008 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2771,7 +2784,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2794,7 +2807,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     HapPolicyParams policy;
@@ -2815,7 +2828,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo009 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2824,7 +2837,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2847,7 +2860,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 
     // Get local map token ID
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
@@ -2872,7 +2885,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo009 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
         .ver = 1,
@@ -2880,7 +2893,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x28100000,
         .tokenAttr = 0
     };
@@ -2912,7 +2925,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens001 start.");
-    std::string deviceID = "deviceid-1:udid-001";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2943,7 +2956,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfo info;
@@ -2966,7 +2979,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens001 start.");
-    std::string deviceID = "deviceid-1:udid-001";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2997,7 +3010,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfo info;
@@ -3023,7 +3036,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken003, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceToken003 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
 
     int ret = AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
@@ -3039,7 +3052,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100001);
     HapTokenInfo baseInfo = {
@@ -3049,7 +3062,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -3077,9 +3090,9 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
     ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo1);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
-    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100001);
+    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100001);
     ASSERT_NE(mapID1, 0);
 
     ret = AccessTokenKit::DeleteRemoteDeviceTokens(deviceID);
@@ -3101,7 +3114,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens002 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100001);
     HapTokenInfo baseInfo = {
@@ -3111,7 +3124,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -3139,9 +3152,9 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
     ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo1);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
-    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100001);
+    AccessTokenID mapID1 = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100001);
     ASSERT_NE(mapID1, 0);
 
     ret = AccessTokenKit::DeleteRemoteDeviceTokens("1111111");
@@ -3207,7 +3220,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetHapTokenInfoFromRemote002 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -3216,7 +3229,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -3238,7 +3251,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfoForSync infoSync;
@@ -3271,7 +3284,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "AllocLocalTokenID001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -3280,7 +3293,7 @@ HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = udid_,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -3302,7 +3315,7 @@ HWTEST_F(AccessTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(deviceID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 }
 
@@ -3330,7 +3343,7 @@ HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteNativeTokenInfo001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = udid_;
 
     NativeTokenInfoForSync native1 = {
         .baseInfo.apl = APL_NORMAL,
