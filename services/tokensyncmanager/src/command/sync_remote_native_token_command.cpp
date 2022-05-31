@@ -102,11 +102,11 @@ void SyncRemoteNativeTokenCommand::Finish()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.dstDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SyncRemoteNativeTokenCommand: get remote networkId failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SyncRemoteNativeTokenCommand: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
-    int ret = AccessTokenKit::SetRemoteNativeTokenInfo(devInfo.deviceId.networkId, nativeTokenInfo_);
+    int ret = AccessTokenKit::SetRemoteNativeTokenInfo(devInfo.deviceId.uniqueDeviceId, nativeTokenInfo_);
     if (ret == RET_SUCCESS) {
         remoteProtocol_.statusCode = Constant::SUCCESS;
     } else {

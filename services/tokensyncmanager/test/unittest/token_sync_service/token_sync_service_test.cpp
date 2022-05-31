@@ -29,6 +29,7 @@
 #include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
+#include "device_info_manager.h"
 
 #define private public
 #include "token_sync_manager_service.h"
@@ -41,6 +42,7 @@ static std::vector<std::thread> threads_;
 static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
     std::make_shared<SoftBusDeviceConnectionListener>();
 static std::string g_networkID = "deviceid-1";
+static std::string g_UDID = "deviceid-1:udid-001";
 static DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
@@ -63,9 +65,11 @@ void TokenSyncServiceTest::SetUpTestCase()
 void TokenSyncServiceTest::TearDownTestCase()
 {}
 void TokenSyncServiceTest::SetUp()
-{}
+{
+}
 void TokenSyncServiceTest::TearDown()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
     }
@@ -141,7 +145,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
         "\\\"111111\\\",\\\"instIndex\\\":0,\\\"dlpType\\\":0,\\\"permState\\\":"
         "null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -151,10 +155,10 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     int ret = OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_NE(mapID, (AccessTokenID)0);
 
     HapTokenInfo tokeInfo;
@@ -242,7 +246,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
         "\\\"requestTokenId\\\":";
     std::string tokenJsonStr = std::to_string(tokenIdEx.tokenIdExStruct.tokenID);
     std::string jsonAfter = ",\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
+        "\\\"srcDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
         "\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
 
     std::string recvJson = jsonBefore + tokenJsonStr + jsonAfter;
@@ -283,7 +287,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
         "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
         "\\\"111111\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -293,9 +297,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -315,7 +319,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
         "\\\"test\\\",\\\"bundleName\\\":\\\"mock_token_sync\\\",\\\"deviceID\\\":"
         "\\\"111111\\\",\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -325,9 +329,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -348,7 +352,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":\\\"aaa\\\","
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -358,9 +362,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -381,7 +385,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
         "\\\"111111\\\",\\\"instIndex\\\":1,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
         "\\\"tokenID\\\":537919488,"
         "\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
@@ -391,9 +395,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -426,9 +430,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
-        g_networkID, 0x20100000);
+        g_UDID, 0x20100000);
 
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20100000);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20100000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -457,7 +461,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
         "\\\"requestTokenId\\\":";
     std::string tokenJsonStr = std::to_string(tokenID);
     std::string jsonAfter = ",\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
-        "\\\"srcDeviceId\\\":\\\"deviceid-1\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
+        "\\\"srcDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
         "\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
 
     // create recv message
@@ -498,7 +502,7 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
         "{\\\"apl\\\":3,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
         "\\\"version\\\":1,\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]}],"
         "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
         "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
         "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
@@ -510,14 +514,14 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
 
     sleep(6);
 
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000000);
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000000);
     ASSERT_NE(mapID, (AccessTokenID)0);
     int ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
     ASSERT_EQ(ret, RET_SUCCESS);
     ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000001);
+    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000001);
     ASSERT_NE(mapID, (AccessTokenID)0);
     ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -554,14 +558,14 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
 
     sleep(6);
 
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000000);
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000000);
     ASSERT_NE(mapID, (AccessTokenID)0);
     int ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
     ASSERT_EQ(ret, RET_SUCCESS);
     ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000001);
+    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000001);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -594,10 +598,10 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens003, TestSize.Level1)
 
     sleep(6);
 
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000000);
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000001);
+    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000001);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -631,10 +635,10 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
 
     sleep(6);
 
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000000);
+    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000000);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_networkID, 0x28000001);
+    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_UDID, 0x28000001);
     ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
@@ -723,9 +727,9 @@ HWTEST_F(TokenSyncServiceTest, UpdateRemoteHapTokenCommand001, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
     sleep(6);
 
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_networkID, g_remoteHapInfo);
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20000001);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfo mapInfo;
@@ -805,9 +809,9 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
 
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_networkID, g_remoteHapInfo);
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20000001);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfo mapInfo;
@@ -847,9 +851,9 @@ HWTEST_F(TokenSyncServiceTest, DeviceOffline001, TestSize.Level1)
     // device online
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_networkID, g_remoteHapInfo);
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(g_UDID, g_remoteHapInfo);
     ASSERT_EQ(ret, RET_SUCCESS);
-    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_networkID, 0x20000001);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_UDID, 0x20000001);
     ASSERT_NE(mapID, 0);
 
     HapTokenInfo mapInfo;
@@ -861,4 +865,5 @@ HWTEST_F(TokenSyncServiceTest, DeviceOffline001, TestSize.Level1)
 
     ret = AccessTokenKit::GetHapTokenInfo(mapID, mapInfo);
     ASSERT_EQ(ret, RET_FAILED);
+
 }

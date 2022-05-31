@@ -124,7 +124,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
         }
         const std::shared_ptr<DeleteRemoteTokenCommand> deleteRemoteTokenCommand =
             RemoteCommandFactory::GetInstance().NewDeleteRemoteTokenCommand(Constant::GetLocalDeviceId(),
-            device.deviceId.networkId, tokenID);
+            device.deviceId.uniqueDeviceId, tokenID);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, deleteRemoteTokenCommand);
@@ -150,7 +150,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
 
         const std::shared_ptr<UpdateRemoteHapTokenCommand> updateRemoteHapTokenCommand =
             RemoteCommandFactory::GetInstance().NewUpdateRemoteHapTokenCommand(Constant::GetLocalDeviceId(),
-            device.deviceId.networkId, tokenInfo);
+            device.deviceId.uniqueDeviceId, tokenInfo);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, updateRemoteHapTokenCommand);

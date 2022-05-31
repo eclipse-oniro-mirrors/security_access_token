@@ -2353,7 +2353,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SetRemoteHapTokenInfo001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = "deviceid-1:udid-001";
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2362,7 +2362,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = deviceID,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2912,7 +2912,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = "deviceid-1:udid-001";
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2921,7 +2921,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = deviceID,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
@@ -2966,7 +2966,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteDeviceTokens001 start.");
-    std::string deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2";
+    std::string deviceID = "deviceid-1:udid-001";
     AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     HapTokenInfo baseInfo = {
         .apl = APL_NORMAL,
@@ -2975,7 +2975,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
         .bundleName = "com.ohos.access_token",
         .instIndex = 1,
         .appID = "testtesttesttest",
-        .deviceID = "ea82205d1f9964346ee12e17ec0f362bb7203fca7c62d82899ffa917f9cbe6b2",
+        .deviceID = deviceID,
         .tokenID = 0x20100000,
         .tokenAttr = 0
     };
