@@ -23,7 +23,6 @@
 #include "accesstoken_log.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
-#include "softbus_bus_center.h"
 
 namespace OHOS {
 namespace Security {

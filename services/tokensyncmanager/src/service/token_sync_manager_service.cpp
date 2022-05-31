@@ -34,7 +34,7 @@ const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<TokenSyncManagerService>::GetInstance().get());
 
 TokenSyncManagerService::TokenSyncManagerService()
-    : SystemAbility(SA_ID_TOKENSYNC_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
+    : SystemAbility(SA_ID_TOKENSYNC_MANAGER_SERVICE, false), state_(ServiceRunningState::STATE_NOT_START)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenSyncManagerService()");
 }
@@ -68,6 +68,7 @@ void TokenSyncManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
+    SoftBusManager::GetInstance().Destroy();
 }
 
 std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetSendEventHandler() const
@@ -174,7 +175,7 @@ bool TokenSyncManagerService::Initialize()
 
     sendHandler_ = std::make_shared<TokenSyncEventHandler>(sendRunner_);
     if (!sendHandler_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sendHandler_ is nullpter.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "sendHandler_ is nullptr.");
         return false;
     }
 
@@ -186,7 +187,7 @@ bool TokenSyncManagerService::Initialize()
 
     recvHandler_ = std::make_shared<TokenSyncEventHandler>(recvRunner_);
     if (!recvHandler_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "recvHandler_ is nullpter.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "recvHandler_ is nullptr.");
         return false;
     }
 

@@ -30,10 +30,16 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/include/token",
     "main/cpp/include/permission",
     "main/cpp/include/database",
+    "main/cpp/include/device",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/database/include",
+    "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/src",
+    "//base/security/access_token/services/tokensyncmanager/include/common",
+    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
     "//third_party/json/include",
   ]
 
@@ -41,6 +47,7 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/src/database/data_storage.cpp",
     "main/cpp/src/database/data_translator.cpp",
     "main/cpp/src/database/sqlite_storage.cpp",
+    "main/cpp/src/device/atm_device_state_callback.cpp",
     "main/cpp/src/permission/permission_definition_cache.cpp",
     "main/cpp/src/permission/permission_manager.cpp",
     "main/cpp/src/permission/permission_policy_set.cpp",
@@ -81,6 +88,7 @@ ohos_shared_library("accesstoken_manager_service") {
   }
 
   external_deps = [
+    "device_manager_base:devicemanagersdk",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

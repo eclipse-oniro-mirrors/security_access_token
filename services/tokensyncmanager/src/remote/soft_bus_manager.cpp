@@ -18,6 +18,9 @@
 
 #include "device_info_manager.h"
 #include "parameter.h"
+#include "softbus_bus_center.h"
+#include "dm_device_info.h"
+#include "remote_command_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -35,7 +38,7 @@ static const int OPENSESSION_RETRY_INTERVAL_MS = 100;
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
 } // namespace
 
-const std::string SoftBusManager::ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_access_token";
+const std::string SoftBusManager::TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
 const std::string SoftBusManager::SESSION_NAME = "ohos.security.atm_channel";
 
 SoftBusManager::SoftBusManager() : isSoftBusServiceBindSuccess_(false), inited_(false), mutex_(), fulfillMutex_()
@@ -54,6 +57,86 @@ SoftBusManager &SoftBusManager::GetInstance()
     return instance;
 }
 
+int SoftBusManager::AddTrustedDeviceInfo()
+{
+    std::string packageName = TOKEN_SYNC_PACKAGE_NAME;
+    std::string extra = "";
+    std::vector<DmDeviceInfo> deviceList;
+
+    int32_t ret = DistributedHardware::DeviceManager::GetInstance().GetTrustedDeviceList(packageName,
+        extra, deviceList);
+    if (ret != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddTrustedDeviceInfo: GetTrustedDeviceList error, result: %{public}d", ret);
+        return Constant::FAILURE;
+    }
+
+    for (DmDeviceInfo device : deviceList) {
+        std::string uuid = GetUuidByNodeId(device.networkId);
+        std::string udid = GetUdidByNodeId(device.networkId);
+        if (uuid.empty() || udid.empty()) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
+                uuid.c_str(), udid.c_str());
+            continue;
+        }
+
+        DeviceInfoManager::GetInstance().AddDeviceInfo(device.networkId, uuid, udid, device.deviceName,
+            std::to_string(device.deviceTypeId));
+        RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
+    }
+
+    return Constant::SUCCESS;
+}
+
+int SoftBusManager::DeviceInit()
+{
+    std::string packageName = TOKEN_SYNC_PACKAGE_NAME;
+    std::shared_ptr<MyDmInitCallback> ptrDmInitCallback = std::make_shared<MyDmInitCallback>();
+
+    int ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+        return ret;
+    }
+
+    ret = AddTrustedDeviceInfo();
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: AddTrustedDeviceInfo error, result: %{public}d", ret);
+        return ret;
+    }
+
+    std::string extra = "";
+    std::shared_ptr<SoftBusDeviceConnectionListener> ptrDeviceStateCallback =
+        std::make_shared<SoftBusDeviceConnectionListener>();
+    ret = DistributedHardware::DeviceManager::GetInstance().RegisterDevStateCallback(packageName, extra,
+        ptrDeviceStateCallback);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: RegisterDevStateCallback error, result: %{public}d", ret);
+        return ret;
+    }
+
+    return ERR_OK;
+}
+
+int SoftBusManager::SessionInit()
+{
+    // register session listener
+    ISessionListener sessionListener;
+    sessionListener.OnSessionOpened = SoftBusSessionListener::OnSessionOpened;
+    sessionListener.OnSessionClosed = SoftBusSessionListener::OnSessionClosed;
+    sessionListener.OnBytesReceived = SoftBusSessionListener::OnBytesReceived;
+    sessionListener.OnMessageReceived = SoftBusSessionListener::OnMessageReceived;
+
+    int ret = ::CreateSessionServer(TOKEN_SYNC_PACKAGE_NAME.c_str(), SESSION_NAME.c_str(), &sessionListener);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Initialize: createSessionServer, result: %{public}d", ret);
+    // REASON_EXIST
+    if ((ret != Constant::SUCCESS) && (ret != REASON_EXIST)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: CreateSessionServer error, result: %{public}d", ret);
+        return ret;
+    }
+
+    return ERR_OK;
+}
+
 void SoftBusManager::Initialize()
 {
     bool inited = false;
@@ -67,39 +150,15 @@ void SoftBusManager::Initialize()
         auto sleepTime = std::chrono::milliseconds(1000);
         while (1) {
             std::unique_lock<std::mutex> lock(mutex_);
-            std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
-            std::shared_ptr<MyDmInitCallback> ptrDmInitCallback = std::make_shared<MyDmInitCallback>();
-            int ret =
-                DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
+            
+            int ret = DeviceInit();
             if (ret != ERR_OK) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
                 std::this_thread::sleep_for(sleepTime);
                 continue;
             }
 
-            std::string extra = "";
-            std::shared_ptr<SoftBusDeviceConnectionListener> ptrDeviceStateCallback =
-                std::make_shared<SoftBusDeviceConnectionListener>();
-            ret = DistributedHardware::DeviceManager::GetInstance().RegisterDevStateCallback(packageName, extra,
-                ptrDeviceStateCallback);
+            ret = SessionInit();
             if (ret != ERR_OK) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: RegisterDevStateCallback error, result: %{public}d", ret);
-                std::this_thread::sleep_for(sleepTime);
-                continue;
-            }
-
-            // register session listener
-            ISessionListener sessionListener;
-            sessionListener.OnSessionOpened = SoftBusSessionListener::OnSessionOpened;
-            sessionListener.OnSessionClosed = SoftBusSessionListener::OnSessionClosed;
-            sessionListener.OnBytesReceived = SoftBusSessionListener::OnBytesReceived;
-            sessionListener.OnMessageReceived = SoftBusSessionListener::OnMessageReceived;
-
-            ret = ::CreateSessionServer(ACCESS_TOKEN_PACKAGE_NAME.c_str(), SESSION_NAME.c_str(), &sessionListener);
-            ACCESSTOKEN_LOG_INFO(LABEL, "Initialize: createSessionServer, result: %{public}d", ret);
-            // REASON_EXIST
-            if ((ret != Constant::SUCCESS) && (ret != REASON_EXIST)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: CreateSessionServer error, result: %{public}d", ret);
                 std::this_thread::sleep_for(sleepTime);
                 continue;
             }
@@ -132,12 +191,12 @@ void SoftBusManager::Destroy()
     }
 
     if (isSoftBusServiceBindSuccess_) {
-        int32_t ret = ::RemoveSessionServer(ACCESS_TOKEN_PACKAGE_NAME.c_str(), SESSION_NAME.c_str());
+        int32_t ret = ::RemoveSessionServer(TOKEN_SYNC_PACKAGE_NAME.c_str(), SESSION_NAME.c_str());
         ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, RemoveSessionServer: %{public}d", ret);
         isSoftBusServiceBindSuccess_ = false;
     }
 
-    std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
+    std::string packageName = TOKEN_SYNC_PACKAGE_NAME;
     int ret = DistributedHardware::DeviceManager::GetInstance().UnRegisterDevStateCallback(packageName);
     if (ret != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnRegisterDevStateCallback failed, code: %{public}d", ret);
@@ -275,7 +334,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
+    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
         NodeDeviceInfoKey::NODE_KEY_UUID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
         delete[] info;
@@ -297,7 +356,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
+    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
         NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
         delete[] info;
@@ -319,7 +378,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
     }
 
     NodeBasicInfo info;
-    int32_t ret = ::GetLocalNodeDeviceInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), &info);
+    int32_t ret = ::GetLocalNodeDeviceInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), &info);
     if (ret != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetLocalNodeDeviceInfo error");
         fulfillMutex_.unlock();
