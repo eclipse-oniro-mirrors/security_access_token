@@ -39,6 +39,7 @@ export struct backBar {
           .fontColor($r('app.color.text_color'))
           .fontSize(Constants.BACKBAR_TEXT_FONT_SIZE)
           .flexGrow(Constants.BACKBAR_TEXT_FLEX_GROW)
+          .fontWeight(FontWeight.Bold)
           .margin({ top: Constants.BACKBAR_TEXT_MARGIN_TOP })
       }
     }

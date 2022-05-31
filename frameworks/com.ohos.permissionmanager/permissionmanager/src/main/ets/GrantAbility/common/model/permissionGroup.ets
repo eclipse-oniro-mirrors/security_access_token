@@ -179,7 +179,7 @@ export const permissionGroups: any[] = [
     "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
     "groupName": "OTHER",
     "icon": $r("app.media.ic_multi_device_vector"),
-    "label": "使用多设备协同",
+    "label": "使用多设备协同？",
     "description": "发现并访问其他设备。",
     "groupId": 11
   }
@@ -190,7 +190,7 @@ export const groups: any[] = [
     "name": "LOCATION",
     "groupName": "位置信息",
     "icon": $r('app.media.ic_public_gps'),
-    "label": "访问位置信息",
+    "label": "访问位置信息？",
     "description": "",
     "permissions": [
       "ohos.permission.LOCATION_IN_BACKGROUND",
@@ -201,7 +201,7 @@ export const groups: any[] = [
     "name": "CAMERA",
     "groupName": "相机",
     "icon": $r('app.media.ic_public_camera'),
-    "label": "使用相机",
+    "label": "使用相机？",
     "description": "",
     "permissions": [
       "ohos.permission.CAMERA"
@@ -211,7 +211,7 @@ export const groups: any[] = [
     "name": "MICROPHONE",
     "groupName": "麦克风",
     "icon": $r('app.media.ic_public_voice'),
-    "label": "使用麦克风",
+    "label": "使用麦克风？",
     "description": "",
     "permissions": [
       "ohos.permission.MICROPHONE"
@@ -221,7 +221,7 @@ export const groups: any[] = [
     "name": "PHONE",
     "groupName": "电话",
     "icon": $r('app.media.ic_public_phone'),
-    "label": "使用拨打电话",
+    "label": "使用拨打电话？",
     "description": "",
     "permissions": [
       "ohos.permission.ANSWER_CALL",
@@ -232,7 +232,7 @@ export const groups: any[] = [
     "name": "SMS",
     "groupName": "信息",
     "icon": $r('app.media.ic_public_message'),
-    "label": "访问信息",
+    "label": "访问信息？",
     "description": "",
     "permissions": [
       "ohos.permission.READ_CELL_MESSAGES",
@@ -247,7 +247,7 @@ export const groups: any[] = [
     "name": "CONTACTS",
     "groupName": "通讯录",
     "icon": $r('app.media.ic_public_contacts_group'),
-    "label": "访问通讯录",
+    "label": "访问通讯录？",
     "description": "",
     "permissions": [
       "ohos.permission.READ_CONTACTS",
@@ -258,7 +258,7 @@ export const groups: any[] = [
     "name": "CALL_LOG",
     "groupName": "通话记录",
     "icon": $r('app.media.ic_call_logs'),
-    "label": "访问通话记录",
+    "label": "访问通话记录？",
     "description": "",
     "permissions": [
       "ohos.permission.READ_CALL_LOG",
@@ -269,7 +269,7 @@ export const groups: any[] = [
     "name": "MEDIA",
     "groupName": "媒体和文件",
     "icon": $r('app.media.ic_public_folder'),
-    "label": "访问媒体和文件",
+    "label": "访问媒体和文件？",
     "description": "",
     "permissions": [
       "ohos.permission.MEDIA_LOCATION",
@@ -281,7 +281,7 @@ export const groups: any[] = [
     "name": "CALENDAR",
     "groupName": "日历",
     "icon": $r('app.media.ic_public_calendar'),
-    "label": "访问日历",
+    "label": "访问日历？",
     "description": "",
     "permissions": [
       "ohos.permission.READ_CALENDAR",
@@ -292,7 +292,7 @@ export const groups: any[] = [
     "name": "SPORT",
     "groupName": "健身运动",
     "icon": $r('app.media.ic_sport'),
-    "label": "访问健身运动",
+    "label": "访问健身运动？",
     "description": "",
     "permissions": [
       "ohos.permission.ACTIVITY_MOTION"
@@ -302,7 +302,7 @@ export const groups: any[] = [
     "name": "HEALTH",
     "groupName": "身体传感器",
     "icon": $r('app.media.ic_ssensor'),
-    "label": "使用身体传感器",
+    "label": "使用身体传感器？",
     "description": "",
     "permissions": [
       "ohos.permission.READ_HEALTH_DATA"

@@ -25,6 +25,8 @@ import { permissionGroups, showSubpermissionsGrop } from "../model/permissionGro
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
   .fontColor($r('app.color.button_color'))
+  .fontWeight(FontWeight.Medium)
+  .height(Constants.BUTTON_HEIGHT)
 }
 
 @CustomDialog
@@ -47,12 +49,14 @@ export struct privacyDialog {
         Image(this.grantGroups[this.count].icon)
           .width(Constants.DIALOG_ICON_WIDTH)
           .height(Constants.DIALOG_ICON_HEIGHT)
+          .fillColor($r("app.color.first_font_color"))
           .margin({
             top: Constants.DIALOG_ICON_MARGIN_TOP
           })
         Text(`${this.count + 1} / ${this.grantGroups.length}`)
           .fontSize(Constants.DIALOG_LABEL_FONT_SIZE)
-          .fontColor($r('app.color.secondary_font_color'))
+          .fontColor($r('app.color.text_secondary_color'))
+          .lineHeight(Constants.DIALOG_LABEL_LINE_HEIGHT)
           .margin({
             top: Constants.DIALOG_LABEL_MARGIN_TOP
           })
@@ -61,7 +65,10 @@ export struct privacyDialog {
             Flex({ justifyContent: FlexAlign.Start }) {
               Text("是否允许" + this.appName +
               this.grantGroups[this.count].label).fontSize(Constants.DIALOG_REQ_FONT_SIZE)
-                .fontColor($r('app.color.secondary_font_color'))
+                .fontColor($r('app.color.first_font_color'))
+                .fontWeight(FontWeight.Medium)
+                .fontSize(Constants.DIALOG_REQ_FONT_SIZE)
+                .lineHeight(Constants.DIALOG_REQ_LINE_HEIGHT)
                 .margin({
                   top: Constants.DIALOG_REQ_MARGIN_TOP,
                   left: Constants.DIALOG_REQ_MARGIN_LEFT
@@ -71,18 +78,21 @@ export struct privacyDialog {
           Row() {
             Flex({ justifyContent: FlexAlign.Start }) {
               Text(this.grantGroups[this.count].description).fontSize(Constants.DIALOG_DESP_FONT_SIZE)
-                .fontColor($r('app.color.secondary_font_color'))
+                .fontColor($r('app.color.text_secondary_color'))
+                .fontSize(Constants.DIALOG_DESP_FONT_SIZE)
+                .lineHeight(Constants.DIALOG_DESP_LINE_HEIGHT)
                 .margin({
                   top: Constants.DIALOG_DESP_MARGIN_TOP,
                   left: Constants.DIALOG_DESP_MARGIN_LEFT,
-                  right: Constants.DIALOG_DESP_MARGIN_RIGHT
+                  right: Constants.DIALOG_DESP_MARGIN_RIGHT,
+                  bottom: Constants.DIALOG_DESP_MARGIN_BOTTOM
                 })
             }
           }
         }
       }
       Row() {
-        Flex({ justifyContent: FlexAlign.SpaceAround }) {
+        Flex({ justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center }) {
           Button('禁止')
             .fontSize(Constants.BUTTON_FONT_SIZE)
             .onClick(() => {
@@ -100,17 +110,13 @@ export struct privacyDialog {
                 this.controller.close()
               }
             }).customizeButton()
-        }.margin({
-          top: Constants.BUTTON_MARGIN_TOP
-        })
+        }
       }
     }
     .backgroundColor($r('app.color.default_background_color'))
     .borderRadius(Constants.DIALOG_BORDER_RADIUS)
-    .constraintSize({
-      minHeight: Constants.DIALOG_HEIGHT
-    })
     .width(Constants.DIALOG_WIDTH)
+    .padding({ bottom: Constants.DIALOG_PADDING_BOTTOM })
   }
 
   answerRequest() {

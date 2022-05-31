@@ -97,6 +97,7 @@ struct mediaDocumentPage {
                   mediaDocumentItem()
                 }.width(Constants.FULL_WIDTH)
               }
+              .margin({ top: Constants.TITLE_MARGIN_BOTTOM })
               .layoutWeight(Constants.LAYOUT_WEIGHT)
             }
           }
@@ -269,39 +270,49 @@ struct mediaDocumentItem {
             Row() {
               Text(this.mediaListItem.labelId)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .fontColor($r('app.color.text_color'))
+                .fontColor($r('app.color.label_color'))
+                .fontWeight(FontWeight.Bold)
                 .textAlign(TextAlign.Start)
             }
             .width(Constants.TERTIARY_HALF_WIDTH)
+            .margin({ bottom: Constants.TERTIARY_LABEL_MARGIN_BOTTOM })
             Row() {
               Text(this.mediaListItem.versionName)
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                .fontColor($r('app.color.label_color_light'))
                 .textAlign(TextAlign.Start)
             }
             .width(Constants.TERTIARY_HALF_WIDTH)
           }
-        }
+        }.margin({ left: Constants.TERTIARY_MARGIN_LEFT })
       }
-      Row() {
-        Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-          Row() {
-            Text(reason)
-              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-              .textAlign(TextAlign.Start)
-          }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
+      if(reason) {
+        Row() {
+          Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
+            Row() {
+              Text(reason)
+                .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                .fontColor($r('app.color.label_color_light'))
+                .textAlign(TextAlign.Start)
+            }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
+          }
         }
+        .margin({ top: Constants.TERTIARY_ROW_MARGIN_TOP, left: Constants.TERTIARY_MARGIN_LEFT })
       }
-      .margin({ top: Constants.TERTIARY_ROW_MARGIN_TOP })
       Row() {
         Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
           Row() {
             Text(backTitle)
-              .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+              .fontColor($r('app.color.label_color_light'))
+              .fontWeight(FontWeight.Medium)
               .textAlign(TextAlign.Start)
             Text($r('app.string.access_permission'))
-              .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+              .fontColor($r('app.color.label_color_light'))
+              .fontWeight(FontWeight.Medium)
               .textAlign(TextAlign.Start)
-          }.margin({ left: Constants.TERTIARY_IMAGE_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
+          }.margin({ left: Constants.TERTIARY_TEXT_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
         }
       }
       .height(Constants.LISTITEM_ROW_HEIGHT)
@@ -316,22 +327,18 @@ struct mediaDocumentItem {
                     Row() {
                       Text(item.name)
                         .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                        .fontColor($r('app.color.text_color'))
+                        .fontColor($r('app.color.label_color'))
+                        .fontWeight(FontWeight.Medium)
                         .flexGrow(Constants.FLEX_GROW)
                       if (this.isCheckList[item.index] === true) {
-                        Image($r('app.media.radioactive'))
-                          .width(Constants.TERTIARY_RADIO_IMAGE_WIDTH)
-                          .height(Constants.TERTIARY_RADIO_IMAGE_HEIGHT)
-                          .margin({
-                            top: Constants.TERTIARY_RADIO_IMAGE_MARGIN_TOP
-                          })
+                        Shape() {
+                          Circle().width(24).height(24).fill('#1856d4').offset({ x: 0, y: 0 })
+                          Circle().width(16).height(16).fill('#ffffff').offset({ x: 4, y: 4 })
+                        }
                       } else if (this.isCheckList[item.index] === false) {
-                        Image($r('app.media.radiodefault'))
-                          .width(Constants.TERTIARY_RADIO_IMAGE_WIDTH)
-                          .height(Constants.TERTIARY_RADIO_IMAGE_HEIGHT)
-                          .margin({
-                            top: Constants.TERTIARY_RADIO_IMAGE_MARGIN_TOP
-                          })
+                        Shape() {
+                          Circle().width(24).height(24).stroke('#000000').fill('#ffffff')
+                        }
                       }
                     }
                     .backgroundColor($r('app.color.default_background_color'))

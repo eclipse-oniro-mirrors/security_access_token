@@ -5,8 +5,20 @@
       "value": "#E5000000"
     },
     {
+      "name": "label_color",
+      "value": "#182431"
+    },
+    {
+      "name": "label_color_light",
+      "value": "#99182431"
+    },
+    {
+      "name": "label_color_lighter",
+      "value": "#66182431"
+    },
+    {
       "name": "background_color",
-      "value": "#f1f3f5"
+      "value": "#F4F5F7"
     },
     {
       "name": "text_secondary_color",
@@ -30,7 +42,11 @@
     },
     {
       "name": "button_color",
-      "value": "#0a59f7"
+      "value": "#007DFF"
+    },
+    {
+      "name": "first_font_color",
+      "value": "#E6000000"
     },
     {
       "name": "secondary_font_color",

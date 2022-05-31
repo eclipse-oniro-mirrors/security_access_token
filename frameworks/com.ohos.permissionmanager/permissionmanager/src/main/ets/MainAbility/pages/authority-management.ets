@@ -73,7 +73,8 @@ struct authorityManagementPage {
                 .margin({ right: Constants.MANAGEMENT_IMAGE_MARGIN_RIGHT })
               Text(item.groupName)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .fontColor($r('app.color.text_color'))
+                .fontWeight(FontWeight.Medium)
+                .fontColor($r('app.color.label_color'))
                 .flexGrow(Constants.FLEX_GROW)
               Image($r('app.media.rightarrow'))
                 .customizeImage(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT)
@@ -109,7 +110,7 @@ struct authorityManagementPage {
           }
         })
       }
-    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.MANAGEMENT_ROW_PADDING_RIGHT })
+    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
   }
 
   @State allApplicationPermissions: applicationPermissions[] = []; // All permissions apply
@@ -473,6 +474,7 @@ struct authorityManagementPage {
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
                                   top: Constants.MANAGEMENT_ROW_PADDING_TOP
                                 })
+                                .height(Constants.FULL_HEIGHT)
                               }
                             }.width(Constants.FULL_WIDTH)
                           }
@@ -534,11 +536,12 @@ struct applicationItem {
                 .margin({ right: Constants.APPLICATION_IMAGE_MARGIN_RIGHT })
               Text(item.labelId)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .fontColor($r('app.color.text_color'))
+                .fontWeight(FontWeight.Medium)
+                .fontColor($r('app.color.label_color'))
                 .flexGrow(Constants.FLEX_GROW)
               Text(item.groupId.length + '项权限')
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                .fontColor($r('app.color.text_secondary_color'))
+                .fontColor($r('app.color.label_color_lighter'))
                 .margin({ right: Constants.APPLICATION_TEXT_MARGIN_RIGHT })
               Image($r('app.media.rightarrow'))
                 .customizeImage(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT)
@@ -546,7 +549,7 @@ struct applicationItem {
             .width(Constants.FULL_WIDTH)
             .height(Constants.AUTHORITY_ROW_HEIGHT)
             .constraintSize({ minHeight: Constants.AUTHORITY_CONSTRAINTSIZE_MINHEIGHT })
-            .padding({ left: Constants.APPLICATION_LIST_PADDING_LEFT})
+            .padding({ left: Constants.APPLICATION_LIST_PADDING_LEFT, right: Constants.APPLICATION_LIST_PADDING_RIGHT })
           }
           if (!index) {
             Row() {

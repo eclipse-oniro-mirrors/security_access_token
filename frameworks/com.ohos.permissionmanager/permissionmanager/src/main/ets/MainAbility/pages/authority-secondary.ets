@@ -104,7 +104,8 @@ struct appNameItem {
             Row() {
               Text(item.label)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
-                .fontColor($r('app.color.text_color'))
+                .fontColor($r('app.color.label_color'))
+                .fontWeight(FontWeight.Medium)
                 .flexGrow(Constants.FLEX_GROW)
               Image($r('app.media.rightarrow'))
                 .objectFit(ImageFit.Contain)

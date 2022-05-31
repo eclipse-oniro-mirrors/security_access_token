@@ -43,6 +43,6 @@ export class Log {
   }
 
   static error(log) {
-    console.info(`Error: ${TAG}  ${log}`)
+    console.error(`Error: ${TAG}  ${log}`)
   }
 }
