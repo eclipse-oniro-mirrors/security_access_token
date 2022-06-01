@@ -13,6 +13,11 @@
  * limitations under the License.
  */
 #include "nativetoken.h"
+
+#ifdef WITH_SELINUX
+#include <policycoreutils.h>
+#endif // WITH_SELINUX
+
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
 
@@ -182,6 +187,11 @@ static int32_t CreateCfgFile(void)
         AT_LOG_ERROR("[ATLIB-%s]:open failed.", __func__);
         return ATRET_FAILED;
     }
+
+#ifdef WITH_SELINUX
+    Restorecon(TOKEN_ID_CFG_FILE_PATH);
+#endif // WITH_SELINUX
+
     close(fd);
     fd = -1;
 

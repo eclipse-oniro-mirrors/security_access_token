@@ -45,4 +45,9 @@ ohos_static_library("libnativetoken") {
   ]
 
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+
+  if (build_selinux) {
+    external_deps += [ "selinux:librestorecon" ]
+    cflags += [ "-DWITH_SELINUX" ]
+  }
 }
