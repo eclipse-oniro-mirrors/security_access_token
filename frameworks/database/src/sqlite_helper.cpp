@@ -16,6 +16,9 @@
 #include "sqlite_helper.h"
 
 #include "accesstoken_log.h"
+#ifdef WITH_SELINUX
+#include <policycoreutils.h>
+#endif // WITH_SELINUX
 
 namespace OHOS {
 namespace Security {
@@ -45,6 +48,10 @@ void SqliteHelper::Open()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to open db: %{public}s", sqlite3_errmsg(db_));
         return;
     }
+
+#ifdef WITH_SELINUX
+    Restorecon(fileName.c_str());
+#endif // WITH_SELINUX
 
     int version = GetVersion();
     if (version == currentVersion_) {

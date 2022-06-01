@@ -34,4 +34,8 @@ ohos_shared_library("accesstoken_database_cxx") {
   ]
 
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  if (build_selinux) {
+    external_deps += [ "selinux:librestorecon" ]
+    cflags_cc += [ "-DWITH_SELINUX" ]
+  }
 }
