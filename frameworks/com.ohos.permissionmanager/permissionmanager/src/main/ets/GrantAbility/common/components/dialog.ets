@@ -189,7 +189,7 @@ export struct privacyDialog {
               item.getString(reqPermissionDetail.reasonId, (err, value) => {
                 this.initStatus = Constants.INIT_NEED_TO_VERIFY
                 if (value !== undefined && !group.hasReason) {
-                  group.description += value
+                  group.description += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
                   group.hasReason = true
                 }
               })
