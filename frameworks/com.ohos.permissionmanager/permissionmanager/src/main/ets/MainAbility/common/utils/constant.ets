@@ -232,4 +232,7 @@ export default class Constants {
   static PRE_AUTHORIZATION_NOT_MODIFIED = 4;
 
   static BUNDLE_NAME = 'com.ohos.permissionmanager'
+
+  static START_SUBSCRIPT = 0
+  static END_SUBSCRIPT = 500
 }

@@ -68,4 +68,7 @@ export default class Constants {
   static INITIAL_INDEX = 10
 
   static BUNDLE_NAME = 'com.ohos.permissionmanager'
+
+  static START_SUBSCRIPT = 0
+  static END_SUBSCRIPT = 500
 }

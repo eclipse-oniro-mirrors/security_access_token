@@ -206,7 +206,7 @@ struct mediaDocumentItem {
             Resmgr.getResourceManager(routerData).then(item => {
               item.getString(reqPermissionDetail.reasonId, (err, value) => {
                 if (value !== undefined && !hasReason) {
-                  reason += value
+                  reason += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
                   hasReason = true
                 }
               })
