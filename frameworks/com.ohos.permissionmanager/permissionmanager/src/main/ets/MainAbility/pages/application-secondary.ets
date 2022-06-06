@@ -57,6 +57,7 @@ struct appNamePlusPage {
               Text(item.groupName)
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
                 .fontColor($r('app.color.text_color'))
+                .fontWeight(FontWeight.Medium)
                 .flexGrow(Constants.FLEX_GROW)
               Image($r('app.media.rightarrow'))
                 .objectFit(ImageFit.Contain)
@@ -247,9 +248,11 @@ struct appNamePlusPage {
                               Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
                                 Text($r('app.string.allowed'))
                                   .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                  .fontColor($r('app.color.label_color_light'))
+                                  .fontWeight(FontWeight.Medium)
                                   .margin({
                                     top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                                    left: Constants.SECONDARY_LIST_PADDING_RIGHT
+                                    left: Constants.SECONDARY_TEXT_MARGIN_LEFT
                                   })
                               }
                             }
@@ -282,9 +285,11 @@ struct appNamePlusPage {
                               Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
                                 Text($r('app.string.banned'))
                                   .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                  .fontColor($r('app.color.label_color_light'))
+                                  .fontWeight(FontWeight.Medium)
                                   .margin({
                                     top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                                    left: Constants.SECONDARY_LIST_PADDING_RIGHT
+                                    left: Constants.SECONDARY_TEXT_MARGIN_LEFT
                                   })
                               }
                             }

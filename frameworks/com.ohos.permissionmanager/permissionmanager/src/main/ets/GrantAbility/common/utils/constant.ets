@@ -17,30 +17,37 @@ export default class Constants {
   // icon of dialog
   static DIALOG_ICON_WIDTH = 24;
   static DIALOG_ICON_HEIGHT = 24;
-  static DIALOG_ICON_MARGIN_TOP = 24;
+  static DIALOG_ICON_MARGIN_TOP = 23;
 
   // label text of dialog
-  static DIALOG_LABEL_FONT_SIZE = 14;
+  static DIALOG_LABEL_FONT_SIZE = 10;
   static DIALOG_LABEL_MARGIN_TOP = 2;
+  static DIALOG_LABEL_LINE_HEIGHT = 14;
 
   // request text of dialog
   static DIALOG_REQ_FONT_SIZE = 16;
   static DIALOG_REQ_MARGIN_TOP = 16;
   static DIALOG_REQ_MARGIN_LEFT = 24;
+  static DIALOG_REQ_LINE_HEIGHT = 22;
 
   // description text of dialog
   static DIALOG_DESP_FONT_SIZE = 14;
   static DIALOG_DESP_MARGIN_TOP = 2;
   static DIALOG_DESP_MARGIN_LEFT = 24;
-  static DIALOG_DESP_MARGIN_RIGHT = 12;
+  static DIALOG_DESP_MARGIN_RIGHT = 24;
+  static DIALOG_DESP_MARGIN_BOTTOM = 8;
+  static DIALOG_DESP_LINE_HEIGHT = 19;
 
   static BUTTON_FONT_SIZE = 16;
-  static BUTTON_DIVIDER_FONT_SIZE = 30;
+  static BUTTON_DIVIDER_FONT_SIZE = 24;
   static BUTTON_MARGIN_TOP = 8;
+  static BUTTON_MARGIN_BOTTOM = 16;
+  static BUTTON_HEIGHT = 40;
 
-  static DIALOG_BORDER_RADIUS = 24;
+  static DIALOG_BORDER_RADIUS = 32;
   static DIALOG_HEIGHT = 186;
-  static DIALOG_WIDTH = "100%";
+  static DIALOG_WIDTH = 395;
+  static DIALOG_PADDING_BOTTOM = 16;
 
   // initial check status
   static INIT_NEED_TO_WAIT = 0

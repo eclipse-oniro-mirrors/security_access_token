@@ -91,7 +91,7 @@ export default class Constants {
   // public property style
   static LAYOUT_WEIGHT = 1;
   static FLEX_GROW = 1;
-  static TEXT_DECORATION_HEIGHT = 2;
+  static TEXT_DECORATION_HEIGHT = 1;
   static TEXT_MIDDLE_FONT_SIZE = 16;
   static TEXT_SMAL_FONT_SIZE = 14;
   static TEXT_SMALLER_FONT_SIZE = 12;
@@ -99,10 +99,11 @@ export default class Constants {
   static LISTITEM_ROW_HEIGHT = 48;
   static LISTITEM_PADDING_LEFT = 24;
   static LIST_PADDING_LEFT = 12
-  static LISTITEM_PADDING_RIGHT = 12;
+  static LISTITEM_PADDING_RIGHT = 24;
   static IMAGE_HEIGHT = 24;
   static IMAGE_WIDTH = 12;
   static BORDER_RADIUS = 24;
+  static TITLE_MARGIN_BOTTOM = 16;
 
   // application-secondary, authority-secondary
   static FLEX_MARGIN_TOP = 8;
@@ -111,7 +112,7 @@ export default class Constants {
   static LIST_PADDING_BOTTOM = 4;
   static ROW_MARGIN_TOP = 9;
   static SECONDARY_TEXT_MARGIN_TOP = 19.5;
-  static SECONDARY_TEXT_MARGIN_LEFT = 48;
+  static SECONDARY_TEXT_MARGIN_LEFT = 24;
   static SECONDARY_LIST_PADDING_LEFT = 12;
   static SECONDARY_LIST_PADDING_RIGHT = 12;
 
@@ -120,6 +121,9 @@ export default class Constants {
   static TERTIARY_IMAGE_HEIGHT = 64;
   static TERTIARY_IMAGE_MARGIN_LEFT = 12;
   static TERTIARY_IMAGE_MARGIN_RIGHT = 12;
+  static TERTIARY_LABEL_MARGIN_BOTTOM = 2;
+  static TERTIARY_MARGIN_LEFT = 12;
+  static TERTIARY_TEXT_MARGIN_LEFT = 24;
   static TERTIARY_HALF_WIDTH = '50%';
   static TERTIARY_ROW_MARGIN_TOP = 24;
   static TERTIARY_PERMISSION_ROW_MARGIN_TOP = 12;
@@ -162,7 +166,7 @@ export default class Constants {
   static MANAGEMENT_IMAGE_HEIGHT = 24;
   static MANAGEMENT_IMAGE_MARGIN_RIGHT = 16;
   static MANAGEMENT_ROW_HEIGHT = 56;
-  static MANAGEMENT_TEXT_DECORATION_WIDTH = '90%';
+  static MANAGEMENT_TEXT_DECORATION_WIDTH = '95%';
   static MANAGEMENT_TEXT_DECORATION_MARGIN_LEFT = 40;
   static MANAGEMENT_LODING_IMAGE_WIDTH = 48;
   static MANAGEMENT_LODING_IMAGE_HEIGHT = 48;
@@ -177,6 +181,7 @@ export default class Constants {
   static APPLICATION_IMAGE_MARGIN_RIGHT = 16;
   static APPLICATION_TEXT_MARGIN_RIGHT = 4;
   static APPLICATION_LIST_PADDING_LEFT = 12;
+  static APPLICATION_LIST_PADDING_RIGHT = 12;
   static APPLICATION_LISTITEM_PADDING_LEFT = 12;
   static APPLICATION_LISTITEM_PADDING_RIGHT = 12;
   static APPLICATION_TEXTINPUT_PADDING_LEFT = 12;
@@ -185,8 +190,8 @@ export default class Constants {
   static APPLICATION_COLUMN_HEIGHT = '93%';
   static APPLICATION_ALPHABETINDEX_MARGIN_TOP = 12;
   static APPLICATION_ALPHABETINDEX_WIDTH = 24;
-  static APPLICATION_TEXT_DECORATION_WIDTH = '83%';
-  static APPLICATION_TEXT_DECORATION_MARGIN_LEFT = 68;
+  static APPLICATION_TEXT_DECORATION_WIDTH = '90%';
+  static APPLICATION_TEXT_DECORATION_MARGIN_LEFT = 60;
 
   // slice
   static SLICE_START = 0;
@@ -195,7 +200,7 @@ export default class Constants {
   static SLICE_END_INDEX = 1;
 
   // tabBar
-  static BAR_WIDTH = 250;
+  static BAR_WIDTH = 285;
 
   // setTimeout
   static DELAY_TIME = 1000;
