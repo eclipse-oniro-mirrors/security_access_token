@@ -17,7 +17,7 @@
 #define PRIVACY_KIT_TEST_H
 
 #include <gtest/gtest.h>
-#include <stdint.h>
+#include <cstdint>
 
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"

@@ -22,8 +22,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request, GenericValues& visitorGenericValues,
-    GenericValues& andGenericValues, GenericValues& orGenericValues)
+int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
+    GenericValues& visitorGenericValues, GenericValues& andGenericValues, GenericValues& orGenericValues)
 {
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;

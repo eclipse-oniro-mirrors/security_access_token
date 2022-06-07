@@ -74,7 +74,8 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: 0x%{public}x, permission: %{public}s",
         __func__, tokenID, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
+    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        tokenID, permissionName, successCount, failCount);
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)

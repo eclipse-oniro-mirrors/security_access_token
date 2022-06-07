@@ -93,7 +93,8 @@ bool PermissionRecordManager::GetPermissionVisitor(AccessTokenID tokenID, Permis
     return true;
 }
 
-bool PermissionRecordManager::AddRecord(int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount)
+bool PermissionRecordManager::AddRecord(
+    int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     PermissionRecord record;
@@ -171,7 +172,8 @@ bool PermissionRecordManager::GetPermissionsRecord(int32_t visitorId, const std:
 int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x, permissionName: %{public}s", __func__, tokenID, permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x, permissionName: %{public}s", __func__,
+        tokenID, permissionName.c_str());
     auto deleteRecordsTask = [this]() {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
         DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
@@ -228,7 +230,8 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID,
     PermissionVisitorRepository::GetInstance().RemoveVisitorValues(visitorValues);
 }
 
-int32_t PermissionRecordManager::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
+int32_t PermissionRecordManager::GetPermissionUsedRecords(
+    const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     auto deleteRecordsTask = [this]() {
@@ -245,7 +248,8 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(const PermissionUsedRe
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
+    const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     auto task = [request, callback]() {
@@ -284,7 +288,8 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
         andConditionValues.Put(FIELD_VISITOR_ID, visitor.GetInt(FIELD_ID));
         std::vector<GenericValues> findRecordsValues;
         BundleUsedRecord bundleRecord;
-        if (!PermissionRecordRepository::GetInstance().FindRecordValues(andConditionValues, orConditionValues, findRecordsValues)) {
+        if (!PermissionRecordRepository::GetInstance().FindRecordValues(
+            andConditionValues, orConditionValues, findRecordsValues)) {
             return false;
         }
         andConditionValues.Remove(FIELD_VISITOR_ID);
@@ -306,7 +311,8 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
     return true;
 }
 
-bool PermissionRecordManager::GetRecords(int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
+bool PermissionRecordManager::GetRecords(
+    int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
 {
     std::vector<PermissionUsedRecord> permissionRecords;
     for (auto record : recordValues) {
@@ -317,12 +323,14 @@ bool PermissionRecordManager::GetRecords(int32_t flag, std::vector<GenericValues
         result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
 
         record.Put(FIELD_FLAG, flag);
-        if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord) != Constant::SUCCESS) {
+        if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
+            != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: failed to transform permission to opcode", __func__);
             continue;
         }
 
-        auto iter = std::find_if(permissionRecords.begin(), permissionRecords.end(), [tmpPermissionRecord](const PermissionUsedRecord& rec) {
+        auto iter = std::find_if(permissionRecords.begin(), permissionRecords.end(),
+            [tmpPermissionRecord](const PermissionUsedRecord& rec) {
             return tmpPermissionRecord.permissionName == rec.permissionName;
         });
         if (iter != permissionRecords.end()) {
@@ -335,7 +343,8 @@ bool PermissionRecordManager::GetRecords(int32_t flag, std::vector<GenericValues
     return true;
 }
 
-void PermissionRecordManager::UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord)
+void PermissionRecordManager::UpdateRecords(
+    int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord)
 {
     outBundleRecord.accessCount += inBundleRecord.accessCount;
     outBundleRecord.rejectCount += inBundleRecord.rejectCount;
@@ -411,7 +420,6 @@ bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)
 void PermissionRecordManager::Init()
 {
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
