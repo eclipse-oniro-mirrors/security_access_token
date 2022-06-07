@@ -61,7 +61,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
 {
     std::string packageName = TOKEN_SYNC_PACKAGE_NAME;
     std::string extra = "";
-    std::vector<DmDeviceInfo> deviceList;
+    std::vector<DistributedHardware::DmDeviceInfo> deviceList;
 
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().GetTrustedDeviceList(packageName,
         extra, deviceList);
@@ -70,7 +70,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
         return Constant::FAILURE;
     }
 
-    for (DmDeviceInfo device : deviceList) {
+    for (DistributedHardware::DmDeviceInfo device : deviceList) {
         std::string uuid = GetUuidByNodeId(device.networkId);
         std::string udid = GetUdidByNodeId(device.networkId);
         if (uuid.empty() || udid.empty()) {

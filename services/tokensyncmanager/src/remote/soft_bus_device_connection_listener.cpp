@@ -24,6 +24,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+using OHOS::DistributedHardware::DeviceStateCallback;
+using OHOS::DistributedHardware::DmDeviceInfo;
+using OHOS::DistributedHardware::DmInitCallback;
+
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusDeviceConnectionListener"};

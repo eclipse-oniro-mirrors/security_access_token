@@ -27,16 +27,12 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
-
-class MyDmInitCallback final : public DmInitCallback {
+class MyDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
     {}
 };
 
-class SoftBusDeviceConnectionListener final : public DeviceStateCallback {
+class SoftBusDeviceConnectionListener final : public DistributedHardware::DeviceStateCallback {
 public:
     SoftBusDeviceConnectionListener();
     ~SoftBusDeviceConnectionListener();
@@ -46,28 +42,28 @@ public:
      *
      * @param deviceInfo node info
      */
-    void OnDeviceOnline(const DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOnline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
 
     /**
      * @brief node offline callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceOffline(const DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
 
     /**
      * @brief node ready callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceReady(const DmDeviceInfo &deviceInfo) override;
+    void OnDeviceReady(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
 
     /**
      * @brief node changed callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceChanged(const DmDeviceInfo &deviceInfo) override;
+    void OnDeviceChanged(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
 };
 }  // namespace AccessToken
 }  // namespace Security
