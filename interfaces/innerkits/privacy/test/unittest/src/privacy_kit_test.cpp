@@ -31,24 +31,24 @@ static const uint32_t TEST_VALID_TOKENID_B = 2;
 static const std::string TEST_EMPTY_DEVICEID = "";
 static const std::string TEST_PERMISSION_INVALID = "";
 
-HapPolicyParams g_PolicyPramsA = {
+static HapPolicyParams g_PolicyPramsA = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
 };
 
-HapInfoParams g_InfoParmsA = {
+static HapInfoParams g_InfoParmsA = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundleA",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
 };
 
-HapPolicyParams g_PolicyPramsB = {
+static HapPolicyParams g_PolicyPramsB = {
     .apl = APL_NORMAL,
     .domain = "test.domain.B",
 };
 
-HapInfoParams g_InfoParmsB = {
+static HapInfoParams g_InfoParmsB = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundleB",
     .instIndex = 0,

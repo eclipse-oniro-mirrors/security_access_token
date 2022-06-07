@@ -300,7 +300,7 @@ std::string SqliteStorage::CreateSelectPrepareSqlCmd(const DataType type) const
     return sql;
 }
 
-std::string SqliteStorage::CreateSelectByConditionPrepareSqlCmd(const DataType type, 
+std::string SqliteStorage::CreateSelectByConditionPrepareSqlCmd(const DataType type,
     const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const
 {
     auto it = dataTypeToSqlTable_.find(type);

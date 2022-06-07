@@ -38,10 +38,12 @@ public:
     virtual ~PermissionRecordManager();
 
     void Init();
-    int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    int32_t AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
     void RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    int32_t GetPermissionUsedRecordsAsync(const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
+    int32_t GetPermissionUsedRecordsAsync(
+        const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
 
 private:
@@ -51,11 +53,13 @@ private:
     bool AddVisitor(AccessTokenID tokenID, int32_t& visitorId);
     bool GetPermissionVisitor(AccessTokenID tokenID, PermissionVisitor& visitor);
     bool AddRecord(int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount);
-    bool GetPermissionsRecord(int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount, PermissionRecord& record);
+    bool GetPermissionsRecord(int32_t visitorId, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, PermissionRecord& record);
 
     int32_t DeletePermissionRecord(int32_t days);
     bool GetRecordsFromDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    bool GetRecords(int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
+    bool GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
+        BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     bool IsLocalDevice(const std::string& deviceId);

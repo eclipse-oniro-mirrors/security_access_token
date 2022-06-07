@@ -28,7 +28,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CALL_LOG", Constant::OP_READ_CALL_LOG),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CELL_MESSAGES", Constant::OP_READ_CELL_MESSAGES),
     std::map<std::string, int32_t>::value_type("ohos.permission.MICROPHONE", Constant::OP_MICROPHONE),
-    std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_WAP_MESSAGES", Constant::OP_RECEIVE_WAP_MESSAGES),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.RECEIVE_WAP_MESSAGES", Constant::OP_RECEIVE_WAP_MESSAGES),
     std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_SMS", Constant::OP_RECEIVE_SMS),
     std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_MMS", Constant::OP_RECEIVE_MMS),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MESSAGES", Constant::OP_READ_MESSAGES),
