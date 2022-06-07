@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "ipc_skeleton.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -73,7 +74,7 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: 0x%{public}x, permission: %{public}s",
         __func__, tokenID, permissionName.c_str());
-    return Constant::SUCCESS;
+    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
@@ -93,6 +94,7 @@ int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
     return Constant::SUCCESS;
 }
 
@@ -101,20 +103,22 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     PermissionUsedResult permissionRecord;
-    return Constant::SUCCESS;
+    int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
+    result.result = permissionRecord;
+    return ret;
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
-    return Constant::SUCCESS;
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
 std::string PrivacyManagerService::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
-    return "";
+    return PermissionRecordManager::GetInstance().DumpRecordInfo(bundleName, permissionName);
 }
 
 bool PrivacyManagerService::Initialize() const

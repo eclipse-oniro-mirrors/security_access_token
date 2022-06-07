@@ -24,10 +24,50 @@ namespace Security {
 namespace AccessToken {
 class Constant {
 public:
+    enum OpCode {
+        OP_ANSWER_CALL = 0,
+        OP_READ_CALENDAR = 1,
+        OP_WRITE_CALENDAR = 2,
+        OP_SEND_MESSAGES = 3,
+        OP_WRITE_CALL_LOG = 4,
+        OP_READ_CALL_LOG = 5,
+        OP_READ_CELL_MESSAGES = 6,
+        OP_MICROPHONE = 7,
+        OP_RECEIVE_WAP_MESSAGES = 8,
+        OP_RECEIVE_SMS = 9,
+        OP_RECEIVE_MMS = 10,
+        OP_READ_MESSAGES = 11,
+        OP_READ_CONTACTS = 12,
+        OP_WRITE_CONTACTS = 13,
+        OP_LOCATION_IN_BACKGROUND = 14,
+        OP_LOCATION = 15,
+        OP_MEDIA_LOCATION = 16,
+        OP_CAMERA = 17,
+        OP_READ_MEDIA = 18,
+        OP_WRITE_MEDIA = 19,
+        OP_ACTIVITY_MOTION = 20,
+        OP_READ_HEALTH_DATA = 21,
+        OP_MANAGE_VOICEMAIL = 22,
+        OP_DISTRIBUTED_DATASYNC = 23,
+    };
+
     enum ErrorCode {
         FAILURE = -1,
         SUCCESS = 0,
     };
+
+    const static int32_t MAX_TOTAL_RECORD = 10000;
+    const static int32_t MAX_DETAIL_RECORD = 10;
+    const static int32_t RECORD_DELETE_TIME = 30 * 86400;
+    const static int32_t PRECISE = 60;
+    const static int32_t LATEST_RECORD_TIME = 7 * 86400;
+
+    const static std::map<std::string, int32_t> PERMISSION_OPCODE_MAP;
+public:
+    static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);
+    static bool TransferOpcodeToPermission(int32_t opCode, std::string& permissionName);
+
+    static std::string GetLocalDeviceUdid();
 };
 } // namespace AccessToken
 } // namespace Security

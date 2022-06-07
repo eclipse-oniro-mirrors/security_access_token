@@ -19,6 +19,8 @@ ohos_shared_library("privacy_manager_service") {
 
   include_dirs = [
     "include/common",
+    "include/database",
+    "include/record",
     "include/service",
     "//base/security/access_token/frameworks/privacy/include",
     "//base/security/access_token/frameworks/common/include",
@@ -29,6 +31,18 @@ ohos_shared_library("privacy_manager_service") {
   ]
 
   sources = [
+    "src/common/constant.cpp",
+    "src/common/time_util.cpp",
+    "src/common/to_string.cpp",
+    "src/database/data_translator.cpp",
+    "src/database/sqlite_storage.cpp",
+    "src/record/on_permission_used_record_callback_proxy.cpp",
+    "src/record/on_permission_used_record_callback_stub.cpp",
+    "src/record/permission_record_manager.cpp",
+    "src/record/permission_record_repository.cpp",
+    "src/record/permission_record.cpp",
+    "src/record/permission_visitor_repository.cpp",
+    "src/record/permission_visitor.cpp",
     "src/service/privacy_manager_service.cpp",
     "src/service/privacy_manager_stub.cpp",
   ]
