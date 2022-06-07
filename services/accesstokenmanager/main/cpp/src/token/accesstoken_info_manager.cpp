@@ -15,6 +15,7 @@
 
 #include "accesstoken_info_manager.h"
 
+#include <securec.h>
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "accesstoken_remote_token_manager.h"
@@ -26,6 +27,7 @@
 #include "hap_token_info_inner.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
+#include "softbus_bus_center.h"
 
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
@@ -811,6 +813,20 @@ int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID
     return RET_SUCCESS;
 }
 
+std::string AccessTokenInfoManager::GetUdidByNodeId(const std::string &nodeId)
+{
+    uint8_t info[UDID_MAX_LENGTH + 1] = {0};
+
+    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(),
+        NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
+        return "";
+    }
+    std::string udid(reinterpret_cast<char *>(info));
+    return udid;
+}
+
 AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
     AccessTokenID remoteTokenID)
 {
@@ -818,19 +834,21 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", remoteDeviceID.c_str());
         return 0;
     }
-    AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteDeviceID,
+    std::string remoteUdid = GetUdidByNodeId(remoteDeviceID);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s remoteUdid", remoteUdid.c_str());
+    AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);
     if (mapID != 0) {
         return mapID;
     }
-    int ret = TokenSyncKit::GetRemoteHapTokenInfo(remoteDeviceID, remoteTokenID);
+    int ret = TokenSyncKit::GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
-            remoteDeviceID.c_str(), remoteTokenID);
+            remoteUdid.c_str(), remoteTokenID);
         return 0;
     }
 
-    return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteDeviceID, remoteTokenID);
+    return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid, remoteTokenID);
 }
 #else
 AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,

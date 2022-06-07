@@ -41,7 +41,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
-const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
+
 const int32_t RETRY_SLEEP_TIME_MS = 1000;
 
 AccessTokenManagerService::AccessTokenManagerService()

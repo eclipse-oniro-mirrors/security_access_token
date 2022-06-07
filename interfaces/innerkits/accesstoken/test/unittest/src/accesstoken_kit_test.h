@@ -25,6 +25,7 @@ static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
 static const std::string TEST_PERMISSION_NAME_GAMMA = "ohos.permission.GAMMA";
+static const std::string TEST_PKG_NAME = "com.softbus.test";
 static const int TEST_USER_ID = 0;
 static const int TEST_USER_ID_INVALID = -1;
 static const unsigned int TEST_TOKENID_INVALID = 0;
@@ -50,6 +51,8 @@ public:
     void DeleteTestToken() const;
     void AllocTestToken() const;
     uint64_t selfTokenId_;
+    std::string udid_;
+    std::string networkId_;
 };
 } // namespace AccessToken
 } // namespace Security

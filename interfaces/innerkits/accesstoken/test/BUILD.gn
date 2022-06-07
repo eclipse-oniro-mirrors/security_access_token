@@ -39,7 +39,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "//utils/native/base:utils",
   ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [
+    "dsoftbus_standard:softbus_client",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }

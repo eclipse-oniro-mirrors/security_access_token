@@ -224,9 +224,9 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
         ACCESSTOKEN_LOG_INFO(LABEL, "get remote networkId failed");
         return Constant::FAILURE;
     }
-    std::string networkId = devInfo.deviceId.networkId;
+    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
     std::function<void()> delayed = ([=]() {
-        AccessTokenKit::DeleteRemoteDeviceTokens(networkId);
+        AccessTokenKit::DeleteRemoteDeviceTokens(uniqueDeviceId);
     });
 
     std::shared_ptr<TokenSyncEventHandler> handler =

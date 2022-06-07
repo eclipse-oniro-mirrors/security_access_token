@@ -76,13 +76,13 @@ void UpdateRemoteHapTokenCommand::Execute()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenCommand: get remote networkId failed");
+        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenCommand: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
 
-    std::string networkID = devInfo.deviceId.networkId;
-    int ret = AccessTokenKit::SetRemoteHapTokenInfo(networkID, updateTokenInfo_);
+    std::string uniqueDeviceId = devInfo.deviceId.uniqueDeviceId;
+    int ret = AccessTokenKit::SetRemoteHapTokenInfo(uniqueDeviceId, updateTokenInfo_);
     if (ret != RET_SUCCESS) {
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         remoteProtocol_.message = Constant::COMMAND_RESULT_FAILED;
