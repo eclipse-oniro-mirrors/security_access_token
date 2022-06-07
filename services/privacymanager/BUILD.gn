@@ -38,11 +38,11 @@ ohos_shared_library("privacy_manager_service") {
     "src/database/sqlite_storage.cpp",
     "src/record/on_permission_used_record_callback_proxy.cpp",
     "src/record/on_permission_used_record_callback_stub.cpp",
+    "src/record/permission_record.cpp",
     "src/record/permission_record_manager.cpp",
     "src/record/permission_record_repository.cpp",
-    "src/record/permission_record.cpp",
-    "src/record/permission_visitor_repository.cpp",
     "src/record/permission_visitor.cpp",
+    "src/record/permission_visitor_repository.cpp",
     "src/service/privacy_manager_service.cpp",
     "src/service/privacy_manager_stub.cpp",
   ]
