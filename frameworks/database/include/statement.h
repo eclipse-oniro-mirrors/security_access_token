@@ -34,6 +34,7 @@ public:
 
     void Bind(const int index, const std::string& text);
     void Bind(const int index, int value);
+    void Bind(const int index, int64_t value);
     void Bind(const std::string& tableColumnName, const VariantValue& value);
 
     State Step();
@@ -41,7 +42,7 @@ public:
 
     std::string GetColumnString(const int column) const;
     int GetColumnInt(const int column) const;
-    int GetColumnInt64(const int column) const;
+    int64_t GetColumnInt64(const int column) const;
     std::string GetColumnName(const int column) const;
     int GetParameterIndex(const std::string& name) const;
     int GetColumnCount() const;

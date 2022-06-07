@@ -40,6 +40,16 @@ group("tokensync_build_module") {
   }
 }
 
+group("privacy_build_module") {
+  if (is_standard_system) {
+    deps = [
+      "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+      "//base/security/access_token/services/privacymanager:privacy_manager_service",
+      "//base/security/access_token/services/privacymanager/sa_profile:privacy_sa_profile_standard",
+    ]
+  }
+}
+
 group("accesstoken_build_module_test") {
   testonly = true
   deps = []

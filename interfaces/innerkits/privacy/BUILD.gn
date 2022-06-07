@@ -1,0 +1,62 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+config("pricacy") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
+
+ohos_shared_library("libprivacy_sdk") {
+  subsystem_name = "security"
+  part_name = "access_token"
+
+  output_name = "libprivacy_sdk"
+
+  public_configs = [ ":pricacy" ]
+
+  include_dirs = [
+    "//utils/native/base/include",
+    "include",
+    "src",
+    "//base/security/access_token/frameworks/privacy/include",
+    "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/privacy/include",
+  ]
+
+  sources = [
+    "src/privacy_death_recipient.cpp",
+    "src/privacy_kit.cpp",
+    "src/privacy_manager_client.cpp",
+    "src/privacy_manager_proxy.cpp",
+  ]
+
+  deps = [
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
+    "//utils/native/base:utils",
+  ]
+
+  external_deps = [
+    "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
+    "samgr_standard:samgr_proxy",
+  ]
+
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
+  ]
+}

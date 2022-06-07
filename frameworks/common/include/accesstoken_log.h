@@ -48,6 +48,7 @@
 #undef LOG_DOMAIN
 
 static constexpr unsigned int SECURITY_DOMAIN_ACCESSTOKEN = 0xD002F01;
+static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD002F03;
 
 #else
 
