@@ -100,7 +100,8 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID,
     return proxy->RemovePermissionUsedRecords(tokenID, deviceID);
 }
 
-int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
+int32_t PrivacyManagerClient::GetPermissionUsedRecords(
+    const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
