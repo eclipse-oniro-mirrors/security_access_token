@@ -23,6 +23,11 @@ void GenericValues::Put(const std::string& key, int value)
     map_.insert(std::make_pair(key, VariantValue(value)));
 }
 
+void GenericValues::Put(const std::string& key, int64_t value)
+{
+    map_.insert(std::make_pair(key, VariantValue(value)));
+}
+
 void GenericValues::Put(const std::string& key, const std::string& value)
 {
     map_.insert(std::make_pair(key, VariantValue(value)));

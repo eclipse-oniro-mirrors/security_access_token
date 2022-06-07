@@ -51,12 +51,19 @@ void Statement::Bind(const int index, int value)
     }
 }
 
+void Statement::Bind(const int index, int64_t value)
+{
+    if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    }
+}
+
 int Statement::GetColumnInt(const int column) const
 {
     return sqlite3_column_int(statement_, column);
 }
 
-int Statement::GetColumnInt64(const int column) const
+int64_t Statement::GetColumnInt64(const int column) const
 {
     return sqlite3_column_int64(statement_, column);
 }

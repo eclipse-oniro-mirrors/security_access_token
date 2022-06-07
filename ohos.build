@@ -33,11 +33,21 @@
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
           }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+          "header": {
+            "header_files": [
+              "privacy_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/privacy/include"
+          }
         }
       ],
       "module_list": [
         "//base/security/access_token:accesstoken_build_module",
-        "//base/security/access_token:tokensync_build_module"
+        "//base/security/access_token:tokensync_build_module",
+        "//base/security/access_token:privacy_build_module"
       ],
       "test_list": [
         "//base/security/access_token:accesstoken_build_module_test",

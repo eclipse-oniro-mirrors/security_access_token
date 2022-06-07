@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "bundle_used_record_parcel.h"
+#include "permission_used_record_parcel.h"
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+#define RETURN_IF_FALSE(expr) \
+    if (!(expr)) { \
+        return false; \
+    }
+
+#define RELEASE_IF_FALSE(expr, obj) \
+    if (!(expr)) { \
+        delete (obj); \
+        (obj) = nullptr; \
+        return (obj); \
+    }
+
+bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
+{
+    RETURN_IF_FALSE(out.WriteUint32(this->bundleRecord.tokenId));
+    RETURN_IF_FALSE(out.WriteBool(this->bundleRecord.isRemote));
+    RETURN_IF_FALSE(out.WriteString(this->bundleRecord.deviceId));
+    RETURN_IF_FALSE(out.WriteString(this->bundleRecord.bundleName));
+
+    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->bundleRecord.permissionRecords.size())));
+    for (auto permRecord : this->bundleRecord.permissionRecords) {
+        PermissionUsedRecordParcel permRecordParcel;
+        permRecordParcel.permissionRecord = permRecord;
+        out.WriteParcelable(&permRecordParcel);
+    }
+    return true;
+}
+
+BundleUsedRecordParcel* BundleUsedRecordParcel::Unmarshalling(Parcel& in)
+{
+    auto* bundleRecordParcel = new (std::nothrow) BundleUsedRecordParcel();
+    RELEASE_IF_FALSE(bundleRecordParcel != nullptr, bundleRecordParcel);
+
+    RELEASE_IF_FALSE(in.ReadUint32(bundleRecordParcel->bundleRecord.tokenId), bundleRecordParcel);
+    RELEASE_IF_FALSE(in.ReadBool(bundleRecordParcel->bundleRecord.isRemote), bundleRecordParcel);
+    RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.deviceId), bundleRecordParcel);
+    RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.bundleName), bundleRecordParcel);
+
+    int permRecordSize = 0;
+    RELEASE_IF_FALSE(in.ReadInt32(permRecordSize), bundleRecordParcel);
+    for (int i = 0; i < permRecordSize; i++) {
+        sptr<PermissionUsedRecordParcel> permRecord = in.ReadParcelable<PermissionUsedRecordParcel>();
+        RELEASE_IF_FALSE(permRecord != nullptr, bundleRecordParcel);
+        bundleRecordParcel->bundleRecord.permissionRecords.emplace_back(permRecord->permissionRecord);
+    }
+    return bundleRecordParcel;
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
