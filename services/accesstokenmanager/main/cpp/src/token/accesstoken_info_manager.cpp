@@ -225,12 +225,11 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
 std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(AccessTokenID id)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    if (hapTokenInfoMap_.count(id) == 0) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "token %{public}u is invalid.", id);
-        return nullptr;
+    if (hapTokenInfoMap_.count(id) != 0) {
+        return hapTokenInfoMap_[id];
     }
-    return hapTokenInfoMap_[id];
+    ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u is invalid.", id);
+    return nullptr;
 }
 
 int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& InfoParcel)

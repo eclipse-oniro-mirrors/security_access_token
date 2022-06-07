@@ -87,21 +87,13 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
 
 int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
     std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
         return PERMISSION_DENIED;
     }
-
-    if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return PERMISSION_DENIED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
+    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return PERMISSION_DENIED;
