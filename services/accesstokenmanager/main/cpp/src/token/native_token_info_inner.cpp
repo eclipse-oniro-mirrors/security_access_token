@@ -104,13 +104,13 @@ std::string NativeTokenInfoInner::NativeAclsToString(const std::vector<std::stri
 
 int NativeTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, tokenInfoBasic_.tokenID);
+    outGenericValues.Put(FIELD_TOKEN_ID, (int)tokenInfoBasic_.tokenID);
     outGenericValues.Put(FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
     outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
     outGenericValues.Put(FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
-    outGenericValues.Put(FIELD_TOKEN_ATTR, tokenInfoBasic_.tokenAttr);
+    outGenericValues.Put(FIELD_TOKEN_ATTR, (int)tokenInfoBasic_.tokenAttr);
 
     return RET_SUCCESS;
 }

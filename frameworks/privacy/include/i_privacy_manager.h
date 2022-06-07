@@ -35,12 +35,15 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
-    virtual int AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount) = 0;
+    virtual int AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount) = 0;
     virtual int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) = 0;
-    virtual int GetPermissionUsedRecords(const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) = 0;
-    virtual int GetPermissionUsedRecords(const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
+    virtual int GetPermissionUsedRecords(
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) = 0;
+    virtual int GetPermissionUsedRecords(
+        const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
     virtual std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName) = 0;
 
     enum class InterfaceCode {

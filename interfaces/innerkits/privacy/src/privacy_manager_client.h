@@ -17,12 +17,14 @@ public:
 
     virtual ~PrivacyManagerClient();
 
-    int AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount);
+    int AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount);
     int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     int GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    int GetPermissionUsedRecords(const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
+    int GetPermissionUsedRecords(
+        const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
 
     void OnRemoteDiedHandle();

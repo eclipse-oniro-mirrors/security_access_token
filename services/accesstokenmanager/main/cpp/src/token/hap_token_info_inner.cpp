@@ -89,7 +89,7 @@ void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const
 
 void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, tokenInfoBasic_.tokenID);
+    outGenericValues.Put(FIELD_TOKEN_ID, (int)tokenInfoBasic_.tokenID);
     outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
     outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
     outGenericValues.Put(FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
@@ -98,7 +98,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
     outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
-    outGenericValues.Put(FIELD_TOKEN_ATTR, tokenInfoBasic_.tokenAttr);
+    outGenericValues.Put(FIELD_TOKEN_ATTR, (int)tokenInfoBasic_.tokenAttr);
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)

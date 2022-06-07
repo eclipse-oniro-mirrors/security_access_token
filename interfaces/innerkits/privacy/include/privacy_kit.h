@@ -28,12 +28,14 @@ namespace Security {
 namespace AccessToken {
 class PrivacyKit {
 public:
-    static int AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount);
+    static int AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount);
     static int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     static int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     static int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     static int GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    static int GetPermissionUsedRecords(const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
+    static int GetPermissionUsedRecords(
+        const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     static std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
 };
 } // namespace AccessToken

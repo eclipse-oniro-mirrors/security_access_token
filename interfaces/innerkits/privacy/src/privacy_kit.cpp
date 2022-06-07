@@ -28,11 +28,13 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyKit"};
 } // namespace
 
-int PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
+int PrivacyKit::AddPermissionUsedRecord(
+    AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s, \
-        successCount=%{public}d, failCount=%{public}d", __func__, tokenID, permissionName.c_str(), successCount, failCount);
-    return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s,",
+        __func__, tokenID, permissionName.c_str());
+    return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(
+        tokenID, permissionName, successCount, failCount);
 }
 
 int PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
@@ -61,7 +63,8 @@ int PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, P
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, result);
 }
 
-int PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+int PrivacyKit::GetPermissionUsedRecords(
+    const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
@@ -73,7 +76,6 @@ std::string PrivacyKit::DumpRecordInfo(const std::string& bundleName, const std:
         __func__, bundleName.c_str(), permissionName.c_str());
     return PrivacyManagerClient::GetInstance().DumpRecordInfo(bundleName, permissionName);
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

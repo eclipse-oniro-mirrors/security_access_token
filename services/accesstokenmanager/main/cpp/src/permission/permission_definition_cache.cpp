@@ -127,7 +127,7 @@ void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& v
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         GenericValues genericValues;
-        genericValues.Put(FIELD_TOKEN_ID, it->second.tokenId);
+        genericValues.Put(FIELD_TOKEN_ID, (int)it->second.tokenId);
         DataTranslator::TranslationIntoGenericValues(it->second.permDef, genericValues);
         valueList.emplace_back(genericValues);
         ++it;

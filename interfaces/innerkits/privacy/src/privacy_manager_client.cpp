@@ -42,8 +42,8 @@ PrivacyManagerClient::PrivacyManagerClient()
 PrivacyManagerClient::~PrivacyManagerClient()
 {}
 
-int PrivacyManagerClient::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-    int successCount, int failCount)
+int PrivacyManagerClient::AddPermissionUsedRecord(
+    AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
         (successCount < 0 || failCount < 0)) {
@@ -116,7 +116,7 @@ int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& 
     return ret;
 }
 
-int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request, 
+int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request,
     const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     auto proxy = GetProxy();
