@@ -29,7 +29,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-int PrivacyManagerStub::OnRemoteRequest(
+int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     std::u16string descriptor = data.ReadInterfaceToken();
@@ -69,9 +69,9 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 {
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int successCount = data.ReadInt32();
-    int failCount = data.ReadInt32();
-    int result = this->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
+    int32_t successCount = data.ReadInt32();
+    int32_t failCount = data.ReadInt32();
+    int32_t result = this->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
     reply.WriteInt32(result);
 }
 
@@ -79,7 +79,7 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
 {
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int result = this->StartUsingPermission(tokenID, permissionName);
+    int32_t result = this->StartUsingPermission(tokenID, permissionName);
     reply.WriteInt32(result);
 }
 
@@ -87,7 +87,7 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 {
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int result = this->StopUsingPermission(tokenID, permissionName);
+    int32_t result = this->StopUsingPermission(tokenID, permissionName);
     reply.WriteInt32(result);
 }
 
@@ -95,7 +95,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 {
     AccessTokenID tokenID = data.ReadUint32();
     std::string deviceID = data.ReadString();
-    int result = this->RemovePermissionUsedRecords(tokenID, deviceID);
+    int32_t result = this->RemovePermissionUsedRecords(tokenID, deviceID);
     reply.WriteInt32(result);
 }
 
@@ -108,7 +108,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
         return;
     }
     PermissionUsedResultParcel responseParcel;
-    int result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
+    int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteParcelable(&responseParcel);
     reply.WriteInt32(result);
 }
@@ -122,7 +122,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
         return;
     }
     sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
-    int result = this->GetPermissionUsedRecords(*requestParcel, callback);
+    int32_t result = this->GetPermissionUsedRecords(*requestParcel, callback);
     reply.WriteInt32(result);
 }
 

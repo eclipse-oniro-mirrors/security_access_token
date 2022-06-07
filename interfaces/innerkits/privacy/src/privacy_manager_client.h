@@ -32,13 +32,13 @@ public:
 
     virtual ~PrivacyManagerClient();
 
-    int AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount);
-    int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
-    int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
-    int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
-    int GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    int GetPermissionUsedRecords(
+    int32_t AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
+    int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
+    int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
 

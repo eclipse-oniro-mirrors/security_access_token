@@ -68,35 +68,35 @@ void PrivacyManagerService::OnStop()
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
-int PrivacyManagerService::AddPermissionUsedRecord(
-    AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
+int32_t PrivacyManagerService::AddPermissionUsedRecord(
+    AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: 0x%{public}x, permission: %{public}s",
         __func__, tokenID, permissionName.c_str());
     return Constant::SUCCESS;
 }
 
-int PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: 0x%{public}x, permission: %{public}s",
         __func__, tokenID, permissionName.c_str());
     return Constant::SUCCESS;
 }
 
-int PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: 0x%{public}x, permission: %{public}s",
         __func__, tokenID, permissionName.c_str());
     return Constant::SUCCESS;
 }
 
-int PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     return Constant::SUCCESS;
 }
 
-int PrivacyManagerService::GetPermissionUsedRecords(
+int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
@@ -104,7 +104,7 @@ int PrivacyManagerService::GetPermissionUsedRecords(
     return Constant::SUCCESS;
 }
 
-int PrivacyManagerService::GetPermissionUsedRecords(
+int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);

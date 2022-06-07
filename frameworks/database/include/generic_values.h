@@ -30,7 +30,7 @@ public:
     GenericValues() = default;
     virtual ~GenericValues() = default;
 
-    void Put(const std::string& key, int value);
+    void Put(const std::string& key, int32_t value);
 
     void Put(const std::string& key, int64_t value);
 
@@ -42,7 +42,7 @@ public:
 
     VariantValue Get(const std::string& key) const;
 
-    int GetInt(const std::string& key) const;
+    int32_t GetInt(const std::string& key) const;
 
     int64_t GetInt64(const std::string& key) const;
 

@@ -26,8 +26,10 @@ namespace AccessToken {
 
 #define RELEASE_IF_FALSE(expr, obj) \
     if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
+        if ((obj) != nullptr) { \
+            delete (obj); \
+            (obj) = nullptr; \
+        } \
         return (obj); \
     }
 
@@ -68,17 +70,17 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadInt64(permissionRecordParcel->permissionRecord.lastRejectTime), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(permissionRecordParcel->permissionRecord.lastAccessDuration), permissionRecordParcel);
 
-    int accRecordSize = 0;
+    int32_t accRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadInt32(accRecordSize), permissionRecordParcel);
-    for (int i = 0; i < accRecordSize; i++) {
+    for (int32_t i = 0; i < accRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.accessRecords.emplace_back(detailParcel->detail);
     }
     
-    int rejRecordSize = 0;
+    int32_t rejRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadInt32(rejRecordSize), permissionRecordParcel);
-    for (int i = 0; i < rejRecordSize; i++) {
+    for (int32_t i = 0; i < rejRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.rejectRecords.emplace_back(detailParcel->detail);

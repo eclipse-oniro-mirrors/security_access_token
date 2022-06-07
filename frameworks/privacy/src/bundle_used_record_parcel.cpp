@@ -26,8 +26,10 @@ namespace AccessToken {
 
 #define RELEASE_IF_FALSE(expr, obj) \
     if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
+        if ((obj) != nullptr) { \
+            delete (obj); \
+            (obj) = nullptr; \
+        } \
         return (obj); \
     }
 
@@ -57,9 +59,9 @@ BundleUsedRecordParcel* BundleUsedRecordParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.deviceId), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.bundleName), bundleRecordParcel);
 
-    int permRecordSize = 0;
+    int32_t permRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadInt32(permRecordSize), bundleRecordParcel);
-    for (int i = 0; i < permRecordSize; i++) {
+    for (int32_t i = 0; i < permRecordSize; i++) {
         sptr<PermissionUsedRecordParcel> permRecord = in.ReadParcelable<PermissionUsedRecordParcel>();
         RELEASE_IF_FALSE(permRecord != nullptr, bundleRecordParcel);
         bundleRecordParcel->bundleRecord.permissionRecords.emplace_back(permRecord->permissionRecord);

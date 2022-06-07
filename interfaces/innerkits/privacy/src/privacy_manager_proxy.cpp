@@ -35,8 +35,8 @@ PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
 PrivacyManagerProxy::~PrivacyManagerProxy()
 {}
 
-int PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-    int successCount, int failCount)
+int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t successCount, int32_t failCount)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -67,7 +67,7 @@ int PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const st
     return ret;
 }
 
-int PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -90,7 +90,7 @@ int PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::
     return ret;
 }
 
-int PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -108,12 +108,12 @@ int PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::s
     if (!requestResult) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "add result fail, result: %{public}d", requestResult);
     }
-    int ret = reply.ReadInt32();
+    int32_t ret = reply.ReadInt32();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
     return ret;
 }
 
-int PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -136,7 +136,7 @@ int PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, cons
     return ret;
 }
 
-int PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
+int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
     PermissionUsedResultParcel& result)
 {
     MessageParcel data;
@@ -164,7 +164,7 @@ int PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestPar
     return ret;
 }
 
-int PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
+int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
     const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     MessageParcel data;
