@@ -14,7 +14,7 @@
  */
 
 #include "time_util.h"
-#include <time.h>
+#include <ctime>
 
 namespace OHOS {
 namespace Security {

@@ -30,7 +30,8 @@ public:
     static PermissionVisitorRepository& GetInstance();
 
     bool AddVisitorValues(const GenericValues& visitorValues);
-    bool FindVisitorValues(const GenericValues& andConditionValues, const GenericValues& orConditionValues, std::vector<GenericValues>& visitorValues);
+    bool FindVisitorValues(const GenericValues& andConditionValues,
+        const GenericValues& orConditionValues, std::vector<GenericValues>& visitorValues);
     bool RemoveVisitorValues(const GenericValues& conditionValues);
 };
 } // namespace AccessToken

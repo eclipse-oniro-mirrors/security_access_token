@@ -19,13 +19,17 @@
 #include "nativetoken_kit.h"
 #include "parameter.h"
 #include "privacy_kit.h"
-#include "to_string.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
 const static int32_t RET_ERROR = -1;
+static const uint32_t TEST_TOKENID_INVALID = 0;
+static const uint32_t TEST_VALID_TOKENID_A = 1;
+static const uint32_t TEST_VALID_TOKENID_B = 2;
+static const std::string TEST_EMPTY_DEVICEID = "";
+static const std::string TEST_PERMISSION_INVALID = "";
 
 HapPolicyParams g_PolicyPramsA = {
     .apl = APL_NORMAL,

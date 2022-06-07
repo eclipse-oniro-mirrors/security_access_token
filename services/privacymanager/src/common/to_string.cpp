@@ -18,7 +18,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-void ToString::DetailUsedRecordToString(bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos)
+void ToString::DetailUsedRecordToString(
+    bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos)
 {
     if (isAccessDetail) {
         infos.append(R"(          "accessRecords": [)");
@@ -40,7 +41,8 @@ void ToString::DetailUsedRecordToString(bool isAccessDetail, const std::vector<U
     infos.append("\n");
 }
 
-void ToString::PermissionUsedRecordToString(const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos)
+void ToString::PermissionUsedRecordToString(
+    const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos)
 {
     infos.append(R"(  "permissionRecords": [)");
     infos.append("\n");
@@ -59,8 +61,7 @@ void ToString::PermissionUsedRecordToString(const std::vector<PermissionUsedReco
         infos.append("      },");
         infos.append("\n");
     }
-    
-    
+
     infos.append("  ]");
     infos.append("\n");
 }

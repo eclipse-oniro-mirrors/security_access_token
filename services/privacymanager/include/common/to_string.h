@@ -25,8 +25,10 @@ namespace Security {
 namespace AccessToken {
 class ToString {
 public:
-    static void DetailUsedRecordToString(bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos);
-    static void PermissionUsedRecordToString(const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos);
+    static void DetailUsedRecordToString(
+        bool isAccessDetail, const std::vector<UsedRecordDetail>& detailRecord, std::string& infos);
+    static void PermissionUsedRecordToString(
+        const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos);
     static void BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos);
     static void PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos);
 };

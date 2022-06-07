@@ -29,7 +29,6 @@ ohos_unittest("libprivacy_sdk_test") {
 
   sources = [
     "unittest/src/privacy_kit_test.cpp",
-    "unittest/src/to_string.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]

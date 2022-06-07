@@ -34,7 +34,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MESSAGES", Constant::OP_READ_MESSAGES),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CONTACTS", Constant::OP_READ_CONTACTS),
     std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CONTACTS", Constant::OP_WRITE_CONTACTS),
-    std::map<std::string, int32_t>::value_type("ohos.permission.LOCATION_IN_BACKGROUND", Constant::OP_LOCATION_IN_BACKGROUND),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.LOCATION_IN_BACKGROUND", Constant::OP_LOCATION_IN_BACKGROUND),
     std::map<std::string, int32_t>::value_type("ohos.permission.LOCATION", Constant::OP_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.CAMERA", Constant::OP_CAMERA),
@@ -43,7 +44,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.ACTIVITY_MOTION", Constant::OP_ACTIVITY_MOTION),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_HEALTH_DATA", Constant::OP_READ_HEALTH_DATA),
     std::map<std::string, int32_t>::value_type("ohos.permission.MANAGE_VOICEMAIL", Constant::OP_MANAGE_VOICEMAIL),
-    std::map<std::string, int32_t>::value_type("ohos.permission.DISTRIBUTED_DATASYNC", Constant::OP_DISTRIBUTED_DATASYNC),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.DISTRIBUTED_DATASYNC", Constant::OP_DISTRIBUTED_DATASYNC),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

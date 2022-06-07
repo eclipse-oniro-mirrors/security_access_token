@@ -26,12 +26,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const uint32_t TEST_TOKENID_INVALID = 0;
-static const uint32_t TEST_VALID_TOKENID_A = 1;
-static const uint32_t TEST_VALID_TOKENID_B = 2;
-static const std::string TEST_EMPTY_DEVICEID = "";
-static const std::string TEST_PERMISSION_INVALID = "";
-
 class PrivacyKitTest : public testing::Test {
 public:
     static void SetUpTestCase();

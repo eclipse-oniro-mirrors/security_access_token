@@ -30,7 +30,8 @@ public:
     static PermissionRecordRepository& GetInstance();
 
     bool AddRecordValues(const std::vector<GenericValues>& recordValues);
-    bool FindRecordValues(const GenericValues& andConditionValues, const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues);
+    bool FindRecordValues(const GenericValues& andConditionValues,
+        const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues);
     bool RemoveRecordValues(const GenericValues& conditionValues);
 };
 } // namespace AccessToken

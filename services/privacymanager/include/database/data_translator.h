@@ -27,9 +27,10 @@ namespace Security {
 namespace AccessToken {
 class DataTranslator final {
 public:
-    static int32_t TranslationIntoGenericValues(const PermissionUsedRequest& request, GenericValues& visitorGenericValues,
-        GenericValues& andGenericValues, GenericValues& orGenericValues);
-    static int32_t TranslationGenericValuesIntoPermissionUsedRecord(const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
+    static int32_t TranslationIntoGenericValues(const PermissionUsedRequest& request,
+    GenericValues& visitorGenericValues, GenericValues& andGenericValues, GenericValues& orGenericValues);
+    static int32_t TranslationGenericValuesIntoPermissionUsedRecord(
+        const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord);
 };
 } // namespace AccessToken
 } // namespace Security

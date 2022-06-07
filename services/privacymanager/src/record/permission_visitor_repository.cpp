@@ -76,7 +76,8 @@ bool PermissionVisitorRepository::FindVisitorValues(
 
 bool PermissionVisitorRepository::RemoveVisitorValues(const GenericValues& conditionValues)
 {
-    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_VISITOR, conditionValues) != SqliteStorage::SUCCESS) {
+    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_VISITOR, conditionValues)
+        != SqliteStorage::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table remove fail", __func__);
         return false;
     }

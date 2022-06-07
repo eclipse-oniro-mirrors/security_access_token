@@ -66,7 +66,7 @@ private:
     std::string CreateDeletePrepareSqlCmd(
         const DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
-    std::string CreateSelectByConditionPrepareSqlCmd(const DataType type, 
+    std::string CreateSelectByConditionPrepareSqlCmd(const DataType type,
         const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const;
     std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;

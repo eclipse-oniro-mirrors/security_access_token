@@ -45,27 +45,28 @@ bool PermissionRecordRepository::AddRecordValues(const std::vector<GenericValues
 {
     if (SqliteStorage::GetInstance().Add(SqliteStorage::PERMISSION_RECORD, recordValues) != SqliteStorage::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table add fail", __func__);
-        return false;        
+        return false;
     }
     return true;
 }
 
-bool PermissionRecordRepository::FindRecordValues(const GenericValues& andConditionValues, 
+bool PermissionRecordRepository::FindRecordValues(const GenericValues& andConditionValues,
     const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues)
 {
     if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_RECORD, andConditionValues,
         orConditionValues, recordValues) != SqliteStorage::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table find fail", __func__);
-        return false;        
+        return false;
     }
     return true;
 }
 
 bool PermissionRecordRepository::RemoveRecordValues(const GenericValues& conditionValues)
 {
-    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_RECORD, conditionValues) != SqliteStorage::SUCCESS) {
+    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_RECORD, conditionValues)
+        != SqliteStorage::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table add fail", __func__);
-        return false;        
+        return false;
     }
     return true;
 }
