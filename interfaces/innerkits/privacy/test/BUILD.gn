@@ -27,9 +27,7 @@ ohos_unittest("libprivacy_sdk_test") {
     "//base/security/access_token/services/privacymanager/include/record",
   ]
 
-  sources = [
-    "unittest/src/privacy_kit_test.cpp",
-  ]
+  sources = [ "unittest/src/privacy_kit_test.cpp" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
