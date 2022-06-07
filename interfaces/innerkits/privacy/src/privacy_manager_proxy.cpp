@@ -35,7 +35,7 @@ PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
 PrivacyManagerProxy::~PrivacyManagerProxy()
 {}
 
-int PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, 
+int PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int successCount, int failCount)
 {
     MessageParcel data;

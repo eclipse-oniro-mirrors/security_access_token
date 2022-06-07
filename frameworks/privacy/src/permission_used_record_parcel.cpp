@@ -35,7 +35,7 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->permissionRecord.permissionName));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.accessCount));
-    RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.rejectCount));;
+    RETURN_IF_FALSE(out.WriteInt32(this->permissionRecord.rejectCount));
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastAccessTime));
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastRejectTime));
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastAccessDuration));

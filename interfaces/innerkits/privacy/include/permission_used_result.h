@@ -53,7 +53,6 @@ struct PermissionUsedResult {
     int64_t endTimeMillis = 0L;
     std::vector<BundleUsedRecord> bundleRecords;
 };
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

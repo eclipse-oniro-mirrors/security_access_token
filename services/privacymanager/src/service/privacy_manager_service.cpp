@@ -106,7 +106,7 @@ int PrivacyManagerService::GetPermissionUsedRecords(
 
 int PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
-{ 
+{
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     return Constant::SUCCESS;
 }
