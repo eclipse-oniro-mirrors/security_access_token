@@ -37,50 +37,50 @@ Statement::~Statement()
     statement_ = nullptr;
 }
 
-void Statement::Bind(const int index, const std::string& text)
+void Statement::Bind(const int32_t index, const std::string& text)
 {
     if (sqlite3_bind_text(statement_, index, text.c_str(), text.size(), SQLITE_TRANSIENT) != SQLITE_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind string, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
-void Statement::Bind(const int index, int value)
+void Statement::Bind(const int32_t index, int32_t value)
 {
     if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
-void Statement::Bind(const int index, int64_t value)
+void Statement::Bind(const int32_t index, int64_t value)
 {
     if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int, errorMsg: %{public}s", sqlite3_errmsg(db_));
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 
-int Statement::GetColumnInt(const int column) const
+int32_t Statement::GetColumnInt(const int32_t column) const
 {
     return sqlite3_column_int(statement_, column);
 }
 
-int64_t Statement::GetColumnInt64(const int column) const
+int64_t Statement::GetColumnInt64(const int32_t column) const
 {
     return sqlite3_column_int64(statement_, column);
 }
 
-std::string Statement::GetColumnString(const int column) const
+std::string Statement::GetColumnString(const int32_t column) const
 {
     return std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement_, column)));
 }
 
-std::string Statement::GetColumnName(const int column) const
+std::string Statement::GetColumnName(const int32_t column) const
 {
     return sqlite3_column_name(statement_, column);
 }
 
 Statement::State Statement::Step()
 {
-    int ret = sqlite3_step(statement_);
+    int32_t ret = sqlite3_step(statement_);
     switch (ret) {
         case SQLITE_ROW:
             return Statement::State::ROW;
@@ -95,14 +95,14 @@ Statement::State Statement::Step()
     }
 }
 
-int Statement::GetParameterIndex(const std::string& name) const
+int32_t Statement::GetParameterIndex(const std::string& name) const
 {
     return sqlite3_bind_parameter_index(statement_, name.c_str());
 }
 
 void Statement::Bind(const std::string& tableColumnName, const VariantValue& value)
 {
-    int index = GetParameterIndex(":" + tableColumnName);
+    int32_t index = GetParameterIndex(":" + tableColumnName);
     if (value.GetType() == ValueType::TYPE_STRING) {
         Bind(index, value.GetString());
     } else if (value.GetType() == ValueType::TYPE_INT) {
@@ -112,19 +112,19 @@ void Statement::Bind(const std::string& tableColumnName, const VariantValue& val
     }
 }
 
-int Statement::Reset()
+int32_t Statement::Reset()
 {
     return sqlite3_reset(statement_);
 }
 
-int Statement::GetColumnCount() const
+int32_t Statement::GetColumnCount() const
 {
     return sqlite3_column_count(statement_);
 }
 
-VariantValue Statement::GetValue(const int column, const bool flagInt64) const
+VariantValue Statement::GetValue(const int32_t column, const bool flagInt64) const
 {
-    int type = sqlite3_column_type(statement_, column);
+    int32_t type = sqlite3_column_type(statement_, column);
     switch (type) {
         case SQLITE_INTEGER:
             if (flagInt64) {

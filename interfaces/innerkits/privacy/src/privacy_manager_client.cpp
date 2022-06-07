@@ -42,8 +42,8 @@ PrivacyManagerClient::PrivacyManagerClient()
 PrivacyManagerClient::~PrivacyManagerClient()
 {}
 
-int PrivacyManagerClient::AddPermissionUsedRecord(
-    AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
+int32_t PrivacyManagerClient::AddPermissionUsedRecord(
+    AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
         (successCount < 0 || failCount < 0)) {
@@ -58,7 +58,7 @@ int PrivacyManagerClient::AddPermissionUsedRecord(
     return proxy->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
 }
 
-int PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -72,7 +72,7 @@ int PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std:
     return proxy->StartUsingPermission(tokenID, permissionName);
 }
 
-int PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -86,7 +86,7 @@ int PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const std::
     return proxy->StopUsingPermission(tokenID, permissionName);
 }
 
-int PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -100,7 +100,7 @@ int PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, con
     return proxy->RemovePermissionUsedRecords(tokenID, deviceID);
 }
 
-int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
+int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -111,12 +111,12 @@ int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& 
     PermissionUsedRequestParcel requestParcel;
     PermissionUsedResultParcel reultParcel;
     requestParcel.request = request;
-    int ret = proxy->GetPermissionUsedRecords(requestParcel, reultParcel);
+    int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, reultParcel);
     result = reultParcel.result;
     return ret;
 }
 
-int PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request,
+int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedRequest& request,
     const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     auto proxy = GetProxy();

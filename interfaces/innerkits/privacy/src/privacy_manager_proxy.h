@@ -29,14 +29,14 @@ public:
     explicit PrivacyManagerProxy(const sptr<IRemoteObject>& impl);
     ~PrivacyManagerProxy() override;
 
-    int AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount) override;
-    int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
-    int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
-    int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) override;
-    int GetPermissionUsedRecords(
+    int32_t AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) override;
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
+    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) override;
+    int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) override;
-    int GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
+    int32_t GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
         const sptr<OnPermissionUsedRecordCallback>& callback) override;
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName) override;
 

@@ -25,8 +25,10 @@ namespace AccessToken {
 
 #define RELEASE_IF_FALSE(expr, obj) \
     if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
+        if ((obj) != nullptr) { \
+            delete (obj); \
+            (obj) = nullptr; \
+        } \
         return (obj); \
     }
 
@@ -57,16 +59,16 @@ PermissionUsedRequestParcel* PermissionUsedRequestParcel::Unmarshalling(Parcel& 
     RELEASE_IF_FALSE(in.ReadString(requestParcel->request.deviceId), requestParcel);
     RELEASE_IF_FALSE(in.ReadString(requestParcel->request.bundleName), requestParcel);
 
-    int permSize = 0;
+    int32_t permSize = 0;
     RELEASE_IF_FALSE(in.ReadInt32(permSize), requestParcel);
-    for (int i = 0; i < permSize; i++) {
+    for (int32_t i = 0; i < permSize; i++) {
         std::string perm;
         RELEASE_IF_FALSE(in.ReadString(perm), requestParcel);
         requestParcel->request.permissionList.emplace_back(perm);
     }
     RELEASE_IF_FALSE(in.ReadInt64(requestParcel->request.beginTimeMillis), requestParcel);
     RELEASE_IF_FALSE(in.ReadInt64(requestParcel->request.endTimeMillis), requestParcel);
-    int flag;
+    int32_t flag;
     RELEASE_IF_FALSE(in.ReadInt32(flag), requestParcel);
     requestParcel->request.flag = static_cast<PermissionUsageFlagEnum>(flag);
     return requestParcel;

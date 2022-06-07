@@ -32,21 +32,21 @@ public:
     Statement(sqlite3* db, const std::string& sql);
     virtual ~Statement();
 
-    void Bind(const int index, const std::string& text);
-    void Bind(const int index, int value);
-    void Bind(const int index, int64_t value);
+    void Bind(const int32_t index, const std::string& text);
+    void Bind(const int32_t index, int32_t value);
+    void Bind(const int32_t index, int64_t value);
     void Bind(const std::string& tableColumnName, const VariantValue& value);
 
     State Step();
-    int Reset();
+    int32_t Reset();
 
-    std::string GetColumnString(const int column) const;
-    int GetColumnInt(const int column) const;
-    int64_t GetColumnInt64(const int column) const;
-    std::string GetColumnName(const int column) const;
-    int GetParameterIndex(const std::string& name) const;
-    int GetColumnCount() const;
-    VariantValue GetValue(const int column, const bool flagInt64) const;
+    std::string GetColumnString(const int32_t column) const;
+    int32_t GetColumnInt(const int32_t column) const;
+    int64_t GetColumnInt64(const int32_t column) const;
+    std::string GetColumnName(const int32_t column) const;
+    int32_t GetParameterIndex(const std::string& name) const;
+    int32_t GetColumnCount() const;
+    VariantValue GetValue(const int32_t column, const bool flagInt64) const;
 
 private:
     sqlite3* db_;

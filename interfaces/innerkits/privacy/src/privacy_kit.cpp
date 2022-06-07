@@ -28,8 +28,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyKit"};
 } // namespace
 
-int PrivacyKit::AddPermissionUsedRecord(
-    AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount)
+int32_t PrivacyKit::AddPermissionUsedRecord(
+    AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s,",
         __func__, tokenID, permissionName.c_str());
@@ -37,33 +37,33 @@ int PrivacyKit::AddPermissionUsedRecord(
         tokenID, permissionName, successCount, failCount);
 }
 
-int PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s",
         __func__, tokenID, permissionName.c_str());
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName);
 }
 
-int PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s",
         __func__, tokenID, permissionName.c_str());
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, permissionName);
 }
 
-int PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
 }
 
-int PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
+int32_t PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, result);
 }
 
-int PrivacyKit::GetPermissionUsedRecords(
+int32_t PrivacyKit::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);

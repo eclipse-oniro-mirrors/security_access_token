@@ -31,18 +31,18 @@ namespace Security {
 namespace AccessToken {
 class IPrivacyManager : public IRemoteBroker {
 public:
-    static const int SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
+    static const int32_t SA_ID_PRIVACY_MANAGER_SERVICE = 3505;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
-    virtual int AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int successCount, int failCount) = 0;
-    virtual int StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
-    virtual int StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
-    virtual int RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) = 0;
-    virtual int GetPermissionUsedRecords(
+    virtual int32_t AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) = 0;
+    virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) = 0;
+    virtual int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) = 0;
-    virtual int GetPermissionUsedRecords(
+    virtual int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
     virtual std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName) = 0;
 

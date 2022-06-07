@@ -26,8 +26,10 @@ namespace AccessToken {
 
 #define RELEASE_IF_FALSE(expr, obj) \
     if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
+        if ((obj) != nullptr) { \
+            delete (obj); \
+            (obj) = nullptr; \
+        } \
         return (obj); \
     }
 
@@ -53,9 +55,9 @@ PermissionUsedResultParcel* PermissionUsedResultParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.beginTimeMillis), resultParcel);
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.endTimeMillis), resultParcel);
 
-    int bundResponseSize = 0;
+    int32_t bundResponseSize = 0;
     RELEASE_IF_FALSE(in.ReadInt32(bundResponseSize), resultParcel);
-    for (int i = 0; i < bundResponseSize; i++) {
+    for (int32_t i = 0; i < bundResponseSize; i++) {
         sptr<BundleUsedRecordParcel> bunRecordParcel = in.ReadParcelable<BundleUsedRecordParcel>();
         RELEASE_IF_FALSE(bunRecordParcel != nullptr, resultParcel);
         resultParcel->result.bundleRecords.emplace_back(bunRecordParcel->bundleRecord);

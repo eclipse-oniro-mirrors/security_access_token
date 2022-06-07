@@ -18,7 +18,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-void GenericValues::Put(const std::string& key, int value)
+void GenericValues::Put(const std::string& key, int32_t value)
 {
     map_.insert(std::make_pair(key, VariantValue(value)));
 }
@@ -47,7 +47,7 @@ VariantValue GenericValues::Get(const std::string& key) const
     return iter->second;
 }
 
-int GenericValues::GetInt(const std::string& key) const
+int32_t GenericValues::GetInt(const std::string& key) const
 {
     auto it = map_.find(key);
     if (it == map_.end()) {

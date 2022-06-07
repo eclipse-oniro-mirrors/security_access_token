@@ -24,7 +24,7 @@ VariantValue::VariantValue() : type_(ValueType::TYPE_NULL)
 VariantValue::~VariantValue()
 {}
 
-VariantValue::VariantValue(int value) : type_(ValueType::TYPE_INT)
+VariantValue::VariantValue(int32_t value) : type_(ValueType::TYPE_INT)
 {
     value_ = value;
 }
@@ -44,13 +44,13 @@ ValueType VariantValue::GetType() const
     return type_;
 }
 
-int VariantValue::GetInt() const
+int32_t VariantValue::GetInt() const
 {
     if (type_ != ValueType::TYPE_INT) {
         return DEFAULT_VALUE;
     }
 
-    return std::get<int>(value_);
+    return std::get<int32_t>(value_);
 }
 
 int64_t VariantValue::GetInt64() const
