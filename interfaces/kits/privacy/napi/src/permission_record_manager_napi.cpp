@@ -336,97 +336,49 @@ static void ParseGetPermissionUsedRecords(
     napi_value argv[ARGS_TWO] = { 0 };
     napi_value thisVar = nullptr;
     void* data = nullptr;
-
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    asyncContext.env = env;
-
-    napi_status status;
     napi_valuetype valuetype = napi_undefined;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     napi_typeof(env, argv[0], &valuetype);
     if (valuetype != napi_object) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
         return;
     }
-
-    // get tokenId
-    napi_value property = nullptr;
-    status = napi_get_named_property(env, argv[0], "tokenId", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(tokenId) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "tokenId", &property)) {
         return;
     }
     asyncContext.request.tokenId = ParseUint32(env, property);
-    ACCESSTOKEN_LOG_INFO(LABEL, "request tokenId=%{public}d", asyncContext.request.tokenId);
-
-    // get isRemote
-    status = napi_get_named_property(env, argv[0], "isRemote", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(isRemote) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "isRemote", &property)) {
         return;
     }
     asyncContext.request.isRemote = ParseBool(env, property);
-    ACCESSTOKEN_LOG_INFO(LABEL, "request isRemote=%{public}d", asyncContext.request.isRemote);
-
-    // get deviceId
-    status = napi_get_named_property(env, argv[0], "deviceId", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(deviceId) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "deviceId", &property)) {
         return;
     }
     asyncContext.request.deviceId = ParseString(env, property);
-    ACCESSTOKEN_LOG_INFO(LABEL, "request deviceId=%{public}s", asyncContext.request.deviceId.c_str());
-
-    // get bundleName
-    property = nullptr;
-    status = napi_get_named_property(env, argv[0], "bundleName", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(bundleName) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "bundleName", &property)) {
         return;
     }
     asyncContext.request.bundleName = ParseString(env, property);
-    ACCESSTOKEN_LOG_INFO(LABEL, "request bundleName=%{public}s", asyncContext.request.bundleName.c_str());
-
-    // get beginTimeMillis
-    property = nullptr;
-    status = napi_get_named_property(env, argv[0], "beginTime", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(beginTimeMillis) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "beginTime", &property)) {
         return;
     }
     asyncContext.request.beginTimeMillis = ParseInt64(env, property);
-
-    // get endTimeMillis
-    property = nullptr;
-    status = napi_get_named_property(env, argv[0], "endTime", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(endTimeMillis) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "endTime", &property)) {
         return;
     }
     asyncContext.request.endTimeMillis = ParseInt64(env, property);
-
-    // get permissionList
-    property = nullptr;
-    status = napi_get_named_property(env, argv[0], "permissionNames", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(permissionNames) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "permissionNames", &property)) {
         return;
     }
     asyncContext.request.permissionList = ParseStringArray(env, property);
-
-    // get flag
-    property = nullptr;
-    status = napi_get_named_property(env, argv[0], "flag", &property);
-    if (status != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "property name(flag) dismatch");
+    if (napi_ok != napi_get_named_property(env, argv[0], "flag", &property)) {
         return;
     }
     asyncContext.request.flag = (PermissionUsageFlagEnum)ParseInt32(env, property);
-    ACCESSTOKEN_LOG_INFO(LABEL, "request flag=%{public}d", asyncContext.request.flag);
 
+    asyncContext.env = env;
     if (argc == ARGS_TWO) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[ARGS_TWO - 1], &valueType);
-        if (valueType == napi_function) {
+        napi_typeof(env, argv[ARGS_TWO - 1], &valuetype);
+        if (valuetype == napi_function) {
             napi_create_reference(env, argv[ARGS_TWO - 1], 1, &asyncContext.callbackRef);
         }
     }
