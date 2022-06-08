@@ -22,10 +22,17 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const std::string TOOLS_NAME = "atm";
-const std::string HELP_MSG = "usage: atm <command>\n"
+const std::string HELP_MSG = "usage: atm <command> <option>\n"
                              "These are common atm commands list:\n"
                              "  help    list available commands\n"
-                             "  dump    list token info\n";
+                             "  dump    dump token info\n";
+
+const std::string HELP_MSG_DUMP =
+    "usage: atm dump <option>.\n"
+    "options list:\n"
+    "  -h, --help                                       list available options\n"
+    "  -t, --token-info                                 list all token info in system\n"
+    "  -r [-b <bundle-name>] [-p <permission-name>]     list used records in system\n";
 
 class AtmCommand : public OHOS::AAFwk::ShellCommand {
 public:

@@ -16,6 +16,9 @@ import("//build/ohos.gni")
 group("napi_packages") {
   deps = []
   if (support_jsapi) {
-    deps += [ "//base/security/access_token/interfaces/kits/accesstoken:libabilityaccessctrl" ]
+    deps += [
+      "//base/security/access_token/interfaces/kits/accesstoken:libabilityaccessctrl",
+      "//base/security/access_token/interfaces/kits/privacy:libprivacymanager"
+    ]
   }
 }

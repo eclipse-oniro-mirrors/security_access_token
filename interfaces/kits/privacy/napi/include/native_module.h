@@ -12,24 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef  INTERFACES_KITS_NATIVE_MODULE_H_
+#define  INTERFACES_KITS_NATIVE_MODULE_H_
 
-#ifndef TO_STRING_H
-#define TO_STRING_H
+#include <pthread.h>
+#include <cstdio>
+#include <cstring>
+#include <unistd.h>
 
-#include <string>
-#include "permission_used_request.h"
-#include "permission_used_result.h"
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class ToString {
-public:
-    static void PermissionUsedRecordToString(const PermissionUsedRecord& permissionRecord, std::string& infos);
-    static void BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos);
-    static void PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos);
-};
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-#endif // TO_STRING_H
+/*
+ * function for module exports
+ */
+static napi_value Init(napi_env env, napi_value exports);
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
+#endif /*  INTERFACES_KITS_NATIVE_MODULE_H_ */
