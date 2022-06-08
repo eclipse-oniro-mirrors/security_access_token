@@ -73,7 +73,7 @@ ErrCode AtmCommand::RunAsHelpCommand()
 
 ErrCode AtmCommand::RunAsDumpCommand()
 {
-    int result = OHOS::ERR_OK;
+    ErrCode result = OHOS::ERR_OK;
     std::string dumpInfo = "";
     bool isDumpTokenInfo = false;
     bool isDumpRecordInfo = false;
@@ -98,64 +98,13 @@ ErrCode AtmCommand::RunAsDumpCommand()
         }
 
         if (option == '?') {
-            switch (optopt) {
-                case 'h' : {
-                    // 'atm dump -h'
-                    result = OHOS::ERR_INVALID_VALUE;
-                    break;
-                }
-                case 'b' : {
-                    // 'atm dump -b' with no argument
-                    resultReceiver_.append("error: option ");
-                    resultReceiver_.append("requires a value.\n");
-                    result = OHOS::ERR_INVALID_VALUE;
-                    break;
-                }
-                case 'p' : {
-                    // 'atm dump -p' with no argument
-                    resultReceiver_.append("error: option ");
-                    resultReceiver_.append("requires a value.\n");
-                    result = OHOS::ERR_INVALID_VALUE;
-                    break;
-                }
-                default: {
-                    std::string unknownOption = "";
-                    std::string unknownOptionMsg = GetUnknownOptionMsg(unknownOption);
-
-                    resultReceiver_.append(unknownOptionMsg);
-                    result = OHOS::ERR_INVALID_VALUE;
-                    break;
-                }
-            }
+            result = RunAsDumpCommandMissingOptionArgument();
             break;
         }
 
-        switch (option) {
-            case 'h':
-                // 'atm dump -h'
-                result = OHOS::ERR_INVALID_VALUE;
-                break;
-            case 't':
-                isDumpTokenInfo = true;
-                break;
-            case 'r':
-                isDumpRecordInfo = true;
-                break;
-            case 'b':
-                isDumpRecordInfo = true;
-                if (optarg != nullptr) {
-                    bundleName = optarg;;
-                }
-                break;
-            case 'p':
-                isDumpRecordInfo = true;
-                if (optarg != nullptr) {
-                    permissionName = optarg;
-                }
-                break;
-            default:
-                break;
-        }
+        result = RunAsDumpCommandExistentOptionArgument(
+            option, isDumpTokenInfo, isDumpRecordInfo, bundleName, permissionName);
+
     }
 
     if (result != OHOS::ERR_OK) {
@@ -170,7 +119,74 @@ ErrCode AtmCommand::RunAsDumpCommand()
             resultReceiver_.append(dumpInfo + "\n");
         }
     }
-    
+    return result;
+}
+
+ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
+{
+    ErrCode result = ERR_OK;
+    switch (optopt) {
+        case 'h' : {
+            // 'atm dump -h'
+            result = OHOS::ERR_INVALID_VALUE;
+            break;
+        }
+        case 'b' : {
+            // 'atm dump -b' with no argument
+            resultReceiver_.append("error: option ");
+            resultReceiver_.append("requires a value.\n");
+            result = OHOS::ERR_INVALID_VALUE;
+            break;
+        }
+        case 'p' : {
+            // 'atm dump -p' with no argument
+            resultReceiver_.append("error: option ");
+            resultReceiver_.append("requires a value.\n");
+            result = OHOS::ERR_INVALID_VALUE;
+            break;
+        }
+        default: {
+            std::string unknownOption = "";
+            std::string unknownOptionMsg = GetUnknownOptionMsg(unknownOption);
+
+            resultReceiver_.append(unknownOptionMsg);
+            result = OHOS::ERR_INVALID_VALUE;
+            break;
+        }
+    }
+    return result;
+}
+
+ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
+    bool &isDumpTokenInfo, bool &isDumpRecordInfo, std::string& bundleName, std::string& permissionName)
+{
+    ErrCode result = ERR_OK;
+    switch (option) {
+        case 'h':
+            // 'atm dump -h'
+            result = OHOS::ERR_INVALID_VALUE;
+            break;
+        case 't':
+            isDumpTokenInfo = true;
+            break;
+        case 'r':
+            isDumpRecordInfo = true;
+            break;
+        case 'b':
+            isDumpRecordInfo = true;
+            if (optarg != nullptr) {
+                bundleName = optarg;;
+            }
+            break;
+        case 'p':
+            isDumpRecordInfo = true;
+            if (optarg != nullptr) {
+                permissionName = optarg;
+            }
+            break;
+        default:
+            break;
+    }
     return result;
 }
 } // namespace AccessToken

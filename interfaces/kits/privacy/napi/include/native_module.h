@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_KITS_NATIVE_MODULE_H_
-#define  INTERFACES_KITS_NATIVE_MODULE_H_
+#ifndef  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_
+#define  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_
 
 #include <pthread.h>
 #include <cstdio>
@@ -33,4 +33,4 @@ static napi_value Init(napi_env env, napi_value exports);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif /*  INTERFACES_KITS_NATIVE_MODULE_H_ */
+#endif /*  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_ */
