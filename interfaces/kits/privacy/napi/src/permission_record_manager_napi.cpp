@@ -310,11 +310,11 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
 
     napi_value nBeginTimestamp;
     napi_create_int64(env, result.beginTimeMillis, &nBeginTimestamp);
-    napi_set_named_property(env, value, "beginTimeMillis", nBeginTimestamp);
+    napi_set_named_property(env, value, "beginTime", nBeginTimestamp);
 
     napi_value nEndTimestamp;
     napi_create_int64(env, result.endTimeMillis, &nEndTimestamp);
-    napi_set_named_property(env, value, "endTimeMillis", nEndTimestamp);
+    napi_set_named_property(env, value, "endTime", nEndTimestamp);
 
     size_t index = 0;
     napi_value objBundleRecords;
@@ -342,6 +342,7 @@ static void ParseGetPermissionUsedRecords(
     if (valuetype != napi_object) {
         return;
     }
+    napi_value property = nullptr;
     if (napi_ok != napi_get_named_property(env, argv[0], "tokenId", &property)) {
         return;
     }
