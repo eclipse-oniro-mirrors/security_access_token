@@ -21,24 +21,20 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
-
-class AtmDmInitCallback final : public DmInitCallback {
+class AtmDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
     {}
 };
 
-class AtmDeviceStateCallback final : public DeviceStateCallback {
+class AtmDeviceStateCallback final : public DistributedHardware::DeviceStateCallback {
 public:
     AtmDeviceStateCallback();
     ~AtmDeviceStateCallback();
 
-    void OnDeviceOnline(const DmDeviceInfo &deviceInfo) override;
-    void OnDeviceOffline(const DmDeviceInfo &deviceInfo) override;
-    void OnDeviceReady(const DmDeviceInfo &deviceInfo) override;
-    void OnDeviceChanged(const DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOnline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceReady(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceChanged(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
 };
 }  // namespace AccessToken
 }  // namespace Security
