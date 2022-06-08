@@ -21,6 +21,8 @@
 #include "singleton.h"
 #include "status_receiver_host.h"
 
+using namespace OHOS::AAFwk;
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -90,9 +92,7 @@ ErrCode AtmCommand::RunAsDumpCommand()
 
         if (option == -1) {
             if (counter == 1) {
-                if (strcmp(argv_[optind], cmd_.c_str()) == 0) {
-                    result = OHOS::ERR_INVALID_VALUE;
-                }
+                result = RunAsDumpCommandError();
             }
             break;
         }
@@ -104,7 +104,6 @@ ErrCode AtmCommand::RunAsDumpCommand()
 
         result = RunAsDumpCommandExistentOptionArgument(
             option, isDumpTokenInfo, isDumpRecordInfo, bundleName, permissionName);
-
     }
 
     if (result != OHOS::ERR_OK) {
@@ -118,6 +117,25 @@ ErrCode AtmCommand::RunAsDumpCommand()
             dumpInfo = PrivacyKit::DumpRecordInfo(bundleName, permissionName);
             resultReceiver_.append(dumpInfo + "\n");
         }
+    }
+    return result;
+}
+
+ErrCode AtmCommand::RunAsDumpCommandError(void)
+{
+    ErrCode result = ERR_OK;
+
+    if (optind < 0 || optind >= argc_) {
+        return ERR_INVALID_VALUE;
+    }
+
+    // When scanning the first argument
+    if (strcmp(argv_[optind], cmd_.c_str()) == 0) {
+        // 'atm dump' with no option: atm dump
+        // 'atm dump' with a wrong argument: atm dump xxx
+
+        resultReceiver_.append(HELP_MSG_NO_OPTION + "\n");
+        result = ERR_INVALID_VALUE;
     }
     return result;
 }
@@ -175,7 +193,7 @@ ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
         case 'b':
             isDumpRecordInfo = true;
             if (optarg != nullptr) {
-                bundleName = optarg;;
+                bundleName = optarg;
             }
             break;
         case 'p':

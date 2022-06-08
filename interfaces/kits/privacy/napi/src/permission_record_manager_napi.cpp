@@ -31,6 +31,10 @@ const int ARGS_TWO = 2;
 const int ARGS_THREE = 3;
 const int ARGS_FIVE = 5;
 const int ASYNC_CALL_BACK_VALUES_NUM = 2;
+const int PARAM0 = 0;
+const int PARAM1 = 1;
+const int PARAM2 = 2;
+const int PARAM3 = 3;
 };
 
 static bool ParseBool(const napi_env env, const napi_value value)
@@ -108,7 +112,7 @@ static std::string ParseString(const napi_env env, const napi_value value)
     std::string str;
     size_t size;
 
-    if (napi_get_value_string_utf8(env, value, nullptr,0, &size) != napi_ok) {
+    if (napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string size");
         return "";
     }
@@ -144,7 +148,8 @@ static std::vector<std::string> ParseStringArray(const napi_env env, const napi_
 }
 
 
-static void ParseAddPermissionRecord(const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
+static void ParseAddPermissionRecord(
+    const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ParseAddPermissionRecord begin.");
     size_t argc = ARGS_FIVE;
@@ -154,10 +159,10 @@ static void ParseAddPermissionRecord(const napi_env env, const napi_callback_inf
 
     NAPI_CALL_RETURN_VOID(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data));
     asyncContext.env = env;
-    asyncContext.tokenId = ParseUint32(env, argv[0]);
-    asyncContext.permissionName = ParseString(env, argv[1]);
-    asyncContext.successCount = ParseInt32(env, argv[2]);
-    asyncContext.failCount = ParseInt32(env, argv[3]);
+    asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
+    asyncContext.permissionName = ParseString(env, argv[PARAM1]);
+    asyncContext.successCount = ParseInt32(env, argv[PARAM2]);
+    asyncContext.failCount = ParseInt32(env, argv[PARAM3]);
     if (argc == ARGS_FIVE) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[ARGS_FIVE - 1], &valueType);
@@ -169,7 +174,8 @@ static void ParseAddPermissionRecord(const napi_env env, const napi_callback_inf
         asyncContext.permissionName.c_str());
 }
 
-static void ParseStartAndStopUsingPermission(const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
+static void ParseStartAndStopUsingPermission(
+    const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     size_t argc = ARGS_THREE;
     napi_value argv[ARGS_THREE] = { 0 };
@@ -179,8 +185,8 @@ static void ParseStartAndStopUsingPermission(const napi_env env, const napi_call
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
 
     asyncContext.env = env;
-    asyncContext.tokenId = ParseUint32(env, argv[0]);
-    asyncContext.permissionName = ParseString(env, argv[1]);
+    asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
+    asyncContext.permissionName = ParseString(env, argv[PARAM1]);
     if (argc == ARGS_THREE) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[ARGS_THREE - 1], &valueType);
@@ -323,7 +329,8 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
     napi_set_named_property(env, value, "bundleRecords", objBundleRecords);
 }
 
-static void ParseGetPermissionUsedRecords(const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
+static void ParseGetPermissionUsedRecords(
+    const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     size_t argc = ARGS_TWO;
     napi_value argv[ARGS_TWO] = { 0 };
@@ -331,7 +338,6 @@ static void ParseGetPermissionUsedRecords(const napi_env env, const napi_callbac
     void* data = nullptr;
 
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-
     asyncContext.env = env;
 
     napi_status status;
@@ -452,8 +458,8 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-            asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(asyncContext->tokenId, asyncContext->permissionName,
-                asyncContext->successCount, asyncContext->failCount);
+            asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(asyncContext->tokenId,
+                asyncContext->permissionName, asyncContext->successCount, asyncContext->failCount);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
@@ -507,7 +513,8 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-            asyncContext->retCode = PrivacyKit::StartUsingPermission(asyncContext->tokenId, asyncContext->permissionName);
+            asyncContext->retCode = PrivacyKit::StartUsingPermission(asyncContext->tokenId,
+                asyncContext->permissionName);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
@@ -561,7 +568,8 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-            asyncContext->retCode = PrivacyKit::StopUsingPermission(asyncContext->tokenId, asyncContext->permissionName);
+            asyncContext->retCode = PrivacyKit::StopUsingPermission(asyncContext->tokenId,
+                asyncContext->permissionName);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);

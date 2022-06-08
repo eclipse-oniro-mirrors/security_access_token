@@ -48,6 +48,7 @@ private:
     ErrCode RunAsHelpCommand();
     ErrCode RunAsDumpCommand();
 
+    ErrCode RunAsDumpCommandError(void);
     ErrCode RunAsDumpCommandMissingOptionArgument(void);
     ErrCode RunAsDumpCommandExistentOptionArgument(const int &option,
         bool &isDumpTokenInfo, bool &isDumpRecordInfo, std::string& bundleName, std::string& permissionName);
