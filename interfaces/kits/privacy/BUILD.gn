@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,52 +12,35 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//foundation/ability/ability_runtime/aafwk.gni")
 
-ohos_source_set("tools_atm_source_set") {
+ohos_shared_library("libprivacymanager") {
   include_dirs = [
-    "include",
+    "napi/include",
     "//base/security/access_token/frameworks/common/include",
-    "${aafwk_path}/tools/aa/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "${services_path}/common/include",
+    "//foundation/arkui/napi/interfaces/inner_api",
+    "//foundation/arkui/napi/interfaces/kits",
+    "//utils/native/base/include",
   ]
 
   sources = [
-    "${aafwk_path}/tools/aa/src/shell_command.cpp",
-    "src/atm_command.cpp",
-    "src/atm_receiver_impl.cpp",
-    "src/main.cpp",
+    "napi/src/native_module.cpp",
+    "napi/src/permission_record_manager_napi.cpp",
   ]
 
   deps = [
-    "${aafwk_path}/tools/aa:aa",
-    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+    "//foundation/arkui/napi:ace_napi",
     "//utils/native/base:utils",
   ]
-
-  cflags = [ "-DHILOG_ENABLE" ]
-
-  if (target_cpu == "arm") {
-    cflags += [ "-DBINDER_IPC_32BIT" ]
-  }
-
+  cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
-    "bundle_framework:appexecfwk_core",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
 
-  subsystem_name = "security"
-  part_name = "access_token"
-}
-
-ohos_executable("atm") {
-  deps = [ ":tools_atm_source_set" ]
-
-  install_enable = true
+  relative_install_dir = "module"
   subsystem_name = "security"
   part_name = "access_token"
 }
