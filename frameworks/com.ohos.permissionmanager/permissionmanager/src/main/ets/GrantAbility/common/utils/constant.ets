@@ -15,7 +15,7 @@
 
 export default class Constants {
   // icon of dialog
-  static DIALOG_ICON_WIDTH = 24;
+  static DIALOG_ICON_WIDTH = 26;
   static DIALOG_ICON_HEIGHT = 24;
   static DIALOG_ICON_MARGIN_TOP = 23;
 
@@ -42,7 +42,10 @@ export default class Constants {
   static BUTTON_DIVIDER_FONT_SIZE = 24;
   static BUTTON_MARGIN_TOP = 8;
   static BUTTON_MARGIN_BOTTOM = 16;
+  static BUTTON_MARGIN_LEFT = 16;
+  static BUTTON_MARGIN_RIGHT = 16;
   static BUTTON_HEIGHT = 40;
+  static BUTTON_WIDTH = 177;
 
   static DIALOG_BORDER_RADIUS = 32;
   static DIALOG_HEIGHT = 186;
