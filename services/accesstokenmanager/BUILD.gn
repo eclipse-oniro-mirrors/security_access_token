@@ -40,7 +40,7 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//base/security/access_token/interfaces/innerkits/tokensync/src",
     "//base/security/access_token/services/tokensyncmanager/include/common",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
     "//third_party/json/include",
   ]
 
