@@ -90,7 +90,7 @@ ohos_shared_library("accesstoken_manager_service") {
   }
 
   external_deps = [
-    "device_manager_base:devicemanagersdk",
+    "device_manager:devicemanagersdk",
     "dsoftbus_standard:softbus_client",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
