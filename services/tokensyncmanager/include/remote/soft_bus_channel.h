@@ -340,18 +340,7 @@ public:
         return jsonPayload_;
     }
 
-    static std::shared_ptr<SoftBusMessage> FromJson(const std::string &jsonString)
-    {
-        nlohmann::json json;
-        if (!json.accept(jsonString)) {
-            return nullptr;
-        }
-        json = json.parse(jsonString);
-        std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(
-            json.at("type"), json.at("id"), json.at("commandName"), json.at("jsonPayload"));
-        return message;
-    }
-
+    static std::shared_ptr<SoftBusMessage> FromJson(const std::string &jsonString);
 private:
     std::string type_;
     std::string id_;
