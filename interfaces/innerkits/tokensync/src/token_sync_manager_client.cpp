@@ -19,6 +19,7 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
+#include "token_sync_death_recipient.h"
 #include "token_sync_load_callback.h"
 
 namespace OHOS {
@@ -75,7 +76,10 @@ int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& 
 
 void TokenSyncManagerClient::LoadTokenSync()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "remoteObject_ is %{public}d", remoteObject_ == nullptr);
+    {
+        std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+        ready_ = false;
+    }
 
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
@@ -97,25 +101,42 @@ void TokenSyncManagerClient::LoadTokenSync()
         return;
     }
 
-    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
-    // wait_for release lock and block until time out(60s) or match the condition with notice
-    auto waitStatus = tokenSyncCon_.wait_for(lock, std::chrono::milliseconds(TOKEN_SYNC_LOAD_SA_TIMEOUT_MS),
-        [this]() { return remoteObject_ != nullptr; });
-    if (!waitStatus) {
-        // time out or loadcallback fail
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokensync load sa timeout");
+    {
+        std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+        // wait_for release lock and block until time out(60s) or match the condition with notice
+        auto waitStatus = tokenSyncCon_.wait_for(lock, std::chrono::milliseconds(TOKEN_SYNC_LOAD_SA_TIMEOUT_MS),
+            [this]() { return ready_; });
+        if (!waitStatus) {
+            // time out or loadcallback fail
+            ACCESSTOKEN_LOG_WARN(LABEL, "tokensync load sa timeout");
+            return;
+        }
+    }
+
+    if (GetRemoteObject() == nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "remote object is null");
         return;
     }
+    sptr<TokenSyncDeathRecipient> ptrTokenSyncDeathRecipient = new (std::nothrow) TokenSyncDeathRecipient();
+    if (ptrTokenSyncDeathRecipient == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new TokenSyncDeathRecipient fail.");
+        return;
+    }
+    // add death recipient to reset token_sync
+    GetRemoteObject()->AddDeathRecipient(ptrTokenSyncDeathRecipient);
 }
 
 void TokenSyncManagerClient::FinishStartSASuccess(const sptr<IRemoteObject> &remoteObject)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get tokensync sa success.");
 
-    remoteObject_ = remoteObject;
+    SetRemoteObject(remoteObject);
 
     // get lock which wait_for release and send a notice so that wait_for can out of block
-    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+    {
+        std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+        ready_ = true;
+    }
 
     tokenSyncCon_.notify_one();
 }
@@ -124,18 +145,48 @@ void TokenSyncManagerClient::FinishStartSAFailed()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get tokensync sa failed.");
 
+    SetRemoteObject(nullptr);
+
     // get lock which wait_for release and send a notice
-    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+    {
+        std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+        ready_ = true;
+    }
+
     tokenSyncCon_.notify_one();
+}
+
+void TokenSyncManagerClient::SetRemoteObject(const sptr<IRemoteObject> &remoteObject)
+{
+    std::unique_lock<std::mutex> lock(remoteMutex_);
+    remoteObject_ = remoteObject;
+}
+
+sptr<IRemoteObject> TokenSyncManagerClient::GetRemoteObject()
+{
+    std::unique_lock<std::mutex> lock(remoteMutex_);
+    return remoteObject_;
+}
+
+void TokenSyncManagerClient::OnRemoteDiedHandle()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Remote service died.");
+
+    SetRemoteObject(nullptr);
+
+    std::unique_lock<std::mutex> lock(tokenSyncMutex_);
+    ready_ = false;
 }
 
 sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy()
 {
-    LoadTokenSync();
+    if (GetRemoteObject() == nullptr) {
+        LoadTokenSync();
+    }
 
-    auto proxy = iface_cast<ITokenSyncManager>(remoteObject_);
+    auto proxy = iface_cast<ITokenSyncManager>(GetRemoteObject());
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_WARN(LABEL, "iface_cast get null");
         return nullptr;
     }
     return proxy;

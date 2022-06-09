@@ -40,6 +40,7 @@ ohos_shared_library("libtokensync_sdk") {
   ]
 
   sources = [
+    "src/token_sync_death_recipient.cpp",
     "src/token_sync_kit.cpp",
     "src/token_sync_load_callback.cpp",
     "src/token_sync_manager_client.cpp",
