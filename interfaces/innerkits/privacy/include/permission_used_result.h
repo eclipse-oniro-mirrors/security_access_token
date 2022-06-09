@@ -24,9 +24,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct UsedRecordDetail {
-    int32_t status;
-    int64_t timestamp;
-    int64_t accessDuration;
+    int32_t status = 0;
+    int64_t timestamp = 0L;
+    int64_t accessDuration = 0L;
 };
 
 struct PermissionUsedRecord {
