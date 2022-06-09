@@ -45,6 +45,14 @@
       "value": "#007DFF"
     },
     {
+      "name": "shape_allow_color",
+      "value": "#1856D4"
+    },
+    {
+      "name": "shape_ban_color",
+      "value": "#000000"
+    },
+    {
       "name": "first_font_color",
       "value": "#E6000000"
     },

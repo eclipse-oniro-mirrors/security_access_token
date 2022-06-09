@@ -27,6 +27,7 @@ import { permissionGroups, showSubpermissionsGrop } from "../model/permissionGro
   .fontColor($r('app.color.button_color'))
   .fontWeight(FontWeight.Medium)
   .height(Constants.BUTTON_HEIGHT)
+  .width(Constants.BUTTON_WIDTH)
 }
 
 @CustomDialog
@@ -92,7 +93,7 @@ export struct privacyDialog {
         }
       }
       Row() {
-        Flex({ justifyContent: FlexAlign.SpaceAround, alignItems: ItemAlign.Center }) {
+        Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
           Button('禁止')
             .fontSize(Constants.BUTTON_FONT_SIZE)
             .onClick(() => {
@@ -100,7 +101,7 @@ export struct privacyDialog {
               if (this.count === this.reqPerms.length) {
                 this.controller.close()
               }
-            }).customizeButton()
+            }).customizeButton().margin({ left: Constants.BUTTON_MARGIN_LEFT })
           Text('|').fontSize(Constants.BUTTON_DIVIDER_FONT_SIZE).fontColor($r('app.color.divider_color'))
           Button('允许')
             .fontSize(Constants.BUTTON_FONT_SIZE)
@@ -109,7 +110,7 @@ export struct privacyDialog {
               if (this.count === this.reqPerms.length) {
                 this.controller.close()
               }
-            }).customizeButton()
+            }).customizeButton().margin({ right: Constants.BUTTON_MARGIN_RIGHT })
         }
       }
     }

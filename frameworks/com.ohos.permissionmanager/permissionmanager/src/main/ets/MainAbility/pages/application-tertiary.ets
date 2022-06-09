@@ -332,16 +332,22 @@ struct mediaDocumentItem {
                         .flexGrow(Constants.FLEX_GROW)
                       if (this.isCheckList[item.index] === true) {
                         Shape() {
-                          Circle().width(24).height(24).fill('#1856d4').offset({ x: 0, y: 0 })
-                          Circle().width(16).height(16).fill('#ffffff').offset({ x: 4, y: 4 })
+                          Circle().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA)
+                            .fill($r("app.color.shape_allow_color")).offset({ x: 0, y: 0 })
+                          Circle().width(Constants.SHAPE_ALLOW_DIA).height(Constants.SHAPE_ALLOW_DIA)
+                            .fill($r("app.color.default_background_color"))
+                            .offset({ x: Constants.SHAPE_ALLOW_OFFSET, y: Constants.SHAPE_ALLOW_OFFSET })
                         }
                       } else if (this.isCheckList[item.index] === false) {
                         Shape() {
-                          Circle().width(24).height(24).stroke('#000000').fill('#ffffff')
+                          Circle().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA)
+                            .fill($r("app.color.shape_ban_color")).offset({ x: 0, y: 0 })
+                          Circle().width(Constants.SHAPE_BAN_DIA).height(Constants.SHAPE_BAN_DIA)
+                            .fill($r("app.color.default_background_color"))
+                            .offset({ x: Constants.SHAPE_BAN_OFFSET, y: Constants.SHAPE_BAN_OFFSET })
                         }
                       }
                     }
-                    .backgroundColor($r('app.color.default_background_color'))
                     .width(Constants.FULL_WIDTH)
                     .height(Constants.LISTITEM_ROW_HEIGHT)
                     .onClick(() => {
