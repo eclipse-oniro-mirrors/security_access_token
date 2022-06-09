@@ -446,10 +446,10 @@ std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &json
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to get json string(json format error)");
         return nullptr;
     }
-    std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(typeStr, idStr, commandNameStr, jsonPayloadStr);
+    std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(
+        typeStr, idStr, commandNameStr, jsonPayloadStr);
     return message;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
