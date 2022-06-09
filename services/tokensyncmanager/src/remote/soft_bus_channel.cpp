@@ -413,6 +413,43 @@ int SoftBusChannel::SendResponseBytes(int session, const unsigned char *bytes, c
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send successfully.");
     return Constant::SUCCESS;
 }
+
+std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &jsonString)
+{
+    nlohmann::json json;
+    if (!json.accept(jsonString)) {
+        return nullptr;
+    }
+    json = json.parse(jsonString, nullptr, false);
+    if (json.is_discarded() || (!json.is_object())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to parse jsonString");
+        return nullptr;
+    }
+
+    std::string typeStr;
+    std::string idStr;
+    std::string commandNameStr;
+    std::string jsonPayloadStr;
+    if (json.find("type") != json.end() && json.at("type").is_string()) {
+        json.at("type").get_to(typeStr);
+    }
+    if (json.find("id") != json.end() && json.at("id").is_string()) {
+        json.at("id").get_to(idStr);
+    }
+    if (json.find("commandName") != json.end() && json.at("commandName").is_string()) {
+        json.at("commandName").get_to(commandNameStr);
+    }
+    if (json.find("jsonPayload") != json.end() && json.at("jsonPayload").is_string()) {
+        json.at("jsonPayload").get_to(jsonPayloadStr);
+    }
+    if (type.empty() || id.empty() || commandName.empty() || jsonPayload.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to get json string(json format error)");
+        return nullptr;
+    }
+    std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(typeStr, idStr, commandNameStr, jsonPayloadStr);
+    return message;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
