@@ -293,7 +293,7 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
             return false;
         }
         andConditionValues.Remove(FIELD_VISITOR_ID);
-        bundleRecord.tokenId = visitor.GetInt(FIELD_TOKEN_ID);
+        bundleRecord.tokenId = (AccessTokenID)visitor.GetInt(FIELD_TOKEN_ID);
         bundleRecord.isRemote = visitor.GetInt(FIELD_IS_REMOTE_DEVICE);
         bundleRecord.deviceId = visitor.GetString(FIELD_DEVICE_ID);
         bundleRecord.bundleName = visitor.GetString(FIELD_BUNDLE_NAME);

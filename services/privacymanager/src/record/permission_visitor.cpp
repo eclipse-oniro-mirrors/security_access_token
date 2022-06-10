@@ -31,7 +31,7 @@ void PermissionVisitor::TranslationIntoGenericValues(const PermissionVisitor& vi
 void PermissionVisitor::TranslationIntoPermissionVisitor(const GenericValues& values, PermissionVisitor& visitor)
 {
     visitor.id = values.GetInt(FIELD_ID);
-    visitor.tokenId = values.GetInt(FIELD_TOKEN_ID);
+    visitor.tokenId = (AccessTokenID)values.GetInt(FIELD_TOKEN_ID);
     visitor.isRemoteDevice = values.GetInt(FIELD_IS_REMOTE_DEVICE);
     visitor.deviceId = values.GetString(FIELD_DEVICE_ID);
     visitor.userId = values.GetInt(FIELD_USER_ID);

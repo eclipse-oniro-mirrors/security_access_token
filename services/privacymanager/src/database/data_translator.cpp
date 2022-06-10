@@ -99,7 +99,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
         permissionRecord.accessRecords.emplace_back(detail);
     }
     if (permissionRecord.lastRejectTime > 0) {
-        detail.timestamp = permissionRecord.lastAccessTime;
+        detail.timestamp = permissionRecord.lastRejectTime;
         permissionRecord.rejectRecords.emplace_back(detail);
     }
     return Constant::SUCCESS;
