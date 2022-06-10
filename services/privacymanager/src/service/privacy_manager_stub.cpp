@@ -15,7 +15,6 @@
 
 #include "privacy_manager_stub.h"
 
-#include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 
 #include "ipc_skeleton.h"
@@ -68,13 +67,6 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
-        return;
-    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int32_t successCount = data.ReadInt32();
@@ -101,13 +93,6 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
-        return;
-    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string deviceID = data.ReadString();
     int32_t result = this->RemovePermissionUsedRecords(tokenID, deviceID);
@@ -116,13 +101,6 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
-        return;
-    }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
