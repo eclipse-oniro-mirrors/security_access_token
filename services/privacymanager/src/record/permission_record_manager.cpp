@@ -46,8 +46,8 @@ PermissionRecordManager::~PermissionRecordManager()
     if (!hasInited_) {
         return;
     }
-    this->deleteTaskWorker_.Stop();
-    this->hasInited_ = false;
+    deleteTaskWorker_.Stop();
+    hasInited_ = false;
 }
 
 bool PermissionRecordManager::AddVisitor(AccessTokenID tokenID, int32_t& visitorId)

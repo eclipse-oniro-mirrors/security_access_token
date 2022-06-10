@@ -20,6 +20,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
 #include "permission_used_request.h"
@@ -27,7 +28,7 @@
 #include "permission_visitor.h"
 
 #include "rwlock.h"
-#include "nocopyable.h"
+#include "thread_pool.h"
 
 namespace OHOS {
 namespace Security {
