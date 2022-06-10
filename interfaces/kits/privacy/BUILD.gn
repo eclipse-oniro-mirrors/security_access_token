@@ -36,6 +36,7 @@ ohos_shared_library("libprivacymanager") {
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
+    "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]

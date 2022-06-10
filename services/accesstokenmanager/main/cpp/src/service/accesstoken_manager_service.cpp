@@ -29,7 +29,7 @@
 #include "native_token_receptor.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
-#include "privacy_kit.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -87,13 +87,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
-    int isGranted = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    if (isGranted != PERMISSION_GRANTED) {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 0, 1);
-    } else {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 1, 0);
-    }
-    return isGranted;
+    return PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -201,7 +195,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, "");
     return RET_SUCCESS;
 }
 
@@ -222,7 +216,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
-    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }
