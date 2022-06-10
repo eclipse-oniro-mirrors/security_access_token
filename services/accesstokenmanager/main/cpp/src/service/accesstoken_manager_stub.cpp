@@ -25,7 +25,6 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerStub"};
-constexpr int32_t FOUNDATION_UID = 5523;
 }
 
 int32_t AccessTokenManagerStub::OnRemoteRequest(
@@ -459,7 +458,7 @@ bool AccessTokenManagerStub::IsAuthorizedCalling() const
 {
     int callingUid = IPCSkeleton::GetCallingUid();
     ACCESSTOKEN_LOG_INFO(LABEL, "Calling uid: %{public}d", callingUid);
-    return callingUid == SYSTEM_UID || callingUid == ROOT_UID || callingUid == FOUNDATION_UID;
+    return callingUid == SYSTEM_UID || callingUid == ROOT_UID;
 }
 
 bool AccessTokenManagerStub::IsAccessTokenCalling() const
