@@ -184,6 +184,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
         return Constant::SUCCESS;
     }
 
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     int32_t visitorId;
     if (!AddVisitor(tokenID, visitorId)) {
         return Constant::FAILURE;
@@ -198,9 +199,8 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID,
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x", __func__, tokenID);
     ExecuteDeletePermissionRecordTask();
-    std::thread deleteRecordsThread(deleteRecordsTask);
-    deleteRecordsThread.detach();
 
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionVisitor visitor;
     if (!GetPermissionVisitor(tokenID, visitor) && deviceID.empty()) {
         return;
@@ -372,7 +372,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
-    
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues nullValues;
     std::vector<GenericValues> deleteRecordValues;
     if (!PermissionRecordRepository::GetInstance().FindRecordValues(nullValues, nullValues, deleteRecordValues)) {
