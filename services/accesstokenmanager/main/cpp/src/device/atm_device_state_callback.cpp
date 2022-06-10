@@ -51,17 +51,19 @@ void AtmDeviceStateCallback::OnDeviceOnline(const DmDeviceInfo &deviceInfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "device online");
 
-    std::function<void()> runner = [&]() {
-        // when remote device online, start a thread to load tokensync
-        TokenSyncManagerClient::GetInstance().LoadTokenSync();
+    // when remote device online and token sync remote object is null, start a thread to load token sync
+    if (TokenSyncManagerClient::GetInstance().GetRemoteObject() == nullptr) {
+        std::function<void()> runner = [&]() {
+            TokenSyncManagerClient::GetInstance().LoadTokenSync();
 
-        ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner register success.");
+            ACCESSTOKEN_LOG_INFO(LABEL, "load tokensync.");
 
-        return;
-    };
+            return;
+        };
 
-    std::thread initThread(runner);
-    initThread.detach();
+        std::thread initThread(runner);
+        initThread.detach();
+    }
 }
 
 void AtmDeviceStateCallback::OnDeviceOffline(const DmDeviceInfo &deviceInfo)

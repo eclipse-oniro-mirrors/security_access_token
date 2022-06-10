@@ -42,10 +42,15 @@ public:
     void LoadTokenSync();
     void FinishStartSASuccess(const sptr<IRemoteObject> &remoteObject);
     void FinishStartSAFailed();
+    void SetRemoteObject(const sptr<IRemoteObject> &remoteObject);
+    sptr<IRemoteObject> GetRemoteObject();
+    void OnRemoteDiedHandle();
 
 private:
     std::condition_variable tokenSyncCon_;
     std::mutex tokenSyncMutex_;
+    std::mutex remoteMutex_;
+    bool ready_ = false;
     sptr<IRemoteObject> remoteObject_ = nullptr;
 
     TokenSyncManagerClient();
