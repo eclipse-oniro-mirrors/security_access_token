@@ -19,12 +19,33 @@
 #include "nativetoken_kit.h"
 #include "parameter.h"
 #include "privacy_kit.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
 const static int32_t RET_ERROR = -1;
+
+static HapPolicyParams g_PolicyPramsTest = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.privacy",
+};
+
+static HapInfoParams g_InfoParmsTest = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.privacy",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.privacy"
+};
+
+PermissionStateFull g_grantPermissionReq = {
+    .permissionName = "ohos.permission.PERMISSION_USED_STATS",
+    .isGeneral = true,
+    .resDeviceID = {"device"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
 
 static HapPolicyParams g_PolicyPramsA = {
     .apl = APL_NORMAL,
@@ -51,10 +72,21 @@ static HapInfoParams g_InfoParmsB = {
 };
 
 void PrivacyKitTest::SetUpTestCase()
-{}
+{
+    g_PolicyPramsTest.permStateList.emplace_back(g_grantPermissionReq);
+    AccessTokenKit::AllocHapToken(g_InfoParmsTest, g_PolicyPramsTest);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsTest.userID,
+                                                          g_InfoParmsTest.bundleName,
+                                                          g_InfoParmsTest.instIndex);
+    SetSelfTokenID(tokenId);
+}
 
 void PrivacyKitTest::TearDownTestCase()
 {
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsTest.userID,
+                                                          g_InfoParmsTest.bundleName,
+                                                          g_InfoParmsTest.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
 }
 
 void PrivacyKitTest::SetUp()
