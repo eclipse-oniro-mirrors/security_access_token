@@ -50,7 +50,8 @@ void SqliteStorage::OnUpdate()
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
 }
 
-SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+SqliteStorage::SqliteStorage() : SqliteHelper(
+    PERMISSION_RECORD_DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
 {
     SqliteTable permissionVisorTable;
     permissionVisorTable.tableName_ = PERMISSION_VISITOR_TABLE;
