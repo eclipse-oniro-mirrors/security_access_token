@@ -70,7 +70,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(-1);
         return;
@@ -103,7 +103,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(-1);
         return;
@@ -118,7 +118,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(
-        callingTokenID, "ohos.permission.PPERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(-1);
         return;
