@@ -29,7 +29,7 @@
 #include "native_token_receptor.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
-#include "permission_record_manager.h"
+#include "privacy_kit.h"
 
 namespace OHOS {
 namespace Security {
