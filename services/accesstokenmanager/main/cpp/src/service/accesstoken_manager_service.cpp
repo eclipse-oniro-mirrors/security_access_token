@@ -195,7 +195,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     return RET_SUCCESS;
 }
 
@@ -216,7 +216,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, "");
+    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
 }
