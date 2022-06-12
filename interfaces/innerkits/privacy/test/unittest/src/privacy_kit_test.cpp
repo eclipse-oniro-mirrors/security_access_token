@@ -69,7 +69,6 @@ void PrivacyKitTest::SetUpTestCase()
     tokenId = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenId);
 
-    GTEST_LOG_(INFO) << "tokenId :" << tokenId << ", type: " << AccessTokenKit::GetTokenTypeFlag(tokenId);
     delete[] perms;
 }
 

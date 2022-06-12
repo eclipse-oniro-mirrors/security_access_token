@@ -133,8 +133,6 @@ static std::vector<std::string> ParseStringArray(const napi_env env, const napi_
     napi_valuetype valuetype = napi_undefined;
 
     napi_get_array_length(env, value, &length);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "ParseStringArray array length=%{public}d", length);
-
     napi_value valueArray;
     for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, value, i, &valueArray);
@@ -151,7 +149,6 @@ static std::vector<std::string> ParseStringArray(const napi_env env, const napi_
 static void ParseAddPermissionRecord(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "ParseAddPermissionRecord begin.");
     size_t argc = ARGS_FIVE;
     napi_value argv[ARGS_FIVE] = { 0 };
     napi_value thisVar = nullptr;
@@ -170,8 +167,6 @@ static void ParseAddPermissionRecord(
             napi_create_reference(env, argv[ARGS_FIVE - 1], 1, &asyncContext.callbackRef); // get probably callback
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
-        asyncContext.permissionName.c_str());
 }
 
 static void ParseStartAndStopUsingPermission(
@@ -195,8 +190,6 @@ static void ParseStartAndStopUsingPermission(
         }
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
-        asyncContext.permissionName.c_str());
 }
 
 static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRecordDetail& detailRecord)
@@ -204,7 +197,6 @@ static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRe
     napi_value nStatus;
     napi_create_int32(env, detailRecord.status, &nStatus);
     napi_set_named_property(env, value, "status", nStatus);
-    ACCESSTOKEN_LOG_INFO(LABEL, "status=%{public}d", detailRecord.status);
 
     napi_value nTimestamp;
     napi_create_int64(env, detailRecord.timestamp, &nTimestamp);
@@ -220,17 +212,14 @@ static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const Pe
     napi_value nPermissionName;
     napi_create_string_utf8(env, permissionRecord.permissionName.c_str(), NAPI_AUTO_LENGTH, &nPermissionName);
     napi_set_named_property(env, value, "permissionName", nPermissionName);
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName=%{public}s", permissionRecord.permissionName.c_str());
 
     napi_value nAccessCount;
     napi_create_int32(env, permissionRecord.accessCount, &nAccessCount);
     napi_set_named_property(env, value, "accessCount", nAccessCount);
-    ACCESSTOKEN_LOG_INFO(LABEL, "accessCount=%{public}d", permissionRecord.accessCount);
 
     napi_value nRejectCount;
     napi_create_int32(env, permissionRecord.rejectCount, &nRejectCount);
     napi_set_named_property(env, value, "rejectCount", nRejectCount);
-    ACCESSTOKEN_LOG_INFO(LABEL, "rejectCount=%{public}d", permissionRecord.rejectCount);
 
     napi_value nLastAccessTime;
     napi_create_int64(env, permissionRecord.lastAccessTime, &nLastAccessTime);
@@ -274,23 +263,18 @@ static void ConvertBundleUsedRecord(napi_env env, napi_value value, const Bundle
     napi_value nTokenId;
     napi_create_int32(env, bundleRecord.tokenId, &nTokenId);
     napi_set_named_property(env, value, "tokenId", nTokenId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId=%{public}d", bundleRecord.tokenId);
 
     napi_value nIsRemote;
     napi_create_int32(env, bundleRecord.isRemote, &nIsRemote);
     napi_set_named_property(env, value, "isRemote", nIsRemote);
-    ACCESSTOKEN_LOG_INFO(LABEL, "isRemote=%{public}d", bundleRecord.isRemote);
 
     napi_value nDeviceId;
     napi_create_string_utf8(env, bundleRecord.deviceId.c_str(), NAPI_AUTO_LENGTH, &nDeviceId);
     napi_set_named_property(env, value, "deviceId", nDeviceId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "deviceId=%{public}s", bundleRecord.deviceId.c_str());
 
     napi_value nBundleName;
     napi_create_string_utf8(env, bundleRecord.bundleName.c_str(), NAPI_AUTO_LENGTH, &nBundleName);
     napi_set_named_property(env, value, "bundleName", nBundleName);
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName=%{public}s", bundleRecord.bundleName.c_str());
-
     size_t index = 0;
     napi_value objPermissionRecords;
     napi_create_array(env, &objPermissionRecords);
@@ -306,8 +290,6 @@ static void ConvertBundleUsedRecord(napi_env env, napi_value value, const Bundle
 
 static void ProcessRecordResult(napi_env env, napi_value value, const PermissionUsedResult& result)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "ProcessRecordResult.");
-
     napi_value nBeginTimestamp;
     napi_create_int64(env, result.beginTimeMillis, &nBeginTimestamp);
     napi_set_named_property(env, value, "beginTime", nBeginTimestamp);
@@ -436,7 +418,6 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork));
     napi_queue_async_work(env, asyncContext->asyncWork);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord end.");
     return result;
 }
 
@@ -491,7 +472,6 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork));
     napi_queue_async_work(env, asyncContext->asyncWork);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission end.");
     return result;
 }
 
@@ -546,14 +526,12 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork));
     napi_queue_async_work(env, asyncContext->asyncWork);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission end.");
     return result;
 }
 
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecords begin.");
-
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords begin.");
     auto *asyncContext = new RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -602,7 +580,6 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork));
     napi_queue_async_work(env, asyncContext->asyncWork);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission end.");
     return result;
 }
 }  // namespace AccessToken

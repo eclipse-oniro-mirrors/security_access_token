@@ -32,7 +32,6 @@ public:
     int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 
 private:
-
     void AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply);
     void StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
     void StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
@@ -40,6 +39,9 @@ private:
     void GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionUsedRecordsAsyncInner(MessageParcel& data, MessageParcel& reply);
     void DumpRecordInfoInner(MessageParcel& data, MessageParcel& reply);
+
+    bool IsAccessTokenCalling() const;
+    static const int32_t ACCESSTOKEN_UID = 3020;
 };
 } // namespace AccessToken
 } // namespace Security

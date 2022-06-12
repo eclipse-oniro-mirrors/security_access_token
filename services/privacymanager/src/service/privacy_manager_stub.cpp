@@ -102,7 +102,7 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(
+    if (!IsAccessTokenCalling() || AccessTokenKit::VerifyAccessToken(
         callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(RET_FAILED);
@@ -156,6 +156,12 @@ void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel&
     std::string permissionName = data.ReadString();
     std::string dumpInfo = this->DumpRecordInfo(bundleName, permissionName);
     reply.WriteString(dumpInfo);
+}
+
+bool PrivacyManagerStub::IsAccessTokenCalling() const
+{
+    int callingUid = IPCSkeleton::GetCallingTokenID();
+    return callingUid == ACCESSTOKEN_UID;
 }
 } // namespace AccessToken
 } // namespace Security
