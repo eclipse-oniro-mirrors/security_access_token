@@ -40,7 +40,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//base/security/access_token/interfaces/innerkits/tokensync/src",
     "//base/security/access_token/services/tokensyncmanager/include/common",
-    "//base/security/access_token/services/privacymanager/include/record",
     "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
     "//third_party/json/include",
   ]
@@ -71,7 +70,6 @@ ohos_shared_library("accesstoken_manager_service") {
     "//base/security/access_token/frameworks/database:accesstoken_database_cxx",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
-    "//base/security/access_token/services/privacymanager:privacy_manager_service",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
