@@ -27,26 +27,6 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 const static int32_t RET_ERROR = -1;
 
-static HapPolicyParams g_PolicyPramsTest = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.privacy",
-};
-
-static HapInfoParams g_InfoParmsTest = {
-    .userID = 1,
-    .bundleName = "ohos.privacy_test.privacy",
-    .instIndex = 0,
-    .appIDDesc = "privacy_test.privacy"
-};
-
-static PermissionStateFull g_grantPermissionReq = {
-    .permissionName = "ohos.permission.PERMISSION_USED_STATS",
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
 static HapPolicyParams g_PolicyPramsA = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",

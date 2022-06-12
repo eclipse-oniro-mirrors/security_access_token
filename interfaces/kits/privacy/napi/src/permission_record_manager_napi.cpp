@@ -18,7 +18,6 @@
 #include "accesstoken_log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
-#include "hitrace_meter.h"
 
 namespace OHOS {
 namespace Security {
@@ -554,7 +553,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecords begin.");
-    static int64_t label = HITRACE_TAG_OHOS;
+
     auto *asyncContext = new RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -576,13 +575,10 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         nullptr,
         resource,
         [](napi_env env, void* data) {
-            StartTrace(label, "GetPermissionUsedRecords_Execute");
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
             asyncContext->retCode = PrivacyKit::GetPermissionUsedRecords(asyncContext->request, asyncContext->result);
-            FinishTrace(label);
         },
         [](napi_env env, napi_status status, void *data) {
-            StartTrace(label, "GetPermissionUsedRecords_Complete");
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[0]);
@@ -601,7 +597,6 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
                 napi_delete_reference(env, asyncContext->callbackRef);
             }
             napi_delete_async_work(env, asyncContext->asyncWork);
-            FinishTrace(label);
             delete asyncContext;
         },
         reinterpret_cast<void *>(asyncContext),
