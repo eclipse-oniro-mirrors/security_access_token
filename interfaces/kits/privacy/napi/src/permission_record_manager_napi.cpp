@@ -189,7 +189,6 @@ static void ParseStartAndStopUsingPermission(
             napi_create_reference(env, argv[ARGS_THREE - 1], 1, &asyncContext.callbackRef); // get probably callback
         }
     }
-
 }
 
 static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRecordDetail& detailRecord)
