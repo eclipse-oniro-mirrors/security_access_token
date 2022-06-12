@@ -198,7 +198,6 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x", __func__, tokenID);
-    ExecuteDeletePermissionRecordTask();
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionVisitor visitor;
@@ -305,7 +304,8 @@ bool PermissionRecordManager::GetRecords(
     int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
 {
     std::vector<PermissionUsedRecord> permissionRecords;
-    for (auto record : recordValues) {
+    for (auto it = recordValues.rbegin(); it != recordValues.rend(); ++it) {
+        GenericValues record = *it;
         PermissionUsedRecord tmpPermissionRecord;
         int64_t timestamp = record.GetInt64(FIELD_TIMESTAMP);
         result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
@@ -392,7 +392,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 
 std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
         __func__, bundleName.c_str(), permissionName.c_str());
     PermissionUsedRequest request;
     request.bundleName = bundleName;
@@ -406,7 +406,7 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     }
 
     if (result.bundleRecords.size() == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "result.bundleRecords.size() = 0");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "no record");
         return "";
     }
     std::string dumpInfo;
@@ -427,6 +427,7 @@ void PermissionRecordManager::Init()
     if (hasInited_) {
         return;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "init");
     deleteTaskWorker_.Start(1);
     hasInited_ = true;
 }

@@ -72,7 +72,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
     if (AccessTokenKit::VerifyAccessToken(
         callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
+        reply.WriteInt32(RET_FAILED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -105,7 +105,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
     if (AccessTokenKit::VerifyAccessToken(
         callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
+        reply.WriteInt32(RET_FAILED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -116,20 +116,22 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    PermissionUsedResultParcel responseParcel;
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(
         callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(-1);
+        reply.WriteParcelable(&responseParcel);
+        reply.WriteInt32(RET_FAILED);
         return;
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteParcelable(&responseParcel);
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    PermissionUsedResultParcel responseParcel;
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteParcelable(&responseParcel);
     reply.WriteInt32(result);

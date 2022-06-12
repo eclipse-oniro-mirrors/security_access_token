@@ -39,7 +39,7 @@ static HapInfoParams g_InfoParmsTest = {
     .appIDDesc = "privacy_test.privacy"
 };
 
-PermissionStateFull g_grantPermissionReq = {
+static PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.PERMISSION_USED_STATS",
     .isGeneral = true,
     .resDeviceID = {"device"},
@@ -73,20 +73,28 @@ static HapInfoParams g_InfoParmsB = {
 
 void PrivacyKitTest::SetUpTestCase()
 {
-    g_PolicyPramsTest.permStateList.emplace_back(g_grantPermissionReq);
-    AccessTokenKit::AllocHapToken(g_InfoParmsTest, g_PolicyPramsTest);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsTest.userID,
-                                                          g_InfoParmsTest.bundleName,
-                                                          g_InfoParmsTest.instIndex);
+    uint64_t tokenId;
+    const char **perms = new const char *[1];
+    perms[0] = "ohos.permission.PERMISSION_USED_STATS";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "PrivacyKitTest",
+        .aplStr = "system_core",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenId);
+
+    GTEST_LOG_(INFO) << "tokenId :" << tokenId << ", type: " << AccessTokenKit::GetTokenTypeFlag(tokenId);
+    delete[] perms;
 }
 
 void PrivacyKitTest::TearDownTestCase()
 {
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsTest.userID,
-                                                          g_InfoParmsTest.bundleName,
-                                                          g_InfoParmsTest.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
 }
 
 void PrivacyKitTest::SetUp()
