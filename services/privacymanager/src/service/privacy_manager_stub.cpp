@@ -15,6 +15,7 @@
 
 #include "privacy_manager_stub.h"
 
+#include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 
 #include "ipc_skeleton.h"
@@ -67,6 +68,13 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (AccessTokenKit::VerifyAccessToken(
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int32_t successCount = data.ReadInt32();
@@ -93,6 +101,13 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsAccessTokenCalling() && AccessTokenKit::VerifyAccessToken(
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string deviceID = data.ReadString();
     int32_t result = this->RemovePermissionUsedRecords(tokenID, deviceID);
@@ -101,13 +116,22 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
-    sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
-    if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+    PermissionUsedResultParcel responseParcel;
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (AccessTokenKit::VerifyAccessToken(
+        callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        reply.WriteParcelable(&responseParcel);
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    PermissionUsedResultParcel responseParcel;
+    sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
+    if (requestParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteParcelable(&responseParcel);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteParcelable(&responseParcel);
     reply.WriteInt32(result);
@@ -132,6 +156,12 @@ void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel&
     std::string permissionName = data.ReadString();
     std::string dumpInfo = this->DumpRecordInfo(bundleName, permissionName);
     reply.WriteString(dumpInfo);
+}
+
+bool PrivacyManagerStub::IsAccessTokenCalling() const
+{
+    int callingUid = IPCSkeleton::GetCallingTokenID();
+    return callingUid == ACCESSTOKEN_UID;
 }
 } // namespace AccessToken
 } // namespace Security

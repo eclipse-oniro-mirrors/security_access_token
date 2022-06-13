@@ -12,7 +12,7 @@
 # limitations under the License.
 
 if (!defined(global_parts_info) ||
-    defined(global_parts_info.distributedhardware_device_manager_base)) {
+    defined(global_parts_info.distributedhardware_device_manager)) {
   token_sync_enable = true
 } else {
   token_sync_enable = false

@@ -39,12 +39,15 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     return instance;
 }
 
-PermissionRecordManager::PermissionRecordManager()
-{
-}
+PermissionRecordManager::PermissionRecordManager() : hasInited_(false) {}
 
 PermissionRecordManager::~PermissionRecordManager()
 {
+    if (!hasInited_) {
+        return;
+    }
+    deleteTaskWorker_.Stop();
+    hasInited_ = false;
 }
 
 bool PermissionRecordManager::AddVisitor(AccessTokenID tokenID, int32_t& visitorId)
@@ -174,18 +177,14 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x, permissionName: %{public}s", __func__,
         tokenID, permissionName.c_str());
-    auto deleteRecordsTask = [this]() {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
-        DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
-    };
-    std::thread deleteRecordsThread(deleteRecordsTask);
-    deleteRecordsThread.detach();
+    ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s Invalid token type", __func__);
         return Constant::SUCCESS;
     }
 
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     int32_t visitorId;
     if (!AddVisitor(tokenID, visitorId)) {
         return Constant::FAILURE;
@@ -199,13 +198,8 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x", __func__, tokenID);
-    auto deleteRecordsTask = [this]() {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
-        DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
-    };
-    std::thread deleteRecordsThread(deleteRecordsTask);
-    deleteRecordsThread.detach();
 
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionVisitor visitor;
     if (!GetPermissionVisitor(tokenID, visitor) && deviceID.empty()) {
         return;
@@ -234,12 +228,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
-    auto deleteRecordsTask = [this]() {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
-        DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
-    };
-    std::thread deleteRecordsThread(deleteRecordsTask);
-    deleteRecordsThread.detach();
+    ExecuteDeletePermissionRecordTask();
 
     if (!GetRecordsFromDB(request, result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromDB");
@@ -315,7 +304,8 @@ bool PermissionRecordManager::GetRecords(
     int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
 {
     std::vector<PermissionUsedRecord> permissionRecords;
-    for (auto record : recordValues) {
+    for (auto it = recordValues.rbegin(); it != recordValues.rend(); ++it) {
+        GenericValues record = *it;
         PermissionUsedRecord tmpPermissionRecord;
         int64_t timestamp = record.GetInt64(FIELD_TIMESTAMP);
         result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
@@ -366,8 +356,23 @@ void PermissionRecordManager::UpdateRecords(
     }
 }
 
+void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
+{
+    if (deleteTaskWorker_.GetCurTaskNum() > 1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Already has delete task!");
+        return;
+    }
+
+    auto deleteRecordsTask = [this]() {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
+        DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
+    };
+    deleteTaskWorker_.AddTask(deleteRecordsTask);
+}
+
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues nullValues;
     std::vector<GenericValues> deleteRecordValues;
     if (!PermissionRecordRepository::GetInstance().FindRecordValues(nullValues, nullValues, deleteRecordValues)) {
@@ -387,7 +392,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 
 std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
         __func__, bundleName.c_str(), permissionName.c_str());
     PermissionUsedRequest request;
     request.bundleName = bundleName;
@@ -401,7 +406,7 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     }
 
     if (result.bundleRecords.size() == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "result.bundleRecords.size() = 0");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "no record");
         return "";
     }
     std::string dumpInfo;
@@ -419,6 +424,12 @@ bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)
 
 void PermissionRecordManager::Init()
 {
+    if (hasInited_) {
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "init");
+    deleteTaskWorker_.Start(1);
+    hasInited_ = true;
 }
 } // namespace AccessToken
 } // namespace Security

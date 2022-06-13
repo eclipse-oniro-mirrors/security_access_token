@@ -19,6 +19,7 @@
 #include "nativetoken_kit.h"
 #include "parameter.h"
 #include "privacy_kit.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
@@ -51,7 +52,25 @@ static HapInfoParams g_InfoParmsB = {
 };
 
 void PrivacyKitTest::SetUpTestCase()
-{}
+{
+    uint64_t tokenId;
+    const char **perms = new const char *[1];
+    perms[0] = "ohos.permission.PERMISSION_USED_STATS";
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 1,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .processName = "PrivacyKitTest",
+        .aplStr = "system_core",
+    };
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+
+    delete[] perms;
+}
 
 void PrivacyKitTest::TearDownTestCase()
 {
