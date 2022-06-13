@@ -21,7 +21,10 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "atm_device_state_callback.h"
 #include "device_manager.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -42,8 +45,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 const bool REGISTER_RESULT =
     SystemAbility::MakeAndRegisterAbility(DelayedSingleton<AccessTokenManagerService>::GetInstance().get());
-
-const int32_t RETRY_SLEEP_TIME_MS = 1000;
 
 AccessTokenManagerService::AccessTokenManagerService()
     : SystemAbility(SA_ID_ACCESSTOKEN_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
@@ -80,20 +81,16 @@ void AccessTokenManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
+#ifdef TOKEN_SYNC_ENABLE
     DestroyDeviceListenner();
+#endif
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
-    int isGranted = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    if (isGranted != PERMISSION_GRANTED) {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 0, 1);
-    } else {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 1, 0);
-    }
-    return isGranted;
+    return PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -357,9 +354,10 @@ void AccessTokenManagerService::DumpTokenInfo(std::string& dumpInfo)
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(dumpInfo);
 }
-
+#ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerService::CreateDeviceListenner()
 {
+    static const int32_t RETRY_SLEEP_TIME_MS = 1000;
     std::function<void()> runner = [&]() {
         auto retrySleepTime = std::chrono::milliseconds(RETRY_SLEEP_TIME_MS);
         while (1) {
@@ -430,12 +428,15 @@ void AccessTokenManagerService::DestroyDeviceListenner()
 
     ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner unregister success.");
 }
+#endif
 
 bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
+#ifdef TOKEN_SYNC_ENABLE
     CreateDeviceListenner(); // for start tokensync when remote devivce online
+#endif
     return true;
 }
 } // namespace AccessToken
