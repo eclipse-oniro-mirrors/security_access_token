@@ -102,7 +102,7 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (!IsAccessTokenCalling() || AccessTokenKit::VerifyAccessToken(
+    if (!IsAccessTokenCalling() && AccessTokenKit::VerifyAccessToken(
         callingTokenID, "ohos.permission.PERMISSION_USED_STATS") == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
         reply.WriteInt32(RET_FAILED);
