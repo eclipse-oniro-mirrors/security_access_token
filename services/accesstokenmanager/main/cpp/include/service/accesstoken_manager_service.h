@@ -27,7 +27,6 @@
 #include "system_ability.h"
 #include "hap_token_info.h"
 #include "access_token.h"
-#include "atm_device_state_callback.h"
 
 namespace OHOS {
 namespace Security {
@@ -73,14 +72,14 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
+    void CreateDeviceListenner();
+    void DestroyDeviceListenner();
 #endif
 
     void DumpTokenInfo(std::string& dumpInfo) override;
 
 private:
     bool Initialize();
-    void CreateDeviceListenner();
-    void DestroyDeviceListenner();
 
     ServiceRunningState state_;
     std::mutex mutex_;
