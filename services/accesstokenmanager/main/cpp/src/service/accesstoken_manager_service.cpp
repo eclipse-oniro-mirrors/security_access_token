@@ -87,13 +87,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
-    int isGranted = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    if (isGranted != PERMISSION_GRANTED) {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 0, 1);
-    } else {
-        PrivacyKit::AddPermissionUsedRecord(tokenID, permissionName, 1, 0);
-    }
-    return isGranted;
+    return PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)

@@ -20,6 +20,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
 #include "permission_used_request.h"
@@ -27,7 +28,7 @@
 #include "permission_visitor.h"
 
 #include "rwlock.h"
-#include "nocopyable.h"
+#include "thread_pool.h"
 
 namespace OHOS {
 namespace Security {
@@ -56,6 +57,7 @@ private:
     bool GetPermissionsRecord(int32_t visitorId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
 
+    void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);
     bool GetRecordsFromDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
     bool GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
@@ -63,6 +65,9 @@ private:
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     bool IsLocalDevice(const std::string& deviceId);
+
+    OHOS::ThreadPool deleteTaskWorker_;
+    bool hasInited_;
     OHOS::Utils::RWLock rwLock_;
 };
 } // namespace AccessToken

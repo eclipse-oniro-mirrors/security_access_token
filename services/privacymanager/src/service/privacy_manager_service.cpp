@@ -124,6 +124,7 @@ std::string PrivacyManagerService::DumpRecordInfo(const std::string& bundleName,
 
 bool PrivacyManagerService::Initialize() const
 {
+    PermissionRecordManager::GetInstance().Init();
     return true;
 }
 } // namespace AccessToken
