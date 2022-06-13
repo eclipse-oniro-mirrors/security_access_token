@@ -35,7 +35,7 @@ ohos_shared_library("libtokensync_sdk") {
     "//base/security/access_token/interfaces/innerkits/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/frameworks/accesstoken/include",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
     "//foundation/distributedschedule/samgr/interfaces/innerkits/samgr_proxy/include",
   ]
 

@@ -66,7 +66,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "//foundation/communication/dsoftbus/interfaces/kits/transport",
     "//foundation/communication/dsoftbus/interfaces/kits/common",
     "//foundation/communication/dsoftbus/interfaces/kits/bus_center",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp/include",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
   ]
 
   deps = [
@@ -74,7 +74,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/startup/syspara_lite/interfaces/innerkits/native/syspara:syspara",
-    "//foundation/distributedhardware/devicemanager/interfaces/inner_kits/native_cpp:devicemanagersdk",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp:devicemanagersdk",
     "//third_party/zlib:libz",
     "//utils/native/base:utils",
   ]
