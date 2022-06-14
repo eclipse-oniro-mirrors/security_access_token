@@ -69,6 +69,6 @@ ATM provides unified access control for apps and allows apps or service abilitie
 
 [startup\_init\_lite](https://gitee.com/openharmony/startup_init_lite/blob/master/README.md)
 
-[security\_deviceauth](https://gitee.com/openharmony/security_deviceauth/blob/master/README.md)
+[security\_device\_auth](https://gitee.com/openharmony/security_device_auth/blob/master/README.md)
 
 [security\_access\_token](https://gitee.com/openharmony/security_access_token/blob/master/README.md)
