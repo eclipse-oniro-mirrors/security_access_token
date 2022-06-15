@@ -160,7 +160,7 @@ void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel&
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const
 {
-    int callingUid = IPCSkeleton::GetCallingTokenID();
+    int32_t callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ACCESSTOKEN_UID;
 }
 } // namespace AccessToken
