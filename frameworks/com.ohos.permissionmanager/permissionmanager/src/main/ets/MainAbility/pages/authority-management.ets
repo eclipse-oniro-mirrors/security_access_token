@@ -458,17 +458,19 @@ struct authorityManagementPage {
                             Column() {
                               Scroll() {
                                 Row() {
-                                  List() {
-                                    ForEach(this.allGroupPermission.slice(Constants.SLICE_START,
-                                      this.allGroupPermission.length - 1), (item) => {
-                                      this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                                    }, item => item.toString())
-                                    ForEach(this.allGroupPermission.slice(Constants.SLICE_END), (item, index) => {
-                                      this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                                    }, item => item.toString())
-                                  }.backgroundColor($r('app.color.default_background_color'))
-                                  .borderRadius(Constants.BORDER_RADIUS)
-                                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                  if(this.allGroupPermission.length) {
+                                    List() {
+                                      ForEach(this.allGroupPermission.slice(Constants.SLICE_START,
+                                        this.allGroupPermission.length - 1), (item) => {
+                                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                                      }, item => item.toString())
+                                      ForEach(this.allGroupPermission.slice(Constants.SLICE_END), (item, index) => {
+                                        this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                      }, item => item.toString())
+                                    }.backgroundColor($r('app.color.default_background_color'))
+                                    .borderRadius(Constants.BORDER_RADIUS)
+                                    .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                  }
                                 }.padding({
                                   left: Constants.MANAGEMENT_ROW_PADDING_LEFT,
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
