@@ -19,6 +19,7 @@
 #include "nativetoken_kit.h"
 #include "parameter.h"
 #include "privacy_kit.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
