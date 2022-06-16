@@ -99,6 +99,9 @@
       {
         "name": "ohos.permission.GET_BUNDLE_INFO",
         "reason": "get applicationInfo"
+      },
+      {
+        "name": "ohos.permission.PERMISSION_USED_STATS"
       }
     ]
   }
