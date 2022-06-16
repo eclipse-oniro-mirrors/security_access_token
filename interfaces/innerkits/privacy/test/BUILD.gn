@@ -24,7 +24,6 @@ ohos_unittest("libprivacy_sdk_test") {
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//base/security/access_token/interfaces/innerkits/token_setproc/include",
     "//base/security/access_token/services/privacymanager/include/record",
   ]
 
@@ -36,7 +35,6 @@ ohos_unittest("libprivacy_sdk_test") {
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
-    "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     "//base/security/access_token/services/privacymanager:privacy_manager_service",
     "//utils/native/base:utils",
   ]
