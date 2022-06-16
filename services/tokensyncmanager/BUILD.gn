@@ -80,7 +80,7 @@ ohos_shared_library("token_sync_manager_service") {
 
   external_deps = [
     "device_manager:devicemanagersdk",
-    "dsoftbus_standard:softbus_client",
+    "dsoftbus:softbus_client",
     "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
