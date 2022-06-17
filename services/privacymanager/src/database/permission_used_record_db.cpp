@@ -124,7 +124,8 @@ int32_t PermissionUsedRecordDb::Remove(const DataType type, const GenericValues&
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t PermissionUsedRecordDb::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
+int32_t PermissionUsedRecordDb::Modify(
+    const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
@@ -258,8 +259,8 @@ std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
     return sql;
 }
 
-std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
-    const std::vector<std::string>& conditionColumns) const
+std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType type,
+    const std::vector<std::string>& modifyColumns, const std::vector<std::string>& conditionColumns) const
 {
     if (modifyColumns.empty()) {
         return std::string();
