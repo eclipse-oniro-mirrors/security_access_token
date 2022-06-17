@@ -46,8 +46,8 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
     GenericValues nullValues;
     std::vector<GenericValues> insertValues;
     std::vector<GenericValues> resultValues;
-    if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_VISITOR, visitorValues,
-        nullValues, resultValues) != SqliteStorage::SUCCESS) {
+    if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_VISITOR,
+        visitorValues, nullValues, resultValues) != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table find fail");
         return false;
     }
@@ -56,7 +56,8 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
     }
 
     insertValues.emplace_back(visitorValues);
-    if (SqliteStorage::GetInstance().Add(SqliteStorage::PERMISSION_VISITOR, insertValues) != SqliteStorage::SUCCESS) {
+    if (PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::PERMISSION_VISITOR, insertValues)
+        != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table add fail");
         return false;
     }
@@ -66,8 +67,8 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
 bool PermissionVisitorRepository::FindVisitorValues(
     const GenericValues& andValues, const GenericValues& orValues, std::vector<GenericValues>& visitorValues)
 {
-    if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_VISITOR, andValues,
-        orValues, visitorValues) != SqliteStorage::SUCCESS) {
+    if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_VISITOR, andValues,
+        orValues, visitorValues) != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table find fail");
         return false;
     }
@@ -76,8 +77,8 @@ bool PermissionVisitorRepository::FindVisitorValues(
 
 bool PermissionVisitorRepository::RemoveVisitorValues(const GenericValues& conditionValues)
 {
-    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_VISITOR, conditionValues)
-        != SqliteStorage::SUCCESS) {
+    if (PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::PERMISSION_VISITOR, conditionValues)
+        != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table remove fail");
         return false;
     }

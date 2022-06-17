@@ -30,16 +30,16 @@ public:
     std::string tableName_;
     std::vector<std::string> tableColumnNames_;
 };
-class SqliteStorage : public SqliteHelper {
+class PermissionUsedRecordDb : public SqliteHelper {
 public:
     enum DataType {
         PERMISSION_VISITOR = 0,
         PERMISSION_RECORD,
     };
     enum ExecuteResult { FAILURE = -1, SUCCESS };
-    static SqliteStorage& GetInstance();
+    static PermissionUsedRecordDb& GetInstance();
 
-    ~SqliteStorage() override;
+    ~PermissionUsedRecordDb() override;
 
     int32_t Add(const DataType type, const std::vector<GenericValues>& values);
     int32_t Remove(const DataType type, const GenericValues& conditions);
@@ -53,8 +53,8 @@ public:
     void OnUpdate() override;
 
 private:
-    SqliteStorage();
-    DISALLOW_COPY_AND_MOVE(SqliteStorage);
+    PermissionUsedRecordDb();
+    DISALLOW_COPY_AND_MOVE(PermissionUsedRecordDb);
 
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
     OHOS::Utils::RWLock rwLock_;

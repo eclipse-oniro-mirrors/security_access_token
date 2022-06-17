@@ -23,34 +23,34 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySqliteStorage"
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordDb"
 };
 }
 
-SqliteStorage& SqliteStorage::GetInstance()
+PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
 {
-    static SqliteStorage instance;
+    static PermissionUsedRecordDb instance;
     return instance;
 }
 
-SqliteStorage::~SqliteStorage()
+PermissionUsedRecordDb::~PermissionUsedRecordDb()
 {
     Close();
 }
 
-void SqliteStorage::OnCreate()
+void PermissionUsedRecordDb::OnCreate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     CreatePermissionVisitorTable();
     CreatePermissionRecordTable();
 }
 
-void SqliteStorage::OnUpdate()
+void PermissionUsedRecordDb::OnUpdate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
 }
 
-SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
 {
     SqliteTable permissionVisorTable;
     permissionVisorTable.tableName_ = PERMISSION_VISITOR_TABLE;
@@ -82,7 +82,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     Open();
 }
 
-int32_t SqliteStorage::Add(const DataType type, const std::vector<GenericValues>& values)
+int32_t PermissionUsedRecordDb::Add(const DataType type, const std::vector<GenericValues>& values)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
@@ -111,7 +111,7 @@ int32_t SqliteStorage::Add(const DataType type, const std::vector<GenericValues>
     return SUCCESS;
 }
 
-int32_t SqliteStorage::Remove(const DataType type, const GenericValues& conditions)
+int32_t PermissionUsedRecordDb::Remove(const DataType type, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
@@ -124,7 +124,7 @@ int32_t SqliteStorage::Remove(const DataType type, const GenericValues& conditio
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t SqliteStorage::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
+int32_t PermissionUsedRecordDb::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
@@ -141,7 +141,7 @@ int32_t SqliteStorage::Modify(const DataType type, const GenericValues& modifyVa
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t SqliteStorage::Find(const DataType type, std::vector<GenericValues>& results)
+int32_t PermissionUsedRecordDb::Find(const DataType type, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateSelectPrepareSqlCmd(type);
@@ -161,7 +161,7 @@ int32_t SqliteStorage::Find(const DataType type, std::vector<GenericValues>& res
     return SUCCESS;
 }
 
-int32_t SqliteStorage::FindByConditions(const DataType type, const GenericValues& andConditions,
+int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const GenericValues& andConditions,
     const GenericValues& orConditions, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
@@ -192,7 +192,7 @@ int32_t SqliteStorage::FindByConditions(const DataType type, const GenericValues
     return SUCCESS;
 }
 
-int32_t SqliteStorage::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
+int32_t PermissionUsedRecordDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteSql = CreateDeletePrepareSqlCmd(type);
@@ -224,7 +224,7 @@ int32_t SqliteStorage::RefreshAll(const DataType type, const std::vector<Generic
     return SUCCESS;
 }
 
-std::string SqliteStorage::CreateInsertPrepareSqlCmd(const DataType type) const
+std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(const DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -243,7 +243,7 @@ std::string SqliteStorage::CreateInsertPrepareSqlCmd(const DataType type) const
     return sql;
 }
 
-std::string SqliteStorage::CreateDeletePrepareSqlCmd(
+std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
     const DataType type, const std::vector<std::string>& columnNames) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -258,7 +258,7 @@ std::string SqliteStorage::CreateDeletePrepareSqlCmd(
     return sql;
 }
 
-std::string SqliteStorage::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
+std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
     const std::vector<std::string>& conditionColumns) const
 {
     if (modifyColumns.empty()) {
@@ -290,7 +290,7 @@ std::string SqliteStorage::CreateUpdatePrepareSqlCmd(const DataType type, const 
     return sql;
 }
 
-std::string SqliteStorage::CreateSelectPrepareSqlCmd(const DataType type) const
+std::string PermissionUsedRecordDb::CreateSelectPrepareSqlCmd(const DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -300,7 +300,7 @@ std::string SqliteStorage::CreateSelectPrepareSqlCmd(const DataType type) const
     return sql;
 }
 
-std::string SqliteStorage::CreateSelectByConditionPrepareSqlCmd(const DataType type,
+std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const DataType type,
     const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -334,7 +334,7 @@ std::string SqliteStorage::CreateSelectByConditionPrepareSqlCmd(const DataType t
     return sql;
 }
 
-int32_t SqliteStorage::CreatePermissionVisitorTable() const
+int32_t PermissionUsedRecordDb::CreatePermissionVisitorTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_VISITOR);
     if (it == dataTypeToSqlTable_.end()) {
@@ -352,7 +352,7 @@ int32_t SqliteStorage::CreatePermissionVisitorTable() const
     return ExecuteSql(sql);
 }
 
-int32_t SqliteStorage::CreatePermissionRecordTable() const
+int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
