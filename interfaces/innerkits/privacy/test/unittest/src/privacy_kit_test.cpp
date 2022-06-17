@@ -77,7 +77,6 @@ void PrivacyKitTest::SetUp()
                                                 g_InfoParmsB.instIndex);
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-    GTEST_LOG_(INFO) << "tokenId :" << tokenId;
     SetSelfTokenID(tokenId);
 }
 
