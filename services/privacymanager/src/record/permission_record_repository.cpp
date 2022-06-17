@@ -16,7 +16,7 @@
 #include "permission_record_repository.h"
 
 #include "accesstoken_log.h"
-#include "sqlite_storage.h"
+#include "permission_used_record_db.h"
 
 namespace OHOS {
 namespace Security {
@@ -44,7 +44,7 @@ PermissionRecordRepository::~PermissionRecordRepository()
 bool PermissionRecordRepository::AddRecordValues(const std::vector<GenericValues>& recordValues)
 {
     if (SqliteStorage::GetInstance().Add(SqliteStorage::PERMISSION_RECORD, recordValues) != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table add fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
         return false;
     }
     return true;
@@ -55,7 +55,7 @@ bool PermissionRecordRepository::FindRecordValues(const GenericValues& andCondit
 {
     if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_RECORD, andConditionValues,
         orConditionValues, recordValues) != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table find fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table find fail");
         return false;
     }
     return true;
@@ -65,7 +65,7 @@ bool PermissionRecordRepository::RemoveRecordValues(const GenericValues& conditi
 {
     if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_RECORD, conditionValues)
         != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table add fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
         return false;
     }
     return true;

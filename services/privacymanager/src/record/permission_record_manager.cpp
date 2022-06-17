@@ -52,7 +52,7 @@ PermissionRecordManager::~PermissionRecordManager()
 
 bool PermissionRecordManager::AddVisitor(AccessTokenID tokenID, int32_t& visitorId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     PermissionVisitor visitor;
     if (!GetPermissionVisitor(tokenID, visitor)) {
         return false;
@@ -82,7 +82,7 @@ bool PermissionRecordManager::GetPermissionVisitor(AccessTokenID tokenID, Permis
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenID, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s GetHapTokenInfo fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo fail");
         return false;
     }
     visitor.isRemoteDevice = true;
@@ -99,7 +99,7 @@ bool PermissionRecordManager::GetPermissionVisitor(AccessTokenID tokenID, Permis
 bool PermissionRecordManager::AddRecord(
     int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     PermissionRecord record;
     if (!GetPermissionsRecord(visitorId, permissionName, successCount, failCount, record)) {
         return false;
@@ -155,11 +155,11 @@ bool PermissionRecordManager::GetPermissionsRecord(int32_t visitorId, const std:
 {
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s TransferPermissionToOpcode fail", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to TransferPermissionToOpcode");
         return false;
     }
     if (successCount == 0 && failCount == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s successCount and failCount are both zero", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "successCount and failCount are both zero");
         return false;
     }
     record.visitorId = visitorId;
@@ -175,12 +175,12 @@ bool PermissionRecordManager::GetPermissionsRecord(int32_t visitorId, const std:
 int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x, permissionName: %{public}s", __func__,
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s Invalid token type", __func__);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Invalid token type");
         return Constant::SUCCESS;
     }
 
@@ -197,7 +197,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenId: %{public}x", __func__, tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x", tokenID);
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionVisitor visitor;
@@ -227,7 +227,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID,
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     ExecuteDeletePermissionRecordTask();
 
     if (!GetRecordsFromDB(request, result)) {
@@ -240,7 +240,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
 int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     auto task = [request, callback]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;
@@ -259,7 +259,7 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
     GenericValues orConditionValues;
     if (DataTranslator::TranslationIntoGenericValues(request, visitorValues, andConditionValues,
         orConditionValues) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: query time is invalid", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "query time is invalid");
         return false;
     }
     
@@ -269,7 +269,7 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
         return false;
     }
     if (findVisitorValues.empty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: no visitor", __func__);
+        ACCESSTOKEN_LOG_INFO(LABEL, "no visitor");
         return true;
     }
 
@@ -315,7 +315,7 @@ bool PermissionRecordManager::GetRecords(
         record.Put(FIELD_FLAG, flag);
         if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
             != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: failed to transform permission to opcode", __func__);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to transform permission to opcode");
             continue;
         }
 
@@ -379,12 +379,17 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
         return Constant::FAILURE;
     }
 
-    int32_t recordNum = 0;
-    for (auto record : deleteRecordValues) {
-        recordNum++;
-        if ((TimeUtil::GetCurrentTimestamp() - record.GetInt64(FIELD_TIMESTAMP)) > days ||
-            recordNum > Constant::MAX_TOTAL_RECORD) {
-            PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
+    size_t deleteSize = 0;
+    if (deleteRecordValues.size() > Constant::MAX_TOTAL_RECORD) {
+        deleteSize = deleteRecordValues.size() - Constant::MAX_TOTAL_RECORD;
+        for (size_t i = 0; i < deleteSize; ++i) {
+            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
+        }
+    }
+    int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
+    for (size_t i = deleteSize; i < deleteRecordValues.size(); ++i) {
+        if (deleteRecordValues[i].GetInt64(FIELD_TIMESTAMP) < deleteTimestamp) {
+            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
         }
     }
     return Constant::SUCCESS;
@@ -392,8 +397,8 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 
 std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
-        __func__, bundleName.c_str(), permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName=%{public}s, permissionName=%{public}s",
+        bundleName.c_str(), permissionName.c_str());
     PermissionUsedRequest request;
     request.bundleName = bundleName;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;

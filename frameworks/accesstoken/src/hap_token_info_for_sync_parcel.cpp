@@ -15,23 +15,12 @@
 
 #include "hap_token_info_for_sync_parcel.h"
 #include "hap_token_info_parcel.h"
+#include "parcel_utils.h"
 #include "permission_state_full_parcel.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#define RETURN_IF_FALSE(expr) \
-    if (!(expr)) { \
-        return false; \
-    }
-
-#define RELEASE_IF_FALSE(expr, obj) \
-    if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
-        return (obj); \
-    }
-
 bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 {
     HapTokenInfoParcel baseInfoParcel;
