@@ -35,7 +35,7 @@ ohos_shared_library("privacy_manager_service") {
     "src/common/time_util.cpp",
     "src/common/to_string.cpp",
     "src/database/data_translator.cpp",
-    "src/database/permission_record_db.cpp",
+    "src/database/permission_used_record_db.cpp",
     "src/record/on_permission_used_record_callback_proxy.cpp",
     "src/record/on_permission_used_record_callback_stub.cpp",
     "src/record/permission_record.cpp",
