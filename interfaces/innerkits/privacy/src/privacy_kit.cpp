@@ -31,49 +31,50 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 int32_t PrivacyKit::AddPermissionUsedRecord(
     AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s,",
-        __func__, tokenID, permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s,",
+        tokenID, permissionName.c_str());
     return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(
         tokenID, permissionName, successCount, failCount);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s",
-        __func__, tokenID, permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
+        tokenID, permissionName.c_str());
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName);
 }
 
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID=0x%{public}x, permissionName=%{public}s",
-        __func__, tokenID, permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
+        tokenID, permissionName.c_str());
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, permissionName);
 }
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, deviceID=%{private}s",
+        tokenID, deviceID.c_str());
     return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, result);
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called", __func__);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
 }
 
 std::string PrivacyKit::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, bundleName=%{public}s, permissionName=%{public}s",
-        __func__, bundleName.c_str(), permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName=%{public}s, permissionName=%{public}s",
+        bundleName.c_str(), permissionName.c_str());
     return PrivacyManagerClient::GetInstance().DumpRecordInfo(bundleName, permissionName);
 }
 } // namespace AccessToken

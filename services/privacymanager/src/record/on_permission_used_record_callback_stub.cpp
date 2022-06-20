@@ -33,7 +33,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, code: 0x%{public}x", __func__, code);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != OnPermissionUsedRecordCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
@@ -53,7 +53,7 @@ int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
             ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
             return Constant::FAILURE;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s errCode: %{public}d", __func__, errCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "errCode: %{public}d", errCode);
         OnQueried(errCode, resultSptr->result);
     } else {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);

@@ -370,7 +370,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord begin.");
 
-    auto *asyncContext = new RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -379,7 +379,9 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
+            return nullptr;
+        }
     } else {
         napi_get_undefined(env, &result);
     }
@@ -424,7 +426,7 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission begin.");
 
-    auto *asyncContext = new RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -433,7 +435,9 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
+            return nullptr;
+        }
     } else {
         napi_get_undefined(env, &result);
     }
@@ -478,7 +482,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission begin.");
 
-    auto *asyncContext = new RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -487,7 +491,9 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
+            return nullptr;
+        }
     } else {
         napi_get_undefined(env, &result);
     }
@@ -531,7 +537,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords begin.");
-    auto *asyncContext = new RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -540,7 +546,9 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 
         napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
+            return nullptr;
+        }
     } else {
         napi_get_undefined(env, &result);
     }

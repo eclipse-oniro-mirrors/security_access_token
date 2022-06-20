@@ -64,7 +64,7 @@ void OnPermissionUsedRecordCallbackProxy::OnQueried(ErrCode code, PermissionUsed
         return;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s SendRequest success", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequest success");
 }
 } // namespace AccessToken
 } // namespace Security
