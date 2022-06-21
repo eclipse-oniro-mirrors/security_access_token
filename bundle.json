@@ -21,11 +21,9 @@
     "deps": {
       "components": [
         "ability_base",
-        "ability_runtime",
         "hiviewdfx_hilog_native",
         "ipc_core",
         "ipc_single",
-        "aafwk_standard",
         "system_ability_fwk",
         "samgr_proxy",
         "appexecfwk_standard",
