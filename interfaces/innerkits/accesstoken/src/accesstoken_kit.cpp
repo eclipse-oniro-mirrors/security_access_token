@@ -45,7 +45,7 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
         __func__, remoteDeviceID.c_str(), remoteTokenID);
 #ifdef DEBUG_API_PERFORMANCE
     ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start call");
@@ -323,7 +323,7 @@ int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfo>& nativeTo
 int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
     const HapTokenInfoForSync& hapSync)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
         __func__, deviceID.c_str(), hapSync.baseInfo.tokenID);
     return AccessTokenManagerClient::GetInstance().SetRemoteHapTokenInfo(deviceID, hapSync);
 }
@@ -331,27 +331,27 @@ int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
 int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfo>& nativeTokenInfoList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s", __func__, deviceID.c_str());
     return AccessTokenManagerClient::GetInstance()
         .SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
 }
 
 int AccessTokenKit::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
         __func__, deviceID.c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
 
 int AccessTokenKit::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s", __func__, deviceID.c_str());
     return AccessTokenManagerClient::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
 
 AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
         __func__, deviceID.c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }

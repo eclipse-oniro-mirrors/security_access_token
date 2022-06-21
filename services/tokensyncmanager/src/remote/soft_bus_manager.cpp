@@ -161,7 +161,7 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (result == false) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{public}s", deviceId.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{private}s", deviceId.c_str());
         return Constant::FAILURE;
     }
     std::string networkId = info.deviceId.networkId;

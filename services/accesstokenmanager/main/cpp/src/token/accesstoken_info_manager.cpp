@@ -617,14 +617,14 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
         || !DataValidator::IsDeviceIdValid(hapSync.baseInfo.deviceID)
         || hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION
         || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
         return RET_FAILED;
     }
 
     AccessTokenID remoteID = hapSync.baseInfo.tokenID;
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
     if (mapID != 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}x update exist remote hap token %{public}x.",
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}x update exist remote hap token %{public}x.",
             deviceID.c_str(), remoteID, mapID);
         // update remote token mapping id
         hapSync.baseInfo.tokenID = mapID;
@@ -635,7 +635,7 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
     mapID = AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID);
     if (mapID == 0) {
         ACCESSTOKEN_LOG_ERROR(
-            LABEL, "device %{public}s token %{public}x map failed.", deviceID.c_str(), remoteID);
+            LABEL, "device %{private}s token %{public}x map failed.", deviceID.c_str(), remoteID);
         return RET_FAILED;
     }
 
@@ -645,11 +645,11 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 
     if (CreateRemoteHapTokenInfo(mapID, hapSync) == RET_FAILED) {
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}x map to local token %{public}x failed.",
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}x map to local token %{public}x failed.",
             deviceID.c_str(), remoteID, mapID);
         return RET_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}x map to local token %{public}x success.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}x map to local token %{public}x success.",
         deviceID.c_str(), remoteID, mapID);
     return RET_SUCCESS;
 }
@@ -658,7 +658,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
     std::vector<NativeTokenInfo>& nativeTokenInfoList)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
         return RET_FAILED;
     }
 
@@ -667,7 +667,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
             || !DataValidator::IsProcessNameValid(nativeToken.processName) || nativeToken.dcap.size() <= 0
             || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.tokenID) != TOKEN_NATIVE) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}x is invalid.", deviceID.c_str(), nativeToken.tokenID);
+                LABEL, "device %{private}s token %{public}x is invalid.", deviceID.c_str(), nativeToken.tokenID);
             continue;
         }
 
@@ -675,7 +675,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
         if (mapID != 0) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}x has maped, no need update it.",
+                LABEL, "device %{private}s token %{public}x has maped, no need update it.",
                 deviceID.c_str(), nativeToken.tokenID);
             continue;
         }
@@ -684,18 +684,18 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         if (mapID == 0) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}x map failed.",
+                LABEL, "device %{private}s token %{public}x map failed.",
                 deviceID.c_str(), remoteID);
             continue;
         }
         nativeToken.tokenID = mapID;
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}x map to local token %{public}x.",
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}x map to local token %{public}x.",
             deviceID.c_str(), remoteID, mapID);
 
         std::shared_ptr<NativeTokenInfoInner> nativePtr = std::make_shared<NativeTokenInfoInner>(nativeToken);
         if (nativePtr == nullptr) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}x alloc local token failed.",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId 0x%{public}x alloc local token failed.",
                 deviceID.c_str(), remoteID);
             continue;
         }
@@ -703,11 +703,11 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         int ret = AddNativeTokenInfo(nativePtr);
         if (ret != RET_SUCCESS) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}x add local token failed.",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId 0x%{public}x add local token failed.",
                 deviceID.c_str(), remoteID);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}x map token %{public}x add success.",
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}x map token %{public}x add success.",
             deviceID.c_str(), remoteID, mapID);
     }
 
@@ -717,12 +717,12 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
 int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
         return RET_FAILED;
     }
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId 0x%{public}x is not mapped",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId 0x%{public}x is not mapped",
             deviceID.c_str(), tokenID);
         return RET_FAILED;
     }
@@ -754,7 +754,7 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)
         || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
         return 0;
     }
     return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
@@ -763,13 +763,13 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
 int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
         return RET_FAILED;
     }
     std::vector<AccessTokenID> remoteTokens;
     int ret = AccessTokenRemoteTokenManager::GetInstance().GetDeviceAllRemoteTokenID(deviceID, remoteTokens);
     if (ret == RET_FAILED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s have no remote token", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s have no remote token", deviceID.c_str());
         return RET_FAILED;
     }
     for (AccessTokenID remoteID : remoteTokens) {
@@ -782,7 +782,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     AccessTokenID remoteTokenID)
 {
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", remoteDeviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", remoteDeviceID.c_str());
         return 0;
     }
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteDeviceID,
@@ -792,7 +792,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     }
     int ret = TokenSyncKit::GetRemoteHapTokenInfo(remoteDeviceID, remoteTokenID);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}x sync failed",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s token %{public}x sync failed",
             remoteDeviceID.c_str(), remoteTokenID);
         return 0;
     }
