@@ -75,7 +75,7 @@ private:
     inline static const std::string PERMISSION_VISITOR_TABLE = "permission_visitor_table";
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
     inline static const std::string DATABASE_NAME = "permission_used_record.db";
-    inline static const std::string DATABASE_PATH = "/data/system/access_token/";
+    inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
     static const int32_t DATABASE_VERSION = 1;
 };
 } // namespace AccessToken
