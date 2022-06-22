@@ -56,7 +56,8 @@
           "pages/authority-secondary",
           "pages/authority-tertiary",
           "pages/authority-tertiary-groups",
-          "pages/other-permissions"
+          "pages/other-permissions",
+          "pages/permission-access-record"
         ],
         "name": ".MainAbility",
         "window": {

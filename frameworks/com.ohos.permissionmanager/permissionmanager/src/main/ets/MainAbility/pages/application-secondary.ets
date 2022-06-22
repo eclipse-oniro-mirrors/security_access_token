@@ -204,7 +204,7 @@ struct appNamePlusPage {
           Row() {
             Column() {
               Row() {
-                backBar({ title: JSON.stringify(this.routerData.labelId) })
+                backBar({ title: JSON.stringify(this.routerData.labelId), recordable: false })
               }
               Row() {
                 Column() {
@@ -317,7 +317,7 @@ struct appNamePlusPage {
                           }
                         }
                       }
-                    }
+                    }.scrollBar(BarState.Off)
                   }
                 }
                 .width(Constants.FULL_WIDTH)

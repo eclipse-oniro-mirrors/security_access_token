@@ -84,11 +84,13 @@ struct authorityManagementPage {
           }
           if (!index) {
             Row() {
-              Column()
-                .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.MANAGEMENT_TEXT_DECORATION_WIDTH)
-                .height(Constants.TEXT_DECORATION_HEIGHT)
-                .margin({ left: Constants.MANAGEMENT_TEXT_DECORATION_MARGIN_LEFT })
+              Flex() {
+                Column().width(Constants.MANAGEMENT_TEXT_DECORATION_MARGIN_LEFT)
+                Column()
+                  .backgroundColor($r('app.color.text_decoration_color'))
+                  .height(Constants.TEXT_DECORATION_HEIGHT)
+                  .flexGrow(Constants.FLEX_GROW)
+              }
             }
           }
         }.onClick(() => {
@@ -446,7 +448,7 @@ struct authorityManagementPage {
         Row() {
           Column() {
             Row() {
-              backBar( { title: JSON.stringify($r('app.string.authority_management')) })
+              backBar( { title: JSON.stringify($r('app.string.authority_management')), recordable: false })
             }
             Row() {
               Column() {
@@ -476,8 +478,7 @@ struct authorityManagementPage {
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
                                   top: Constants.MANAGEMENT_ROW_PADDING_TOP
                                 })
-                                .height(Constants.FULL_HEIGHT)
-                              }
+                              }.scrollBar(BarState.Off)
                             }.width(Constants.FULL_WIDTH)
                           }
                       }.tabBar($r('app.string.authority'))
@@ -555,12 +556,14 @@ struct applicationItem {
           }
           if (!index) {
             Row() {
-              Column()
-                .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.APPLICATION_TEXT_DECORATION_WIDTH)
-                .height(Constants.TEXT_DECORATION_HEIGHT)
-                .margin({ left: Constants.APPLICATION_TEXT_DECORATION_MARGIN_LEFT })
-            }
+              Flex() {
+                Column().width(Constants.APPLICATION_TEXT_DECORATION_MARGIN_LEFT)
+                Column()
+                  .backgroundColor($r('app.color.text_decoration_color'))
+                  .height(Constants.TEXT_DECORATION_HEIGHT)
+                  .flexGrow(Constants.FLEX_GROW)
+              }
+            }.padding({ right: Constants.APPLICATION_LIST_PADDING_RIGHT })
           }
         }.onClick(() => {
           router.push({
@@ -589,24 +592,24 @@ struct applicationItem {
         top: Constants.APPLICATION_TEXTINPUT_PADDING_TOP,
         right: Constants.APPLICATION_TEXTINPUT_PADDING_RIGHT
       })
-      Scroll() {
-        Row() {
-          Flex({ alignItems: ItemAlign.Start }) {
-            Column() {
+      Row() {
+        Flex({ alignItems: ItemAlign.Start }) {
+          Column() {
+            Scroll() {
               if (!this.applicationItem.length) {
                 if (this.searchResult) {
                   Row() {
                     List() {
                       ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                      (item) => {
-                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                      }, item => item.toString())
+                        (item) => {
+                          this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                        }, item => item.toString())
                       ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
                         this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                       }, item => item.toString())
                     }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)
                   }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                   .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+                  .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
                 } else {
                   Row() {
                     Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
@@ -620,27 +623,27 @@ struct applicationItem {
                 Row() {
                   List() {
                     ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                    (item) => {
-                      this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                    }, item => item.toString())
+                      (item) => {
+                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                      }, item => item.toString())
                     ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
                       this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                     }, item => item.toString())
                   }.backgroundColor($r('app.color.default_background_color'))
-                   .borderRadius(Constants.BORDER_RADIUS)
-                   .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+                  .borderRadius(Constants.BORDER_RADIUS)
+                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                }.padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
               }
-            }
-            .backgroundColor($r('app.color.background_color'))
-            .height(Constants.APPLICATION_COLUMN_HEIGHT)
-            Column() {
-              alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
-            }
-            .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
-            .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
+            }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
+            .scrollBar(BarState.Off)
           }
+          .backgroundColor($r('app.color.background_color'))
+          .margin({ bottom: Constants.APPLICATION_LIST_MARGIN_BOTTOM })
+          Column() {
+            alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
+          }
+          .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
+          .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
         }
       }
     }

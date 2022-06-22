@@ -395,7 +395,20 @@ function mkRslt(arr) {
 export function getPermissionGroup(permission: string) {
   for (var i = 0; i < permissionGroups.length; i++) {
     if (permissionGroups[i].permissionName == permission) {
-      return groups[permissionGroups[i].groupId];
+      if(permissionGroups[i].groupName == 'OTHER') {
+        return {
+          "name": permissionGroups[i].groupName,
+          "groupName": permissionGroups[i].groupName,
+          "label": permissionGroups[i].label,
+          "icon": permissionGroups[i].icon,
+          "description": "",
+          "permissions": [
+            permissionGroups[i].permissionName
+          ]
+        }
+      }else {
+        return groups[permissionGroups[i].groupId]
+      }
     }
   }
 }

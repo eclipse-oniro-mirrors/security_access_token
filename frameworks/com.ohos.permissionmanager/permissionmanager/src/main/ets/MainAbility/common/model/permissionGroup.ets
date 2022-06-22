@@ -157,8 +157,8 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.WRITE_CALENDAR",
     "groupName": "CALENDAR",
-    "label": "修建/修改/删除日历",
-    "description": "允许应用修建/修改/删除日历。",
+    "label": "新建/修改/删除日历",
+    "description": "允许应用新建/修改/删除日历。",
     "groupId": 8
   },
   {
@@ -178,6 +178,7 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.DISTRIBUTED_DATASYNC",
     "groupName": "OTHER",
+    "icon": $r("app.media.ic_multi_device_vector"),
     "label": "多设备协同",
     "description": "发现并访问其他设备。",
     "groupId": 11
@@ -371,7 +372,7 @@ export const permissionDescriptions: object = {
   "通讯录": "允许应用新建/修改/删除设备上存储的联系人信息。" ,
   "通话记录": "允许新建/修改/删除设备上的通话记录信息。" ,
   "媒体和文件": "允许应用访问户媒体文件，如视频、音频、图片等。" ,
-  "日历": "允许应用修建/修改/删除日历。" ,
+  "日历": "允许应用新建/修改/删除日历。" ,
   "健身运动": "允许应用程序读取用户的运动状态。" ,
   "身体传感器": "允许应用程序读取用户的健康数据。" ,
   "其他权限": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。"

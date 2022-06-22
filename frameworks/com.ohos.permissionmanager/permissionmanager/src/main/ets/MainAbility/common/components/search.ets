@@ -51,13 +51,11 @@ export struct textInput {
           })
           .onEditChanged((isEditing) => {
           })
-        Column() {
-          Image($r('app.media.search'))
-            .objectFit(ImageFit.Contain)
-            .width(Constants.TEXTINPUT_IMAGE_WIDTH)
-            .height(Constants.TEXTINPUT_IMAGE_HEIGHT)
-            .margin({ left: Constants.TEXTINPUT_IMAGE_MARGIN_LEFT, top: Constants.TEXTINPUT_IMAGE_MARGIN_TOP })
-        }
+        Image($r('app.media.search'))
+          .objectFit(ImageFit.Contain)
+          .width(Constants.TEXTINPUT_IMAGE_WIDTH)
+          .height(Constants.TEXTINPUT_IMAGE_HEIGHT)
+          .position({ x: Constants.TEXTINPUT_IMAGE_MARGIN_LEFT, y: Constants.TEXTINPUT_IMAGE_MARGIN_TOP })
       }
     }
   }
