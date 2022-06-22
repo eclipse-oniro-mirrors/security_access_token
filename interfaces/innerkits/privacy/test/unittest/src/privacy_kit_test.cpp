@@ -371,7 +371,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
 
 /**
  * @tc.name: GetPermissionUsedRecords001
- * @tc.desc: cannot GetPermissionUsedRecords with invalid query request.
+ * @tc.desc: cannot GetPermissionUsedRecords with invalid query time.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
@@ -388,12 +388,6 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
 
     request.beginTimeMillis = 3;
     request.endTimeMillis = 1;
-    ASSERT_EQ(RET_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-
-    request.flag = -1;
-    ASSERT_EQ(RET_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-
-    request.flag = 3;
     ASSERT_EQ(RET_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 }
 
