@@ -265,11 +265,11 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
 
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
-            (goalGrantFlags == PERMISSION_USER_SET)) {
+            ((goalGrantFlags & PERMISSION_USER_SET) != 0)) {
             permState.state = DYNAMIC_OPER;
             return;
         }
-        if (goalGrantFlags == PERMISSION_USER_FIXED) {
+        if ((goalGrantFlags & PERMISSION_USER_FIXED) != 0) {
             permState.state = SETTING_OPER;
             return;
         }
@@ -387,15 +387,7 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         return;
     }
 
-    std::vector<PermissionStateFull> permList;
-    permPolicySet->GetPermissionStateFulls(permList);
-    for (auto& perm : permList) {
-        PermissionDef permDef;
-        bool isGranted = false;
-        GetDefPermission(perm.permissionName, permDef);
-        isGranted = (permDef.grantMode == SYSTEM_GRANT) ? true : false;
-        permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, PERMISSION_DEFAULT_FLAG);
-    }
+    permPolicySet->ResetUserGrantPermissionStatus();
 }
 
 std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)

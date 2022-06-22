@@ -213,7 +213,7 @@ void AccessTokenKitTest::SetUp()
         .isGeneral = true,
         .resDeviceID = {"device"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
     };
     PermissionStateFull permTestState1 = {
         .grantFlags = {0},
@@ -955,6 +955,62 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState003, TestSize.Level0
         ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
         ASSERT_EQ(PERMISSION_DENIED, ret);
     }
+}
+
+/**
+ * @tc.name: ClearUserGrantedPermissionState004
+ * @tc.desc: Clear user/system granted permission after ClearUserGrantedPermissionState has been invoked.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TF AR000GK6TG
+ */
+HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState1 = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PERMISSION_GRANTED_BY_POLICY | PERMISSION_DEFAULT_FLAG}
+    };
+    OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState2 = {
+        .permissionName = "ohos.permission.SEND_MESSAGES",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PERMISSION_GRANTED_BY_POLICY | PERMISSION_USER_FIXED}
+    };
+    OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState3 = {
+        .permissionName = "ohos.permission.RECEIVE_SMS",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PERMISSION_USER_FIXED}
+    };
+    OHOS::Security::AccessToken::HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = OHOS::Security::AccessToken::ATokenAplEnum::APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {g_infoManagerTestPermDef1},
+        .permStateList = {infoManagerTestState1, infoManagerTestState2, infoManagerTestState3}
+    };
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(0, tokenID);
+    int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
+    ASSERT_EQ(PERMISSION_GRANTED, ret);
+
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.SEND_MESSAGES");
+    ASSERT_EQ(PERMISSION_GRANTED, ret);
+
+    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.RECEIVE_SMS");
+    ASSERT_EQ(PERMISSION_DENIED, ret);
+
+    ret = AccessTokenKit::DeleteToken(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
 }
 
 /**

@@ -169,7 +169,7 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     for (auto perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                return perm.grantFlags[0];
+                return perm.grantFlags[0] & (~PERMISSION_GRANTED_BY_POLICY);
             } else {
                 return PERMISSION_DEFAULT_FLAG;
             }
@@ -185,10 +185,31 @@ void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionNa
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
                 perm.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-                perm.grantFlags[0] = flag;
+                perm.grantFlags[0] = flag | (perm.grantFlags[0] & PERMISSION_GRANTED_BY_POLICY);
             } else {
                 return;
             }
+        }
+    }
+}
+
+void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (auto& perm : permStateList_) {
+        if (perm.isGeneral) {
+            if ((perm.grantFlags[0] & PERMISSION_SYSTEM_FIXED) != 0) {
+                continue;
+            }
+            if ((perm.grantFlags[0] & PERMISSION_GRANTED_BY_POLICY) != 0) {
+                perm.grantStatus[0] = PERMISSION_GRANTED;
+                perm.grantFlags[0] = PERMISSION_GRANTED_BY_POLICY | PERMISSION_DEFAULT_FLAG;
+                continue;
+            }
+            perm.grantStatus[0] = PERMISSION_DENIED;
+            perm.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
+        } else {
+            continue;
         }
     }
 }

@@ -51,6 +51,7 @@ public:
         const std::vector<std::string>& nativeAcls);
     void PermStateToString(int32_t tokenApl, const std::vector<std::string>& nativeAcls, std::string& info);
     void GetPermissionStateList(std::vector<PermissionStateFull>& stateList);
+    void ResetUserGrantPermissionStatus(void);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
