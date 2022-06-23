@@ -14,24 +14,11 @@
  */
 
 #include "permission_used_request_parcel.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#define RETURN_IF_FALSE(expr) \
-    if (!(expr)) { \
-        return false; \
-    }
-
-#define RELEASE_IF_FALSE(expr, obj) \
-    if (!(expr)) { \
-        if ((obj) != nullptr) { \
-            delete (obj); \
-            (obj) = nullptr; \
-        } \
-        return (obj); \
-    }
-
 bool PermissionUsedRequestParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteUint32(this->request.tokenId));
