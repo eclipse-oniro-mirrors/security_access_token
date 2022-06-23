@@ -25,6 +25,7 @@ namespace AccessToken {
 class Constant {
 public:
     enum OpCode {
+        OP_INVALID = -1,
         OP_ANSWER_CALL = 0,
         OP_READ_CALENDAR = 1,
         OP_WRITE_CALENDAR = 2,
