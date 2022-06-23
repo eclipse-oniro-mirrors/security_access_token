@@ -31,6 +31,10 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
         return Constant::FAILURE;
     }
 
+    if (request.flag != FLAG_PERMISSION_USAGE_SUMMARY && request.flag != FLAG_PERMISSION_USAGE_DETAIL) {
+        return Constant::FAILURE;
+    }
+
     if (begin == 0 && end == 0) {
         int64_t beginTime = TimeUtil::GetCurrentTimestamp() - Constant::LATEST_RECORD_TIME;
         begin = (beginTime < 0) ? 0 : beginTime;
