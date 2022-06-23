@@ -19,7 +19,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 bool HapInfoParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.userID));
