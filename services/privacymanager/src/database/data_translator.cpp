@@ -63,6 +63,8 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
         int32_t opCode;
         if (Constant::TransferPermissionToOpcode(perm, opCode)) {
             orGenericValues.Put(FIELD_OP_CODE, opCode);
+        } else {
+            orGenericValues.Put(FIELD_OP_CODE, Constant::OP_INVALID);
         }
     }
     return Constant::SUCCESS;
