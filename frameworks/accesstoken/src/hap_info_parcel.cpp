@@ -14,22 +14,11 @@
  */
 
 #include "hap_info_parcel.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#define RETURN_IF_FALSE(expr) \
-    if (!(expr)) { \
-        return false; \
-    }
-
-#define RELEASE_IF_FALSE(expr, obj) \
-    if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
-        return (obj); \
-    }
-
 bool HapInfoParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.userID));
