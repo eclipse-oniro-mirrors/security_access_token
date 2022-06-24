@@ -28,7 +28,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct RecordManagerAsyncContext : public PrivacyAsyncWorkData{
+struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     explicit RecordManagerAsyncContext(napi_env env) : PrivacyAsyncWorkData(env) {}
 
     AccessTokenID   tokenId = 0;

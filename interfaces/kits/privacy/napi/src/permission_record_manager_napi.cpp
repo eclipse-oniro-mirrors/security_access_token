@@ -515,7 +515,8 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
             if (asyncContext->deferred) {
-                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
+                    results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             } else {
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
