@@ -370,26 +370,26 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     ParseAddPermissionRecord(env, cbinfo, *asyncContext);
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
-            return nullptr;
-        }
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "AddPermissionUsedRecord", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "AddPermissionUsedRecord", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env,
+    NAPI_CALL(env, napi_create_async_work(env,
         nullptr,
         resource,
         [](napi_env env, void* data) {
@@ -399,26 +399,26 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
             if (asyncContext->deferred) {
-                napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
+                    results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             } else {
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
                 napi_create_int32(env, 0, &callResult);
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
                 napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
-                napi_delete_reference(env, asyncContext->callbackRef);
             }
-            napi_delete_async_work(env, asyncContext->asyncWork);
-            delete asyncContext;
         },
         reinterpret_cast<void *>(asyncContext),
-        &(asyncContext->asyncWork));
-    napi_queue_async_work(env, asyncContext->asyncWork);
+        &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    callbackPtr.release();
     return result;
 }
 
@@ -426,26 +426,26 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext);
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
-            return nullptr;
-        }
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "StartUsingPermission", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "StartUsingPermission", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env,
+    NAPI_CALL(env, napi_create_async_work(env,
         nullptr,
         resource,
         [](napi_env env, void* data) {
@@ -455,26 +455,26 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
             if (asyncContext->deferred) {
-                napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
+                    results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             } else {
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
                 napi_create_int32(env, 0, &callResult);
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
                 napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
-                napi_delete_reference(env, asyncContext->callbackRef);
             }
-            napi_delete_async_work(env, asyncContext->asyncWork);
-            delete asyncContext;
         },
         reinterpret_cast<void *>(asyncContext),
-        &(asyncContext->asyncWork));
-    napi_queue_async_work(env, asyncContext->asyncWork);
+        &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    callbackPtr.release();
     return result;
 }
 
@@ -482,26 +482,26 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission begin.");
 
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext);
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
-            return nullptr;
-        }
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "StopUsingPermission", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "StopUsingPermission", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env,
+    NAPI_CALL(env, napi_create_async_work(env,
         nullptr,
         resource,
         [](napi_env env, void* data) {
@@ -511,52 +511,51 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
             if (asyncContext->deferred) {
-                napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             } else {
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
                 napi_create_int32(env, 0, &callResult);
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
                 napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
-                napi_delete_reference(env, asyncContext->callbackRef);
             }
-            napi_delete_async_work(env, asyncContext->asyncWork);
-            delete asyncContext;
         },
         reinterpret_cast<void *>(asyncContext),
-        &(asyncContext->asyncWork));
-    napi_queue_async_work(env, asyncContext->asyncWork);
+        &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    callbackPtr.release();
     return result;
 }
 
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords begin.");
-    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext();
+    auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
+
+    std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     ParseGetPermissionUsedRecords(env, cbinfo, *asyncContext);
 
-        napi_value result = nullptr;
+    napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
-        if (napi_create_promise(env, &(asyncContext->deferred), &result) !=napi_ok) {
-            return nullptr;
-        }
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "GetPermissionUsedRecords", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetPermissionUsedRecords", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(env,
+    NAPI_CALL(env, napi_create_async_work(env,
         nullptr,
         resource,
         [](napi_env env, void* data) {
@@ -565,28 +564,28 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
             napi_create_int32(env, asyncContext->retCode, &results[0]);
             napi_create_array(env, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
             ProcessRecordResult(env, results[ASYNC_CALL_BACK_VALUES_NUM - 1], asyncContext->result);
             if (asyncContext->deferred) {
-                napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+                NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
+                    results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             } else {
                 napi_value callback = nullptr;
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
                 napi_create_int32(env, 0, &callResult);
-                napi_get_reference_value(env, asyncContext->callbackRef, &callback);
+                NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
                 napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
-                napi_delete_reference(env, asyncContext->callbackRef);
             }
-            napi_delete_async_work(env, asyncContext->asyncWork);
-            delete asyncContext;
         },
         reinterpret_cast<void *>(asyncContext),
-        &(asyncContext->asyncWork));
-    napi_queue_async_work(env, asyncContext->asyncWork);
+        &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    callbackPtr.release();
     return result;
 }
 }  // namespace AccessToken

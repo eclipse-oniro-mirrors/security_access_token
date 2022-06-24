@@ -25,6 +25,7 @@ ohos_shared_library("libprivacymanager") {
   ]
 
   sources = [
+    "napi/src/napi_common.cpp",
     "napi/src/native_module.cpp",
     "napi/src/permission_record_manager_napi.cpp",
   ]

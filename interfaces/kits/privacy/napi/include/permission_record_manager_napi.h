@@ -20,6 +20,7 @@
 #include "access_token.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "napi_common.h"
 
 #include "permission_used_request.h"
 #include "permission_used_result.h"
@@ -27,11 +28,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct RecordManagerAsyncContext {
-    napi_env        env = nullptr;
-    napi_async_work asyncWork = nullptr;
-    napi_deferred   deferred = nullptr;
-    napi_ref        callbackRef = nullptr;
+struct RecordManagerAsyncContext : public PrivacyAsyncWorkData{
+    explicit RecordManagerAsyncContext(napi_env env) : PrivacyAsyncWorkData(env) {}
 
     AccessTokenID   tokenId = 0;
     std::string     permissionName;
@@ -39,7 +37,6 @@ struct RecordManagerAsyncContext {
     int32_t         failCount;
     PermissionUsedRequest request;
     PermissionUsedResult result;
-
     int32_t retCode;
 };
 

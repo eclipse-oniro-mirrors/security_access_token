@@ -389,6 +389,9 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
     request.beginTimeMillis = 3;
     request.endTimeMillis = 1;
     ASSERT_EQ(RET_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    request.flag = (PermissionUsageFlag)-1;
+    ASSERT_EQ(RET_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 }
 
 /**
@@ -435,11 +438,18 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     BuildQueryRequest(g_TokenId_A, GetLocalDeviceUdid(), "bundleA", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(0, result.bundleRecords.size());
+
+    // query by invalid permission Name
+    permissionList.clear();
+    permissionList.emplace_back("invalid permission");
+    BuildQueryRequest(g_TokenId_A, GetLocalDeviceUdid(), g_InfoParmsA.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(0, result.bundleRecords.size());
 }
 
 /**
  * @tc.name: GetPermissionUsedRecords003
- * @tc.desc: cannot GetPermissionUsedRecords with valid query time.
+ * @tc.desc: can GetPermissionUsedRecords with valid query time.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
@@ -470,7 +480,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
 
 /**
  * @tc.name: GetPermissionUsedRecords004
- * @tc.desc: cannot GetPermissionUsedRecords with valid query time.
+ * @tc.desc: can GetPermissionUsedRecords with valid query time.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
