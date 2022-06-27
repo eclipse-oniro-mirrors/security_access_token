@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef SQL_STORAGE_H
-#define SQL_STORAGE_H
+#ifndef PERMISSION_USED_RECORD_DB_H
+#define PERMISSION_USED_RECORD_DB_H
 
 #include "generic_values.h"
 #include "sqlite_helper.h"
@@ -30,16 +30,16 @@ public:
     std::string tableName_;
     std::vector<std::string> tableColumnNames_;
 };
-class SqliteStorage : public SqliteHelper {
+class PermissionUsedRecordDb : public SqliteHelper {
 public:
     enum DataType {
         PERMISSION_VISITOR = 0,
         PERMISSION_RECORD,
     };
     enum ExecuteResult { FAILURE = -1, SUCCESS };
-    static SqliteStorage& GetInstance();
+    static PermissionUsedRecordDb& GetInstance();
 
-    ~SqliteStorage() override;
+    ~PermissionUsedRecordDb() override;
 
     int32_t Add(const DataType type, const std::vector<GenericValues>& values);
     int32_t Remove(const DataType type, const GenericValues& conditions);
@@ -53,8 +53,8 @@ public:
     void OnUpdate() override;
 
 private:
-    SqliteStorage();
-    DISALLOW_COPY_AND_MOVE(SqliteStorage);
+    PermissionUsedRecordDb();
+    DISALLOW_COPY_AND_MOVE(PermissionUsedRecordDb);
 
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
     OHOS::Utils::RWLock rwLock_;
@@ -75,11 +75,11 @@ private:
     inline static const std::string PERMISSION_VISITOR_TABLE = "permission_visitor_table";
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
     inline static const std::string DATABASE_NAME = "permission_used_record.db";
-    inline static const std::string DATABASE_PATH = "/data/system/access_token/";
+    inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
     static const int32_t DATABASE_VERSION = 1;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif // SQL_STORAGE_H
+#endif // PERMISSION_USED_RECORD_DB_H

@@ -21,6 +21,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
+    "//base/security/access_token/frameworks/common/include",
     "//utils/native/base/include",
   ]
 

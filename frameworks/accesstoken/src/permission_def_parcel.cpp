@@ -16,22 +16,11 @@
 #include "permission_def_parcel.h"
 
 #include "access_token.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#define RETURN_IF_FALSE(expr) \
-    if (!(expr)) { \
-        return false; \
-    }
-
-#define RELEASE_IF_FALSE(expr, obj) \
-    if (!(expr)) { \
-        delete (obj); \
-        (obj) = nullptr; \
-        return (obj); \
-    }
-
 bool PermissionDefParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->permissionDef.permissionName));

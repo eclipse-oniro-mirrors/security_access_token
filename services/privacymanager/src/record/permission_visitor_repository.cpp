@@ -16,7 +16,7 @@
 #include "permission_visitor_repository.h"
 
 #include "accesstoken_log.h"
-#include "sqlite_storage.h"
+#include "permission_used_record_db.h"
 
 namespace OHOS {
 namespace Security {
@@ -46,9 +46,9 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
     GenericValues nullValues;
     std::vector<GenericValues> insertValues;
     std::vector<GenericValues> resultValues;
-    if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_VISITOR, visitorValues,
-        nullValues, resultValues) != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table find fail", __func__);
+    if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_VISITOR,
+        visitorValues, nullValues, resultValues) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table find fail");
         return false;
     }
     if (!resultValues.empty()) {
@@ -56,8 +56,9 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
     }
 
     insertValues.emplace_back(visitorValues);
-    if (SqliteStorage::GetInstance().Add(SqliteStorage::PERMISSION_VISITOR, insertValues) != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table add fail", __func__);
+    if (PermissionUsedRecordDb::GetInstance().Add(PermissionUsedRecordDb::PERMISSION_VISITOR, insertValues)
+        != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table add fail");
         return false;
     }
     return true;
@@ -66,9 +67,9 @@ bool PermissionVisitorRepository::AddVisitorValues(const GenericValues& visitorV
 bool PermissionVisitorRepository::FindVisitorValues(
     const GenericValues& andValues, const GenericValues& orValues, std::vector<GenericValues>& visitorValues)
 {
-    if (SqliteStorage::GetInstance().FindByConditions(SqliteStorage::PERMISSION_VISITOR, andValues,
-        orValues, visitorValues) != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table find fail", __func__);
+    if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_VISITOR, andValues,
+        orValues, visitorValues) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table find fail");
         return false;
     }
     return true;
@@ -76,9 +77,9 @@ bool PermissionVisitorRepository::FindVisitorValues(
 
 bool PermissionVisitorRepository::RemoveVisitorValues(const GenericValues& conditionValues)
 {
-    if (SqliteStorage::GetInstance().Remove(SqliteStorage::PERMISSION_VISITOR, conditionValues)
-        != SqliteStorage::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s PERMISSION_VISITOR table remove fail", __func__);
+    if (PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::PERMISSION_VISITOR, conditionValues)
+        != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_VISITOR table remove fail");
         return false;
     }
     return true;

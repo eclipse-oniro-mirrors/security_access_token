@@ -247,7 +247,7 @@ AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::st
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{private}s, remoteTokenID: %{public}d",
         remoteDeviceID.c_str(), remoteTokenID);
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
@@ -303,7 +303,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -312,7 +312,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
 
@@ -325,7 +325,7 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
         deviceID.c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
@@ -334,7 +334,7 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
         deviceID.c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
@@ -342,7 +342,7 @@ AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::strin
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }

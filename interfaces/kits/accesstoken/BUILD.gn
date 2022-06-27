@@ -30,8 +30,6 @@ ohos_shared_library("libabilityaccessctrl") {
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
-    "ability_base:want",
-    "ability_runtime:wantagent_innerkits",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
