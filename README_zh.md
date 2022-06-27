@@ -1,21 +1,23 @@
 # 访问控制<a name="ZH-CN_TOPIC_0000001101239136"></a>
 
--   [简介](#section11660541593)
--   [目录](#section119744591305)
--   [使用](#section137768191623)
-    -   [接口说明](#section1551164914237)
-    -   [使用说明](#section129654513264)
--   [相关仓](#section1371113476307)
+ - [简介<a name="section11660541593"></a>](#简介)
+ - [目录<a name="section161941989596"></a>](#目录)
+ - [使用<a name="section137768191623"></a>](#使用)
+  - [接口说明<a name="section1551164914237"></a>](#接口说明)
+  - [使用说明<a name="section129654513264"></a>](#使用说明)
+   - [native进程](#native进程)
+   - [应用hap](#应用hap)
+ - [相关仓<a name="section1371113476307"></a>](#相关仓)
 
 ## 简介<a name="section11660541593"></a>
 
 ATM(AccessTokenManager)是OpenHarmony上基于AccessToken构建的统一的应用权限管理能力。
 
-应用的Accesstoken信息主要包括应用身份标识APPID、用户ID，应用分身索引、应用APL(Ability Privilege Level)等级、应用权限信息等。每个应用的Accestoken信息由一个32bits的设备内唯一标识符TokenID(Token identity)来标识。
+应用的Accesstoken信息主要包括应用身份标识APPID、用户ID，应用分身索引、应用APL(Ability Privilege Level)等级、应用权限信息等。每个应用的Accesstoken信息由一个32bits的设备内唯一标识符TokenID(Token identity)来标识。
 
 ATM模块主要提供如下功能：
 -   提供基于TokenID的应用权限校验机制，应用访问敏感数据或者API时可以检查是否有对应的权限。
--   提供基于TokenID的Accestoken信息查询，应用可以根据TokenID查询自身的APL等级等信息。
+-   提供基于TokenID的Accesstoken信息查询，应用可以根据TokenID查询自身的APL等级等信息。
 
 ## 目录<a name="section161941989596"></a>
 
