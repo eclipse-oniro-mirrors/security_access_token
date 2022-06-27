@@ -162,9 +162,10 @@ static void ParseAddPermissionRecord(
     asyncContext.failCount = ParseInt32(env, argv[PARAM3]);
     if (argc == ARGS_FIVE) {
         napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[ARGS_FIVE - 1], &valueType);
+        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_FIVE - 1], &valueType));
         if (valueType == napi_function) {
-            napi_create_reference(env, argv[ARGS_FIVE - 1], 1, &asyncContext.callbackRef); // get probably callback
+            NAPI_CALL_RETURN_VOID(env,
+                napi_create_reference(env, argv[ARGS_FIVE - 1], 1, &asyncContext.callbackRef));
         }
     }
 }
@@ -177,16 +178,17 @@ static void ParseStartAndStopUsingPermission(
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    NAPI_CALL_RETURN_VOID(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data));
 
     asyncContext.env = env;
     asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
     asyncContext.permissionName = ParseString(env, argv[PARAM1]);
     if (argc == ARGS_THREE) {
         napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[ARGS_THREE - 1], &valueType);
+        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_THREE - 1], &valueType))  ;
         if (valueType == napi_function) {
-            napi_create_reference(env, argv[ARGS_THREE - 1], 1, &asyncContext.callbackRef); // get probably callback
+            NAPI_CALL_RETURN_VOID(env, napi_create_reference(env,
+                argv[ARGS_THREE - 1], 1, &asyncContext.callbackRef));
         }
     }
 }
@@ -194,120 +196,123 @@ static void ParseStartAndStopUsingPermission(
 static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRecordDetail& detailRecord)
 {
     napi_value nStatus;
-    napi_create_int32(env, detailRecord.status, &nStatus);
-    napi_set_named_property(env, value, "status", nStatus);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.status, &nStatus));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "status", nStatus));
 
     napi_value nTimestamp;
-    napi_create_int64(env, detailRecord.timestamp, &nTimestamp);
-    napi_set_named_property(env, value, "timestamp", nTimestamp);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, detailRecord.timestamp, &nTimestamp));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "timestamp", nTimestamp));
 
     napi_value nAccessDuration;
-    napi_create_int64(env, detailRecord.accessDuration, &nAccessDuration);
-    napi_set_named_property(env, value, "accessDuration", nAccessDuration);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, detailRecord.accessDuration, &nAccessDuration));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "accessDuration", nAccessDuration));
 }
 
 static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const PermissionUsedRecord& permissionRecord)
 {
     napi_value nPermissionName;
-    napi_create_string_utf8(env, permissionRecord.permissionName.c_str(), NAPI_AUTO_LENGTH, &nPermissionName);
-    napi_set_named_property(env, value, "permissionName", nPermissionName);
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+        permissionRecord.permissionName.c_str(), NAPI_AUTO_LENGTH, &nPermissionName));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "permissionName", nPermissionName));
 
     napi_value nAccessCount;
-    napi_create_int32(env, permissionRecord.accessCount, &nAccessCount);
-    napi_set_named_property(env, value, "accessCount", nAccessCount);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, permissionRecord.accessCount, &nAccessCount));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "accessCount", nAccessCount));
 
     napi_value nRejectCount;
-    napi_create_int32(env, permissionRecord.rejectCount, &nRejectCount);
-    napi_set_named_property(env, value, "rejectCount", nRejectCount);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, permissionRecord.rejectCount, &nRejectCount));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "rejectCount", nRejectCount));
 
     napi_value nLastAccessTime;
-    napi_create_int64(env, permissionRecord.lastAccessTime, &nLastAccessTime);
-    napi_set_named_property(env, value, "lastAccessTime", nLastAccessTime);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, permissionRecord.lastAccessTime, &nLastAccessTime));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lastAccessTime", nLastAccessTime));
 
     napi_value nLastRejectTime;
-    napi_create_int64(env, permissionRecord.lastRejectTime, &nLastRejectTime);
-    napi_set_named_property(env, value, "lastRejectTime", nLastRejectTime);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, permissionRecord.lastRejectTime, &nLastRejectTime));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lastRejectTime", nLastRejectTime));
 
     napi_value nLastAccessDuration;
-    napi_create_int64(env, permissionRecord.lastAccessDuration, &nLastAccessDuration);
-    napi_set_named_property(env, value, "lastAccessDuration", nLastAccessDuration);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, permissionRecord.lastAccessDuration, &nLastAccessDuration));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lastAccessDuration", nLastAccessDuration));
 
     size_t index = 0;
     napi_value objAccessRecords;
-    napi_create_array(env, &objAccessRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objAccessRecords));
     for (const auto& accRecord : permissionRecord.accessRecords) {
         napi_value objAccessRecord;
-        napi_create_object(env, &objAccessRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objAccessRecord));
         ConvertDetailUsedRecord(env, objAccessRecord, accRecord);
-        napi_set_element(env, objAccessRecords, index, objAccessRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objAccessRecords, index, objAccessRecord));
         index++;
     }
-    napi_set_named_property(env, value, "accessRecords", objAccessRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "accessRecords", objAccessRecords));
 
     index = 0;
     napi_value objRejectRecords;
-    napi_create_array(env, &objRejectRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objRejectRecords));
     for (const auto& rejRecord : permissionRecord.rejectRecords) {
         napi_value objRejectRecord;
-        napi_create_object(env, &objRejectRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objRejectRecord));
         ConvertDetailUsedRecord(env, objRejectRecord, rejRecord);
-        napi_set_element(env, objRejectRecords, index, objRejectRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objRejectRecords, index, objRejectRecord));
         index++;
     }
-    napi_set_named_property(env, value, "rejectRecords", objRejectRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "rejectRecords", objRejectRecords));
 }
 
 static void ConvertBundleUsedRecord(napi_env env, napi_value value, const BundleUsedRecord& bundleRecord)
 {
     napi_value nTokenId;
-    napi_create_int32(env, bundleRecord.tokenId, &nTokenId);
-    napi_set_named_property(env, value, "tokenId", nTokenId);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, bundleRecord.tokenId, &nTokenId));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "tokenId", nTokenId));
 
     napi_value nIsRemote;
-    napi_create_int32(env, bundleRecord.isRemote, &nIsRemote);
-    napi_set_named_property(env, value, "isRemote", nIsRemote);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, bundleRecord.isRemote, &nIsRemote));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "isRemote", nIsRemote));
 
     napi_value nDeviceId;
-    napi_create_string_utf8(env, bundleRecord.deviceId.c_str(), NAPI_AUTO_LENGTH, &nDeviceId);
-    napi_set_named_property(env, value, "deviceId", nDeviceId);
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+        bundleRecord.deviceId.c_str(), NAPI_AUTO_LENGTH, &nDeviceId));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "deviceId", nDeviceId));
 
     napi_value nBundleName;
-    napi_create_string_utf8(env, bundleRecord.bundleName.c_str(), NAPI_AUTO_LENGTH, &nBundleName);
-    napi_set_named_property(env, value, "bundleName", nBundleName);
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env,
+        bundleRecord.bundleName.c_str(), NAPI_AUTO_LENGTH, &nBundleName));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "bundleName", nBundleName));
     size_t index = 0;
     napi_value objPermissionRecords;
-    napi_create_array(env, &objPermissionRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objPermissionRecords));
     for (const auto& permRecord : bundleRecord.permissionRecords) {
         napi_value objPermissionRecord;
-        napi_create_object(env, &objPermissionRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objPermissionRecord));
         ConvertPermissionUsedRecord(env, objPermissionRecord, permRecord);
-        napi_set_element(env, objPermissionRecords, index, objPermissionRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objPermissionRecords, index, objPermissionRecord));
         index++;
     }
-    napi_set_named_property(env, value, "permissionRecords", objPermissionRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "permissionRecords", objPermissionRecords));
 }
 
 static void ProcessRecordResult(napi_env env, napi_value value, const PermissionUsedResult& result)
 {
     napi_value nBeginTimestamp;
-    napi_create_int64(env, result.beginTimeMillis, &nBeginTimestamp);
-    napi_set_named_property(env, value, "beginTime", nBeginTimestamp);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, result.beginTimeMillis, &nBeginTimestamp));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "beginTime", nBeginTimestamp));
 
     napi_value nEndTimestamp;
-    napi_create_int64(env, result.endTimeMillis, &nEndTimestamp);
-    napi_set_named_property(env, value, "endTime", nEndTimestamp);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, result.endTimeMillis, &nEndTimestamp));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "endTime", nEndTimestamp));
 
     size_t index = 0;
     napi_value objBundleRecords;
-    napi_create_array(env, &objBundleRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &objBundleRecords));
     for (const auto& bundleRecord : result.bundleRecords) {
         napi_value objBundleRecord;
-        napi_create_object(env, &objBundleRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &objBundleRecord));
         ConvertBundleUsedRecord(env, objBundleRecord, bundleRecord);
-        napi_set_element(env, objBundleRecords, index, objBundleRecord);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, objBundleRecords, index, objBundleRecord));
         index++;
     }
-    napi_set_named_property(env, value, "bundleRecords", objBundleRecords);
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "bundleRecords", objBundleRecords));
 }
 
 static void ParseGetPermissionUsedRecords(
@@ -324,44 +329,42 @@ static void ParseGetPermissionUsedRecords(
         return;
     }
     napi_value property = nullptr;
-    if (napi_ok != napi_get_named_property(env, argv[0], "tokenId", &property)) {
-        return;
-    }
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "tokenId", &property));
     asyncContext.request.tokenId = ParseUint32(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "isRemote", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "isRemote", &property)) ;
     asyncContext.request.isRemote = ParseBool(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "deviceId", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "deviceId", &property));
     asyncContext.request.deviceId = ParseString(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "bundleName", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "bundleName", &property));
     asyncContext.request.bundleName = ParseString(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "beginTime", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "beginTime", &property));
     asyncContext.request.beginTimeMillis = ParseInt64(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "endTime", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "endTime", &property));
     asyncContext.request.endTimeMillis = ParseInt64(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "permissionNames", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "permissionNames", &property));
     asyncContext.request.permissionList = ParseStringArray(env, property);
-    if (napi_ok != napi_get_named_property(env, argv[0], "flag", &property)) {
-        return;
-    }
+
+    property = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[0], "flag", &property));
     asyncContext.request.flag = (PermissionUsageFlagEnum)ParseInt32(env, property);
 
     asyncContext.env = env;
     if (argc == ARGS_TWO) {
-        napi_typeof(env, argv[ARGS_TWO - 1], &valuetype);
+        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_TWO - 1], &valuetype));
         if (valuetype == napi_function) {
-            napi_create_reference(env, argv[ARGS_TWO - 1], 1, &asyncContext.callbackRef);
+            NAPI_CALL_RETURN_VOID(env, napi_create_reference(env, argv[ARGS_TWO - 1], 1, &asyncContext.callbackRef));
         }
     }
 }
@@ -394,14 +397,21 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(asyncContext->tokenId,
                 asyncContext->permissionName, asyncContext->successCount, asyncContext->failCount);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
-            napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+            NAPI_CALL_RETURN_VOID(env, napi_create_int32(env,
+                asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             if (asyncContext->deferred) {
                 NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
                     results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
@@ -410,9 +420,10 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
-                napi_create_int32(env, 0, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &callResult));
                 NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-                napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM,
+                    results, &callResult));
             }
         },
         reinterpret_cast<void *>(asyncContext),
@@ -450,14 +461,21 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             asyncContext->retCode = PrivacyKit::StartUsingPermission(asyncContext->tokenId,
                 asyncContext->permissionName);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
-            napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+            NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode,
+                &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             if (asyncContext->deferred) {
                 NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
                     results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
@@ -466,9 +484,10 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
-                napi_create_int32(env, 0, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &callResult));
                 NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-                napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM,
+                    results, &callResult));
             }
         },
         reinterpret_cast<void *>(asyncContext),
@@ -506,14 +525,21 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             asyncContext->retCode = PrivacyKit::StopUsingPermission(asyncContext->tokenId,
                 asyncContext->permissionName);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
-            napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+            NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode,
+                &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             if (asyncContext->deferred) {
                 NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
                     results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
@@ -522,9 +548,10 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
-                napi_create_int32(env, 0, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &callResult));
                 NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-                napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM,
+                    results, &callResult));
             }
         },
         reinterpret_cast<void *>(asyncContext),
@@ -561,14 +588,20 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         resource,
         [](napi_env env, void* data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             asyncContext->retCode = PrivacyKit::GetPermissionUsedRecords(asyncContext->request, asyncContext->result);
         },
         [](napi_env env, napi_status status, void *data) {
             RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+            if (asyncContext == nullptr) {
+                return;
+            }
             std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
             napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
-            napi_create_int32(env, asyncContext->retCode, &results[0]);
-            napi_create_array(env, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+            NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode, &results[0]));
+            NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
             ProcessRecordResult(env, results[ASYNC_CALL_BACK_VALUES_NUM - 1], asyncContext->result);
             if (asyncContext->deferred) {
                 NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
@@ -578,9 +611,10 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
                 napi_value callResult = nullptr;
                 napi_value undefine = nullptr;
                 napi_get_undefined(env, &undefine);
-                napi_create_int32(env, 0, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &callResult));
                 NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-                napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &callResult);
+                NAPI_CALL_RETURN_VOID(env, napi_call_function(env, undefine, callback, ASYNC_CALL_BACK_VALUES_NUM,
+                    results, &callResult));
             }
         },
         reinterpret_cast<void *>(asyncContext),
