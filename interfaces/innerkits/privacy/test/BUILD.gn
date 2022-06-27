@@ -41,9 +41,9 @@ ohos_unittest("libprivacy_sdk_test") {
     "//utils/native/base:utils",
   ]
   external_deps = [
+    "init:libbegetutil",
     "ipc:ipc_core",
     "samgr_standard:samgr_proxy",
-    "startup_l2:syspara",
   ]
 }
 
