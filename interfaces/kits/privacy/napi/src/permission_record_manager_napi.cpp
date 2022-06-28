@@ -384,7 +384,7 @@ static void AddPermissionUsedRecordExecute(napi_env env, void* data)
 static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, void* data)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord complete.");
-   RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
+    RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
         return;
     }
