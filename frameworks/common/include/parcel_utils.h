@@ -15,6 +15,7 @@
 
 #ifndef PARCEL_UTILS_H
 #define PARCEL_UTILS_H
+#define MAX_PERMLIST_SIZE 256
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
