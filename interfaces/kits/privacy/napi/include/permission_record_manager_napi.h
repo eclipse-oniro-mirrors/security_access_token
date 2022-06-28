@@ -33,11 +33,11 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
 
     AccessTokenID   tokenId = 0;
     std::string     permissionName;
-    int32_t         successCount;
-    int32_t         failCount;
+    int32_t         successCount = 0;
+    int32_t         failCount = 0;
     PermissionUsedRequest request;
     PermissionUsedResult result;
-    int32_t retCode;
+    int32_t retCode = -1;
 };
 
 napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo);
