@@ -12,13 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_
-#define  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_
-
-#include <pthread.h>
-#include <cstdio>
-#include <cstring>
-#include <unistd.h>
+#ifndef  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_
+#define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -26,11 +21,16 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/*
- * function for module exports
- */
-static napi_value Init(napi_env env, napi_value exports);
+struct PrivacyAsyncWorkData {
+    explicit PrivacyAsyncWorkData(napi_env env);
+    virtual ~PrivacyAsyncWorkData();
+
+    napi_env        env = nullptr;
+    napi_async_work asyncWork = nullptr;
+    napi_deferred   deferred = nullptr;
+    napi_ref        callbackRef = nullptr;
+};
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif /*  INTERFACES_PRIVACY_KITS_NATIVE_MODULE_H_ */
+#endif /*  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_ */

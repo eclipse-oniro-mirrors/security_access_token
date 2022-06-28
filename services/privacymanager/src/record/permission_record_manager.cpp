@@ -402,7 +402,9 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     PermissionUsedRequest request;
     request.bundleName = bundleName;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    request.permissionList.emplace_back(permissionName);
+    if (!permissionName.empty()) {
+        request.permissionList.emplace_back(permissionName);
+    }
 
     PermissionUsedResult result;
     if (!GetRecordsFromDB(request, result)) {
