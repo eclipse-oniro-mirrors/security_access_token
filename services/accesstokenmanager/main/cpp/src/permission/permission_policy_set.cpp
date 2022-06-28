@@ -169,7 +169,9 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     for (auto perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                return perm.grantFlags[0] & (~PERMISSION_GRANTED_BY_POLICY);
+                uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+                uint32_t unmaskedFlag = (oldFlag) & (~PERMISSION_GRANTED_BY_POLICY);
+                return static_cast<int32_t>(unmaskedFlag);
             } else {
                 return PERMISSION_DEFAULT_FLAG;
             }
@@ -178,14 +180,16 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     return PERMISSION_DEFAULT_FLAG;
 }
 
-void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, int flag)
+void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
                 perm.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-                perm.grantFlags[0] = flag | (perm.grantFlags[0] & PERMISSION_GRANTED_BY_POLICY);
+                uint32_t currFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+                uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
+                perm.grantFlags[0] = static_cast<int32_t>(newFlag);
             } else {
                 return;
             }
@@ -198,12 +202,13 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
         if (perm.isGeneral) {
-            if ((perm.grantFlags[0] & PERMISSION_SYSTEM_FIXED) != 0) {
+            uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+            if ((oldFlag & PERMISSION_SYSTEM_FIXED) != 0) {
                 continue;
             }
-            if ((perm.grantFlags[0] & PERMISSION_GRANTED_BY_POLICY) != 0) {
+            if ((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) {
                 perm.grantStatus[0] = PERMISSION_GRANTED;
-                perm.grantFlags[0] = PERMISSION_GRANTED_BY_POLICY | PERMISSION_DEFAULT_FLAG;
+                perm.grantFlags[0] = PERMISSION_GRANTED_BY_POLICY;
                 continue;
             }
             perm.grantStatus[0] = PERMISSION_DENIED;

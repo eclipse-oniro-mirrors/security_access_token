@@ -239,14 +239,14 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
 {
     bool foundGoal = false;
     int32_t goalGrantStatus;
-    int32_t goalGrantFlags;
+    uint32_t goalGrantFlags;
     for (auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "find goal permission: %{public}s!", permState.permissionName.c_str());
             foundGoal = true;
             goalGrantStatus = perm.grantStatus[0];
-            goalGrantFlags = perm.grantFlags[0];
+            goalGrantFlags = static_cast<uint32_t>(perm.grantFlags[0]);
             break;
         }
     }
@@ -320,7 +320,7 @@ void PermissionManager::UpdateTokenPermissionState(
         return;
     }
 
-    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif

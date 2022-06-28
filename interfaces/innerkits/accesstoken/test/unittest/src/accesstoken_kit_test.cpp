@@ -1010,7 +1010,6 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
 
     ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
-
 }
 
 /**
