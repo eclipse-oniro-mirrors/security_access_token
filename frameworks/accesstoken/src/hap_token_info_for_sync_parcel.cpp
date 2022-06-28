@@ -30,7 +30,7 @@ bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
     const std::vector<PermissionStateFull>& permStateList = this->hapTokenInfoForSyncParams.permStateList;
     int32_t permStateListSize = static_cast<int32_t>(permStateList.size());
     RETURN_IF_FALSE(out.WriteInt32(permStateListSize));
-
+    RETURN_IF_FALSE((permStateListSize <= MAX_PERMLIST_SIZE));
     for (int i = 0; i < permStateListSize; i++) {
         PermissionStateFullParcel permStateParcel;
         permStateParcel.permStatFull = permStateList[i];
