@@ -75,6 +75,7 @@ typedef enum TypePermissionFlag {
     PERMISSION_USER_SET = 1 << 0,
     PERMISSION_USER_FIXED = 1 << 1,
     PERMISSION_SYSTEM_FIXED = 1 << 2,
+    PERMISSION_GRANTED_BY_POLICY = 1 << 3,
 } PermissionFlag;
 
 typedef enum TypePermissionOper {
