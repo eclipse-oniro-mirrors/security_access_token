@@ -2,87 +2,87 @@
   "string": [
     {
       "name": "permissionmanager_MainAbility",
-      "value": "authority management"
+      "value": "权限管理"
     },
     {
       "name": "description_mainability",
-      "value": "authority management"
+      "value": "权限管理"
     },
     {
       "name": "permissionmanager_GrantAbility",
-      "value": "apply for permission"
+      "value": "权限申请"
     },
     {
       "name": "no_permission",
-      "value": "no permission"
+      "value": "暂无权限"
     },
     {
       "name": "access_permission",
-      "value": "access permission"
+      "value": "访问权限"
     },
     {
       "name": "permission_access_record",
-      "value": "permission access record"
+      "value": "权限访问记录"
     },
     {
       "name": "authority_management",
-      "value": "authority management"
+      "value": "权限管理"
     },
     {
       "name": "other_permissions",
-      "value": "other permissions"
+      "value": "其它权限"
     },
     {
       "name": "application",
-      "value": "        application        "
+      "value": "        应用        "
     },
     {
       "name": "authority",
-      "value": "        authority        "
+      "value": "        权限        "
     },
     {
       "name": "textInput_placeholder",
-      "value": "search application"
+      "value": "搜索应用"
     },
     {
       "name": "allowed",
-      "value": "allowed"
+      "value": "已允许"
     },
     {
       "name": "banned",
-      "value": "banned"
+      "value": "已禁止"
     },
     {
       "name": "description_grantability",
-      "value": "apply for permission"
+      "value": "权限申请"
     },
     {
       "name": "Authorization_failed",
-      "value": "Authorization failure！"
+      "value": "授权失败！"
     },
     {
       "name": "reason_suffix",
-      "value": " and other permissions."
+      "value": "等权限。"
     },
     {
       "name": "separator",
-      "value": ","
+      "value": "、"
     },
     {
       "name": "visits",
-      "value": "Number of visits:"
+      "value": "访问次数："
     },
     {
       "name": "recent_visit",
-      "value": ";Recent visits:"
+      "value": "；最近访问："
     },
     {
       "name": "morning",
-      "value": "am"
+      "value": "上午"
     },
     {
       "name": "afternoon",
-      "value": "pm"
+      "value": "下午"
     }
   ]
 }

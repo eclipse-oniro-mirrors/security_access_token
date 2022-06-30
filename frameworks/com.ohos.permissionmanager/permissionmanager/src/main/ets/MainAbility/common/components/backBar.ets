@@ -14,11 +14,14 @@
  */
 
 import router from '@system.router';
+import Resmgr from '@ohos.resourceManager'
 import Constants from '../utils/constant.ets';
 
 @Component
 export struct backBar {
   @Prop title: string; // return title name
+  @Prop recordable: boolean
+  @State record: string = ''
 
   build() {
     Column() {
@@ -41,11 +44,34 @@ export struct backBar {
           .flexGrow(Constants.BACKBAR_TEXT_FLEX_GROW)
           .fontWeight(FontWeight.Bold)
           .margin({ top: Constants.BACKBAR_TEXT_MARGIN_TOP })
+        if(this.recordable) {
+          Image($r("app.media.gongneng_dian"))
+            .objectFit(ImageFit.Contain)
+            .height(Constants.BACKBAR_IMAGE_HEIGHT)
+            .width(Constants.BACKBAR_IMAGE_WIDTH)
+            .margin({ top: Constants.BACKBAR_TEXT_MARGIN_TOP, right: Constants.BACKBAR_IMAGE_MARGIN_RIGHT })
+            .bindMenu([
+              {
+                value: this.record,
+                action: () => {
+                  router.push({ uri: 'pages/permission-access-record' })
+                }
+              }
+            ])
+        }
       }
     }
     .height(Constants.BACKBAR_HEIGHT)
     .constraintSize({ minHeight: Constants.BACKBAR_MINHEIGHT })
     .alignItems(HorizontalAlign.Start)
     .backgroundColor($r('app.color.background_color'))
+  }
+
+  aboutToAppear() {
+    Resmgr.getResourceManager(Constants.BUNDLE_NAME).then(item => {
+      item.getString($r("app.string.permission_access_record").id, (err, val) => {
+        this.record = val
+      })
+    })
   }
 }

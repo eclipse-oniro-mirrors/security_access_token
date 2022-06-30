@@ -17,6 +17,10 @@
       "value": "#66182431"
     },
     {
+      "name": "label_color_lightest",
+      "value": "#0D182431"
+    },
+    {
       "name": "background_color",
       "value": "#F4F5F7"
     },

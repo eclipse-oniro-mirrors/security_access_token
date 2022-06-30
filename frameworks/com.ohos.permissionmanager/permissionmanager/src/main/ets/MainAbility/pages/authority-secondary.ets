@@ -54,7 +54,7 @@ struct appNamePage {
         Row() {
           Column() {
             Row() {
-              backBar({ title: JSON.stringify(this.backTitle) })
+              backBar({ title: JSON.stringify(this.backTitle), recordable: false })
             }
             Row() {
               Column() {
