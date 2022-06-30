@@ -117,7 +117,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
     std::string localUdid = Constant::GetLocalDeviceId();
-    for (DeviceInfo device : devices) {
+    for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
             continue;
@@ -142,7 +142,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
 {
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
     std::string localUdid = Constant::GetLocalDeviceId();
-    for (DeviceInfo device : devices) {
+    for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
             continue;

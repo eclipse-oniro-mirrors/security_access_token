@@ -480,7 +480,7 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
     const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
-    for (auto& infoPtr: tokenInfos) {
+    for (const auto& infoPtr: tokenInfos) {
         if (infoPtr == nullptr) {
             ACCESSTOKEN_LOG_WARN(LABEL, "token info from libat is null");
             continue;

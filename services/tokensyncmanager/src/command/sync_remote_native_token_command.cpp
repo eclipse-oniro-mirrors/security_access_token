@@ -46,7 +46,7 @@ SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(const std::string &js
 
     if (jsonObject.find("NativeTokenInfos") != jsonObject.end() && jsonObject.at("NativeTokenInfos").is_array()) {
         nlohmann::json nativeTokenListJson = jsonObject.at("NativeTokenInfos");
-        for (auto& tokenJson : nativeTokenListJson) {
+        for (const auto& tokenJson : nativeTokenListJson) {
             NativeTokenInfoForSync token;
             BaseRemoteCommand::FromNativeTokenInfoJson(tokenJson, token);
             nativeTokenInfo_.emplace_back(token);
@@ -58,7 +58,7 @@ std::string SyncRemoteNativeTokenCommand::ToJsonPayload()
 {
     nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
     nlohmann::json nativeTokensJson;
-    for (auto token : nativeTokenInfo_) {
+    for (const auto& token : nativeTokenInfo_) {
         nlohmann::json tokenJson = BaseRemoteCommand::ToNativeTokenInfoJson(token);
         nativeTokensJson.emplace_back(tokenJson);
     }

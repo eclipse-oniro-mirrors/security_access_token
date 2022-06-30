@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +28,7 @@ bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->bundleRecord.bundleName));
 
     RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->bundleRecord.permissionRecords.size())));
-    for (auto permRecord : this->bundleRecord.permissionRecords) {
+    for (const auto& permRecord : this->bundleRecord.permissionRecords) {
         PermissionUsedRecordParcel permRecordParcel;
         permRecordParcel.permissionRecord = permRecord;
         out.WriteParcelable(&permRecordParcel);

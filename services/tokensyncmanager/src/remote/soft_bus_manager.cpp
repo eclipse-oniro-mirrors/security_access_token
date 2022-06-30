@@ -70,7 +70,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
         return Constant::FAILURE;
     }
 
-    for (DistributedHardware::DmDeviceInfo device : deviceList) {
+    for (const DistributedHardware::DmDeviceInfo& device : deviceList) {
         std::string uuid = GetUuidByNodeId(device.networkId);
         std::string udid = GetUdidByNodeId(device.networkId);
         if (uuid.empty() || udid.empty()) {

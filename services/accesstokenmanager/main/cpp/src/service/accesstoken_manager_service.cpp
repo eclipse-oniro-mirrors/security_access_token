@@ -112,7 +112,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
-    for (auto perm : permVec) {
+    for (const auto& perm : permVec) {
         PermissionDefParcel permPrcel;
         permPrcel.permissionDef = perm;
         permList.emplace_back(permPrcel);
@@ -128,7 +128,7 @@ int AccessTokenManagerService::GetReqPermissions(
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
-    for (auto& perm : permList) {
+    for (const auto& perm : permList) {
         PermissionStateFullParcel permPrcel;
         permPrcel.permStatFull = perm;
         reqPermList.emplace_back(permPrcel);
@@ -291,7 +291,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 
     std::vector<NativeTokenInfoForSync> nativeVec;
     AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
-    for (auto& native : nativeVec) {
+    for (const auto& native : nativeVec) {
         NativeTokenInfoForSyncParcel nativeParcel;
         nativeParcel.nativeTokenInfoForSyncParams = native;
         nativeTokenInfosRes.emplace_back(nativeParcel);
@@ -316,7 +316,7 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
     std::vector<NativeTokenInfoForSync> nativeList;
 
-    for (auto& nativeParcel : nativeTokenInfoForSyncParcel) {
+    for (const auto& nativeParcel : nativeTokenInfoForSyncParcel) {
         nativeList.emplace_back(nativeParcel.nativeTokenInfoForSyncParams);
     }
 

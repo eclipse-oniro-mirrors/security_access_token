@@ -94,7 +94,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
             return;
         }
 
-        if (deviceList.size() == 0) {
+        if (deviceList.empty()) {
             ACCESSTOKEN_LOG_INFO(LABEL, "there is no remote decice online, exit tokensync process");
 
             exit(0);

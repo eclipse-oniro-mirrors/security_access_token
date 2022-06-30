@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,7 +59,7 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
         visitorGenericValues.Put(FIELD_TOKEN_ID, (int32_t)request.tokenId);
     }
 
-    for (auto perm : request.permissionList) {
+    for (const auto& perm : request.permissionList) {
         int32_t opCode;
         if (Constant::TransferPermissionToOpcode(perm, opCode)) {
             orGenericValues.Put(FIELD_OP_CODE, opCode);
