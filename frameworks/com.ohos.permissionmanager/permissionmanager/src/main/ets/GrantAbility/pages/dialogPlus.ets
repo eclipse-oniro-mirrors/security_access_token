@@ -16,6 +16,7 @@
 import { privacyDialog } from "../common/components/dialog.ets"
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { Log } from '../common/utils/utils.ets'
+import { showSubpermissionsGrop } from '../common/model/permissionGroup.ets'
 
 @Entry
 @Component
@@ -33,7 +34,14 @@ struct dialogPlusPage {
     var acManager = abilityAccessCtrl.createAtManager()
     var num = 0
     group.permissions.forEach(async permission => {
-      const result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+      let result
+      if(showSubpermissionsGrop.indexOf(group.groupName) == -1) {
+        result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+      }else {
+        if(permissionList.includes(permission)) {
+          result = await acManager.grantUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+        }
+      }
       num ++
       Log.info("grant permission result:" + result + "permission" + permission)
       if (result == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED) {
@@ -54,7 +62,14 @@ struct dialogPlusPage {
   async privacyCancel(group, accessTokenId, permissionList, userFixedFlag) {
     var acManager = abilityAccessCtrl.createAtManager()
     group.permissions.forEach(async permission => {
-      const result = await acManager.revokeUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+      let result
+      if(showSubpermissionsGrop.indexOf(group.groupName) == -1) {
+        result = await acManager.revokeUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+      }else {
+        if(permissionList.includes(permission)) {
+          result = await acManager.revokeUserGrantedPermission(accessTokenId, permission, userFixedFlag)
+        }
+      }
       Log.info("revoke permission result:" + result + "permission" + permission);
     })
     this.count ++
