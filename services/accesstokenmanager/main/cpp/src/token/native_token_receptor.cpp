@@ -43,7 +43,7 @@ int32_t NativeReqPermsGet(
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
         return RET_FAILED;
     }
-    for (auto permReq : permReqList) {
+    for (const auto& permReq : permReqList) {
         PermissionStateFull permState;
         permState.permissionName = permReq;
         permState.isGeneral = true;

@@ -82,7 +82,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     }
     policySet->tokenId_ = tokenId;
 
-    for (GenericValues stateValue : permStateRes) {
+    for (const GenericValues& stateValue : permStateRes) {
         if ((AccessTokenID)stateValue.GetInt(FIELD_TOKEN_ID) == tokenId) {
             PermissionStateFull state;
             int ret = DataTranslator::TranslationIntoPermissionStateFull(stateValue, state);
@@ -112,7 +112,7 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
 
 void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& valueList) const
 {
-    for (auto permissionState : permStateList_) {
+    for (const auto& permissionState : permStateList_) {
         if (permissionState.isGeneral) {
             GenericValues genericValues;
             genericValues.Put(FIELD_TOKEN_ID, (int)tokenId_);
@@ -140,7 +140,7 @@ void PermissionPolicySet::StorePermissionPolicySet(std::vector<GenericValues>& p
 int PermissionPolicySet::VerifyPermissStatus(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (auto perm : permStateList_) {
+    for (const auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
                 return perm.grantStatus[0];
@@ -166,7 +166,7 @@ void PermissionPolicySet::GetPermissionStateFulls(std::vector<PermissionStateFul
 int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (auto perm : permStateList_) {
+    for (const auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
                 uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
@@ -222,7 +222,7 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
 void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull>& stateList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (auto& state : permStateList_) {
+    for (const auto& state : permStateList_) {
         stateList.emplace_back(state);
     }
 }
@@ -349,7 +349,7 @@ void PermissionPolicySet::PermStateToString(int32_t tokenApl,
     }
     info.append("\n  ]\n");
 
-    if (invalidPermList.size() == 0) {
+    if (invalidPermList.empty()) {
         return;
     }
 

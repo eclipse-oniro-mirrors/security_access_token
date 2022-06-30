@@ -480,7 +480,7 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
     const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
-    for (auto& infoPtr: tokenInfos) {
+    for (const auto& infoPtr: tokenInfos) {
         if (infoPtr == nullptr) {
             ACCESSTOKEN_LOG_WARN(LABEL, "token info from libat is null");
             continue;
@@ -692,7 +692,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         return RET_FAILED;
     }
 
-    for (NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
+    for (const NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||

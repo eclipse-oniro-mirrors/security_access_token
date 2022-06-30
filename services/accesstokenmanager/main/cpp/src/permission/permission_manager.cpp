@@ -51,7 +51,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
     std::vector<PermissionDef> permFilterList;
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
 
-    for (auto perm : permFilterList) {
+    for (const auto& perm : permFilterList) {
         if (!PermissionValidator::IsPermissionDefValid(perm)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "invalid permission definition info: %{public}s",
                 TransferPermissionDefToString(perm).c_str());
@@ -224,7 +224,7 @@ int PermissionManager::GetReqPermissions(
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
     std::vector<PermissionStateFull> tmpList;
     permPolicySet->GetPermissionStateFulls(tmpList);
-    for (auto perm : tmpList) {
+    for (const auto& perm : tmpList) {
         PermissionDef permDef;
         GetDefPermission(perm.permissionName, permDef);
         if (permDef.grantMode == mode) {
@@ -240,7 +240,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     bool foundGoal = false;
     int32_t goalGrantStatus;
     uint32_t goalGrantFlags;
-    for (auto& perm : permsList) {
+    for (const auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "find goal permission: %{public}s!", permState.permissionName.c_str());

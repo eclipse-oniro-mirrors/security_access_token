@@ -119,7 +119,7 @@ int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand> &
     std::unique_lock<std::recursive_mutex> lock(mutex_);
 
     // make sure do not have the same command in the command buffer
-    for (auto bufferedCommand : commands_) {
+    for (const auto& bufferedCommand : commands_) {
         if (bufferedCommand->remoteProtocol_.uniqueId == uniqueId) {
             ACCESSTOKEN_LOG_WARN(LABEL,
                 "targetNodeId %{public}s, add uniqueId %{public}s, already exist in the buffer, skip",

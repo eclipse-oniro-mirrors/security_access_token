@@ -27,7 +27,7 @@ void ToString::DetailUsedRecordToString(
         infos.append(R"(          "rejectRecords": [)");
     }
     infos.append("\n");
-    for (auto detail : detailRecord) {
+    for (const auto& detail : detailRecord) {
         infos.append("              {");
         infos.append("\n");
         infos.append(R"(                  "status": ")" + std::to_string(detail.status) + R"(")" + ",\n");
@@ -47,7 +47,7 @@ void ToString::PermissionUsedRecordToString(
     infos.append(R"(  "permissionRecords": [)");
     infos.append("\n");
 
-    for (auto perm : permissionRecords) {
+    for (const auto& perm : permissionRecords) {
         infos.append("      {");
         infos.append("\n");
         infos.append(R"(          "permissionName": ")" + perm.permissionName + R"(")" + ",\n");
@@ -83,13 +83,13 @@ void ToString::BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, st
 
 void ToString::PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos)
 {
-    if (result.bundleRecords.size() == 0) {
+    if (result.bundleRecords.empty()) {
         return;
     }
     infos.append(R"("beginTime": )" + std::to_string(result.beginTimeMillis) + ",\n");
     infos.append(R"("endTime": )" + std::to_string(result.endTimeMillis) + ",\n");
 
-    for (auto res : result.bundleRecords) {
+    for (const auto& res : result.bundleRecords) {
         ToString::BundleUsedRecordToString(res, infos);
     }
 }

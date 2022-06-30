@@ -94,7 +94,7 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     int result = this->GetDefPermissions(tokenID, permList);
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, (int) permList.size());
     reply.WriteInt32((int32_t)permList.size());
-    for (auto permDef : permList) {
+    for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
     }
     reply.WriteInt32(result);
@@ -109,7 +109,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
     ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}d", (int) permList.size());
     reply.WriteInt32((int32_t)permList.size());
-    for (auto permDef : permList) {
+    for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
     }
     reply.WriteInt32(result);
@@ -137,7 +137,7 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
     reply.WriteInt32(result);
 
     reply.WriteUint32(permList.size());
-    for (auto perm : permList) {
+    for (const auto& perm : permList) {
         reply.WriteParcelable(&perm);
     }
 }
@@ -346,7 +346,7 @@ void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, Mes
     std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
     int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
     reply.WriteUint32(nativeTokenInfosRes.size());
-    for (auto native : nativeTokenInfosRes) {
+    for (const auto& native : nativeTokenInfosRes) {
         reply.WriteParcelable(&native);
     }
     reply.WriteInt32(result);

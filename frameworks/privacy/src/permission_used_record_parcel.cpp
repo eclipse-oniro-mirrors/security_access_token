@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,14 +30,14 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastAccessDuration));
 
     RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permissionRecord.accessRecords.size())));
-    for (auto accRecord : this->permissionRecord.accessRecords) {
+    for (const auto& accRecord : this->permissionRecord.accessRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = accRecord;
         out.WriteParcelable(&detailParcel);
     }
 
     RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permissionRecord.rejectRecords.size())));
-    for (auto rejRecord : this->permissionRecord.rejectRecords) {
+    for (const auto& rejRecord : this->permissionRecord.rejectRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = rejRecord;
         out.WriteParcelable(&detailParcel);

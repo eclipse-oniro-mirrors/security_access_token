@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -127,7 +127,7 @@ bool PermissionRecordManager::AddRecord(
     recordValues.Put(FIELD_ACCESS_DURATION, insertAccessDuration);
     recordValues.Put(FIELD_ACCESS_COUNT, insertAccessCount);
     recordValues.Put(FIELD_REJECT_COUNT, insertRejectCount);
-    for (auto rec : findValues) {
+    for (const auto& rec : findValues) {
         if (insertTimestamp - rec.GetInt64(FIELD_TIMESTAMP) < Constant::PRECISE) {
             insertAccessDuration += rec.GetInt64(FIELD_ACCESS_DURATION);
             insertAccessCount += rec.GetInt(FIELD_ACCESS_COUNT);
@@ -216,7 +216,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID,
         return;
     }
 
-    for (auto visitor : findVisitorValues) {
+    for (const auto& visitor : findVisitorValues) {
         GenericValues record;
         record.Put(FIELD_VISITOR_ID, visitor.GetInt(FIELD_ID));
         PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
@@ -273,7 +273,7 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
         return true;
     }
 
-    for (auto visitor : findVisitorValues) {
+    for (const auto& visitor : findVisitorValues) {
         andConditionValues.Put(FIELD_VISITOR_ID, visitor.GetInt(FIELD_ID));
         std::vector<GenericValues> findRecordsValues;
         BundleUsedRecord bundleRecord;
@@ -287,13 +287,13 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
         bundleRecord.deviceId = visitor.GetString(FIELD_DEVICE_ID);
         bundleRecord.bundleName = visitor.GetString(FIELD_BUNDLE_NAME);
 
-        if (findRecordsValues.size() != 0) {
+        if (!findRecordsValues.empty()) {
             if (!GetRecords(request.flag, findRecordsValues, bundleRecord, result)) {
                 return false;
             }
         }
 
-        if (bundleRecord.permissionRecords.size() != 0) {
+        if (!bundleRecord.permissionRecords.empty()) {
             result.bundleRecords.emplace_back(bundleRecord);
         }
     }
@@ -412,7 +412,7 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
         return "";
     }
 
-    if (result.bundleRecords.size() == 0) {
+    if (result.bundleRecords.empty()) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "no record");
         return "";
     }
