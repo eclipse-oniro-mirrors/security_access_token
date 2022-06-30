@@ -692,7 +692,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         return RET_FAILED;
     }
 
-    for (const NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
+    for (NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||
