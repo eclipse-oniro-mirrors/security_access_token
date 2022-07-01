@@ -25,6 +25,9 @@ static const std::string REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
     std::string result = deviceId;
+    if (deviceId.empty()) {
+        return result;
+    }
     if (deviceId.size() > MINDEVICEIDLEN) {
         result.replace(ENCRYPTBEGIN + ENCRYPTLEN, deviceId.size() - MINDEVICEIDLEN, REPLACE_TARGET);
     } else {
