@@ -20,6 +20,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static const std::string REPLACE_TARGET = "****";
+static const std::string REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
 } // namespace
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
@@ -27,7 +28,7 @@ std::string ConstantCommon::EncryptDevId(std::string deviceId)
     if (deviceId.size() > MINDEVICEIDLEN) {
         result.replace(ENCRYPTBEGIN + ENCRYPTLEN, deviceId.size() - MINDEVICEIDLEN, REPLACE_TARGET);
     } else {
-        result.replace(ENCRYPTBEGIN, deviceId.size(), REPLACE_TARGET);
+        result.replace(ENCRYPTBEGIN + 1, deviceId.size()-1, REPLACE_TARGET_LESS_THAN_MINLEN);
     }
     return result;
 }
