@@ -40,8 +40,9 @@ std::string ConstantCommon::GetLocalDeviceId()
     }
     const int32_t DEVICE_UUID_LENGTH = 65;
     char udid[DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(udid, DEVICE_UUID_LENGTH);
-    localDeviceId = udid;
+    if (GetDevUdid(udid, DEVICE_UUID_LENGTH) == 0) {
+        localDeviceId = udid;
+    }
     return localDeviceId;
 }
 } // namespace AccessToken
