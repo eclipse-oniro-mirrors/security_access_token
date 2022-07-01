@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "token_sync_manager_client.h"
 
 namespace OHOS {
@@ -32,8 +33,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 
 int TokenSyncKit::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
-        __func__, deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return TokenSyncManagerClient::GetInstance().GetRemoteHapTokenInfo(deviceID, tokenID);
 }
 

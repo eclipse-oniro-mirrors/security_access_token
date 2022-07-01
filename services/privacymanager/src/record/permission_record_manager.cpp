@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "constant.h"
+#include "constant_common.h"
 #include "data_translator.h"
 #include "field_const.h"
 #include "permission_record_repository.h"
@@ -89,7 +90,7 @@ bool PermissionRecordManager::GetPermissionVisitor(AccessTokenID tokenID, Permis
     visitor.userId = tokenInfo.userID;
     visitor.bundleName = tokenInfo.bundleName;
     if (IsLocalDevice(tokenInfo.deviceID)) {
-        visitor.deviceId = Constant::GetLocalDeviceUdid();
+        visitor.deviceId = ConstantCommon::GetLocalDeviceId();
         visitor.isRemoteDevice = false;
         visitor.tokenId = tokenID;
     }

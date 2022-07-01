@@ -22,10 +22,11 @@
 #include <memory>
 #include <thread>
 
+#include "gtest/gtest.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "base_remote_command.h"
-#include "gtest/gtest.h"
+#include "constant_common.h"
 #include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
@@ -91,7 +92,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
-        udid.c_str());
+        ConstantCommon::EncryptDevId(udid).c_str());
 
     if (uuid != "" && udid != "") {
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(uuid);

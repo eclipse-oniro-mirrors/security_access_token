@@ -68,26 +68,7 @@ public:
      * Command result string, indicates failed.
      */
     static const std::string COMMAND_RESULT_FAILED;
-
-    /**
-     * Device id length.
-     */
-    const static int32_t DEVICE_UUID_LENGTH = 65;
-
-    /**
-     * Command status code, indicate a status of command before RPC call.
-     */
     const static int32_t DELAY_SYNC_TOKEN_MS = 3000;
-
-    static constexpr int32_t ENCRYPTLEN = 4;
-    static constexpr int32_t ENCRYPTBEGIN = 0;
-    static constexpr int32_t ENCRYPTEND = 3;
-    static std::string EncryptDevId(std::string deviceId);
-
-    /**
-     * GetLocalDeviceId
-     */
-    static std::string GetLocalDeviceId();
 };
 } // namespace AccessToken
 } // namespace Security

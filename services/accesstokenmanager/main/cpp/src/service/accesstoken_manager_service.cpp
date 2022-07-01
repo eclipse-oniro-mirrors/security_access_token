@@ -25,6 +25,7 @@
 #include "atm_device_state_callback.h"
 #include "device_manager.h"
 #endif
+#include "constant_common.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -247,8 +248,8 @@ AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::st
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{private}s, remoteTokenID: %{public}d",
-        remoteDeviceID.c_str(), remoteTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+        ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
@@ -303,7 +304,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -312,7 +313,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
 
@@ -325,8 +326,8 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
-        deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
@@ -334,15 +335,15 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
-        deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }

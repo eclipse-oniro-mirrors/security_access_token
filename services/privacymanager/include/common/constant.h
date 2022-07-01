@@ -67,8 +67,6 @@ public:
 public:
     static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);
     static bool TransferOpcodeToPermission(int32_t opCode, std::string& permissionName);
-
-    static std::string GetLocalDeviceUdid();
 };
 } // namespace AccessToken
 } // namespace Security

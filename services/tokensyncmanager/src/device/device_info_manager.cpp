@@ -14,6 +14,7 @@
  */
 
 #include "device_info_manager.h"
+#include "constant_common.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,11 +55,11 @@ void DeviceInfoManager::AddDeviceInfo(const std::string &networkId, const std::s
 
 void DeviceInfoManager::RemoveAllRemoteDeviceInfo()
 {
-    char deviceIdCharArray[Constant::DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(deviceIdCharArray, Constant::DEVICE_UUID_LENGTH);
+    std::string localDevice = ConstantCommon::GetLocalDeviceId();
+    
     DeviceInfo localDeviceInfoOpt;
     if (DeviceInfoRepository::GetInstance().FindDeviceInfo(
-        deviceIdCharArray, DeviceIdType::UNIQUE_DISABILITY_ID, localDeviceInfoOpt)) {
+        localDevice, DeviceIdType::UNIQUE_DISABILITY_ID, localDeviceInfoOpt)) {
         DeviceInfoRepository::GetInstance().DeleteAllDeviceInfoExceptOne(localDeviceInfoOpt);
     }
 }
@@ -69,10 +70,9 @@ void DeviceInfoManager::RemoveRemoteDeviceInfo(const std::string &nodeId, Device
         ACCESSTOKEN_LOG_ERROR(LABEL, "removeDeviceInfoByNetworkId: nodeId is invalid");
     } else {
         DeviceInfo deviceInfo;
-        char deviceIdCharArray[Constant::DEVICE_UUID_LENGTH] = {0};
-        GetDevUdid(deviceIdCharArray, Constant::DEVICE_UUID_LENGTH);
+        std::string localDevice = ConstantCommon::GetLocalDeviceId();
         if (DeviceInfoRepository::GetInstance().FindDeviceInfo(nodeId, deviceIdType, deviceInfo)) {
-            if (deviceInfo.deviceId.uniqueDeviceId != deviceIdCharArray) {
+            if (deviceInfo.deviceId.uniqueDeviceId != localDevice) {
                 DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, deviceIdType);
             }
         }
@@ -119,17 +119,18 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
             } else {
                 ACCESSTOKEN_LOG_DEBUG(LABEL,
                     "FindDeviceInfo succeed, udid and local udid is empty, nodeId(%{public}s)",
-                    Constant::EncryptDevId(nodeId).c_str());
+                    ConstantCommon::EncryptDevId(nodeId).c_str());
             }
         } else {
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 "FindDeviceInfo succeed, udid is empty, nodeId(%{public}s) ",
-                Constant::EncryptDevId(nodeId).c_str());
+                ConstantCommon::EncryptDevId(nodeId).c_str());
             result = uniqueDeviceId;
         }
     } else {
         ACCESSTOKEN_LOG_DEBUG(
-            LABEL, "FindDeviceInfo failed, nodeId(%{public}s)", Constant::EncryptDevId(nodeId).c_str());
+            LABEL, "FindDeviceInfo failed, nodeId(%{public}s)",
+            ConstantCommon::EncryptDevId(nodeId).c_str());
         auto list = DeviceInfoRepository::GetInstance().ListDeviceInfo();
         auto iter = list.begin();
         for (; iter != list.end(); iter++) {
@@ -140,7 +141,7 @@ std::string DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch(const std::string 
                 LABEL, ">>> DeviceInfoRepository device type: %{public}s", info.deviceType.c_str());
             ACCESSTOKEN_LOG_DEBUG(LABEL,
                 ">>> DeviceInfoRepository device network id: %{public}s",
-                Constant::EncryptDevId(info.deviceId.networkId).c_str());
+                ConstantCommon::EncryptDevId(info.deviceId.networkId).c_str());
         }
     }
     return result;
