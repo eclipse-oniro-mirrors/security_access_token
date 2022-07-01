@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "constant_common.h"
-#include "constant.h"
+#include "parameter.h"
 
 namespace OHOS {
 namespace Security {
@@ -21,8 +21,6 @@ namespace AccessToken {
 namespace {
 static const std::string REPLACE_TARGET = "****";
 } // namespace
-const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
-const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
     std::string result = deviceId;
@@ -36,7 +34,15 @@ std::string ConstantCommon::EncryptDevId(std::string deviceId)
 
 std::string ConstantCommon::GetLocalDeviceId()
 {
-    return "local:udid-001";
+    static std::string localDeviceId;
+    if (!localDeviceId.empty()) {
+        return localDeviceId;
+    }
+    const int32_t DEVICE_UUID_LENGTH = 65;
+    char udid[DEVICE_UUID_LENGTH] = {0};
+    GetDevUdid(udid, DEVICE_UUID_LENGTH);
+    localDeviceId = udid;
+    return localDeviceId;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -18,6 +18,7 @@
 #include <securec.h>
 
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "device_info_repository.h"
 #include "device_info.h"
 #include "remote_command_manager.h"
@@ -95,16 +96,16 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
     }
     std::string udid = devInfo.deviceId.uniqueDeviceId;
     const std::shared_ptr<SyncRemoteHapTokenCommand> syncRemoteHapTokenCommand =
-        RemoteCommandFactory::GetInstance().NewSyncRemoteHapTokenCommand(Constant::GetLocalDeviceId(),
+        RemoteCommandFactory::GetInstance().NewSyncRemoteHapTokenCommand(ConstantCommon::GetLocalDeviceId(),
         deviceID, tokenID);
 
     const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(udid, syncRemoteHapTokenCommand);
     if (resultCode != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_INFO(LABEL,
-            "RemoteExecutorManager executeCommand SyncRemoteHapTokenCommand failed, return %d", resultCode);
+            "RemoteExecutorManager executeCommand SyncRemoteHapTokenCommand failed, return %{public}d", resultCode);
         return resultCode;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %d", resultCode);
+    ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
     return RET_SUCCESS;
 }
 
@@ -116,24 +117,24 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     }
 
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
-    std::string localUdid = Constant::GetLocalDeviceId();
+    std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
             continue;
         }
         const std::shared_ptr<DeleteRemoteTokenCommand> deleteRemoteTokenCommand =
-            RemoteCommandFactory::GetInstance().NewDeleteRemoteTokenCommand(Constant::GetLocalDeviceId(),
+            RemoteCommandFactory::GetInstance().NewDeleteRemoteTokenCommand(ConstantCommon::GetLocalDeviceId(),
             device.deviceId.uniqueDeviceId, tokenID);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, deleteRemoteTokenCommand);
         if (resultCode != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_INFO(LABEL,
-                "RemoteExecutorManager executeCommand DeleteRemoteTokenCommand failed, return %d", resultCode);
+                "RemoteExecutorManager executeCommand DeleteRemoteTokenCommand failed, return %{public}d", resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %d", resultCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
     }
     return RET_SUCCESS;
 }
@@ -141,7 +142,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
 {
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
-    std::string localUdid = Constant::GetLocalDeviceId();
+    std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
             ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
@@ -149,17 +150,18 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
         }
 
         const std::shared_ptr<UpdateRemoteHapTokenCommand> updateRemoteHapTokenCommand =
-            RemoteCommandFactory::GetInstance().NewUpdateRemoteHapTokenCommand(Constant::GetLocalDeviceId(),
+            RemoteCommandFactory::GetInstance().NewUpdateRemoteHapTokenCommand(ConstantCommon::GetLocalDeviceId(),
             device.deviceId.uniqueDeviceId, tokenInfo);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
             device.deviceId.uniqueDeviceId, updateRemoteHapTokenCommand);
         if (resultCode != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_INFO(LABEL,
-                "RemoteExecutorManager executeCommand updateRemoteHapTokenCommand failed, return %d", resultCode);
+                "RemoteExecutorManager executeCommand updateRemoteHapTokenCommand failed, return %{public}d",
+                resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %d", resultCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
     }
 
     return RET_SUCCESS;

@@ -18,6 +18,7 @@
 #include "soft_bus_manager.h"
 #include "device_info_manager.h"
 #include "softbus_bus_center.h"
+#include "constant_common.h"
 #include "device_manager.h"
 #include "dm_device_info.h"
 
@@ -54,7 +55,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
         "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
-        udid.c_str());
+        ConstantCommon::EncryptDevId(udid).c_str());
 
     if (uuid != "" && udid != "") {
         DeviceInfoManager::GetInstance().AddDeviceInfo(
@@ -76,7 +77,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
         networkId.c_str(),
         uuid.c_str(),
-        udid.c_str());
+        ConstantCommon::EncryptDevId(udid).c_str());
 
     if (uuid != "" && udid != "") {
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(uuid);

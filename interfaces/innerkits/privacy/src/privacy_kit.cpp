@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "privacy_manager_client.h"
 
 namespace OHOS {
@@ -53,8 +54,8 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, deviceID=%{private}s",
-        tokenID, deviceID.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, deviceID=%{public}s",
+        tokenID, ConstantCommon::EncryptDevId(deviceID).c_str());
     return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
 }
 

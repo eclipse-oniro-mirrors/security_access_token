@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,17 +12,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "constant.h"
-#include "parameter.h"
+#ifndef FRAMEWORK_CONSTANT_COMMON_H
+#define FRAMEWORK_CONSTANT_COMMON_H
+
+#include <algorithm>
+#include <string>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static const std::string REPLACE_TARGET = "****";
-} // namespace
-const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
-const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+class ConstantCommon {
+public:
+    /**
+     * Device id length.
+     */
+    const static int32_t DEVICE_UUID_LENGTH = 65;
+    static constexpr int32_t MINDEVICEIDLEN = 8;
+    static constexpr int32_t ENCRYPTLEN = 4;
+    static constexpr int32_t ENCRYPTBEGIN = 0;
+    static constexpr int32_t ENCRYPTEND = 3;
+    static std::string EncryptDevId(std::string deviceId);
+
+    /**
+     * GetLocalDeviceId
+     */
+    static std::string GetLocalDeviceId();
+};
+}
+}
+}
+#endif

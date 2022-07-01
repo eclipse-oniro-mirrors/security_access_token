@@ -32,6 +32,7 @@ ohos_shared_library("accesstoken_common_cxx") {
   ]
 
   sources = [
+    "src/constant_common.cpp",
     "src/data_validator.cpp",
     "src/random_mbedtls.cpp",
   ]
@@ -40,7 +41,10 @@ ohos_shared_library("accesstoken_common_cxx") {
     "//third_party/mbedtls:mbedtls_shared",
     "//utils/native/base:utils",
   ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [
+    "hiviewdfx_hilog_native:libhilog",
+    "startup_l2:syspara",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 }

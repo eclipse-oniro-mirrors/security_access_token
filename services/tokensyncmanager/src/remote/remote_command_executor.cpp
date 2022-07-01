@@ -14,7 +14,7 @@
  */
 
 #include "remote_command_executor.h"
-
+#include "constant_common.h"
 #include "device_info_manager.h"
 #include "parameter.h"
 #include "singleton.h"
@@ -81,8 +81,7 @@ int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCom
         return status;
     }
 
-    char localUdid[Constant::DEVICE_UUID_LENGTH] = {0};
-    ::GetDevUdid(localUdid, Constant::DEVICE_UUID_LENGTH);
+    std::string localUdid = ConstantCommon::GetLocalDeviceId();
     if (targetNodeId_ == localUdid) {
         return ExecuteRemoteCommand(ptrCommand, false);
     }

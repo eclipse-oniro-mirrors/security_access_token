@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "base_remote_command.h"
+#include "constant_common.h"
 #include "device_info_manager.h"
 
 namespace OHOS {
@@ -76,7 +77,7 @@ void SyncRemoteNativeTokenCommand::Prepare()
 void SyncRemoteNativeTokenCommand::Execute()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteNativeTokenCommand");
-    remoteProtocol_.responseDeviceId = Constant::GetLocalDeviceId();
+    remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
     int ret = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfo_);
