@@ -26,6 +26,9 @@
 #include "device_manager.h"
 #endif
 #include "constant_common.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_parser.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -437,6 +440,9 @@ bool AccessTokenManagerService::Initialize()
     NativeTokenReceptor::GetInstance().Init();
 #ifdef TOKEN_SYNC_ENABLE
     CreateDeviceListenner(); // for start tokensync when remote devivce online
+#endif
+#ifdef SUPPORT_SANDBOX_APP
+    DlpPermissionSetParser::GetInstance().Init();
 #endif
     return true;
 }

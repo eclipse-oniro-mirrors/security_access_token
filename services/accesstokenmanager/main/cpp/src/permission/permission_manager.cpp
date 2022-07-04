@@ -18,6 +18,9 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_manager.h"
+#endif
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -319,8 +322,19 @@ void PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
-
+#ifdef SUPPORT_SANDBOX_APP
+    int32_t dlpType = infoPtr->GetDlpType();
+    if (isGranted && dlpType != DLP_COMMON) {
+        int32_t dlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
+        if (DlpPermissionSetManager::GetInstance().IsPermStateNeedUpdate(dlpType, dlpMode)) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
+                tokenID, permissionName.c_str());
+            return;
+        }
+    }
+#endif
     permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
