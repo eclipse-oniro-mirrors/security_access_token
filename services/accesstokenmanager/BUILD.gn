@@ -62,6 +62,14 @@ ohos_shared_library("accesstoken_manager_service") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
+  if (dlp_permission_enable == true) {
+    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
+    sources += [
+      "main/cpp/src/permission/dlp_permission_set_manager.cpp",
+      "main/cpp/src/permission/dlp_permission_set_parser.cpp",
+    ]
+  }
+
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",

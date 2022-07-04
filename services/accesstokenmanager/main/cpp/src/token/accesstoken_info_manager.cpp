@@ -23,6 +23,9 @@
 #include "data_storage.h"
 #include "data_translator.h"
 #include "data_validator.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_manager.h"
+#endif
 #include "field_const.h"
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
@@ -371,6 +374,21 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     return RET_SUCCESS;
 }
 
+#ifdef SUPPORT_SANDBOX_APP
+static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& policyNew)
+{
+    policyNew.apl = policy.apl;
+    policyNew.domain = policy.domain;
+
+    for (auto& state : policy.permStateList) {
+        policyNew.permStateList.emplace_back(state);
+    }
+    for (auto& def : policy.permList) {
+        policyNew.permList.emplace_back(def);
+    }
+}
+#endif
+
 int AccessTokenInfoManager::CreateHapTokenInfo(
     const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
 {
@@ -386,8 +404,26 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
         return RET_FAILED;
     }
-
+#ifdef SUPPORT_SANDBOX_APP
+    std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    if (info.dlpType != DLP_COMMON) {
+        HapPolicyParams policyNew;
+        GetPolicyCopied(policy, policyNew);
+        int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
+            info.dlpType, policyNew.permStateList);
+        if (res != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+            return RET_FAILED;
+        }
+        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
+    } else {
+        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
+    }
+#else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
+#endif
+
     if (tokenInfo == nullptr) {
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         ACCESSTOKEN_LOG_INFO(LABEL, "alloc token info failed");
