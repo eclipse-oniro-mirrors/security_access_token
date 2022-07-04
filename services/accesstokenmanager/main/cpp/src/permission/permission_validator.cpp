@@ -35,10 +35,7 @@ bool PermissionValidator::IsGrantStatusValid(int grantStaus)
 
 bool PermissionValidator::IsPermissionFlagValid(int flag)
 {
-    return flag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
-    flag == PermissionFlag::PERMISSION_USER_SET ||
-    flag == PermissionFlag::PERMISSION_USER_FIXED ||
-    flag == PermissionFlag::PERMISSION_SYSTEM_FIXED;
+    return DataValidator::IsPermissionFlagValid(flag);
 }
 
 bool PermissionValidator::IsPermissionNameValid(const std::string& permissionName)

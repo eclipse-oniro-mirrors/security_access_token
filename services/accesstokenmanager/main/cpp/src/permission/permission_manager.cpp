@@ -239,14 +239,14 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
 {
     bool foundGoal = false;
     int32_t goalGrantStatus;
-    int32_t goalGrantFlags;
+    uint32_t goalGrantFlags;
     for (auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "find goal permission: %{public}s!", permState.permissionName.c_str());
             foundGoal = true;
             goalGrantStatus = perm.grantStatus[0];
-            goalGrantFlags = perm.grantFlags[0];
+            goalGrantFlags = static_cast<uint32_t>(perm.grantFlags[0]);
             break;
         }
     }
@@ -265,11 +265,11 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
 
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
-            (goalGrantFlags == PERMISSION_USER_SET)) {
+            ((goalGrantFlags & PERMISSION_USER_SET) != 0)) {
             permState.state = DYNAMIC_OPER;
             return;
         }
-        if (goalGrantFlags == PERMISSION_USER_FIXED) {
+        if ((goalGrantFlags & PERMISSION_USER_FIXED) != 0) {
             permState.state = SETTING_OPER;
             return;
         }
@@ -320,7 +320,7 @@ void PermissionManager::UpdateTokenPermissionState(
         return;
     }
 
-    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
@@ -387,15 +387,7 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         return;
     }
 
-    std::vector<PermissionStateFull> permList;
-    permPolicySet->GetPermissionStateFulls(permList);
-    for (auto& perm : permList) {
-        PermissionDef permDef;
-        bool isGranted = false;
-        GetDefPermission(perm.permissionName, permDef);
-        isGranted = (permDef.grantMode == SYSTEM_GRANT) ? true : false;
-        permPolicySet->UpdatePermissionStatus(perm.permissionName, isGranted, PERMISSION_DEFAULT_FLAG);
-    }
+    permPolicySet->ResetUserGrantPermissionStatus();
 }
 
 std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)
