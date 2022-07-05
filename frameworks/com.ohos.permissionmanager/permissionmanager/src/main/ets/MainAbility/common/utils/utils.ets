@@ -398,7 +398,7 @@ export function getPermissionGroup(permission: string) {
       if(permissionGroups[i].groupName == 'OTHER') {
         return {
           "name": permissionGroups[i].groupName,
-          "groupName": permissionGroups[i].groupName,
+          "groupName": permissionGroups[i].label,
           "label": permissionGroups[i].label,
           "icon": permissionGroups[i].icon,
           "description": "",
