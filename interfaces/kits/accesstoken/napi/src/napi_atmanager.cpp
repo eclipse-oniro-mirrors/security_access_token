@@ -51,6 +51,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 
     napi_property_descriptor properties[] = {
         DECLARE_NAPI_FUNCTION("verifyAccessToken", VerifyAccessToken),
+        DECLARE_NAPI_FUNCTION("verifyAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags)
@@ -201,6 +202,34 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
         env, nullptr, resource, VerifyAccessTokenExecute, VerifyAccessTokenComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
+
+    return result;
+}
+
+napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
+
+    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+
+    ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
+    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
+        delete asyncContext;
+        return nullptr;
+    }
+
+    // use innerkit class method to verify permission
+    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
+        asyncContext->permissionName);
+
+    napi_value result = nullptr;
+    napi_create_int32(env, asyncContext->result, &result); // verify result
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
 
