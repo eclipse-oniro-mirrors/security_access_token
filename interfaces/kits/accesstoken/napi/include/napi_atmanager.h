@@ -57,6 +57,7 @@ private:
     static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo);
     static napi_value CreateAtManager(napi_env env, napi_callback_info cbInfo);
     static napi_value VerifyAccessToken(napi_env env, napi_callback_info info);
+    static napi_value VerifyAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
