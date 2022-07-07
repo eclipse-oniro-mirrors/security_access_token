@@ -438,8 +438,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "create hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
+    ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
 
     tokenIdEx.tokenIdExStruct.tokenID = tokenId;

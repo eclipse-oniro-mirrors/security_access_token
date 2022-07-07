@@ -86,13 +86,13 @@ int32_t DlpPermissionSetParser::ReadCfgFile(std::string& dlpPermsRawData)
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed errno %{public}d.", errno);
         close(fd);
         return RET_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is 0.");
         close(fd);
         return RET_FAILED;
     }
