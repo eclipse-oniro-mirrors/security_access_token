@@ -19,7 +19,6 @@ import Constants from '../utils/constant.ets';
 export struct alphabetIndexerComponent {
   private value: string[] = [
     '#',
-    '☆',
     'A',
     'B',
     'C',
