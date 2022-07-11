@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_
-#define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_
+#ifndef  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
+#define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -33,4 +33,4 @@ struct PrivacyAsyncWorkData {
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif /*  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H_ */
+#endif /*  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H */
