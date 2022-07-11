@@ -13,6 +13,13 @@
 
 import("//build/ohos.gni")
 
+ohos_prebuilt_etc("privacy.rc") {
+  source = "privacy.cfg"
+  relative_install_dir = "init"
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
 ohos_shared_library("privacy_manager_service") {
   subsystem_name = "security"
   part_name = "access_token"
