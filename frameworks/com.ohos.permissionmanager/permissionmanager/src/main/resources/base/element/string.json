@@ -34,11 +34,11 @@
     },
     {
       "name": "application",
-      "value": "        application        "
+      "value": "application"
     },
     {
       "name": "authority",
-      "value": "        authority        "
+      "value": "authority"
     },
     {
       "name": "textInput_placeholder",

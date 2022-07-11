@@ -49,6 +49,7 @@ export default class Constants {
   // search textInput
   static TEXTINPUT_PADDING_LEFT = 36;
   static TEXTINPUT_BORDER_RADIUS = 20;
+  static TEXTINPUT_BORDER_WIDTH = 1.5;
   static TEXTINPUT_PLACEHOLDER_Font_SIZE = 16;
   static TEXTINPUT_HEIGHT = 40;
   static TEXTINPUT_IMAGE_WIDTH = 16;
@@ -124,6 +125,7 @@ export default class Constants {
   static FLEX_MARGIN_BOTTOM = 8;
   static LIST_PADDING_TOP = 4;
   static LIST_PADDING_BOTTOM = 4;
+  static LIST_MARGIN_BOTTOM = 12;
   static ROW_MARGIN_TOP = 9;
   static SECONDARY_TEXT_MARGIN_TOP = 19.5;
   static SECONDARY_TEXT_MARGIN_LEFT = 24;
@@ -203,7 +205,7 @@ export default class Constants {
   static APPLICATION_LISTITEM_PADDING_RIGHT = 12;
   static APPLICATION_TEXTINPUT_PADDING_LEFT = 12;
   static APPLICATION_TEXTINPUT_PADDING_TOP = 8;
-  static APPLICATION_TEXTINPUT_PADDING_RIGHT = 4;
+  static APPLICATION_TEXTINPUT_PADDING_RIGHT = 24;
   static APPLICATION_COLUMN_HEIGHT = '93%';
   static APPLICATION_ALPHABETINDEX_MARGIN_TOP = 12;
   static APPLICATION_ALPHABETINDEX_WIDTH = 24;
@@ -215,6 +217,11 @@ export default class Constants {
   static SLICE_END = -1;
   static SLICE_START_INDEX = 0;
   static SLICE_END_INDEX = 1;
+
+  //group number
+  static FIXED_GROUP = 1;
+  static CHANGE_GROUP = 2;
+  static OTHER_GROUP = 3;
 
   // tabBar
   static BAR_WIDTH = 285;
@@ -234,9 +241,12 @@ export default class Constants {
   //shape
   static SHAPE_DIA = 24;
   static SHAPE_BAN_DIA = 23;
+  static SHAPE_BIG_DIA = 48;
+  static SHAPE_OFFSET_X = -24;
   static SHAPE_BAN_OFFSET = .5;
   static SHAPE_ALLOW_DIA = 16;
   static SHAPE_ALLOW_OFFSET = 4;
+  static SHAPE_ZINDEX = 10;
 
   // utils
   static CHAR_CODE = 0;
