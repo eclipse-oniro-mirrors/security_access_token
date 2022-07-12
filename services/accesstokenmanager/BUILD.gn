@@ -33,12 +33,12 @@ ohos_shared_library("accesstoken_manager_service") {
     "main/cpp/include/device",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
-    "//base/security/access_token/frameworks/database/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//base/security/access_token/interfaces/innerkits/tokensync/src",
+    "//base/security/access_token/services/common/database/include",
     "//base/security/access_token/services/tokensyncmanager/include/common",
     "//third_party/json/include",
   ]
@@ -73,9 +73,9 @@ ohos_shared_library("accesstoken_manager_service") {
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/frameworks/database:accesstoken_database_cxx",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
     "//base/security/access_token/services/accesstokenmanager:access_token.rc",
+    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
