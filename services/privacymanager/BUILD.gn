@@ -24,9 +24,9 @@ ohos_shared_library("privacy_manager_service") {
     "include/service",
     "//base/security/access_token/frameworks/privacy/include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/frameworks/database/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
+    "//base/security/access_token/services/common/database/include",
     "//third_party/json/include",
   ]
 
@@ -51,9 +51,9 @@ ohos_shared_library("privacy_manager_service") {
 
   deps = [
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/frameworks/database:accesstoken_database_cxx",
     "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
