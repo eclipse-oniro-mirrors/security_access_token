@@ -19,9 +19,13 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "accesstoken_remote_token_manager.h"
+#include "constant_common.h"
 #include "data_storage.h"
 #include "data_translator.h"
 #include "data_validator.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_manager.h"
+#endif
 #include "field_const.h"
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
@@ -370,6 +374,21 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     return RET_SUCCESS;
 }
 
+#ifdef SUPPORT_SANDBOX_APP
+static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& policyNew)
+{
+    policyNew.apl = policy.apl;
+    policyNew.domain = policy.domain;
+
+    for (auto& state : policy.permStateList) {
+        policyNew.permStateList.emplace_back(state);
+    }
+    for (auto& def : policy.permList) {
+        policyNew.permList.emplace_back(def);
+    }
+}
+#endif
+
 int AccessTokenInfoManager::CreateHapTokenInfo(
     const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
 {
@@ -385,8 +404,26 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
         return RET_FAILED;
     }
-
+#ifdef SUPPORT_SANDBOX_APP
+    std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    if (info.dlpType != DLP_COMMON) {
+        HapPolicyParams policyNew;
+        GetPolicyCopied(policy, policyNew);
+        int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
+            info.dlpType, policyNew.permStateList);
+        if (res != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+            return RET_FAILED;
+        }
+        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
+    } else {
+        tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
+    }
+#else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
+#endif
+
     if (tokenInfo == nullptr) {
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         ACCESSTOKEN_LOG_INFO(LABEL, "alloc token info failed");
@@ -401,8 +438,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "create hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
+    ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
 
     tokenIdEx.tokenIdExStruct.tokenID = tokenId;
@@ -480,7 +516,7 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
 void AccessTokenInfoManager::ProcessNativeTokenInfos(
     const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos)
 {
-    for (auto& infoPtr: tokenInfos) {
+    for (const auto& infoPtr: tokenInfos) {
         if (infoPtr == nullptr) {
             ACCESSTOKEN_LOG_WARN(LABEL, "token info from libat is null");
             continue;
@@ -647,15 +683,15 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
         || !DataValidator::IsDlpTypeValid(hapSync.baseInfo.dlpType)
         || hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION
         || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
 
     AccessTokenID remoteID = hapSync.baseInfo.tokenID;
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
     if (mapID != 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}u update exist remote hap token %{public}u.",
-            deviceID.c_str(), remoteID, mapID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u update exist remote hap token %{public}u.",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         // update remote token mapping id
         hapSync.baseInfo.tokenID = mapID;
         hapSync.baseInfo.deviceID = deviceID;
@@ -664,8 +700,8 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 
     mapID = AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "device %{private}s token %{public}u map failed.", deviceID.c_str(), remoteID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u map failed.",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
         return RET_FAILED;
     }
 
@@ -675,12 +711,12 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 
     if (CreateRemoteHapTokenInfo(mapID, hapSync) == RET_FAILED) {
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}u map to local token %{public}u failed.",
-            deviceID.c_str(), remoteID, mapID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u failed.",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
         return RET_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}u map to local token %{public}u success.",
-        deviceID.c_str(), remoteID, mapID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u success.",
+        ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
     return RET_SUCCESS;
 }
 
@@ -688,7 +724,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
     std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
 
@@ -699,8 +735,8 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
             nativeToken.baseInfo.dcap.size() <= 0 ||
             AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID) != TOKEN_NATIVE) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{private}s token %{public}u is invalid.",
-                deviceID.c_str(), nativeToken.baseInfo.tokenID);
+                LABEL, "device %{public}s token %{public}u is invalid.",
+                ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
             continue;
         }
 
@@ -708,8 +744,8 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
         if (mapID != 0) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{private}s token %{public}u has maped, no need update it.",
-                deviceID.c_str(), nativeToken.baseInfo.tokenID);
+                LABEL, "device %{public}s token %{public}u has maped, no need update it.",
+                ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
             continue;
         }
 
@@ -717,32 +753,32 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         if (mapID == 0) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{private}s token %{public}u map failed.",
-                deviceID.c_str(), remoteID);
+                LABEL, "device %{public}s token %{public}u map failed.",
+                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
             continue;
         }
         nativeToken.baseInfo.tokenID = mapID;
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}u map to local token %{public}u.",
-            deviceID.c_str(), remoteID, mapID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u.",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
 
         std::shared_ptr<NativeTokenInfoInner> nativePtr =
             std::make_shared<NativeTokenInfoInner>(nativeToken.baseInfo, nativeToken.permStateList);
         if (nativePtr == nullptr) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId %{public}u alloc local token failed.",
-                deviceID.c_str(), remoteID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u alloc local token failed.",
+                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
             continue;
         }
         nativePtr->SetRemote(true);
         int ret = AddNativeTokenInfo(nativePtr);
         if (ret != RET_SUCCESS) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId %{public}u add local token failed.",
-                deviceID.c_str(), remoteID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u add local token failed.",
+                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "device %{private}s token %{public}u map token %{public}u add success.",
-            deviceID.c_str(), remoteID, mapID);
+        ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map token %{public}u add success.",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
     }
 
     return RET_SUCCESS;
@@ -751,13 +787,13 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
 int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
     if (mapID == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s tokenId %{public}u is not mapped",
-            deviceID.c_str(), tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u is not mapped",
+            ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
         return RET_FAILED;
     }
 
@@ -788,7 +824,7 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)
         || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
     }
     return AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, tokenID);
@@ -797,13 +833,14 @@ AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& 
 int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
     std::vector<AccessTokenID> remoteTokens;
     int ret = AccessTokenRemoteTokenManager::GetInstance().GetDeviceAllRemoteTokenID(deviceID, remoteTokens);
     if (ret == RET_FAILED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s have no remote token", deviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s have no remote token",
+            ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
     for (AccessTokenID remoteID : remoteTokens) {
@@ -830,11 +867,12 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     AccessTokenID remoteTokenID)
 {
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s parms invalid", remoteDeviceID.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid",
+            ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
         return 0;
     }
     std::string remoteUdid = GetUdidByNodeId(remoteDeviceID);
-    ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s remoteUdid", remoteUdid.c_str());
+    ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s remoteUdid", ConstantCommon::EncryptDevId(remoteUdid).c_str());
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);
     if (mapID != 0) {
@@ -842,8 +880,8 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     }
     int ret = TokenSyncKit::GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{private}s token %{public}u sync failed",
-            remoteUdid.c_str(), remoteTokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
+            ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
         return 0;
     }
 

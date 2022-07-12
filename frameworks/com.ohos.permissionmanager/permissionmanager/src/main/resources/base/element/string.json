@@ -2,103 +2,87 @@
   "string": [
     {
       "name": "permissionmanager_MainAbility",
-      "value": "permissionmanager_MainAbility"
+      "value": "authority management"
     },
     {
       "name": "description_mainability",
-      "value": "eTS_Empty Ability"
-    },
-    {
-      "name": "entry_MainAbility",
-      "value": "entry_MainAbility"
+      "value": "authority management"
     },
     {
       "name": "permissionmanager_GrantAbility",
-      "value": "permissionmanager_GrantAbility"
-    },
-    {
-      "name": "permissionmanager_description",
-      "value": "eTS_Empty Ability"
+      "value": "apply for permission"
     },
     {
       "name": "no_permission",
-      "value": "暂无权限"
-    },
-    {
-      "name": "no_data",
-      "value": "暂无数据"
+      "value": "no permission"
     },
     {
       "name": "access_permission",
-      "value": "访问权限"
+      "value": "access permission"
     },
     {
       "name": "permission_access_record",
-      "value": "权限访问记录"
+      "value": "permission access record"
     },
     {
       "name": "authority_management",
-      "value": "权限管理"
-    },
-    {
-      "name": "authority_tertiary_description",
-      "value": "个应用获取此权限"
+      "value": "authority management"
     },
     {
       "name": "other_permissions",
-      "value": "其它权限"
+      "value": "other permissions"
     },
     {
       "name": "application",
-      "value": "        应用        "
+      "value": "application"
     },
     {
       "name": "authority",
-      "value": "        权限        "
-    },
-    {
-      "name": "media_document",
-      "value": "媒体和文件"
+      "value": "authority"
     },
     {
       "name": "textInput_placeholder",
-      "value": "搜索应用"
+      "value": "search application"
     },
     {
       "name": "allowed",
-      "value": "已允许"
+      "value": "allowed"
     },
     {
       "name": "banned",
-      "value": "已禁止"
+      "value": "banned"
     },
     {
       "name": "description_grantability",
-      "value": "eTS_Empty Ability"
-    },
-    {
-      "name": "entry_GrantAbility",
-      "value": "entry_GrantAbility"
+      "value": "apply for permission"
     },
     {
       "name": "Authorization_failed",
-      "value": "授权失败！"
-    },
-    {
-      "name": "other_permission_label",
-      "value": "多设备协同"
-    },
-    {
-      "name": "other_permission_label_description",
-      "value": "多设备协同访问权限"
+      "value": "Authorization failure！"
     },
     {
       "name": "reason_suffix",
-      "value": "等权限。"
+      "value": " and other permissions."
     },
     {
       "name": "separator",
-      "value": "、"
+      "value": ","
+    },
+    {
+      "name": "visits",
+      "value": "Number of visits:"
+    },
+    {
+      "name": "recent_visit",
+      "value": ";Recent visits:"
+    },
+    {
+      "name": "morning",
+      "value": "am"
+    },
+    {
+      "name": "afternoon",
+      "value": "pm"
     }
   ]
 }

@@ -81,7 +81,7 @@ nlohmann::json BaseRemoteCommand::ToRemoteProtocolJson()
 nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoForSync& tokenInfo)
 {
     nlohmann::json permStatesJson;
-    for (auto& permState : tokenInfo.permStateList) {
+    for (const auto& permState : tokenInfo.permStateList) {
         nlohmann::json permStateJson;
         ToPermStateJson(permStateJson, permState);
         permStatesJson.emplace_back(permStateJson);
@@ -127,7 +127,7 @@ void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const Per
 nlohmann::json BaseRemoteCommand::ToHapTokenInfosJson(const HapTokenInfoForSync& tokenInfo)
 {
     nlohmann::json permStatesJson;
-    for (auto& permState : tokenInfo.permStateList) {
+    for (const auto& permState : tokenInfo.permStateList) {
         nlohmann::json permStateJson;
         ToPermStateJson(permStateJson, permState);
         permStatesJson.emplace_back(permStateJson);
@@ -194,7 +194,7 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
         && hapTokenJson.at("permState").is_array()
         && hapTokenJson.at("permState").size() > 0) {
         nlohmann::json permissionsJson = hapTokenJson.at("permState").get<nlohmann::json>();
-        for (auto permissionJson : permissionsJson) {
+        for (const auto& permissionJson : permissionsJson) {
             PermissionStateFull permission;
             if (permissionJson.find("permissionName") == permissionJson.end() ||
                 !permissionJson.at("permissionName").is_string() ||
@@ -202,13 +202,13 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
                 !permissionJson.at("isGeneral").is_boolean() ||
                 permissionJson.find("grantConfig") == permissionJson.end() ||
                 !permissionJson.at("grantConfig").is_array() ||
-                permissionJson.at("grantConfig").size() == 0) {
+                permissionJson.at("grantConfig").empty()) {
                 continue;
             }
             permissionJson.at("permissionName").get_to(permission.permissionName);
             permissionJson.at("isGeneral").get_to(permission.isGeneral);
             nlohmann::json grantConfigsJson = permissionJson.at("grantConfig").get<nlohmann::json>();
-            for (auto grantConfigJson :grantConfigsJson) {
+            for (const auto& grantConfigJson :grantConfigsJson) {
                 if (grantConfigJson.find("resDeviceID") == grantConfigJson.end() ||
                     !grantConfigJson.at("resDeviceID").is_string() ||
                     grantConfigJson.find("grantStatus") == grantConfigJson.end() ||

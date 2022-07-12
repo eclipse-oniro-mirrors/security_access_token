@@ -17,6 +17,7 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "base_remote_command.h"
 
 namespace OHOS {
@@ -92,7 +93,7 @@ void SyncRemoteHapTokenCommand::Prepare()
 void SyncRemoteHapTokenCommand::Execute()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteHapTokenCommand");
-    remoteProtocol_.responseDeviceId = Constant::GetLocalDeviceId();
+    remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(requestTokenId_, hapTokenInfo_);

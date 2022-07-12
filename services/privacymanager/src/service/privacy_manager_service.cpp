@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,7 @@
 #include "privacy_manager_service.h"
 
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
@@ -94,7 +95,8 @@ int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const 
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID: 0x%{public}x, deviceID: %{private}s", tokenID, deviceID.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID: 0x%{public}x, deviceID: %{public}s",
+        tokenID, ConstantCommon::EncryptDevId(deviceID).c_str());
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
     return Constant::SUCCESS;
 }

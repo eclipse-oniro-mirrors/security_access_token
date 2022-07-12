@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "constant_common.h"
 #include "constant.h"
 
 namespace OHOS {
@@ -22,19 +23,18 @@ static const std::string REPLACE_TARGET = "****";
 } // namespace
 const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
 const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
-
-std::string Constant::EncryptDevId(std::string deviceId)
+std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
     std::string result = deviceId;
-    if (deviceId.size() >= ENCRYPTLEN) {
-        result.replace(ENCRYPTBEGIN, ENCRYPTEND, REPLACE_TARGET);
+    if (deviceId.size() > MINDEVICEIDLEN) {
+        result.replace(ENCRYPTBEGIN + ENCRYPTLEN, deviceId.size() - MINDEVICEIDLEN, REPLACE_TARGET);
     } else {
-        result.replace(ENCRYPTBEGIN, result.size() - 1, REPLACE_TARGET);
+        result.replace(ENCRYPTBEGIN, deviceId.size(), REPLACE_TARGET);
     }
     return result;
 }
 
-std::string Constant::GetLocalDeviceId()
+std::string ConstantCommon::GetLocalDeviceId()
 {
     return "local:udid-001";
 }

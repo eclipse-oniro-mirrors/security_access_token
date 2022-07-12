@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -89,9 +89,9 @@ int32_t PermissionUsedRecordDb::Add(const DataType type, const std::vector<Gener
     auto statement = Prepare(prepareSql);
     BeginTransaction();
     bool isExecuteSuccessfully = true;
-    for (auto value : values) {
+    for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
-        for (auto columnName : columnNames) {
+        for (const auto& columnName : columnNames) {
             statement.Bind(columnName, value.Get(columnName));
         }
         int32_t ret = statement.Step();
@@ -117,7 +117,7 @@ int32_t PermissionUsedRecordDb::Remove(const DataType type, const GenericValues&
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     auto statement = Prepare(prepareSql);
-    for (auto columnName : columnNames) {
+    for (const auto& columnName : columnNames) {
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int32_t ret = statement.Step();
@@ -132,10 +132,10 @@ int32_t PermissionUsedRecordDb::Modify(
     std::vector<std::string> conditionColumns = conditions.GetAllKeys();
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns);
     auto statement = Prepare(prepareSql);
-    for (auto columnName : modifyColumns) {
+    for (const auto& columnName : modifyColumns) {
         statement.Bind(columnName, modifyValues.Get(columnName));
     }
-    for (auto columnName : conditionColumns) {
+    for (const auto& columnName : conditionColumns) {
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int32_t ret = statement.Step();
@@ -171,10 +171,10 @@ int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const Gene
     std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, andColumns, orColumns);
     auto statement = Prepare(prepareSql);
 
-    for (auto columnName : andColumns) {
+    for (const auto& columnName : andColumns) {
         statement.Bind(columnName, andConditions.Get(columnName));
     }
-    for (auto columnName : orColumns) {
+    for (const auto& columnName : orColumns) {
         statement.Bind(columnName, orConditions.Get(columnName));
     }
 
@@ -202,9 +202,9 @@ int32_t PermissionUsedRecordDb::RefreshAll(const DataType type, const std::vecto
     auto insertStatement = Prepare(insertSql);
     BeginTransaction();
     bool canCommit = deleteStatement.Step() == Statement::State::DONE;
-    for (auto value : values) {
+    for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
-        for (auto columnName : columnNames) {
+        for (const auto& columnName : columnNames) {
             insertStatement.Bind(columnName, value.Get(columnName));
         }
         int32_t ret = insertStatement.Step();
@@ -252,7 +252,7 @@ std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
         return std::string();
     }
     std::string sql = "delete from " + it->second.tableName_ + " where 1 = 1";
-    for (auto columnName : columnNames) {
+    for (const auto& columnName : columnNames) {
         sql.append(" and ");
         sql.append(columnName + "=:" + columnName);
     }

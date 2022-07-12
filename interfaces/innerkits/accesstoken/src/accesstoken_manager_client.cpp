@@ -91,7 +91,7 @@ int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vect
     }
     std::vector<PermissionDefParcel> parcelList;
     int result = proxy->GetDefPermissions(tokenID, parcelList);
-    for (auto permParcel : parcelList) {
+    for (const auto& permParcel : parcelList) {
         PermissionDef perm = permParcel.permissionDef;
         permList.emplace_back(perm);
     }
@@ -109,7 +109,7 @@ int AccessTokenManagerClient::GetReqPermissions(
     }
     std::vector<PermissionStateFullParcel> parcelList;
     int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
-    for (auto permParcel : parcelList) {
+    for (const auto& permParcel : parcelList) {
         PermissionStateFull perm = permParcel.permStatFull;
         reqPermList.emplace_back(perm);
     }
@@ -145,7 +145,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(
 
     std::vector<PermissionListStateParcel> parcelList;
 
-    for (auto perm : permList) {
+    for (const auto& perm : permList) {
         PermissionListStateParcel permParcel;
         permParcel.permsState = perm;
         parcelList.emplace_back(permParcel);
@@ -338,7 +338,7 @@ int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoF
 
     std::vector<NativeTokenInfoForSyncParcel> parcelList;
     int result = proxy->GetAllNativeTokenInfo(parcelList);
-    for (auto nativeTokenParcel : parcelList) {
+    for (const auto& nativeTokenParcel : parcelList) {
         NativeTokenInfoForSync native = nativeTokenParcel.nativeTokenInfoForSyncParams;
         nativeTokenInfosRes.emplace_back(native);
     }
@@ -372,7 +372,7 @@ int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& device
         return RET_FAILED;
     }
     std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfoParcels;
-    for (auto native : nativeTokenInfoList) {
+    for (const auto& native : nativeTokenInfoList) {
         NativeTokenInfoForSyncParcel nativeTokenInfoForSyncParcel;
         nativeTokenInfoForSyncParcel.nativeTokenInfoForSyncParams = native;
         nativeTokenInfoParcels.emplace_back(nativeTokenInfoForSyncParcel);

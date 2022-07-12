@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 
 #include "constant.h"
-#include "parameter.h"
 
 namespace OHOS {
 namespace Security {
@@ -69,19 +68,6 @@ bool Constant::TransferOpcodeToPermission(int32_t opCode, std::string& permissio
     }
     permissionName = iter->first;
     return true;
-}
-
-std::string Constant::GetLocalDeviceUdid()
-{
-    static std::string localDeviceId;
-    if (!localDeviceId.empty()) {
-        return localDeviceId;
-    }
-    const int32_t DEVICE_UUID_LENGTH = 65;
-    char udid[DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(udid, DEVICE_UUID_LENGTH);
-    localDeviceId = udid;
-    return localDeviceId;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -49,6 +49,7 @@ ohos_shared_library("libtokensync_sdk") {
 
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//utils/native/base:utils",
   ]
 

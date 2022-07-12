@@ -157,8 +157,8 @@ export const permissionGroups: any[] = [
   {
     "permissionName": "ohos.permission.WRITE_CALENDAR",
     "groupName": "CALENDAR",
-    "label": "修建/修改/删除日历",
-    "description": "允许应用修建/修改/删除日历。",
+    "label": "新建/修改/删除日历",
+    "description": "允许应用新建/修改/删除日历。",
     "groupId": 8
   },
   {

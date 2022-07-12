@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,7 +27,7 @@ bool PermissionUsedRequestParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->request.bundleName));
 
     RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->request.permissionList.size())));
-    for (auto perm : this->request.permissionList) {
+    for (const auto& perm : this->request.permissionList) {
         RETURN_IF_FALSE(out.WriteString(perm));
     }
     RETURN_IF_FALSE(out.WriteInt64(this->request.beginTimeMillis));

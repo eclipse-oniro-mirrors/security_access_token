@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "base_remote_command.h"
+#include "constant_common.h"
 #include "device_info_manager.h"
 
 namespace OHOS {
@@ -46,7 +47,7 @@ SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(const std::string &js
 
     if (jsonObject.find("NativeTokenInfos") != jsonObject.end() && jsonObject.at("NativeTokenInfos").is_array()) {
         nlohmann::json nativeTokenListJson = jsonObject.at("NativeTokenInfos");
-        for (auto& tokenJson : nativeTokenListJson) {
+        for (const auto& tokenJson : nativeTokenListJson) {
             NativeTokenInfoForSync token;
             BaseRemoteCommand::FromNativeTokenInfoJson(tokenJson, token);
             nativeTokenInfo_.emplace_back(token);
@@ -58,7 +59,7 @@ std::string SyncRemoteNativeTokenCommand::ToJsonPayload()
 {
     nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
     nlohmann::json nativeTokensJson;
-    for (auto token : nativeTokenInfo_) {
+    for (const auto& token : nativeTokenInfo_) {
         nlohmann::json tokenJson = BaseRemoteCommand::ToNativeTokenInfoJson(token);
         nativeTokensJson.emplace_back(tokenJson);
     }
@@ -76,7 +77,7 @@ void SyncRemoteNativeTokenCommand::Prepare()
 void SyncRemoteNativeTokenCommand::Execute()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteNativeTokenCommand");
-    remoteProtocol_.responseDeviceId = Constant::GetLocalDeviceId();
+    remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
     int ret = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfo_);

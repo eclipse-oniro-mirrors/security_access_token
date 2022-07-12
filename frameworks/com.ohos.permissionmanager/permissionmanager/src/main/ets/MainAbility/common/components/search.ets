@@ -26,9 +26,10 @@ export struct textInput {
     Column() {
       Flex({ alignContent: FlexAlign.Start }) {
         TextInput({ placeholder: this.placeholder })
+          .backgroundColor($r('app.color.default_background_color'))
           .padding({ left: Constants.TEXTINPUT_PADDING_LEFT })
           .type(InputType.Normal)
-          .border({ radius: Constants.TEXTINPUT_BORDER_RADIUS })
+          .border({ width: Constants.TEXTINPUT_BORDER_WIDTH, color: $r("app.color.label_color_20"), radius: Constants.TEXTINPUT_BORDER_RADIUS })
           .placeholderColor(Color.Grey)
           .placeholderFont({ size: Constants.TEXTINPUT_PLACEHOLDER_Font_SIZE, weight: FontWeight.Normal, family: "sans-serif", style: FontStyle.Normal })
           .caretColor($r('app.color.secondary_font_color'))
@@ -51,13 +52,11 @@ export struct textInput {
           })
           .onEditChanged((isEditing) => {
           })
-        Column() {
-          Image($r('app.media.search'))
-            .objectFit(ImageFit.Contain)
-            .width(Constants.TEXTINPUT_IMAGE_WIDTH)
-            .height(Constants.TEXTINPUT_IMAGE_HEIGHT)
-            .margin({ left: Constants.TEXTINPUT_IMAGE_MARGIN_LEFT, top: Constants.TEXTINPUT_IMAGE_MARGIN_TOP })
-        }
+        Image($r('app.media.search'))
+          .objectFit(ImageFit.Contain)
+          .width(Constants.TEXTINPUT_IMAGE_WIDTH)
+          .height(Constants.TEXTINPUT_IMAGE_HEIGHT)
+          .position({ x: Constants.TEXTINPUT_IMAGE_MARGIN_LEFT, y: Constants.TEXTINPUT_IMAGE_MARGIN_TOP })
       }
     }
   }

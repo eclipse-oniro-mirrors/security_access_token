@@ -20,6 +20,7 @@
 
 #include "accesstoken_log.h"
 #include "accesstoken_manager_client.h"
+#include "constant_common.h"
 #include "data_validator.h"
 
 namespace OHOS {
@@ -45,8 +46,8 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
-        __func__, remoteDeviceID.c_str(), remoteTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
 #ifdef DEBUG_API_PERFORMANCE
     ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start call");
     AccessTokenID resID = AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
@@ -324,36 +325,38 @@ int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& n
 int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
     const HapTokenInfoForSync& hapSync)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
-        __func__, deviceID.c_str(), hapSync.baseInfo.tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, ConstantCommon::EncryptDevId(deviceID).c_str(), hapSync.baseInfo.tokenID);
     return AccessTokenManagerClient::GetInstance().SetRemoteHapTokenInfo(deviceID, hapSync);
 }
 
 int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__,
+        ConstantCommon::EncryptDevId(deviceID).c_str());
     return AccessTokenManagerClient::GetInstance()
         .SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
 }
 
 int AccessTokenKit::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
-        __func__, deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
 
 int AccessTokenKit::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s", __func__, deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s", __func__,
+        ConstantCommon::EncryptDevId(deviceID).c_str());
     return AccessTokenManagerClient::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
 
 AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{private}s tokenID=%{public}d",
-        __func__, deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, deviceID=%{public}s tokenID=%{public}d",
+        __func__, ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
 #endif

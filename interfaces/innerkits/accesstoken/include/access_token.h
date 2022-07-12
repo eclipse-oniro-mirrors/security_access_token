@@ -90,6 +90,12 @@ typedef enum DlpType {
     DLP_READ = 1,
     DLP_FULL_CONTROL = 2,
 } HapDlpType;
+
+typedef enum TypeDlpPerm {
+    DLP_PERM_ALL = 0,
+    DLP_PERM_FULL_CONTROL = 1,
+    DLP_PERM_NONE = 2,
+} DlpPermMode;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -43,14 +43,19 @@ int32_t NativeReqPermsGet(
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
         return RET_FAILED;
     }
-    for (auto permReq : permReqList) {
+    std::set<std::string> permRes;
+    for (const auto& permReq : permReqList) {
         PermissionStateFull permState;
+        if (permRes.count(permReq) != 0) {
+            continue;
+        }
         permState.permissionName = permReq;
         permState.isGeneral = true;
         permState.resDeviceID.push_back("");
         permState.grantStatus.push_back(PERMISSION_GRANTED);
         permState.grantFlags.push_back(PERMISSION_SYSTEM_FIXED);
         permStateList.push_back(permState);
+        permRes.insert(permReq);
     }
     return RET_SUCCESS;
 }

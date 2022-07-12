@@ -25,6 +25,10 @@
 #include "atm_device_state_callback.h"
 #include "device_manager.h"
 #endif
+#include "constant_common.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_parser.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -112,7 +116,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
-    for (auto perm : permVec) {
+    for (const auto& perm : permVec) {
         PermissionDefParcel permPrcel;
         permPrcel.permissionDef = perm;
         permList.emplace_back(permPrcel);
@@ -128,7 +132,7 @@ int AccessTokenManagerService::GetReqPermissions(
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
-    for (auto& perm : permList) {
+    for (const auto& perm : permList) {
         PermissionStateFullParcel permPrcel;
         permPrcel.permStatFull = perm;
         reqPermList.emplace_back(permPrcel);
@@ -247,8 +251,8 @@ AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::st
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{private}s, remoteTokenID: %{public}d",
-        remoteDeviceID.c_str(), remoteTokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+        ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
@@ -291,7 +295,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 
     std::vector<NativeTokenInfoForSync> nativeVec;
     AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
-    for (auto& native : nativeVec) {
+    for (const auto& native : nativeVec) {
         NativeTokenInfoForSyncParcel nativeParcel;
         nativeParcel.nativeTokenInfoForSyncParams = native;
         nativeTokenInfosRes.emplace_back(nativeParcel);
@@ -303,7 +307,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -312,11 +316,11 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
 
-    for (auto& nativeParcel : nativeTokenInfoForSyncParcel) {
+    for (const auto& nativeParcel : nativeTokenInfoForSyncParcel) {
         nativeList.emplace_back(nativeParcel.nativeTokenInfoForSyncParams);
     }
 
@@ -325,8 +329,8 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
-        deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
 }
@@ -334,15 +338,15 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s, token id %{public}d",
-        deviceID.c_str(), tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+        ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{private}s", deviceID.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
@@ -436,6 +440,9 @@ bool AccessTokenManagerService::Initialize()
     NativeTokenReceptor::GetInstance().Init();
 #ifdef TOKEN_SYNC_ENABLE
     CreateDeviceListenner(); // for start tokensync when remote devivce online
+#endif
+#ifdef SUPPORT_SANDBOX_APP
+    DlpPermissionSetParser::GetInstance().Init();
 #endif
     return true;
 }

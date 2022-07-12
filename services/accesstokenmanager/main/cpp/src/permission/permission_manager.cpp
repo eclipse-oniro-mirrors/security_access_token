@@ -18,6 +18,9 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#ifdef SUPPORT_SANDBOX_APP
+#include "dlp_permission_set_manager.h"
+#endif
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -51,7 +54,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
     std::vector<PermissionDef> permFilterList;
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
 
-    for (auto perm : permFilterList) {
+    for (const auto& perm : permFilterList) {
         if (!PermissionValidator::IsPermissionDefValid(perm)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "invalid permission definition info: %{public}s",
                 TransferPermissionDefToString(perm).c_str());
@@ -224,7 +227,7 @@ int PermissionManager::GetReqPermissions(
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
     std::vector<PermissionStateFull> tmpList;
     permPolicySet->GetPermissionStateFulls(tmpList);
-    for (auto perm : tmpList) {
+    for (const auto& perm : tmpList) {
         PermissionDef permDef;
         GetDefPermission(perm.permissionName, permDef);
         if (permDef.grantMode == mode) {
@@ -240,7 +243,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     bool foundGoal = false;
     int32_t goalGrantStatus;
     uint32_t goalGrantFlags;
-    for (auto& perm : permsList) {
+    for (const auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
             ACCESSTOKEN_LOG_INFO(LABEL,
                 "find goal permission: %{public}s!", permState.permissionName.c_str());
@@ -319,8 +322,19 @@ void PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
-
+#ifdef SUPPORT_SANDBOX_APP
+    int32_t dlpType = infoPtr->GetDlpType();
+    if (isGranted && dlpType != DLP_COMMON) {
+        int32_t dlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
+        if (DlpPermissionSetManager::GetInstance().IsPermStateNeedUpdate(dlpType, dlpMode)) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
+                tokenID, permissionName.c_str());
+            return;
+        }
+    }
+#endif
     permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif

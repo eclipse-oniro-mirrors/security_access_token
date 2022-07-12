@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H_
-#define  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H_
+#ifndef  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H
+#define  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H
 
 #include <pthread.h>
 #include <cstdio>
@@ -57,6 +57,7 @@ private:
     static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo);
     static napi_value CreateAtManager(napi_env env, napi_callback_info cbInfo);
     static napi_value VerifyAccessToken(napi_env env, napi_callback_info info);
+    static napi_value VerifyAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
@@ -83,4 +84,4 @@ private:
  */
 static napi_value Init(napi_env env, napi_value exports);
 
-#endif /*  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H_ */
+#endif /*  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H */

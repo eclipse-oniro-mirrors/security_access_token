@@ -15,7 +15,7 @@
 #include "soft_bus_manager.h"
 
 #include <securec.h>
-
+#include "constant_common.h"
 #include "device_info_manager.h"
 #include "parameter.h"
 #include "softbus_bus_center.h"
@@ -70,12 +70,12 @@ int SoftBusManager::AddTrustedDeviceInfo()
         return Constant::FAILURE;
     }
 
-    for (DistributedHardware::DmDeviceInfo device : deviceList) {
+    for (const DistributedHardware::DmDeviceInfo& device : deviceList) {
         std::string uuid = GetUuidByNodeId(device.networkId);
         std::string udid = GetUdidByNodeId(device.networkId);
         if (uuid.empty() || udid.empty()) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
-                uuid.c_str(), udid.c_str());
+                uuid.c_str(), ConstantCommon::EncryptDevId(udid).c_str());
             continue;
         }
 
@@ -220,7 +220,8 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (!result) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{private}s", deviceId.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{public}s",
+            ConstantCommon::EncryptDevId(deviceId).c_str());
         return Constant::FAILURE;
     }
     std::string networkId = info.deviceId.networkId;
@@ -312,11 +313,11 @@ std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
     }
     std::string udid = GetUdidByNodeId(nodeId);
     if (udid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string: %{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string: %{public}s",
+            ConstantCommon::EncryptDevId(udid).c_str());
         return "";
     }
-    char localUdid[Constant::DEVICE_UUID_LENGTH] = {0};
-    ::GetDevUdid(localUdid, Constant::DEVICE_UUID_LENGTH);
+    std::string localUdid = ConstantCommon::GetLocalDeviceId();
     if (udid == localUdid) {
         // refresh cache
         std::function<void()> fulfillDeviceInfo = std::bind(&SoftBusManager::FulfillLocalDeviceInfo, this);

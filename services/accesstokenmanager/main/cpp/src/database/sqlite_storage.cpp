@@ -105,9 +105,9 @@ int SqliteStorage::Add(const DataType type, const std::vector<GenericValues>& va
     auto statement = Prepare(prepareSql);
     BeginTransaction();
     bool isExecuteSuccessfully = true;
-    for (auto value : values) {
+    for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
-        for (auto columnName : columnNames) {
+        for (const auto& columnName : columnNames) {
             statement.Bind(columnName, value.Get(columnName));
         }
         int ret = statement.Step();
@@ -133,7 +133,7 @@ int SqliteStorage::Remove(const DataType type, const GenericValues& conditions)
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
     auto statement = Prepare(prepareSql);
-    for (auto columnName : columnNames) {
+    for (const auto& columnName : columnNames) {
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int ret = statement.Step();
@@ -147,10 +147,10 @@ int SqliteStorage::Modify(const DataType type, const GenericValues& modifyValues
     std::vector<std::string> conditionColumns = conditions.GetAllKeys();
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns);
     auto statement = Prepare(prepareSql);
-    for (auto columnName : modifyColumns) {
+    for (const auto& columnName : modifyColumns) {
         statement.Bind(columnName, modifyValues.Get(columnName));
     }
-    for (auto columnName : conditionColumns) {
+    for (const auto& columnName : conditionColumns) {
         statement.Bind(columnName, conditions.Get(columnName));
     }
     int ret = statement.Step();
@@ -182,9 +182,9 @@ int SqliteStorage::RefreshAll(const DataType type, const std::vector<GenericValu
     auto insertStatement = Prepare(insertSql);
     BeginTransaction();
     bool canCommit = deleteStatement.Step() == Statement::State::DONE;
-    for (auto value : values) {
+    for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
-        for (auto columnName : columnNames) {
+        for (const auto& columnName : columnNames) {
             insertStatement.Bind(columnName, value.Get(columnName));
         }
         int ret = insertStatement.Step();
@@ -232,7 +232,7 @@ std::string SqliteStorage::CreateDeletePrepareSqlCmd(
         return std::string();
     }
     std::string sql = "delete from " + it->second.tableName_ + " where 1 = 1";
-    for (auto columnName : columnNames) {
+    for (const auto& columnName : columnNames) {
         sql.append(" and ");
         sql.append(columnName + "=:" + columnName);
     }

@@ -258,7 +258,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel size.");
         return INVALID_OPER;
     }
-    for (auto permission : permListParcel) {
+    for (const auto& permission : permListParcel) {
         if (!data.WriteParcelable(&permission)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel.");
             return INVALID_OPER;
@@ -814,7 +814,7 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
     if (!data.WriteUint32(nativeTokenInfoForSyncParcel.size())) {
         return RET_FAILED;
     }
-    for (NativeTokenInfoForSyncParcel& parcel : nativeTokenInfoForSyncParcel) {
+    for (const NativeTokenInfoForSyncParcel& parcel : nativeTokenInfoForSyncParcel) {
         if (!data.WriteParcelable(&parcel)) {
             return RET_FAILED;
         }

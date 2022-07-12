@@ -23,24 +23,6 @@ static const std::string REPLACE_TARGET = "****";
 } // namespace
 const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
 const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
-
-std::string Constant::EncryptDevId(std::string deviceId)
-{
-    std::string result = deviceId;
-    if (deviceId.size() >= ENCRYPTLEN) {
-        result.replace(ENCRYPTBEGIN, ENCRYPTEND, REPLACE_TARGET);
-    } else {
-        result.replace(ENCRYPTBEGIN, result.size() - 1, REPLACE_TARGET);
-    }
-    return result;
-}
-
-std::string Constant::GetLocalDeviceId()
-{
-    char deviceIdCharArray[Constant::DEVICE_UUID_LENGTH] = {0};
-    GetDevUdid(deviceIdCharArray, Constant::DEVICE_UUID_LENGTH);
-    return deviceIdCharArray;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

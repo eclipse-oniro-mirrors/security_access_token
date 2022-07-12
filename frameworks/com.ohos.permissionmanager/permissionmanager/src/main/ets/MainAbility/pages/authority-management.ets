@@ -84,11 +84,13 @@ struct authorityManagementPage {
           }
           if (!index) {
             Row() {
-              Column()
-                .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.MANAGEMENT_TEXT_DECORATION_WIDTH)
-                .height(Constants.TEXT_DECORATION_HEIGHT)
-                .margin({ left: Constants.MANAGEMENT_TEXT_DECORATION_MARGIN_LEFT })
+              Flex() {
+                Column().width(Constants.MANAGEMENT_TEXT_DECORATION_MARGIN_LEFT)
+                Column()
+                  .backgroundColor($r('app.color.text_decoration_color'))
+                  .height(Constants.TEXT_DECORATION_HEIGHT)
+                  .flexGrow(Constants.FLEX_GROW)
+              }
             }
           }
         }.onClick(() => {
@@ -432,6 +434,31 @@ struct authorityManagementPage {
     this.getAllBundlePermissions(this.allPermissions, this.allApplicationPermissions);
   }
 
+  getPermissionGroup(allGroup, order) {
+    var fixedName: string[] = ['LOCATION', 'CAMERA', 'MICROPHONE']
+    var fixedGroup: any[] = []
+    var changeGroup: any[] = []
+    var otherGroup: any[] = []
+
+    allGroup.forEach(group => {
+      if(fixedName.indexOf(group.group) !== -1) {
+        fixedGroup.push(group)
+      }else if(group.group == 'OTHER') {
+        otherGroup.push(group)
+      }else {
+        changeGroup.push(group)
+      }
+    })
+
+    if(order == Constants.FIXED_GROUP){
+      return fixedGroup
+    }else if(order == Constants.CHANGE_GROUP) {
+      return changeGroup
+    }else if(order == Constants.OTHER_GROUP) {
+      return otherGroup
+    }
+  }
+
   build() {
     GridContainer({ gutter: Constants.GUTTER, margin: Constants.GRID_MARGIN }) {
       Row() {
@@ -446,7 +473,7 @@ struct authorityManagementPage {
         Row() {
           Column() {
             Row() {
-              backBar( { title: JSON.stringify($r('app.string.authority_management')) })
+              backBar( { title: JSON.stringify($r('app.string.authority_management')), recordable: false })
             }
             Row() {
               Column() {
@@ -456,15 +483,53 @@ struct authorityManagementPage {
                       TabContent() {
                         Row() {
                             Column() {
+                              if(this.allGroupPermission.length) {
+                                Flex({ justifyContent: FlexAlign.SpaceBetween }) {
+                                  Shape() {
+                                    Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                                    Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                                      .fill($r('app.color.list_background_color'))
+                                  }.width(Constants.SHAPE_DIA)
+                                  Shape() {
+                                    Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                                    Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                                      .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
+                                  }.width(Constants.SHAPE_DIA)
+                                }.width(Constants.FULL_WIDTH).height(Constants.SHAPE_DIA).zIndex(Constants.SHAPE_ZINDEX)
+                                .position({ x: 0, y: Constants.MANAGEMENT_ROW_PADDING_TOP })
+                                .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT, right: Constants.MANAGEMENT_ROW_PADDING_RIGHT })
+                              }
                               Scroll() {
-                                Row() {
+                                Column() {
                                   if(this.allGroupPermission.length) {
                                     List() {
-                                      ForEach(this.allGroupPermission.slice(Constants.SLICE_START,
-                                        this.allGroupPermission.length - 1), (item) => {
+                                      ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_START,
+                                        this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).length - 1), (item) => {
                                         this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                                       }, item => item.toString())
-                                      ForEach(this.allGroupPermission.slice(Constants.SLICE_END), (item, index) => {
+                                      ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                        this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                      }, item => item.toString())
+                                    }.backgroundColor($r('app.color.default_background_color'))
+                                    .borderRadius(Constants.BORDER_RADIUS)
+                                    .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                    .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+
+                                    List() {
+                                      ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_START,
+                                        this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).length - 1), (item) => {
+                                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                                      }, item => item.toString())
+                                      ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                        this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                      }, item => item.toString())
+                                    }.backgroundColor($r('app.color.default_background_color'))
+                                    .borderRadius(Constants.BORDER_RADIUS)
+                                    .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                    .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+
+                                    List() {
+                                      ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.OTHER_GROUP), (item) => {
                                         this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                                       }, item => item.toString())
                                     }.backgroundColor($r('app.color.default_background_color'))
@@ -474,10 +539,9 @@ struct authorityManagementPage {
                                 }.padding({
                                   left: Constants.MANAGEMENT_ROW_PADDING_LEFT,
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
-                                  top: Constants.MANAGEMENT_ROW_PADDING_TOP
                                 })
-                                .height(Constants.FULL_HEIGHT)
-                              }
+                              }.scrollBar(BarState.Off)
+                              .margin({ top: Constants.MANAGEMENT_ROW_PADDING_TOP })
                             }.width(Constants.FULL_WIDTH)
                           }
                       }.tabBar($r('app.string.authority'))
@@ -555,12 +619,14 @@ struct applicationItem {
           }
           if (!index) {
             Row() {
-              Column()
-                .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.APPLICATION_TEXT_DECORATION_WIDTH)
-                .height(Constants.TEXT_DECORATION_HEIGHT)
-                .margin({ left: Constants.APPLICATION_TEXT_DECORATION_MARGIN_LEFT })
-            }
+              Flex() {
+                Column().width(Constants.APPLICATION_TEXT_DECORATION_MARGIN_LEFT)
+                Column()
+                  .backgroundColor($r('app.color.text_decoration_color'))
+                  .height(Constants.TEXT_DECORATION_HEIGHT)
+                  .flexGrow(Constants.FLEX_GROW)
+              }
+            }.padding({ right: Constants.APPLICATION_LIST_PADDING_RIGHT })
           }
         }.onClick(() => {
           router.push({
@@ -589,24 +655,40 @@ struct applicationItem {
         top: Constants.APPLICATION_TEXTINPUT_PADDING_TOP,
         right: Constants.APPLICATION_TEXTINPUT_PADDING_RIGHT
       })
-      Scroll() {
-        Row() {
-          Flex({ alignItems: ItemAlign.Start }) {
-            Column() {
+      Row() {
+        Flex({ alignItems: ItemAlign.Start }) {
+          Column() {
+            if (this.applicationItem.length) {
+              Flex({ justifyContent: FlexAlign.SpaceBetween }) {
+                Shape() {
+                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                    .fill($r('app.color.list_background_color'))
+                }.width(Constants.SHAPE_DIA)
+                Shape() {
+                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                    .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
+                }.width(Constants.SHAPE_DIA)
+              }.width(Constants.FULL_WIDTH).height(Constants.SHAPE_DIA).zIndex(Constants.SHAPE_ZINDEX)
+              .position({ x: 0, y: Constants.MANAGEMENT_ROW_MARGIN_TOP })
+              .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+            }
+            Scroll() {
               if (!this.applicationItem.length) {
                 if (this.searchResult) {
                   Row() {
                     List() {
                       ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                      (item) => {
-                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                      }, item => item.toString())
+                        (item) => {
+                          this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                        }, item => item.toString())
                       ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
                         this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                       }, item => item.toString())
                     }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)
                   }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                   .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+                  .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
                 } else {
                   Row() {
                     Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
@@ -620,27 +702,27 @@ struct applicationItem {
                 Row() {
                   List() {
                     ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                    (item) => {
-                      this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                    }, item => item.toString())
+                      (item) => {
+                        this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                      }, item => item.toString())
                     ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
                       this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                     }, item => item.toString())
                   }.backgroundColor($r('app.color.default_background_color'))
-                   .borderRadius(Constants.BORDER_RADIUS)
-                   .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+                  .borderRadius(Constants.BORDER_RADIUS)
+                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                }.padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
               }
-            }
-            .backgroundColor($r('app.color.background_color'))
-            .height(Constants.APPLICATION_COLUMN_HEIGHT)
-            Column() {
-              alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
-            }
-            .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
-            .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
+            }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
+            .scrollBar(BarState.Off)
           }
+          .backgroundColor($r('app.color.background_color'))
+          .margin({ bottom: Constants.APPLICATION_LIST_MARGIN_BOTTOM })
+          Column() {
+            alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
+          }
+          .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
+          .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
         }
       }
     }

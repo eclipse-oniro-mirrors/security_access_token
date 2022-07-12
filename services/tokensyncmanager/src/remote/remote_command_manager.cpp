@@ -14,15 +14,14 @@
  */
 
 #include "remote_command_manager.h"
+#include <thread>
 #include "device_info_manager.h"
 #include "sync_remote_native_token_command.h"
 #include "remote_command_factory.h"
 #include "token_sync_event_handler.h"
 #include "token_sync_manager_service.h"
 #include "accesstoken_kit.h"
-
-#include <thread>
-
+#include "constant_common.h"
 
 namespace OHOS {
 namespace Security {
@@ -80,11 +79,13 @@ void RemoteCommandManager::RemoveCommand(const std::string &udid)
 int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command)
 {
     if (udid.empty() || command == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s, or null command", udid.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s, or null command",
+            ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
     std::string uniqueId = command->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid: %{public}s , uniqueId: %{public}s ", udid.c_str(), uniqueId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid: %{public}s , uniqueId: %{public}s ",
+        ConstantCommon::EncryptDevId(udid).c_str(), uniqueId.c_str());
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
@@ -100,19 +101,20 @@ int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::sha
 int RemoteCommandManager::ProcessDeviceCommandImmediately(const std::string &udid)
 {
     if (udid.empty()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s", ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid:%{public}s ", udid.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid:%{public}s ", ConstantCommon::EncryptDevId(udid).c_str());
     auto executorIt = executors_.find(udid);
     if (executorIt == executors_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no executor found, udid:%{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no executor found, udid:%{public}s", ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
 
     auto executor = executorIt->second;
     if (executor == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor is null for udid %{public}s ", udid.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor is null for udid %{public}s ",
+            ConstantCommon::EncryptDevId(udid).c_str());
         return Constant::FAILURE;
     }
 
@@ -174,7 +176,7 @@ int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 
     std::function<void()> delayed = ([=]() {
         const std::shared_ptr<SyncRemoteNativeTokenCommand> syncRemoteNativeTokenCommand =
-            RemoteCommandFactory::GetInstance().NewSyncRemoteNativeTokenCommand(Constant::GetLocalDeviceId(),
+            RemoteCommandFactory::GetInstance().NewSyncRemoteNativeTokenCommand(ConstantCommon::GetLocalDeviceId(),
             nodeId);
 
         const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
