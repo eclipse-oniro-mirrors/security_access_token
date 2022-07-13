@@ -13,7 +13,7 @@
      limitations under the License.
 -->
 <info>
-    <process>accesstoken_service</process>
+    <process>privacy_service</process>
     <systemability>
         <name>3505</name>
         <libpath>libprivacy_manager_service.z.so</libpath>

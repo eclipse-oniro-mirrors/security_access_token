@@ -13,6 +13,13 @@
 
 import("//build/ohos.gni")
 
+ohos_prebuilt_etc("privacy.rc") {
+  source = "privacy.cfg"
+  relative_install_dir = "init"
+  subsystem_name = "security"
+  part_name = "access_token"
+}
+
 ohos_shared_library("privacy_manager_service") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -54,6 +61,7 @@ ohos_shared_library("privacy_manager_service") {
     "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/services/common/database:accesstoken_database_cxx",
+    "//base/security/access_token/services/privacymanager:privacy.rc",
     "//third_party/sqlite:sqlite",
     "//utils/native/base:utils",
   ]
