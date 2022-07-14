@@ -14,7 +14,6 @@
  */
 
 #include "accesstoken_kit.h"
-
 #include <string>
 #include <vector>
 
@@ -22,10 +21,7 @@
 #include "accesstoken_manager_client.h"
 #include "constant_common.h"
 #include "data_validator.h"
-
 #include "hap_token_info.h"
-#include "hilog/log_c.h"
-#include "hilog/log_cpp.h"
 #include "permission_def.h"
 
 namespace OHOS {

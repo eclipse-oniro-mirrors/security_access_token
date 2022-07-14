@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "parcel_utils.h"
 #include "hap_info_parcel.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {

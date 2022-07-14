@@ -16,8 +16,6 @@
 #include "hap_token_info_parcel.h"
 #include "parcel_utils.h"
 
-#include "access_token.h"
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

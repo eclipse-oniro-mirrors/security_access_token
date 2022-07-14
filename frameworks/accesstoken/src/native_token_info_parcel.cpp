@@ -14,12 +14,11 @@
  */
 
 #include "native_token_info_parcel.h"
-#include "parcel_utils.h"
-
 #include <iosfwd>
 #include <new>
 #include <string>
 #include <vector>
+#include "parcel_utils.h"
 #include "access_token.h"
 
 namespace OHOS {

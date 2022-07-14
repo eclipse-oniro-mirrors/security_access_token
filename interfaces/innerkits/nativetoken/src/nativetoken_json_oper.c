@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <stdlib.h>
+#include "nativetoken_json_oper.h"
 #include <securec.h>
+#include <stdlib.h>
 #include <string.h>
 #include "nativetoken_log.h"
-#include "nativetoken_json_oper.h"
 
 void FreeStrArray(char **arr, int32_t num)
 {

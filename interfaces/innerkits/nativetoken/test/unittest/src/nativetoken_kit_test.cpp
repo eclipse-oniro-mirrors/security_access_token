@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include <pthread.h>
+#include "nativetoken_kit_test.h"
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
 #include "securec.h"
 #include "nativetoken.h"
 #include "nativetoken_kit.h"
-#include "nativetoken_kit_test.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;

@@ -16,9 +16,6 @@
 #include "random_mbedtls.h"
 #include "access_token.h"
 
-#include "ctr_drbg.h"
-#include "entropy.h"
-
 using OHOS::Security::AccessToken::RandomMbedtls;
 using OHOS::Security::AccessToken::RET_SUCCESS;
 

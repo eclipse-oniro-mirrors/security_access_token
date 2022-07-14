@@ -13,12 +13,8 @@
  * limitations under the License.
  */
 #include "accesstoken_death_recipient.h"
-
 #include "accesstoken_log.h"
 #include "accesstoken_manager_client.h"
-
-#include "hilog/log_c.h"
-#include "hilog/log_cpp.h"
 
 namespace OHOS {
 namespace Security {

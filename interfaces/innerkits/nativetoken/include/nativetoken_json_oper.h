@@ -14,7 +14,6 @@
  */
 
 #include <stdint.h>
-
 #include "cJSON.h"
 #include "nativetoken.h"
 

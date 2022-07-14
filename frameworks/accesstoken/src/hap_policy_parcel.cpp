@@ -15,13 +15,12 @@
 
 #include "hap_policy_parcel.h"
 #include "parcel_utils.h"
-
+#include "refbase.h"
 #include "access_token.h"
 #include "permission_def.h"
 #include "permission_def_parcel.h"
 #include "permission_state_full.h"
 #include "permission_state_full_parcel.h"
-#include "refbase.h"
 
 namespace OHOS {
 namespace Security {
