@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <securec.h>
 #include <string.h>
-#include "nativetoken_json_oper.h"
 #include "nativetoken_log.h"
+#include "nativetoken_json_oper.h"
 
 void FreeStrArray(char **arr, int32_t num)
 {
