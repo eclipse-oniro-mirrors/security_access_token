@@ -14,6 +14,7 @@
  */
 #include "constant_common.h"
 #include "parameter.h"
+#include <string>
 
 namespace OHOS {
 namespace Security {

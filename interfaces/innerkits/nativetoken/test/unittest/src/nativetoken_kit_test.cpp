@@ -17,6 +17,9 @@
 #include <pthread.h>
 #include "nativetoken.h"
 #include "nativetoken_kit.h"
+#include "securec.h"
+#include <fcntl.h>
+#include <poll.h>
 
 using namespace testing::ext;
 using namespace OHOS::Security;

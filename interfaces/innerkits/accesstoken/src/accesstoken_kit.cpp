@@ -23,12 +23,22 @@
 #include "constant_common.h"
 #include "data_validator.h"
 
+#include "hap_token_info.h"
+#include "hilog/log_c.h"
+#include "hilog/log_cpp.h"
+#include "permission_def.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
 } // namespace
+
+class NativeTokenInfo;
+class NativeTokenInfoForSync;
+class PermissionListState;
+class PermissionStateFull;
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {

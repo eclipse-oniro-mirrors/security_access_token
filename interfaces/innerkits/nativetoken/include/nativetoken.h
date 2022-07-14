@@ -13,17 +13,7 @@
  * limitations under the License.
  */
 
-#include <fcntl.h>
-#include <poll.h>
 #include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-
-#include "cJSON.h"
-#include "securec.h"
-#include "nativetoken_log.h"
 
 #ifndef NATIVE_TOKEN_H
 #define NATIVE_TOKEN_H

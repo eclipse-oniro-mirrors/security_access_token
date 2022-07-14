@@ -14,13 +14,9 @@
  */
 
 #include <stdint.h>
-#include <sys/un.h>
-#include <unistd.h>
 
 #include "cJSON.h"
-#include "securec.h"
 #include "nativetoken.h"
-#include "nativetoken_log.h"
 
 #ifndef NATIVETOKEN_JSON_OPER_H
 #define NATIVETOKEN_JSON_OPER_H

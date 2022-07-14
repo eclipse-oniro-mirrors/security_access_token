@@ -15,6 +15,7 @@
 
 #include "used_record_detail_parcel.h"
 #include "parcel_utils.h"
+#include <new>
 
 namespace OHOS {
 namespace Security {

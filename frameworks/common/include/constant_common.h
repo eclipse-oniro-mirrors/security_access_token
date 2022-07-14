@@ -15,8 +15,8 @@
 #ifndef FRAMEWORK_CONSTANT_COMMON_H
 #define FRAMEWORK_CONSTANT_COMMON_H
 
-#include <algorithm>
-#include <string>
+#include <stdint.h>
+#include <iosfwd>
 
 namespace OHOS {
 namespace Security {

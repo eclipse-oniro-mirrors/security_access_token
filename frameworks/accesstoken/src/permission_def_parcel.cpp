@@ -18,6 +18,10 @@
 #include "access_token.h"
 #include "parcel_utils.h"
 
+#include <iosfwd>
+#include <new>
+#include <string>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

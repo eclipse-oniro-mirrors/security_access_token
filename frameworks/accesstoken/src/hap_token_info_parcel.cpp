@@ -16,6 +16,12 @@
 #include "hap_token_info_parcel.h"
 #include "parcel_utils.h"
 
+#include <stdint.h>
+#include "access_token.h"
+#include <iosfwd>
+#include <new>
+#include <string>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

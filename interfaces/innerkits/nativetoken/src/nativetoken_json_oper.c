@@ -14,6 +14,11 @@
  */
 #include "nativetoken_json_oper.h"
 
+#include <stdlib.h>
+#include "nativetoken_log.h"
+#include <securec.h>
+#include <string.h>
+
 void FreeStrArray(char **arr, int32_t num)
 {
     for (int32_t i = 0; i <= num; i++) {

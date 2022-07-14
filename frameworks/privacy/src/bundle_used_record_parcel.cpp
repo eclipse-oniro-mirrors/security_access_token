@@ -16,6 +16,10 @@
 #include "bundle_used_record_parcel.h"
 #include "parcel_utils.h"
 #include "permission_used_record_parcel.h"
+#include <stdint.h>
+#include <new>
+#include "refbase.h"
+#include <vector>
 
 namespace OHOS {
 namespace Security {
