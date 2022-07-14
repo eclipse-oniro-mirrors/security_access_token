@@ -16,12 +16,6 @@
 #include "permission_state_full_parcel.h"
 #include "parcel_utils.h"
 
-#include <stdint.h>
-#include <iosfwd>
-#include <new>
-#include <string>
-#include <vector>
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

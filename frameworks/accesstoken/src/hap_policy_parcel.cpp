@@ -16,17 +16,12 @@
 #include "hap_policy_parcel.h"
 #include "parcel_utils.h"
 
-#include <stdint.h>
 #include "access_token.h"
-#include <iosfwd>
-#include <new>
 #include "permission_def.h"
 #include "permission_def_parcel.h"
 #include "permission_state_full.h"
 #include "permission_state_full_parcel.h"
 #include "refbase.h"
-#include <string>
-#include <vector>
 
 namespace OHOS {
 namespace Security {

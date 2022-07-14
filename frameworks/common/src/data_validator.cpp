@@ -14,7 +14,6 @@
  */
 
 #include "data_validator.h"
-#include <stdint.h>
 #include "access_token.h"
 #include <string>
 

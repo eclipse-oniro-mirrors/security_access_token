@@ -15,7 +15,7 @@
 #ifndef FRAMEWORK_CONSTANT_COMMON_H
 #define FRAMEWORK_CONSTANT_COMMON_H
 
-#include <stdint.h>
+#include <algorithm>
 #include <iosfwd>
 
 namespace OHOS {

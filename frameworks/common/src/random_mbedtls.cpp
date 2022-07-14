@@ -16,7 +16,6 @@
 #include "random_mbedtls.h"
 #include "access_token.h"
 
-#include <stddef.h>
 #include "ctr_drbg.h"
 #include "entropy.h"
 

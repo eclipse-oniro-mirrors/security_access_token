@@ -16,8 +16,8 @@
 #ifndef DATA_VALIDATOR_H
 #define DATA_VALIDATOR_H
 
-#include "access_token.h"
 #include <iosfwd>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {

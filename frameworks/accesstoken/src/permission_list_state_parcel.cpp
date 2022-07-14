@@ -14,7 +14,6 @@
  */
 
 #include "permission_list_state_parcel.h"
-#include <new>
 #include "parcel_utils.h"
 
 namespace OHOS {

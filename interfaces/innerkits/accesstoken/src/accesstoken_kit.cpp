@@ -35,11 +35,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
 } // namespace
 
-class NativeTokenInfo;
-class NativeTokenInfoForSync;
-class PermissionListState;
-class PermissionStateFull;
-
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};

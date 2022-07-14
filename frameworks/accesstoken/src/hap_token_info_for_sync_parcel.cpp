@@ -17,12 +17,8 @@
 #include "hap_token_info_parcel.h"
 #include "parcel_utils.h"
 #include "permission_state_full_parcel.h"
-
-#include <stdint.h>
-#include <new>
 #include "permission_state_full.h"
 #include "refbase.h"
-#include <vector>
 
 namespace OHOS {
 namespace Security {
