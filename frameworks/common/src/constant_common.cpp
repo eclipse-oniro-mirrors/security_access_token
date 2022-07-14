@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "parameter.h"
 #include "constant_common.h"
 #include <string>
+#include "parameter.h"
 
 namespace OHOS {
 namespace Security {

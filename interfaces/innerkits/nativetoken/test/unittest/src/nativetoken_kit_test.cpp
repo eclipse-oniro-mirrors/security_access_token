@@ -15,11 +15,11 @@
 
 #include "nativetoken_kit_test.h"
 #include <pthread.h>
-#include "nativetoken.h"
-#include "nativetoken_kit.h"
 #include "securec.h"
 #include <fcntl.h>
 #include <poll.h>
+#include "nativetoken.h"
+#include "nativetoken_kit.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security;

@@ -15,7 +15,6 @@
 
 #include "data_validator.h"
 #include "access_token.h"
-#include <string>
 
 namespace OHOS {
 namespace Security {

@@ -17,6 +17,7 @@
 #include "hap_token_info_parcel.h"
 #include "parcel_utils.h"
 #include "permission_state_full_parcel.h"
+
 #include "permission_state_full.h"
 #include "refbase.h"
 
