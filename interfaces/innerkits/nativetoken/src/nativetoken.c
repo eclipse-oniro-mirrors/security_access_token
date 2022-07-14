@@ -20,12 +20,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "bits/errno.h"
 #include "bits/fcntl.h"
 #include "errno.h"
 #include "fcntl.h"
 #include "securec.h"
-#include <string.h>
 #include "sys/stat.h"
 #include "unistd.h"
 #include "nativetoken_log.h"
