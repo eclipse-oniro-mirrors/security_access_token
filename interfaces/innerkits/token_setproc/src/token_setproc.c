@@ -14,10 +14,10 @@
  */
 
 #include "token_setproc.h"
-#include "bits/ioctl.h"
+
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #define    ACCESS_TOKEN_ID_IOCTL_BASE    'A'

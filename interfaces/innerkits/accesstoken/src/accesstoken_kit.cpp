@@ -16,7 +16,6 @@
 #include "accesstoken_kit.h"
 #include <string>
 #include <vector>
-
 #include "accesstoken_log.h"
 #include "accesstoken_manager_client.h"
 #include "constant_common.h"
