@@ -13,6 +13,10 @@
  * limitations under the License.
  */
 #include "nativetoken_json_oper.h"
+#include <stdlib.h>
+#include <string.h>
+#include <securec.h>
+#include "nativetoken_log.h"
 
 void FreeStrArray(char **arr, int32_t num)
 {

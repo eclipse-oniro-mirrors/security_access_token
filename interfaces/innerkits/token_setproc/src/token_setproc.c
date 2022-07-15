@@ -16,11 +16,9 @@
 #include "token_setproc.h"
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <stdint.h>
 
 #define    ACCESS_TOKEN_ID_IOCTL_BASE    'A'
 

@@ -17,8 +17,7 @@
 #define HAP_POLICY_PARCEL_H
 
 #include "hap_token_info.h"
-#include "permission_def_parcel.h"
-#include "permission_state_full_parcel.h"
+#include "parcel.h"
 
 namespace OHOS {
 namespace Security {

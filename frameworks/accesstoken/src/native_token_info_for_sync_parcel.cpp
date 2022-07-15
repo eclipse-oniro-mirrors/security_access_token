@@ -14,8 +14,10 @@
  */
 
 #include "native_token_info_for_sync_parcel.h"
+#include "refbase.h"
 #include "native_token_info_parcel.h"
 #include "parcel_utils.h"
+#include "permission_state_full.h"
 #include "permission_state_full_parcel.h"
 
 namespace OHOS {
