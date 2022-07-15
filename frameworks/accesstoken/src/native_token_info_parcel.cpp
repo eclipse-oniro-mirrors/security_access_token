@@ -18,8 +18,8 @@
 #include <new>
 #include <string>
 #include <vector>
-#include "parcel_utils.h"
 #include "access_token.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
