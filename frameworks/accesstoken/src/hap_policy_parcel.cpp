@@ -14,9 +14,9 @@
  */
 
 #include "hap_policy_parcel.h"
-#include "parcel_utils.h"
 #include "refbase.h"
 #include "access_token.h"
+#include "parcel_utils.h"
 #include "permission_def.h"
 #include "permission_def_parcel.h"
 #include "permission_state_full.h"

@@ -14,8 +14,8 @@
  */
 
 #include "permission_used_record_parcel.h"
-#include "parcel_utils.h"
 #include "refbase.h"
+#include "parcel_utils.h"
 #include "used_record_detail_parcel.h"
 
 namespace OHOS {

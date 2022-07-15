@@ -23,9 +23,9 @@
 #include <string.h>
 #include "errno.h"
 #include "fcntl.h"
-#include "securec.h"
 #include "sys/stat.h"
 #include "unistd.h"
+#include "securec.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
 #include "nativetoken_log.h"
