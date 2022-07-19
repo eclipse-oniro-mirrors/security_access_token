@@ -656,20 +656,26 @@ struct applicationItem {
       Row() {
         Flex({ alignItems: ItemAlign.Start }) {
           Column() {
-            Flex({ justifyContent: FlexAlign.SpaceBetween }) {
-              Shape() {
-                Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
-                Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                  .fill($r('app.color.list_background_color'))
-              }.width(Constants.SHAPE_DIA)
-              Shape() {
-                Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
-                Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                  .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
-              }.width(Constants.SHAPE_DIA)
-            }.width(Constants.FULL_WIDTH).height(Constants.SHAPE_DIA).zIndex(Constants.SHAPE_ZINDEX)
-            .position({ x: 0, y: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-            .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+            if(this.applicationItem.length) {
+              Flex({ justifyContent: FlexAlign.SpaceBetween }) {
+                Shape() {
+                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                    .fill($r('app.color.list_background_color'))
+                }.width(Constants.SHAPE_DIA)
+
+                Shape() {
+                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
+                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
+                    .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
+                }.width(Constants.SHAPE_DIA)
+              }
+              .width(Constants.FULL_WIDTH)
+              .height(Constants.SHAPE_DIA)
+              .zIndex(Constants.SHAPE_ZINDEX)
+              .position({ x: 0, y: Constants.MANAGEMENT_ROW_MARGIN_TOP })
+              .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+            }
             Scroll() {
               if (!this.applicationItem.length) {
                 if (this.searchResult) {
@@ -714,11 +720,13 @@ struct applicationItem {
           }
           .backgroundColor($r('app.color.background_color'))
           .margin({ bottom: Constants.APPLICATION_LIST_MARGIN_BOTTOM })
-          Column() {
-            alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
+          Scroll() {
+            Column() {
+              alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
+            }
+            .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
+            .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
           }
-          .margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
-          .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
         }
       }
     }
