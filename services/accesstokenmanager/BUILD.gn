@@ -85,7 +85,7 @@ ohos_shared_library("accesstoken_manager_service") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
-    "samgr_standard:samgr_proxy",
+    "samgr:samgr_proxy",
   ]
 
   if (token_sync_enable == true) {
