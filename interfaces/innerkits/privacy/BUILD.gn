@@ -18,45 +18,47 @@ config("pricacy") {
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("libprivacy_sdk") {
-  subsystem_name = "security"
-  part_name = "access_token"
+if (is_standard_system) {
+  ohos_shared_library("libprivacy_sdk") {
+    subsystem_name = "security"
+    part_name = "access_token"
 
-  output_name = "libprivacy_sdk"
+    output_name = "libprivacy_sdk"
 
-  public_configs = [ ":pricacy" ]
+    public_configs = [ ":pricacy" ]
 
-  include_dirs = [
-    "//utils/native/base/include",
-    "include",
-    "src",
-    "//base/security/access_token/frameworks/privacy/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-  ]
+    include_dirs = [
+      "//utils/native/base/include",
+      "include",
+      "src",
+      "//base/security/access_token/frameworks/privacy/include",
+      "//base/security/access_token/frameworks/common/include",
+      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+      "//base/security/access_token/interfaces/innerkits/privacy/include",
+    ]
 
-  sources = [
-    "src/privacy_death_recipient.cpp",
-    "src/privacy_kit.cpp",
-    "src/privacy_manager_client.cpp",
-    "src/privacy_manager_proxy.cpp",
-  ]
+    sources = [
+      "src/privacy_death_recipient.cpp",
+      "src/privacy_kit.cpp",
+      "src/privacy_manager_client.cpp",
+      "src/privacy_manager_proxy.cpp",
+    ]
 
-  deps = [
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
-    "//utils/native/base:utils",
-  ]
+    deps = [
+      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
+      "//utils/native/base:utils",
+    ]
 
-  external_deps = [
-    "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
-    "samgr_standard:samgr_proxy",
-  ]
+    external_deps = [
+      "hiviewdfx_hilog_native:libhilog",
+      "ipc:ipc_core",
+      "samgr_standard:samgr_proxy",
+    ]
 
-  cflags_cc = [
-    "-DHILOG_ENABLE",
-    "-DDEBUG_API_PERFORMANCE",
-  ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-DDEBUG_API_PERFORMANCE",
+    ]
+  }
 }

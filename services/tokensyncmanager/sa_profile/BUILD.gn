@@ -11,10 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build/ohos.gni")
+import("//build/ohos/sa_profile/sa_profile.gni")
 import("//build/ohos/sa_profile/sa_profile.gni")
 
-ohos_sa_profile("tokensync_sa_profile_standard") {
-  part_name = "access_token"
+if (is_standard_system && token_sync_enable == true) {
+  ohos_sa_profile("tokensync_sa_profile_standard") {
+    part_name = "access_token"
 
-  sources = [ "3504.xml" ]
+    sources = [ "3504.xml" ]
+  }
 }
