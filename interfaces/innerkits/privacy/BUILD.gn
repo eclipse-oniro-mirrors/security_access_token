@@ -38,6 +38,9 @@ if (is_standard_system) {
     ]
 
     sources = [
+      "src/perm_active_status_change_callback.cpp",
+      "src/perm_active_status_change_callback_stub.cpp",
+      "src/perm_active_status_change_customized_cbk.cpp",
       "src/privacy_death_recipient.cpp",
       "src/privacy_kit.cpp",
       "src/privacy_manager_client.cpp",

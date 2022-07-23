@@ -46,13 +46,18 @@ public:
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t RegisterPermActiveStatusCallback(
+        std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+    int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
+    bool GetPermissionVisitor(AccessTokenID tokenID, PermissionVisitor& visitor);
 
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
     bool AddVisitor(AccessTokenID tokenID, int32_t& visitorId);
-    bool GetPermissionVisitor(AccessTokenID tokenID, PermissionVisitor& visitor);
     bool AddRecord(int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount);
     bool GetPermissionsRecord(int32_t visitorId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);

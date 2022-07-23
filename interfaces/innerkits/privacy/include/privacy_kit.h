@@ -22,6 +22,7 @@
 #include "on_permission_used_record_callback.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "perm_active_status_change_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {
@@ -37,6 +38,8 @@ public:
     static int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     static std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    static int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    static int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -60,6 +60,12 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::DUMP_RECORD_INFO):
             DumpRecordInfoInner(data, reply);
             break;
+        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+            RegisterPermActiveStatusCallbackInner(data, reply);
+            break;
+        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+            UnRegisterPermActiveStatusCallbackInner(data, reply);
+            break;
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
@@ -156,6 +162,43 @@ void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel&
     std::string permissionName = data.ReadString();
     std::string dumpInfo = this->DumpRecordInfo(bundleName, permissionName);
     reply.WriteString(dumpInfo);
+}
+
+void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t permListSize = data.ReadUint32();
+    if (permListSize > 200) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    std::vector<std::string> permList;
+    for (uint32_t i = 0; i < permListSize; i++) {
+        std::string perm = data.ReadString();
+        permList.emplace_back(perm);
+    }
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", (IRemoteObject *)callback);
+    int32_t result = this->RegisterPermActiveStatusCallback(permList, callback);
+    reply.WriteInt32(result);
+}
+
+void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", (IRemoteObject *)callback);
+    int32_t result = this->UnRegisterPermActiveStatusCallback(callback);
+    reply.WriteInt32(result);
 }
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const

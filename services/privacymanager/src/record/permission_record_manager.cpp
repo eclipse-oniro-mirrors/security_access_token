@@ -23,6 +23,7 @@
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_visitor_repository.h"
+#include "perm_active_status_change_callback_manage.h"
 #include "time_util.h"
 #include "to_string.h"
 
@@ -420,6 +421,82 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     std::string dumpInfo;
     ToString::PermissionUsedResultToString(result, dumpInfo);
     return dumpInfo;
+}
+
+static void RegisterFrontAndBackGroundlistener()
+{
+    // 给注册前后台监听打桩
+    // 此处需要实现一个callback函数用于被注册
+}
+
+static void UnRegisterFrontAndBackGroundlistener()
+{
+
+}
+
+// 被注册的函数
+int32_t FrontAndBackGroundlistener(
+    AccessTokenID tokenID, const std::string& permissionName, int32_t statusType)
+{
+    PermissionVisitor visitor;
+    bool res = PermissionRecordManager::GetInstance().GetPermissionVisitor(tokenID, visitor);
+    if (!res) {
+        return Constant::FAILURE;
+    }
+    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+        tokenID, permissionName, visitor.deviceId, static_cast<ActiveChangeType>(statusType));
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    // 记录开始使用
+
+    // 此处是否结合全局变量的使用来判断是否开始记录
+
+    // 注册前后台监听
+    RegisterFrontAndBackGroundlistener();
+
+    // 触发给systemUi当前的权限在前台使用
+    PermissionVisitor visitor;
+    bool res = GetPermissionVisitor(tokenID, visitor);
+    if (!res) {
+        return Constant::FAILURE;
+    }
+
+    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+        tokenID, permissionName, visitor.deviceId, PERM_ACTIVE_IN_FOREGROUND);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    // 记录结束使用
+
+    // 注册前后台监听
+    UnRegisterFrontAndBackGroundlistener();
+
+    // 触发给systemUi当前的权限在前台使用
+    PermissionVisitor visitor;
+    bool res = GetPermissionVisitor(tokenID, visitor);
+    if (!res) {
+        return Constant::FAILURE;
+    }
+
+    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+        tokenID, permissionName, visitor.deviceId, PERM_INACTIVE);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
+    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    return ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+}
+
+int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+{
+    return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
 }
 
 bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)

@@ -16,11 +16,14 @@
 #ifndef PRIVACY_MANAGER_CLIENT_H
 #define PRIVACY_MANAGER_CLIENT_H
 
+#include <map>
 #include <mutex>
 #include <string>
 #include <vector>
 
 #include "i_privacy_manager.h"
+#include "perm_active_status_change_callback.h"
+#include "perm_active_status_change_customized_cbk.h"
 #include "privacy_death_recipient.h"
 
 namespace OHOS {
@@ -41,6 +44,10 @@ public:
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    int32_t CreateActiveStatusChangeCbk(
+        const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<IRemoteObject>& callbackObject);
 
     void OnRemoteDiedHandle();
 private:
@@ -52,6 +59,10 @@ private:
     sptr<PrivacyDeathRecipient> serviceDeathObserver_ = nullptr;
     void InitProxy();
     sptr<IPrivacyManager> GetProxy();
+
+private:
+    std::mutex activeCbkMutex_;
+    std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
 };
 } // namespace AccessToken
 } // namespace Security
