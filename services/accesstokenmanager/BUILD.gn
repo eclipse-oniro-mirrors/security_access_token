@@ -21,88 +21,90 @@ ohos_prebuilt_etc("access_token.rc") {
   part_name = "access_token"
 }
 
-ohos_shared_library("accesstoken_manager_service") {
-  subsystem_name = "security"
-  part_name = "access_token"
+if (is_standard_system) {
+  ohos_shared_library("accesstoken_manager_service") {
+    subsystem_name = "security"
+    part_name = "access_token"
 
-  include_dirs = [
-    "main/cpp/include/service",
-    "main/cpp/include/token",
-    "main/cpp/include/permission",
-    "main/cpp/include/database",
-    "main/cpp/include/device",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/frameworks/accesstoken/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/frameworks/tokensync/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/src",
-    "//base/security/access_token/services/common/database/include",
-    "//base/security/access_token/services/tokensyncmanager/include/common",
-    "//third_party/json/include",
-  ]
-
-  sources = [
-    "main/cpp/src/database/data_storage.cpp",
-    "main/cpp/src/database/data_translator.cpp",
-    "main/cpp/src/database/sqlite_storage.cpp",
-    "main/cpp/src/permission/permission_definition_cache.cpp",
-    "main/cpp/src/permission/permission_manager.cpp",
-    "main/cpp/src/permission/permission_policy_set.cpp",
-    "main/cpp/src/permission/permission_validator.cpp",
-    "main/cpp/src/service/accesstoken_manager_service.cpp",
-    "main/cpp/src/service/accesstoken_manager_stub.cpp",
-    "main/cpp/src/token/accesstoken_id_manager.cpp",
-    "main/cpp/src/token/accesstoken_info_manager.cpp",
-    "main/cpp/src/token/hap_token_info_inner.cpp",
-    "main/cpp/src/token/native_token_info_inner.cpp",
-    "main/cpp/src/token/native_token_receptor.cpp",
-  ]
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-
-  if (dlp_permission_enable == true) {
-    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
-    sources += [
-      "main/cpp/src/permission/dlp_permission_set_manager.cpp",
-      "main/cpp/src/permission/dlp_permission_set_parser.cpp",
-    ]
-  }
-
-  deps = [
-    "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
-    "//base/security/access_token/services/accesstokenmanager:access_token.rc",
-    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
-    "//third_party/sqlite:sqlite",
-    "//utils/native/base:utils",
-  ]
-
-  external_deps = [
-    "dsoftbus:softbus_client",
-    "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-    "samgr_standard:samgr_proxy",
-  ]
-
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-
-    sources += [
-      "main/cpp/src/device/atm_device_state_callback.cpp",
-      "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-      "main/cpp/src/token/token_modify_notifier.cpp",
+    include_dirs = [
+      "main/cpp/include/service",
+      "main/cpp/include/token",
+      "main/cpp/include/permission",
+      "main/cpp/include/database",
+      "main/cpp/include/device",
+      "//base/security/access_token/frameworks/common/include",
+      "//base/security/access_token/frameworks/accesstoken/include",
+      "//base/security/access_token/frameworks/common/include",
+      "//base/security/access_token/frameworks/tokensync/include",
+      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+      "//base/security/access_token/interfaces/innerkits/privacy/include",
+      "//base/security/access_token/interfaces/innerkits/tokensync/src",
+      "//base/security/access_token/services/common/database/include",
+      "//base/security/access_token/services/tokensyncmanager/include/common",
+      "//third_party/json/include",
     ]
 
-    include_dirs += [
-      "//base/security/access_token/interfaces/innerkits/tokensync/include",
-      "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
+    sources = [
+      "main/cpp/src/database/data_storage.cpp",
+      "main/cpp/src/database/data_translator.cpp",
+      "main/cpp/src/database/sqlite_storage.cpp",
+      "main/cpp/src/permission/permission_definition_cache.cpp",
+      "main/cpp/src/permission/permission_manager.cpp",
+      "main/cpp/src/permission/permission_policy_set.cpp",
+      "main/cpp/src/permission/permission_validator.cpp",
+      "main/cpp/src/service/accesstoken_manager_service.cpp",
+      "main/cpp/src/service/accesstoken_manager_stub.cpp",
+      "main/cpp/src/token/accesstoken_id_manager.cpp",
+      "main/cpp/src/token/accesstoken_info_manager.cpp",
+      "main/cpp/src/token/hap_token_info_inner.cpp",
+      "main/cpp/src/token/native_token_info_inner.cpp",
+      "main/cpp/src/token/native_token_receptor.cpp",
     ]
 
-    deps += [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
-    external_deps += [ "device_manager:devicemanagersdk" ]
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+
+    if (dlp_permission_enable == true) {
+      cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
+      sources += [
+        "main/cpp/src/permission/dlp_permission_set_manager.cpp",
+        "main/cpp/src/permission/dlp_permission_set_parser.cpp",
+      ]
+    }
+
+    deps = [
+      "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+      "//base/security/access_token/services/accesstokenmanager:access_token.rc",
+      "//base/security/access_token/services/common/database:accesstoken_database_cxx",
+      "//third_party/sqlite:sqlite",
+      "//utils/native/base:utils",
+    ]
+
+    external_deps = [
+      "dsoftbus:softbus_client",
+      "hiviewdfx_hilog_native:libhilog",
+      "ipc:ipc_core",
+      "safwk:system_ability_fwk",
+      "samgr_standard:samgr_proxy",
+    ]
+
+    if (token_sync_enable == true) {
+      cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+
+      sources += [
+        "main/cpp/src/device/atm_device_state_callback.cpp",
+        "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
+        "main/cpp/src/token/token_modify_notifier.cpp",
+      ]
+
+      include_dirs += [
+        "//base/security/access_token/interfaces/innerkits/tokensync/include",
+        "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
+      ]
+
+      deps += [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
+      external_deps += [ "device_manager:devicemanagersdk" ]
+    }
   }
 }
