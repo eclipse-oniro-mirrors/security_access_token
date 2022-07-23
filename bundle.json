@@ -40,11 +40,22 @@
       ]
     },
     "build": {
-      "sub_component": [
-        "//base/security/access_token:accesstoken_build_module",
-        "//base/security/access_token:tokensync_build_module",
-        "//base/security/access_token:privacy_build_module"
-      ],
+      "group_type": {
+        "base_group": [
+          "//base/security/access_token/tools:tools_atm"
+        ],
+        "fwk_group": [
+          "//base/security/access_token/interfaces/kits:napi_packages"
+        ],
+        "service_group": [
+          "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
+          "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
+          "//base/security/access_token/services/privacymanager:privacy_manager_service",
+          "//base/security/access_token/services/privacymanager/sa_profile:privacy_sa_profile_standard",
+          "//base/security/access_token/services/tokensyncmanager:token_sync_manager_service",
+          "//base/security/access_token/services/tokensyncmanager/sa_profile:tokensync_sa_profile_standard"
+        ]
+      },
       "inner_kits": [
         {
           "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
@@ -65,15 +76,6 @@
           }
         },
         {
-          "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
-          "header": {
-            "header_files": [
-              "token_setproc.h"
-            ],
-            "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
-          }
-        },
-        {
           "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
           "header": {
             "header_files": [
@@ -81,17 +83,21 @@
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/privacy/include"
           }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
+          "header": {
+            "header_files": [
+              "token_setproc.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
+          }
         }
       ],
       "test": [
-        "//base/security/access_token:accesstoken_build_module_test",
-        "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest",
-        "//base/security/access_token/interfaces/innerkits/nativetoken/test:unittest",
-        "//base/security/access_token/interfaces/innerkits/privacy/test:unittest",
-        "//base/security/access_token/interfaces/innerkits/token_setproc/test:unittest",
         "//base/security/access_token/interfaces/kits/accesstoken/test/benchmarktest:benchmarktest",
         "//base/security/access_token/test/fuzztest/access_token:fuzztest"
-        ]
+      ]
     }
   }
 }

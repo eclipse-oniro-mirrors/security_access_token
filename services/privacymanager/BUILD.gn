@@ -20,57 +20,59 @@ ohos_prebuilt_etc("privacy.rc") {
   part_name = "access_token"
 }
 
-ohos_shared_library("privacy_manager_service") {
-  subsystem_name = "security"
-  part_name = "access_token"
+if (is_standard_system) {
+  ohos_shared_library("privacy_manager_service") {
+    subsystem_name = "security"
+    part_name = "access_token"
 
-  include_dirs = [
-    "include/common",
-    "include/database",
-    "include/record",
-    "include/service",
-    "//base/security/access_token/frameworks/privacy/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//base/security/access_token/services/common/database/include",
-    "//third_party/json/include",
-  ]
+    include_dirs = [
+      "include/common",
+      "include/database",
+      "include/record",
+      "include/service",
+      "//base/security/access_token/frameworks/privacy/include",
+      "//base/security/access_token/frameworks/common/include",
+      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+      "//base/security/access_token/interfaces/innerkits/privacy/include",
+      "//base/security/access_token/services/common/database/include",
+      "//third_party/json/include",
+    ]
 
-  sources = [
-    "src/common/constant.cpp",
-    "src/common/time_util.cpp",
-    "src/common/to_string.cpp",
-    "src/database/data_translator.cpp",
-    "src/database/permission_used_record_db.cpp",
-    "src/record/on_permission_used_record_callback_proxy.cpp",
-    "src/record/on_permission_used_record_callback_stub.cpp",
-    "src/record/permission_record.cpp",
-    "src/record/permission_record_manager.cpp",
-    "src/record/permission_record_repository.cpp",
-    "src/record/permission_visitor.cpp",
-    "src/record/permission_visitor_repository.cpp",
-    "src/service/privacy_manager_service.cpp",
-    "src/service/privacy_manager_stub.cpp",
-  ]
+    sources = [
+      "src/common/constant.cpp",
+      "src/common/time_util.cpp",
+      "src/common/to_string.cpp",
+      "src/database/data_translator.cpp",
+      "src/database/permission_used_record_db.cpp",
+      "src/record/on_permission_used_record_callback_proxy.cpp",
+      "src/record/on_permission_used_record_callback_stub.cpp",
+      "src/record/permission_record.cpp",
+      "src/record/permission_record_manager.cpp",
+      "src/record/permission_record_repository.cpp",
+      "src/record/permission_visitor.cpp",
+      "src/record/permission_visitor_repository.cpp",
+      "src/service/privacy_manager_service.cpp",
+      "src/service/privacy_manager_stub.cpp",
+    ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+    cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  deps = [
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
-    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
-    "//base/security/access_token/services/privacymanager:privacy.rc",
-    "//third_party/sqlite:sqlite",
-    "//utils/native/base:utils",
-  ]
+    deps = [
+      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
+      "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "//base/security/access_token/services/common/database:accesstoken_database_cxx",
+      "//base/security/access_token/services/privacymanager:privacy.rc",
+      "//third_party/sqlite:sqlite",
+      "//utils/native/base:utils",
+    ]
 
-  external_deps = [
-    "hiviewdfx_hilog_native:libhilog",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-  ]
+    external_deps = [
+      "hiviewdfx_hilog_native:libhilog",
+      "init:libbegetutil",
+      "ipc:ipc_core",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
+    ]
+  }
 }

@@ -14,42 +14,6 @@
 import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 
-group("accesstoken_build_module") {
-  if (is_standard_system) {
-    deps = [
-      "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-      "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
-      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
-      "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
-      "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
-      "//base/security/access_token/tools:tools_atm",
-    ]
-  }
-  if (support_jsapi) {
-    deps += [ "//base/security/access_token/interfaces/kits:napi_packages" ]
-  }
-}
-
-group("tokensync_build_module") {
-  if (is_standard_system && token_sync_enable == true) {
-    deps = [
-      "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
-      "//base/security/access_token/services/tokensyncmanager:token_sync_manager_service",
-      "//base/security/access_token/services/tokensyncmanager/sa_profile:tokensync_sa_profile_standard",
-    ]
-  }
-}
-
-group("privacy_build_module") {
-  if (is_standard_system) {
-    deps = [
-      "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
-      "//base/security/access_token/services/privacymanager:privacy_manager_service",
-      "//base/security/access_token/services/privacymanager/sa_profile:privacy_sa_profile_standard",
-    ]
-  }
-}
-
 group("accesstoken_build_module_test") {
   testonly = true
   deps = []
