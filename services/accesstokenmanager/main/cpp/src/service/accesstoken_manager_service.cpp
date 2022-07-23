@@ -206,6 +206,19 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     return RET_SUCCESS;
 }
 
+int32_t AccessTokenManagerService::RegisterPermStateChangeCallback(
+    const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    return PermissionManager::GetInstance().AddPermStateChangeCallback(scope.scope, callback);
+}
+
+int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    return PermissionManager::GetInstance().RemovePermStateChangeCallback(callback);
+}
+
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");

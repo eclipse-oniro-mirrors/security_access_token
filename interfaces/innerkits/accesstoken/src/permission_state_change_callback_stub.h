@@ -13,28 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef PERMISSION_STATE_CHANGE_CALLBACK_STUB_H
+#define PERMISSION_STATE_CHANGE_CALLBACK_STUB_H
 
-#include "parcel.h"
-#include "permission_used_result.h"
+
+#include "i_permission_state_callback.h"
+
+#include "iremote_stub.h"
+#include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+class PermissionStateCallbackStub : public IRemoteStub<IPermissionStateCallback> {
+public:
+    PermissionStateCallbackStub() = default;
+    virtual ~PermissionStateCallbackStub() = default;
 
-    ~PermissionUsedResultParcel() override = default;
-
-    bool Marshalling(Parcel& out) const override;
-
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // PERMISSION_STATE_CHANGE_CALLBACK_STUB_H

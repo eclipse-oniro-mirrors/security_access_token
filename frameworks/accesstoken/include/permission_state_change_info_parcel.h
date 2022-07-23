@@ -13,28 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef PERMISSION_STATE_CHANGE_INFO_PARCEL_H
+#define PERMISSION_STATE_CHANGE_INFO_PARCEL_H
 
 #include "parcel.h"
-#include "permission_used_result.h"
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+struct PermissionStateChangeInfoParcel final : public Parcelable {
+    PermissionStateChangeInfoParcel() = default;
 
-    ~PermissionUsedResultParcel() override = default;
+    ~PermissionStateChangeInfoParcel() override = default;
 
     bool Marshalling(Parcel& out) const override;
 
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
+    static PermissionStateChangeInfoParcel* Unmarshalling(Parcel& in);
 
-    PermissionUsedResult result;
+    PermStateChangeInfo changeInfo;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // PERMISSION_STATE_CHANGE_INFO_PARCEL_H

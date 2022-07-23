@@ -180,21 +180,30 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     return PERMISSION_DEFAULT_FLAG;
 }
 
-void PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
+bool PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName %{public}s.", permissionName.c_str());
+    int32_t oldStatus = 1;
+    int32_t newStatus = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                perm.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+                oldStatus = perm.grantStatus[0];
+                perm.grantStatus[0] = newStatus;
                 uint32_t currFlag = static_cast<uint32_t>(perm.grantFlags[0]);
                 uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
                 perm.grantFlags[0] = static_cast<int32_t>(newFlag);
-            } else {
-                return;
             }
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "oldStatus %{public}d newStatus %{public}d.", oldStatus, newStatus);
+            if (oldStatus == newStatus) {
+                return false;
+            }
+            return true;
         }
     }
+
+    return false;
 }
 
 void PermissionPolicySet::ResetUserGrantPermissionStatus(void)

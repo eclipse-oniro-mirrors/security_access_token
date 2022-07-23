@@ -13,28 +13,29 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef PERMISSION_STATE_CHANGE_CALLBACK_PROXY_H
+#define PERMISSION_STATE_CHANGE_CALLBACK_PROXY_H
 
-#include "parcel.h"
-#include "permission_used_result.h"
+
+#include "i_permission_state_callback.h"
+
+#include "iremote_proxy.h"
+#include "nocopyable.h"
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+class PermissionStateCallbackProxy : public IRemoteProxy<IPermissionStateCallback> {
+public:
+    explicit PermissionStateCallbackProxy(const sptr<IRemoteObject>& impl);
+    ~PermissionStateCallbackProxy() override;
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result) override;
 
-    ~PermissionUsedResultParcel() override = default;
-
-    bool Marshalling(Parcel& out) const override;
-
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
+private:
+    static inline BrokerDelegator<PermissionStateCallbackProxy> delegator_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // PERMISSION_STATE_CHANGE_CALLBACK_PROXY_H

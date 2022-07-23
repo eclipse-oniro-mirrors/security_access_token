@@ -320,6 +320,30 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
+    if (scopeParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    int32_t result = this->RegisterPermStateChangeCallback(*scopeParcel, callback);
+    reply.WriteInt32(result);
+}
+void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    int32_t result = this->UnRegisterPermStateChangeCallback(callback);
+    reply.WriteInt32(result);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -528,6 +552,11 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::DumpTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_OPER_STATE)] =
         &AccessTokenManagerStub::GetSelfPermissionsStateInner;
+
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK)] =
+        &AccessTokenManagerStub::RegisterPermStateChangeCallbackInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK)] =
+        &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
 }
 
 AccessTokenManagerStub::~AccessTokenManagerStub()

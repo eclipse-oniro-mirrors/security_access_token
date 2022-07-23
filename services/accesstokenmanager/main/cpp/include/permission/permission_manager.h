@@ -21,8 +21,10 @@
 
 #include "access_token.h"
 #include "hap_token_info_inner.h"
+#include "i_permission_state_callback.h"
 #include "permission_def.h"
 #include "permission_list_state.h"
+#include "permission_state_change_info.h"
 #include "permission_state_full.h"
 
 #include "rwlock.h"
@@ -53,6 +55,10 @@ public:
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     void GetSelfPermissionState(
         std::vector<PermissionStateFull> permsList, PermissionListState &permState);
+    int32_t AddPermStateChangeCallback(
+        const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
+    int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
+
 private:
     PermissionManager();
     void UpdateTokenPermissionState(

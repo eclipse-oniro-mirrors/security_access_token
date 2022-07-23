@@ -13,28 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
-
-#include "parcel.h"
-#include "permission_used_result.h"
+#include "perm_state_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+PermStateChangeCbCustomize::PermStateChangeCbCustomize()
+{}
 
-    ~PermissionUsedResultParcel() override = default;
+PermStateChangeCbCustomize::PermStateChangeCbCustomize(
+    const PermStateChangeScope &scopeInfo) : scopeInfo_(scopeInfo)
+{}
 
-    bool Marshalling(Parcel& out) const override;
+PermStateChangeCbCustomize::~PermStateChangeCbCustomize()
+{}
 
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
-};
+void PermStateChangeCbCustomize::GetScope(PermStateChangeScope &scopeInfo) const
+{
+    scopeInfo = scopeInfo_;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H

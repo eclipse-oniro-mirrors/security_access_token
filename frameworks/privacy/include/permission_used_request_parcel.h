@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_REQUEST_PRACEL_H
-#define PERMISSION_USED_REQUEST_PRACEL_H
+#ifndef PERMISSION_USED_REQUEST_PARCEL_H
+#define PERMISSION_USED_REQUEST_PARCEL_H
 
 #include "parcel.h"
 #include "permission_used_request.h"
@@ -37,4 +37,4 @@ struct PermissionUsedRequestParcel final : public Parcelable {
 } // namespace Security
 } // namespace OHOS
 
-#endif // PERMISSION_USED_REQUEST_PRACEL_H
+#endif // PERMISSION_USED_REQUEST_PARCEL_H

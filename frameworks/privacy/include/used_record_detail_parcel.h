@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef USED_RECORD_DETAIL_PRACEL_H
-#define USED_RECORD_DETAIL_PRACEL_H
+#ifndef USED_RECORD_DETAIL_PARCEL_H
+#define USED_RECORD_DETAIL_PARCEL_H
 
 #include "parcel.h"
 #include "permission_used_result.h"
@@ -37,4 +37,4 @@ struct UsedRecordDetailParcel final : public Parcelable {
 } // namespace Security
 } // namespace OHOS
 
-#endif // USED_RECORD_DETAIL_PRACEL_H
+#endif // USED_RECORD_DETAIL_PARCEL_H

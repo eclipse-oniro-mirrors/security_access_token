@@ -13,28 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef PERMISSION_STATE_CHANGE_CALLBACK_H
+#define PERMISSION_STATE_CHANGE_CALLBACK_H
 
-#include "parcel.h"
-#include "permission_used_result.h"
+
+#include "permission_state_change_callback_stub.h"
+#include "perm_state_callback_customize.h"
+
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+class PermissionStateCallback : public PermissionStateCallbackStub {
+public:
+    explicit PermissionStateCallback(const std::shared_ptr<PermStateChangeCbCustomize> &subscriber);
+    ~PermissionStateCallback() override;
 
-    ~PermissionUsedResultParcel() override = default;
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
 
-    bool Marshalling(Parcel& out) const override;
+    void Stop();
 
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
+private:
+    std::shared_ptr<PermStateChangeCbCustomize> customizedCallback_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // PERMISSION_STATE_CHANGE_CALLBACK_H

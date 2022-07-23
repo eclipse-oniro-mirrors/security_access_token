@@ -13,28 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef PERM_STATE_CALLBACK_DEATH_RECIPIENT_H
+#define PERM_STATE_CALLBACK_DEATH_RECIPIENT_H
 
-#include "parcel.h"
-#include "permission_used_result.h"
+
+#include "iremote_object.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+class PermStateCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    PermStateCallbackDeathRecipient() = default;
+    virtual ~PermStateCallbackDeathRecipient() = default;
 
-    ~PermissionUsedResultParcel() override = default;
-
-    bool Marshalling(Parcel& out) const override;
-
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
+    virtual void OnRemoteDied(const wptr<IRemoteObject> &remote);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // PERM_STATE_CALLBACK_DEATH_RECIPIENT_H

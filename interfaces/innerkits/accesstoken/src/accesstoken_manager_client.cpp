@@ -22,6 +22,7 @@
 #include "iservice_registry.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info.h"
+#include "permission_state_change_callback.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerClient"
 };
 } // namespace
+static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
 {
@@ -193,6 +195,81 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
         return RET_FAILED;
     }
     return proxy->ClearUserGrantedPermissionState(tokenID);
+}
+
+int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCbCustomize>& customizedCb, sptr<IRemoteObject>& callbackObject)
+{
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    auto goalCallback = callbackMap_.find(customizedCb);
+    if (goalCallback != callbackMap_.end()) {
+        callbackObject = goalCallback->second->AsObject();
+        ACCESSTOKEN_LOG_ERROR(LABEL, "already has the same callback");
+        return RET_FAILED;
+    } else {
+        if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
+            return RET_FAILED;
+        }
+        sptr<PermissionStateCallback> callback = new (std::nothrow) PermissionStateCallback(customizedCb);
+        if (!callback) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callback failed!");
+            return RET_FAILED;
+        }
+        callbackObject = callback->AsObject();
+        callbackMap_[customizedCb] = callback;
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCbCustomize> &customizedCb)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+
+    if (customizedCb == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCb is nullptr");
+        return RET_FAILED;
+    }
+
+    sptr<IRemoteObject> callbackObject = nullptr;
+    int32_t result = CreatePermStateChangeCallback(customizedCb, callbackObject);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return RET_FAILED;
+    }
+
+    PermStateChangeScopeParcel scopeParcel;
+    customizedCb->GetScope(scopeParcel.scope);
+
+    return proxy->RegisterPermStateChangeCallback(scopeParcel, callbackObject);
+}
+
+int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCbCustomize> &customizedCb)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: called!", __func__);
+
+    std::lock_guard<std::mutex> lock(callbackMutex_);
+    auto goalCallback = callbackMap_.find(customizedCb);
+    if (goalCallback == callbackMap_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "goalCallback already is not exist");
+        return RET_FAILED;
+    }
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return RET_FAILED;
+    }
+
+    int32_t result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());
+    callbackMap_.erase(goalCallback);
+    return result;
 }
 
 AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)

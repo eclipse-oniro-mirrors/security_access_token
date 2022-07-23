@@ -61,6 +61,9 @@ public:
         const HapPolicyParcel& policyPar) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
+    int32_t RegisterPermStateChangeCallback(
+        const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;

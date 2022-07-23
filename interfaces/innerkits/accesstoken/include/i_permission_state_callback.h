@@ -13,28 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RESPONSE_PARCEL_H
-#define PERMISSION_USED_RESPONSE_PARCEL_H
+#ifndef I_PERMISSION_STATE_CALLBACK_H
+#define I_PERMISSION_STATE_CALLBACK_H
 
-#include "parcel.h"
-#include "permission_used_result.h"
+#include <string>
+
+#include "access_token.h"
+#include "errors.h"
+#include "iremote_broker.h"
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedResultParcel final : public Parcelable {
-    PermissionUsedResultParcel() = default;
+class IPermissionStateCallback : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermissionStateCallback");
 
-    ~PermissionUsedResultParcel() override = default;
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result) = 0;
 
-    bool Marshalling(Parcel& out) const override;
-
-    static PermissionUsedResultParcel* Unmarshalling(Parcel& in);
-
-    PermissionUsedResult result;
+    enum {
+        PERMISSION_STATE_CHANGE = 0,
+    };
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif // PERMISSION_USED_RESPONSE_PARCEL_H
+#endif // I_PERMISSION_STATE_CALLBACK_H
