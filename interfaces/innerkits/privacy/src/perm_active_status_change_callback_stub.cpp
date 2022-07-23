@@ -33,13 +33,13 @@ int32_t PermActiveStatusChangeCallbackStub::OnRemoteRequest(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
-    if (descriptor != IPermActiveStatusChangeCbk::GetDescriptor()) {
+    if (descriptor != IPermActiveStatusCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return RET_FAILED;
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
-    if (msgCode == IPermActiveStatusChangeCbk::PERM_ACTIVE_STATUS_CHANGE) {
+    if (msgCode == IPermActiveStatusCallback::PERM_ACTIVE_STATUS_CHANGE) {
         sptr<ActiveChangeResponseParcel> resultSptr = data.ReadParcelable<ActiveChangeResponseParcel>();
         if (resultSptr == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
@@ -52,7 +52,6 @@ int32_t PermActiveStatusChangeCallbackStub::OnRemoteRequest(
     }
     return RET_SUCCESS;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

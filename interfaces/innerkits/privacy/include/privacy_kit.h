@@ -22,7 +22,7 @@
 #include "on_permission_used_record_callback.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
-#include "perm_active_status_change_customized_cbk.h"
+#include "perm_active_status_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {

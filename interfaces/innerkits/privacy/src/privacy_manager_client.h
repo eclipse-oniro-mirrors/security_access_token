@@ -23,7 +23,7 @@
 
 #include "i_privacy_manager.h"
 #include "perm_active_status_change_callback.h"
-#include "perm_active_status_change_customized_cbk.h"
+#include "perm_active_status_customized_cbk.h"
 #include "privacy_death_recipient.h"
 
 namespace OHOS {

@@ -21,7 +21,7 @@
 
 #include "active_change_response_info.h"
 #include "perm_active_status_change_callback_stub.h"
-#include "perm_active_status_change_customized_cbk.h"
+#include "perm_active_status_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {

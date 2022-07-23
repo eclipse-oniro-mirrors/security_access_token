@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermActiveStatusChangeCallbackProxy : public IRemoteProxy<IPermActiveStatusChangeCbk> {
+class PermActiveStatusChangeCallbackProxy : public IRemoteProxy<IPermActiveStatusCallback> {
 public:
     explicit PermActiveStatusChangeCallbackProxy(const sptr<IRemoteObject>& impl);
     ~PermActiveStatusChangeCallbackProxy() override;

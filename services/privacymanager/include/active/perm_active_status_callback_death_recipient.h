@@ -22,10 +22,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermActiveCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+class PermActiveStatusCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    PermActiveCallbackDeathRecipient() = default;
-    virtual ~PermActiveCallbackDeathRecipient() = default;
+    PermActiveStatusCallbackDeathRecipient() = default;
+    virtual ~PermActiveStatusCallbackDeathRecipient() = default;
 
     virtual void OnRemoteDied(const wptr<IRemoteObject> &remote);
 };

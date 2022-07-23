@@ -23,10 +23,7 @@
 
 namespace OHOS {
 namespace Security {
-namespace AccessToken{
-#define TOKENID_LIST_SIZE_MAX 1024
-#define PERM_LIST_SIZE_MAX 1024
-
+namespace AccessToken {
 enum ActiveChangeType {
     PERM_INACTIVE = 0,
     PERM_ACTIVE_IN_FOREGROUND = 1,
@@ -39,7 +36,6 @@ struct ActiveChangeResponse {
     std::string deviceId;
     ActiveChangeType type;
 };
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

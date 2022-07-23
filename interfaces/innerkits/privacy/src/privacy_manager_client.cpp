@@ -30,6 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 } // namespace
 
 const static int32_t ERROR = -1;
+const static int32_t MAX_PERM_LIST_SIZE = 200;
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
 {
@@ -148,17 +149,18 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
 {
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
 
+    if (activeCbkMap_.size() == MAX_PERM_LIST_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of subscribers has been reached");
+        return ERROR;
+    }
+
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback != activeCbkMap_.end()) {
         callbackObject = goalCallback->second->AsObject();
         ACCESSTOKEN_LOG_ERROR(LABEL, "activeCbkMap_ already has such callback");
         return ERROR;
     } else {
-        if (activeCbkMap_.size() == 200) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of subscribers has been reached");
-            return ERROR;
-        }
-        sptr<PermActiveStatusChangeCallback> callbackWraped = 
+        sptr<PermActiveStatusChangeCallback> callbackWraped =
             new (std::nothrow) PermActiveStatusChangeCallback(callback);
         if (!callbackWraped) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callbackWraped failed!");
@@ -200,7 +202,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
 int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: called!", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
     auto goalCallback = activeCbkMap_.find(callback);
@@ -216,7 +218,9 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     }
 
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
-    activeCbkMap_.erase(goalCallback);
+    if (result == RET_SUCCESS) {
+        activeCbkMap_.erase(goalCallback);
+    }
     return result;
 }
 

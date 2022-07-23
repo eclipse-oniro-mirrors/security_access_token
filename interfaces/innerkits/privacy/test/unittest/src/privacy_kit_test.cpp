@@ -73,6 +73,7 @@ void PrivacyKitTest::TearDownTestCase()
 
 void PrivacyKitTest::SetUp()
 {
+    AccessTokenID tokenId;
     AccessTokenKit::AllocHapToken(g_InfoParmsA, g_PolicyPramsA);
     AccessTokenKit::AllocHapToken(g_InfoParmsB, g_PolicyPramsB);
 
@@ -82,12 +83,12 @@ void PrivacyKitTest::SetUp()
     g_TokenId_B = AccessTokenKit::GetHapTokenID(g_InfoParmsB.userID,
                                                 g_InfoParmsB.bundleName,
                                                 g_InfoParmsB.instIndex);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
-                                                g_InfoParmsE.bundleName,
-                                                g_InfoParmsE.instIndex);
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
+                                            g_InfoParmsE.bundleName,
+                                            g_InfoParmsE.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
 
-    tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
+    tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
     SetSelfTokenID(tokenId);
 }
 

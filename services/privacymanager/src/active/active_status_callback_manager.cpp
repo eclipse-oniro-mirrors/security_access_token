@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "perm_active_status_change_callback_manage.h"
+#include "active_status_callback_manager.h"
 
 #include <future>
 #include <thread>
@@ -26,9 +26,10 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermActiveStatusChangeCallbackManage"
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ActiveStatusCallbackManager"
 };
-const time_t MAX_TIMEOUT_SEC = 30;
+static const time_t MAX_TIMEOUT_SEC = 30;
+static const time_t MAX_CALLBACK_SIZE = 200;
 }
 
 ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
@@ -37,8 +38,9 @@ ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
     return instance;
 }
 
-ActiveStatusCallbackManager::ActiveStatusCallbackManager() :
-    callbackDeathRecipient_(sptr<IRemoteObject::DeathRecipient>(new (std::nothrow) PermActiveCallbackDeathRecipient()))
+ActiveStatusCallbackManager::ActiveStatusCallbackManager()
+    : callbackDeathRecipient_(sptr<IRemoteObject::DeathRecipient>(
+        new (std::nothrow) PermActiveStatusCallbackDeathRecipient()))
 {
 }
 
@@ -62,6 +64,10 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     recordInstance.permList_ = permList;
 
     std::lock_guard<std::mutex> lock(mutex_);
+    if (callbackDataList_.size() > MAX_CALLBACK_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "list size has reached max value");
+        return RET_FAILED;
+    }
     callbackDataList_.emplace_back(recordInstance);
 
     ACCESSTOKEN_LOG_INFO(LABEL, "recordInstance is added");
@@ -116,10 +122,10 @@ void ActiveStatusCallbackManager::ExcuteCallbackAsync(
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, permName)) {
-                    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID is %{public}u, permName is  %{public}s", tokenID, permName.c_str());
-                    continue;
+                ACCESSTOKEN_LOG_INFO(LABEL, "tokenID %{public}u, permName %{public}s", tokenID, permName.c_str());
+                continue;
             }
-            auto callback = iface_cast<IPermActiveStatusChangeCbk>((*it).callbackObject_);
+            auto callback = iface_cast<IPermActiveStatusCallback>((*it).callbackObject_);
             if (callback != nullptr) {
                 ActiveChangeResponse resInfo;
                 resInfo.type = changeType;
@@ -142,7 +148,6 @@ void ActiveStatusCallbackManager::ExcuteCallbackAsync(
         ACCESSTOKEN_LOG_WARN(LABEL, "callbackTask callback execution timeout");
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");
-
 }
 } // namespace AccessToken
 } // namespace Security

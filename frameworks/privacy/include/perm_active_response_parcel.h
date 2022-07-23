@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_USED_RECORD_PRACEL_H
-#define PERMISSION_USED_RECORD_PRACEL_H
+#ifndef PERM_ACTIVE_RESPONES_PARCEL_H
+#define PERM_ACTIVE_RESPONES_PARCEL_H
 
-#include "parcel.h"
 #include "active_change_response_info.h"
+#include "parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -37,4 +37,4 @@ struct ActiveChangeResponseParcel final : public Parcelable {
 } // namespace Security
 } // namespace OHOS
 
-#endif // PERMISSION_USED_RECORD_PRACEL_H
+#endif // PERM_ACTIVE_RESPONES_PARCEL_H

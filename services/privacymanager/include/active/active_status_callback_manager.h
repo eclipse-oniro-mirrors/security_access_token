@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PERM_ACTIVE_STATUS_CHANGE_CALLBACK_MANAGE_H
-#define PERM_ACTIVE_STATUS_CHANGE_CALLBACK_MANAGE_H
+#ifndef ACTIVE_STATUS_CHANGE_CALLBACK_MANAGER_H
+#define ACTIVE_STATUS_CHANGE_CALLBACK_MANAGER_H
 
 #include <mutex>
 #include <vector>
@@ -27,7 +27,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 struct CallbackData {
     CallbackData() : permList_(), callbackObject_(nullptr)
     {}
@@ -60,4 +59,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERM_ACTIVE_STATUS_CHANGE_CALLBACK_MANAGE_H
+#endif // ACTIVE_STATUS_CHANGE_CALLBACK_MANAGER_H

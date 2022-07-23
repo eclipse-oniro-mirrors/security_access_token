@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermActiveStatusChangeCallbackStub : public IRemoteStub<IPermActiveStatusChangeCbk> {
+class PermActiveStatusChangeCallbackStub : public IRemoteStub<IPermActiveStatusCallback> {
 public:
     PermActiveStatusChangeCallbackStub() = default;
     virtual ~PermActiveStatusChangeCallbackStub() = default;

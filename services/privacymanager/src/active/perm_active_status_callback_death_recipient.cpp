@@ -16,17 +16,17 @@
 #include "perm_active_status_callback_death_recipient.h"
 
 #include "access_token.h"
-#include "perm_active_status_change_callback_manage.h"
+#include "active_status_callback_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermActiveCallbackDeathRecipient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermActiveStatusCallbackDeathRecipient"
 };
 }
-void PermActiveCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
+void PermActiveStatusCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "enter");
     if (remote == nullptr) {
@@ -40,9 +40,8 @@ void PermActiveCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &r
         return;
     }
     ActiveStatusCallbackManager::GetInstance().RemoveCallback(object);
-    ACCESSTOKEN_LOG_ERROR(LABEL, "end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "end");
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

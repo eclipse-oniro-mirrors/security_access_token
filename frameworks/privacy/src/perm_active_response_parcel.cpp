@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "perm_active_response_parcel.h"
 #include "parcel_utils.h"
+#include "perm_active_response_parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -36,7 +36,7 @@ ActiveChangeResponseParcel* ActiveChangeResponseParcel::Unmarshalling(Parcel& in
     }
 
     RELEASE_IF_FALSE(in.ReadUint32(activeChangeResponseParcel->changeResponse.tokenID), activeChangeResponseParcel);
-    RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.permissionName), 
+    RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.permissionName),
         activeChangeResponseParcel);
     RELEASE_IF_FALSE(in.ReadString(activeChangeResponseParcel->changeResponse.deviceId), activeChangeResponseParcel);
 

@@ -216,14 +216,17 @@ int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called.");
     MessageParcel data;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return ERROR;
+    }
 
     uint32_t listSize = permList.size();
     if (!data.WriteUint32(listSize)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write listSize");
         return ERROR;
     }
-    for (int i = 0; i < listSize; i++) {
+    for (uint32_t i = 0; i < listSize; i++) {
         if (!data.WriteString(permList[i])) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permList[%{public}d], %{public}s", i, permList[i].c_str());
             return ERROR;
@@ -249,7 +252,11 @@ int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
         return ERROR;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return ERROR;
+    }
     return result;
 }
 
@@ -257,8 +264,10 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called.");
     MessageParcel data;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return ERROR;
+    }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
         return ERROR;
@@ -278,7 +287,11 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
         return ERROR;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return ERROR;
+    }
     return result;
 }
 

@@ -13,33 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef PERM_ACTIVE_STATUS_CHANGE_CUSTOMIZED_CBK_H
-#define PERM_ACTIVE_STATUS_CHANGE_CUSTOMIZED_CBK_H
-
-#include <string>
-#include <vector>
-
-#include "access_token.h"
-#include "active_change_response_info.h"
+#include "perm_active_status_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermActiveStatusCustomizedCbk {
-public:
-    PermActiveStatusCustomizedCbk();
-    explicit PermActiveStatusCustomizedCbk(const std::vector<std::string>& permList);
-    virtual ~PermActiveStatusCustomizedCbk();
+PermActiveStatusCustomizedCbk::PermActiveStatusCustomizedCbk()
+{}
 
-    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result) = 0;
+PermActiveStatusCustomizedCbk::PermActiveStatusCustomizedCbk(
+    const std::vector<std::string>& permList) : permList_(permList)
+{}
 
-    void GetPermList(std::vector<std::string>& permList) const;
+PermActiveStatusCustomizedCbk::~PermActiveStatusCustomizedCbk()
+{}
 
-private:
-    std::vector<std::string> permList_;
-};
+void PermActiveStatusCustomizedCbk::GetPermList(std::vector<std::string>& permList) const
+{
+    permList = permList_;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif  // PERM_ACTIVE_STATUS_CHANGE_CUSTOMIZED_CBK_H

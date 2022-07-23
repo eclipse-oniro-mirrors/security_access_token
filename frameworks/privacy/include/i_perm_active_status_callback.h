@@ -25,9 +25,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class IPermActiveStatusChangeCbk : public IRemoteBroker {
+class IPermActiveStatusCallback : public IRemoteBroker {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermActiveStatusChangeCbk");
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermActiveStatusCallback");
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result) = 0;
 

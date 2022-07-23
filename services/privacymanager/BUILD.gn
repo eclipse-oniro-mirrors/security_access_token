@@ -40,8 +40,8 @@ if (is_standard_system) {
     ]
 
     sources = [
+      "src/active/active_status_callback_manager.cpp",
       "src/active/perm_active_status_callback_death_recipient.cpp",
-      "src/active/perm_active_status_change_callback_manage.cpp",
       "src/active/perm_active_status_change_callback_proxy.cpp",
       "src/common/constant.cpp",
       "src/common/time_util.cpp",

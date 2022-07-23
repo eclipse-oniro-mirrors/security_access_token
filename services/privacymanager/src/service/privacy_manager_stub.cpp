@@ -28,6 +28,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerStub"
 };
+static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 }
 
 int32_t PrivacyManagerStub::OnRemoteRequest(
@@ -167,7 +168,7 @@ void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel&
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t permListSize = data.ReadUint32();
-    if (permListSize > 200) {
+    if (permListSize > PERM_LIST_SIZE_MAX) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
         reply.WriteInt32(RET_FAILED);
         return;
@@ -183,7 +184,6 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", (IRemoteObject *)callback);
     int32_t result = this->RegisterPermActiveStatusCallback(permList, callback);
     reply.WriteInt32(result);
 }
@@ -196,7 +196,7 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", (IRemoteObject *)callback);
+
     int32_t result = this->UnRegisterPermActiveStatusCallback(callback);
     reply.WriteInt32(result);
 }
