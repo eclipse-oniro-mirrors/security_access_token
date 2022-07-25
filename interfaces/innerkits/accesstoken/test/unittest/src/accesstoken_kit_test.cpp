@@ -1982,7 +1982,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 
     infoManagerTestInfo.instIndex = 1;
     g_infoManagerTestPolicyPrams.apl = APL_SYSTEM_BASIC;
-    for (int i = 0; i < obj.size(); i++) {
+    for (size_t i = 0; i < obj.size(); i++) {
         ret = AccessTokenKit::UpdateHapToken(obj[i], appIDDesc, g_infoManagerTestPolicyPrams);
         if (RET_SUCCESS != ret) {
             updateFlag = 1;
@@ -1991,7 +1991,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
     }
     g_infoManagerTestPolicyPrams.apl = APL_NORMAL;
 
-    for (int i = 0; i < obj.size(); i++) {
+    for (size_t i = 0; i < obj.size(); i++) {
         ret = AccessTokenKit::DeleteToken(obj[i]);
         if (RET_SUCCESS != ret) {
             deleteFlag = 1;
