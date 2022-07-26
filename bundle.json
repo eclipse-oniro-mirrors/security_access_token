@@ -20,18 +20,23 @@
     "ram": "5102KB",
     "deps": {
       "components": [
-        "ability_base",
-        "hiviewdfx_hilog_native",
-        "ipc_core",
-        "ipc_single",
-        "system_ability_fwk",
-        "samgr_proxy",
-        "appexecfwk_standard",
+        "ability_tools",
+        "bounds_checking_function",
+        "bundle_framework",
+        "cjson",
+        "common",
+        "device_manager",
+        "dsoftbus",
         "eventhandler",
+        "hiviewdfx_hilog_native",
+        "init",
+        "ipc",
         "napi",
         "safwk",
         "samgr_standard",
-        "utils_base"
+        "selinux",
+        "startup_l2",
+        "zlib"
       ],
       "third_party": [
         "cJSON",
