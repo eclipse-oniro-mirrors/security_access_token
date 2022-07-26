@@ -1,6 +1,4 @@
-/build
 /node_modules
-/.gradle
+/local.properties
 /.idea
-local.properties
-package-lock.json
+**/build

@@ -1,16 +1,16 @@
 {
   "string": [
     {
-      "name": "permissionmanager_MainAbility",
-      "value": "authority management"
+      "name": "permissionmanager_desc",
+      "value": "permissionmanager"
     },
     {
-      "name": "description_mainability",
-      "value": "authority management"
+      "name": "MainAbility_desc",
+      "value": "manage the permissions of all applications from the permission and application dimensions"
     },
     {
-      "name": "permissionmanager_GrantAbility",
-      "value": "apply for permission"
+      "name": "MainAbility_label",
+      "value": "permission manage"
     },
     {
       "name": "no_permission",
@@ -53,10 +53,6 @@
       "value": "banned"
     },
     {
-      "name": "description_grantability",
-      "value": "apply for permission"
-    },
-    {
       "name": "Authorization_failed",
       "value": "Authorization failure！"
     },
@@ -83,6 +79,14 @@
     {
       "name": "afternoon",
       "value": "pm"
+    },
+    {
+      "name": "no_record",
+      "value": "No permission access record"
+    },
+    {
+      "name": "record_time_limit",
+      "value": "Access records in the last 7 days"
     }
   ]
 }
