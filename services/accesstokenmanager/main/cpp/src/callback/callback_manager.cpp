@@ -91,7 +91,6 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
     return RET_SUCCESS;
 }
 
-
 bool CallbackManager::CalledAccordingToTokenIdLlist(
     const std::vector<AccessTokenID>& tokenIDList, AccessTokenID tokenID)
 {

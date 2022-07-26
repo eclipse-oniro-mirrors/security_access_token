@@ -404,7 +404,10 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
     const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return RET_FAILED;
+    }
     if (!data.WriteParcelable(&scope)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write PermStateChangeScopeParcel.");
         return RET_FAILED;
@@ -428,14 +431,21 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
         return RET_FAILED;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return RET_FAILED;
+    }
     return result;
 }
 
 int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return RET_FAILED;
+    }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
         return RET_FAILED;
@@ -456,7 +466,11 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
         return RET_FAILED;
     }
 
-    int32_t result = reply.ReadInt32();
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return RET_FAILED;
+    }
     return result;
 }
 

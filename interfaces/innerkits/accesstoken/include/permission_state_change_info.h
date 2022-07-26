@@ -24,8 +24,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#define TOKENID_LIST_SIZE_MAX 1024
-#define PERM_LIST_SIZE_MAX 1024
+#define TOKENIDS_LIST_SIZE_MAX 1024
+#define PERMS_LIST_SIZE_MAX 1024
 
 struct PermStateChangeInfo {
     int32_t PermStateChangeType;

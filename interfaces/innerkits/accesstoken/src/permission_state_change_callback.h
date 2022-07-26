@@ -18,23 +18,23 @@
 
 
 #include "permission_state_change_callback_stub.h"
-#include "perm_state_callback_customize.h"
+#include "perm_state_change_callback_customize.h"
 
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermissionStateCallback : public PermissionStateCallbackStub {
+class PermissionStateChangeCallback : public PermissionStateChangeCallbackStub {
 public:
-    explicit PermissionStateCallback(const std::shared_ptr<PermStateChangeCbCustomize> &subscriber);
-    ~PermissionStateCallback() override;
+    explicit PermissionStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& scope);
+    ~PermissionStateChangeCallback() override;
 
     void PermStateChangeCallback(PermStateChangeInfo& result) override;
 
     void Stop();
 
 private:
-    std::shared_ptr<PermStateChangeCbCustomize> customizedCallback_;
+    std::shared_ptr<PermStateChangeCallbackCustomize> customizedCallback_;
 };
 } // namespace AccessToken
 } // namespace Security

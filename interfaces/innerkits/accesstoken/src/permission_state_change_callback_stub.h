@@ -25,10 +25,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermissionStateCallbackStub : public IRemoteStub<IPermissionStateCallback> {
+class PermissionStateChangeCallbackStub : public IRemoteStub<IPermissionStateCallback> {
 public:
-    PermissionStateCallbackStub() = default;
-    virtual ~PermissionStateCallbackStub() = default;
+    PermissionStateChangeCallbackStub() = default;
+    virtual ~PermissionStateChangeCallbackStub() = default;
 
     int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
 };

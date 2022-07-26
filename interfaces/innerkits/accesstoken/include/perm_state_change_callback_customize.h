@@ -13,25 +13,29 @@
  * limitations under the License.
  */
 
-#include "perm_state_callback_customize.h"
+#ifndef INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H
+#define INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H
+
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-PermStateChangeCbCustomize::PermStateChangeCbCustomize()
-{}
+class PermStateChangeCallbackCustomize {
+public:
+    PermStateChangeCallbackCustomize();
+    explicit PermStateChangeCallbackCustomize(const PermStateChangeScope &scopeInfo);
+    virtual ~PermStateChangeCallbackCustomize();
 
-PermStateChangeCbCustomize::PermStateChangeCbCustomize(
-    const PermStateChangeScope &scopeInfo) : scopeInfo_(scopeInfo)
-{}
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result) = 0;
 
-PermStateChangeCbCustomize::~PermStateChangeCbCustomize()
-{}
+    void GetScope(PermStateChangeScope &scopeInfo) const;
 
-void PermStateChangeCbCustomize::GetScope(PermStateChangeScope &scopeInfo) const
-{
-    scopeInfo = scopeInfo_;
-}
+private:
+    PermStateChangeScope scopeInfo_;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+
+#endif  // INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H

@@ -24,15 +24,16 @@ namespace AccessToken {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionStateChangeCallback"
 };
-PermissionStateCallback::PermissionStateCallback(
-    const std::shared_ptr<PermStateChangeCbCustomize> &customizedCallback)
+
+PermissionStateChangeCallback::PermissionStateChangeCallback(
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback)
     : customizedCallback_(customizedCallback)
 {}
 
-PermissionStateCallback::~PermissionStateCallback()
+PermissionStateChangeCallback::~PermissionStateChangeCallback()
 {}
 
-void PermissionStateCallback::PermStateChangeCallback(PermStateChangeInfo& result)
+void PermissionStateChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
 {
     if (customizedCallback_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
@@ -42,7 +43,7 @@ void PermissionStateCallback::PermStateChangeCallback(PermStateChangeInfo& resul
     customizedCallback_->PermStateChangeCallback(result);
 }
 
-void PermissionStateCallback::Stop()
+void PermissionStateChangeCallback::Stop()
 {}
 } // namespace AccessToken
 } // namespace Security

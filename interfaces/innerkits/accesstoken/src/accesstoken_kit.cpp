@@ -22,7 +22,7 @@
 #include "data_validator.h"
 #include "hap_token_info.h"
 #include "permission_def.h"
-#include "perm_state_callback_customize.h"
+#include "perm_state_change_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
@@ -304,14 +304,14 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 }
 
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCbCustomize> &callback)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback);
 }
 
 int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCbCustomize> &callback)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);

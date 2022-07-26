@@ -42,7 +42,7 @@ if (is_standard_system) {
       "src/accesstoken_kit.cpp",
       "src/accesstoken_manager_client.cpp",
       "src/accesstoken_manager_proxy.cpp",
-      "src/perm_state_callback_customize.cpp",
+      "src/perm_state_change_callback_customize.cpp",
       "src/permission_state_change_callback.cpp",
       "src/permission_state_change_callback_stub.cpp",
     ]

@@ -28,14 +28,14 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-PermissionStateCallbackProxy::PermissionStateCallbackProxy(const sptr<IRemoteObject>& impl)
+PermissionStateChangeCallbackProxy::PermissionStateChangeCallbackProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<IPermissionStateCallback>(impl) {
 }
 
-PermissionStateCallbackProxy::~PermissionStateCallbackProxy()
+PermissionStateChangeCallbackProxy::~PermissionStateChangeCallbackProxy()
 {}
 
-void PermissionStateCallbackProxy::PermStateChangeCallback(PermStateChangeInfo& info)
+void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChangeInfo& info)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor());

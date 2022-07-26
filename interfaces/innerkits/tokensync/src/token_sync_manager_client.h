@@ -40,9 +40,9 @@ public:
     int DeleteRemoteHapTokenInfo(AccessTokenID tokenID);
     int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo);
     void LoadTokenSync();
-    void FinishStartSASuccess(const sptr<IRemoteObject> &remoteObject);
+    void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
     void FinishStartSAFailed();
-    void SetRemoteObject(const sptr<IRemoteObject> &remoteObject);
+    void SetRemoteObject(const sptr<IRemoteObject>& remoteObject);
     sptr<IRemoteObject> GetRemoteObject();
     void OnRemoteDiedHandle();
 

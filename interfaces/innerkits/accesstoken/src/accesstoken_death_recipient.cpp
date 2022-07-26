@@ -24,7 +24,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
 } // namespace
 
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &object)
+void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();

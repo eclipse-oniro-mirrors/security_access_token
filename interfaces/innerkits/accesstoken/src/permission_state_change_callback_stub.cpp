@@ -29,7 +29,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-int32_t PermissionStateCallbackStub::OnRemoteRequest(
+int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);

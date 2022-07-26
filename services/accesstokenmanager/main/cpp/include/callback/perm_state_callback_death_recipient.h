@@ -16,7 +16,6 @@
 #ifndef PERM_STATE_CALLBACK_DEATH_RECIPIENT_H
 #define PERM_STATE_CALLBACK_DEATH_RECIPIENT_H
 
-
 #include "iremote_object.h"
 
 namespace OHOS {
@@ -27,7 +26,7 @@ public:
     PermStateCallbackDeathRecipient() = default;
     virtual ~PermStateCallbackDeathRecipient() = default;
 
-    virtual void OnRemoteDied(const wptr<IRemoteObject> &remote);
+    virtual void OnRemoteDied(const wptr<IRemoteObject>& remote);
 };
 } // namespace AccessToken
 } // namespace Security

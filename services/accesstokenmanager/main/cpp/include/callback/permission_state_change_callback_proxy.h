@@ -16,7 +16,6 @@
 #ifndef PERMISSION_STATE_CHANGE_CALLBACK_PROXY_H
 #define PERMISSION_STATE_CHANGE_CALLBACK_PROXY_H
 
-
 #include "i_permission_state_callback.h"
 
 #include "iremote_proxy.h"
@@ -26,14 +25,14 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermissionStateCallbackProxy : public IRemoteProxy<IPermissionStateCallback> {
+class PermissionStateChangeCallbackProxy : public IRemoteProxy<IPermissionStateCallback> {
 public:
-    explicit PermissionStateCallbackProxy(const sptr<IRemoteObject>& impl);
-    ~PermissionStateCallbackProxy() override;
+    explicit PermissionStateChangeCallbackProxy(const sptr<IRemoteObject>& impl);
+    ~PermissionStateChangeCallbackProxy() override;
     virtual void PermStateChangeCallback(PermStateChangeInfo& result) override;
 
 private:
-    static inline BrokerDelegator<PermissionStateCallbackProxy> delegator_;
+    static inline BrokerDelegator<PermissionStateChangeCallbackProxy> delegator_;
 };
 } // namespace AccessToken
 } // namespace Security

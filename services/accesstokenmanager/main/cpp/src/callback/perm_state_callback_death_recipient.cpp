@@ -26,7 +26,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermStateCallbackDeathRecipient"
 };
 }
-void PermStateCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
+
+void PermStateCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "enter");
     if (remote == nullptr) {

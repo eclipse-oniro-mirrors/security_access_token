@@ -32,11 +32,11 @@ public:
     RemoteCommandExecutor(const std::string &targetNodeId);
     virtual ~RemoteCommandExecutor();
 
-    const std::shared_ptr<RpcChannel> &GetChannel() const
+    const std::shared_ptr<RpcChannel>& GetChannel() const
     {
         return ptrChannel_;
     }
-    void SetChannel(const std::shared_ptr<RpcChannel> &ptrChannel)
+    void SetChannel(const std::shared_ptr<RpcChannel>& ptrChannel)
     {
         ptrChannel_ = ptrChannel;
     }
@@ -61,7 +61,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    int ProcessOneCommand(const std::shared_ptr<BaseRemoteCommand> &ptrCommand);
+    int ProcessOneCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand);
 
     /**
      * @brief Add one command into the buffer
@@ -72,7 +72,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    int AddCommand(const std::shared_ptr<BaseRemoteCommand> &ptrCommand);
+    int AddCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand);
 
     /**
      * @brief Process all the command in the buffer
@@ -111,7 +111,7 @@ private:
      * @since 1.0
      * @version 1.0
      */
-    int ExecuteRemoteCommand(const std::shared_ptr<BaseRemoteCommand> &ptrCommand, bool isRemote);
+    int ExecuteRemoteCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand, bool isRemote);
 
     /**
      * @brief create a rpc channel if not exist.
@@ -134,7 +134,7 @@ private:
      * @since 1.0
      * @version 1.0
      */
-    int ClientProcessResult(const std::shared_ptr<BaseRemoteCommand> &ptrCommand);
+    int ClientProcessResult(const std::shared_ptr<BaseRemoteCommand>& ptrCommand);
 
 private:
     // target device node id(udid)

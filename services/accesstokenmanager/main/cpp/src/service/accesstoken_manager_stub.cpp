@@ -329,6 +329,11 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     int32_t result = this->RegisterPermStateChangeCallback(*scopeParcel, callback);
     reply.WriteInt32(result);
 }
@@ -336,7 +341,7 @@ void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParce
 {
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
         reply.WriteInt32(RET_FAILED);
         return;
     }

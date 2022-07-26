@@ -21,13 +21,12 @@
 
 #include "access_token.h"
 #include "hap_token_info.h"
-#include "i_permission_state_callback.h"
 #include "native_token_info.h"
 #include "permission_def.h"
 #include "permission_list_state.h"
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
-#include "perm_state_callback_customize.h"
+#include "perm_state_change_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
@@ -60,8 +59,8 @@ public:
     static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     static int ClearUserGrantedPermissionState(AccessTokenID tokenID);
     static int32_t RegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCbCustomize> &callback);
-    static int32_t UnRegisterPermStateChangeCallback(const std::shared_ptr<PermStateChangeCbCustomize> &callback);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
+    static int32_t UnRegisterPermStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
 
 #ifdef TOKEN_SYNC_ENABLE
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);

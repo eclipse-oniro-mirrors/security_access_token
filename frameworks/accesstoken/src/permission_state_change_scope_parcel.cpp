@@ -22,7 +22,7 @@ namespace AccessToken {
 bool PermStateChangeScopeParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteUint32((this->scope.tokenIDs.size())));
-    for (const auto& tokenID : this->scope.tokenIDs) {
+    for (auto& tokenID : this->scope.tokenIDs) {
         RETURN_IF_FALSE(out.WriteUint32(tokenID));
     }
 
@@ -41,7 +41,7 @@ PermStateChangeScopeParcel* PermStateChangeScopeParcel::Unmarshalling(Parcel& in
     }
     uint32_t tokenIdListSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(tokenIdListSize), permStateChangeScopeParcel);
-    RELEASE_IF_FALSE(tokenIdListSize <= TOKENID_LIST_SIZE_MAX, permStateChangeScopeParcel);
+    RELEASE_IF_FALSE(tokenIdListSize <= TOKENIDS_LIST_SIZE_MAX, permStateChangeScopeParcel);
     for (uint32_t i = 0; i < tokenIdListSize; i++) {
         AccessTokenID tokenID;
         RELEASE_IF_FALSE(in.ReadUint32(tokenID), permStateChangeScopeParcel);
@@ -50,7 +50,7 @@ PermStateChangeScopeParcel* PermStateChangeScopeParcel::Unmarshalling(Parcel& in
 
     uint32_t permListSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(permListSize), permStateChangeScopeParcel);
-    RELEASE_IF_FALSE(permListSize <= PERM_LIST_SIZE_MAX, permStateChangeScopeParcel);
+    RELEASE_IF_FALSE(permListSize <= PERMS_LIST_SIZE_MAX, permStateChangeScopeParcel);
     for (uint32_t i = 0; i < permListSize; i++) {
         std::string permName;
         RELEASE_IF_FALSE(in.ReadString(permName), permStateChangeScopeParcel);

@@ -50,7 +50,7 @@ void RemoteCommandManager::Init()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Init()");
 }
 
-int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command)
+int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command)
 {
     if (udid.empty() || command == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid, or null command");
@@ -76,7 +76,7 @@ void RemoteCommandManager::RemoveCommand(const std::string &udid)
     executors_.erase(udid);
 }
 
-int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command)
+int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command)
 {
     if (udid.empty() || command == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s, or null command",

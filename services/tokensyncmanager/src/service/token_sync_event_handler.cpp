@@ -25,7 +25,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncEventHandler"};
 }
 TokenSyncEventHandler::TokenSyncEventHandler(
-    const std::shared_ptr<AppExecFwk::EventRunner> &runner)
+    const std::shared_ptr<AppExecFwk::EventRunner>& runner)
     : AppExecFwk::EventHandler(runner)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "enter");
