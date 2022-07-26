@@ -39,7 +39,8 @@ private:
     void GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionUsedRecordsAsyncInner(MessageParcel& data, MessageParcel& reply);
     void DumpRecordInfoInner(MessageParcel& data, MessageParcel& reply);
-
+    void RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
     bool IsAccessTokenCalling() const;
     static const int32_t ACCESSTOKEN_UID = 3020;
 };
