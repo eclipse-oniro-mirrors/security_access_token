@@ -12,23 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#ifndef I_PERMISSION_STATE_CALLBACK_H
+#define I_PERMISSION_STATE_CALLBACK_H
+
+#include <string>
+
+#include "access_token.h"
+#include "errors.h"
+#include "iremote_broker.h"
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
+class IPermissionStateCallback : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermissionStateCallback");
 
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result) = 0;
+
+    enum {
+        PERMISSION_STATE_CHANGE = 0,
+    };
+};
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS
+
+#endif // I_PERMISSION_STATE_CALLBACK_H

@@ -56,7 +56,7 @@ const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std
 /*
  * called by RemoteCommandExecutor, RemoteCommandManager
  */
-int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCommand> &ptrCommand)
+int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand)
 {
     if (ptrCommand == nullptr) {
         ACCESSTOKEN_LOG_WARN(
@@ -103,7 +103,7 @@ int RemoteCommandExecutor::ProcessOneCommand(const std::shared_ptr<BaseRemoteCom
 /*
  * called by RemoteCommandManager
  */
-int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand> &ptrCommand)
+int RemoteCommandExecutor::AddCommand(const std::shared_ptr<BaseRemoteCommand>& ptrCommand)
 {
     if (ptrCommand == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "targetNodeId %{public}s, attempt to add an empty command.",
@@ -231,7 +231,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
 }
 
 int RemoteCommandExecutor::ExecuteRemoteCommand(
-    const std::shared_ptr<BaseRemoteCommand> &ptrCommand, const bool isRemote)
+    const std::shared_ptr<BaseRemoteCommand>& ptrCommand, const bool isRemote)
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
     ACCESSTOKEN_LOG_INFO(LABEL,
@@ -297,7 +297,7 @@ void RemoteCommandExecutor::CreateChannelIfNeeded()
     ptrChannel_ = CreateChannel(targetNodeId_);
 }
 
-int RemoteCommandExecutor::ClientProcessResult(const std::shared_ptr<BaseRemoteCommand> &ptrCommand)
+int RemoteCommandExecutor::ClientProcessResult(const std::shared_ptr<BaseRemoteCommand>& ptrCommand)
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
     if (ptrCommand->remoteProtocol_.statusCode == Constant::STATUS_CODE_BEFORE_RPC) {

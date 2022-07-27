@@ -12,23 +12,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#ifndef INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H
+#define INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H
+
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
+class PermStateChangeCallbackCustomize {
+public:
+    PermStateChangeCallbackCustomize();
+    explicit PermStateChangeCallbackCustomize(const PermStateChangeScope &scopeInfo);
+    virtual ~PermStateChangeCallbackCustomize();
 
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result) = 0;
+
+    void GetScope(PermStateChangeScope &scopeInfo) const;
+
+private:
+    PermStateChangeScope scopeInfo_;
+};
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS
+
+#endif  // INTERFACES_INNER_KITS_PERM_STATE_CALLBACK_CUSTOMIZE_H

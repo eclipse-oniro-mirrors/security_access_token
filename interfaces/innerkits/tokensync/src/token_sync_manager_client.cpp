@@ -126,7 +126,7 @@ void TokenSyncManagerClient::LoadTokenSync()
     GetRemoteObject()->AddDeathRecipient(ptrTokenSyncDeathRecipient);
 }
 
-void TokenSyncManagerClient::FinishStartSASuccess(const sptr<IRemoteObject> &remoteObject)
+void TokenSyncManagerClient::FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get tokensync sa success.");
 
@@ -156,7 +156,7 @@ void TokenSyncManagerClient::FinishStartSAFailed()
     tokenSyncCon_.notify_one();
 }
 
-void TokenSyncManagerClient::SetRemoteObject(const sptr<IRemoteObject> &remoteObject)
+void TokenSyncManagerClient::SetRemoteObject(const sptr<IRemoteObject>& remoteObject)
 {
     std::unique_lock<std::mutex> lock(remoteMutex_);
     remoteObject_ = remoteObject;

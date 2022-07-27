@@ -12,23 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#include "perm_state_change_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
+PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize()
+{}
 
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
+PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize(
+    const PermStateChangeScope &scopeInfo) : scopeInfo_(scopeInfo)
+{}
+
+PermStateChangeCallbackCustomize::~PermStateChangeCallbackCustomize()
+{}
+
+void PermStateChangeCallbackCustomize::GetScope(PermStateChangeScope &scopeInfo) const
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
+    scopeInfo = scopeInfo_;
 }
-}  // namespace AccessToken
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS

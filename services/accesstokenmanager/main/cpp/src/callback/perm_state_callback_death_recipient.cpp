@@ -12,23 +12,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#include "perm_state_callback_death_recipient.h"
+
+#include "access_token.h"
+#include "callback_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
-
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermStateCallbackDeathRecipient"
+};
 }
-}  // namespace AccessToken
+
+void PermStateCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "enter");
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote object is nullptr");
+        return;
+    }
+
+    sptr<IRemoteObject> object = remote.promote();
+    if (object == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "object is nullptr");
+        return;
+    }
+    CallbackManager::GetInstance().RemoveCallback(object);
+    ACCESSTOKEN_LOG_INFO(LABEL, "end");
+}
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS

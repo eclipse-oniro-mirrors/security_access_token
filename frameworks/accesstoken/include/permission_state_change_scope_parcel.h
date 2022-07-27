@@ -12,23 +12,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "accesstoken_death_recipient.h"
-#include "accesstoken_log.h"
-#include "accesstoken_manager_client.h"
+
+#ifndef PERMISSION_STATE_CHANGE_SCOPE_PARCEL_H
+#define PERMISSION_STATE_CHANGE_SCOPE_PARCEL_H
+
+#include "parcel.h"
+#include "permission_state_change_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDeathRecipient"};
-} // namespace
+struct PermStateChangeScopeParcel final : public Parcelable {
+    PermStateChangeScopeParcel() = default;
 
-void AccessTokenDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().OnRemoteDiedHandle();
-}
-}  // namespace AccessToken
+    ~PermStateChangeScopeParcel() override = default;
+
+    bool Marshalling(Parcel& out) const override;
+
+    static PermStateChangeScopeParcel* Unmarshalling(Parcel& in);
+
+    PermStateChangeScope scope;
+};
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
+} // namespace OHOS
+
+#endif // PERMISSION_STATE_CHANGE_SCOPE_PARCEL_H
