@@ -18,6 +18,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "callback_manager.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
@@ -333,7 +334,12 @@ void PermissionManager::UpdateTokenPermissionState(
         }
     }
 #endif
-    permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+    bool isUpdated = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+    if (isUpdated) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
+        int32_t changeType = isGranted ? GRANTED : REVOKED;
+        CallbackManager::GetInstance().ExcuteCallbackAsync(tokenID, permissionName, changeType);
+    }
 
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
@@ -380,6 +386,23 @@ void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::strin
         return;
     }
     UpdateTokenPermissionState(tokenID, permissionName, false, flag);
+}
+
+int32_t PermissionManager::AddPermStateChangeCallback(
+    const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scope);
+    if (callbackScopePtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
+    }
+
+    return CallbackManager::GetInstance().AddCallback(callbackScopePtr, callback);
+}
+
+int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    return CallbackManager::GetInstance().RemoveCallback(callback);
 }
 
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)

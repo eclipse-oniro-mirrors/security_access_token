@@ -27,6 +27,7 @@ if (is_standard_system) {
     part_name = "access_token"
 
     include_dirs = [
+      "main/cpp/include/callback",
       "main/cpp/include/service",
       "main/cpp/include/token",
       "main/cpp/include/permission",
@@ -45,6 +46,9 @@ if (is_standard_system) {
     ]
 
     sources = [
+      "main/cpp/src/callback/callback_manager.cpp",
+      "main/cpp/src/callback/perm_state_callback_death_recipient.cpp",
+      "main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
       "main/cpp/src/database/data_storage.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/sqlite_storage.cpp",

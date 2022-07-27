@@ -46,6 +46,9 @@ public:
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) override;
     std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName) override;
+    int32_t RegisterPermActiveStatusCallback(
+        std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
 
 private:
     bool Initialize() const;

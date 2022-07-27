@@ -45,7 +45,9 @@ public:
     virtual int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) = 0;
     virtual std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName) = 0;
-
+    virtual int32_t RegisterPermActiveStatusCallback(
+        std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
+    virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
     enum class InterfaceCode {
         ADD_PERMISSION_USED_RECORD = 0xf001,
         START_USING_PERMISSION = 0xf002,
@@ -53,7 +55,9 @@ public:
         DELETE_PERMISSION_USED_RECORDS = 0xf004,
         GET_PERMISSION_USED_RECORDS = 0xf005,
         GET_PERMISSION_USED_RECORDS_ASYNC = 0xf006,
-        DUMP_RECORD_INFO = 0xf007
+        DUMP_RECORD_INFO = 0xf007,
+        REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK = 0xf008,
+        UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK = 0xf009,
     };
 };
 } // namespace AccessToken

@@ -83,14 +83,14 @@ int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID: 0x%{public}x, permission: %{public}s",
         tokenID, permissionName.c_str());
-    return Constant::SUCCESS;
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenID, permissionName);
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID: 0x%{public}x, permission: %{public}s",
         tokenID, permissionName.c_str());
-    return Constant::SUCCESS;
+    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenID, permissionName);
 }
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
@@ -123,6 +123,17 @@ std::string PrivacyManagerService::DumpRecordInfo(const std::string& bundleName,
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName: %{public}s, permissionName: %{public}s",
         bundleName.c_str(), permissionName.c_str());
     return PermissionRecordManager::GetInstance().DumpRecordInfo(bundleName, permissionName);
+}
+
+int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
+    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
+}
+
+int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+{
+    return PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
 bool PrivacyManagerService::Initialize() const

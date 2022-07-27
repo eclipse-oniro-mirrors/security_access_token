@@ -25,11 +25,13 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "hap_token_info_parcel.h"
 #include "iremote_broker.h"
+#include "i_permission_state_callback.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
 #include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
+#include "permission_state_change_scope_parcel.h"
 
 namespace OHOS {
 namespace Security {
@@ -62,6 +64,9 @@ public:
     virtual int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) = 0;
     virtual int UpdateHapToken(
         AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParcel& policyParcel) = 0;
+    virtual int32_t RegisterPermStateChangeCallback(
+        const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) = 0;
+    virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;
 
 #ifdef TOKEN_SYNC_ENABLE
     virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
@@ -108,6 +113,8 @@ public:
 
         DUMP_TOKENINFO = 0xff30,
         GET_PERMISSION_OPER_STATE = 0xff31,
+        REGISTER_PERM_STATE_CHANGE_CALLBACK = 0xff32,
+        UNREGISTER_PERM_STATE_CHANGE_CALLBACK = 0xff33,
     };
 };
 } // namespace AccessToken

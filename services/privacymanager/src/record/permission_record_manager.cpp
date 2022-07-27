@@ -23,6 +23,7 @@
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_visitor_repository.h"
+#include "active_status_callback_manager.h"
 #include "time_util.h"
 #include "to_string.h"
 
@@ -420,6 +421,42 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     std::string dumpInfo;
     ToString::PermissionUsedResultToString(result, dumpInfo);
     return dumpInfo;
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    // to do
+    PermissionVisitor visitor;
+    if (!GetPermissionVisitor(tokenID, visitor)) {
+        return Constant::FAILURE;
+    }
+    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+        tokenID, permissionName, visitor.deviceId, PERM_ACTIVE_IN_FOREGROUND);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    // to do
+    PermissionVisitor visitor;
+    if (!GetPermissionVisitor(tokenID, visitor)) {
+        return Constant::FAILURE;
+    }
+
+    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+        tokenID, permissionName, visitor.deviceId, PERM_INACTIVE);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
+    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    return ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+}
+
+int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+{
+    return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
 }
 
 bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)

@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_MANAGER_CLIENT_H
 #define ACCESSTOKEN_MANAGER_CLIENT_H
 
+#include <map>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -29,7 +30,9 @@
 #include "native_token_info.h"
 #include "nocopyable.h"
 #include "permission_def.h"
+#include "permission_state_change_callback.h"
 #include "permission_state_full.h"
+#include "perm_state_change_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
@@ -60,6 +63,10 @@ public:
     int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+    int32_t RegisterPermStateChangeCallback(
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
+    int32_t UnRegisterPermStateChangeCallback(
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
@@ -77,6 +84,8 @@ public:
 
 private:
     AccessTokenManagerClient();
+    int32_t CreatePermStateChangeCallback(
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback, sptr<IRemoteObject>& callback);
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);
     std::mutex proxyMutex_;
@@ -84,6 +93,8 @@ private:
     sptr<AccessTokenDeathRecipient> serviceDeathObserver_ = nullptr;
     void InitProxy();
     sptr<IAccessTokenManager> GetProxy();
+    std::mutex callbackMutex_;
+    std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, sptr<PermissionStateChangeCallback>> callbackMap_;
 };
 } // namespace AccessToken
 } // namespace Security

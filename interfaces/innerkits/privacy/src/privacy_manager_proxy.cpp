@@ -211,6 +211,90 @@ std::string PrivacyManagerProxy::DumpRecordInfo(const std::string& bundleName, c
     return dumpInfo;
 }
 
+int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
+    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called.");
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return ERROR;
+    }
+
+    uint32_t listSize = permList.size();
+    if (!data.WriteUint32(listSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write listSize");
+        return ERROR;
+    }
+    for (uint32_t i = 0; i < listSize; i++) {
+        if (!data.WriteString(permList[i])) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permList[%{public}d], %{public}s", i, permList[i].c_str());
+            return ERROR;
+        }
+    }
+
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return ERROR;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return ERROR;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK),
+        data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
+        return ERROR;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return ERROR;
+    }
+    return result;
+}
+
+int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called.");
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return ERROR;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return ERROR;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return ERROR;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK),
+        data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
+        return ERROR;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return ERROR;
+    }
+    return result;
+}
+
 bool PrivacyManagerProxy::SendRequest(
     IPrivacyManager::InterfaceCode code, MessageParcel& data, MessageParcel& reply)
 {

@@ -400,6 +400,80 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     return result;
 }
 
+int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
+    const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return RET_FAILED;
+    }
+    if (!data.WriteParcelable(&scope)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write PermStateChangeScopeParcel.");
+        return RET_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return RET_FAILED;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK),
+        data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return RET_FAILED;
+    }
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return RET_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return RET_FAILED;
+    }
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK),
+        data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
+        return RET_FAILED;
+    }
+    return result;
+}
+
 AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel)
 {

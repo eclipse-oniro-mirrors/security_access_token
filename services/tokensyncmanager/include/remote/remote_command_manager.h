@@ -62,7 +62,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    int ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command);
+    int ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command);
 
     /**
      * @brief Add a command to buffer.
@@ -74,7 +74,7 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    int AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command);
+    int AddCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand>& command);
 
     /**
      * @brief Execute all buffered commands for given device.

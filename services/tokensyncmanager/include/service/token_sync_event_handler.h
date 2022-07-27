@@ -26,7 +26,7 @@ namespace Security {
 namespace AccessToken {
 class TokenSyncEventHandler : public AppExecFwk::EventHandler {
 public:
-    explicit TokenSyncEventHandler(const std::shared_ptr<AppExecFwk::EventRunner> &runner);
+    explicit TokenSyncEventHandler(const std::shared_ptr<AppExecFwk::EventRunner>& runner);
     virtual ~TokenSyncEventHandler();
 
     bool ProxyPostTask(const Callback &callback, int64_t delayTime);

@@ -78,6 +78,18 @@ std::string PrivacyKit::DumpRecordInfo(const std::string& bundleName, const std:
         bundleName.c_str(), permissionName.c_str());
     return PrivacyManagerClient::GetInstance().DumpRecordInfo(bundleName, permissionName);
 }
+
+int32_t PrivacyKit::RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
+    return PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback);
+}
+
+int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
+    return PrivacyManagerClient::GetInstance().UnRegisterPermActiveStatusCallback(callback);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

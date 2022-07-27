@@ -14,6 +14,7 @@
  */
 #include "privacy_manager_client.h"
 
+#include <algorithm>
 #include "accesstoken_log.h"
 #include "data_validator.h"
 #include "iservice_registry.h"
@@ -29,6 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 } // namespace
 
 const static int32_t ERROR = -1;
+const static int32_t MAX_PERM_LIST_SIZE = 200;
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
 {
@@ -140,6 +142,86 @@ std::string PrivacyManagerClient::DumpRecordInfo(const std::string& bundleName, 
     }
 
     return proxy->DumpRecordInfo(bundleName, permissionName);
+}
+
+int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<IRemoteObject>& callbackObject)
+{
+    std::lock_guard<std::mutex> lock(activeCbkMutex_);
+
+    if (activeCbkMap_.size() == MAX_PERM_LIST_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of subscribers has been reached");
+        return ERROR;
+    }
+
+    auto goalCallback = activeCbkMap_.find(callback);
+    if (goalCallback != activeCbkMap_.end()) {
+        callbackObject = goalCallback->second->AsObject();
+        ACCESSTOKEN_LOG_ERROR(LABEL, "activeCbkMap_ already has such callback");
+        return ERROR;
+    } else {
+        sptr<PermActiveStatusChangeCallback> callbackWraped =
+            new (std::nothrow) PermActiveStatusChangeCallback(callback);
+        if (!callbackWraped) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callbackWraped failed!");
+            return ERROR;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "callbackObject added");
+        callbackObject = callbackWraped->AsObject();
+        activeCbkMap_[callback] = callbackWraped;
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCb is nullptr");
+        return ERROR;
+    }
+
+    sptr<IRemoteObject> callbackObject = nullptr;
+    int32_t result = CreateActiveStatusChangeCbk(callback, callbackObject);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return ERROR;
+    }
+    std::vector<std::string> permList;
+    callback->GetPermList(permList);
+
+    return proxy->RegisterPermActiveStatusCallback(permList, callbackObject);
+}
+
+int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+
+    std::lock_guard<std::mutex> lock(activeCbkMutex_);
+    auto goalCallback = activeCbkMap_.find(callback);
+    if (goalCallback == activeCbkMap_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "goalCallback already is not exist");
+        return ERROR;
+    }
+
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return ERROR;
+    }
+
+    int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
+    if (result == RET_SUCCESS) {
+        activeCbkMap_.erase(goalCallback);
+    }
+    return result;
 }
 
 void PrivacyManagerClient::InitProxy()
