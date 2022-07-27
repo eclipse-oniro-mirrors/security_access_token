@@ -43,7 +43,7 @@ ohos_shared_library("accesstoken_common_cxx") {
   ]
   external_deps = [
     "hiviewdfx_hilog_native:libhilog",
-    "startup_l2:syspara",
+    "init:libbegetutil",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
