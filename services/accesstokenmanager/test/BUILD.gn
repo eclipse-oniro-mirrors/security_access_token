@@ -29,6 +29,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
     "//base/security/access_token/services/common/database/include",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
     "//third_party/json/include",
     "//third_party/googletest/include",
     "//utils/native/base/include",
