@@ -21,73 +21,81 @@ ohos_prebuilt_etc("token_sync.rc") {
   part_name = "access_token"
 }
 
-if (is_standard_system && token_sync_enable == true) {
-  ohos_shared_library("token_sync_manager_service") {
-    subsystem_name = "security"
-    part_name = "access_token"
-
-    include_dirs = [
-      "include/service",
-      "include/remote",
-      "include/command",
-      "include/common",
-      "include/device",
-      "include/protocol",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/frameworks/accesstoken/include",
-      "//base/security/access_token/frameworks/tokensync/include",
-      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-      "//third_party/json/include",
-    ]
-
-    sources = [
-      "src/command/base_remote_command.cpp",
-      "src/command/delete_remote_token_command.cpp",
-      "src/command/sync_remote_hap_token_command.cpp",
-      "src/command/sync_remote_native_token_command.cpp",
-      "src/command/update_remote_hap_token_command.cpp",
-      "src/common/constant.cpp",
-      "src/device/device_info_manager.cpp",
-      "src/device/device_info_repository.cpp",
-      "src/remote/remote_command_executor.cpp",
-      "src/remote/remote_command_factory.cpp",
-      "src/remote/remote_command_manager.cpp",
-      "src/remote/soft_bus_channel.cpp",
-      "src/remote/soft_bus_device_connection_listener.cpp",
-      "src/remote/soft_bus_manager.cpp",
-      "src/remote/soft_bus_session_listener.cpp",
-      "src/service/token_sync_event_handler.cpp",
-      "src/service/token_sync_manager_service.cpp",
-      "src/service/token_sync_manager_stub.cpp",
-    ]
-
-    cflags_cc = [
-      "-DHILOG_ENABLE",
-      "-DDEBUG_API_PERFORMANCE",
-    ]
-
+group("tokensyncmanager") {
+  if (is_standard_system && token_sync_enable == true) {
     deps = [
-      "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-      "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-      "//base/security/access_token/services/tokensyncmanager:token_sync.rc",
-      "//third_party/zlib:libz",
-      "//utils/native/base:utils",
+      "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
+      "//base/security/access_token/services/tokensyncmanager:token_sync_manager_service",
+      "//base/security/access_token/services/tokensyncmanager/sa_profile:tokensync_sa_profile_standard",
     ]
+  }
+}
 
-    if (token_sync_enable == true) {
-      cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    }
+ohos_shared_library("token_sync_manager_service") {
+  subsystem_name = "security"
+  part_name = "access_token"
 
-    external_deps = [
-      "device_manager:devicemanagersdk",
-      "dsoftbus:softbus_client",
-      "eventhandler:libeventhandler",
-      "hiviewdfx_hilog_native:libhilog",
-      "init:libbegetutil",
-      "ipc:ipc_core",
-      "safwk:system_ability_fwk",
-      "samgr_standard:samgr_proxy",
-    ]
+  include_dirs = [
+    "include/service",
+    "include/remote",
+    "include/command",
+    "include/common",
+    "include/device",
+    "include/protocol",
+    "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/frameworks/accesstoken/include",
+    "//base/security/access_token/frameworks/tokensync/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//third_party/json/include",
+  ]
+
+  sources = [
+    "src/command/base_remote_command.cpp",
+    "src/command/delete_remote_token_command.cpp",
+    "src/command/sync_remote_hap_token_command.cpp",
+    "src/command/sync_remote_native_token_command.cpp",
+    "src/command/update_remote_hap_token_command.cpp",
+    "src/common/constant.cpp",
+    "src/device/device_info_manager.cpp",
+    "src/device/device_info_repository.cpp",
+    "src/remote/remote_command_executor.cpp",
+    "src/remote/remote_command_factory.cpp",
+    "src/remote/remote_command_manager.cpp",
+    "src/remote/soft_bus_channel.cpp",
+    "src/remote/soft_bus_device_connection_listener.cpp",
+    "src/remote/soft_bus_manager.cpp",
+    "src/remote/soft_bus_session_listener.cpp",
+    "src/service/token_sync_event_handler.cpp",
+    "src/service/token_sync_manager_service.cpp",
+    "src/service/token_sync_manager_stub.cpp",
+  ]
+
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
+  ]
+
+  deps = [
+    "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//base/security/access_token/services/tokensyncmanager:token_sync.rc",
+    "//third_party/zlib:libz",
+    "//utils/native/base:utils",
+  ]
+
+  external_deps = [
+    "dsoftbus:softbus_client",
+    "eventhandler:libeventhandler",
+    "hiviewdfx_hilog_native:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr_standard:samgr_proxy",
+  ]
+
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+    external_deps += [ "device_manager:devicemanagersdk" ]
   }
 }
