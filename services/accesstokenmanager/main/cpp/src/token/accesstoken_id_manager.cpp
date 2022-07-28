@@ -92,9 +92,9 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
     // random maybe repeat, retry twice.
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
         tokenId = CreateTokenId(type, dlpType);
-        if (tokenId == 0) {
+        if (tokenId == INVALID_TOKENID) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "create tokenId failed");
-            return 0;
+            return INVALID_TOKENID;
         }
 
         int ret = RegisterTokenId(tokenId, type);
@@ -104,7 +104,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
             ACCESSTOKEN_LOG_INFO(LABEL, "reigster tokenId failed, maybe repeat, retry");
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "reigster tokenId finally failed");
-            tokenId = 0;
+            tokenId = INVALID_TOKENID;
         }
     }
     return tokenId;

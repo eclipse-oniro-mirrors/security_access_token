@@ -92,9 +92,10 @@ void AccessTokenManagerService::OnStop()
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
-        tokenID, permissionName.c_str());
-    return PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permissionName: %{public}s, res %{public}d",
+        tokenID, permissionName.c_str(), res);
+    return res;
 }
 
 int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -158,13 +159,14 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     }
 
     uint32_t size = reqPermList.size();
-    ACCESSTOKEN_LOG_INFO(LABEL, "reqPermList size: 0x%{public}x", size);
     for (uint32_t i = 0; i < size; i++) {
         PermissionManager::GetInstance().GetSelfPermissionState(
             permsList, reqPermList[i].permsState);
         if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
             needRes = true;
         }
+        ACCESSTOKEN_LOG_INFO(LABEL, "perm: 0x%{public}s, state: 0x%{public}d",
+            reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
     if (needRes) {
         return DYNAMIC_OPER;

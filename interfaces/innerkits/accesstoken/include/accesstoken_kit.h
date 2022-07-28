@@ -61,6 +61,7 @@ public:
     static int32_t RegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
     static int32_t UnRegisterPermStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
+    static int32_t GetHapDlpFlag(AccessTokenID tokenID);
 
 #ifdef TOKEN_SYNC_ENABLE
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
