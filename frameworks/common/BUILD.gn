@@ -37,11 +37,9 @@ ohos_shared_library("accesstoken_common_cxx") {
     "src/random_mbedtls.cpp",
   ]
 
-  deps = [
-    "//third_party/mbedtls:mbedtls_shared",
-    "//utils/native/base:utils",
-  ]
+  deps = [ "//third_party/mbedtls:mbedtls_shared" ]
   external_deps = [
+    "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "init:libbegetutil",
   ]

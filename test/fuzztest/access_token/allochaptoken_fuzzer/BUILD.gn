@@ -21,7 +21,7 @@ ohos_fuzztest("AllocHapTokenFuzzTest") {
   fuzz_config_file = "//base/security/access_token/test/fuzztest/access_token/allochaptoken_fuzzer"
 
   include_dirs = [
-    "//utils/native/base/include",
+    "//commonlibrary/c_utils/base/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
   ]
   cflags = [
@@ -32,12 +32,12 @@ ohos_fuzztest("AllocHapTokenFuzzTest") {
   ]
   sources = [ "allochaptoken_fuzzer.cpp" ]
 
-  deps = [
-    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "//utils/native/base:utils",
-  ]
+  deps = [ "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk" ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
 
   defines = [
     "ACCOUNT_LOG_TAG = \"AccessTokenFuzzTest\"",

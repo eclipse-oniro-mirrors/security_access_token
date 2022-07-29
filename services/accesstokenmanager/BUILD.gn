@@ -82,10 +82,10 @@ if (is_standard_system) {
       "//base/security/access_token/services/accesstokenmanager:access_token.rc",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//third_party/sqlite:sqlite",
-      "//utils/native/base:utils",
     ]
 
     external_deps = [
+      "c_utils:utils",
       "dsoftbus:softbus_client",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
