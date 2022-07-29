@@ -58,8 +58,6 @@ public:
     void AllocTestToken() const;
     
     uint64_t selfTokenId_;
-    std::string udid_;
-    std::string networkId_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -1337,8 +1337,8 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID004, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
 {
-    int32_t Info = AccessTokenKit::ReloadNativeTokenInfo();
-    ASSERT_EQ(RET_SUCCESS, Info);
+    int32_t ret = AccessTokenKit::ReloadNativeTokenInfo();
+    ASSERT_EQ(RET_SUCCESS, ret);
 }
 
 /**

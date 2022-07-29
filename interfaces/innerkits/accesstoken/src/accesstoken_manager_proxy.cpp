@@ -777,7 +777,10 @@ int AccessTokenManagerProxy::UpdateHapToken(
 int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
 {
     MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return RET_FAILED;
+    }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
