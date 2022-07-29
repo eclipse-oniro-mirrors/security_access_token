@@ -274,7 +274,6 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
 
 int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
@@ -294,7 +293,6 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
 
 int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return RET_FAILED;
@@ -315,6 +313,17 @@ int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);
+}
+
+int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
+{
+    if (tokenID == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return INVALID_DLP_TOKEN_FLAG;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID=%{public}d", tokenID);
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    return (int32_t)(idInner->dlpFlag);
 }
 
 #ifdef TOKEN_SYNC_ENABLE

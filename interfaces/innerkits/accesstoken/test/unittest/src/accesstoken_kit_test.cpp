@@ -1700,32 +1700,49 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
         .appIDDesc = "testtesttesttest"
     };
     HapTokenInfo hapTokenInfoRes;
+    AccessTokenID tokenID;
+    int32_t ret;
 
+    tokenID = GetAccessTokenID(infoManagerTestInfoParms1.userID, infoManagerTestInfoParms1.bundleName, 0);
+    if (tokenID != 0) {
+        ret = AccessTokenKit::DeleteToken(tokenID);
+    }
     tokenIdEx= AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
-    int ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
+    ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
     ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(AccessTokenKit::GetHapDlpFlag(tokenIdEx.tokenIdExStruct.tokenID), 0);
     ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_COMMON);
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
     ASSERT_EQ(ret, RET_FAILED);
 
+    tokenID = GetAccessTokenID(infoManagerTestInfoParms2.userID, infoManagerTestInfoParms2.bundleName, 1);
+    if (tokenID != 0) {
+        ret = AccessTokenKit::DeleteToken(tokenID);
+    }
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms2, infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_READ);
+    ASSERT_EQ(AccessTokenKit::GetHapDlpFlag(tokenIdEx.tokenIdExStruct.tokenID), 1);
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
     ASSERT_EQ(ret, RET_FAILED);
 
+    tokenID = GetAccessTokenID(infoManagerTestInfoParms3.userID, infoManagerTestInfoParms3.bundleName, 2);
+    if (tokenID != 0) {
+        ret = AccessTokenKit::DeleteToken(tokenID);
+    }
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms3, infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(hapTokenInfoRes.dlpType, DLP_FULL_CONTROL);
+    ASSERT_EQ(AccessTokenKit::GetHapDlpFlag(tokenIdEx.tokenIdExStruct.tokenID), 1);
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapTokenInfoRes);

@@ -247,7 +247,7 @@ void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParc
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (this->GetTokenType(tokenCaller) != TOKEN_NATIVE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(INVALID_TOKENID);
         return;
     }
     int userID = data.ReadInt32();
@@ -262,7 +262,7 @@ void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, Message
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     if ((!IsAuthorizedCalling()) && (this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(INVALID_TOKENID);
         return;
     }
     std::string remoteDeviceID = data.ReadString();
@@ -447,7 +447,7 @@ void AccessTokenManagerStub::GetRemoteNativeTokenIDInner(MessageParcel& data, Me
 {
     if (!IsAuthorizedCalling() && !IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(INVALID_TOKENID);
         return;
     }
     std::string deviceID = data.ReadString();
