@@ -15,10 +15,8 @@ import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
 import("//build/ohos/sa_profile/sa_profile.gni")
 
-if (is_standard_system && token_sync_enable == true) {
-  ohos_sa_profile("tokensync_sa_profile_standard") {
-    part_name = "access_token"
+ohos_sa_profile("tokensync_sa_profile_standard") {
+  part_name = "access_token"
 
-    sources = [ "3504.xml" ]
-  }
+  sources = [ "3504.xml" ]
 }
