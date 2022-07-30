@@ -31,7 +31,7 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   include_dirs = [
     "include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//utils/native/base/include",
+    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
@@ -48,7 +48,8 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_state_full_parcel.cpp",
   ]
 
-  deps = [ "//utils/native/base:utils" ]
-
-  external_deps = [ "ipc:ipc_single" ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_single",
+  ]
 }

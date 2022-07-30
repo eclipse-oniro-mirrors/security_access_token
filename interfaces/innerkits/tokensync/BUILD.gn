@@ -28,7 +28,7 @@ if (is_standard_system) {
     public_configs = [ ":tokensync" ]
 
     include_dirs = [
-      "//utils/native/base/include",
+      "//commonlibrary/c_utils/base/include",
       "include",
       "src",
       "//base/security/access_token/frameworks/tokensync/include",
@@ -51,10 +51,10 @@ if (is_standard_system) {
     deps = [
       "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-      "//utils/native/base:utils",
     ]
 
     external_deps = [
+      "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
       "samgr:samgr_proxy",

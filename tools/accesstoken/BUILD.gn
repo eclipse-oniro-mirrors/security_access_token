@@ -35,7 +35,6 @@ ohos_source_set("tools_atm_source_set") {
     "${ability_runtime_path}/tools/aa:aa",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
-    "//utils/native/base:utils",
   ]
 
   cflags = [ "-DHILOG_ENABLE" ]
@@ -46,6 +45,7 @@ ohos_source_set("tools_atm_source_set") {
 
   external_deps = [
     "bundle_framework:appexecfwk_core",
+    "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]

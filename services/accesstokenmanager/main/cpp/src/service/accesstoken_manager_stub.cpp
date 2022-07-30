@@ -43,9 +43,13 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
         if (requestFunc != nullptr) {
             (this->*requestFunc)(data, reply);
         } else {
+            // when valid code without any function to handle
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
+    } else {
+        return IPCObjectStub::OnRemoteRequest(code, data, reply, option); // when code invalid
     }
+
     return NO_ERROR;
 }
 
