@@ -21,7 +21,7 @@
 
 #include "access_token.h"
 #include "hap_token_info_inner.h"
-#include "i_permission_state_callback.h"
+#include "iremote_broker.h"
 #include "permission_def.h"
 #include "permission_list_state.h"
 #include "permission_state_change_info.h"

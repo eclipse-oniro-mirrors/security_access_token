@@ -331,7 +331,7 @@ AccessTokenID AccessTokenManagerClient::GetHapTokenID(int userID, const std::str
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return INVALID_TOKENID;
     }
     return proxy->GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -343,7 +343,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return INVALID_TOKENID;
     }
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
@@ -481,7 +481,7 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return INVALID_TOKENID;
     }
 
     AccessTokenID res = proxy->GetRemoteNativeTokenID(deviceID, tokenID);
