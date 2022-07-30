@@ -26,7 +26,7 @@ if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
 
-    include_dirs = [
+    include_dirs = [ "//third_party/sqlite/include/",
       "main/cpp/include/callback",
       "main/cpp/include/service",
       "main/cpp/include/token",
@@ -81,7 +81,6 @@ if (is_standard_system) {
       "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
       "//base/security/access_token/services/accesstokenmanager:access_token.rc",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
-      "//third_party/sqlite:sqlite",
     ]
 
     external_deps = [
@@ -90,7 +89,6 @@ if (is_standard_system) {
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
-      "samgr_standard:samgr_proxy",
     ]
 
     if (token_sync_enable == true) {
