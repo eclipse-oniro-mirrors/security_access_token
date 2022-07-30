@@ -22,7 +22,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//base/security/access_token/frameworks/common/include",
-    "//utils/native/base/include",
+    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
@@ -34,7 +34,8 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/used_record_detail_parcel.cpp",
   ]
 
-  deps = [ "//utils/native/base:utils" ]
-
-  external_deps = [ "ipc:ipc_core" ]
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+  ]
 }

@@ -32,7 +32,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
     "//third_party/json/include",
     "//third_party/googletest/include",
-    "//utils/native/base/include",
+    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
@@ -54,10 +54,12 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "//base/security/access_token/services/accesstokenmanager/:accesstoken_manager_service",
     "//base/security/access_token/services/common/database:accesstoken_database_cxx",
     "//third_party/googletest:gtest_main",
-    "//utils/native/base:utils",
   ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
+  ]
 }
 
 group("unittest") {

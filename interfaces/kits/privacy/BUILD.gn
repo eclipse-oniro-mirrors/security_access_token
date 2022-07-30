@@ -21,7 +21,7 @@ ohos_shared_library("libprivacymanager") {
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
-    "//utils/native/base/include",
+    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
@@ -33,10 +33,10 @@ ohos_shared_library("libprivacymanager") {
   deps = [
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
     "//foundation/arkui/napi:ace_napi",
-    "//utils/native/base:utils",
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
+    "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
