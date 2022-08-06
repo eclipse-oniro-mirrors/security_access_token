@@ -33,7 +33,7 @@
         "ipc",
         "napi",
         "safwk",
-        "samgr_standard",
+        "samgr",
         "selinux",
         "startup_l2",
         "zlib"
