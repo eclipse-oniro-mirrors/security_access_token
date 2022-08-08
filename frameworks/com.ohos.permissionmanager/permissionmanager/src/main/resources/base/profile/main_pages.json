@@ -1,0 +1,13 @@
+{
+  "src": [
+    "pages/authority-management",
+    "pages/application-secondary",
+    "pages/authority-secondary",
+    "pages/authority-tertiary",
+    "pages/application-tertiary",
+    "pages/other-permissions",
+    "pages/authority-tertiary-groups",
+    "pages/permission-access-record",
+    "pages/dialogPlus"
+  ]
+}

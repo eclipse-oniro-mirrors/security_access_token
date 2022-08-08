@@ -1,16 +1,16 @@
 {
   "string": [
     {
-      "name": "permissionmanager_MainAbility",
+      "name": "permissionmanager_desc",
       "value": "权限管理"
     },
     {
-      "name": "description_mainability",
-      "value": "权限管理"
+      "name": "MainAbility_desc",
+      "value": "从权限和应用两个维度来管理所有应用申请的权限。"
     },
     {
-      "name": "permissionmanager_GrantAbility",
-      "value": "权限申请"
+      "name": "MainAbility_label",
+      "value": "权限管理"
     },
     {
       "name": "no_permission",
@@ -53,10 +53,6 @@
       "value": "已禁止"
     },
     {
-      "name": "description_grantability",
-      "value": "权限申请"
-    },
-    {
       "name": "Authorization_failed",
       "value": "授权失败！"
     },
@@ -83,6 +79,14 @@
     {
       "name": "afternoon",
       "value": "下午"
+    },
+    {
+      "name": "no_record",
+      "value": "没有权限访问记录"
+    },
+    {
+      "name": "record_time_limit",
+      "value": "近7天访问记录"
     }
   ]
 }
