@@ -48,7 +48,7 @@ if (is_standard_system) {
     external_deps = [
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
-      "samgr_standard:samgr_proxy",
+      "samgr:samgr_proxy",
     ]
 
     cflags_cc = [
