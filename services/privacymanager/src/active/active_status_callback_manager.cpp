@@ -111,7 +111,7 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
     return false;
 }
 
-void ActiveStatusCallbackManager::ExcuteCallbackAsync(
+void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     AccessTokenID tokenID, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");

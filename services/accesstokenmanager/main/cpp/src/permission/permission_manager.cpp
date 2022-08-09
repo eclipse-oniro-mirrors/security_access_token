@@ -338,7 +338,7 @@ void PermissionManager::UpdateTokenPermissionState(
     if (isUpdated) {
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
-        CallbackManager::GetInstance().ExcuteCallbackAsync(tokenID, permissionName, changeType);
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
     }
 
 #ifdef TOKEN_SYNC_ENABLE
