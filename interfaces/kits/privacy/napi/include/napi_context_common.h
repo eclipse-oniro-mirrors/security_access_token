@@ -12,28 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "napi_common.h"
+#ifndef  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
+#define  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
+
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-PrivacyAsyncWorkData::PrivacyAsyncWorkData(napi_env envValue)
-{
-    env = envValue;
-}
+struct PrivacyAsyncWorkData {
+    explicit PrivacyAsyncWorkData(napi_env env);
+    virtual ~PrivacyAsyncWorkData();
 
-PrivacyAsyncWorkData::~PrivacyAsyncWorkData()
-{
-    if (callbackRef) {
-        napi_delete_reference(env, callbackRef);
-        callbackRef = nullptr;
-    }
-
-    if (asyncWork) {
-        napi_delete_async_work(env, asyncWork);
-        asyncWork = nullptr;
-    }
-}
+    napi_env        env = nullptr;
+    napi_async_work asyncWork = nullptr;
+    napi_deferred   deferred = nullptr;
+    napi_ref        callbackRef = nullptr;
+};
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
+#endif /*  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H */

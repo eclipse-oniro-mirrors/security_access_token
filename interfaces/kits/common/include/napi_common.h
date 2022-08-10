@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 #define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 
@@ -21,16 +22,23 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PrivacyAsyncWorkData {
-    explicit PrivacyAsyncWorkData(napi_env env);
-    virtual ~PrivacyAsyncWorkData();
+const int ARGS_TWO = 2;
+const int ARGS_THREE = 3;
+const int ARGS_FIVE = 5;
+const int ASYNC_CALL_BACK_VALUES_NUM = 2;
+const int PARAM0 = 0;
+const int PARAM1 = 1;
+const int PARAM2 = 2;
+const int PARAM3 = 3;
 
-    napi_env        env = nullptr;
-    napi_async_work asyncWork = nullptr;
-    napi_deferred   deferred = nullptr;
-    napi_ref        callbackRef = nullptr;
-};
+bool ParseBool(const napi_env env, const napi_value value);
+int32_t ParseInt32(const napi_env env, const napi_value value);
+int64_t ParseInt64(const napi_env env, const napi_value value);
+uint32_t ParseUint32(const napi_env env, const napi_value value);
+std::string ParseString(const napi_env env, const napi_value value);
+std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
 #endif /*  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H */
+

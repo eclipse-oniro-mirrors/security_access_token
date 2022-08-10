@@ -16,6 +16,8 @@
 
 #include "privacy_kit.h"
 #include "accesstoken_log.h"
+#include "napi_context_common.h"
+#include "napi_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -25,127 +27,6 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
 } // namespace
-
-namespace {
-const int ARGS_TWO = 2;
-const int ARGS_THREE = 3;
-const int ARGS_FIVE = 5;
-const int ASYNC_CALL_BACK_VALUES_NUM = 2;
-const int PARAM0 = 0;
-const int PARAM1 = 1;
-const int PARAM2 = 2;
-const int PARAM3 = 3;
-};
-
-static bool ParseBool(const napi_env env, const napi_value value)
-{
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_boolean) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return 0;
-    }
-    bool result = 0;
-    if (napi_get_value_bool(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value bool");
-        return 0;
-    }
-    return result;
-}
-
-static int32_t ParseInt32(const napi_env env, const napi_value value)
-{
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return 0;
-    }
-    int32_t result = 0;
-    if (napi_get_value_int32(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int32");
-        return 0;
-    }
-    return result;
-}
-
-static int64_t ParseInt64(const napi_env env, const napi_value value)
-{
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return 0;
-    }
-    int64_t result = 0;
-    if (napi_get_value_int64(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int64");
-        return 0;
-    }
-    return result;
-}
-
-static uint32_t ParseUint32(const napi_env env, const napi_value value)
-{
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return 0;
-    }
-    uint32_t result = 0;
-    if (napi_get_value_uint32(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value uint32");
-        return 0;
-    }
-    return result;
-}
-
-static std::string ParseString(const napi_env env, const napi_value value)
-{
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_string) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return "";
-    }
-    std::string str;
-    size_t size;
-
-    if (napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string size");
-        return "";
-    }
-
-    str.reserve(size + 1);
-    str.resize(size);
-    if (napi_get_value_string_utf8(env, value, str.data(), size + 1, &size) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string value");
-        return "";
-    }
-    return str;
-}
-
-static std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value)
-{
-    std::vector<std::string> res;
-    uint32_t length = 0;
-    napi_valuetype valuetype = napi_undefined;
-
-    napi_get_array_length(env, value, &length);
-    napi_value valueArray;
-    for (uint32_t i = 0; i < length; i++) {
-        napi_get_element(env, value, i, &valueArray);
-
-        napi_typeof(env, valueArray, &valuetype);
-        if (valuetype == napi_string) {
-            res.emplace_back(ParseString(env, valueArray));
-        }
-    }
-    return res;
-}
-
-
 static void ParseAddPermissionRecord(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
