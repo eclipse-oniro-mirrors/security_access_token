@@ -118,7 +118,7 @@ bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>&
     return false;
 }
 
-void CallbackManager::ExcuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
+void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
 

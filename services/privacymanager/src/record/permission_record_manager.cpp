@@ -430,7 +430,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenID, con
     if (!GetPermissionVisitor(tokenID, visitor)) {
         return Constant::FAILURE;
     }
-    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
         tokenID, permissionName, visitor.deviceId, PERM_ACTIVE_IN_FOREGROUND);
     return Constant::SUCCESS;
 }
@@ -443,7 +443,7 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenID, cons
         return Constant::FAILURE;
     }
 
-    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
         tokenID, permissionName, visitor.deviceId, PERM_INACTIVE);
     return Constant::SUCCESS;
 }
