@@ -326,12 +326,6 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
 
 void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
     if (scopeParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
@@ -349,12 +343,6 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
 }
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(RET_FAILED);
-        return;
-    }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
