@@ -19,6 +19,7 @@ group("napi_packages") {
     deps += [
       "//base/security/access_token/interfaces/kits/accesstoken:libabilityaccessctrl",
       "//base/security/access_token/interfaces/kits/privacy:libprivacymanager",
+      "//base/security/access_token/interfaces/kits/common:libnapi_common",
     ]
   }
 }

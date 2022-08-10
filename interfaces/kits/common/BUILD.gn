@@ -13,37 +13,27 @@
 
 import("//build/ohos.gni")
 
-ohos_shared_library("libprivacymanager") {
+ohos_static_library("libnapi_common") {
   include_dirs = [
-    "napi/include",
+    "include",
     "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//base/security/access_token/interfaces/kits/common/include",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
-    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
-    "napi/src/napi_context_common.cpp",
-    "napi/src/native_module.cpp",
-    "napi/src/permission_record_manager_napi.cpp",
+    "src/napi_common.cpp",
   ]
 
   deps = [
-    "//base/security/access_token/interfaces/kits/common:libnapi_common",
-    "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
     "//foundation/arkui/napi:ace_napi",
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
-    "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
   ]
 
-  relative_install_dir = "module"
   subsystem_name = "security"
   part_name = "access_token"
+  output_name = "libnativetoken"
 }

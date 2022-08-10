@@ -20,8 +20,8 @@
 #include "access_token.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "napi_context_common.h"
 #include "napi_common.h"
-
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 
