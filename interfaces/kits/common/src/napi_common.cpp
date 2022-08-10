@@ -22,12 +22,20 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonNapi"};
 } // namespace
 
-bool ParseBool(const napi_env env, const napi_value value)
+static bool inline Check(const napi_env env, const napi_value value,const napi_valuetype type)
 {
     napi_valuetype valuetype = napi_undefined;
     napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_boolean) {
+    if (valuetype != type) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+        return false;
+    }
+    return true;
+}
+
+bool ParseBool(const napi_env env, const napi_value value)
+{
+    if (!Check(env, value, napi_boolean)) {
         return 0;
     }
     bool result = 0;
@@ -40,10 +48,7 @@ bool ParseBool(const napi_env env, const napi_value value)
 
 int32_t ParseInt32(const napi_env env, const napi_value value)
 {
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+    if (!Check(env, value, napi_number)) {
         return 0;
     }
     int32_t result = 0;
@@ -56,10 +61,7 @@ int32_t ParseInt32(const napi_env env, const napi_value value)
 
 int64_t ParseInt64(const napi_env env, const napi_value value)
 {
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+    if (!Check(env, value, napi_number)) {
         return 0;
     }
     int64_t result = 0;
@@ -72,10 +74,7 @@ int64_t ParseInt64(const napi_env env, const napi_value value)
 
 uint32_t ParseUint32(const napi_env env, const napi_value value)
 {
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_number) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+    if (!Check(env, value, napi_number)) {
         return 0;
     }
     uint32_t result = 0;
@@ -88,20 +87,16 @@ uint32_t ParseUint32(const napi_env env, const napi_value value)
 
 std::string ParseString(const napi_env env, const napi_value value)
 {
-    napi_valuetype valuetype = napi_undefined;
-    napi_typeof(env, value, &valuetype);
-    if (valuetype != napi_string) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+    if (!Check(env, value, napi_string)) {
         return "";
     }
-    std::string str;
     size_t size;
 
     if (napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string size");
         return "";
     }
-
+    std::string str;
     str.reserve(size + 1);
     str.resize(size);
     if (napi_get_value_string_utf8(env, value, str.data(), size + 1, &size) != napi_ok) {
