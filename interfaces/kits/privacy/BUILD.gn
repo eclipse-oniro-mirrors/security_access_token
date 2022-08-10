@@ -32,8 +32,8 @@ ohos_shared_library("libprivacymanager") {
   ]
 
   deps = [
-    "//base/security/access_token/interfaces/kits/common:libnapi_common",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+    "//base/security/access_token/interfaces/kits/common:libnapi_common",
     "//foundation/arkui/napi:ace_napi",
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]

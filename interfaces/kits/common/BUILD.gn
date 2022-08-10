@@ -21,17 +21,11 @@ ohos_static_library("libnapi_common") {
     "//foundation/arkui/napi/interfaces/kits",
   ]
 
-  sources = [
-    "src/napi_common.cpp",
-  ]
+  sources = [ "src/napi_common.cpp" ]
 
-  deps = [
-    "//foundation/arkui/napi:ace_napi",
-  ]
+  deps = [ "//foundation/arkui/napi:ace_napi" ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  external_deps = [
-    "hiviewdfx_hilog_native:libhilog",
-  ]
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
 
   subsystem_name = "security"
   part_name = "access_token"
