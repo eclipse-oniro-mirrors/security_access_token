@@ -40,6 +40,20 @@ struct permissionRecordPage {
   @State permissionIndex: number = -1
   @State applicationIndex: number = -1
   @State strings: any = {}
+  @State currentIndex: number = 0
+  @Builder TabBuilder(index: number) {
+    Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+      Text(index ? $r('app.string.application') : $r('app.string.authority'))
+        .fontColor(this.currentIndex == index ? $r('app.color.button_color') : $r('app.color.label_color'))
+        .fontWeight(this.currentIndex == index ? FontWeight.Bold : FontWeight.Regular)
+        .lineHeight(Constants.TEXT_LINE_HEIGHT)
+      if(this.currentIndex == index) {
+        Row().width(Constants.FULL_WIDTH).height(Constants.TAB_DECORATION_HEIGHT)
+          .backgroundColor($r('app.color.button_color'))
+          .position({ y: Constants.TAB_DECORATION_POSITION_Y })
+      }
+    }.height(Constants.TAB_HEIGHT)
+  }
 
   @Builder ListItemLayout(item, index, dimension) {
     ListItem() {
@@ -138,7 +152,7 @@ struct permissionRecordPage {
                   }.alignItems(HorizontalAlign.Start)
                   .height(Constants.FULL_HEIGHT)
                 }
-              }.height(Constants.LISTITEM_HEIGHT_PERMISSION)
+              }.height(Constants.LISTITEM_HEIGHT_APPLICATION)
               .onClick(() => {
                 router.push({
                   uri: 'pages/application-secondary',
@@ -181,7 +195,7 @@ struct permissionRecordPage {
                   }.alignItems(HorizontalAlign.Start)
                   .height(Constants.FULL_HEIGHT)
                 }
-              }.height(Constants.LISTITEM_HEIGHT_APPLICATION)
+              }.height(Constants.LISTITEM_HEIGHT_PERMISSION)
               .onClick(() => {
                 router.push({
                   uri: 'pages/application-secondary',
@@ -199,8 +213,8 @@ struct permissionRecordPage {
           }
         }
       }
-    }.padding({ left: dimension ? Constants.LISTITEM_PADDING_LEFT_RECORD : Constants.LISTITEM_PADDING_LEFT,
-      right: Constants.LISTITEM_PADDING_RIGHT })
+    }.padding({ left: Constants.DEFAULT_PADDING_START, right: Constants.DEFAULT_PADDING_END,
+      top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
     .margin({ bottom: Constants.LISTITEM_MARGIN_BOTTOM })
     .backgroundColor($r('app.color.default_background_color'))
     .borderRadius(Constants.BORDER_RADIUS)
@@ -230,7 +244,9 @@ struct permissionRecordPage {
                       .margin({ left: Constants.BACKBAR_IMAGE_MARGIN_LEFT })
                       .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                       .fontColor($r('app.color.label_color_light'))
-                  }
+                      .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
+                  }.constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+                  .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM })
                   if(this.groups.length) {
                     Stack() {
                       Tabs() {
@@ -252,7 +268,7 @@ struct permissionRecordPage {
                               }.scrollBar(BarState.Off)
                             }.width(Constants.FULL_WIDTH)
                           }
-                        }.tabBar($r('app.string.authority'))
+                        }.tabBar(this.TabBuilder(0))
                         TabContent() {
                           Row() {
                             Column() {
@@ -271,10 +287,13 @@ struct permissionRecordPage {
                               }.scrollBar(BarState.Off)
                             }.width(Constants.FULL_WIDTH)
                           }
-                        }.tabBar($r('app.string.application'))
+                        }.tabBar(this.TabBuilder(1))
                       }
                       .barWidth(Constants.BAR_WIDTH)
                       .barMode(BarMode.Fixed)
+                      .onChange((index) => {
+                        this.currentIndex = index
+                      })
                     }.height(Constants.FULL_HEIGHT)
                   }else {
                     Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center, direction: FlexDirection.Column }) {

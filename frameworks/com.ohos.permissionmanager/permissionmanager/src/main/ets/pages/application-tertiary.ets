@@ -300,22 +300,22 @@ struct mediaDocumentItem {
         .margin({ top: Constants.TERTIARY_ROW_MARGIN_TOP, left: Constants.TERTIARY_MARGIN_LEFT })
       }
       Row() {
-        Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-          Row() {
-            Text(backTitle)
-              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-              .fontColor($r('app.color.label_color_light'))
-              .fontWeight(FontWeight.Medium)
-              .textAlign(TextAlign.Start)
-            Text($r('app.string.access_permission'))
-              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-              .fontColor($r('app.color.label_color_light'))
-              .fontWeight(FontWeight.Medium)
-              .textAlign(TextAlign.Start)
-          }.margin({ left: Constants.TERTIARY_TEXT_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT })
-        }
-      }
-      .height(Constants.LISTITEM_ROW_HEIGHT)
+        Text(backTitle)
+          .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+          .fontColor($r('app.color.label_color_light'))
+          .fontWeight(FontWeight.Medium)
+          .textAlign(TextAlign.Start)
+          .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
+        Text($r('app.string.access_permission'))
+          .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+          .fontColor($r('app.color.label_color_light'))
+          .fontWeight(FontWeight.Medium)
+          .textAlign(TextAlign.Start)
+          .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
+      }.width(Constants.FULL_WIDTH)
+      .constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+      .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM,
+        left: Constants.TERTIARY_TEXT_MARGIN_LEFT, right: Constants.TERTIARY_IMAGE_MARGIN_RIGHT})
       .margin({ top: Constants.TERTIARY_PERMISSION_ROW_MARGIN_TOP })
       Column() {
         List() {
@@ -407,8 +407,8 @@ struct mediaDocumentItem {
               })
             }
             .padding({
-              left: Constants.TERTIARY_LISTITEM_PADDING_LEFT,
-              right: Constants.TERTIARY_LISTITEM_PADDING_RIGHT
+              left: Constants.DEFAULT_PADDING_START,
+              right: Constants.DEFAULT_PADDING_END
             })
             .margin({ top: Constants.TERTIARY_LISTITEM_MARGIN_TOP })
           }, item => item.toString())
