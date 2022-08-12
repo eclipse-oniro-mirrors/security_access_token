@@ -248,7 +248,7 @@ static int32_t AtlibInit(void)
 static int32_t GetRandomTokenId(uint32_t *randNum)
 {
     uint32_t random;
-    int32_t len;
+    ssize_t len;
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0) {
         return ATRET_FAILED;
@@ -327,8 +327,8 @@ static int32_t GetAplLevel(const char *aplStr)
 
 static void WriteToFile(const cJSON *root)
 {
-    int32_t strLen;
-    int32_t writtenLen;
+    size_t strLen;
+    ssize_t writtenLen;
 
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
