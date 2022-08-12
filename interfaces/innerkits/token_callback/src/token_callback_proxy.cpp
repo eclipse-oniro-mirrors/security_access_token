@@ -44,8 +44,9 @@ void TokenCallbackProxy::GrantResultsCallback(
     }
 
     uint32_t listSize = permissions.size();
-    if (listSize > LIST_SIZE_MAX) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "listSize is invalid");
+    uint32_t resultSize = grantResults.size();
+    if ((listSize > LIST_SIZE_MAX) || (resultSize != listSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "listSize %{public}d or resultSize %{public}d is invalid", listSize, resultSize);
         return;
     }
     if (!data.WriteUint32(listSize)) {
@@ -59,11 +60,6 @@ void TokenCallbackProxy::GrantResultsCallback(
         }
     }
 
-    uint32_t resultSize = grantResults.size();
-    if (resultSize != listSize) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "resultSize is invalid");
-        return;
-    }
     if (!data.WriteUint32(resultSize)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write resultSize");
         return;
