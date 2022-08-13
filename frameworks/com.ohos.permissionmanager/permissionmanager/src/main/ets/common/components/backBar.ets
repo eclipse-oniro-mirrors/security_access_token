@@ -36,7 +36,8 @@ export struct backBar {
             right: Constants.BACKBAR_IMAGE_MARGIN_RIGHT
           })
           .onClick(() => {
-            router.back();
+            var length = router.getLength()
+            Number(length) == 1 ? globalThis.context.terminateSelf() : router.back()
           })
         Text(JSON.parse(this.title))
           .fontColor($r('app.color.text_color'))
