@@ -43,7 +43,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
         uint32_t permListSize = data.ReadUint32();
         if (permListSize > LIST_SIZE_MAX) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
@@ -54,7 +54,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
 
         uint32_t statusListSize = data.ReadUint32();
         if (statusListSize != permListSize) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;
