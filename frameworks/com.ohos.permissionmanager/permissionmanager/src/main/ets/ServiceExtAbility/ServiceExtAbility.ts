@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,8 @@ import window from '@ohos.window';
 import display from '@ohos.display';
 
 var TAG = "PermissionManager_Log:";
+const MAX_WIDTH = 790;
+const MAX_HEIGHT = 1100;
 
 export default class ServiceExtensionAbility extends extension {
     /**
@@ -40,10 +42,10 @@ export default class ServiceExtensionAbility extends extension {
 
         display.getDefaultDisplay().then(dis => {
             let navigationBarRect = {
-                left: 0.5 * dis.width - 395,
-                top: 0.5 * dis.height - 500,
-                width: 790,
-                height: 1000
+                left: (dis.width - MAX_WIDTH)/2,
+                top: (dis.height - MAX_HEIGHT)/2,
+                width: MAX_WIDTH,
+                height: MAX_HEIGHT
             }
             this.createWindow("permissionDialog" + startId, window.WindowType.TYPE_DIALOG, navigationBarRect)
         })

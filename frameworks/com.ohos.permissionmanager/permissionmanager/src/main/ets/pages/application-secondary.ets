@@ -126,7 +126,7 @@ struct appNamePlusPage {
           }
         })
       }
-    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+    }.padding({ left: Constants.DEFAULT_PADDING_START, right: Constants.DEFAULT_PADDING_END })
   }
 
   /**
@@ -245,17 +245,14 @@ struct appNamePlusPage {
                         if (this.allowedListItem.length) {
                           ListItem() {
                             Row() {
-                              Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                                Text($r('app.string.allowed'))
-                                  .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                                  .fontColor($r('app.color.label_color_light'))
-                                  .fontWeight(FontWeight.Medium)
-                                  .margin({
-                                    top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                                    left: Constants.SECONDARY_TEXT_MARGIN_LEFT
-                                  })
-                              }
-                            }
+                              Text($r('app.string.allowed'))
+                                .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                .fontColor($r('app.color.label_color_light'))
+                                .fontWeight(FontWeight.Medium)
+                                .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
+                            }.constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+                            .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM,
+                              left: Constants.SECONDARY_TEXT_MARGIN_LEFT})
                           }
 
                           ListItem() {
@@ -282,17 +279,14 @@ struct appNamePlusPage {
                         if (this.bannedListItem.length) {
                           ListItem() {
                             Row() {
-                              Flex({ justifyContent: FlexAlign.Start, alignItems: ItemAlign.Center }) {
-                                Text($r('app.string.banned'))
-                                  .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
-                                  .fontColor($r('app.color.label_color_light'))
-                                  .fontWeight(FontWeight.Medium)
-                                  .margin({
-                                    top: Constants.SECONDARY_TEXT_MARGIN_TOP,
-                                    left: Constants.SECONDARY_TEXT_MARGIN_LEFT
-                                  })
-                              }
-                            }
+                              Text($r('app.string.banned'))
+                                .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                                .fontColor($r('app.color.label_color_light'))
+                                .fontWeight(FontWeight.Medium)
+                                .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
+                            }.constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+                            .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM,
+                              left: Constants.SECONDARY_TEXT_MARGIN_LEFT})
                           }
 
                           ListItem() {

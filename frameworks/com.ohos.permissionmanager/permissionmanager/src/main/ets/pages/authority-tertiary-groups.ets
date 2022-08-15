@@ -205,17 +205,19 @@ struct applicationItem {
           }
           if (!index) {
             Row() {
-              Column()
-                .backgroundColor($r('app.color.text_decoration_color'))
-                .width(Constants.AUTHORITY_TEXT_DECORATION_WIDTH)
-                .height(Constants.TEXT_DECORATION_HEIGHT)
-                .margin({ left: Constants.AUTHORITY_TEXT_DECORATION_MARGIN_LEFT })
+              Flex() {
+                Column().width(Constants.APPLICATION_TEXT_DECORATION_MARGIN_LEFT)
+                Column()
+                  .backgroundColor($r('app.color.text_decoration_color'))
+                  .height(Constants.TEXT_DECORATION_HEIGHT)
+                  .flexGrow(Constants.FLEX_GROW)
+              }
             }
           }
         }.onClick(() => {
         })
       }
-    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.AUTHORITY_LISTITEM_PADDING_RIGHT })
+    }.padding({ left: Constants.DEFAULT_PADDING_START, right: Constants.DEFAULT_PADDING_END })
   }
 
   /**

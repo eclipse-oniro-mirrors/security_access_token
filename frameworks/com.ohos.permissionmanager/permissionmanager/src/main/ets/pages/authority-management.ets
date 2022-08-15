@@ -113,7 +113,7 @@ struct authorityManagementPage {
           }
         })
       }
-    }.padding({ left: Constants.LISTITEM_PADDING_LEFT, right: Constants.LISTITEM_PADDING_RIGHT })
+    }.padding({ left: Constants.DEFAULT_PADDING_START, right: Constants.DEFAULT_PADDING_END })
   }
 
   @State allApplicationPermissions: applicationPermissions[] = []; // All permissions apply
@@ -123,6 +123,20 @@ struct authorityManagementPage {
   @State allPermissionApplications: permissionApplications [] = [] // All app permissions
   @State allGroups: string[] = [] // All groups
   @State allGroupPermission: groupPermission[] = [] // All group permissions
+  @State currentIndex: number = 0
+  @Builder TabBuilder(index: number) {
+    Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
+      Text(index ? $r('app.string.application') : $r('app.string.authority'))
+        .fontColor(this.currentIndex == index ? $r('app.color.button_color') : $r('app.color.label_color'))
+        .fontWeight(this.currentIndex == index ? FontWeight.Bold : FontWeight.Regular)
+        .lineHeight(Constants.TEXT_LINE_HEIGHT)
+      if(this.currentIndex == index) {
+        Row().width(Constants.FULL_WIDTH).height(Constants.TAB_DECORATION_HEIGHT)
+          .backgroundColor($r('app.color.button_color'))
+          .position({ y: Constants.TAB_DECORATION_POSITION_Y })
+      }
+    }.height(Constants.TAB_HEIGHT)
+  }
 
   /**
    * Convert the permission array into key, value key-value objects for easy sorting
@@ -490,55 +504,51 @@ struct authorityManagementPage {
                         TabContent() {
                           Row() {
                             Column() {
-                              Flex({ justifyContent: FlexAlign.SpaceBetween }) {
-                                Shape() {
-                                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
-                                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                                    .fill($r('app.color.list_background_color'))
-                                }.width(Constants.SHAPE_DIA)
-                                Shape() {
-                                  Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA).fill($r('app.color.background_color'))
-                                  Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                                    .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
-                                }.width(Constants.SHAPE_DIA)
-                              }.width(Constants.FULL_WIDTH).height(Constants.SHAPE_DIA).zIndex(Constants.SHAPE_ZINDEX)
-                              .position({ x: 0, y: Constants.MANAGEMENT_ROW_PADDING_TOP })
-                              .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT, right: Constants.MANAGEMENT_ROW_PADDING_RIGHT })
                               Scroll() {
                                 Column() {
                                   List() {
-                                    ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_START,
-                                      this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).length - 1), (item) => {
-                                      this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                                    }, item => item.toString())
-                                    ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_END), (item, index) => {
-                                      this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                                    }, item => item.toString())
-                                  }.backgroundColor($r('app.color.default_background_color'))
-                                  .borderRadius(Constants.BORDER_RADIUS)
-                                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                                  .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+                                    ListItem() {
+                                      List() {
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_START,
+                                          this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).length - 1), (item) => {
+                                          this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                                        }, item => item.toString())
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                          this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                        }, item => item.toString())
+                                      }.backgroundColor($r('app.color.default_background_color'))
+                                      .borderRadius(Constants.BORDER_RADIUS)
+                                      .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                      .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+                                    }
 
-                                  List() {
-                                    ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_START,
-                                      this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).length - 1), (item) => {
-                                      this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                                    }, item => item.toString())
-                                    ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_END), (item, index) => {
-                                      this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                                    }, item => item.toString())
-                                  }.backgroundColor($r('app.color.default_background_color'))
-                                  .borderRadius(Constants.BORDER_RADIUS)
-                                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                                  .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+                                    ListItem() {
+                                      List() {
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_START,
+                                          this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).length - 1), (item) => {
+                                          this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                                        }, item => item.toString())
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                          this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                        }, item => item.toString())
+                                      }.backgroundColor($r('app.color.default_background_color'))
+                                      .borderRadius(Constants.BORDER_RADIUS)
+                                      .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                      .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
+                                    }
 
-                                  List() {
-                                    ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.OTHER_GROUP), (item) => {
-                                      this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                                    }, item => item.toString())
-                                  }.backgroundColor($r('app.color.default_background_color'))
+                                    ListItem() {
+                                      List() {
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.OTHER_GROUP), (item) => {
+                                          this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                                        }, item => item.toString())
+                                      }.backgroundColor($r('app.color.default_background_color'))
+                                      .borderRadius(Constants.BORDER_RADIUS)
+                                      .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                    }
+                                  }.height(Constants.FULL_HEIGHT)
                                   .borderRadius(Constants.BORDER_RADIUS)
-                                  .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                                  .clip(true)
                                 }.padding({
                                   left: Constants.MANAGEMENT_ROW_PADDING_LEFT,
                                   right: Constants.MANAGEMENT_ROW_PADDING_RIGHT,
@@ -547,16 +557,18 @@ struct authorityManagementPage {
                               .margin({ top: Constants.MANAGEMENT_ROW_PADDING_TOP })
                             }.width(Constants.FULL_WIDTH)
                           }
-                        }.tabBar($r('app.string.authority'))
+                        }.tabBar(this.TabBuilder(0))
                         TabContent() {
-                          applicationItem({
-                            applicationItem: bundleInfosList,
-                            oldApplicationItem: bundleInfosList
-                          })
-                        }.tabBar($r('app.string.application'))
+                          applicationItem()
+                        }.tabBar(this.TabBuilder(1))
                       }
                       .barWidth(Constants.BAR_WIDTH)
                       .barMode(BarMode.Fixed)
+                      .onChange((index) => {
+                        this.currentIndex = index
+                      })
+                    }else {
+                      LoadingProgress().width(Constants.LOADING_WIDTH)
                     }
                   }.height(Constants.FULL_HEIGHT)
                 }
@@ -619,7 +631,6 @@ struct applicationItem {
             .width(Constants.FULL_WIDTH)
             .height(Constants.AUTHORITY_ROW_HEIGHT)
             .constraintSize({ minHeight: Constants.AUTHORITY_CONSTRAINTSIZE_MINHEIGHT })
-            .padding({ left: Constants.APPLICATION_LIST_PADDING_LEFT, right: Constants.APPLICATION_LIST_PADDING_RIGHT })
           }
           if (!index) {
             Row() {
@@ -630,7 +641,7 @@ struct applicationItem {
                   .height(Constants.TEXT_DECORATION_HEIGHT)
                   .flexGrow(Constants.FLEX_GROW)
               }
-            }.padding({ right: Constants.APPLICATION_LIST_PADDING_RIGHT })
+            }
           }
         }.onClick(() => {
           router.push({
@@ -640,8 +651,8 @@ struct applicationItem {
         })
       }
     }.padding({
-      left: Constants.APPLICATION_LISTITEM_PADDING_LEFT,
-      right: Constants.APPLICATION_LISTITEM_PADDING_RIGHT
+      left: Constants.DEFAULT_PADDING_START,
+      right: Constants.DEFAULT_PADDING_END
     })
   }
 
@@ -662,79 +673,41 @@ struct applicationItem {
       Row() {
         Flex({ alignItems: ItemAlign.Start }) {
           Column() {
-            Scroll() {
-              Column() {
-                if (this.applicationItem.length) {
-                  Flex({ justifyContent: FlexAlign.SpaceBetween }) {
-                    Shape() {
-                      Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA)
-                        .fill($r('app.color.background_color'))
-                      Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                        .fill($r('app.color.list_background_color'))
-                    }.width(Constants.SHAPE_DIA)
-
-                    Shape() {
-                      Rect().width(Constants.SHAPE_DIA).height(Constants.SHAPE_DIA)
-                        .fill($r('app.color.background_color'))
-                      Circle().width(Constants.SHAPE_BIG_DIA).height(Constants.SHAPE_BIG_DIA)
-                        .fill($r('app.color.list_background_color')).offset({ x: Constants.SHAPE_OFFSET_X })
-                    }.width(Constants.SHAPE_DIA)
-                  }.width(Constants.FULL_WIDTH).height(Constants.SHAPE_DIA).zIndex(Constants.SHAPE_ZINDEX)
-                  .position({ x: 0, y: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                  .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
-                }
-                Scroll() {
-                  if (!this.applicationItem.length) {
-                    if (this.searchResult) {
-                      Row() {
-                        List() {
-                          ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                            (item) => {
-                              this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                            }, item => item.toString())
-                          ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
-                            this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                          }, item => item.toString())
-                        }.backgroundColor($r('app.color.default_background_color'))
-                        .borderRadius(Constants.BORDER_RADIUS)
-                      }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                      .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
-                    } else {
-                      Row() {
-                        Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
-                          Image($r('app.media.searchnoresult'))
-                            .customizeImage(Constants.SEARCHNORESULT_IMAGE_WIDTH, Constants.SEARCHNORESULT_IMAGE_HEIGHT)
-                        }
-                      }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                      .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
-                    }
-                  } else {
-                    Row() {
-                      List() {
-                        ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
-                          (item) => {
-                            this.ListItemLayout(item, Constants.SLICE_START_INDEX)
-                          }, item => item.toString())
-                        ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
-                          this.ListItemLayout(item, Constants.SLICE_END_INDEX)
-                        }, item => item.toString())
-                      }.backgroundColor($r('app.color.default_background_color'))
-                      .borderRadius(Constants.BORDER_RADIUS)
-                      .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
-                      .margin({ bottom: Constants.LIST_MARGIN_BOTTOM })
-                    }.padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+            Column() {
+              if (!this.applicationItem.length) {
+                Row() {
+                  Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
+                    Image($r('app.media.searchnoresult'))
+                      .customizeImage(Constants.SEARCHNORESULT_IMAGE_WIDTH, Constants.SEARCHNORESULT_IMAGE_HEIGHT)
                   }
                 }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP })
-                .scrollBar(BarState.Off)
-              }.backgroundColor($r('app.color.background_color'))
-            }.scrollBar(BarState.Off)
-          }.margin({ bottom: Constants.APPLICATION_LIST_MARGIN_BOTTOM })
-          Scroll() {
-            Column() {
-              alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
-            }.margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
-            .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
-          }
+                .padding({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+              } else {
+                Row() {
+                  Scroll() {
+                    List() {
+                      ForEach(this.applicationItem.slice(Constants.SLICE_START, this.applicationItem.length - 1),
+                        (item) => {
+                          this.ListItemLayout(item, Constants.SLICE_START_INDEX)
+                        }, item => item.toString())
+                      ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
+                        this.ListItemLayout(item, Constants.SLICE_END_INDEX)
+                      }, item => item.toString())
+                    }.backgroundColor($r('app.color.default_background_color'))
+                    .borderRadius(Constants.BORDER_RADIUS)
+                    .padding({ top: Constants.LIST_PADDING_TOP, bottom: Constants.LIST_PADDING_BOTTOM })
+                  }.scrollBar(BarState.Off)
+                }.margin({ left: Constants.MANAGEMENT_ROW_PADDING_LEFT })
+                .borderRadius(Constants.BORDER_RADIUS)
+                .clip(true)
+              }
+            }.backgroundColor($r('app.color.background_color'))
+            .height(Constants.FULL_HEIGHT)
+          }.margin({ top: Constants.MANAGEMENT_ROW_MARGIN_TOP, bottom: Constants.APPLICATION_LIST_MARGIN_BOTTOM })
+          Column() {
+            alphabetIndexerComponent({ applicationItem: $applicationItem, oldApplicationItem: $oldApplicationItem })
+          }.margin({ top: Constants.APPLICATION_ALPHABETINDEX_MARGIN_TOP })
+          .width(Constants.APPLICATION_ALPHABETINDEX_WIDTH)
         }
       }
     }

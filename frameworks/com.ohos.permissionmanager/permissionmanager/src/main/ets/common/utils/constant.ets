@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -108,9 +108,9 @@ export default class Constants {
     static LISTITEM_PADDING_LEFT_RECORD = 32;
     static LISTITEM_MARGIN_BOTTOM = 12;
     static LISTITEM_MARGIN_BOTTOM_PERMISSION = 14;
-    static LISTITEM_MARGIN_BOTTOM_APPLICATION = 18;
-    static LISTITEM_HEIGHT_PERMISSION = 72;
-    static LISTITEM_HEIGHT_APPLICATION = 80;
+    static LISTITEM_MARGIN_BOTTOM_APPLICATION = 10;
+    static LISTITEM_HEIGHT_PERMISSION = 64;
+    static LISTITEM_HEIGHT_APPLICATION = 72;
     static IMAGE_HEIGHT = 24;
     static IMAGE_WIDTH = 12;
     static IMAGE_HEIGHT_RECORD = 12;
@@ -119,6 +119,15 @@ export default class Constants {
     static IMAGE_WIDTH_RECORD_APPLICATION = 16;
     static BORDER_RADIUS = 24;
     static TITLE_MARGIN_BOTTOM = 16;
+    static SUBTITLE_MIN_HEIGHT = 48;
+    static SUBTITLE_LINE_HEIGHT = 24;
+    static SUBTITLE_PADDING_TOP = 16;
+    static SUBTITLE_PADDING_BOTTOM = 8;
+    static TAB_HEIGHT = 56;
+    static TAB_DECORATION_HEIGHT = 2;
+    static TAB_DECORATION_POSITION_Y = 46;
+    static DEFAULT_PADDING_START = 12;
+    static DEFAULT_PADDING_END = 12;
 
     // application-secondary, authority-secondary
     static FLEX_MARGIN_TOP = 8;
@@ -151,7 +160,7 @@ export default class Constants {
     static TERTIARY_LISTITEM_MARGIN_TOP = 1;
     static TERTIARY_LIST_PADDING_LEFT = 12;
     static TERTIARY_LIST_PADDING_RIGHT = 12;
-    static TERTIARY_LIST_PADDING_TOP = 3;
+    static TERTIARY_LIST_PADDING_TOP = 4;
     static TERTIARY_LIST_PADDING_BOTTOM = 4;
 
     // authority-tertiary
@@ -213,7 +222,8 @@ export default class Constants {
     static APPLICATION_ALPHABETINDEX_MARGIN_TOP = 12;
     static APPLICATION_ALPHABETINDEX_WIDTH = 24;
     static APPLICATION_TEXT_DECORATION_WIDTH = '90%';
-    static APPLICATION_TEXT_DECORATION_MARGIN_LEFT = 68;
+    static APPLICATION_TEXT_DECORATION_MARGIN_LEFT = 56;
+    static LOADING_WIDTH = 100;
 
     // slice
     static SLICE_START = 0;
