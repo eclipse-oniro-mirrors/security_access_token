@@ -328,7 +328,7 @@ static int32_t GetAplLevel(const char *aplStr)
 static void WriteToFile(const cJSON *root)
 {
     size_t strLen;
-    ssize_t writtenLen;
+    size_t writtenLen;
 
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
@@ -348,7 +348,7 @@ static void WriteToFile(const cJSON *root)
         writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
         if (writtenLen != strLen) {
-            AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %d.", __func__, writtenLen);
+            AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
         }
     } while (0);
