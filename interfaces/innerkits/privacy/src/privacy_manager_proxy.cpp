@@ -194,11 +194,11 @@ std::string PrivacyManagerProxy::DumpRecordInfo(AccessTokenID tokenID, const std
     MessageParcel data;
     MessageParcel reply;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteString(bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(bundleName)");
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(tokenID)");
         return "";
     }
-    if (!data.WriteUint32(tokenID)) {
+    if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
         return "";
     }

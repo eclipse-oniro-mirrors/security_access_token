@@ -177,8 +177,6 @@ bool PermissionRecordManager::GetPermissionsRecord(int32_t visitorId, const std:
 int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x, permissionName: %{public}s",
-        tokenID, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -199,8 +197,6 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, 
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x", tokenID);
-
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionVisitor visitor;
     if (!GetPermissionVisitor(tokenID, visitor) && deviceID.empty()) {
@@ -229,7 +225,6 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID,
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     ExecuteDeletePermissionRecordTask();
 
     if (!GetRecordsFromDB(request, result)) {
@@ -242,7 +237,6 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
 int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     auto task = [request, callback]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;
@@ -399,8 +393,6 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 
 std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=%{public}d, permissionName=%{public}s",
-        tokenID, permissionName.c_str());
     PermissionUsedRequest request;
     request.tokenId = tokenID;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
