@@ -40,12 +40,12 @@ public:
 
     ~PermissionUsedRecordDb() override;
 
-    int32_t Add(const DataType type, const std::vector<GenericValues>& values);
-    int32_t Remove(const DataType type, const GenericValues& conditions);
-    int32_t FindByConditions(const DataType type, const GenericValues& andConditions,
+    int32_t Add(DataType type, const std::vector<GenericValues>& values);
+    int32_t Remove(DataType type, const GenericValues& conditions);
+    int32_t FindByConditions(DataType type, const GenericValues& andConditions,
         const GenericValues& orConditions, std::vector<GenericValues>& results);
-    int32_t Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
-    int32_t GetDistinctValue(const DataType type, const std::string& condition, std::vector<GenericValues>& results);
+    int32_t Modify(DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
+    int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
 
     void OnCreate() override;
     void OnUpdate() override;
@@ -59,14 +59,14 @@ private:
 
     int32_t CreatePermissionRecordTable() const;
 
-    std::string CreateInsertPrepareSqlCmd(const DataType type) const;
+    std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
-        const DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
-    std::string CreateSelectByConditionPrepareSqlCmd(const DataType type,
+        DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
+    std::string CreateSelectByConditionPrepareSqlCmd(DataType type,
         const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const;
-    std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
+    std::string CreateUpdatePrepareSqlCmd(DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
-    std::string CreateGetDistinctValue(const DataType type, const std::string conditionColumns) const;
+    std::string CreateGetDistinctValue(DataType type, const std::string conditionColumns) const;
 
 private:
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";

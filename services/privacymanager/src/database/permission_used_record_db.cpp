@@ -69,7 +69,7 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     Open();
 }
 
-int32_t PermissionUsedRecordDb::Add(const DataType type, const std::vector<GenericValues>& values)
+int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValues>& values)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
@@ -98,7 +98,7 @@ int32_t PermissionUsedRecordDb::Add(const DataType type, const std::vector<Gener
     return SUCCESS;
 }
 
-int32_t PermissionUsedRecordDb::Remove(const DataType type, const GenericValues& conditions)
+int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
@@ -112,7 +112,7 @@ int32_t PermissionUsedRecordDb::Remove(const DataType type, const GenericValues&
 }
 
 int32_t PermissionUsedRecordDb::Modify(
-    const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
+    DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
@@ -129,7 +129,7 @@ int32_t PermissionUsedRecordDb::Modify(
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const GenericValues& andConditions,
+int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const GenericValues& andConditions,
     const GenericValues& orConditions, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
@@ -160,7 +160,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const Gene
     return SUCCESS;
 }
 
-int32_t PermissionUsedRecordDb::GetDistinctValue(const DataType type,
+int32_t PermissionUsedRecordDb::GetDistinctValue(DataType type,
     const std::string& condition, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
@@ -181,7 +181,7 @@ int32_t PermissionUsedRecordDb::GetDistinctValue(const DataType type,
     return SUCCESS;
 }
 
-std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(const DataType type) const
+std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -201,7 +201,7 @@ std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(const DataType typ
 }
 
 std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
-    const DataType type, const std::vector<std::string>& columnNames) const
+    DataType type, const std::vector<std::string>& columnNames) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -215,7 +215,7 @@ std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
     return sql;
 }
 
-std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType type,
+std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
     const std::vector<std::string>& modifyColumns, const std::vector<std::string>& conditionColumns) const
 {
     if (modifyColumns.empty()) {
@@ -247,7 +247,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType typ
     return sql;
 }
 
-std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const DataType type,
+std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataType type,
     const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -281,7 +281,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const D
     return sql;
 }
 
-std::string PermissionUsedRecordDb::CreateGetDistinctValue(const DataType type,
+std::string PermissionUsedRecordDb::CreateGetDistinctValue(DataType type,
     const std::string conditionColumns) const
 {
     auto it = dataTypeToSqlTable_.find(type);
