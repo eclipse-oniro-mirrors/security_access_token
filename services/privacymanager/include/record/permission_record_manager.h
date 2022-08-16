@@ -45,7 +45,7 @@ public:
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    std::string DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName);
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(

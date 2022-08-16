@@ -397,12 +397,12 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     return Constant::SUCCESS;
 }
 
-std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
+std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName=%{public}s, permissionName=%{public}s",
-        bundleName.c_str(), permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=%{public}d, permissionName=%{public}s",
+        tokenID, permissionName.c_str());
     PermissionUsedRequest request;
-    request.bundleName = bundleName;
+    request.tokenId = tokenID;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     if (!permissionName.empty()) {
         request.permissionList.emplace_back(permissionName);

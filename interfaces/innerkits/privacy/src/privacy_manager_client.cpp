@@ -133,7 +133,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     return proxy->GetPermissionUsedRecords(requestParcel, callback);
 }
 
-std::string PrivacyManagerClient::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
+std::string PrivacyManagerClient::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -141,7 +141,7 @@ std::string PrivacyManagerClient::DumpRecordInfo(const std::string& bundleName, 
         return "";
     }
 
-    return proxy->DumpRecordInfo(bundleName, permissionName);
+    return proxy->DumpRecordInfo(tokenID, permissionName);
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(

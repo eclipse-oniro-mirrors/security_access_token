@@ -189,7 +189,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     return ret;
 }
 
-std::string PrivacyManagerProxy::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
+std::string PrivacyManagerProxy::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -198,7 +198,7 @@ std::string PrivacyManagerProxy::DumpRecordInfo(const std::string& bundleName, c
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(bundleName)");
         return "";
     }
-    if (!data.WriteString(permissionName)) {
+    if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
         return "";
     }
