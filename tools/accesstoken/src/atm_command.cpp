@@ -26,7 +26,7 @@ using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const std::string SHORT_OPTIONS_DUMP = "htr::b:p:";
+const std::string SHORT_OPTIONS_DUMP = "htr::i:p:";
 const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
@@ -150,14 +150,14 @@ ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
             break;
         }
         case 'i' : {
-            // 'atm dump -r -i' with no argument
+            // 'atm dump -i' with no argument
             resultReceiver_.append("error: option ");
             resultReceiver_.append("requires a value.\n");
             result = OHOS::ERR_INVALID_VALUE;
             break;
         }
         case 'p' : {
-            // 'atm dump -r -p' with no argument
+            // 'atm dump -p' with no argument
             resultReceiver_.append("error: option ");
             resultReceiver_.append("requires a value.\n");
             result = OHOS::ERR_INVALID_VALUE;
