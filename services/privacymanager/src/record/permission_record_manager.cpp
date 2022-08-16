@@ -133,13 +133,13 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Invalid token type");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid token type");
         return Constant::SUCCESS;
     }
 
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId%{public}d", tokenId);
         return Constant::FAILURE;
     }
 
@@ -164,7 +164,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     }
 
     if (!deviceID.empty() && device != deviceID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "deviceID mismatch");
         return;
     }
 
@@ -277,7 +277,8 @@ bool PermissionRecordManager::GetRecords(
         record.Put(FIELD_FLAG, flag);
         if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
             != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to transform permission to opcode");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to transform opcode(%{public}d) into permission",
+                record.GetInt(FIELD_OP_CODE));
             continue;
         }
 
@@ -412,7 +413,7 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         return "";
     }
-    if (tokenInfo.deviceID == "0") { // local
+    if (tokenInfo.deviceID.empty()) { // local
         return ConstantCommon::GetLocalDeviceId();
     }
     return tokenInfo.deviceID;
