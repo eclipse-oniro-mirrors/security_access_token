@@ -51,19 +51,6 @@ PermissionRecordManager::~PermissionRecordManager()
     hasInited_ = false;
 }
 
-bool PermissionRecordManager::GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList)
-{
-    std::vector<GenericValues> results;
-    {
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
-    }
-    for (const auto& res : results) {
-        tokenIdList.emplace_back(res.GetInt(FIELD_TOKEN_ID));
-    }
-    return true;
-}
-
 bool PermissionRecordManager::AddRecord(
     AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
@@ -167,7 +154,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     if (IsLocalDevice(tokenInfo.deviceID)) {
         Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
         GenericValues record;
-        record.Put(FIELD_TOKEN_ID, tokenId);
+        record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
         PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
     } else {
         // distributed permission record
@@ -200,6 +187,19 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     return Constant::SUCCESS;
 }
 
+bool PermissionRecordManager::GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList)
+{
+    std::vector<GenericValues> results;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
+    }
+    for (const auto& res : results) {
+        tokenIdList.emplace_back(res.GetInt(FIELD_TOKEN_ID));
+    }
+    return true;
+}
+
 bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     GenericValues andConditionValues;
@@ -211,7 +211,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     }
     
     std::vector<AccessTokenID> tokenIdList;
-    if (request.tokenId = 0) {
+    if (request.tokenId == 0) {
         GetLocalRecordTokenIdList(tokenIdList);
     } else {
         tokenIdList.emplace_back(request.tokenId);
@@ -219,7 +219,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
-        andConditionValues.Put(FIELD_TOKEN_ID, tokenId);
+        andConditionValues.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
         std::vector<GenericValues> findRecordsValues;
         if (!PermissionRecordRepository::GetInstance().FindRecordValues(
             andConditionValues, orConditionValues, findRecordsValues)) {
@@ -234,7 +234,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         bundleRecord.tokenId = tokenId;
         bundleRecord.isRemote = false;
         bundleRecord.deviceId = ConstantCommon::GetLocalDeviceId();
-        bundleRecord.bundleName = tokenId.bundleName;
+        bundleRecord.bundleName = tokenInfo.bundleName;
 
         if (!findRecordsValues.empty()) {
             if (!GetRecords(request.flag, findRecordsValues, bundleRecord, result)) {
@@ -366,6 +366,20 @@ std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenId, const
     std::string dumpInfo;
     ToString::PermissionUsedResultToString(result, dumpInfo);
     return dumpInfo;
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
+        tokenId, permissionName, ConstantCommon::GetLocalDeviceId(), PERM_ACTIVE_IN_FOREGROUND);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
+        tokenId, permissionName, ConstantCommon::GetLocalDeviceId(), PERM_INACTIVE);
+    return Constant::SUCCESS;
 }
 
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(

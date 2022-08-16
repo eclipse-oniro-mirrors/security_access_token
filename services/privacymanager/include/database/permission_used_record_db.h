@@ -66,8 +66,7 @@ private:
         const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const;
     std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
-    std::string PermissionUsedRecordDb::CreateGetDistinctValue(const DataType type,
-        const std::string conditionColumns) const;
+    std::string CreateGetDistinctValue(const DataType type, const std::string conditionColumns) const;
 
 private:
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
