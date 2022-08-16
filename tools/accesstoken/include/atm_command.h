@@ -51,7 +51,7 @@ private:
     ErrCode RunAsDumpCommandError(void);
     ErrCode RunAsDumpCommandMissingOptionArgument(void);
     ErrCode RunAsDumpCommandExistentOptionArgument(const int &option,
-        bool &isDumpTokenInfo, bool &isDumpRecordInfo, std::string& bundleName, std::string& permissionName);
+        bool &isDumpTokenInfo, bool &isDumpRecordInfo, uint32_t& tokenId, std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

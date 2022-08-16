@@ -175,8 +175,8 @@ ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
     return result;
 }
 
-ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
-    bool &isDumpTokenInfo, bool &isDumpRecordInfo, uint32_t& tokenId, std::string& permissionName)
+ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int& option,
+    bool& isDumpTokenInfo, bool& isDumpRecordInfo, uint32_t& tokenId, std::string& permissionName)
 {
     ErrCode result = ERR_OK;
     switch (option) {
@@ -190,7 +190,7 @@ ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
         case 'r':
             isDumpRecordInfo = true;
             break;
-        case 't':
+        case 'i':
             isDumpRecordInfo = true;
             if (optarg != nullptr) {
                 tokenId = std::atoi(optarg);
