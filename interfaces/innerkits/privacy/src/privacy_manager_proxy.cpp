@@ -41,7 +41,7 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)",tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return ERROR;
     }
     if (!data.WriteString(permissionName)) {
@@ -72,7 +72,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)",tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return ERROR;
     }
     if (!data.WriteString(permissionName)) {
@@ -95,7 +95,7 @@ int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const st
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)",tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return ERROR;
     }
     if (!data.WriteString(permissionName)) {
@@ -118,7 +118,7 @@ int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, 
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)",tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return ERROR;
     }
     if (!data.WriteString(deviceID)) {
@@ -195,7 +195,7 @@ std::string PrivacyManagerProxy::DumpRecordInfo(AccessTokenID tokenID, const std
     MessageParcel reply;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)",tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
         return "";
     }
     if (!data.WriteString(permissionName)) {
