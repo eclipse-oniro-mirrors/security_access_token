@@ -53,15 +53,21 @@ PermissionRecordManager::~PermissionRecordManager()
 
 bool PermissionRecordManager::GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList)
 {
-    // PermissionRecordRepository::GetInstance().xxx();
-    
+    std::vector<GenericValues> results;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
+    }
+    for (const auto& res : results) {
+        tokenIdList.emplace_back(res.GetInt(FIELD_TOKEN_ID));
+    }
     return true;
 }
 
 bool PermissionRecordManager::AddRecord(
     AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionRecord record;
     if (!GetPermissionsRecord(tokenId, permissionName, successCount, failCount, record)) {
         return false;
@@ -144,7 +150,6 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
         return Constant::SUCCESS;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     if (!AddRecord(tokenId, permissionName, successCount, failCount)) {
         return Constant::FAILURE;
     }
@@ -212,9 +217,10 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         tokenIdList.emplace_back(request.tokenId);
     }
 
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
         andConditionValues.Put(FIELD_TOKEN_ID, tokenId);
-        std::vector<GenericValues> findRecordsValues; 
+        std::vector<GenericValues> findRecordsValues;
         if (!PermissionRecordRepository::GetInstance().FindRecordValues(
             andConditionValues, orConditionValues, findRecordsValues)) {
             return false;

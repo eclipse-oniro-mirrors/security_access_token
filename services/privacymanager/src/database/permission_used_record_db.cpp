@@ -129,26 +129,6 @@ int32_t PermissionUsedRecordDb::Modify(
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t PermissionUsedRecordDb::Find(const DataType type, std::vector<GenericValues>& results)
-{
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string prepareSql = CreateSelectPrepareSqlCmd(type);
-    auto statement = Prepare(prepareSql);
-    while (statement.Step() == Statement::State::ROW) {
-        int32_t columnCount = statement.GetColumnCount();
-        GenericValues value;
-        for (int32_t i = 0; i < columnCount; i++) {
-            if (statement.GetColumnName(i) == FIELD_TIMESTAMP || statement.GetColumnName(i) == FIELD_ACCESS_DURATION) {
-                value.Put(statement.GetColumnName(i), statement.GetValue(i, true));
-            } else {
-                value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-            }
-        }
-        results.emplace_back(value);
-    }
-    return SUCCESS;
-}
-
 int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const GenericValues& andConditions,
     const GenericValues& orConditions, std::vector<GenericValues>& results)
 {
@@ -181,10 +161,10 @@ int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const Gene
 }
 
 int32_t PermissionUsedRecordDb::GetDistinctValue(const DataType type,
-    const std::string conditionColumns)
+    const std::string& condition, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string getDistinctValueSql = CreateGetDistinctValue(type, conditionColumns);
+    std::string getDistinctValueSql = CreateGetDistinctValue(type, condition);
     auto statement = Prepare(getDistinctValueSql);
     while (statement.Step() == Statement::State::ROW) {
         int32_t columnCount = statement.GetColumnCount();
@@ -264,16 +244,6 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(const DataType typ
             sql.append(columnName + "=:" + columnName);
         }
     }
-    return sql;
-}
-
-std::string PermissionUsedRecordDb::CreateSelectPrepareSqlCmd(const DataType type) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "select * from " + it->second.tableName_;
     return sql;
 }
 

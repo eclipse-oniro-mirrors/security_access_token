@@ -71,6 +71,18 @@ bool PermissionRecordRepository::RemoveRecordValues(const GenericValues& conditi
     }
     return true;
 }
+
+bool PermissionRecordRepository::GetAllRecordValuesByKey(
+    const std::string& condition, std::vector<GenericValues>& resultValues)
+{
+    if (PermissionUsedRecordDb::GetInstance().GetDistinctValue(PermissionUsedRecordDb::PERMISSION_RECORD,
+        condition, resultValues) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
+        return false;
+    }
+    return true;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
