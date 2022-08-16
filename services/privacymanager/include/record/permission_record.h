@@ -22,7 +22,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct PermissionRecord {
-    int32_t visitorId = 0;
+    uint32_t tokenId = 0;
     int32_t opCode = 0;
     int32_t status = 0;
     int64_t timestamp = 0L;

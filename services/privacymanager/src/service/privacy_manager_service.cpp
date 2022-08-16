@@ -78,12 +78,12 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenID, permissionName);
+    return 0;
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenID, permissionName);
+    return 0;
 }
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)

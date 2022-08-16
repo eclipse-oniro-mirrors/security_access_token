@@ -21,7 +21,7 @@ namespace Security {
 namespace AccessToken {
 void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values)
 {
-    values.Put(FIELD_VISITOR_ID, record.visitorId);
+    values.Put(FIELD_TOKEN_ID, record.tokenId);
     values.Put(FIELD_OP_CODE, record.opCode);
     values.Put(FIELD_STATUS, record.status);
     values.Put(FIELD_TIMESTAMP, record.timestamp);
@@ -32,7 +32,7 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
 {
-    record.visitorId = values.GetInt(FIELD_VISITOR_ID);
+    record.tokenId = values.GetInt(FIELD_TOKEN_ID);
     record.opCode = values.GetInt(FIELD_OP_CODE);
     record.status = values.GetInt(FIELD_STATUS);
     record.timestamp = values.GetInt64(FIELD_TIMESTAMP);

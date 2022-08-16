@@ -41,7 +41,6 @@ PermissionUsedRecordDb::~PermissionUsedRecordDb()
 void PermissionUsedRecordDb::OnCreate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    CreatePermissionVisitorTable();
     CreatePermissionRecordTable();
 }
 
@@ -52,21 +51,10 @@ void PermissionUsedRecordDb::OnUpdate()
 
 PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
 {
-    SqliteTable permissionVisorTable;
-    permissionVisorTable.tableName_ = PERMISSION_VISITOR_TABLE;
-    permissionVisorTable.tableColumnNames_ = {
-        FIELD_ID,
-        FIELD_TOKEN_ID,
-        FIELD_IS_REMOTE_DEVICE,
-        FIELD_DEVICE_ID,
-        FIELD_USER_ID,
-        FIELD_BUNDLE_NAME
-    };
-
     SqliteTable permissionRecordTable;
     permissionRecordTable.tableName_ = PERMISSION_RECORD_TABLE;
     permissionRecordTable.tableColumnNames_ = {
-        FIELD_VISITOR_ID,
+        FIELD_TOKEN_ID,
         FIELD_OP_CODE,
         FIELD_STATUS,
         FIELD_TIMESTAMP,
@@ -76,7 +64,6 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     };
 
     dataTypeToSqlTable_ = {
-        {PERMISSION_VISITOR, permissionVisorTable},
         {PERMISSION_RECORD, permissionRecordTable},
     };
     Open();
@@ -193,35 +180,24 @@ int32_t PermissionUsedRecordDb::FindByConditions(const DataType type, const Gene
     return SUCCESS;
 }
 
-int32_t PermissionUsedRecordDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
+int32_t PermissionUsedRecordDb::GetDistinctValue(const DataType type,
+    const std::string conditionColumns)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string deleteSql = CreateDeletePrepareSqlCmd(type);
-    std::string insertSql = CreateInsertPrepareSqlCmd(type);
-    auto deleteStatement = Prepare(deleteSql);
-    auto insertStatement = Prepare(insertSql);
-    BeginTransaction();
-    bool canCommit = deleteStatement.Step() == Statement::State::DONE;
-    for (const auto& value : values) {
-        std::vector<std::string> columnNames = value.GetAllKeys();
-        for (const auto& columnName : columnNames) {
-            insertStatement.Bind(columnName, value.Get(columnName));
+    std::string getDistinctValueSql = CreateGetDistinctValue(type, conditionColumns);
+    auto statement = Prepare(getDistinctValueSql);
+    while (statement.Step() == Statement::State::ROW) {
+        int32_t columnCount = statement.GetColumnCount();
+        GenericValues value;
+        for (int32_t i = 0; i < columnCount; i++) {
+            if (statement.GetColumnName(i) == FIELD_TOKEN_ID) {
+                value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
+            } else if (statement.GetColumnName(i) == FIELD_DEVICE_ID) {
+                value.Put(statement.GetColumnName(i), statement.GetColumnString(i));
+            }
         }
-        int32_t ret = insertStatement.Step();
-        if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "insert failed, errorMsg: %{public}s", SpitError().c_str());
-            canCommit = false;
-        }
-        insertStatement.Reset();
+        results.emplace_back(value);
     }
-    if (!canCommit) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
-        RollbackTransaction();
-        return FAILURE;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "commit transaction.");
-    CommitTransaction();
     return SUCCESS;
 }
 
@@ -335,22 +311,16 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const D
     return sql;
 }
 
-int32_t PermissionUsedRecordDb::CreatePermissionVisitorTable() const
+std::string PermissionUsedRecordDb::CreateGetDistinctValue(const DataType type,
+    const std::string conditionColumns) const
 {
-    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_VISITOR);
+    auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
+        return std::string();
     }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(FIELD_ID + " integer PRIMARY KEY autoincrement not null,")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_IS_REMOTE_DEVICE + " integer not null,")
-        .append(FIELD_DEVICE_ID + " text not null,")
-        .append(FIELD_USER_ID + " integer not null,")
-        .append(FIELD_BUNDLE_NAME + " text not null")
-        .append(")");
-    return ExecuteSql(sql);
+    std::string sql = "select distinct ";
+    sql.append(conditionColumns + " from "+ it->second.tableName_);
+    return sql;
 }
 
 int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
@@ -361,14 +331,14 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_VISITOR_ID + " integer not null,")
+        .append(FIELD_TOKEN_ID + " integer not null,")
         .append(FIELD_OP_CODE + " integer not null,")
         .append(FIELD_STATUS + " integer not null,")
         .append(FIELD_TIMESTAMP + " integer not null,")
         .append(FIELD_ACCESS_DURATION + " integer not null,")
         .append(FIELD_ACCESS_COUNT + " integer not null,")
         .append(FIELD_REJECT_COUNT + " integer not null,")
-        .append("primary key(" + FIELD_VISITOR_ID)
+        .append("primary key(" + FIELD_TOKEN_ID)
         .append("," + FIELD_OP_CODE)
         .append("," + FIELD_STATUS)
         .append("," + FIELD_TIMESTAMP)
