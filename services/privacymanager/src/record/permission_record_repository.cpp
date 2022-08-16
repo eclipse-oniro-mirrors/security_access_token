@@ -82,7 +82,6 @@ bool PermissionRecordRepository::GetAllRecordValuesByKey(
     }
     return true;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

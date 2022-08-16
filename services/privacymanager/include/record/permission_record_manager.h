@@ -67,7 +67,7 @@ private:
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
-    bool IsLocalDevice(const std::string& deviceId);
+    std::string GetDeviceId(AccessTokenID tokenId);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;

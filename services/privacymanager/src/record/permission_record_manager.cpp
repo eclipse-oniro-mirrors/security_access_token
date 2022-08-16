@@ -137,6 +137,12 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
         return Constant::SUCCESS;
     }
 
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is invalid");
+        return Constant::FAILURE;
+    }
+
     if (!AddRecord(tokenId, permissionName, successCount, failCount)) {
         return Constant::FAILURE;
     }
@@ -145,20 +151,27 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+    if (tokenId == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is 0");
+        return;
+    }
+
+    // only support remove by tokenId(local)
+    std::string device = GetDeviceId(tokenId);
+    if (device.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId%{public}d", tokenId);
+        return;
+    }
+
+    if (!deviceID.empty() && device != deviceID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo fail");
         return;
     }
 
-    if (IsLocalDevice(tokenInfo.deviceID)) {
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-        GenericValues record;
-        record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
-        PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
-    } else {
-        // distributed permission record
-    }
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    GenericValues record;
+    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
+    PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
@@ -393,12 +406,16 @@ int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<I
     return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
 }
 
-bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)
+std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
 {
-    if (deviceId == "0") { // local
-        return true;
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        return "";
     }
-    return false;
+    if (tokenInfo.deviceID == "0") { // local
+        return ConstantCommon::GetLocalDeviceId();
+    }
+    return tokenInfo.deviceID;
 }
 
 void PermissionRecordManager::Init()

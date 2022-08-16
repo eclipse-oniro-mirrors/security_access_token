@@ -32,7 +32,7 @@ const std::string HELP_MSG_DUMP =
     "options list:\n"
     "  -h, --help                                       list available options\n"
     "  -t, --token-info                                 list all token info in system\n"
-    "  -r [-b <bundle-name>] [-p <permission-name>]     list used records in system\n";
+    "  -r [-i <token-id>] [-p <permission-name>]        list used records in system\n";
 
 class AtmCommand : public OHOS::AAFwk::ShellCommand {
 public:
