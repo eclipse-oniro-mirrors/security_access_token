@@ -150,18 +150,16 @@ struct dialogPlusPage {
     let option = new rpc.MessageOption()
     let data = new rpc.MessageParcel()
     let reply = new rpc.MessageParcel()
-    if(!data.writeStringArray(perms)) {
-      Log.error('writeStringArray permission failed!')
+    Promise.all([data.writeInterfaceToken(Constants.ACCESS_TOKEN),
+      data.writeStringArray(perms),
+      data.writeIntArray(results)
+    ]).then(() => {
+      this.proxy.sendRequest(Constants.RESULT_CODE, data, reply, option)
       this.destruction()
-      return
-    }
-    if (!data.writeIntArray(results)) {
-      Log.error('writeIntArray result failed!')
+    }).catch(() => {
+      Log.error('write result failed!')
       this.destruction()
-      return
-    }
-    this.proxy.sendRequest(Constants.RESULT_CODE, data, reply, option)
-    this.destruction()
+    })
   }
 
   destruction() {
