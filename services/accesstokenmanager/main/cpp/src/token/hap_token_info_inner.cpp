@@ -26,6 +26,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "HapTokenInfoInner"};
+static constexpr DEFAULT_DEVICEID = "0";
 }
 
 HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
@@ -50,7 +51,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
     tokenInfoBasic_.appID = info.appIDDesc;
-    tokenInfoBasic_.deviceID = "0";
+    tokenInfoBasic_.deviceID = DEFAULT_DEVICEID;
     tokenInfoBasic_.apl = policy.apl;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permStateList);
 }
