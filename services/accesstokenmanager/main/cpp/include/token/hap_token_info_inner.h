@@ -42,7 +42,7 @@ public:
     void TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
         std::vector<GenericValues>& permStateValues) const;
-    int RestoreHapTokenInfo(AccessTokenID tokenId, GenericValues& tokenValue,
+    int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes);
 
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
