@@ -413,7 +413,7 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         return "";
     }
-    if (tokenInfo.deviceID.empty()) { // local
+    if (tokenInfo.deviceID == "0") { // local
         return ConstantCommon::GetLocalDeviceId();
     }
     return tokenInfo.deviceID;
