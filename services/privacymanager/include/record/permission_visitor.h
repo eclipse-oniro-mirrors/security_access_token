@@ -13,29 +13,30 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_RECORD_H
-#define PERMISSION_RECORD_H
+#ifndef PERMISSION_VISITOR_H
+#define PERMISSION_VISITOR_H
 
+#include <string>
+#include "access_token.h"
 #include "generic_values.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionRecord {
-    int32_t visitorId = 0;
-    int32_t opCode = 0;
-    int32_t status = 0;
-    int64_t timestamp = 0L;
-    int64_t accessDuration = 0L;
-    int32_t accessCount = 0;
-    int32_t rejectCount = 0;
+struct PermissionVisitor {
+    int32_t id = -1;
+    AccessTokenID tokenId = 0;
+    bool isRemoteDevice = false;
+    std::string deviceId;
+    int32_t userId;
+    std::string bundleName;
 
-    PermissionRecord() = default;
+    PermissionVisitor() = default;
 
-    static void TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values);
-    static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
+    static void TranslationIntoGenericValues(const PermissionVisitor& visitor, GenericValues& values);
+    static void TranslationIntoPermissionVisitor(const GenericValues& values, PermissionVisitor& visitor);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_RECORD_H
+#endif // PERMISSION_VISITOR_H

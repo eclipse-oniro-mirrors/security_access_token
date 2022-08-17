@@ -50,7 +50,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
     tokenInfoBasic_.appID = info.appIDDesc;
-    tokenInfoBasic_.deviceID = "";
+    tokenInfoBasic_.deviceID = "0";
     tokenInfoBasic_.apl = policy.apl;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, policy.permStateList);
 }

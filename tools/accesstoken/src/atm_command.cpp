@@ -26,12 +26,12 @@ using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const std::string SHORT_OPTIONS_DUMP = "htr::i:p:";
+const std::string SHORT_OPTIONS_DUMP = "htr::b:p:";
 const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
     {"record-info", no_argument, nullptr, 'r'},
-    {"token-id", required_argument, nullptr, 'i'},
+    {"bundle-name", required_argument, nullptr, 'b'},
     {"permission-name", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0}
 };
@@ -79,7 +79,7 @@ ErrCode AtmCommand::RunAsDumpCommand()
     std::string dumpInfo = "";
     bool isDumpTokenInfo = false;
     bool isDumpRecordInfo = false;
-    uint32_t tokenId = 0;
+    std::string bundleName = "";
     std::string permissionName = "";
     int option = -1;
     int counter = 0;
@@ -103,7 +103,7 @@ ErrCode AtmCommand::RunAsDumpCommand()
         }
 
         result = RunAsDumpCommandExistentOptionArgument(
-            option, isDumpTokenInfo, isDumpRecordInfo, tokenId, permissionName);
+            option, isDumpTokenInfo, isDumpRecordInfo, bundleName, permissionName);
     }
 
     if (result != OHOS::ERR_OK) {
@@ -114,7 +114,7 @@ ErrCode AtmCommand::RunAsDumpCommand()
             resultReceiver_.append(dumpInfo + "\n");
         }
         if (isDumpRecordInfo) {
-            dumpInfo = PrivacyKit::DumpRecordInfo(tokenId, permissionName);
+            dumpInfo = PrivacyKit::DumpRecordInfo(bundleName, permissionName);
             resultReceiver_.append(dumpInfo + "\n");
         }
     }
@@ -149,8 +149,8 @@ ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
             result = OHOS::ERR_INVALID_VALUE;
             break;
         }
-        case 'i' : {
-            // 'atm dump -i' with no argument
+        case 'b' : {
+            // 'atm dump -b' with no argument
             resultReceiver_.append("error: option ");
             resultReceiver_.append("requires a value.\n");
             result = OHOS::ERR_INVALID_VALUE;
@@ -175,8 +175,8 @@ ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
     return result;
 }
 
-ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int& option,
-    bool& isDumpTokenInfo, bool& isDumpRecordInfo, uint32_t& tokenId, std::string& permissionName)
+ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
+    bool &isDumpTokenInfo, bool &isDumpRecordInfo, std::string& bundleName, std::string& permissionName)
 {
     ErrCode result = ERR_OK;
     switch (option) {
@@ -190,10 +190,10 @@ ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int& option,
         case 'r':
             isDumpRecordInfo = true;
             break;
-        case 'i':
+        case 'b':
             isDumpRecordInfo = true;
             if (optarg != nullptr) {
-                tokenId = std::atoi(optarg);
+                bundleName = optarg;
             }
             break;
         case 'p':

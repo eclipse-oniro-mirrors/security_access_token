@@ -159,9 +159,9 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 
 void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenID = data.ReadUint32();
+    std::string bundleName = data.ReadString();
     std::string permissionName = data.ReadString();
-    std::string dumpInfo = this->DumpRecordInfo(tokenID, permissionName);
+    std::string dumpInfo = this->DumpRecordInfo(bundleName, permissionName);
     reply.WriteString(dumpInfo);
 }
 

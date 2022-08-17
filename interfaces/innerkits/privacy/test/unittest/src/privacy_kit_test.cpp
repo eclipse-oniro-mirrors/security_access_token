@@ -434,8 +434,25 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     request.bundleName = g_InfoParmsA.bundleName;
     CheckPermissionUsedResult(request, result, 3, 3, 0);
 
+    // query by deviceId and bundle Name
+    BuildQueryRequest(0, GetLocalDeviceUdid(), g_InfoParmsA.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(1, result.bundleRecords.size());
+    request.tokenId = g_TokenId_A;
+    CheckPermissionUsedResult(request, result, 3, 3, 0);
+
     // query by unmatched tokenId, deviceId and bundle Name
     BuildQueryRequest(123, GetLocalDeviceUdid(), g_InfoParmsA.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(0, result.bundleRecords.size());
+
+    // query by unmatched tokenId, deviceId and bundle Name
+    BuildQueryRequest(g_TokenId_A, "local device", g_InfoParmsA.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(0, result.bundleRecords.size());
+
+    // query by unmatched tokenId, deviceId and bundle Name
+    BuildQueryRequest(g_TokenId_A, GetLocalDeviceUdid(), "bundleA", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(0, result.bundleRecords.size());
 

@@ -25,6 +25,7 @@
 #include "permission_record.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "permission_visitor.h"
 
 #include "rwlock.h"
 #include "thread_pool.h"
@@ -39,35 +40,36 @@ public:
 
     void Init();
     int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount);
-    void RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID);
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    void RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    std::string DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName);
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
-    int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
+    bool GetPermissionVisitor(AccessTokenID tokenID, PermissionVisitor& visitor);
 
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    bool GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList);
-    bool AddRecord(AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount);
-    bool GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
+    bool AddVisitor(AccessTokenID tokenID, int32_t& visitorId);
+    bool AddRecord(int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    bool GetPermissionsRecord(int32_t visitorId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
 
     void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);
-    bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
+    bool GetRecordsFromDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
     bool GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
-    std::string GetDeviceId(AccessTokenID tokenId);
+    bool IsLocalDevice(const std::string& deviceId);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;

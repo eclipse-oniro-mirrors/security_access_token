@@ -61,29 +61,33 @@ int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std
 
 int32_t PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, result);
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
 }
 
-std::string PrivacyKit::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
+std::string PrivacyKit::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=%{public}d, permissionName=%{public}s",
-        tokenID, permissionName.c_str());
-    return PrivacyManagerClient::GetInstance().DumpRecordInfo(tokenID, permissionName);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName=%{public}s, permissionName=%{public}s",
+        bundleName.c_str(), permissionName.c_str());
+    return PrivacyManagerClient::GetInstance().DumpRecordInfo(bundleName, permissionName);
 }
 
 int32_t PrivacyKit::RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback);
 }
 
 int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     return PrivacyManagerClient::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 } // namespace AccessToken

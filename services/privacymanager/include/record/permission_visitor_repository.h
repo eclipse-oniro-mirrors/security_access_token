@@ -13,29 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_RECORD_H
-#define PERMISSION_RECORD_H
+#ifndef PERMISSION_VISITOR_REPOSITORY_H
+#define PERMISSION_VISITOR_REPOSITORY_H
 
+#include <vector>
 #include "generic_values.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionRecord {
-    int32_t visitorId = 0;
-    int32_t opCode = 0;
-    int32_t status = 0;
-    int64_t timestamp = 0L;
-    int64_t accessDuration = 0L;
-    int32_t accessCount = 0;
-    int32_t rejectCount = 0;
+class PermissionVisitorRepository final {
+public:
+    virtual ~PermissionVisitorRepository();
+    PermissionVisitorRepository();
 
-    PermissionRecord() = default;
+    static PermissionVisitorRepository& GetInstance();
 
-    static void TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values);
-    static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
+    bool AddVisitorValues(const GenericValues& visitorValues);
+    bool FindVisitorValues(const GenericValues& andConditionValues,
+        const GenericValues& orConditionValues, std::vector<GenericValues>& visitorValues);
+    bool RemoveVisitorValues(const GenericValues& conditionValues);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_RECORD_H
+#endif // PERMISSION_VISITOR_REPOSITORY_H
