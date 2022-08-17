@@ -33,7 +33,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
-static constexpr DEFAULT_DEVICEID = "0";
+static const std::string DEFAULT_DEVICEID = "0";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {

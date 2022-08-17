@@ -26,7 +26,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "HapTokenInfoInner"};
-static constexpr DEFAULT_DEVICEID = "0";
+static const std::string DEFAULT_DEVICEID = "0";
 }
 
 HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
