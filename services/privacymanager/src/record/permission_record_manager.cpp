@@ -33,6 +33,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
+static const std::string DEFAULT_DEVICEID = "0";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -413,7 +414,7 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         return "";
     }
-    if (tokenInfo.deviceID.empty()) { // local
+    if (tokenInfo.deviceID == DEFAULT_DEVICEID) { // local
         return ConstantCommon::GetLocalDeviceId();
     }
     return tokenInfo.deviceID;
