@@ -29,6 +29,11 @@ static const int32_t LIST_SIZE_MAX = 200;
 static const int32_t FAILED = -1;
 }
 
+static std::string to_utf8(std::u16string str16)
+{
+    return std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> {}.to_bytes(str16);
+}
+
 int32_t TokenCallbackStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
@@ -43,18 +48,19 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
         uint32_t permListSize = data.ReadUint32();
         if (permListSize > LIST_SIZE_MAX) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
         for (uint32_t i = 0; i < permListSize; i++) {
-            std::string perm = data.ReadString();
+            std::u16string u16Perm = data.ReadString16();
+            std::string perm = to_utf8(u16Perm);
             permList.emplace_back(perm);
         }
 
         uint32_t statusListSize = data.ReadUint32();
         if (statusListSize != permListSize) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "read statusListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;

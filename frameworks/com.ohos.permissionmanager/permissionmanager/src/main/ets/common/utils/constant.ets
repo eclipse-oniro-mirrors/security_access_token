@@ -344,5 +344,6 @@ export default class Constants {
 
     //
     static INITIAL_INDEX = 10
+    static ACCESS_TOKEN = 'ohos.security.accesstoken.tokencallback'
 
 }
