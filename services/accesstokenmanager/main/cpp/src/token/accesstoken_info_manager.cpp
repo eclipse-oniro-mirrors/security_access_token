@@ -81,7 +81,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
 
-    for (GenericValues& tokenValue : hapTokenRes) {
+    for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
@@ -121,7 +121,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
 
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
-    for (GenericValues nativeTokenValue : nativeTokenResults) {
+    for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
         if (ret != RET_SUCCESS) {
@@ -380,10 +380,10 @@ static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& poli
     policyNew.apl = policy.apl;
     policyNew.domain = policy.domain;
 
-    for (auto& state : policy.permStateList) {
+    for (const auto& state : policy.permStateList) {
         policyNew.permStateList.emplace_back(state);
     }
-    for (auto& def : policy.permList) {
+    for (const auto& def : policy.permList) {
         policyNew.permList.emplace_back(def);
     }
 }
@@ -610,10 +610,10 @@ void AccessTokenInfoManager::GetAllNativeTokenInfo(
     std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-    for (auto nativeTokenInner : nativeTokenInfoMap_) {
+    for (const auto& nativeTokenInner : nativeTokenInfoMap_) {
         std::shared_ptr<NativeTokenInfoInner> nativeTokenInnerPtr = nativeTokenInner.second;
         if (nativeTokenInnerPtr == nullptr || nativeTokenInnerPtr->IsRemote()
-            || nativeTokenInnerPtr->GetDcap().size() <= 0) {
+            || nativeTokenInnerPtr->GetDcap().empty()) {
             continue;
         }
         NativeTokenInfoForSync token;
@@ -732,7 +732,7 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||
-            nativeToken.baseInfo.dcap.size() <= 0 ||
+            nativeToken.baseInfo.dcap.empty() ||
             AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID) != TOKEN_NATIVE) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "device %{public}s token %{public}u is invalid.",

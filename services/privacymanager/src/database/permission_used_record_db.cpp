@@ -268,7 +268,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
             sql.append(andColName + "=:" + andColName);
         }
     }
-    if (orColumns.size() > 0) {
+    if (!orColumns.empty()) {
         sql.append(" and (");
         for (const auto& orColName : orColumns) {
             if (orColName.find(FIELD_OP_CODE) != std::string::npos) {

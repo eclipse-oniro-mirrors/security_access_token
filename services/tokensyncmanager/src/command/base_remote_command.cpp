@@ -192,7 +192,7 @@ void BaseRemoteCommand::FromPermStateListJson(const nlohmann::json& hapTokenJson
 {
     if (hapTokenJson.find("permState") != hapTokenJson.end()
         && hapTokenJson.at("permState").is_array()
-        && hapTokenJson.at("permState").size() > 0) {
+        && !hapTokenJson.at("permState").empty()) {
         nlohmann::json permissionsJson = hapTokenJson.at("permState").get<nlohmann::json>();
         for (const auto& permissionJson : permissionsJson) {
             PermissionStateFull permission;
@@ -265,11 +265,11 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeToke
         nativeTokenInfo.baseInfo.tokenAttr = (unsigned)nativeTokenJson.at("tokenAttr").get<int32_t>();
     }
     if (nativeTokenJson.find("dcaps") != nativeTokenJson.end() && nativeTokenJson.at("dcaps").is_array()
-        && nativeTokenJson.at("dcaps").size() > 0 && (nativeTokenJson.at("dcaps"))[0].is_string()) {
+        && !nativeTokenJson.at("dcaps").empty() && (nativeTokenJson.at("dcaps"))[0].is_string()) {
         nativeTokenInfo.baseInfo.dcap = nativeTokenJson.at("dcaps").get<std::vector<std::string>>();
     }
     if (nativeTokenJson.find("nativeAcls") != nativeTokenJson.end() && nativeTokenJson.at("nativeAcls").is_array()
-        && nativeTokenJson.at("nativeAcls").size() > 0 && (nativeTokenJson.at("nativeAcls"))[0].is_string()) {
+        && !nativeTokenJson.at("nativeAcls").empty() && (nativeTokenJson.at("nativeAcls"))[0].is_string()) {
         nativeTokenInfo.baseInfo.nativeAcls = nativeTokenJson.at("nativeAcls").get<std::vector<std::string>>();
     }
 

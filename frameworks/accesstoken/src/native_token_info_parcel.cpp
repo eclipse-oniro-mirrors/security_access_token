@@ -38,7 +38,7 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
     int32_t dcapSize = static_cast<int32_t>((this->nativeTokenInfoParams.dcap).size());
     RETURN_IF_FALSE(out.WriteInt32(dcapSize));
 
-    for (auto dcapItem : this->nativeTokenInfoParams.dcap) {
+    for (const auto& dcapItem : this->nativeTokenInfoParams.dcap) {
         RETURN_IF_FALSE(out.WriteString(dcapItem));
     }
 
@@ -48,7 +48,7 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
     int32_t nativeAclSize = static_cast<int32_t>((this->nativeTokenInfoParams.nativeAcls).size());
     RETURN_IF_FALSE(out.WriteInt32(nativeAclSize));
 
-    for (auto item : this->nativeTokenInfoParams.nativeAcls) {
+    for (const auto& item : this->nativeTokenInfoParams.nativeAcls) {
         RETURN_IF_FALSE(out.WriteString(item));
     }
 

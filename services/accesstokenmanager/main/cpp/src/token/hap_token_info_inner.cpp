@@ -148,7 +148,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
 }
 
 int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
-    GenericValues& tokenValue,
+    const GenericValues& tokenValue,
     const std::vector<GenericValues>& permStateRes)
 {
     tokenInfoBasic_.tokenID = tokenId;
