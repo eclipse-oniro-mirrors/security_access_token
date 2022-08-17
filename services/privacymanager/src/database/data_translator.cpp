@@ -23,7 +23,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
-    GenericValues& visitorGenericValues, GenericValues& andGenericValues, GenericValues& orGenericValues)
+    GenericValues& andGenericValues, GenericValues& orGenericValues)
 {
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;
@@ -46,17 +46,6 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     }
     if (end != 0) {
         andGenericValues.Put(FIELD_TIMESTAMP_END, end);
-    }
-
-    if (!request.deviceId.empty()) {
-        visitorGenericValues.Put(FIELD_DEVICE_ID, request.deviceId);
-    }
-    if (!request.bundleName.empty()) {
-        visitorGenericValues.Put(FIELD_BUNDLE_NAME, request.bundleName);
-    }
-
-    if (request.tokenId != 0) {
-        visitorGenericValues.Put(FIELD_TOKEN_ID, (int32_t)request.tokenId);
     }
 
     for (const auto& perm : request.permissionList) {

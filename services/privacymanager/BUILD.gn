@@ -53,8 +53,6 @@ if (is_standard_system) {
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",
       "src/record/permission_record_repository.cpp",
-      "src/record/permission_visitor.cpp",
-      "src/record/permission_visitor_repository.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]

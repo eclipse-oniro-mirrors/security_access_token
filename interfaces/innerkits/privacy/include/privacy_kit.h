@@ -37,7 +37,7 @@ public:
     static int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     static int32_t GetPermissionUsedRecords(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
-    static std::string DumpRecordInfo(const std::string& bundleName, const std::string& permissionName);
+    static std::string DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName);
     static int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     static int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
 };
