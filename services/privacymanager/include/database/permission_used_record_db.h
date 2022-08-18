@@ -45,6 +45,9 @@ public:
     int32_t FindByConditions(DataType type, const GenericValues& andConditions,
         const GenericValues& orConditions, std::vector<GenericValues>& results);
     int32_t Modify(DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
+    int32_t Count(DataType type, GenericValues& result);
+    int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
+    int32_t DeleteExcessiveRecords(DataType type, unsigned excessiveSize);
     int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
 
     void OnCreate() override;
@@ -66,6 +69,10 @@ private:
         const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const;
     std::string CreateUpdatePrepareSqlCmd(DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
+    std::string CreateCountPrepareSqlCmd(DataType type) const;
+    std::string CreateDeleteExpireRecordsPrepareSqlCmd(DataType type,
+        const std::vector<std::string>& andColumns) const;
+    std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type, unsigned excessiveSize) const;
     std::string CreateGetDistinctValue(DataType type, const std::string conditionColumns) const;
 
 private:

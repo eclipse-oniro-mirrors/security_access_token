@@ -17,9 +17,11 @@
 #define PERMISSION_RECORD_MANAGER_H
 
 #include <vector>
+#include <set>
 #include <string>
 
 #include "access_token.h"
+#include "hap_token_info.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
@@ -55,11 +57,11 @@ private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    bool GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList);
+    bool GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     bool AddRecord(AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount);
     bool GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
-
+    bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);

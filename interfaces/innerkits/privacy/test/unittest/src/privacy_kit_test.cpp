@@ -150,6 +150,53 @@ void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& requ
     ASSERT_EQ(totalFailCount, failCount);
 }
 
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+namespace {
+    void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
+        std::vector<AccessTokenID>& g_TokenId_List, int32_t number)
+    {
+        SetSelfTokenID(g_selfTokenId);
+        for (int32_t i = 0; i < number; i++) {
+            HapInfoParams g_InfoParmsTmp = {
+                .userID = i,
+                .bundleName = "ohos.privacy_test.bundle" + std::to_string(i),
+                .instIndex = i,
+                .appIDDesc = "privacy_test.bundle" + std::to_string(i)
+            };
+            g_InfoParms_List.push_back(g_InfoParmsTmp);
+            HapPolicyParams g_PolicyPramsTmp = {
+                .apl = APL_NORMAL,
+                .domain = "test.domain." + std::to_string(i)
+            };
+            AccessTokenKit::AllocHapToken(g_InfoParmsTmp, g_PolicyPramsTmp);
+            AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParmsTmp.userID,
+                                                                        g_InfoParmsTmp.bundleName,
+                                                                        g_InfoParmsTmp.instIndex);
+            g_TokenId_List.push_back(g_TokenId_Tmp);
+        }
+        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
+        SetSelfTokenID(tokenId);
+    }
+
+    void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
+    {
+        SetSelfTokenID(g_selfTokenId);
+        for (size_t i = 0; i < g_InfoParms_List.size(); i++) {
+            AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParms_List[i].userID,
+                                                                        g_InfoParms_List[i].bundleName,
+                                                                        g_InfoParms_List[i].instIndex);
+            AccessTokenKit::DeleteToken(g_TokenId_Tmp);
+        }
+        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
+        SetSelfTokenID(tokenId);
+    }
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+
 /**
  * @tc.name: AddPermissionUsedRecord001
  * @tc.desc: cannot AddPermissionUsedRecord with illegal tokenId and permission.
@@ -720,4 +767,49 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
 
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord007
+ * @tc.desc: AddPermissionUsedRecord user_grant permission.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
+{
+    std::vector<HapInfoParams> g_InfoParms_List;
+    std::vector<AccessTokenID> g_TokenId_List;
+    SetTokenID(g_InfoParms_List, g_TokenId_List, 100);
+    std::vector<std::string> addPermissionList = {
+        "ohos.permission.ANSWER_CALL",
+        "ohos.permission.READ_CALENDAR",
+    };
+    for (int32_t i = 0; i < 200; i++) {
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_List[i % 100],
+            addPermissionList[i % 2], 1, 0));
+
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList;
+        BuildQueryRequest(g_TokenId_List[i % 100], GetLocalDeviceUdid(),
+            g_InfoParms_List[i % 100].bundleName, permissionList, request);
+        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    }
+    sleep(70);
+    for (int32_t i = 0; i < 100; i++) {
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList;
+        BuildQueryRequest(g_TokenId_List[i], GetLocalDeviceUdid(),
+            g_InfoParms_List[i].bundleName, permissionList, request);
+        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+        
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+        ASSERT_EQ(1, result.bundleRecords.size());
+        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
+        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
+        CheckPermissionUsedResult(request, result, 1, 2, 0);
+    }
+    DeleteTokenID(g_InfoParms_List);
 }

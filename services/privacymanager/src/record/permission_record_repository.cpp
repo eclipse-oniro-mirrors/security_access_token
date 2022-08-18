@@ -82,6 +82,36 @@ bool PermissionRecordRepository::GetAllRecordValuesByKey(
     }
     return true;
 }
+
+int32_t PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
+{
+    if (PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues)
+        != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot count PERMISSION_RECORD");
+        return false;
+    }
+    return true;
+}
+
+bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& andConditions)
+{
+    if (PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
+        andConditions) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
+        return false;
+    }
+    return true;
+}
+
+bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(int32_t excessiveSize)
+{
+    if (PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
+        excessiveSize) != PermissionUsedRecordDb::SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
+            return false;
+    }
+    return true;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

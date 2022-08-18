@@ -53,6 +53,7 @@ if (is_standard_system) {
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",
       "src/record/permission_record_repository.cpp",
+      "src/record/permission_used_record_cache.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]
@@ -66,6 +67,7 @@ if (is_standard_system) {
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
       "//third_party/sqlite:sqlite",
+      "//utils/native/base:utils",
     ]
 
     external_deps = [
