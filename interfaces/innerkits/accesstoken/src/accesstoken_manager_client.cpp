@@ -349,7 +349,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
 }
 
 int AccessTokenManagerClient::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy)
+    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -359,7 +359,7 @@ int AccessTokenManagerClient::UpdateHapToken(
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicyParameter = policy;
-    return proxy->UpdateHapToken(tokenID, appIDDesc, hapPolicyParcel);
+    return proxy->UpdateHapToken(tokenID, appIDDesc, apiVersion, hapPolicyParcel);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)

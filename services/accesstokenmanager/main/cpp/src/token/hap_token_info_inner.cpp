@@ -35,6 +35,7 @@ HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
     tokenInfoBasic_.tokenID = 0;
     tokenInfoBasic_.tokenAttr = 0;
     tokenInfoBasic_.userID = 0;
+    tokenInfoBasic_.apiVersion = 0;
     tokenInfoBasic_.instIndex = 0;
     tokenInfoBasic_.dlpType = 0;
     tokenInfoBasic_.apl = APL_NORMAL;
@@ -48,6 +49,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenAttr = 0;
     tokenInfoBasic_.bundleName = info.bundleName;
+    tokenInfoBasic_.apiVersion = info.apiVersion;
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
     tokenInfoBasic_.appID = info.appIDDesc;
@@ -69,9 +71,10 @@ HapTokenInfoInner::~HapTokenInfoInner()
         "tokenID: 0x%{public}x destruction", tokenInfoBasic_.tokenID);
 }
 
-void HapTokenInfoInner::Update(const std::string& appIDDesc, const HapPolicyParams& policy)
+void HapTokenInfoInner::Update(const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     tokenInfoBasic_.appID = appIDDesc;
+    tokenInfoBasic_.apiVersion = apiVersion;
     tokenInfoBasic_.apl = policy.apl;
     if (permPolicySet_ == nullptr) {
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
@@ -93,6 +96,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(FIELD_TOKEN_ID, (int)tokenInfoBasic_.tokenID);
     outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
     outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
+    outGenericValues.Put(FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
     outGenericValues.Put(FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
     outGenericValues.Put(FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
     outGenericValues.Put(FIELD_APP_ID, tokenInfoBasic_.appID);
@@ -112,6 +116,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         return RET_FAILED;
     }
 
+    tokenInfoBasic_.apiVersion = inGenericValues.GetInt(FIELD_API_VERSION);
     tokenInfoBasic_.instIndex = inGenericValues.GetInt(FIELD_INST_INDEX);
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(FIELD_DLP_TYPE);
     tokenInfoBasic_.appID = inGenericValues.GetString(FIELD_APP_ID);

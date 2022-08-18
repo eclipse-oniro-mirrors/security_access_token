@@ -62,8 +62,8 @@ public:
     virtual AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) = 0;
     virtual int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) = 0;
     virtual int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) = 0;
-    virtual int UpdateHapToken(
-        AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParcel& policyParcel) = 0;
+    virtual int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion,
+        const HapPolicyParcel& policyParcel) = 0;
     virtual int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;

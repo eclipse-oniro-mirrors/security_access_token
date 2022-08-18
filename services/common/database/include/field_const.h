@@ -57,6 +57,8 @@ const std::string FIELD_REJECT_COUNT = "reject_count";
 const std::string FIELD_TIMESTAMP_BEGIN = "timestamp_begin";
 const std::string FIELD_TIMESTAMP_END = "timestamp_end";
 const std::string FIELD_FLAG = "flag";
+
+const std::string FIELD_API_VERSION = "api_version";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

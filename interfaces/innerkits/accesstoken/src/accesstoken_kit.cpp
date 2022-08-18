@@ -59,7 +59,8 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 #endif
 }
 
-int AccessTokenKit::UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy)
+int AccessTokenKit::UpdateHapToken(
+    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     if ((tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
@@ -67,7 +68,7 @@ int AccessTokenKit::UpdateHapToken(AccessTokenID tokenID, const std::string& app
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return RET_FAILED;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenID, appIDDesc, policy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenID, appIDDesc, apiVersion, policy);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)

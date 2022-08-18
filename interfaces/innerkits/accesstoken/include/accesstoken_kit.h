@@ -35,7 +35,8 @@ class AccessTokenKit {
 public:
     static AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     static AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    static int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
+    static int UpdateHapToken(
+        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     static int DeleteToken(AccessTokenID tokenID);
     /* Get token type by ATM service */
     static ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
