@@ -538,6 +538,63 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
 
+/**
+ * @tc.name: DumpRecordInfo001
+ * @tc.desc: cannot DumpRecordInfo with invalid params.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, DumpRecordInfo001, TestSize.Level1)
+{
+    std::string permission = "ohos.permission.CAMERA";
+
+    // invalid tokenId
+    std::string info = PrivacyKit::DumpRecordInfo(123, permission);
+    ASSERT_EQ(true, info.empty());
+
+    // invalid permission
+    info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "invalid permission");
+    ASSERT_EQ(true, info.empty());
+}
+
+/**
+ * @tc.name: DumpRecordInfo002
+ * @tc.desc: cannot DumpRecordInfo with no record.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, DumpRecordInfo002, TestSize.Level1)
+{
+    std::string permission = "ohos.permission.CAMERA";
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, permission, 1, 0));
+
+    std::string info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "");
+    ASSERT_EQ(false, info.empty());
+
+    info = PrivacyKit::DumpRecordInfo(0, permission);
+    ASSERT_EQ(false, info.empty());
+
+    info = PrivacyKit::DumpRecordInfo(0, "");
+    ASSERT_EQ(false, info.empty());
+}
+
+/**
+ * @tc.name: DumpRecordInfo003
+ * @tc.desc: cannot DumpRecordInfo with record.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, DumpRecordInfo003, TestSize.Level1)
+{
+    std::string permission = "ohos.permission.CAMERA";
+
+    std::string info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "");
+    ASSERT_EQ(true, info.empty());
+
+    info = PrivacyKit::DumpRecordInfo(0, "");
+    ASSERT_EQ(true, info.empty());
+}
+
 class CbCustomizeTest1 : public PermActiveStatusCustomizedCbk {
 public:
     explicit CbCustomizeTest1(const std::vector<std::string> &permList)
@@ -649,7 +706,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
 }
-
 
 /**
  * @tc.name: RegisterPermActiveStatusCallback002
