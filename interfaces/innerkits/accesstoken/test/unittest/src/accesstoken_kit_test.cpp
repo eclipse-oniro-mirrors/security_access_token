@@ -2420,7 +2420,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
  * @tc.name: DumpTokenInfo001
  * @tc.desc: Get dump token information
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require:Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
 {
@@ -2433,7 +2433,7 @@ HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
  * @tc.name: DeleteRemoteToken001
  * @tc.desc: DeleteRemoteToken with invalid parameters.
  * @tc.type: FUNC
- * @tc.require:
+ * @tc.require:Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
 {
