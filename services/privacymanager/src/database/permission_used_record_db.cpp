@@ -16,6 +16,7 @@
 #include "permission_used_record_db.h"
 
 #include "accesstoken_log.h"
+#include "constant.h"
 #include "field_const.h"
 
 namespace OHOS {
@@ -181,6 +182,48 @@ int32_t PermissionUsedRecordDb::GetDistinctValue(DataType type,
     return SUCCESS;
 }
 
+int32_t PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
+{
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::string countSql = CreateCountPrepareSqlCmd(type);
+    auto countStatement = Prepare(countSql);
+    if (countStatement.Step() == Statement::State::ROW) {
+        int32_t column = 0;
+        result.Put(Constant::COUNT_CMD, countStatement.GetValue(column, true));
+    }
+    return SUCCESS;
+}
+
+int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
+    const GenericValues& andConditions)
+{
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::vector<std::string> andColumns = andConditions.GetAllKeys();
+    if (!andColumns.empty()) {
+        std::string deleteExpireSql = CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns);
+        auto deleteExpireStatement = Prepare(deleteExpireSql);
+        for (const auto& columnName : andColumns) {
+            deleteExpireStatement.Bind(columnName, andConditions.Get(columnName));
+        }
+        int32_t ret = deleteExpireStatement.Step();
+        if (ret != Statement::State::DONE) {
+            return FAILURE;
+        }
+    }
+    return SUCCESS;
+}
+
+int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, unsigned excessiveSize)
+{
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);
+    auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
+    if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
+        return FAILURE;
+    }
+    return SUCCESS;
+}
+
 std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -278,6 +321,57 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
         }
         sql.append("0)");
     }
+    return sql;
+}
+
+std::string PermissionUsedRecordDb::CreateCountPrepareSqlCmd(DataType type) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "select count(*) from " + it->second.tableName_;
+    return sql;
+}
+
+std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataType type,
+    const std::vector<std::string>& andColumns) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "delete from " + it->second.tableName_ + " where ";
+    sql.append(FIELD_TIMESTAMP + " in (select ");
+    sql.append(FIELD_TIMESTAMP + " from " + it->second.tableName_ + " where 1 = 1");
+    for (const auto& andColName : andColumns) {
+        if (andColName == FIELD_TIMESTAMP_BEGIN) {
+            sql.append(" and ");
+            sql.append(FIELD_TIMESTAMP + " >=:" + andColName);
+        } else if (andColName == FIELD_TIMESTAMP_END) {
+            sql.append(" and ");
+            sql.append(FIELD_TIMESTAMP + " <=:" + andColName);
+        } else {
+            sql.append(" and ");
+            sql.append(andColName + "=:" + andColName);
+        }
+    }
+    sql.append(" )");
+    return sql;
+}
+
+std::string PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type,
+    uint32_t excessiveSize) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "delete from " + it->second.tableName_ + " where ";
+    sql.append(FIELD_TIMESTAMP + " in (select ");
+    sql.append(FIELD_TIMESTAMP + " from " + it->second.tableName_ + " order by ");
+    sql.append(FIELD_TIMESTAMP + " limit ");
+    sql.append(std::to_string(excessiveSize) + " )");
     return sql;
 }
 

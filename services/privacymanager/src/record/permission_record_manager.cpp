@@ -22,6 +22,7 @@
 #include "data_translator.h"
 #include "field_const.h"
 #include "permission_record_repository.h"
+#include "permission_used_record_cache.h"
 #include "active_status_callback_manager.h"
 #include "time_util.h"
 #include "to_string.h"
@@ -60,50 +61,10 @@ bool PermissionRecordManager::AddRecord(
     if (!GetPermissionsRecord(tokenId, permissionName, successCount, failCount, record)) {
         return false;
     }
-
-    GenericValues nullValues;
-    GenericValues recordValues;
-    std::vector<GenericValues> insertValues;
-    std::vector<GenericValues> findValues;
-    PermissionRecord::TranslationIntoGenericValues(record, recordValues);
-
-    int64_t insertTimestamp = record.timestamp;
-    int64_t insertAccessDuration = record.accessDuration;
-    int32_t insertAccessCount = record.accessCount;
-    int32_t insertRejectCount = record.rejectCount;
-    recordValues.Remove(FIELD_TIMESTAMP);
-    recordValues.Remove(FIELD_ACCESS_DURATION);
-    recordValues.Remove(FIELD_ACCESS_COUNT);
-    recordValues.Remove(FIELD_REJECT_COUNT);
-    if (!PermissionRecordRepository::GetInstance().FindRecordValues(recordValues, nullValues, findValues)) {
-        return false;
+    if (PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record) == Constant::SUCCESS) {
+        return true;
     }
-
-    recordValues.Put(FIELD_TIMESTAMP, insertTimestamp);
-    recordValues.Put(FIELD_ACCESS_DURATION, insertAccessDuration);
-    recordValues.Put(FIELD_ACCESS_COUNT, insertAccessCount);
-    recordValues.Put(FIELD_REJECT_COUNT, insertRejectCount);
-    for (const auto& rec : findValues) {
-        if (insertTimestamp - rec.GetInt64(FIELD_TIMESTAMP) < Constant::PRECISE) {
-            insertAccessDuration += rec.GetInt64(FIELD_ACCESS_DURATION);
-            insertAccessCount += rec.GetInt(FIELD_ACCESS_COUNT);
-            insertRejectCount += rec.GetInt(FIELD_REJECT_COUNT);
-            recordValues.Remove(FIELD_ACCESS_DURATION);
-            recordValues.Remove(FIELD_ACCESS_COUNT);
-            recordValues.Remove(FIELD_REJECT_COUNT);
-
-            recordValues.Put(FIELD_ACCESS_DURATION, insertAccessDuration);
-            recordValues.Put(FIELD_ACCESS_COUNT, insertAccessCount);
-            recordValues.Put(FIELD_REJECT_COUNT, insertRejectCount);
-
-            if (!PermissionRecordRepository::GetInstance().RemoveRecordValues(rec)) {
-                return false;
-            }
-            break;
-        }
-    }
-    insertValues.emplace_back(recordValues);
-    return PermissionRecordRepository::GetInstance().AddRecordValues(insertValues);
+    return false;
 }
 
 bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
@@ -160,7 +121,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     // only support remove by tokenId(local)
     std::string device = GetDeviceId(tokenId);
     if (device.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId%{public}d", tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId = %{public}d", tokenId);
         return;
     }
 
@@ -172,7 +133,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues record;
     record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
-    PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
+    PermissionUsedRecordCache::GetInstance().RemoveRecords(record); // remove from cache and database
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
@@ -201,15 +162,18 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::GetLocalRecordTokenIdList(std::vector<AccessTokenID>& tokenIdList)
+bool PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList)
 {
     std::vector<GenericValues> results;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        // find tokenId from cache
+        PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
+        // find tokenId from database
         PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
     }
     for (const auto& res : results) {
-        tokenIdList.emplace_back(res.GetInt(FIELD_TOKEN_ID));
+        tokenIdList.emplace(res.GetInt(FIELD_TOKEN_ID));
     }
     return true;
 }
@@ -224,32 +188,22 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         return false;
     }
     
-    std::vector<AccessTokenID> tokenIdList;
+    std::set<AccessTokenID> tokenIdList;
     if (request.tokenId == 0) {
         GetLocalRecordTokenIdList(tokenIdList);
     } else {
-        tokenIdList.emplace_back(request.tokenId);
+        tokenIdList.emplace(request.tokenId);
     }
-
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetLocalRecordTokenIdList.size = %{public}zu", tokenIdList.size());
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
         andConditionValues.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
         std::vector<GenericValues> findRecordsValues;
-        if (!PermissionRecordRepository::GetInstance().FindRecordValues(
-            andConditionValues, orConditionValues, findRecordsValues)) {
-            return false;
-        }
+        PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
+            andConditionValues, orConditionValues, findRecordsValues); // find records from cache and database
         andConditionValues.Remove(FIELD_TOKEN_ID);
-        HapTokenInfo tokenInfo;
-        if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-            continue;
-        }
         BundleUsedRecord bundleRecord;
-        bundleRecord.tokenId = tokenId;
-        bundleRecord.isRemote = false;
-        bundleRecord.deviceId = ConstantCommon::GetLocalDeviceId();
-        bundleRecord.bundleName = tokenInfo.bundleName;
-
+        CreateBundleUsedRecord(tokenId, bundleRecord);
         if (!findRecordsValues.empty()) {
             if (!GetRecords(request.flag, findRecordsValues, bundleRecord, result)) {
                 return false;
@@ -260,6 +214,20 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
             result.bundleRecords.emplace_back(bundleRecord);
         }
     }
+    return true;
+}
+
+bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord)
+{
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo failed");
+        return false;
+    }
+    bundleRecord.tokenId = tokenId;
+    bundleRecord.isRemote = false;
+    bundleRecord.deviceId = ConstantCommon::GetLocalDeviceId();
+    bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
 }
 
@@ -278,7 +246,7 @@ bool PermissionRecordManager::GetRecords(
         record.Put(FIELD_FLAG, flag);
         if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
             != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to transform opcode(%{public}d) into permission",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform opcode(%{public}d) into permission",
                 record.GetInt(FIELD_OP_CODE));
             continue;
         }
@@ -337,24 +305,22 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    GenericValues nullValues;
-    std::vector<GenericValues> deleteRecordValues;
-    if (!PermissionRecordRepository::GetInstance().FindRecordValues(nullValues, nullValues, deleteRecordValues)) {
+    GenericValues countValue;
+    if (!PermissionRecordRepository::GetInstance().CountRecordValues(countValue)) {
         return Constant::FAILURE;
     }
-
-    size_t deleteSize = 0;
-    if (deleteRecordValues.size() > Constant::MAX_TOTAL_RECORD) {
-        deleteSize = deleteRecordValues.size() - Constant::MAX_TOTAL_RECORD;
-        for (size_t i = 0; i < deleteSize; ++i) {
-            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
+    int64_t total = countValue.GetInt64(Constant::COUNT_CMD);
+    if (total > Constant::MAX_TOTAL_RECORD) {
+        uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
+        if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {
+            return Constant::FAILURE;
         }
     }
+    GenericValues andConditionValues;
     int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
-    for (size_t i = deleteSize; i < deleteRecordValues.size(); ++i) {
-        if (deleteRecordValues[i].GetInt64(FIELD_TIMESTAMP) < deleteTimestamp) {
-            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
-        }
+    andConditionValues.Put(FIELD_TIMESTAMP_END, deleteTimestamp);
+    if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
+        return Constant::FAILURE;
     }
     return Constant::SUCCESS;
 }

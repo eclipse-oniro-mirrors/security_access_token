@@ -18,6 +18,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const std::string Constant::COUNT_CMD = "COUNT";
 const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.ANSWER_CALL", Constant::OP_ANSWER_CALL),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CALENDAR", Constant::OP_READ_CALENDAR),
