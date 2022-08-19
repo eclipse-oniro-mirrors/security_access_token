@@ -66,7 +66,7 @@ private:
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
     std::vector<std::shared_ptr<PermissionUsedRecordNode>> persistPendingBufferQueue_;
     int64_t nextPersistTimestamp_ = 0L;
-    const static int32_t INTERVAL = 60;
+    const static int32_t INTERVAL = 60 * 15;
     const static int32_t MAX_PERSIST_SIZE = 100;
     int32_t persistIsRunning_ = 0;
     OHOS::Utils::RWLock cacheLock_;
