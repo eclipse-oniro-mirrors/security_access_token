@@ -2146,6 +2146,34 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken009, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
 }
 
+/**
+ * @tc.name: UpdateHapToken010
+ * @tc.desc: update api version.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, UpdateHapToken010, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
+
+    uint32_t apiVersion = DEFAULT_API_VERSION - 1;
+    int ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
+    
+    HapTokenInfo hapTokenInfoRes;
+    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
+    ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
+
+    apiVersion = DEFAULT_API_VERSION + 1;
+    ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
+    
+    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
+    ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
+}
+
 static void *ThreadTestFunc01(void *args)
 {
     ATokenTypeEnum type;
