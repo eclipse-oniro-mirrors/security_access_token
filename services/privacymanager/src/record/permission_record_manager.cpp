@@ -106,16 +106,13 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
     }
 
     if (!AddRecord(tokenId, permissionName, successCount, failCount)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Add record failed");
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Add record successful");
     return Constant::SUCCESS;
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}d, deviceID = %{public}s", tokenId, deviceID.c_str());
     if (tokenId == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is 0");
         return;
@@ -193,14 +190,13 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     
     std::set<AccessTokenID> tokenIdList;
     if (request.tokenId == 0) {
-        GetLocalRecordTokenIdList(tokenIdList); 
+        GetLocalRecordTokenIdList(tokenIdList);
     } else {
         tokenIdList.emplace(request.tokenId);
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetLocalRecordTokenIdList.size = %{public}zu", tokenIdList.size());
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d", tokenId);
         andConditionValues.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
         std::vector<GenericValues> findRecordsValues;
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
@@ -311,14 +307,12 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
     if (!PermissionRecordRepository::GetInstance().CountRecordValues(countValue)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeletePermissionRecord failed");
         return Constant::FAILURE;
     }
     int64_t total = countValue.GetInt64(Constant::COUNT_CMD);
     if (total > Constant::MAX_TOTAL_RECORD) {
-        unsigned excessiveSize = total - Constant::MAX_TOTAL_RECORD;
+        uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
         if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteExcessiveSizeRecordValues failed");
             return Constant::FAILURE;
         }
     }
@@ -326,7 +320,6 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
     andConditionValues.Put(FIELD_TIMESTAMP_END, deleteTimestamp);
     if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteExpireRecordsValues failed");
         return Constant::FAILURE;
     }
     return Constant::SUCCESS;

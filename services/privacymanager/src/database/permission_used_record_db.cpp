@@ -207,7 +207,6 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
         }
         int32_t ret = deleteExpireStatement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteExpireRecords failed");
             return FAILURE;
         }
     }
@@ -220,7 +219,6 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, unsigned e
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);
     auto deleteExcessiveStatement = Prepare(deleteExcessiveSql);
     if (deleteExcessiveStatement.Step() != Statement::State::DONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteExcessiveRecords failed");
         return FAILURE;
     }
     return SUCCESS;
@@ -363,7 +361,7 @@ std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataT
 }
 
 std::string PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type,
-    unsigned excessiveSize) const
+    uint32_t excessiveSize) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {

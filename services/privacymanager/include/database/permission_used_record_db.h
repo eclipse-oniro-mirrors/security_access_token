@@ -72,7 +72,7 @@ private:
     std::string CreateCountPrepareSqlCmd(DataType type) const;
     std::string CreateDeleteExpireRecordsPrepareSqlCmd(DataType type,
         const std::vector<std::string>& andColumns) const;
-    std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type, unsigned excessiveSize) const;
+    std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type, uint32_t excessiveSize) const;
     std::string CreateGetDistinctValue(DataType type, const std::string conditionColumns) const;
 
 private:

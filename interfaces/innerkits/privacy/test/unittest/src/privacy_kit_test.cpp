@@ -150,52 +150,44 @@ void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& requ
     ASSERT_EQ(totalFailCount, failCount);
 }
 
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-namespace {
-    void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
-        std::vector<AccessTokenID>& g_TokenId_List, int32_t number)
-    {
-        SetSelfTokenID(g_selfTokenId);
-        for (int32_t i = 0; i < number; i++) {
-            HapInfoParams g_InfoParmsTmp = {
-                .userID = i,
-                .bundleName = "ohos.privacy_test.bundle" + std::to_string(i),
-                .instIndex = i,
-                .appIDDesc = "privacy_test.bundle" + std::to_string(i)
-            };
-            g_InfoParms_List.push_back(g_InfoParmsTmp);
-            HapPolicyParams g_PolicyPramsTmp = {
-                .apl = APL_NORMAL,
-                .domain = "test.domain." + std::to_string(i)
-            };
-            AccessTokenKit::AllocHapToken(g_InfoParmsTmp, g_PolicyPramsTmp);
-            AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParmsTmp.userID,
-                                                                        g_InfoParmsTmp.bundleName,
-                                                                        g_InfoParmsTmp.instIndex);
-            g_TokenId_List.push_back(g_TokenId_Tmp);
-        }
-        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-        SetSelfTokenID(tokenId);
+static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
+    std::vector<AccessTokenID>& g_TokenId_List, int32_t number)
+{
+    SetSelfTokenID(g_selfTokenId);
+    for (int32_t i = 0; i < number; i++) {
+        HapInfoParams g_InfoParmsTmp = {
+            .userID = i,
+            .bundleName = "ohos.privacy_test.bundle" + std::to_string(i),
+            .instIndex = i,
+            .appIDDesc = "privacy_test.bundle" + std::to_string(i)
+        };
+        g_InfoParms_List.push_back(g_InfoParmsTmp);
+        HapPolicyParams g_PolicyPramsTmp = {
+            .apl = APL_NORMAL,
+            .domain = "test.domain." + std::to_string(i)
+        };
+        AccessTokenKit::AllocHapToken(g_InfoParmsTmp, g_PolicyPramsTmp);
+        AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParmsTmp.userID,
+                                                                    g_InfoParmsTmp.bundleName,
+                                                                    g_InfoParmsTmp.instIndex);
+        g_TokenId_List.push_back(g_TokenId_Tmp);
     }
-
-    void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
-    {
-        SetSelfTokenID(g_selfTokenId);
-        for (size_t i = 0; i < g_InfoParms_List.size(); i++) {
-            AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParms_List[i].userID,
-                                                                        g_InfoParms_List[i].bundleName,
-                                                                        g_InfoParms_List[i].instIndex);
-            AccessTokenKit::DeleteToken(g_TokenId_Tmp);
-        }
-        AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-        SetSelfTokenID(tokenId);
-    }
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
+    SetSelfTokenID(tokenId);
 }
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+
+static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
+{
+    SetSelfTokenID(g_selfTokenId);
+    for (size_t i = 0; i < g_InfoParms_List.size(); i++) {
+        AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParms_List[i].userID,
+                                                                    g_InfoParms_List[i].bundleName,
+                                                                    g_InfoParms_List[i].instIndex);
+        AccessTokenKit::DeleteToken(g_TokenId_Tmp);
+    }
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
+    SetSelfTokenID(tokenId);
+}
 
 /**
  * @tc.name: AddPermissionUsedRecord001

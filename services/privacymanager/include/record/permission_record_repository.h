@@ -36,7 +36,7 @@ public:
     bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
     int32_t CountRecordValues(GenericValues& resultValues);
     bool DeleteExpireRecordsValues(const GenericValues& andConditions);
-    bool DeleteExcessiveSizeRecordValues(int32_t excessiveSize);
+    bool DeleteExcessiveSizeRecordValues(uint32_t excessiveSize);
 };
 } // namespace AccessToken
 } // namespace Security

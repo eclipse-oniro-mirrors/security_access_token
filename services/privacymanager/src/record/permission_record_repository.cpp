@@ -103,7 +103,7 @@ bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& 
     return true;
 }
 
-bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(int32_t excessiveSize)
+bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excessiveSize)
 {
     if (PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
         excessiveSize) != PermissionUsedRecordDb::SUCCESS) {

@@ -181,7 +181,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     return true;
 }
 
-int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues &record)
+int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
 {
     AccessTokenID tokenID = record.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
@@ -226,7 +226,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues &record)
     return Constant::SUCCESS;
 }
 
-void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const GenericValues &record,
+void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const GenericValues& record,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd)
 {
@@ -254,7 +254,7 @@ void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const
 }
 
 void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permissionList,
-    const GenericValues &andConditionValues, const GenericValues& orConditionValues,
+    const GenericValues& andConditionValues, const GenericValues& orConditionValues,
     std::vector<GenericValues>& findRecordsValues)
 {
     std::set<int32_t> opCodeList;
@@ -341,7 +341,7 @@ void PermissionUsedRecordCache::TransferToOpcode(std::set<int32_t>& opCodeList,
 }
 
 bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenID, const std::set<int32_t>& opCodeList,
-    const GenericValues &andConditionValues, const PermissionRecord &record)
+    const GenericValues& andConditionValues, const PermissionRecord& record)
 {
     // compare tokenId
     if (record.tokenId != (int32_t)tokenID) {
