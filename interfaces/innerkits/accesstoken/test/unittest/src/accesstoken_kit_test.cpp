@@ -139,7 +139,7 @@ void AccessTokenKitTest::SetUp()
         .bundleName = TEST_BUNDLE_NAME,
         .instIndex = 0,
         .appIDDesc = "appIDDesc",
-    .apiVersion = DEFAULT_API_VERSION
+        .apiVersion = DEFAULT_API_VERSION
     };
 
     HapPolicyParams policy = {
