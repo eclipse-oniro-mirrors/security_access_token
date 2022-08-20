@@ -25,6 +25,7 @@ bool HapTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint8(this->hapTokenInfoParams.ver));
     RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.userID));
     RETURN_IF_FALSE(out.WriteString(this->hapTokenInfoParams.bundleName));
+    RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.apiVersion));
     RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.instIndex));
     RETURN_IF_FALSE(out.WriteInt32(this->hapTokenInfoParams.dlpType));
     RETURN_IF_FALSE(out.WriteString(this->hapTokenInfoParams.appID));
@@ -46,6 +47,7 @@ HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
     hapTokenInfoParcel->hapTokenInfoParams.ver = ver;
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.userID), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.bundleName = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.apiVersion), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.instIndex), hapTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapTokenInfoParcel->hapTokenInfoParams.dlpType), hapTokenInfoParcel);
     hapTokenInfoParcel->hapTokenInfoParams.appID = in.ReadString();

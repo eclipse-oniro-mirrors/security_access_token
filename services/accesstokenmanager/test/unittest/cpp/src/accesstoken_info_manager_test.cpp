@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManagerTest"
 };
 
+static constexpr int32_t DEFAULT_API_VERSION = 8;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",
@@ -308,7 +309,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
     HapPolicyParams policy = g_infoManagerTestPolicyPrams;
     policy.apl = APL_SYSTEM_BASIC;
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx.tokenIdExStruct.tokenID,
-    std::string("updateAppId"), policy);
+        std::string("updateAppId"), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "update the hap token";
 

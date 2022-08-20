@@ -739,8 +739,8 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int AccessTokenManagerProxy::UpdateHapToken(AccessTokenID tokenID,
-                                            const std::string& appIDDesc, const HapPolicyParcel& policyParcel)
+int AccessTokenManagerProxy::UpdateHapToken(
+    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -748,6 +748,9 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenID tokenID,
         return RET_FAILED;
     }
     if (!data.WriteString(appIDDesc)) {
+        return RET_FAILED;
+    }
+    if (!data.WriteInt32(apiVersion)) {
         return RET_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {

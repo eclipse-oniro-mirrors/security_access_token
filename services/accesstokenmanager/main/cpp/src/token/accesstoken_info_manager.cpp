@@ -545,7 +545,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
 }
 
 int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
-    const std::string& appIDDesc, const HapPolicyParams& policy)
+    const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     if (!DataValidator::IsAppIDDescValid(appIDDesc)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u parm format error!", tokenID);
@@ -564,7 +564,7 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(appIDDesc, policy);
+        infoPtr->Update(appIDDesc, apiVersion, policy);
         ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}u bundle name %{public}s user %{public}d inst %{public}d update ok!",
             tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());

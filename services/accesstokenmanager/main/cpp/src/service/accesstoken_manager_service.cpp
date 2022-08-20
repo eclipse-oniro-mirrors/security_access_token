@@ -271,12 +271,12 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int AccessTokenManagerService::UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc,
-    const HapPolicyParcel& policyParcel)
+int AccessTokenManagerService::UpdateHapToken(
+    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
-    return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenID, appIDDesc,
+    return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenID, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
 }
 

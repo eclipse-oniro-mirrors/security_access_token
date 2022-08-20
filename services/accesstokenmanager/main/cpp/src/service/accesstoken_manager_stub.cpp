@@ -284,13 +284,14 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string appIDDesc = data.ReadString();
+    int32_t apiVersion = data.ReadInt32();
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (policyParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "policyParcel read faild");
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    int32_t result = this->UpdateHapToken(tokenID, appIDDesc, *policyParcel);
+    int32_t result = this->UpdateHapToken(tokenID, appIDDesc, apiVersion, *policyParcel);
     reply.WriteInt32(result);
 }
 

@@ -57,7 +57,7 @@ public:
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) override;
     int DeleteToken(AccessTokenID tokenID) override;
-    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc,
+    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion,
         const HapPolicyParcel& policyPar) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
