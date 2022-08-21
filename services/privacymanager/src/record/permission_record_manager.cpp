@@ -53,14 +53,10 @@ PermissionRecordManager::~PermissionRecordManager()
     hasInited_ = false;
 }
 
-bool PermissionRecordManager::AddRecord(const PermissionRecord& record)
+int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    if (PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record))
-        == Constant::SUCCESS) {
-        return true;
-    }
-    return false;
+    return PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record);
 }
 
 bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
@@ -100,10 +96,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
         return Constant::FAILURE;
     }
 
-    if (!AddRecord(record)) {
-        return Constant::FAILURE;
-    }
-    return Constant::SUCCESS;
+    return AddRecord(record);
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)

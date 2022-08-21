@@ -58,7 +58,7 @@ private:
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
     bool GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
-    bool AddRecord(const PermissionRecord& record);
+    int32_t AddRecord(const PermissionRecord& record);
     bool GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
