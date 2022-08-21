@@ -51,6 +51,27 @@ static HapInfoParams g_InfoParmsB = {
     .appIDDesc = "privacy_test.bundleB"
 };
 
+static PermissionStateFull g_infoManagerTestStateA = {
+    .permissionName = "ohos.permission.CAMERA",
+    .grantFlags = {1},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .isGeneral = true,
+    .resDeviceID = {"local"}
+};
+
+static PermissionStateFull g_infoManagerTestStateB = {
+    .permissionName = "ohos.permission.MICROPHONE",
+    .grantFlags = {1},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .isGeneral = true,
+    .resDeviceID = {"local"}
+};
+static HapPolicyParams g_PolicyPramsE = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain",
+    .permList = {},
+    .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB}
+};
 static HapInfoParams g_InfoParmsE = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundleE",
@@ -61,6 +82,7 @@ static HapInfoParams g_InfoParmsE = {
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_TokenId_A = 0;
 static AccessTokenID g_TokenId_B = 0;
+static AccessTokenID g_TokenId_E = 0;
 
 void PrivacyKitTest::SetUpTestCase()
 {
@@ -73,9 +95,9 @@ void PrivacyKitTest::TearDownTestCase()
 
 void PrivacyKitTest::SetUp()
 {
-    AccessTokenID tokenId;
     AccessTokenKit::AllocHapToken(g_InfoParmsA, g_PolicyPramsA);
     AccessTokenKit::AllocHapToken(g_InfoParmsB, g_PolicyPramsB);
+    AccessTokenKit::AllocHapToken(g_InfoParmsE, g_PolicyPramsE);
 
     g_TokenId_A = AccessTokenKit::GetHapTokenID(g_InfoParmsA.userID,
                                                 g_InfoParmsA.bundleName,
@@ -83,12 +105,11 @@ void PrivacyKitTest::SetUp()
     g_TokenId_B = AccessTokenKit::GetHapTokenID(g_InfoParmsB.userID,
                                                 g_InfoParmsB.bundleName,
                                                 g_InfoParmsB.instIndex);
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
-                                            g_InfoParmsE.bundleName,
-                                            g_InfoParmsE.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    g_TokenId_E = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
+                                                g_InfoParmsE.bundleName,
+                                                g_InfoParmsE.instIndex);
 
-    tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
     SetSelfTokenID(tokenId);
 }
 
@@ -270,7 +291,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     delete[] dcaps;
     delete[] acls;
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(
+    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(
         tokenId, "ohos.permission.READ_CONTACTS", 1, 0));
 
     PermissionUsedRequest request;
@@ -370,6 +391,51 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(2, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result, 1, 5, 0);
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord007
+ * @tc.desc: AddPermissionUsedRecord user_grant permission.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
+{
+    std::vector<HapInfoParams> g_InfoParms_List;
+    std::vector<AccessTokenID> g_TokenId_List;
+    SetTokenID(g_InfoParms_List, g_TokenId_List, 100);
+    std::vector<std::string> addPermissionList = {
+        "ohos.permission.ANSWER_CALL",
+        "ohos.permission.READ_CALENDAR",
+    };
+    for (int32_t i = 0; i < 200; i++) {
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_List[i % 100],
+            addPermissionList[i % 2], 1, 0));
+
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList;
+        BuildQueryRequest(g_TokenId_List[i % 100], GetLocalDeviceUdid(),
+            g_InfoParms_List[i % 100].bundleName, permissionList, request);
+        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    }
+    sleep(70);
+    for (int32_t i = 0; i < 100; i++) {
+        PermissionUsedRequest request;
+        PermissionUsedResult result;
+        std::vector<std::string> permissionList;
+        BuildQueryRequest(g_TokenId_List[i], GetLocalDeviceUdid(),
+            g_InfoParms_List[i].bundleName, permissionList, request);
+        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+        
+        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+        ASSERT_EQ(1, result.bundleRecords.size());
+        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
+        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
+        CheckPermissionUsedResult(request, result, 1, 2, 0);
+    }
+    DeleteTokenID(g_InfoParms_List);
 }
 
 /**
@@ -649,10 +715,10 @@ public:
     {
         type_ = result.type;
         GTEST_LOG_(INFO) << "CbCustomizeTest1 ActiveChangeResponse";
-        GTEST_LOG_(INFO) << "tokenid " << result.tokenID;
-        GTEST_LOG_(INFO) << "permissionName " << result.permissionName;
-        GTEST_LOG_(INFO) << "deviceId " << result.deviceId;
-        GTEST_LOG_(INFO) << "type " << result.type;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 tokenid " << result.tokenID;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 permissionName " << result.permissionName;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 deviceId " << result.deviceId;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 type " << result.type;
     }
 
     ActiveChangeType type_ = PERM_INACTIVE;
@@ -673,10 +739,10 @@ public:
     {
         type_ = result.type;
         GTEST_LOG_(INFO) << "CbCustomizeTest2 ActiveChangeResponse";
-        GTEST_LOG_(INFO) << "tokenid " << result.tokenID;
-        GTEST_LOG_(INFO) << "permissionName " << result.permissionName;
-        GTEST_LOG_(INFO) << "deviceId " << result.deviceId;
-        GTEST_LOG_(INFO) << "type " << result.type;
+        GTEST_LOG_(INFO) << "CbCustomizeTest2 tokenid " << result.tokenID;
+        GTEST_LOG_(INFO) << "CbCustomizeTest2 permissionName " << result.permissionName;
+        GTEST_LOG_(INFO) << "CbCustomizeTest2 deviceId " << result.deviceId;
+        GTEST_LOG_(INFO) << "CbCustomizeTest2 type " << result.type;
     }
 
     ActiveChangeType type_;
@@ -697,53 +763,29 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 
     int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
 
-    static PermissionStateFull infoManagerTestStateA = {
-        .permissionName = "ohos.permission.CAMERA",
-        .grantFlags = {1},
-        .grantStatus = {PERMISSION_GRANTED},
-        .isGeneral = true,
-        .resDeviceID = {"local"}
-    };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-        .permList = {},
-        .permStateList = {infoManagerTestStateA}
-    };
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
 
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParmsE, infoManagerTestPolicyPrams);
-
-    tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(0, tokenID);
-
-    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
-    ASSERT_EQ(ret, TOKEN_HAP);
-
-    res = PrivacyKit::StartUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
 
-    res = PrivacyKit::StopUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
+
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 
     res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(RET_NO_ERROR, res);
     callbackPtr->type_ = PERM_INACTIVE;
 
-    res = PrivacyKit::StartUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 
-    res = PrivacyKit::StopUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
-
-    res = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, res);
 }
 
 /**
@@ -759,105 +801,41 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     auto callbackPtr1 = std::make_shared<CbCustomizeTest1>(permList1);
     callbackPtr1->type_ = PERM_INACTIVE;
 
-    std::vector<std::string> permList2 = {"ohos.permission.GET_BUNDLE_INFO"};
+    std::vector<std::string> permList2 = {"ohos.permission.MICROPHONE"};
     auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(permList2);
     callbackPtr2->type_ = PERM_INACTIVE;
 
     int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1);
     res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2);
 
-    static PermissionStateFull infoManagerTestStateA = {
-        .permissionName = "ohos.permission.CAMERA",
-        .grantFlags = {1},
-        .grantStatus = {PERMISSION_GRANTED},
-        .isGeneral = true,
-        .resDeviceID = {"local"}
-    };
-    static PermissionStateFull infoManagerTestStateB = {
-        .permissionName = "ohos.permission.GET_BUNDLE_INFO",
-        .grantFlags = {1},
-        .grantStatus = {PERMISSION_GRANTED},
-        .isGeneral = true,
-        .resDeviceID = {"local"}
-    };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-        .permList = {},
-        .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
-    };
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
 
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParmsE, infoManagerTestPolicyPrams);
-
-    tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(0, tokenID);
-
-    res = PrivacyKit::StartUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr1->type_);
     ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
 
-    res = PrivacyKit::StopUsingPermission(tokenID, "ohos.permission.CAMERA");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
+
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
 
-    res = PrivacyKit::StartUsingPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
+    ASSERT_EQ(RET_NO_ERROR, res);
+
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr2->type_);
 
-    res = PrivacyKit::StopUsingPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO");
-    ASSERT_EQ(RET_SUCCESS, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
+    ASSERT_EQ(RET_NO_ERROR, res);
+
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
 
-    res = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, res);
-}
-
-/**
- * @tc.name: AddPermissionUsedRecord007
- * @tc.desc: AddPermissionUsedRecord user_grant permission.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
-{
-    std::vector<HapInfoParams> g_InfoParms_List;
-    std::vector<AccessTokenID> g_TokenId_List;
-    SetTokenID(g_InfoParms_List, g_TokenId_List, 100);
-    std::vector<std::string> addPermissionList = {
-        "ohos.permission.ANSWER_CALL",
-        "ohos.permission.READ_CALENDAR",
-    };
-    for (int32_t i = 0; i < 200; i++) {
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_List[i % 100],
-            addPermissionList[i % 2], 1, 0));
-
-        PermissionUsedRequest request;
-        PermissionUsedResult result;
-        std::vector<std::string> permissionList;
-        BuildQueryRequest(g_TokenId_List[i % 100], GetLocalDeviceUdid(),
-            g_InfoParms_List[i % 100].bundleName, permissionList, request);
-        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    }
-    sleep(70);
-    for (int32_t i = 0; i < 100; i++) {
-        PermissionUsedRequest request;
-        PermissionUsedResult result;
-        std::vector<std::string> permissionList;
-        BuildQueryRequest(g_TokenId_List[i], GetLocalDeviceUdid(),
-            g_InfoParms_List[i].bundleName, permissionList, request);
-        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-        
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-        ASSERT_EQ(1, result.bundleRecords.size());
-        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
-        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
-        CheckPermissionUsedResult(request, result, 1, 2, 0);
-    }
-    DeleteTokenID(g_InfoParms_List);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr2);
+    ASSERT_EQ(RET_NO_ERROR, res);
 }

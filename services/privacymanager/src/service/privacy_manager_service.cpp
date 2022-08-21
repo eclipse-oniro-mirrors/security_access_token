@@ -70,25 +70,25 @@ void PrivacyManagerService::OnStop()
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(
-    AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
+    AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
-        tokenID, permissionName, successCount, failCount);
+        tokenId, permissionName, successCount, failCount);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenID, permissionName);
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName);
 }
 
-int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenID, permissionName);
+    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName);
 }
 
-int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
     return Constant::SUCCESS;
 }
 
@@ -107,9 +107,9 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
-std::string PrivacyManagerService::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
+std::string PrivacyManagerService::DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName)
 {
-    return PermissionRecordManager::GetInstance().DumpRecordInfo(tokenID, permissionName);
+    return PermissionRecordManager::GetInstance().DumpRecordInfo(tokenId, permissionName);
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(

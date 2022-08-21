@@ -53,26 +53,23 @@ PermissionRecordManager::~PermissionRecordManager()
     hasInited_ = false;
 }
 
-bool PermissionRecordManager::AddRecord(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
+int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    PermissionRecord record;
-    if (!GetPermissionsRecord(tokenId, permissionName, successCount, failCount, record)) {
-        return false;
-    }
-    if (PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record) == Constant::SUCCESS) {
-        return true;
-    }
-    return false;
+    return PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record));
 }
 
 bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        return false;
+    }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to TransferPermissionToOpcode");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
         return false;
     }
     if (successCount == 0 && failCount == 0) {
@@ -83,7 +80,7 @@ bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const 
     record.accessCount = successCount;
     record.rejectCount = failCount;
     record.opCode = opCode;
-    record.status = 0; // get isForeground by uid  lockscreen
+    record.status = 0;
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     return true;
@@ -94,21 +91,12 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
 {
     ExecuteDeletePermissionRecordTask();
 
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid token type");
-        return Constant::SUCCESS;
-    }
-
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId%{public}d", tokenId);
+    PermissionRecord record;
+    if (!GetPermissionsRecord(tokenId, permissionName, successCount, failCount, record)) {
         return Constant::FAILURE;
     }
 
-    if (!AddRecord(tokenId, permissionName, successCount, failCount)) {
-        return Constant::FAILURE;
-    }
-    return Constant::SUCCESS;
+    return AddRecord(record);
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)

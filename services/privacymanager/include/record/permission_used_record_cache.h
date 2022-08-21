@@ -52,7 +52,7 @@ public:
     void GetRecordsFromPersistPendingBufferQueue(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues, const std::set<int32_t>& opCodeList);
-    bool RecordCompare(const AccessTokenID tokenID, const std::set<int32_t>& opCodeList,
+    bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
         const GenericValues &andConditionValues, const PermissionRecord &record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void TransferToOpcode(std::set<int32_t>& opCodeList,
