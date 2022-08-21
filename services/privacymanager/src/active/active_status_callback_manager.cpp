@@ -112,7 +112,7 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
 }
 
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(
-    AccessTokenID tokenID, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
+    AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
 
@@ -122,7 +122,7 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, permName)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "tokenID %{public}u, permName %{public}s", tokenID, permName.c_str());
+                ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
                 continue;
             }
             auto callback = iface_cast<IPermActiveStatusCallback>((*it).callbackObject_);
@@ -130,7 +130,7 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
                 ActiveChangeResponse resInfo;
                 resInfo.type = changeType;
                 resInfo.permissionName = permName;
-                resInfo.tokenID = tokenID;
+                resInfo.tokenID = tokenId;
                 resInfo.deviceId = deviceId;
                 ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", changeType);
                 callback->ActiveStatusChangeCallback(resInfo);

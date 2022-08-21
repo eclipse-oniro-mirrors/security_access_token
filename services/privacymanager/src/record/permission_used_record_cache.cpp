@@ -183,7 +183,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
 
 int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
 {
-    AccessTokenID tokenID = record.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
@@ -194,7 +194,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
         persistPendingBufferHead = recordBufferHead_;
         while (curFindDeletePos != nullptr) {
             auto next = curFindDeletePos->next;
-            if (curFindDeletePos->record.tokenId == tokenID) {
+            if (curFindDeletePos->record.tokenId == tokenId) {
                 if (curRecordBufferPos_ == curFindDeletePos) {
                     curRecordBufferPos_ = curFindDeletePos->pre.lock();
                 }
@@ -230,7 +230,7 @@ void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd)
 {
-    AccessTokenID tokenID = record.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     {
         std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock_);
@@ -239,7 +239,7 @@ void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const
                 curFindDeletePos = persistHead->next;
                 while (curFindDeletePos != nullptr) {
                     auto next = curFindDeletePos->next;
-                    if (curFindDeletePos->record.tokenId == tokenID) {
+                    if (curFindDeletePos->record.tokenId == tokenId) {
                         DeleteRecordNode(curFindDeletePos);
                     }
                     curFindDeletePos = next;
@@ -262,7 +262,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
     int32_t countPersistPendingNode = 0;
-    AccessTokenID tokenID = andConditionValues.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
     TransferToOpcode(opCodeList, permissionList);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock_);
@@ -270,7 +270,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
         persistPendingBufferHead = recordBufferHead_;
         while (curFindPos != nullptr) {
             auto next = curFindPos->next;
-            if (RecordCompare(tokenID, opCodeList, andConditionValues, curFindPos->record)) {
+            if (RecordCompare(tokenId, opCodeList, andConditionValues, curFindPos->record)) {
                 GenericValues recordValues;
                 PermissionRecord::TranslationIntoGenericValues(curFindPos->record, recordValues);
                 findRecordsValues.emplace_back(recordValues);
@@ -307,7 +307,7 @@ void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
     const GenericValues& orConditionValues, std::vector<GenericValues>& findRecordsValues,
     const std::set<int32_t>& opCodeList)
 {
-    AccessTokenID tokenID = andConditionValues.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock_);
     if (!persistPendingBufferQueue_.empty()) {
@@ -315,7 +315,7 @@ void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
             curFindPos = persistHead->next;
             while (curFindPos != nullptr) {
                 auto next = curFindPos->next;
-                if (RecordCompare(tokenID, opCodeList, andConditionValues, curFindPos->record)) {
+                if (RecordCompare(tokenId, opCodeList, andConditionValues, curFindPos->record)) {
                     GenericValues recordValues;
                     PermissionRecord::TranslationIntoGenericValues(curFindPos->record, recordValues);
                     findRecordsValues.emplace_back(recordValues);
@@ -324,7 +324,7 @@ void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
             }
         }
     }
-    if (tokenID != INVALID_TOKENID && !PermissionRecordRepository::GetInstance().FindRecordValues(
+    if (tokenId != INVALID_TOKENID && !PermissionRecordRepository::GetInstance().FindRecordValues(
         andConditionValues, orConditionValues, findRecordsValues)) { // find records from database
         ACCESSTOKEN_LOG_ERROR(LABEL, "find records from database failed");
     }
@@ -340,11 +340,11 @@ void PermissionUsedRecordCache::TransferToOpcode(std::set<int32_t>& opCodeList,
     }
 }
 
-bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenID, const std::set<int32_t>& opCodeList,
+bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
     const GenericValues& andConditionValues, const PermissionRecord& record)
 {
     // compare tokenId
-    if (record.tokenId != (int32_t)tokenID) {
+    if (record.tokenId != (int32_t)tokenId) {
         return false;
     }
     // compare opCode

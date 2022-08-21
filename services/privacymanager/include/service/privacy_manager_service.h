@@ -37,15 +37,15 @@ public:
     void OnStop() override;
 
     int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) override;
-    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
-    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
-    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) override;
+        AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount) override;
+    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
+    int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID) override;
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) override;
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback) override;
-    std::string DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName) override;
+    std::string DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName) override;
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;

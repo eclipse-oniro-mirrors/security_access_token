@@ -49,7 +49,7 @@ public:
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
     void ExecuteCallbackAsync(
-        AccessTokenID tokenID, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType);
+        AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType);
 
 private:
     std::mutex mutex_;
