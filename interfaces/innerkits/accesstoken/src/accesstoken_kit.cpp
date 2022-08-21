@@ -386,10 +386,10 @@ AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID
 }
 #endif
 
-void AccessTokenKit::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenKit::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AccessTokenManagerClient::GetInstance().DumpTokenInfo(dumpInfo);
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called,tokenID: %{public}d", __func__, tokenID);
+    AccessTokenManagerClient::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
 } // namespace AccessToken
 } // namespace Security

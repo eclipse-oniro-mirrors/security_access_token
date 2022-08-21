@@ -502,7 +502,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
 }
 #endif
 
-void AccessTokenManagerClient::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenManagerClient::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
@@ -510,7 +510,7 @@ void AccessTokenManagerClient::DumpTokenInfo(std::string& dumpInfo)
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: proxy is null", __func__);
         return;
     }
-    proxy->DumpTokenInfo(dumpInfo);
+    proxy->DumpTokenInfo(tokenID, dumpInfo);
 }
 
 void AccessTokenManagerClient::InitProxy()

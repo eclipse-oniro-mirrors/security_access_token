@@ -79,7 +79,7 @@ public:
     void DestroyDeviceListenner();
 #endif
 
-    void DumpTokenInfo(std::string& dumpInfo) override;
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:
     bool Initialize();

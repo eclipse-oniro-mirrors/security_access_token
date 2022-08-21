@@ -367,11 +367,11 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
 }
 #endif
 
-void AccessTokenManagerService::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
 
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(dumpInfo);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerService::CreateDeviceListenner()

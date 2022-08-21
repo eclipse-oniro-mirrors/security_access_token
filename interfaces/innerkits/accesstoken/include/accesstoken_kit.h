@@ -74,7 +74,7 @@ public:
     static AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
-    static void DumpTokenInfo(std::string& dumpInfo);
+    static void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
 };
 } // namespace AccessToken
 } // namespace Security

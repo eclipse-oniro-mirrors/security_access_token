@@ -1006,11 +1006,14 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
 }
 #endif
 
-void AccessTokenManagerProxy::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
+    if (!data.WriteUint32(tokenID)) {
+        return;
+    }
     MessageParcel reply;
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();

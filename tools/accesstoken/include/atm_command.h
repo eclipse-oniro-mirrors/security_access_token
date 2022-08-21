@@ -21,18 +21,34 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+typedef enum TypeOptType {
+    DEFAULT = 0,
+    DUMP_TOKEN,
+    DUMP_RECORD,
+    PERM_GRANT,
+    PERM_REVOKE,
+} OptType;
+
 const std::string TOOLS_NAME = "atm";
 const std::string HELP_MSG = "usage: atm <command> <option>\n"
                              "These are common atm commands list:\n"
                              "  help    list available commands\n"
-                             "  dump    dump token info\n";
+                             "  dump    dumpsys command\n"
+                             "  perm    grant/cancel permission\n";
 
 const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
+    "  -h, --help                                                       list available options\n"
+    "  -t, --token-info [-i <token-id>]                                 list token info in system\n"
+    "  -r, --record-info [-i <token-id>] [-p <permission-name>]         list used records in system\n";
+
+const std::string HELP_MSG_PERM =
+    "usage: atm perm <option>.\n"
+    "options list:\n"
     "  -h, --help                                       list available options\n"
-    "  -t, --token-info                                 list all token info in system\n"
-    "  -r [-i <token-id>] [-p <permission-name>]        list used records in system\n";
+    "  -g, --grant -i <token-id> -p <permission-name>   grant a permission by a specified token-id\n"
+    "  -c, --cancel -i <token-id> -p <permission-name>  cancel a permission by a specified token-id\n";
 
 class AtmCommand : public OHOS::AAFwk::ShellCommand {
 public:
@@ -47,11 +63,16 @@ private:
 
     ErrCode RunAsHelpCommand();
     ErrCode RunAsDumpCommand();
+    ErrCode RunAsPermCommand();
 
-    ErrCode RunAsDumpCommandError(void);
-    ErrCode RunAsDumpCommandMissingOptionArgument(void);
-    ErrCode RunAsDumpCommandExistentOptionArgument(const int &option,
-        bool &isDumpTokenInfo, bool &isDumpRecordInfo, uint32_t& tokenId, std::string& permissionName);
+    ErrCode RunAsCommandError(void);
+    ErrCode RunAsCommandExistentOptionArgument(const int& option,
+        OptType& type, uint32_t& tokenId, std::string& permissionName);
+    ErrCode RunCommandByOperationType(const OptType& type,
+        uint32_t& tokenId, std::string& permissionName);
+
+    ErrCode RunAsCommandMissingOptionArgument(void);
+    ErrCode ModifyPermission(const OptType& type, uint32_t& tokenId, std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

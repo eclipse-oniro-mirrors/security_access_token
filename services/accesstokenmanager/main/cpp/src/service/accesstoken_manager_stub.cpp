@@ -484,8 +484,9 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
         reply.WriteInt32(RET_FAILED);
         return;
     }
+    AccessTokenID tokenID = data.ReadUint32();
     std::string dumpInfo = "";
-    this->DumpTokenInfo(dumpInfo);
+    this->DumpTokenInfo(tokenID, dumpInfo);
     reply.WriteString(dumpInfo);
 }
 
