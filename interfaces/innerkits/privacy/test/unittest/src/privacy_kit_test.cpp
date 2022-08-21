@@ -291,7 +291,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     delete[] dcaps;
     delete[] acls;
 
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(
+    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(
         tokenId, "ohos.permission.READ_CONTACTS", 1, 0));
 
     PermissionUsedRequest request;
