@@ -33,7 +33,7 @@ namespace AccessToken {
 class PermissionUsedRecordCache {
 public:
     static PermissionUsedRecordCache& GetInstance();
-    int32_t AddRecordToBuffer(PermissionRecord& record);
+    void AddRecordToBuffer(PermissionRecord& record);
     void MergeRecord(PermissionRecord& record, std::shared_ptr<PermissionUsedRecordNode> curFindMergePos);
     void AddToPersistQueue(const std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead);
     void ExecuteReadRecordBufferTask();
