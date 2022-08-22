@@ -949,10 +949,26 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
     });
 }
 
-void AccessTokenInfoManager::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     ACCESSTOKEN_LOG_INFO(LABEL, "get hapTokenInfo");
+    if (tokenID != 0) {
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+        if (type == TOKEN_HAP) {
+            std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
+            if (infoPtr != nullptr) {
+                infoPtr->ToString(dumpInfo);
+            }
+        } else if (type == TOKEN_NATIVE) {
+            std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
+            if (infoPtr != nullptr) {
+                infoPtr->ToString(dumpInfo);
+            }
+        } else {
+            dumpInfo.append("invalid tokenId");
+        }
+        return;
+    }
 
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {

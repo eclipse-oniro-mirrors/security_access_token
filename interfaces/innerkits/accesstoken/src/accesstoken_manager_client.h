@@ -80,7 +80,7 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
 
-    void DumpTokenInfo(std::string& dumpInfo);
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void OnRemoteDiedHandle();
 
 private:

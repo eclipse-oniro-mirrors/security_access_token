@@ -76,7 +76,7 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
 #endif
 
-    void DumpTokenInfo(std::string& dumpInfo) override;
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:
     static inline BrokerDelegator<AccessTokenManagerProxy> delegator_;

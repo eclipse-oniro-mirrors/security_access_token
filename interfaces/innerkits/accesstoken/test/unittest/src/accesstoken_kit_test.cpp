@@ -2455,14 +2455,43 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
 
 /**
  * @tc.name: DumpTokenInfo001
- * @tc.desc: Get dump token information
+ * @tc.desc: Get dump token information with invalid tokenID
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
 {
     std::string info;
-    AccessTokenKit::DumpTokenInfo(info);
+    AccessTokenKit::DumpTokenInfo(123, info);
+    ASSERT_EQ("invalid tokenId", info);
+}
+
+/**
+ * @tc.name: DumpTokenInfo002
+ * @tc.desc: Get dump token information
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, DumpTokenInfo002, TestSize.Level1)
+{
+    std::string info;
+    AccessTokenKit::DumpTokenInfo(0, info);
+    ASSERT_EQ(false, info.empty());
+}
+
+/**
+ * @tc.name: DumpTokenInfo003
+ * @tc.desc: Get dump token information
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, DumpTokenInfo003, TestSize.Level1)
+{
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+                                                          g_infoManagerTestInfoParms.bundleName,
+                                                          g_infoManagerTestInfoParms.instIndex);
+    std::string info;
+    AccessTokenKit::DumpTokenInfo(tokenID, info);
     ASSERT_EQ(false, info.empty());
 }
 

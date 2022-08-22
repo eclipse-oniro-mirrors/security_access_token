@@ -55,7 +55,7 @@ public:
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int UpdateHapToken(
         AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
-    void DumpTokenInfo(std::string& dumpInfo);
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
 
 #ifdef TOKEN_SYNC_ENABLE

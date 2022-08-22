@@ -81,7 +81,7 @@ public:
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
 #endif
 
-    virtual void DumpTokenInfo(std::string& tokenInfo) = 0;
+    virtual void DumpTokenInfo(AccessTokenID tokenID, std::string& tokenInfo) = 0;
 
     enum class InterfaceCode {
         VERIFY_ACCESSTOKEN = 0xff10,

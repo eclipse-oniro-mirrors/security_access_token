@@ -182,14 +182,14 @@ void AccessTokenInfoManagerTest::TearDown()
 HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
 {
     AccessTokenInfoManager::GetInstance().Init();
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(dumpInfo);
-    GTEST_LOG_(INFO) << "dump all:" << dumpInfo.c_str();
-
-    // delete test token
     AccessTokenID getTokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
 
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(getTokenId, dumpInfo);
+    GTEST_LOG_(INFO) << "dump all:" << dumpInfo.c_str();
+
+    // delete test token
     if (getTokenId != 0) {
         int ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(getTokenId);
         ASSERT_EQ(RET_SUCCESS, ret);
