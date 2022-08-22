@@ -16,20 +16,24 @@
 #ifndef  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 #define  INTERFACES_PRIVACY_KITS_NAPI_COMMON_H
 
+#include "access_token.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const int ARGS_ONE = 1;
 const int ARGS_TWO = 2;
 const int ARGS_THREE = 3;
+const int ARGS_FOUR = 4;
 const int ARGS_FIVE = 5;
 const int ASYNC_CALL_BACK_VALUES_NUM = 2;
 const int PARAM0 = 0;
 const int PARAM1 = 1;
 const int PARAM2 = 2;
 const int PARAM3 = 3;
+const int VALUE_BUFFER_SIZE = 256;
 
 bool ParseBool(const napi_env env, const napi_value value);
 int32_t ParseInt32(const napi_env env, const napi_value value);
@@ -37,6 +41,8 @@ int64_t ParseInt64(const napi_env env, const napi_value value);
 uint32_t ParseUint32(const napi_env env, const napi_value value);
 std::string ParseString(const napi_env env, const napi_value value);
 std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value);
+bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& res);
+bool IsArray(const napi_env& env, const napi_value& value);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

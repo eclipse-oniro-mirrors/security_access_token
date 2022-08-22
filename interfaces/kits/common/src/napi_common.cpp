@@ -109,6 +109,9 @@ std::string ParseString(const napi_env env, const napi_value value)
 std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value)
 {
     std::vector<std::string> res;
+    if (!IsArray(env, value)) {
+        return res;
+    }
     uint32_t length = 0;
     napi_valuetype valuetype = napi_undefined;
 
@@ -123,6 +126,31 @@ std::vector<std::string> ParseStringArray(const napi_env env, const napi_value v
         }
     }
     return res;
+}
+
+bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& res)
+{
+    uint32_t length = 0;
+    if (!IsArray(env, value)) {
+        return false;
+    }
+    napi_get_array_length(env, value, &length);
+    napi_value valueArray;
+    for (uint32_t i = 0; i < length; i++) {
+        napi_get_element(env, value, i, &valueArray);
+        res.emplace_back(ParseUint32(env, valueArray));
+    }
+    return true;
+};
+
+bool IsArray(const napi_env& env, const napi_value& value)
+{
+    bool isArray = false;
+    napi_status ret = napi_is_array(env, value, &isArray);
+    if (ret != napi_ok) {
+        return false;
+    }
+    return isArray;
 }
 }  // namespace AccessToken
 }  // namespace Security
