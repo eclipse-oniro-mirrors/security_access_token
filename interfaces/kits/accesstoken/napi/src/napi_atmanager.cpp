@@ -777,7 +777,6 @@ void NapiAtManager::RegisterPermStateChangeComplete(napi_env env, napi_status st
     }
     RegisterPermStateChangeInfo* registerPermStateChangeInfo =
         reinterpret_cast<RegisterPermStateChangeInfo*>(data);
-    std::unique_ptr<RegisterPermStateChangeInfo> callbackPtr {registerPermStateChangeInfo};
     if (registerPermStateChangeInfo->errCode != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "errCode = %{public}d, delete register in map",
             registerPermStateChangeInfo->errCode);
@@ -789,7 +788,6 @@ void NapiAtManager::RegisterPermStateChangeComplete(napi_env env, napi_status st
     }
     NAPI_CALL_RETURN_VOID(env, napi_delete_async_work(env, registerPermStateChangeInfo->work));
     registerPermStateChangeInfo->work = nullptr;
-    callbackPtr.release();
 }
 
 napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo)
