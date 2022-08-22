@@ -570,7 +570,7 @@ HWTEST_F(PrivacyKitTest, DumpRecordInfo001, TestSize.Level1)
     ASSERT_EQ(true, info.empty());
 
     // invalid permission
-    info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "invalid permission");
+    info = PrivacyKit::DumpRecordInfo(g_InfoParmsA.bundleName, "invalid permission");
     ASSERT_EQ(true, info.empty());
 }
 
@@ -585,7 +585,7 @@ HWTEST_F(PrivacyKitTest, DumpRecordInfo002, TestSize.Level1)
     std::string permission = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, permission, 1, 0));
 
-    std::string info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "");
+    std::string info = PrivacyKit::DumpRecordInfo(g_InfoParmsA.bundleName, "");
     ASSERT_EQ(false, info.empty());
 
     info = PrivacyKit::DumpRecordInfo(0, permission);
