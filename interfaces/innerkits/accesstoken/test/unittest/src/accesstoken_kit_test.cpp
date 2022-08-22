@@ -2416,6 +2416,38 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, res);
 }
 
+/**
+ * @tc.name: DumpTokenInfo001
+ * @tc.desc: Get dump token information
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
+{
+    std::string info;
+    AccessTokenKit::DumpTokenInfo(info);
+    ASSERT_EQ(false, info.empty());
+}
+
+/**
+ * @tc.name: DeleteRemoteToken001
+ * @tc.desc: DeleteRemoteToken with invalid parameters.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
+{
+    std::string deviceId = "device";
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+                                                          g_infoManagerTestInfoParms.bundleName,
+                                                          g_infoManagerTestInfoParms.instIndex);
+    int res = AccessTokenKit::DeleteRemoteToken("", tokenID);
+    ASSERT_EQ(RET_FAILED, res);
+
+    res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
+    ASSERT_EQ(RET_FAILED, res);
+}
+
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
 public:
     explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
