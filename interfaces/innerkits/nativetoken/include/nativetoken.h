@@ -26,6 +26,7 @@ extern "C" {
 #define TOKEN_ID_CFG_FILE_PATH "/data/service/el0/access_token/nativetoken.json"
 #define TOKEN_ID_CFG_DIR_PATH "/data/service/el0/access_token"
 #define TOKEN_NATIVE_TYPE 1
+#define TOKEN_SHELL_TYPE 2
 #define DEFAULT_AT_VERSION 1
 #define TRANSFER_KEY_WORDS "NativeTokenInfo"
 #define MAX_JSON_FILE_LEN 102400
@@ -50,6 +51,7 @@ extern "C" {
 #define APL_KEY_NAME "APL"
 #define VERSION_KEY_NAME "version"
 #define PROCESS_KEY_NAME "processName"
+#define HDC_PROCESS_NAME "hdcd"
 
 #define SYSTEM_CORE 3
 #define SYSTEM_BASIC 2

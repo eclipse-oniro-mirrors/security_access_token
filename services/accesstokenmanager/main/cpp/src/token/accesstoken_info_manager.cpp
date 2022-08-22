@@ -123,7 +123,8 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
-        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
+        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
             continue;
@@ -341,7 +342,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
-    if (type != TOKEN_NATIVE) {
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is not hap.", id);
         return RET_FAILED;
@@ -527,7 +528,8 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
                 "token %{public}u process name %{public}s is new, add to manager!",
                 infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
             AccessTokenID id = infoPtr->GetTokenID();
-            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_NATIVE);
+            ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(id);
+            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, type);
             if (ret != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "token Id register fail");
                 continue;
@@ -729,11 +731,12 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
     }
 
     for (NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID);
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||
             nativeToken.baseInfo.dcap.empty() ||
-            AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID) != TOKEN_NATIVE) {
+            (type != TOKEN_NATIVE && type != TOKEN_SHELL)) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "device %{public}s token %{public}u is invalid.",
                 ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
@@ -805,7 +808,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
             return RET_FAILED;
         }
         hapTokenInfoMap_.erase(mapID);
-    } else if (type == TOKEN_NATIVE) {
+    } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(mapID) == 0) {
             ACCESSTOKEN_LOG_ERROR(
@@ -822,8 +825,9 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
 
 AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
-    if (!DataValidator::IsDeviceIdValid(deviceID)
-        || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) {
+    if ((!DataValidator::IsDeviceIdValid(deviceID)) || (tokenID == 0) ||
+        ((AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) &&
+        (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_SHELL))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
     }

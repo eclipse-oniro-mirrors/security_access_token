@@ -277,7 +277,7 @@ static int32_t IsTokenUniqueIdExist(uint32_t tokenUniqueId)
     return 0;
 }
 
-static NativeAtId CreateNativeTokenId(void)
+static NativeAtId CreateNativeTokenId(const char *processName)
 {
     uint32_t rand;
     NativeAtId tokenId;
@@ -302,8 +302,14 @@ static NativeAtId CreateNativeTokenId(void)
 
     innerId->reserved = 0;
     innerId->tokenUniqueId = rand & (TOKEN_RANDOM_MASK);
-    innerId->type = TOKEN_NATIVE_TYPE;
     innerId->version = 1;
+
+    if (strcmp(processName, HDC_PROCESS_NAME) == 0) {
+        innerId->type = TOKEN_SHELL_TYPE;
+    } else {
+        innerId->type = TOKEN_NATIVE_TYPE;
+    }
+
     return tokenId;
 }
 
@@ -465,7 +471,7 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     NativeTokenList *tokenNode;
     NativeAtId id;
 
-    id = CreateNativeTokenId();
+    id = CreateNativeTokenId(tokenInfo->processName);
     if (id == INVALID_TOKEN_ID) {
         return ATRET_FAILED;
     }
