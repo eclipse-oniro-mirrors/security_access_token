@@ -781,6 +781,9 @@ void NapiAtManager::RegisterPermStateChangeComplete(napi_env env, napi_status st
     if (registerPermStateChangeInfo->errCode != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "errCode = %{public}d, delete register in map",
             registerPermStateChangeInfo->errCode);
+        // Even if napi_delete_async_work failed, invalid registerPermStateChangeInfo needs to be deleted
+        napi_delete_async_work(env, registerPermStateChangeInfo->work);
+        registerPermStateChangeInfo->work = nullptr;
         DeleteRegisterInMap(registerPermStateChangeInfo->accessTokenKit, registerPermStateChangeInfo->scopeInfo);
         return;
     }
