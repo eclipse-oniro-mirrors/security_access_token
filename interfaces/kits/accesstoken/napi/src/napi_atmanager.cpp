@@ -85,6 +85,7 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertPermStateChangeInfo failed");
         return;
     }
+    
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
     napi_value resultout = nullptr;
@@ -230,7 +231,7 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
     AccessTokenKit* objectInfo = new (std::nothrow) AccessTokenKit();
     if (objectInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo == nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo is nullptr");
         return nullptr;
     }
     if (napi_wrap(env, thisVar, objectInfo, [](napi_env env, void* data, void* hint) {
@@ -1009,9 +1010,9 @@ void NapiAtManager::DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const Pe
         while (it != subscribers->second.end()) {
             if (CompareScopeInfo((*it)->scopeInfo, tokenIDs, permList)) {
                 ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscribers in map, delete");
-                subscribers->second.erase(it);
                 delete *it;
-                *it =nullptr;
+                *it = nullptr;
+                subscribers->second.erase(it);
                 break;
             } else {
                 ++it;
