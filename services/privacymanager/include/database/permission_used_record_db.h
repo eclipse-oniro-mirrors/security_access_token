@@ -21,7 +21,6 @@
 
 #include "nocopyable.h"
 #include "rwlock.h"
-#include <bits/stdint-uintn.h>
 
 namespace OHOS {
 namespace Security {

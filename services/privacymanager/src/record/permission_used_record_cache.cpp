@@ -25,7 +25,6 @@
 #include "permission_used_record_db.h"
 #include "time_util.h"
 #include "to_string.h"
-#include <bits/stdint-intn.h>
 
 namespace OHOS {
 namespace Security {

@@ -18,7 +18,6 @@
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "field_const.h"
-#include <bits/stdint-uintn.h>
 
 namespace OHOS {
 namespace Security {
