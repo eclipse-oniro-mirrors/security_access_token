@@ -18,6 +18,10 @@
 
 #include <gtest/gtest.h>
 
+#include "access_token.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -48,6 +52,8 @@ public:
 
     void TearDown();
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
+    void AllocHapToken(std::vector<PermissionDef>& permmissionDefs,
+        std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
     void DeleteTestToken() const;
     void AllocTestToken() const;
     uint64_t selfTokenId_;
