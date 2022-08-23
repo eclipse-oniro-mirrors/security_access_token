@@ -17,13 +17,13 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "active_status_callback_manager.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
-#include "active_status_callback_manager.h"
 #include "time_util.h"
 #include "to_string.h"
 
@@ -53,13 +53,13 @@ PermissionRecordManager::~PermissionRecordManager()
     hasInited_ = false;
 }
 
-int32_t PermissionRecordManager::AddRecord(const PermissionRecord& record)
+void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    return PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record));
+    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record));
 }
 
-bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
+bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
     HapTokenInfo tokenInfo;
@@ -73,16 +73,17 @@ bool PermissionRecordManager::GetPermissionsRecord(AccessTokenID tokenId, const 
         return false;
     }
     if (successCount == 0 && failCount == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "successCount and failCount are both zero");
-        return false;
+        record.status = PERM_INACTIVE;
+    } else {
+        record.status = PERM_ACTIVE_IN_FOREGROUND;
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;
     record.opCode = opCode;
-    record.status = 0;
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
     return true;
 }
 
@@ -92,11 +93,16 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
     ExecuteDeletePermissionRecordTask();
 
     PermissionRecord record;
-    if (!GetPermissionsRecord(tokenId, permissionName, successCount, failCount, record)) {
+    if (!GetPermissionRecord(tokenId, permissionName, successCount, failCount, record)) {
         return Constant::FAILURE;
     }
 
-    return AddRecord(record);
+    if (record.status == PERM_INACTIVE) {
+        return Constant::FAILURE;
+    }
+
+    AddRecord(record);
+    return Constant::SUCCESS;
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
@@ -214,7 +220,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     }
     bundleRecord.tokenId = tokenId;
     bundleRecord.isRemote = false;
-    bundleRecord.deviceId = ConstantCommon::GetLocalDeviceId();
+    bundleRecord.deviceId = GetDeviceId(tokenId);
     bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
 }
@@ -337,17 +343,115 @@ std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenId, const
     return dumpInfo;
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (const auto& rec : startRecordList_) {
+        if ((rec.opCode == record.opCode) && (rec.tokenId == record.tokenId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
+                record.tokenId, record.opCode);
+            return true;
+        }
+    }
+    return false;
+}
+
+void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    startRecordList_.emplace_back(record);
+}
+
+bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode == opCode) && (tokenId == (it->tokenId))) {
+            record = *it;
+            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            startRecordList_.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+void PermissionRecordManager::ResetRecord(PermissionRecord& record, int32_t status)
+{
+    record.status = status;
+    record.accessDuration = 0;
+    record.timestamp = TimeUtil::GetCurrentTimestamp();
+}
+
+std::vector<PermissionRecord> PermissionRecordManager::GetRecordsAndReset(uint32_t tokenId, int32_t status)
+{
+    std::vector<PermissionRecord> recordList;
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->tokenId == tokenId) && status != (it->status)) {
+            PermissionRecord record = *it;
+            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            recordList.emplace_back(record);
+            ResetRecord(*it, status);
+        }
+    }
+    return recordList;
+}
+
+void PermissionRecordManager::CallbackExecute(
+    AccessTokenID tokenId, const std::string& permissionName, int32_t status)
 {
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, ConstantCommon::GetLocalDeviceId(), PERM_ACTIVE_IN_FOREGROUND);
+        tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    int32_t accessCount = 1;
+    int32_t failCount = 0;
+
+    PermissionRecord record = { 0 };
+    if (!GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record)) {
+        return Constant::FAILURE;
+    }
+
+    if (HasStarted(record)) {
+        return Constant::FAILURE;
+    }
+
+    AddRecordToStartList(record);
+    if (record.status != PERM_INACTIVE) {
+        CallbackExecute(tokenId, permissionName, record.status);
+    }
     return Constant::SUCCESS;
 }
 
 int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
-        tokenId, permissionName, ConstantCommon::GetLocalDeviceId(), PERM_INACTIVE);
+    ExecuteDeletePermissionRecordTask();
+
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        return Constant::FAILURE;
+    }
+
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
+        return Constant::FAILURE;
+    }
+
+    PermissionRecord record;
+    if (!GetRecordFromStartList(tokenId, opCode, record)) {
+        return Constant::FAILURE;
+    }
+
+    if (record.status != PERM_INACTIVE) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "AddRecord(tokenId: %{public}d, opCode: %{public}d, status: %{public}d)",
+            record.tokenId, record.opCode, record.status);
+        AddRecord(record);
+        CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
+    }
     return Constant::SUCCESS;
 }
 
