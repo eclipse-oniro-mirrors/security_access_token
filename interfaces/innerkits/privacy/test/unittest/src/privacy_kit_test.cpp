@@ -605,7 +605,7 @@ HWTEST_F(PrivacyKitTest, DumpRecordInfo003, TestSize.Level1)
 {
     std::string permission = "ohos.permission.CAMERA";
 
-    std::string info = PrivacyKit::DumpRecordInfo(g_TokenId_A, "");
+    std::string info = PrivacyKit::DumpRecordInfo(g_InfoParmsA.bundleName, "");
     ASSERT_EQ(true, info.empty());
 
     info = PrivacyKit::DumpRecordInfo(0, "");
