@@ -234,8 +234,7 @@ void AccessTokenManagerStub::GetTokenTypeInner(MessageParcel& data, MessageParce
 
 void AccessTokenManagerStub::CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (this->GetTokenType(tokenCaller) != TOKEN_NATIVE) {
+    if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -248,8 +247,7 @@ void AccessTokenManagerStub::CheckNativeDCapInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (this->GetTokenType(tokenCaller) != TOKEN_NATIVE) {
+    if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(INVALID_TOKENID);
         return;
@@ -263,8 +261,7 @@ void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParc
 
 void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if ((!IsAuthorizedCalling()) && (this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
+    if ((!IsAuthorizedCalling()) && (!IsNativeProcessCalling())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(INVALID_TOKENID);
         return;
@@ -297,8 +294,7 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
 
 void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if ((this->GetTokenType(tokenCaller) != TOKEN_NATIVE)) {
+    if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -312,8 +308,7 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (this->GetTokenType(tokenCaller) != TOKEN_NATIVE) {
+    if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -478,14 +473,14 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
 
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if (this->GetTokenType(tokenCaller) != TOKEN_NATIVE) {
+    if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
+    AccessTokenID tokenID = data.ReadUint32();
     std::string dumpInfo = "";
-    this->DumpTokenInfo(dumpInfo);
+    this->DumpTokenInfo(tokenID, dumpInfo);
     reply.WriteString(dumpInfo);
 }
 
@@ -500,6 +495,17 @@ bool AccessTokenManagerStub::IsAccessTokenCalling() const
 {
     int callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ACCESSTOKEN_UID;
+}
+
+bool AccessTokenManagerStub::IsNativeProcessCalling()
+{
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    int32_t type = this->GetTokenType(tokenCaller);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling tokenID: %{public}d, type: %{public}d", tokenCaller, type);
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
+        return false;
+    }
+    return true;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()

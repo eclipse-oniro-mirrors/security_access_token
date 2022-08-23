@@ -21,6 +21,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "active_change_response_info.h"
 #include "hap_token_info.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
@@ -53,13 +54,15 @@ public:
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
+    void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
+
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
     bool GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
-    int32_t AddRecord(const PermissionRecord& record);
-    bool GetPermissionsRecord(AccessTokenID tokenId, const std::string& permissionName,
+    void AddRecord(const PermissionRecord& record);
+    bool GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
@@ -69,11 +72,19 @@ private:
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
+    void AddRecordToStartList(const PermissionRecord& record);
+    bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
+    void ResetRecord(PermissionRecord& record, int32_t status);
+    bool HasStarted(const PermissionRecord& record);
+    std::vector<PermissionRecord> GetRecordsAndReset(uint32_t tokenId, int32_t status);
+
     std::string GetDeviceId(AccessTokenID tokenId);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
     OHOS::Utils::RWLock rwLock_;
+    OHOS::Utils::RWLock startRecordListRWLock_;
+    std::vector<PermissionRecord> startRecordList_;
 };
 } // namespace AccessToken
 } // namespace Security

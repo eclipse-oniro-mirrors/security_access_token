@@ -150,7 +150,7 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     }
 
     ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID);
-    if (tokenType == TOKEN_NATIVE) {
+    if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
         return VerifyNativeAccessToken(tokenID, permissionName);
     }
     if (tokenType == TOKEN_HAP) {

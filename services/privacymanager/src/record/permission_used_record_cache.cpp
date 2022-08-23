@@ -41,7 +41,7 @@ PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
     return instance;
 }
 
-int32_t PermissionUsedRecordCache::AddRecordToBuffer(PermissionRecord& record)
+void PermissionUsedRecordCache::AddRecordToBuffer(PermissionRecord& record)
 {
     if (nextPersistTimestamp_ == 0) {
         nextPersistTimestamp_ = record.timestamp + INTERVAL;
@@ -87,7 +87,6 @@ int32_t PermissionUsedRecordCache::AddRecordToBuffer(PermissionRecord& record)
     if (persistPendingBufferEnd != nullptr) {
         AddToPersistQueue(persistPendingBufferHead);
     }
-    return Constant::SUCCESS;
 }
 
 void PermissionUsedRecordCache::MergeRecord(PermissionRecord& record,
