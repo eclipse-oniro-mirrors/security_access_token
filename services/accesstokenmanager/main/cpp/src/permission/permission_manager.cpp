@@ -239,15 +239,23 @@ int PermissionManager::GetReqPermissions(
 }
 
 void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> permsList,
-    PermissionListState &permState)
+    PermissionListState &permState, int32_t apiVersion)
 {
     bool foundGoal = false;
     int32_t goalGrantStatus;
     uint32_t goalGrantFlags;
+
+    // api8 require vague location permission refuse directlty beause there is no vague location permission in api8
+    if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) &&
+       (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
+        permState.state = INVALID_OPER;
+        return;
+    }
+
     for (const auto& perm : permsList) {
         if (perm.permissionName == permState.permissionName) {
-            ACCESSTOKEN_LOG_INFO(LABEL,
-                "find goal permission: %{public}s!", permState.permissionName.c_str());
+            ACCESSTOKEN_LOG_INFO(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
+                permState.permissionName.c_str(), perm.grantStatus[0], perm.grantFlags[0]);
             foundGoal = true;
             goalGrantStatus = perm.grantStatus[0];
             goalGrantFlags = static_cast<uint32_t>(perm.grantFlags[0]);
@@ -403,6 +411,167 @@ int32_t PermissionManager::AddPermStateChangeCallback(
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
     return CallbackManager::GetInstance().RemoveCallback(callback);
+}
+
+bool PermissionManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion)
+{
+    // only hap can do this
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    ATokenTypeEnum tokenType = (ATokenTypeEnum)(idInner->type);
+    if (tokenType != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid token type %{public}d", tokenType);
+        return false;
+    }
+
+    HapTokenInfo hapInfo;
+    int ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, hapInfo);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get hap token info error!");
+        return false;
+    }
+
+    apiVersion = hapInfo.apiVersion;
+
+    return true;
+}
+
+bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
+    int& vagueIndex, int& accurateIndex)
+{
+    int index = 0;
+    bool hasFound = false;
+
+    for (const auto& perm : reqPermList) {
+        if (perm.permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) {
+            vagueIndex = index;
+            hasFound = true;
+        } else if (perm.permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) {
+            accurateIndex = index;
+            hasFound = true;
+        }
+
+        index++;
+
+        if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
+            break;
+        }
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "vague location permission index is %{public}d, accurate location permission index is %{public}d!",
+        vagueIndex, accurateIndex);
+
+    return hasFound;
+}
+
+bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
+{
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid permissionName %{public}s", permissionName.c_str());
+        return false;
+    }
+
+    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "permission %{public}s has no definition ", permissionName.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permissionName,
+    const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag)
+{
+    if (!IsPermissionVaild(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission %{public}s", permissionName.c_str());
+        return false;
+    }
+
+    for (const auto& perm : permsList) {
+        if (perm.permissionName == permissionName) {
+            status = perm.grantStatus[0];
+            flag = static_cast<uint32_t>(perm.grantFlags[0]);
+
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "permission:%{public}s, status:%{public}d, flag:%{public}d!",
+                permissionName.c_str(), status, flag);
+            return true;
+        }
+    }
+    return false;
+}
+
+void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex)
+{
+    int32_t vagueStatus = PERMISSION_DENIED;
+    uint32_t vagueFlag = PERMISSION_DEFAULT_FLAG;
+    int32_t vagueState = INVALID_OPER;
+    int32_t accurateStatus = PERMISSION_DENIED;
+    uint32_t accurateFlag = PERMISSION_DEFAULT_FLAG;
+    int32_t accurateState = INVALID_OPER;
+
+    if (!GetPermissionStatusAndFlag(VAGUE_LOCATION_PERMISSION_NAME, permsList, vagueStatus, vagueFlag) ||
+        !GetPermissionStatusAndFlag(ACCURATE_LOCATION_PERMISSION_NAME, permsList, accurateStatus, accurateFlag)) {
+        return;
+    }
+
+    // vague location status -1 means vague location permission has been refused
+    if (vagueStatus == PERMISSION_DENIED) {
+        if ((vagueFlag == PERMISSION_DEFAULT_FLAG) || ((vagueFlag & PERMISSION_USER_SET) != 0)) {
+            // vague location flag 0 or 1 means permission has not been operated or valid only once
+            vagueState = DYNAMIC_OPER;
+            accurateState = DYNAMIC_OPER;
+        } else if ((vagueFlag & PERMISSION_USER_FIXED) != 0) {
+            // vague location flag 2 means vague location has been operated, only can be changed by settings
+            // so that accurate location is no need to operate
+            vagueState = SETTING_OPER;
+            accurateState = SETTING_OPER;
+        }
+    } else if (vagueStatus == PERMISSION_GRANTED) {
+        // vague location status 0 means vague location permission has been accepted
+        // now flag 1 is not in use so return PASS_OPER, otherwise should judge by flag
+        vagueState = PASS_OPER;
+
+        if (accurateStatus == PERMISSION_DENIED) {
+            if ((accurateFlag == PERMISSION_DEFAULT_FLAG) || ((accurateFlag & PERMISSION_USER_SET) != 0)) {
+                accurateState = DYNAMIC_OPER;
+            } else if ((accurateFlag & PERMISSION_USER_FIXED) != 0) {
+                accurateState = SETTING_OPER;
+            }
+        } else if (accurateStatus == PERMISSION_GRANTED) {
+            accurateState = PASS_OPER;
+        }
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "vague location permission state is %{public}d, accurate location permission state is %{public}d",
+        vagueState, accurateState);
+
+    reqPermList[vagueIndex].permsState.state = vagueState;
+    reqPermList[accurateIndex].permsState.state = accurateState;
+}
+
+bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
+    int32_t apiVersion, std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex)
+{
+    if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex == ELEMENT_NOT_FOUND)) {
+        // only vague location permission
+        GetSelfPermissionState(permsList, reqPermList[vagueIndex].permsState, apiVersion);
+        if (reqPermList[vagueIndex].permsState.state == DYNAMIC_OPER) {
+            return true;
+        }
+    }
+
+    if ((vagueIndex == ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
+        // only accurate location permission refuse directly
+        ACCESSTOKEN_LOG_ERROR(LABEL, "operate invaild, accurate location permission base on vague location permission");
+        reqPermList[accurateIndex].permsState.state = INVALID_OPER;
+        return false;
+    }
+
+    // all location permissions
+    AllLocationPermissionHandle(reqPermList, permsList, vagueIndex, accurateIndex);
+    return ((reqPermList[vagueIndex].permsState.state == DYNAMIC_OPER) ||
+        (reqPermList[accurateIndex].permsState.state == DYNAMIC_OPER));
 }
 
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
