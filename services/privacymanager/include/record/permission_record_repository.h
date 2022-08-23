@@ -34,7 +34,7 @@ public:
         const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues);
     bool RemoveRecordValues(const GenericValues& conditionValues);
     bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
-    int32_t CountRecordValues(GenericValues& resultValues);
+    void CountRecordValues(GenericValues& resultValues);
     bool DeleteExpireRecordsValues(const GenericValues& andConditions);
     bool DeleteExcessiveSizeRecordValues(uint32_t excessiveSize);
 };

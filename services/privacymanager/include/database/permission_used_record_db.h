@@ -21,6 +21,7 @@
 
 #include "nocopyable.h"
 #include "rwlock.h"
+#include <bits/stdint-uintn.h>
 
 namespace OHOS {
 namespace Security {
@@ -45,9 +46,9 @@ public:
     int32_t FindByConditions(DataType type, const GenericValues& andConditions,
         const GenericValues& orConditions, std::vector<GenericValues>& results);
     int32_t Modify(DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
-    int32_t Count(DataType type, GenericValues& result);
+    void Count(DataType type, GenericValues& result);
     int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
-    int32_t DeleteExcessiveRecords(DataType type, unsigned excessiveSize);
+    int32_t DeleteExcessiveRecords(DataType type, uint32_t excessiveSize);
     int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
 
     void OnCreate() override;

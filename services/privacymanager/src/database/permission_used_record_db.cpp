@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "field_const.h"
+#include <bits/stdint-uintn.h>
 
 namespace OHOS {
 namespace Security {
@@ -182,7 +183,7 @@ int32_t PermissionUsedRecordDb::GetDistinctValue(DataType type,
     return SUCCESS;
 }
 
-int32_t PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
+void PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string countSql = CreateCountPrepareSqlCmd(type);
@@ -191,7 +192,6 @@ int32_t PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
         int32_t column = 0;
         result.Put(Constant::COUNT_CMD, countStatement.GetValue(column, true));
     }
-    return SUCCESS;
 }
 
 int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
@@ -205,15 +205,14 @@ int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
         for (const auto& columnName : andColumns) {
             deleteExpireStatement.Bind(columnName, andConditions.Get(columnName));
         }
-        int32_t ret = deleteExpireStatement.Step();
-        if (ret != Statement::State::DONE) {
+        if (deleteExpireStatement.Step() != Statement::State::DONE) {
             return FAILURE;
         }
     }
     return SUCCESS;
 }
 
-int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, unsigned excessiveSize)
+int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t excessiveSize)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteExcessiveSql = CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize);

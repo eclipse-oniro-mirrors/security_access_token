@@ -39,24 +39,23 @@ public:
     void ExecuteReadRecordBufferTask();
     int32_t PersistPendingRecords();
     void GetPersistPendingRecordsAndReset();
-    int32_t RemoveRecords(const GenericValues &record);
-    void RemoveRecordsFromPersistPendingBufferQueue(const GenericValues &record,
+    int32_t RemoveRecords(const GenericValues& record);
+    void RemoveRecordsFromPersistPendingBufferQueue(const GenericValues& record,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd);
     void GetRecords(const std::vector<std::string>& permissionList,
-        const GenericValues &andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues);
-    void GetAllRecords(const std::vector<std::string>& permissionList,
-        const GenericValues &andConditionValues, const GenericValues& orConditionValues,
+        const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues);
     void GetRecordsFromPersistPendingBufferQueue(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues, const std::set<int32_t>& opCodeList);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
-        const GenericValues &andConditionValues, const PermissionRecord &record);
+        const GenericValues& andConditionValues, const PermissionRecord& record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void TransferToOpcode(std::set<int32_t>& opCodeList,
         const std::vector<std::string>& permissionList);
+    void ResetRecordBuffer(const int32_t remainCount,
+        std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
     void AddRecordNode(const PermissionRecord& record);
     void DeleteRecordNode(std::shared_ptr<PermissionUsedRecordNode> deleteRecordNode);
 	    
@@ -66,7 +65,8 @@ private:
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
     std::vector<std::shared_ptr<PermissionUsedRecordNode>> persistPendingBufferQueue_;
     int64_t nextPersistTimestamp_ = 0L;
-    const static int32_t INTERVAL = 60 * 15;
+    // const static int32_t INTERVAL = 60 * 15;
+    const static int32_t INTERVAL = 60;
     const static int32_t MAX_PERSIST_SIZE = 100;
     int32_t persistIsRunning_ = 0;
     OHOS::Utils::RWLock cacheLock_;

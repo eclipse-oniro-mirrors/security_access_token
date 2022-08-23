@@ -83,14 +83,9 @@ bool PermissionRecordRepository::GetAllRecordValuesByKey(
     return true;
 }
 
-int32_t PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
+void PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
 {
-    if (PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues)
-        != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot count PERMISSION_RECORD");
-        return false;
-    }
-    return true;
+    PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues);
 }
 
 bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& andConditions)
