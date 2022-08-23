@@ -56,7 +56,8 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
 void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -72,7 +73,8 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
@@ -86,7 +88,8 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
 void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    if ((reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type != TOKEN_NATIVE) {
+    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
