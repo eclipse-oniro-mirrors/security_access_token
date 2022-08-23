@@ -23,30 +23,23 @@ var TAG = 'PermissionManager_MainAbility:'
 
 const allowedStatus = 0; // Status: Allowed
 const bannedStatus = 1; // Status: Banned
-
-class AllowedObj {
+class permissionObj {
   groupName: string;
   permission: string[];
-  constructor(groupName: string, permission: string[]) {
+  group: string;
+  constructor(groupName: string, permission: string[], group: string) {
     this.groupName = groupName;
     this.permission = permission;
+    this.group = group
   }
-} // Class Allowed
-class BannedObj {
-  groupName: string;
-  permission: string[];
-  constructor(groupName: string, permission: string[]) {
-    this.groupName = groupName;
-    this.permission = permission;
-  }
-} // Class Banned
+}
 
 @Entry
 @Component
 struct appNamePlusPage {
-  @State allowedListItem: AllowedObj[] = []; // Array of allowed permissions
-  @State bannedListItem: BannedObj[] = []; // array of forbidden permissions
-  private routerData = router.getParams().routerData; // Routing jump data
+  @State allowedListItem: permissionObj[] = []; // Array of allowed permissions
+  @State bannedListItem: permissionObj[] = []; // array of forbidden permissions
+  private routerData: any = router.getParams().routerData; // Routing jump data
 
   @Builder ListItemLayout(item, index, status) {
     ListItem() {
@@ -76,6 +69,7 @@ struct appNamePlusPage {
             }
           }
         }.onClick(() => {
+          globalThis.currentPermissionGroup = item.group
           if (status === 'allow') {
             if (item.groupName == "其他权限") {
               router.push({
@@ -145,6 +139,7 @@ struct appNamePlusPage {
     for (let i = 0; i < reqGroupIds.length; i++) {
       let id = reqGroupIds[i];
       let groupName = groups[id].groupName;
+      let group = groups[id].name;
       let groupReqPermissons = [];
       for (let j = 0; j < reqPermissions.length; j++) {
         let permission = reqPermissions[j];
@@ -163,9 +158,9 @@ struct appNamePlusPage {
       }
 
       if (isGranted) {
-        this.allowedListItem.push(new AllowedObj(groupName, groupReqPermissons));
+        this.allowedListItem.push(new permissionObj(groupName, groupReqPermissons, group));
       } else {
-        this.bannedListItem.push(new BannedObj(groupName, groupReqPermissons));
+        this.bannedListItem.push(new permissionObj(groupName, groupReqPermissons, group));
       }
     }
   }
@@ -251,6 +246,7 @@ struct appNamePlusPage {
                                 .fontWeight(FontWeight.Medium)
                                 .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
                             }.constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+                            .width(Constants.FULL_WIDTH)
                             .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM,
                               left: Constants.SECONDARY_TEXT_MARGIN_LEFT})
                           }
@@ -285,6 +281,7 @@ struct appNamePlusPage {
                                 .fontWeight(FontWeight.Medium)
                                 .lineHeight(Constants.SUBTITLE_LINE_HEIGHT)
                             }.constraintSize({ minHeight: Constants.SUBTITLE_MIN_HEIGHT })
+                            .width(Constants.FULL_WIDTH)
                             .padding({ top: Constants.SUBTITLE_PADDING_TOP, bottom: Constants.SUBTITLE_PADDING_BOTTOM,
                               left: Constants.SECONDARY_TEXT_MARGIN_LEFT})
                           }

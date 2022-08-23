@@ -24,6 +24,7 @@ import { getAppLabel, getAppIcon, verifyAccessToken} from "../common/utils/utils
 import { makePy } from "../common/utils/utils";
 import { authorizeDialog } from "../common/components/dialog";
 import Constants from '../common/utils/constant';
+import { polymorphismGroup } from "../common/model/permissionGroup";
 
 var TAG = 'PermissionManager_MainAbility:'
 
@@ -33,7 +34,7 @@ var TAG = 'PermissionManager_MainAbility:'
   .height(height)
 }
 
-let routerData = router.getParams().routerData; // Routing jump data
+let routerData: any = router.getParams().routerData; // Routing jump data
 let backTitle = router.getParams().backTitle; // return title name
 let nowGrantResult = Constants.PERMISSION_NUM; // Authorization results now
 let nowRevokeResult = Constants.PERMISSION_NUM; // Now deauthorize results
@@ -66,6 +67,8 @@ class ApplicationObj {
 @Entry
 @Component
 struct locationInfoPage {
+  @State polymorphismIsOn: Array<boolean> = []
+
   build() {
     GridContainer({ gutter: Constants.GUTTER, margin: Constants.GRID_MARGIN }) {
       Row() {
@@ -84,7 +87,7 @@ struct locationInfoPage {
             }
             Row() {
               Column() {
-                applicationItem()
+                applicationItem({ polymorphismIsOn: $polymorphismIsOn })
 
               }.width(Constants.FULL_WIDTH)
             }
@@ -113,6 +116,42 @@ struct locationInfoPage {
       .opacity(Constants.MANAGEMENT_TRANSPARENCY)
     }
   }
+
+  onPageShow() {
+    console.log(TAG + "onPageShow");
+    if (polymorphismGroup.indexOf(globalThis.currentPermissionGroup) !== -1) {
+      var bundleNames = []
+      routerData.forEach(permissionmanager => {
+        permissionmanager.bundleNames.forEach( bundleName => {
+          if (bundleNames.indexOf(bundleName) == -1) {
+            bundleNames.push(bundleName)
+          }
+        })
+      })
+
+      bundleNames.forEach((bundleName, index) => {
+        bundle.getBundleInfo(bundleName, Constants.PARMETER_BUNDLE_FLAG).then(res => {
+          // 0: have permission; -1: no permission
+          this.polymorphismIsOn[index] = true
+          for (let j = 0; j < routerData.length; j++) {
+            if (routerData[j].permission == 'ohos.permission.LOCATION') {
+              continue
+            }
+            if (res.reqPermissions.indexOf(routerData[j].permission) == -1) {
+              continue
+            }
+            verifyAccessToken(res.appInfo.accessTokenId, routerData[j].permission).then((access) => {
+              if (Number(access) === abilityAccessCtrl.GrantStatus.PERMISSION_DENIED) {
+                this.polymorphismIsOn[index] = false;
+              }
+            });
+          }
+        }).catch(error => {
+          console.log(TAG + bundleName + "onPageShow getBundleInfo failed, cause: " + JSON.stringify(error));
+        })
+      })
+    }
+  }
 }
 
 @Component
@@ -123,6 +162,8 @@ struct applicationItem {
   @State oldApplicationItem: ApplicationObj[] = []; // Original application information array
   @State searchResult: boolean = true; // search results
   @State placeholder: string = ''
+  @State bundleNameGroup: Array<string> = []
+  @Link polymorphismIsOn: any
 
   authorizeDialogController: CustomDialogController = new CustomDialogController({
     builder: authorizeDialog({ }),
@@ -143,61 +184,70 @@ struct applicationItem {
                 .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
                 .fontColor($r('app.color.text_color'))
                 .flexGrow(Constants.FLEX_GROW)
-              Toggle({ type: ToggleType.Switch, isOn: this.toggleIsOn[item.index] })
-                .selectedColor($r('app.color.toggle_color'))
-                .width(Constants.AUTHORITY_TOGGLE_WIDTH)
-                .height(Constants.AUTHORITY_TOGGLE_HEIGHT)
-                .onChange((isOn: boolean) => {
-                  if (item.accessTokenId === '' || item.permission === '') {
-                    return;
-                  }
-                  let _this = this;
-                  if (isOn) {
-                    let promises = routerData.map(it => new Promise((resolve, reject) => {
-                      _this.grantUserGrantedPermission(item.accessTokenId, it.permission, item.index, resolve);
-                    }));
-                    Promise.all(promises).then(function(results) {
-                      if(results.indexOf(-1) != -1) {
-                        _this.authorizeDialogController.open();
-                        _this.toggleIsOn[item.index] = false;
-                        setTimeout(()=> {
-                          _this.authorizeDialogController.close();
-                        }, Constants.DELAY_TIME)
-                      } else {
-                        _this.toggleIsOn[item.index] = true;
-                      }
-                      let num = Constants.PERMISSION_NUM;
-                      for(let key in _this.toggleIsOn){
-                        if(_this.toggleIsOn[key]){
-                          num++;
+              if (polymorphismGroup.indexOf(globalThis.currentPermissionGroup) == -1) {
+                Toggle({ type: ToggleType.Switch, isOn: this.toggleIsOn[item.index] })
+                  .selectedColor($r('app.color.toggle_color'))
+                  .width(Constants.AUTHORITY_TOGGLE_WIDTH)
+                  .height(Constants.AUTHORITY_TOGGLE_HEIGHT)
+                  .onChange((isOn: boolean) => {
+                    if (item.accessTokenId === '' || item.permission === '') {
+                      return;
+                    }
+                    let _this = this;
+                    if (isOn) {
+                      let promises = routerData.map(it => new Promise((resolve, reject) => {
+                        _this.grantUserGrantedPermission(item.accessTokenId, it.permission, item.index, resolve);
+                      }));
+                      Promise.all(promises).then(function(results) {
+                        if(results.indexOf(-1) != -1) {
+                          _this.authorizeDialogController.open();
+                          _this.toggleIsOn[item.index] = false;
+                          setTimeout(()=> {
+                            _this.authorizeDialogController.close();
+                          }, Constants.DELAY_TIME)
+                        } else {
+                          _this.toggleIsOn[item.index] = true;
                         }
-                      }
-                      _this.permissionNum = num;
-                    });
-                  } else {
-                    let promises = routerData.map(it => new Promise((resolve, reject) => {
-                      _this.revokeUserGrantedPermission(item.accessTokenId, it.permission, item.index, resolve);
-                    }));
-                    Promise.all(promises).then(function(results) {
-                      if(results.indexOf(-1) != -1) {
-                        _this.authorizeDialogController.open();
-                        _this.toggleIsOn[item.index] = true;
-                        setTimeout(()=> {
-                          _this.authorizeDialogController.close();
-                        }, Constants.DELAY_TIME)
-                      } else {
-                        _this.toggleIsOn[item.index] = false;
-                      }
-                      let num = Constants.PERMISSION_NUM;
-                      for(let key in _this.toggleIsOn){
-                        if(_this.toggleIsOn[key]){
-                          num++;
+                        let num = Constants.PERMISSION_NUM;
+                        for(let key in _this.toggleIsOn){
+                          if(_this.toggleIsOn[key]){
+                            num++;
+                          }
                         }
-                      }
-                      _this.permissionNum = num;
-                    });
-                  }
-                })
+                        _this.permissionNum = num;
+                      });
+                    } else {
+                      let promises = routerData.map(it => new Promise((resolve, reject) => {
+                        _this.revokeUserGrantedPermission(item.accessTokenId, it.permission, item.index, resolve);
+                      }));
+                      Promise.all(promises).then(function(results) {
+                        if(results.indexOf(-1) != -1) {
+                          _this.authorizeDialogController.open();
+                          _this.toggleIsOn[item.index] = true;
+                          setTimeout(()=> {
+                            _this.authorizeDialogController.close();
+                          }, Constants.DELAY_TIME)
+                        } else {
+                          _this.toggleIsOn[item.index] = false;
+                        }
+                        let num = Constants.PERMISSION_NUM;
+                        for(let key in _this.toggleIsOn){
+                          if(_this.toggleIsOn[key]){
+                            num++;
+                          }
+                        }
+                        _this.permissionNum = num;
+                      });
+                    }
+                  })
+              }else {
+                Text(this.polymorphismIsOn[item.index] ? $r('app.string.allow') : $r('app.string.ban'))
+                .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+                .fontColor($r('app.color.label_color_light'))
+                .margin({ right: Constants.AUTHORITY_IMAGE_MARGIN_RIGHT })
+                Image($r('app.media.rightarrow'))
+                  .customizeImage(Constants.IMAGE_WIDTH, Constants.IMAGE_HEIGHT)
+              }
             }
             .width(Constants.FULL_WIDTH)
             .height(Constants.AUTHORITY_ROW_HEIGHT)
@@ -215,9 +265,36 @@ struct applicationItem {
             }
           }
         }.onClick(() => {
+          if (polymorphismGroup.indexOf(globalThis.currentPermissionGroup) !== -1) {
+            var permissions: any = []
+            routerData.forEach(item => {
+              permissions.push(item.permission)
+            })
+            router.push({
+              uri: 'pages/application-tertiary',
+              params: {
+                routerData: this.bundleNameGroup[item.index],
+                backTitle,
+                permission: permissions,
+                status: this.polymorphismIsOn[item.index] ? Constants.RADIO_ALLOW_INDEX : Constants.RADIO_BAN_INDEX
+              }
+            });
+          }
         })
       }
     }.padding({ left: Constants.DEFAULT_PADDING_START, right: Constants.DEFAULT_PADDING_END })
+  }
+
+  /**
+   * Take the total number of access applications
+   */
+  getGrantApplicationNumber() {
+    if (polymorphismGroup.indexOf(globalThis.currentPermissionGroup) !== -1) {
+      var sum = this.polymorphismIsOn.filter(item => item == true)
+      return sum.length
+    }else {
+      return this.permissionNum
+    }
   }
 
   /**
@@ -279,6 +356,7 @@ struct applicationItem {
         new ApplicationObj('', '', i, 0, '', ''));
       this.oldApplicationItem.push(
         new ApplicationObj('', '', i, 0, '', ''));
+      this.bundleNameGroup.push(bundleNames[i])
     }
 
     for (let i = 0; i < bundleNames.length; i++) {
@@ -306,6 +384,7 @@ struct applicationItem {
                 routerData[0].permission,
               makePy(values[0])[0].slice(0, 1)) // Get the first letter in the returned initials array
             );
+            this.bundleNameGroup[i] = bundleNames[i]
           });
         // 0: have permission; -1: no permission
         var boole = true;
@@ -351,7 +430,7 @@ struct applicationItem {
         Flex({ alignItems:ItemAlign.Start, justifyContent: FlexAlign.Start }) {
           Column() {
             Flex({ justifyContent: FlexAlign.Start }) {
-              Text(this.permissionNum + '个应用获取此权限')
+              Text(this.getGrantApplicationNumber() + '个应用获取此权限')
                 .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
                 .fontColor($r('app.color.secondary_font_color'))
                 .margin({ top: Constants.AUTHORITY_TEXT_MARGIN_TOP, left: Constants.AUTHORITY_TEXT_MARGIN_LEFT })

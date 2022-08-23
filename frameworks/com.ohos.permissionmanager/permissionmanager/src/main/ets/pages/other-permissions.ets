@@ -16,7 +16,7 @@
 import { backBar } from "../common/components/backBar";
 import router from '@system.router';
 import Constants from '../common/utils/constant';
-import { otherPermissionsLabel } from '../common/model/permissionGroup'
+import { permissionGroups } from '../common/model/permissionGroup'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 
 var TAG = 'PermissionManager_MainAbility:'
@@ -29,7 +29,7 @@ let permissions: any = router.getParams().permission; // permissions name
 let otherPermissionList = []; // otherPermission List
 for (let i = 0; i < permissions.length; i++) {
   otherPermissionList.push({
-    permissionLabel: otherPermissionsLabel[permissions[i]],
+    permissionLabel: permissionGroups.filter(item => item.permissionName == permissions[i])[0].label,
     permission: permissions[i]
   })
 }

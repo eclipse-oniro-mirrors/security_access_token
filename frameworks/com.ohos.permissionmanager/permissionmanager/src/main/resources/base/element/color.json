@@ -61,6 +61,14 @@
       "value": "#1856D4"
     },
     {
+      "name": "location_circle_color",
+      "value": "#254FF7"
+    },
+    {
+      "name": "location_bgColor",
+      "value": "#19596080"
+    },
+    {
       "name": "shape_ban_color",
       "value": "#000000"
     },
