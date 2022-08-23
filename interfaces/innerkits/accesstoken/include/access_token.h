@@ -46,6 +46,7 @@ typedef enum TypeATokenTypeEnum {
     TOKEN_HAP = 0,
     TOKEN_NATIVE,
     TOKEN_SHELL,
+    TOKEN_TYPE_BUTT,
 } ATokenTypeEnum;
 
 typedef enum TypeATokenAplEnum {
