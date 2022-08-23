@@ -566,7 +566,7 @@ HWTEST_F(PrivacyKitTest, DumpRecordInfo001, TestSize.Level1)
     std::string permission = "ohos.permission.CAMERA";
 
     // invalid tokenId
-    std::string info = PrivacyKit::DumpRecordInfo(dsdd, permission);
+    std::string info = PrivacyKit::DumpRecordInfo("dsdd", permission);
     ASSERT_EQ(true, info.empty());
 
     // invalid permission
