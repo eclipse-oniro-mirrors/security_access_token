@@ -280,10 +280,6 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
     }
 
     PermissionOper result = static_cast<PermissionOper>(reply.ReadInt32());
-    if (result == INVALID_OPER) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "result from server is invalid!");
-        return result;
-    }
     size_t size = reply.ReadUint32();
     if (size != permListParcel.size()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permListParcel size from server is invalid!");

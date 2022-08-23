@@ -145,7 +145,13 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     std::vector<PermissionListStateParcel>& reqPermList)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
+
+    int32_t apiVersion = 0;
+    if (!PermissionManager::GetInstance().GetApiVersionByTokenId(callingTokenID, apiVersion)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get api version error");
+        return INVALID_OPER;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d, apiVersion: %{public}d", callingTokenID, apiVersion);
 
     bool needRes = false;
     std::vector<PermissionStateFull> permsList;
@@ -158,10 +164,25 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
         return INVALID_OPER;
     }
 
+    int vagueIndex = ELEMENT_NOT_FOUND;
+    int accurateIndex = ELEMENT_NOT_FOUND;
+
+    if (apiVersion >= ACCURATE_LOCATION_API_VERSION) {
+        if (PermissionManager::GetInstance().GetLocationPermissionIndex(reqPermList, vagueIndex, accurateIndex)) {
+            needRes = PermissionManager::GetInstance().LocationPermissionSpecialHandle(reqPermList, apiVersion,
+                permsList, vagueIndex, accurateIndex); // api9 location permission handle here
+        }
+    }
+
     uint32_t size = reqPermList.size();
     for (uint32_t i = 0; i < size; i++) {
-        PermissionManager::GetInstance().GetSelfPermissionState(
-            permsList, reqPermList[i].permsState);
+        if (((reqPermList[i].permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
+            (reqPermList[i].permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME)) &&
+            (apiVersion >= ACCURATE_LOCATION_API_VERSION)) {
+            continue; // api9 location permission special handle above
+        }
+
+        PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
         if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
             needRes = true;
         }
@@ -170,6 +191,11 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     }
     if (needRes) {
         return DYNAMIC_OPER;
+    } else {
+        if ((vagueIndex == ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
+            // only accurate location permission without other DYNAMIC_OPER state return INVALID_OPER
+            return INVALID_OPER;
+        }
     }
     return PASS_OPER;
 }
