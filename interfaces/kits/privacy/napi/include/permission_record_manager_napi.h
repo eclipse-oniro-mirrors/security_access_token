@@ -16,12 +16,13 @@
 #define  INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H
 
 #include <string>
+#include <vector>
 
 #include "access_token.h"
+#include "active_change_response_info.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_context_common.h"
-#include "napi_common.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 
@@ -40,10 +41,19 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     int32_t retCode = -1;
 };
 
+struct RegisterPermActiveChangeContext : public PermActiveChangeContext {
+};
+
+struct UnregisterPermActiveChangeContext : public PermActiveChangeContext {
+    ~UnregisterPermActiveChangeContext();
+    std::vector<std::string> permList;
+};
 napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo);
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo);
 napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo);
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo);
+napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
+napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

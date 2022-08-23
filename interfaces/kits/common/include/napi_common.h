@@ -22,6 +22,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const int ARGS_ONE = 1;
 const int ARGS_TWO = 2;
 const int ARGS_THREE = 3;
 const int ARGS_FIVE = 5;

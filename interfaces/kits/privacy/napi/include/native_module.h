@@ -19,7 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
-
+#include "napi_context_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 

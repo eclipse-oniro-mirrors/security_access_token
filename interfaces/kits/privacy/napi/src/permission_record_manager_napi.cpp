@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "permission_record_manager_napi.h"
-
+#include <vector>
 #include "privacy_kit.h"
 #include "accesstoken_log.h"
 #include "napi_context_common.h"
@@ -24,6 +24,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::mutex g_lockForPermActiveChangeSubscribers;
+std::vector<RegisterPermActiveChangeContext*> g_permActiveChangeSubscribers;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
 } // namespace
@@ -547,6 +549,293 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
     NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
     callbackPtr.release();
     return result;
+}
+
+UnregisterPermActiveChangeContext::~UnregisterPermActiveChangeContext()
+{
+    if (work != nullptr) {
+        napi_delete_async_work(env, work);
+        work = nullptr;
+    }
+}
+
+static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
+    RegisterPermActiveChangeContext& registerPermActiveChangeContext)
+{
+    size_t argc = ARGS_THREE;
+    napi_value argv[ARGS_THREE] = {nullptr};
+    napi_value thisVar = nullptr;
+    napi_ref callback = nullptr;
+    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+        return false;
+    }
+    std::string type = ParseString(env, argv[PARAM0]);
+    std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM2], &valueType); // get PRARM[2] callback
+    if (valueType == napi_function) {
+        if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
+            return false;
+        }
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM2] callback matching failed");
+        return false;
+    }
+    registerPermActiveChangeContext.env = env;
+    registerPermActiveChangeContext.work = nullptr;
+    registerPermActiveChangeContext.callbackRef = callback;
+    registerPermActiveChangeContext.type = type;
+    registerPermActiveChangeContext.subscriber = std::make_shared<PermActiveStatusPtr>(permList);
+    return true;
+}
+
+static bool ParseInputToUnregister(const napi_env env, const napi_callback_info cbInfo,
+    UnregisterPermActiveChangeContext& unregisterPermActiveChangeContext)
+{
+    size_t argc = ARGS_THREE;
+    napi_value argv[ARGS_THREE] = {nullptr};
+    napi_value thisVar = nullptr;
+    napi_ref callback = nullptr;
+    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+        return false;
+    }
+    std::string type = ParseString(env, argv[PARAM0]);
+    std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, argv[PARAM2], &valueType); // get PRARM[2] callback
+    if (argc >= ARGS_THREE) {
+        if (valueType == napi_function) {
+            if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
+                return false;
+            }
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM2] callback matching failed");
+            return false;
+        }
+    }
+    unregisterPermActiveChangeContext.env = env;
+    unregisterPermActiveChangeContext.work = nullptr;
+    unregisterPermActiveChangeContext.callbackRef = callback;
+    unregisterPermActiveChangeContext.type = type;
+    unregisterPermActiveChangeContext.permList = permList;
+    return true;
+}
+
+static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeContext)
+{
+    std::vector<std::string> targetPermList;
+    permActiveChangeContext->subscriber->GetPermList(targetPermList);
+    std::sort(targetPermList.begin(), targetPermList.end());
+    std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+    for (const auto& item : g_permActiveChangeSubscribers) {
+        std::vector<std::string> permList;
+        item->subscriber->GetPermList(permList);
+        std::sort(permList.begin(), permList.end());
+        if (permList == targetPermList) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
+            return true;
+        }
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "cannot find subscriber in map");
+    return false;
+}
+
+static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeContext)
+{
+    std::vector<std::string> targetPermList;
+    permActiveChangeContext->subscriber->GetPermList(targetPermList);
+    std::sort(targetPermList.begin(), targetPermList.end());
+    std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+    auto item = g_permActiveChangeSubscribers.begin();
+    while (item != g_permActiveChangeSubscribers.end()) {
+        std::vector<std::string> permList;
+        (*item)->subscriber->GetPermList(permList);
+        std::sort(permList.begin(), permList.end());
+        if (permList == targetPermList) {
+            delete *item;
+            *item = nullptr;
+            g_permActiveChangeSubscribers.erase(item);
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete permActiveChangeContext");
+            return;
+        } else {
+            ++item;
+        }
+    }
+}
+
+static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext)
+{
+    std::vector<std::string> targetPermList = unregisterPermActiveChangeContext->permList;
+    std::sort(targetPermList.begin(), targetPermList.end());
+    std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+    for (const auto& item : g_permActiveChangeSubscribers) {
+        std::vector<std::string> permList;
+        item->subscriber->GetPermList(permList);
+        std::sort(permList.begin(), permList.end());
+        if (permList == targetPermList) {
+            unregisterPermActiveChangeContext->subscriber = item->subscriber;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "find and get subscriber in map");
+            return true;
+        }
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "cannot find and get subscriber in map");
+    return false;
+}
+
+static void RegisterPermActiveChangeExecute(napi_env env, void* data)
+{
+    if (data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "data is null");
+        return;
+    }
+    RegisterPermActiveChangeContext* registerPermActiveChangeContext =
+        reinterpret_cast<RegisterPermActiveChangeContext*>(data);
+    (*registerPermActiveChangeContext->subscriber).SetEnv(env);
+    (*registerPermActiveChangeContext->subscriber).SetCallbackRef(registerPermActiveChangeContext->callbackRef);
+    registerPermActiveChangeContext->errCode =
+        PrivacyKit::RegisterPermActiveStatusCallback(registerPermActiveChangeContext->subscriber);
+}
+
+static void RegisterPermActiveChangeComplete(napi_env env, napi_status status, void *data)
+{
+    if (data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "data is null");
+        return;
+    }
+    RegisterPermActiveChangeContext* registerPermActiveChangeContext =
+        reinterpret_cast<RegisterPermActiveChangeContext*>(data);
+    if (registerPermActiveChangeContext->errCode != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "errCode = %{public}d, delete register in map",
+            registerPermActiveChangeContext->errCode);
+        // Even if napi_delete_async_work failed, invalid registerPermActiveChangeContext needs to be deleted
+        napi_delete_async_work(env, registerPermActiveChangeContext->work);
+        registerPermActiveChangeContext->work = nullptr;
+        DeleteRegisterInVector(registerPermActiveChangeContext);
+        return;
+    }
+    NAPI_CALL_RETURN_VOID(env, napi_delete_async_work(env, registerPermActiveChangeContext->work));
+    registerPermActiveChangeContext->work = nullptr;
+}
+
+napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
+{
+    RegisterPermActiveChangeContext* registerPermActiveChangeContext = new (std::nothrow) RegisterPermActiveChangeContext();
+    if (registerPermActiveChangeContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        return nullptr;
+    }
+    std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {registerPermActiveChangeContext};
+    if (!ParseInputToRegister(env, cbInfo, *registerPermActiveChangeContext)) {
+        return nullptr;
+    }
+    if (IsExistRegister(registerPermActiveChangeContext)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribe failed. The current subscriber has been existed");
+        return nullptr;
+    }
+    {
+        // add to vector
+        std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+        g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, 
+            "add g_permActiveChangeSubscribers.size = %{public}zu, registerPermActiveChangeContext = %{public}p",
+            g_permActiveChangeSubscribers.size(), registerPermActiveChangeContext);
+    }
+    napi_value resource = nullptr;
+    if (napi_create_string_utf8(env, "RegisterPermActiveChangeCallback", NAPI_AUTO_LENGTH, &resource) != napi_ok) {
+        DeleteRegisterInVector(registerPermActiveChangeContext);
+        return nullptr;
+    }
+    if (napi_create_async_work(env,
+        nullptr,
+        resource,
+        RegisterPermActiveChangeExecute,
+        RegisterPermActiveChangeComplete,
+        reinterpret_cast<void *>(registerPermActiveChangeContext),
+        &registerPermActiveChangeContext->work) != napi_ok) {
+            DeleteRegisterInVector(registerPermActiveChangeContext);
+            return nullptr;
+    }
+    if (napi_queue_async_work(env, registerPermActiveChangeContext->work) != napi_ok) {
+        DeleteRegisterInVector(registerPermActiveChangeContext);
+        return nullptr;
+    }
+    callbackPtr.release();
+    return nullptr;
+}
+
+static void UnregisterPermActiveChangeExecute(napi_env env, void* data)
+{
+    if (data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "data is null");
+        return;
+    }
+    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
+        reinterpret_cast<UnregisterPermActiveChangeContext*>(data);
+    unregisterPermActiveChangeContext->errCode =
+        PrivacyKit::UnRegisterPermActiveStatusCallback(unregisterPermActiveChangeContext->subscriber);
+}
+
+static void UnregisterPermActiveChangeCompleted(napi_env env, napi_status status, void *data)
+{
+    if (data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "data is null");
+        return;
+    }
+    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
+        reinterpret_cast<UnregisterPermActiveChangeContext*>(data);
+    std::unique_ptr<UnregisterPermActiveChangeContext> callbackPtr {unregisterPermActiveChangeContext};
+    if (unregisterPermActiveChangeContext->callbackRef != nullptr) {
+        napi_value results[ARGS_ONE] = {nullptr};
+        NAPI_CALL_RETURN_VOID(env, napi_get_null(env, &results[PARAM0]));
+        napi_value undefined;
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &undefined));
+        napi_value resultout = nullptr;
+        napi_value callback = nullptr;
+        NAPI_CALL_RETURN_VOID(env,
+            napi_get_reference_value(env, unregisterPermActiveChangeContext->callbackRef, &callback));
+        NAPI_CALL_RETURN_VOID(env,
+            napi_call_function(env, undefined, callback, ARGS_ONE, &results[PARAM0], &resultout));
+    }
+    if (unregisterPermActiveChangeContext->errCode == RET_SUCCESS) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "ret = %{public}d", unregisterPermActiveChangeContext->errCode);
+        DeleteRegisterInVector(unregisterPermActiveChangeContext);
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "errCode = %{public}d", unregisterPermActiveChangeContext->errCode);
+    }
+}
+
+napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
+{
+    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext = new (std::nothrow) UnregisterPermActiveChangeContext();
+    if (unregisterPermActiveChangeContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        return nullptr;
+    }
+    std::unique_ptr<UnregisterPermActiveChangeContext> callbackPtr {unregisterPermActiveChangeContext};
+    if (!ParseInputToUnregister(env, cbInfo, *unregisterPermActiveChangeContext)) {
+        return nullptr;
+    }
+    if (!FindAndGetSubscriber(unregisterPermActiveChangeContext)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
+        return nullptr;
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "The current subscriber exist");
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "UnregisterPermActiveChangeCallback", NAPI_AUTO_LENGTH, &resource));
+    NAPI_CALL(env, napi_create_async_work(env,
+        nullptr,
+        resource,
+        UnregisterPermActiveChangeExecute,
+        UnregisterPermActiveChangeCompleted,
+        reinterpret_cast<void *>(unregisterPermActiveChangeContext),
+        &(unregisterPermActiveChangeContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, unregisterPermActiveChangeContext->work));
+    callbackPtr.release();
+    return nullptr;
 }
 }  // namespace AccessToken
 }  // namespace Security
