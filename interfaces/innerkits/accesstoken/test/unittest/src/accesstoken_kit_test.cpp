@@ -2575,7 +2575,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState002
  * @tc.desc: only vague location permission
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
 {
@@ -2612,7 +2612,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState003
  * @tc.desc: only vague location permission after refuse
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
 {
@@ -2649,7 +2649,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState004
  * @tc.desc: only vague location permission after accept
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
 {
@@ -2686,7 +2686,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState005
  * @tc.desc: only accurate location permission
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState005, TestSize.Level1)
 {
@@ -2723,7 +2723,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState005, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState006
  * @tc.desc: all location permissions
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState006, TestSize.Level1)
 {
@@ -2768,7 +2768,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState006, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState007
  * @tc.desc: all location permissions after accept vague location permission
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState007, TestSize.Level1)
 {
@@ -2813,7 +2813,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState007, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState008
  * @tc.desc: all location permissions after refuse vague location permission
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState008, TestSize.Level1)
 {
@@ -2858,7 +2858,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState008, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState009
  * @tc.desc: all location permissions after accept all location permissions
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState009, TestSize.Level1)
 {
@@ -2903,7 +2903,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState009, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState010
  * @tc.desc: all location permissions whith other permissions
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState010, TestSize.Level1)
 {
@@ -2964,7 +2964,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState010, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState011
  * @tc.desc: only accurate location permission whith api8
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState011, TestSize.Level1)
 {
@@ -3001,7 +3001,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState011, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState012
  * @tc.desc: all location permissions with api8
  * @tc.type: FUNC
- * @tc.require: issue I5NOQI
+ * @tc.require: issueI5NOQI
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
 {
@@ -3148,7 +3148,7 @@ public:
  * @tc.name: RegisterPermStateChangeCallback001
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1)
 {
@@ -3227,7 +3227,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback002
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback002, TestSize.Level1)
 {
@@ -3284,7 +3284,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback002, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback003
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1)
 {
@@ -3350,7 +3350,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback004
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1)
 {
@@ -3416,7 +3416,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback005
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback005, TestSize.Level1)
 {
