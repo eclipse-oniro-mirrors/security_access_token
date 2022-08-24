@@ -301,7 +301,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
     PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
-    int64_t total = countValue.GetInt64(Constant::COUNT_CMD);
+    int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);
     if (total > Constant::MAX_TOTAL_RECORD) {
         uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
         if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {

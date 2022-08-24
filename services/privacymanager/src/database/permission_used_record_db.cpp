@@ -189,7 +189,7 @@ void PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
     auto countStatement = Prepare(countSql);
     if (countStatement.Step() == Statement::State::ROW) {
         int32_t column = 0;
-        result.Put(Constant::COUNT_CMD, countStatement.GetValue(column, true));
+        result.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, true));
     }
 }
 

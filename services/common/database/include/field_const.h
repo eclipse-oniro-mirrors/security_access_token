@@ -59,6 +59,8 @@ const std::string FIELD_TIMESTAMP_END = "timestamp_end";
 const std::string FIELD_FLAG = "flag";
 
 const std::string FIELD_API_VERSION = "api_version";
+
+const std::string FIELD_COUNT_NUMBER = "count";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
