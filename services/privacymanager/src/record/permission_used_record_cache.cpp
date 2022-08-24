@@ -61,6 +61,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(PermissionRecord& record)
                 break;
             } else if (curFindMergePos->record.tokenId == record.tokenId &&
                 record.opCode == curFindMergePos->record.opCode &&
+                record.status == curFindMergePos->record.status &&
                 (record.timestamp - curFindMergePos->record.timestamp) <= Constant::PRECISE) {
                 MergeRecord(record, curFindMergePos);
             } else {
@@ -71,17 +72,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(PermissionRecord& record)
         AddRecordNode(record); // refresh curRecordBUfferPos and readableSize
         remainCount++;
         if (persistPendingBufferEnd != nullptr) {
-            readableSize_ = remainCount;
-            std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
-                std::make_shared<PermissionUsedRecordNode>();
-            tmpRecordBufferHead->next = persistPendingBufferEnd->next;
-            persistPendingBufferEnd->next.reset();
-            recordBufferHead_ = tmpRecordBufferHead;
-            if (persistPendingBufferEnd == curRecordBufferPos_) { // persistPendingBufferEnd == curRecordBufferPos
-                curRecordBufferPos_ = recordBufferHead_;
-            } else { // remainCount !=0 ==> recordBufferHead->next != nullptr
-                recordBufferHead_->next->pre = recordBufferHead_;
-            }
+            ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
     if (persistPendingBufferEnd != nullptr) {
@@ -180,9 +171,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     return true;
 }
 
-int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
+int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
 {
-    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
@@ -207,34 +197,23 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
             curFindDeletePos = next;
         }
         if (countPersistPendingNode != 0) { // refresh recordBufferHead
-            readableSize_ -= countPersistPendingNode;
-            std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
-                std::make_shared<PermissionUsedRecordNode>();
-            tmpRecordBufferHead->next = persistPendingBufferEnd->next;
-            persistPendingBufferEnd->next.reset();
-            recordBufferHead_ = tmpRecordBufferHead;
-            recordBufferHead_->pre.reset();
-            if (persistPendingBufferEnd == curRecordBufferPos_) {
-                curRecordBufferPos_ = recordBufferHead_;
-            } else { // remainCount !=0 ==> recordBufferHead->next != nullptr
-                recordBufferHead_->next->pre = recordBufferHead_;
-            }
+            int32_t remainCount = readableSize_ - countPersistPendingNode;
+            ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    RemoveRecordsFromPersistPendingBufferQueue(record, persistPendingBufferHead, persistPendingBufferEnd);
+    RemoveRecordsFromPersistPendingBufferQueue(tokenId, persistPendingBufferHead, persistPendingBufferEnd);
     return Constant::SUCCESS;
 }
 
-void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const GenericValues& record,
+void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const AccessTokenID tokenId,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd)
 {
-    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     {
         std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock_);
         if (!persistPendingBufferQueue_.empty()) {
-            for (auto persistHead : persistPendingBufferQueue_) {
+            for (auto& persistHead : persistPendingBufferQueue_) {
                 curFindDeletePos = persistHead->next;
                 while (curFindDeletePos != nullptr) {
                     auto next = curFindDeletePos->next;
@@ -245,8 +224,10 @@ void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const
                 }
             }
         }
-        PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
     }
+    GenericValues record;
+    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
+    PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
     if (persistPendingBufferEnd != nullptr) { // add to queue
         AddToPersistQueue(persistPendingBufferHead);
     }
@@ -281,36 +262,26 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
             curFindPos = next;
         }
         if (countPersistPendingNode != 0) { // refresh recordBufferHead
-            readableSize_ -= countPersistPendingNode;
-            std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
-                std::make_shared<PermissionUsedRecordNode>();
-            tmpRecordBufferHead->next = persistPendingBufferEnd->next;
-            persistPendingBufferEnd->next.reset();
-            recordBufferHead_ = tmpRecordBufferHead;
-            if (persistPendingBufferEnd == curRecordBufferPos_) {
-                curRecordBufferPos_ = recordBufferHead_;
-            } else { // remainCount !=0 ==> recordBufferHead->next != nullptr
-                recordBufferHead_->next->pre = recordBufferHead_;
-            }
+            int32_t remainCount = readableSize_ - countPersistPendingNode;
+            ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    GetRecordsFromPersistPendingBufferQueue(permissionList, andConditionValues,
-        orConditionValues, findRecordsValues, opCodeList);
+    GetRecordsFromPersistPendingBufferQueue(opCodeList, andConditionValues,
+        orConditionValues, findRecordsValues);
     if (countPersistPendingNode != 0) {
         AddToPersistQueue(persistPendingBufferHead);
     }
 }
 
-void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
-    const std::vector<std::string>& permissionList, const GenericValues& andConditionValues,
-    const GenericValues& orConditionValues, std::vector<GenericValues>& findRecordsValues,
-    const std::set<int32_t>& opCodeList)
+void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList,
+    const GenericValues& andConditionValues, const GenericValues& orConditionValues,
+    std::vector<GenericValues>& findRecordsValues)
 {
     AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock_);
     if (!persistPendingBufferQueue_.empty()) {
-        for (auto persistHead : persistPendingBufferQueue_) {
+        for (auto& persistHead : persistPendingBufferQueue_) {
             curFindPos = persistHead->next;
             while (curFindPos != nullptr) {
                 auto next = curFindPos->next;
@@ -323,9 +294,29 @@ void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
             }
         }
     }
-    if (tokenId != INVALID_TOKENID && !PermissionRecordRepository::GetInstance().FindRecordValues(
+    if (!PermissionRecordRepository::GetInstance().FindRecordValues(
         andConditionValues, orConditionValues, findRecordsValues)) { // find records from database
         ACCESSTOKEN_LOG_ERROR(LABEL, "find records from database failed");
+    }
+}
+
+void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
+    std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd)
+{
+    readableSize_ = remainCount;
+    // refresh recordBufferHead
+    std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
+        std::make_shared<PermissionUsedRecordNode>();
+    tmpRecordBufferHead->next = persistPendingBufferEnd->next;
+    persistPendingBufferEnd->next.reset();
+    recordBufferHead_ = tmpRecordBufferHead;
+    
+    if (persistPendingBufferEnd == curRecordBufferPos_) {
+        // persistPendingBufferEnd == curRecordBufferPos, reset curRecordBufferPos
+        curRecordBufferPos_ = recordBufferHead_;
+    } else {
+        // recordBufferHead_->next->pre = persistPendingBufferEnd, reset recordBufferHead_->next->pre
+        recordBufferHead_->next->pre = recordBufferHead_;
     }
 }
 

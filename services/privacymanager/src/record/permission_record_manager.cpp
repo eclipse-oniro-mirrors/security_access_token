@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
 static const std::string DEFAULT_DEVICEID = "0";
+static const std::string FIELD_COUNT_NUMBER = "count";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -125,9 +126,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    GenericValues record;
-    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
-    PermissionUsedRecordCache::GetInstance().RemoveRecords(record); // remove from cache and database
+    PermissionUsedRecordCache::GetInstance().RemoveRecords(tokenId); // remove from cache and database
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
@@ -300,10 +299,8 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
-    if (!PermissionRecordRepository::GetInstance().CountRecordValues(countValue)) {
-        return Constant::FAILURE;
-    }
-    int64_t total = countValue.GetInt64(Constant::COUNT_CMD);
+    PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
+    int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);
     if (total > Constant::MAX_TOTAL_RECORD) {
         uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
         if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {

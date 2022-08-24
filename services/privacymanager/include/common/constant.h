@@ -62,7 +62,6 @@ public:
     const static int32_t RECORD_DELETE_TIME = 30 * 86400;
     const static int32_t PRECISE = 60;
     const static int32_t LATEST_RECORD_TIME = 7 * 86400;
-    const static std::string COUNT_CMD;
 
     const static std::map<std::string, int32_t> PERMISSION_OPCODE_MAP;
 public:
