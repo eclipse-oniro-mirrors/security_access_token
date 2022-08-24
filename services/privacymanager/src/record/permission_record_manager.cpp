@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
 static const std::string DEFAULT_DEVICEID = "0";
+static const std::string FIELD_COUNT_NUMBER = "count";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -124,9 +125,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
         return;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    GenericValues record;
-    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);  
     PermissionUsedRecordCache::GetInstance().RemoveRecords(record); // remove from cache and database
 }
 

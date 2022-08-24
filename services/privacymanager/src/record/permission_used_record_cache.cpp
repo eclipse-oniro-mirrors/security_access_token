@@ -171,9 +171,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     return true;
 }
 
-int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
+int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
 {
-    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
@@ -202,15 +201,14 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const GenericValues& record)
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    RemoveRecordsFromPersistPendingBufferQueue(record, persistPendingBufferHead, persistPendingBufferEnd);
+    RemoveRecordsFromPersistPendingBufferQueue(tokenId, persistPendingBufferHead, persistPendingBufferEnd);
     return Constant::SUCCESS;
 }
 
-void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const GenericValues& record,
+void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const AccessTokenID tokenId,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd)
 {
-    AccessTokenID tokenId = record.GetInt(FIELD_TOKEN_ID);
     {
         std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock_);
@@ -226,8 +224,10 @@ void PermissionUsedRecordCache::RemoveRecordsFromPersistPendingBufferQueue(const
                 }
             }
         }
-        PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
     }
+    GenericValues record;
+    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
+    PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
     if (persistPendingBufferEnd != nullptr) { // add to queue
         AddToPersistQueue(persistPendingBufferHead);
     }

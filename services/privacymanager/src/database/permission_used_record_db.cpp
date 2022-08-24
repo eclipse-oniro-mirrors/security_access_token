@@ -26,6 +26,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordDb"
 };
+static const std::string FIELD_COUNT_NUMBER = "count";
 }
 
 PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
