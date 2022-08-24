@@ -327,8 +327,8 @@ static int32_t GetAplLevel(const char *aplStr)
 
 static void WriteToFile(const cJSON *root)
 {
-    size_t strLen;
-    size_t writtenLen;
+    ssize_t strLen;
+    ssize_t writtenLen;
 
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
