@@ -2474,7 +2474,7 @@ public:
  * @tc.name: RegisterPermStateChangeCallback001
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1)
 {
@@ -2553,7 +2553,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback002
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback002, TestSize.Level1)
 {
@@ -2610,7 +2610,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback002, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback003
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1)
 {
@@ -2676,7 +2676,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback004
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1)
 {
@@ -2742,7 +2742,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
  * @tc.name: RegisterPermStateChangeCallback005
  * @tc.desc: RegisterPermStateChangeCallback permList
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback005, TestSize.Level1)
 {
