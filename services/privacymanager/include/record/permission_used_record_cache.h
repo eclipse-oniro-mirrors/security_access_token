@@ -46,9 +46,9 @@ public:
     void GetRecords(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues);
-    void GetRecordsFromPersistPendingBufferQueue(const std::vector<std::string>& permissionList,
+    void GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues, const std::set<int32_t>& opCodeList);
+        std::vector<GenericValues>& findRecordsValues);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
         const GenericValues& andConditionValues, const PermissionRecord& record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);

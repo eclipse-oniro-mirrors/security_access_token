@@ -266,17 +266,16 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    GetRecordsFromPersistPendingBufferQueue(permissionList, andConditionValues,
-        orConditionValues, findRecordsValues, opCodeList);
+    GetRecordsFromPersistPendingBufferQueue(opCodeList, andConditionValues,
+        orConditionValues, findRecordsValues);
     if (countPersistPendingNode != 0) {
         AddToPersistQueue(persistPendingBufferHead);
     }
 }
 
-void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(
-    const std::vector<std::string>& permissionList, const GenericValues& andConditionValues,
-    const GenericValues& orConditionValues, std::vector<GenericValues>& findRecordsValues,
-    const std::set<int32_t>& opCodeList)
+void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList
+    const GenericValues& andConditionValues, const GenericValues& orConditionValues,
+    std::vector<GenericValues>& findRecordsValues)
 {
     AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
