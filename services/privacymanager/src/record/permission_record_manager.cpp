@@ -125,7 +125,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
         return;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);  
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionUsedRecordCache::GetInstance().RemoveRecords(tokenId); // remove from cache and database
 }
 
