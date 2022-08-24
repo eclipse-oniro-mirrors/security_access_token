@@ -273,7 +273,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
     }
 }
 
-void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList
+void PermissionUsedRecordCache::GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList,
     const GenericValues& andConditionValues, const GenericValues& orConditionValues,
     std::vector<GenericValues>& findRecordsValues)
 {
