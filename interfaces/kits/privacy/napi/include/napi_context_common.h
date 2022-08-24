@@ -68,7 +68,6 @@ struct PermActiveChangeContext {
 
 void UvQueueWorkActiveStatusChange(uv_work_t* work, int status);
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result);
-
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

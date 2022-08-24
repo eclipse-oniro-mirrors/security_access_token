@@ -26,6 +26,7 @@ namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermActiveChangeSubscribers;
 std::vector<RegisterPermActiveChangeContext*> g_permActiveChangeSubscribers;
+static const size_t MAX_CALLBACK_SIZE = 200;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
 } // namespace
@@ -573,7 +574,10 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     std::string type = ParseString(env, argv[PARAM0]);
     std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
     napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[PARAM2], &valueType); // get PRARM[2] callback
+    if (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get napi type failed");
+        return false;
+    } // get PRARM[2] callback type
     if (valueType == napi_function) {
         if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
@@ -605,7 +609,10 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     std::string type = ParseString(env, argv[PARAM0]);
     std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
     napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[PARAM2], &valueType); // get PRARM[2] callback
+    if (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get napi type failed");
+        return false;
+    } // get PRARM[2] callback type
     if (argc >= ARGS_THREE) {
         if (valueType == napi_function) {
             if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
@@ -723,7 +730,8 @@ static void RegisterPermActiveChangeComplete(napi_env env, napi_status status, v
 
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
-    RegisterPermActiveChangeContext* registerPermActiveChangeContext = new (std::nothrow) RegisterPermActiveChangeContext();
+    RegisterPermActiveChangeContext* registerPermActiveChangeContext =
+        new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
         return nullptr;
@@ -739,8 +747,12 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     {
         // add to vector
         std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+        if (g_permActiveChangeSubscribers.size() >= MAX_CALLBACK_SIZE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "subscribers size has reached max value");
+            return nullptr;
+        }
         g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, 
+        ACCESSTOKEN_LOG_DEBUG(LABEL,
             "add g_permActiveChangeSubscribers.size = %{public}zu, registerPermActiveChangeContext = %{public}p",
             g_permActiveChangeSubscribers.size(), registerPermActiveChangeContext);
     }
@@ -810,7 +822,8 @@ static void UnregisterPermActiveChangeCompleted(napi_env env, napi_status status
 
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
-    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext = new (std::nothrow) UnregisterPermActiveChangeContext();
+    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
+        new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
         return nullptr;
