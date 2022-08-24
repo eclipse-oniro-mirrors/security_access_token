@@ -607,7 +607,7 @@ public:
  * @tc.name: RegisterPermActiveStatusCallback001
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5NT1X
  */
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 {
@@ -672,7 +672,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
  * @tc.name: RegisterPermActiveStatusCallback002
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5NT1X
  */
 
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)

@@ -22,6 +22,7 @@ group("accesstoken_build_module_test") {
       "//base/security/access_token/interfaces/innerkits/accesstoken/test:unittest",
       "//base/security/access_token/interfaces/innerkits/nativetoken/test:unittest",
       "//base/security/access_token/interfaces/innerkits/privacy/test:unittest",
+      "//base/security/access_token/interfaces/innerkits/token_callback/test:unittest",
       "//base/security/access_token/interfaces/innerkits/token_setproc/test:unittest",
       "//base/security/access_token/services/accesstokenmanager/test:unittest",
     ]
