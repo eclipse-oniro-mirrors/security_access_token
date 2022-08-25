@@ -15,9 +15,10 @@
 
 #include "allochaptoken_fuzzer.h"
 
+#include <iostream>
+#include <thread>
 #include <string>
 #include <vector>
-#include <thread>
 #undef private
 #include "accesstoken_kit.h"
 
@@ -27,40 +28,38 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool AllocHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
-        bool result = false;
-        std::string testdata;
         AccessTokenIDEx tokenIdEx = {0};
         if ((data == nullptr) || (size <= 0)) {
-            return result;
+            return tokenIdEx.tokenIdExStruct.tokenID != 0;
         }
         if (size > 0) {
-            testdata = reinterpret_cast<const char*>(data);
+            std::string testName(reinterpret_cast<const char*>(data), size);
             PermissionDef TestPermDef = {
-                .permissionName = testdata,
-                .bundleName = testdata,
+                .permissionName = testName,
+                .bundleName = testName,
                 .grantMode = 1,
                 .availableLevel = APL_NORMAL,
-                .label = testdata,
+                .label = testName,
                 .labelId = 1,
-                .description = testdata,
+                .description = testName,
                 .descriptionId = 1
             };
             PermissionStateFull TestState = {
-                .permissionName = testdata,
+                .permissionName = testName,
                 .isGeneral = true,
-                .resDeviceID = {testdata},
+                .resDeviceID = {testName},
                 .grantStatus = {PermissionState::PERMISSION_GRANTED},
                 .grantFlags = {1},
             };
             HapInfoParams TestInfoParms = {
                 .userID = 1,
-                .bundleName = testdata,
+                .bundleName = testName,
                 .instIndex = 0,
-                .appIDDesc = testdata
+                .appIDDesc = testName
             };
             HapPolicyParams TestPolicyPrams = {
                 .apl = APL_NORMAL,
-                .domain = testdata,
+                .domain = testName,
                 .permList = {TestPermDef},
                 .permStateList = {TestState}
             };

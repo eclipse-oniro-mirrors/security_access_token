@@ -28,38 +28,38 @@ namespace OHOS {
     bool UpdateHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
         bool result = false;
-        std::string testdata;
         if ((data == nullptr) || (size <= 0)) {
             return result;
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            testdata = reinterpret_cast<const char*>(data);
+            int32_t apiVersion = static_cast<int32_t>(size);
+            std::string testName(reinterpret_cast<const char*>(data), size);
             PermissionDef TestPermDef = {
-                .permissionName = testdata,
-                .bundleName = testdata,
+                .permissionName = testName,
+                .bundleName = testName,
                 .grantMode = 1,
                 .availableLevel = APL_NORMAL,
-                .label = testdata,
+                .label = testName,
                 .labelId = 1,
-                .description = testdata,
+                .description = testName,
                 .descriptionId = 1
             };
             PermissionStateFull TestState = {
-                .permissionName = testdata,
+                .permissionName = testName,
                 .isGeneral = true,
-                .resDeviceID = {testdata},
+                .resDeviceID = {testName},
                 .grantStatus = {PermissionState::PERMISSION_GRANTED},
                 .grantFlags = {1},
             };
             HapPolicyParams TestPolicyPrams = {
                 .apl = APL_NORMAL,
-                .domain = testdata,
+                .domain = testName,
                 .permList = {TestPermDef},
                 .permStateList = {TestState}
             };
 
-            result = AccessTokenKit::UpdateHapToken(TOKENID, testdata, TestPolicyPrams);
+            result = AccessTokenKit::UpdateHapToken(TOKENID, testName, apiVersion, TestPolicyPrams);
         }
         return result;
     }
