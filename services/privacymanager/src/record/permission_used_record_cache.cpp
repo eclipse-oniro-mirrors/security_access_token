@@ -334,7 +334,7 @@ bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const
     const GenericValues& andConditionValues, const PermissionRecord& record)
 {
     // compare tokenId
-    if (record.tokenId != (int32_t)tokenId) {
+    if (record.tokenId != tokenId) {
         return false;
     }
     // compare opCode
