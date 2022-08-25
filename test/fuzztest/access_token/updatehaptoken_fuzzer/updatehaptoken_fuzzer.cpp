@@ -33,7 +33,6 @@ namespace OHOS {
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            int32_t apiVersion = static_cast<int32_t>(size);
             std::string testName(reinterpret_cast<const char*>(data), size);
             PermissionDef TestPermDef = {
                 .permissionName = testName,
@@ -58,8 +57,8 @@ namespace OHOS {
                 .permList = {TestPermDef},
                 .permStateList = {TestState}
             };
-
-            result = AccessTokenKit::UpdateHapToken(TOKENID, testName, apiVersion, TestPolicyPrams);
+            constexpr int32_t DEFAULT_API_VERSION = 8;
+            result = AccessTokenKit::UpdateHapToken(TOKENID, testName, DEFAULT_API_VERSION, TestPolicyPrams);
         }
         return result;
     }
