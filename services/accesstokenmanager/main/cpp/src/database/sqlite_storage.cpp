@@ -58,7 +58,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
         FIELD_BUNDLE_NAME, FIELD_INST_INDEX, FIELD_DLP_TYPE,
         FIELD_APP_ID, FIELD_DEVICE_ID,
         FIELD_APL, FIELD_TOKEN_VERSION,
-        FIELD_TOKEN_ATTR
+        FIELD_TOKEN_ATTR, FIELD_API_VERSION
     };
 
     SqliteTable NativeTokenInfoTable;
@@ -299,6 +299,7 @@ int SqliteStorage::CreateHapTokenInfoTable() const
         .append(FIELD_APL + " integer not null,")
         .append(FIELD_TOKEN_VERSION + " integer not null,")
         .append(FIELD_TOKEN_ATTR + " integer not null,")
+        .append(FIELD_API_VERSION + " integer not null,")
         .append("primary key(" + FIELD_TOKEN_ID)
         .append("))");
     return ExecuteSql(sql);

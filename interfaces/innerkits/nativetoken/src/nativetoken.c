@@ -248,7 +248,7 @@ static int32_t AtlibInit(void)
 static int32_t GetRandomTokenId(uint32_t *randNum)
 {
     uint32_t random;
-    int32_t len;
+    ssize_t len;
     int32_t fd = open("/dev/urandom", O_RDONLY);
     if (fd < 0) {
         return ATRET_FAILED;
@@ -277,7 +277,7 @@ static int32_t IsTokenUniqueIdExist(uint32_t tokenUniqueId)
     return 0;
 }
 
-static NativeAtId CreateNativeTokenId(void)
+static NativeAtId CreateNativeTokenId(const char *processName)
 {
     uint32_t rand;
     NativeAtId tokenId;
@@ -302,8 +302,14 @@ static NativeAtId CreateNativeTokenId(void)
 
     innerId->reserved = 0;
     innerId->tokenUniqueId = rand & (TOKEN_RANDOM_MASK);
-    innerId->type = TOKEN_NATIVE_TYPE;
     innerId->version = 1;
+
+    if (strcmp(processName, HDC_PROCESS_NAME) == 0) {
+        innerId->type = TOKEN_SHELL_TYPE;
+    } else {
+        innerId->type = TOKEN_NATIVE_TYPE;
+    }
+
     return tokenId;
 }
 
@@ -327,8 +333,8 @@ static int32_t GetAplLevel(const char *aplStr)
 
 static void WriteToFile(const cJSON *root)
 {
-    int32_t strLen;
-    int32_t writtenLen;
+    ssize_t strLen;
+    ssize_t writtenLen;
 
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
@@ -348,7 +354,7 @@ static void WriteToFile(const cJSON *root)
         writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
         if (writtenLen != strLen) {
-            AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %d.", __func__, writtenLen);
+            AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
         }
     } while (0);
@@ -465,7 +471,7 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
     NativeTokenList *tokenNode;
     NativeAtId id;
 
-    id = CreateNativeTokenId();
+    id = CreateNativeTokenId(tokenInfo->processName);
     if (id == INVALID_TOKEN_ID) {
         return ATRET_FAILED;
     }

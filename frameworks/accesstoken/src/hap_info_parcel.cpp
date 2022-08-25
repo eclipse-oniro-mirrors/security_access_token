@@ -26,6 +26,7 @@ bool HapInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.instIndex));
     RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.dlpType));
     RETURN_IF_FALSE(out.WriteString(this->hapInfoParameter.appIDDesc));
+    RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.apiVersion));
     return true;
 }
 
@@ -38,6 +39,7 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.instIndex), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.dlpType), hapInfoParcel);
     hapInfoParcel->hapInfoParameter.appIDDesc = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.apiVersion), hapInfoParcel);
 
     return hapInfoParcel;
 }

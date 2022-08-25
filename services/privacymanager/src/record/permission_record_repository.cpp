@@ -71,6 +71,42 @@ bool PermissionRecordRepository::RemoveRecordValues(const GenericValues& conditi
     }
     return true;
 }
+
+bool PermissionRecordRepository::GetAllRecordValuesByKey(
+    const std::string& condition, std::vector<GenericValues>& resultValues)
+{
+    if (PermissionUsedRecordDb::GetInstance().GetDistinctValue(PermissionUsedRecordDb::PERMISSION_RECORD,
+        condition, resultValues) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
+        return false;
+    }
+    return true;
+}
+
+void PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
+{
+    PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues);
+}
+
+bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& andConditions)
+{
+    if (PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
+        andConditions) != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
+        return false;
+    }
+    return true;
+}
+
+bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excessiveSize)
+{
+    if (PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
+        excessiveSize) != PermissionUsedRecordDb::SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
+            return false;
+    }
+    return true;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -82,27 +82,27 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int32_t successCount = data.ReadInt32();
     int32_t failCount = data.ReadInt32();
-    int32_t result = this->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
+    int32_t result = this->AddPermissionUsedRecord(tokenId, permissionName, successCount, failCount);
     reply.WriteInt32(result);
 }
 
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenID = data.ReadUint32();
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int32_t result = this->StartUsingPermission(tokenID, permissionName);
+    int32_t result = this->StartUsingPermission(tokenId, permissionName);
     reply.WriteInt32(result);
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenID = data.ReadUint32();
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int32_t result = this->StopUsingPermission(tokenID, permissionName);
+    int32_t result = this->StopUsingPermission(tokenId, permissionName);
     reply.WriteInt32(result);
 }
 
@@ -115,9 +115,9 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
+    AccessTokenID tokenId = data.ReadUint32();
     std::string deviceID = data.ReadString();
-    int32_t result = this->RemovePermissionUsedRecords(tokenID, deviceID);
+    int32_t result = this->RemovePermissionUsedRecords(tokenId, deviceID);
     reply.WriteInt32(result);
 }
 
@@ -159,9 +159,9 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 
 void PrivacyManagerStub::DumpRecordInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    std::string bundleName = data.ReadString();
+    AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    std::string dumpInfo = this->DumpRecordInfo(bundleName, permissionName);
+    std::string dumpInfo = this->DumpRecordInfo(tokenId, permissionName);
     reply.WriteString(dumpInfo);
 }
 

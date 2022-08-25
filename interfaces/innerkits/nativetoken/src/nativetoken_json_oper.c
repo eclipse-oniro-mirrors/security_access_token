@@ -52,7 +52,7 @@ uint32_t GetTokenIdFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
     }
 
     AtInnerInfo *atIdInfo = (AtInnerInfo *)&(tokenIdJson->valueint);
-    if (atIdInfo->type != TOKEN_NATIVE_TYPE) {
+    if (atIdInfo->type != TOKEN_NATIVE_TYPE && atIdInfo->type != TOKEN_SHELL_TYPE) {
         AT_LOG_ERROR("[ATLIB-%s]:tokenId type is invalid.", __func__);
         return ATRET_FAILED;
     }

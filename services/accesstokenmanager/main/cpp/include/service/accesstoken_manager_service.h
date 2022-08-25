@@ -61,7 +61,7 @@ public:
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& InfoParcel) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& InfoParcel) override;
     int UpdateHapToken(AccessTokenID tokenID,
-        const std::string& appIDDesc, const HapPolicyParcel& policyParcel) override;
+        const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel) override;
     int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
@@ -79,7 +79,7 @@ public:
     void DestroyDeviceListenner();
 #endif
 
-    void DumpTokenInfo(std::string& dumpInfo) override;
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:
     bool Initialize();

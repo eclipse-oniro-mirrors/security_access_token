@@ -33,7 +33,7 @@
         "ipc",
         "napi",
         "safwk",
-        "samgr_standard",
+        "samgr",
         "selinux",
         "startup_l2",
         "zlib"
@@ -86,6 +86,15 @@
               "privacy_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/privacy/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/token_callback:libtoken_callback_sdk",
+          "header": {
+            "header_files": [
+              "token_callback_stub.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/token_callback/include"
           }
         },
         {

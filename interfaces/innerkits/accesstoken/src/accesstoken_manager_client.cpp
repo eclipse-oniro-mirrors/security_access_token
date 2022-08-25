@@ -48,7 +48,6 @@ AccessTokenManagerClient::~AccessTokenManagerClient()
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -59,7 +58,6 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
 
 int AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -71,7 +69,6 @@ int AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std
 int AccessTokenManagerClient::GetDefPermission(
     const std::string& permissionName, PermissionDef& permissionDefResult)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -85,7 +82,6 @@ int AccessTokenManagerClient::GetDefPermission(
 
 int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -103,7 +99,6 @@ int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vect
 int AccessTokenManagerClient::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -120,7 +115,6 @@ int AccessTokenManagerClient::GetReqPermissions(
 
 int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -129,10 +123,8 @@ int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std
     return proxy->GetPermissionFlag(tokenID, permissionName);
 }
 
-PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(
-    std::vector<PermissionListState>& permList)
+PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList.size() : %{public}d.", (int)permList.size());
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
@@ -166,7 +158,6 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(
 
 int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -177,7 +168,6 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
 
 int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -188,7 +178,6 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
 
 int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -226,8 +215,6 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
 int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
-
     if (customizedCb == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCb is nullptr");
         return RET_FAILED;
@@ -253,8 +240,6 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: called!", __func__);
-
     std::lock_guard<std::mutex> lock(callbackMutex_);
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback == callbackMap_.end()) {
@@ -278,7 +263,6 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
 AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = { 0 };
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -294,7 +278,6 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
 
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -305,7 +288,6 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
 
 ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -316,7 +298,6 @@ ATokenTypeEnum AccessTokenManagerClient::GetTokenType(AccessTokenID tokenID)
 
 int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -327,7 +308,6 @@ int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::
 
 AccessTokenID AccessTokenManagerClient::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -339,7 +319,6 @@ AccessTokenID AccessTokenManagerClient::GetHapTokenID(int userID, const std::str
 AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -349,9 +328,8 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
 }
 
 int AccessTokenManagerClient::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy)
+    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -359,12 +337,11 @@ int AccessTokenManagerClient::UpdateHapToken(
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicyParameter = policy;
-    return proxy->UpdateHapToken(tokenID, appIDDesc, hapPolicyParcel);
+    return proxy->UpdateHapToken(tokenID, appIDDesc, apiVersion, hapPolicyParcel);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -379,7 +356,6 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
 
 int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -394,7 +370,6 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -409,7 +384,6 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
 
 int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -428,7 +402,6 @@ int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoF
 
 int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -445,7 +418,6 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
 int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -464,7 +436,6 @@ int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& device
 
 int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -477,7 +448,6 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
 
 AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -490,7 +460,6 @@ AccessTokenID AccessTokenManagerClient::GetRemoteNativeTokenID(const std::string
 
 int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -502,15 +471,14 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
 }
 #endif
 
-void AccessTokenManagerClient::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenManagerClient::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s: called!", __func__);
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: proxy is null", __func__);
         return;
     }
-    proxy->DumpTokenInfo(dumpInfo);
+    proxy->DumpTokenInfo(tokenID, dumpInfo);
 }
 
 void AccessTokenManagerClient::InitProxy()
@@ -519,12 +487,12 @@ void AccessTokenManagerClient::InitProxy()
     if (proxy_ == nullptr) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
             return;
         }
         auto accesstokenSa = sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
         if (accesstokenSa == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
                 IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
             return;
         }
@@ -535,7 +503,7 @@ void AccessTokenManagerClient::InitProxy()
         }
         proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
         if (proxy_ == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "iface_cast get null");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
         }
     }
 }

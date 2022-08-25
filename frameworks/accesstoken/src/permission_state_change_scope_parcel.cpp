@@ -22,7 +22,7 @@ namespace AccessToken {
 bool PermStateChangeScopeParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteUint32((this->scope.tokenIDs.size())));
-    for (auto& tokenID : this->scope.tokenIDs) {
+    for (const auto& tokenID : this->scope.tokenIDs) {
         RETURN_IF_FALSE(out.WriteUint32(tokenID));
     }
 

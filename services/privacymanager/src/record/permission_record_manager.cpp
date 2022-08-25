@@ -17,13 +17,13 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "active_status_callback_manager.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
 #include "field_const.h"
 #include "permission_record_repository.h"
-#include "permission_visitor_repository.h"
-#include "active_status_callback_manager.h"
+#include "permission_used_record_cache.h"
 #include "time_util.h"
 #include "to_string.h"
 
@@ -34,6 +34,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
+static const std::string DEFAULT_DEVICEID = "0";
+static const std::string FIELD_COUNT_NUMBER = "count";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -52,188 +54,88 @@ PermissionRecordManager::~PermissionRecordManager()
     hasInited_ = false;
 }
 
-bool PermissionRecordManager::AddVisitor(AccessTokenID tokenID, int32_t& visitorId)
+void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
-    PermissionVisitor visitor;
-    if (!GetPermissionVisitor(tokenID, visitor)) {
-        return false;
-    }
-
-    GenericValues visitorValues;
-    GenericValues nullValues;
-    std::vector<GenericValues> resultValues;
-    PermissionVisitor::TranslationIntoGenericValues(visitor, visitorValues);
-    if (!PermissionVisitorRepository::GetInstance().FindVisitorValues(visitorValues, nullValues, resultValues)) {
-        return false;
-    }
-    if (resultValues.empty()) {
-        if (!PermissionVisitorRepository::GetInstance().AddVisitorValues(visitorValues)) {
-            return false;
-        }
-        if (!PermissionVisitorRepository::GetInstance().FindVisitorValues(visitorValues, nullValues, resultValues)) {
-            return false;
-        }
-    }
-    PermissionVisitor::TranslationIntoPermissionVisitor(resultValues[0], visitor);
-    visitorId = visitor.id;
-    return true;
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record));
 }
 
-bool PermissionRecordManager::GetPermissionVisitor(AccessTokenID tokenID, PermissionVisitor& visitor)
-{
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenID, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo fail");
-        return false;
-    }
-    visitor.isRemoteDevice = true;
-    visitor.userId = tokenInfo.userID;
-    visitor.bundleName = tokenInfo.bundleName;
-    if (IsLocalDevice(tokenInfo.deviceID)) {
-        visitor.deviceId = ConstantCommon::GetLocalDeviceId();
-        visitor.isRemoteDevice = false;
-        visitor.tokenId = tokenID;
-    }
-    return true;
-}
-
-bool PermissionRecordManager::AddRecord(
-    int32_t visitorId, const std::string& permissionName, int32_t successCount, int32_t failCount)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
-    PermissionRecord record;
-    if (!GetPermissionsRecord(visitorId, permissionName, successCount, failCount, record)) {
-        return false;
-    }
-
-    GenericValues nullValues;
-    GenericValues recordValues;
-    std::vector<GenericValues> insertValues;
-    std::vector<GenericValues> findValues;
-    PermissionRecord::TranslationIntoGenericValues(record, recordValues);
-
-    int64_t insertTimestamp = record.timestamp;
-    int64_t insertAccessDuration = record.accessDuration;
-    int32_t insertAccessCount = record.accessCount;
-    int32_t insertRejectCount = record.rejectCount;
-    recordValues.Remove(FIELD_TIMESTAMP);
-    recordValues.Remove(FIELD_ACCESS_DURATION);
-    recordValues.Remove(FIELD_ACCESS_COUNT);
-    recordValues.Remove(FIELD_REJECT_COUNT);
-    if (!PermissionRecordRepository::GetInstance().FindRecordValues(recordValues, nullValues, findValues)) {
-        return false;
-    }
-
-    recordValues.Put(FIELD_TIMESTAMP, insertTimestamp);
-    recordValues.Put(FIELD_ACCESS_DURATION, insertAccessDuration);
-    recordValues.Put(FIELD_ACCESS_COUNT, insertAccessCount);
-    recordValues.Put(FIELD_REJECT_COUNT, insertRejectCount);
-    for (const auto& rec : findValues) {
-        if (insertTimestamp - rec.GetInt64(FIELD_TIMESTAMP) < Constant::PRECISE) {
-            insertAccessDuration += rec.GetInt64(FIELD_ACCESS_DURATION);
-            insertAccessCount += rec.GetInt(FIELD_ACCESS_COUNT);
-            insertRejectCount += rec.GetInt(FIELD_REJECT_COUNT);
-            recordValues.Remove(FIELD_ACCESS_DURATION);
-            recordValues.Remove(FIELD_ACCESS_COUNT);
-            recordValues.Remove(FIELD_REJECT_COUNT);
-
-            recordValues.Put(FIELD_ACCESS_DURATION, insertAccessDuration);
-            recordValues.Put(FIELD_ACCESS_COUNT, insertAccessCount);
-            recordValues.Put(FIELD_REJECT_COUNT, insertRejectCount);
-
-            if (!PermissionRecordRepository::GetInstance().RemoveRecordValues(rec)) {
-                return false;
-            }
-            break;
-        }
-    }
-    insertValues.emplace_back(recordValues);
-    return PermissionRecordRepository::GetInstance().AddRecordValues(insertValues);
-}
-
-bool PermissionRecordManager::GetPermissionsRecord(int32_t visitorId, const std::string& permissionName,
+bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        return false;
+    }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to TransferPermissionToOpcode");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
         return false;
     }
     if (successCount == 0 && failCount == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "successCount and failCount are both zero");
-        return false;
+        record.status = PERM_INACTIVE;
+    } else {
+        record.status = PERM_ACTIVE_IN_FOREGROUND;
     }
-    record.visitorId = visitorId;
+    record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;
     record.opCode = opCode;
-    record.status = 0; // get isForeground by uid  lockscreen
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
     return true;
 }
 
-int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
+int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x, permissionName: %{public}s",
-        tokenID, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
-    if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Invalid token type");
-        return Constant::SUCCESS;
+    PermissionRecord record;
+    if (!GetPermissionRecord(tokenId, permissionName, successCount, failCount, record)) {
+        return Constant::FAILURE;
     }
 
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    int32_t visitorId;
-    if (!AddVisitor(tokenID, visitorId)) {
+    if (record.status == PERM_INACTIVE) {
         return Constant::FAILURE;
     }
-    if (!AddRecord(visitorId, permissionName, successCount, failCount)) {
-        return Constant::FAILURE;
-    }
+
+    AddRecord(record);
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenId: %{public}x", tokenID);
+    if (tokenId == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is 0");
+        return;
+    }
+
+    // only support remove by tokenId(local)
+    std::string device = GetDeviceId(tokenId);
+    if (device.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId = %{public}d", tokenId);
+        return;
+    }
+
+    if (!deviceID.empty() && device != deviceID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "deviceID mismatch");
+        return;
+    }
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    PermissionVisitor visitor;
-    if (!GetPermissionVisitor(tokenID, visitor) && deviceID.empty()) {
-        return;
-    }
-    if (!deviceID.empty()) {
-        visitor.deviceId = deviceID;
-    }
-
-    GenericValues nullValues;
-    GenericValues visitorValues;
-    std::vector<GenericValues> findVisitorValues;
-    PermissionVisitor::TranslationIntoGenericValues(visitor, visitorValues);
-    if (!PermissionVisitorRepository::GetInstance().FindVisitorValues(visitorValues, nullValues, findVisitorValues)) {
-        return;
-    }
-
-    for (const auto& visitor : findVisitorValues) {
-        GenericValues record;
-        record.Put(FIELD_VISITOR_ID, visitor.GetInt(FIELD_ID));
-        PermissionRecordRepository::GetInstance().RemoveRecordValues(record);
-    }
-    PermissionVisitorRepository::GetInstance().RemoveVisitorValues(visitorValues);
+    PermissionUsedRecordCache::GetInstance().RemoveRecords(tokenId); // remove from cache and database
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     ExecuteDeletePermissionRecordTask();
 
-    if (!GetRecordsFromDB(request, result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromDB");
+    if (!request.isRemote && !GetRecordsFromLocalDB(request, result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromLocalDB");
         return  Constant::FAILURE;
     }
     return Constant::SUCCESS;
@@ -242,7 +144,6 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
 int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry");
     auto task = [request, callback]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;
@@ -254,41 +155,48 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
+bool PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList)
 {
-    GenericValues visitorValues;
+    std::vector<GenericValues> results;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        // find tokenId from cache
+        PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
+        // find tokenId from database
+        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
+    }
+    for (const auto& res : results) {
+        tokenIdList.emplace(res.GetInt(FIELD_TOKEN_ID));
+    }
+    return true;
+}
+
+bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
+{
     GenericValues andConditionValues;
     GenericValues orConditionValues;
-    if (DataTranslator::TranslationIntoGenericValues(request, visitorValues, andConditionValues,
-        orConditionValues) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "query time is invalid");
+    if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues, orConditionValues)
+        != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "query time or flag is invalid");
         return false;
     }
     
-    GenericValues nullValues;
-    std::vector<GenericValues> findVisitorValues;
-    if (!PermissionVisitorRepository::GetInstance().FindVisitorValues(visitorValues, nullValues, findVisitorValues)) {
-        return false;
+    std::set<AccessTokenID> tokenIdList;
+    if (request.tokenId == 0) {
+        GetLocalRecordTokenIdList(tokenIdList);
+    } else {
+        tokenIdList.emplace(request.tokenId);
     }
-    if (findVisitorValues.empty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "no visitor");
-        return true;
-    }
-
-    for (const auto& visitor : findVisitorValues) {
-        andConditionValues.Put(FIELD_VISITOR_ID, visitor.GetInt(FIELD_ID));
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetLocalRecordTokenIdList.size = %{public}zu", tokenIdList.size());
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    for (const auto& tokenId : tokenIdList) {
+        andConditionValues.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
         std::vector<GenericValues> findRecordsValues;
+        PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
+            andConditionValues, orConditionValues, findRecordsValues); // find records from cache and database
+        andConditionValues.Remove(FIELD_TOKEN_ID);
         BundleUsedRecord bundleRecord;
-        if (!PermissionRecordRepository::GetInstance().FindRecordValues(
-            andConditionValues, orConditionValues, findRecordsValues)) {
-            return false;
-        }
-        andConditionValues.Remove(FIELD_VISITOR_ID);
-        bundleRecord.tokenId = (AccessTokenID)visitor.GetInt(FIELD_TOKEN_ID);
-        bundleRecord.isRemote = visitor.GetInt(FIELD_IS_REMOTE_DEVICE);
-        bundleRecord.deviceId = visitor.GetString(FIELD_DEVICE_ID);
-        bundleRecord.bundleName = visitor.GetString(FIELD_BUNDLE_NAME);
-
+        CreateBundleUsedRecord(tokenId, bundleRecord);
         if (!findRecordsValues.empty()) {
             if (!GetRecords(request.flag, findRecordsValues, bundleRecord, result)) {
                 return false;
@@ -299,6 +207,20 @@ bool PermissionRecordManager::GetRecordsFromDB(const PermissionUsedRequest& requ
             result.bundleRecords.emplace_back(bundleRecord);
         }
     }
+    return true;
+}
+
+bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord)
+{
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetHapTokenInfo failed");
+        return false;
+    }
+    bundleRecord.tokenId = tokenId;
+    bundleRecord.isRemote = false;
+    bundleRecord.deviceId = GetDeviceId(tokenId);
+    bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
 }
 
@@ -317,7 +239,8 @@ bool PermissionRecordManager::GetRecords(
         record.Put(FIELD_FLAG, flag);
         if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
             != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to transform permission to opcode");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform opcode(%{public}d) into permission",
+                record.GetInt(FIELD_OP_CODE));
             continue;
         }
 
@@ -375,42 +298,36 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    GenericValues nullValues;
-    std::vector<GenericValues> deleteRecordValues;
-    if (!PermissionRecordRepository::GetInstance().FindRecordValues(nullValues, nullValues, deleteRecordValues)) {
-        return Constant::FAILURE;
-    }
-
-    size_t deleteSize = 0;
-    if (deleteRecordValues.size() > Constant::MAX_TOTAL_RECORD) {
-        deleteSize = deleteRecordValues.size() - Constant::MAX_TOTAL_RECORD;
-        for (size_t i = 0; i < deleteSize; ++i) {
-            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
+    GenericValues countValue;
+    PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
+    int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);
+    if (total > Constant::MAX_TOTAL_RECORD) {
+        uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
+        if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {
+            return Constant::FAILURE;
         }
     }
+    GenericValues andConditionValues;
     int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
-    for (size_t i = deleteSize; i < deleteRecordValues.size(); ++i) {
-        if (deleteRecordValues[i].GetInt64(FIELD_TIMESTAMP) < deleteTimestamp) {
-            PermissionRecordRepository::GetInstance().RemoveRecordValues(deleteRecordValues[i]);
-        }
+    andConditionValues.Put(FIELD_TIMESTAMP_END, deleteTimestamp);
+    if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
+        return Constant::FAILURE;
     }
     return Constant::SUCCESS;
 }
 
-std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleName, const std::string& permissionName)
+std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, bundleName=%{public}s, permissionName=%{public}s",
-        bundleName.c_str(), permissionName.c_str());
     PermissionUsedRequest request;
-    request.bundleName = bundleName;
+    request.tokenId = tokenId;
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     if (!permissionName.empty()) {
         request.permissionList.emplace_back(permissionName);
     }
 
     PermissionUsedResult result;
-    if (!GetRecordsFromDB(request, result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to GetRecordsFromDB");
+    if (!GetRecordsFromLocalDB(request, result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to GetRecordsFromLocalDB");
         return "";
     }
 
@@ -423,28 +340,115 @@ std::string PermissionRecordManager::DumpRecordInfo(const std::string& bundleNam
     return dumpInfo;
 }
 
-int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
 {
-    // to do
-    PermissionVisitor visitor;
-    if (!GetPermissionVisitor(tokenID, visitor)) {
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (const auto& rec : startRecordList_) {
+        if ((rec.opCode == record.opCode) && (rec.tokenId == record.tokenId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
+                record.tokenId, record.opCode);
+            return true;
+        }
+    }
+    return false;
+}
+
+void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    startRecordList_.emplace_back(record);
+}
+
+bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode == opCode) && (tokenId == (it->tokenId))) {
+            record = *it;
+            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            startRecordList_.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+void PermissionRecordManager::ResetRecord(PermissionRecord& record, int32_t status)
+{
+    record.status = status;
+    record.accessDuration = 0;
+    record.timestamp = TimeUtil::GetCurrentTimestamp();
+}
+
+std::vector<PermissionRecord> PermissionRecordManager::GetRecordsAndReset(uint32_t tokenId, int32_t status)
+{
+    std::vector<PermissionRecord> recordList;
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->tokenId == tokenId) && status != (it->status)) {
+            PermissionRecord record = *it;
+            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            recordList.emplace_back(record);
+            ResetRecord(*it, status);
+        }
+    }
+    return recordList;
+}
+
+void PermissionRecordManager::CallbackExecute(
+    AccessTokenID tokenId, const std::string& permissionName, int32_t status)
+{
+    ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
+        tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    int32_t accessCount = 1;
+    int32_t failCount = 0;
+
+    PermissionRecord record = { 0 };
+    if (!GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record)) {
         return Constant::FAILURE;
     }
-    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
-        tokenID, permissionName, visitor.deviceId, PERM_ACTIVE_IN_FOREGROUND);
+
+    if (HasStarted(record)) {
+        return Constant::FAILURE;
+    }
+
+    AddRecordToStartList(record);
+    if (record.status != PERM_INACTIVE) {
+        CallbackExecute(tokenId, permissionName, record.status);
+    }
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    // to do
-    PermissionVisitor visitor;
-    if (!GetPermissionVisitor(tokenID, visitor)) {
+    ExecuteDeletePermissionRecordTask();
+
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
         return Constant::FAILURE;
     }
 
-    ActiveStatusCallbackManager::GetInstance().ExcuteCallbackAsync(
-        tokenID, permissionName, visitor.deviceId, PERM_INACTIVE);
+    int32_t opCode;
+    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
+        return Constant::FAILURE;
+    }
+
+    PermissionRecord record;
+    if (!GetRecordFromStartList(tokenId, opCode, record)) {
+        return Constant::FAILURE;
+    }
+
+    if (record.status != PERM_INACTIVE) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "AddRecord(tokenId: %{public}d, opCode: %{public}d, status: %{public}d)",
+            record.tokenId, record.opCode, record.status);
+        AddRecord(record);
+        CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
+    }
     return Constant::SUCCESS;
 }
 
@@ -459,12 +463,16 @@ int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<I
     return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
 }
 
-bool PermissionRecordManager::IsLocalDevice(const std::string& deviceId)
+std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
 {
-    if (deviceId == "0") { // local
-        return true;
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        return "";
     }
-    return false;
+    if (tokenInfo.deviceID == DEFAULT_DEVICEID) { // local
+        return ConstantCommon::GetLocalDeviceId();
+    }
+    return tokenInfo.deviceID;
 }
 
 void PermissionRecordManager::Init()

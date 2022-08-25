@@ -44,7 +44,7 @@ The ATM module provides the following functions:
 | --- | --- |
 | AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy); | Allocates a token ID to an app.|
 | AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | Allocates a local token ID to the app of a remote device.|
-| int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy); | Updates token information.|
+| int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | Updates token information.|
 | int DeleteToken(AccessTokenID tokenID); | Deletes the app's token ID and information.|
 | int GetTokenType(AccessTokenID tokenID); | Obtains the type of an access token.|
 | int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | Checks whether the native process corresponding to the given token ID has the specified distributed capability.|

@@ -53,8 +53,9 @@ public:
     AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
-    void DumpTokenInfo(std::string& dumpInfo);
+    int UpdateHapToken(
+        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
+    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
 
 #ifdef TOKEN_SYNC_ENABLE

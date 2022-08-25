@@ -26,12 +26,23 @@ using namespace OHOS::AAFwk;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const std::string SHORT_OPTIONS_DUMP = "htr::b:p:";
+const int PERMISSION_FLAG = 2;
+const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:";
 const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
     {"record-info", no_argument, nullptr, 'r'},
-    {"bundle-name", required_argument, nullptr, 'b'},
+    {"token-id", required_argument, nullptr, 'i'},
+    {"permission-name", required_argument, nullptr, 'p'},
+    {nullptr, 0, nullptr, 0}
+};
+
+const std::string SHORT_OPTIONS_PERM = "hg::c::i:p:";
+const struct option LONG_OPTIONS_PERM[] = {
+    {"help", no_argument, nullptr, 'h'},
+    {"grant", no_argument, nullptr, 'g'},
+    {"cancel", no_argument, nullptr, 'c'},
+    {"token-id", required_argument, nullptr, 'i'},
     {"permission-name", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0}
 };
@@ -44,9 +55,10 @@ ErrCode AtmCommand::CreateCommandMap()
     commandMap_ = {
         {"help", std::bind(&AtmCommand::RunAsHelpCommand, this)},
         {"dump", std::bind(&AtmCommand::RunAsDumpCommand, this)},
+        {"perm", std::bind(&AtmCommand::RunAsPermCommand, this)},
     };
 
-    return OHOS::ERR_OK;
+    return ERR_OK;
 }
 
 ErrCode AtmCommand::CreateMessageMap()
@@ -54,12 +66,12 @@ ErrCode AtmCommand::CreateMessageMap()
     messageMap_ = {
     };
 
-    return OHOS::ERR_OK;
+    return ERR_OK;
 }
 
 ErrCode AtmCommand::init()
 {
-    ErrCode result = OHOS::ERR_OK;
+    ErrCode result = ERR_OK;
 
     // there is no need to get proxy currently, the function used in class AccessTokenKit is static
 
@@ -70,16 +82,14 @@ ErrCode AtmCommand::RunAsHelpCommand()
 {
     resultReceiver_.append(HELP_MSG);
 
-    return OHOS::ERR_OK;
+    return ERR_OK;
 }
 
 ErrCode AtmCommand::RunAsDumpCommand()
 {
-    ErrCode result = OHOS::ERR_OK;
-    std::string dumpInfo = "";
-    bool isDumpTokenInfo = false;
-    bool isDumpRecordInfo = false;
-    std::string bundleName = "";
+    ErrCode result = ERR_OK;
+    OptType type = DEFAULT;
+    uint32_t tokenId = 0;
     std::string permissionName = "";
     int option = -1;
     int counter = 0;
@@ -87,41 +97,120 @@ ErrCode AtmCommand::RunAsDumpCommand()
         counter++;
         option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
         if (optind < 0 || optind > argc_) {
-            return OHOS::ERR_INVALID_VALUE;
+            return ERR_INVALID_VALUE;
         }
 
         if (option == -1) {
             if (counter == 1) {
-                result = RunAsDumpCommandError();
+                result = RunAsCommandError();
             }
             break;
         }
 
         if (option == '?') {
-            result = RunAsDumpCommandMissingOptionArgument();
+            result = RunAsCommandMissingOptionArgument();
             break;
         }
 
-        result = RunAsDumpCommandExistentOptionArgument(
-            option, isDumpTokenInfo, isDumpRecordInfo, bundleName, permissionName);
+        result = RunAsCommandExistentOptionArgument(option, type, tokenId, permissionName);
     }
 
-    if (result != OHOS::ERR_OK) {
+    if (result != ERR_OK) {
         resultReceiver_.append(HELP_MSG_DUMP + "\n");
     } else {
-        if (isDumpTokenInfo) {
-            AccessTokenKit::DumpTokenInfo(dumpInfo);
-            resultReceiver_.append(dumpInfo + "\n");
-        }
-        if (isDumpRecordInfo) {
-            dumpInfo = PrivacyKit::DumpRecordInfo(bundleName, permissionName);
-            resultReceiver_.append(dumpInfo + "\n");
-        }
+        result = RunCommandByOperationType(type, tokenId, permissionName);
     }
     return result;
 }
 
-ErrCode AtmCommand::RunAsDumpCommandError(void)
+ErrCode AtmCommand::RunAsPermCommand()
+{
+    ErrCode result = ERR_OK;
+    OptType type = DEFAULT;
+    uint32_t tokenId = 0;
+    std::string permissionName = "";
+    int option = -1;
+    int counter = 0;
+    while (true) {
+        counter++;
+        option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
+        if (optind < 0 || optind > argc_) {
+            return ERR_INVALID_VALUE;
+        }
+
+        if (option == -1) {
+            if (counter == 1) {
+                result = RunAsCommandError();
+            }
+            break;
+        }
+
+        if (option == '?') {
+            result = RunAsCommandMissingOptionArgument();
+            break;
+        }
+
+        result = RunAsCommandExistentOptionArgument(option, type, tokenId, permissionName);
+    }
+
+    if (result != ERR_OK) {
+        resultReceiver_.append(HELP_MSG_PERM + "\n");
+    } else {
+        result = RunCommandByOperationType(type, tokenId, permissionName);
+    }
+    return result;
+}
+
+ErrCode AtmCommand::RunCommandByOperationType(const OptType& type,
+    uint32_t& tokenId, std::string& permissionName)
+{
+    std::string dumpInfo = "";
+    ErrCode ret = ERR_OK;
+    switch (type) {
+        case DUMP_TOKEN:
+            AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
+            break;
+        case DUMP_RECORD:
+            dumpInfo = PrivacyKit::DumpRecordInfo(tokenId, permissionName);
+            break;
+        case PERM_GRANT:
+        case PERM_REVOKE:
+            ret = ModifyPermission(type, tokenId, permissionName);
+            if (ret == ERR_OK) {
+                dumpInfo = "Success";
+            } else {
+                dumpInfo = "Failure";
+            }
+            break;
+        default:
+            resultReceiver_.append("error: miss option \n");
+            return ERR_INVALID_VALUE;
+    }
+    resultReceiver_.append(dumpInfo + "\n");
+    return ret;
+}
+
+ErrCode AtmCommand::ModifyPermission(const OptType& type, uint32_t& tokenId, std::string& permissionName)
+{
+    if (tokenId == 0 || permissionName.empty()) {
+        return ERR_INVALID_VALUE;
+    }
+
+    int result = 0;
+    if (type == PERM_GRANT) {
+        result = AccessTokenKit::GrantPermission(tokenId, permissionName, PERMISSION_FLAG);
+    } else if (type == PERM_REVOKE) {
+        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_FLAG);
+    } else {
+        return ERR_INVALID_VALUE;
+    }
+    if (result != 0) {
+        return ERR_INVALID_VALUE;
+    }
+    return ERR_OK;
+}
+
+ErrCode AtmCommand::RunAsCommandError(void)
 {
     ErrCode result = ERR_OK;
 
@@ -140,64 +229,61 @@ ErrCode AtmCommand::RunAsDumpCommandError(void)
     return result;
 }
 
-ErrCode AtmCommand::RunAsDumpCommandMissingOptionArgument(void)
+ErrCode AtmCommand::RunAsCommandMissingOptionArgument(void)
 {
     ErrCode result = ERR_OK;
     switch (optopt) {
-        case 'h' : {
+        case 'h':
             // 'atm dump -h'
-            result = OHOS::ERR_INVALID_VALUE;
+            result = ERR_INVALID_VALUE;
             break;
-        }
-        case 'b' : {
-            // 'atm dump -b' with no argument
+        case 'i':
+        case 'p':
+        case 'g':
+        case 'c':
             resultReceiver_.append("error: option ");
             resultReceiver_.append("requires a value.\n");
-            result = OHOS::ERR_INVALID_VALUE;
+            result = ERR_INVALID_VALUE;
             break;
-        }
-        case 'p' : {
-            // 'atm dump -p' with no argument
-            resultReceiver_.append("error: option ");
-            resultReceiver_.append("requires a value.\n");
-            result = OHOS::ERR_INVALID_VALUE;
-            break;
-        }
         default: {
             std::string unknownOption = "";
             std::string unknownOptionMsg = GetUnknownOptionMsg(unknownOption);
 
             resultReceiver_.append(unknownOptionMsg);
-            result = OHOS::ERR_INVALID_VALUE;
+            result = ERR_INVALID_VALUE;
             break;
         }
     }
     return result;
 }
 
-ErrCode AtmCommand::RunAsDumpCommandExistentOptionArgument(const int &option,
-    bool &isDumpTokenInfo, bool &isDumpRecordInfo, std::string& bundleName, std::string& permissionName)
+ErrCode AtmCommand::RunAsCommandExistentOptionArgument(
+    const int& option, OptType& type, uint32_t& tokenId, std::string& permissionName)
 {
     ErrCode result = ERR_OK;
     switch (option) {
         case 'h':
             // 'atm dump -h'
-            result = OHOS::ERR_INVALID_VALUE;
+            result = ERR_INVALID_VALUE;
             break;
         case 't':
-            isDumpTokenInfo = true;
+            type = DUMP_TOKEN;
             break;
         case 'r':
-            isDumpRecordInfo = true;
+            type = DUMP_RECORD;
             break;
-        case 'b':
-            isDumpRecordInfo = true;
+        case 'g':
+            type = PERM_GRANT;
+            break;
+        case 'c':
+            type = PERM_REVOKE;
+            break;
+        case 'i':
             if (optarg != nullptr) {
-                bundleName = optarg;
+                tokenId = std::atoi(optarg);
             }
             break;
         case 'p':
-            isDumpRecordInfo = true;
             if (optarg != nullptr) {
                 permissionName = optarg;
             }

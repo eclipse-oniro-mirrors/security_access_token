@@ -35,7 +35,8 @@ class AccessTokenKit {
 public:
     static AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     static AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    static int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, const HapPolicyParams& policy);
+    static int UpdateHapToken(
+        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     static int DeleteToken(AccessTokenID tokenID);
     /* Get token type by ATM service */
     static ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
@@ -73,7 +74,7 @@ public:
     static AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
-    static void DumpTokenInfo(std::string& dumpInfo);
+    static void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
 };
 } // namespace AccessToken
 } // namespace Security

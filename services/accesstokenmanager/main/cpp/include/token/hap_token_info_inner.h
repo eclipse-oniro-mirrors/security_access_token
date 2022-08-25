@@ -38,11 +38,11 @@ public:
         const std::vector<PermissionStateFull>& permStateList);
     virtual ~HapTokenInfoInner();
 
-    void Update(const std::string& appIDDesc, const HapPolicyParams& policy);
+    void Update(const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     void TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
         std::vector<GenericValues>& permStateValues) const;
-    int RestoreHapTokenInfo(AccessTokenID tokenId, GenericValues& tokenValue,
+    int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,
         const std::vector<GenericValues>& permStateRes);
 
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;

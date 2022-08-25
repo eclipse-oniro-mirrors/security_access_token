@@ -81,7 +81,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
 
-    for (GenericValues& tokenValue : hapTokenRes) {
+    for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
@@ -121,9 +121,10 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
 
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
-    for (GenericValues nativeTokenValue : nativeTokenResults) {
+    for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
-        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
+        int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
             continue;
@@ -341,7 +342,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
 {
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(id);
-    if (type != TOKEN_NATIVE) {
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is not hap.", id);
         return RET_FAILED;
@@ -380,10 +381,10 @@ static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& poli
     policyNew.apl = policy.apl;
     policyNew.domain = policy.domain;
 
-    for (auto& state : policy.permStateList) {
+    for (const auto& state : policy.permStateList) {
         policyNew.permStateList.emplace_back(state);
     }
-    for (auto& def : policy.permList) {
+    for (const auto& def : policy.permList) {
         policyNew.permList.emplace_back(def);
     }
 }
@@ -527,7 +528,8 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
                 "token %{public}u process name %{public}s is new, add to manager!",
                 infoPtr->GetTokenID(), infoPtr->GetProcessName().c_str());
             AccessTokenID id = infoPtr->GetTokenID();
-            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, TOKEN_NATIVE);
+            ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(id);
+            int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(id, type);
             if (ret != RET_SUCCESS) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "token Id register fail");
                 continue;
@@ -545,7 +547,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
 }
 
 int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
-    const std::string& appIDDesc, const HapPolicyParams& policy)
+    const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     if (!DataValidator::IsAppIDDescValid(appIDDesc)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u parm format error!", tokenID);
@@ -564,7 +566,7 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenID tokenID,
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(appIDDesc, policy);
+        infoPtr->Update(appIDDesc, apiVersion, policy);
         ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}u bundle name %{public}s user %{public}d inst %{public}d update ok!",
             tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex());
@@ -610,10 +612,10 @@ void AccessTokenInfoManager::GetAllNativeTokenInfo(
     std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-    for (auto nativeTokenInner : nativeTokenInfoMap_) {
+    for (const auto& nativeTokenInner : nativeTokenInfoMap_) {
         std::shared_ptr<NativeTokenInfoInner> nativeTokenInnerPtr = nativeTokenInner.second;
         if (nativeTokenInnerPtr == nullptr || nativeTokenInnerPtr->IsRemote()
-            || nativeTokenInnerPtr->GetDcap().size() <= 0) {
+            || nativeTokenInnerPtr->GetDcap().empty()) {
             continue;
         }
         NativeTokenInfoForSync token;
@@ -729,11 +731,12 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
     }
 
     for (NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID);
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||
-            nativeToken.baseInfo.dcap.size() <= 0 ||
-            AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID) != TOKEN_NATIVE) {
+            nativeToken.baseInfo.dcap.empty() ||
+            (type != TOKEN_NATIVE && type != TOKEN_SHELL)) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "device %{public}s token %{public}u is invalid.",
                 ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
@@ -805,7 +808,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
             return RET_FAILED;
         }
         hapTokenInfoMap_.erase(mapID);
-    } else if (type == TOKEN_NATIVE) {
+    } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(mapID) == 0) {
             ACCESSTOKEN_LOG_ERROR(
@@ -822,8 +825,9 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
 
 AccessTokenID AccessTokenInfoManager::GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID)
 {
-    if (!DataValidator::IsDeviceIdValid(deviceID)
-        || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) {
+    if ((!DataValidator::IsDeviceIdValid(deviceID)) || (tokenID == 0) ||
+        ((AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_NATIVE) &&
+        (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) != TOKEN_SHELL))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return 0;
     }
@@ -949,10 +953,26 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
     });
 }
 
-void AccessTokenInfoManager::DumpTokenInfo(std::string& dumpInfo)
+void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     ACCESSTOKEN_LOG_INFO(LABEL, "get hapTokenInfo");
+    if (tokenID != 0) {
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
+        if (type == TOKEN_HAP) {
+            std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
+            if (infoPtr != nullptr) {
+                infoPtr->ToString(dumpInfo);
+            }
+        } else if (type == TOKEN_NATIVE) {
+            std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
+            if (infoPtr != nullptr) {
+                infoPtr->ToString(dumpInfo);
+            }
+        } else {
+            dumpInfo.append("invalid tokenId");
+        }
+        return;
+    }
 
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {

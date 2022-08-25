@@ -19,22 +19,67 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <uv.h>
 
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "napi_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "perm_state_change_callback_customize.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 const int AT_PERM_OPERA_FAIL = -1;
 const int AT_PERM_OPERA_SUCC = 0;
-const int VALUE_BUFFER_SIZE = 256;
-const int ASYNC_CALL_BACK_VALUES_NUM = 2;
 const int VERIFY_OR_FLAG_INPUT_MAX_VALUES = 2;
 const int GRANT_OR_REVOKE_INPUT_MAX_VALUES = 4;
 
+enum PermissionStateChangeType {
+    PERMISSION_REVOKED_OPER = 0,
+    PERMISSION_GRANTED_OPER = 1,
+};
+
 static thread_local napi_ref atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
+
+class RegisterPermStateChangeScopePtr : public PermStateChangeCallbackCustomize {
+public:
+    explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
+    ~RegisterPermStateChangeScopePtr();
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
+    void SetEnv(const napi_env& env);
+    void SetCallbackRef(const napi_ref& ref);
+private:
+    napi_env env_ = nullptr;
+    napi_ref ref_ = nullptr;
+};
+
+struct RegisterPermStateChangeWorker {
+    napi_env env = nullptr;
+    napi_ref ref = nullptr;
+    PermStateChangeInfo result;
+    RegisterPermStateChangeScopePtr* subscriber = nullptr;
+};
+
+struct PermStateChangeContext {
+    virtual ~PermStateChangeContext();
+    napi_env env = nullptr;
+    napi_async_work work = nullptr;
+    napi_ref callbackRef =  nullptr;
+    int32_t errCode = RET_FAILED;
+    std::string permStateChangeType;
+    PermStateChangeScope scopeInfo;
+    AccessTokenKit* accessTokenKit = nullptr;
+    std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
+};
+
+struct RegisterPermStateChangeInfo : public PermStateChangeContext {};
+
+struct UnregisterPermStateChangeInfo : public PermStateChangeContext {
+    ~UnregisterPermStateChangeInfo();
+};
 
 struct AtManagerAsyncContext {
     napi_env env = nullptr;
@@ -75,6 +120,19 @@ private:
     static void GetPermissionFlagsExcute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
+    static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,
+        RegisterPermStateChangeInfo& registerPermStateChangeInfo);
+    static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
+    static void RegisterPermStateChangeExecute(napi_env env, void* data);
+    static void RegisterPermStateChangeComplete(napi_env env, napi_status status, void* data);
+    static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
+    static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
+        UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
+    static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
+    static void UnregisterPermStateChangeExecute(napi_env env, void* data);
+    static void UnregisterPermStateChangeCompleted(napi_env env, napi_status status, void* data);
+    static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
+    static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
 };
 }  // namespace AccessToken
 }  // namespace Security

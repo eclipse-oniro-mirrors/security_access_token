@@ -32,6 +32,7 @@ public:
     int instIndex;
     int dlpType;
     std::string appIDDesc;
+    int32_t apiVersion;
 };
 
 class HapPolicyParams final {
@@ -48,6 +49,7 @@ public:
     char ver;
     int userID;
     std::string bundleName;
+    int32_t apiVersion;
     int instIndex;
     int dlpType;
     std::string appID;

@@ -54,7 +54,7 @@ public:
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool CalledAccordingToTokenIdLlist(const std::vector<AccessTokenID>& tokenIDList, AccessTokenID tokenID);
     bool CalledAccordingToPermLlist(const std::vector<std::string>& permList, const std::string& permName);
-    void ExcuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType);
+    void ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType);
 
 private:
     std::mutex mutex_;

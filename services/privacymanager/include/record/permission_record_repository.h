@@ -33,6 +33,10 @@ public:
     bool FindRecordValues(const GenericValues& andConditionValues,
         const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues);
     bool RemoveRecordValues(const GenericValues& conditionValues);
+    bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
+    void CountRecordValues(GenericValues& resultValues);
+    bool DeleteExpireRecordsValues(const GenericValues& andConditions);
+    bool DeleteExcessiveSizeRecordValues(uint32_t excessiveSize);
 };
 } // namespace AccessToken
 } // namespace Security

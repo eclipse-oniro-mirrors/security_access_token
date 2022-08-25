@@ -95,8 +95,11 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
 
     if (j.find(JSON_TOKEN_ID) != j.end()) {
         native.tokenID = j.at(JSON_TOKEN_ID).get<unsigned int>();
-        if (native.tokenID == 0 ||
-            AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID) != TOKEN_NATIVE) {
+        if (native.tokenID == 0) {
+            return;
+        }
+        ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
+        if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
             return;
         }
     } else {
