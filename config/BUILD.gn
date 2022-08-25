@@ -12,12 +12,12 @@
 # limitations under the License.
 
 declare_args() {
-    access_token_feature_coverage = false
+  access_token_feature_coverage = false
 }
 
 config("coverage_flags") {
-    if(access_token_feature_coverage) {
-        cflags = [ "--coverage" ]
-        ldflags = [ "--coverage" ]
-    }
+  if (access_token_feature_coverage) {
+    cflags = [ "--coverage" ]
+    ldflags = [ "--coverage" ]
+  }
 }
