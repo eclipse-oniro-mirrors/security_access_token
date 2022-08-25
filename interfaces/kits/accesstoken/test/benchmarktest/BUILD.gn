@@ -28,6 +28,8 @@ config("access_token_kits_config_benchmarktest") {
     "//base/security/access_token/interfaces/innerkits/accesstoken/include/permission_def.h",
   ]
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   cflags = []
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
@@ -38,7 +40,10 @@ ohos_benchmarktest("NapiAtmanagerTest") {
   module_out_path = module_output_path
 
   sources = [ "napi_atmanager_test.cpp" ]
-  configs = [ ":access_token_kits_config_benchmarktest" ]
+  configs = [
+    ":access_token_kits_config_benchmarktest",
+    "//base/security/access_token/config:coverage_flags",
+  ]
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",

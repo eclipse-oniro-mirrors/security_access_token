@@ -28,6 +28,8 @@ ohos_unittest("libtoken_callback_test") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   deps = [ "//base/security/access_token/interfaces/innerkits/token_callback:libtoken_callback_sdk" ]
   external_deps = [
     "c_utils:utils",

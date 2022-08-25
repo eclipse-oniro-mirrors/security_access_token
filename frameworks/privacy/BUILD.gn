@@ -25,6 +25,8 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "//commonlibrary/c_utils/base/include",
   ]
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   sources = [
     "src/bundle_used_record_parcel.cpp",
     "src/perm_active_response_parcel.cpp",

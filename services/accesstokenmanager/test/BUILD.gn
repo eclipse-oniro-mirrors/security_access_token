@@ -46,6 +46,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
   }
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
