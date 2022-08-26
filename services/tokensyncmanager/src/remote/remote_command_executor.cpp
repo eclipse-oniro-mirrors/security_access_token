@@ -16,7 +16,6 @@
 #include "remote_command_executor.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
-#include "parameter.h"
 #include "singleton.h"
 #include "soft_bus_channel.h"
 #include "token_sync_event_handler.h"

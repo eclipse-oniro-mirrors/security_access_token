@@ -42,15 +42,12 @@ if (is_standard_system) {
       "src/token_callback_stub.cpp",
     ]
 
-    deps = [
-      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    ]
+    deps = []
 
     external_deps = [
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
-      "samgr:samgr_proxy",
     ]
 
     cflags_cc = [

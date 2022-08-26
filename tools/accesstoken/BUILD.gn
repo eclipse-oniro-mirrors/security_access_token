@@ -21,6 +21,8 @@ ohos_source_set("tools_atm_source_set") {
     "${ability_runtime_path}/tools/aa/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
+    "//foundation/bundlemanager/bundle_framework/interfaces/inner_api/appexecfwk_core/include/bundlemgr",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
     "${ability_runtime_services_path}/common/include",
   ]
 
@@ -44,10 +46,8 @@ ohos_source_set("tools_atm_source_set") {
   }
 
   external_deps = [
-    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
   ]
 
   subsystem_name = "security"

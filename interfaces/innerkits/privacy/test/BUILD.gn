@@ -45,7 +45,6 @@ ohos_unittest("libprivacy_sdk_test") {
     "c_utils:utils",
     "init:libbegetutil",
     "ipc:ipc_core",
-    "samgr:samgr_proxy",
   ]
 }
 

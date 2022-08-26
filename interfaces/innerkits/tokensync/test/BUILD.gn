@@ -31,10 +31,7 @@ ohos_unittest("libtokensync_sdk_test") {
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
-  deps = [
-    #"//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
-    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
-  ]
+  deps = []
   external_deps = [ "c_utils:utils" ]
 }
 
