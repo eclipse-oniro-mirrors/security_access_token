@@ -84,8 +84,28 @@ static AccessTokenID g_TokenId_A = 0;
 static AccessTokenID g_TokenId_B = 0;
 static AccessTokenID g_TokenId_E = 0;
 
+
+static void DeleteTestToken()
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsA.userID,
+                                                          g_InfoParmsA.bundleName,
+                                                          g_InfoParmsA.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsB.userID,
+                                            g_InfoParmsB.bundleName,
+                                            g_InfoParmsB.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
+                                            g_InfoParmsE.bundleName,
+                                            g_InfoParmsE.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+}
+
 void PrivacyKitTest::SetUpTestCase()
 {
+    DeleteTestToken();
     g_selfTokenId = GetSelfTokenID();
 }
 
@@ -116,20 +136,7 @@ void PrivacyKitTest::SetUp()
 void PrivacyKitTest::TearDown()
 {
     SetSelfTokenID(g_selfTokenId);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsA.userID,
-                                                          g_InfoParmsA.bundleName,
-                                                          g_InfoParmsA.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsB.userID,
-                                            g_InfoParmsB.bundleName,
-                                            g_InfoParmsB.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-
-    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsE.userID,
-                                            g_InfoParmsE.bundleName,
-                                            g_InfoParmsE.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    DeleteTestToken();
 }
 
 std::string PrivacyKitTest::GetLocalDeviceUdid()
