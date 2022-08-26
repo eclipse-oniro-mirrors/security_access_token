@@ -24,6 +24,7 @@ ohos_unittest("libtoken_setproc_test") {
 
   sources = [ "unittest/src/tokensetproc_kit_test.cpp" ]
   cflags_cc = [ "-fexceptions" ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",

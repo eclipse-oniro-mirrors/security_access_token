@@ -60,6 +60,8 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
+
     cflags_cc = [ "-DHILOG_ENABLE" ]
   }
 }

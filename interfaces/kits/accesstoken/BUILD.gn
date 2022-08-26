@@ -35,6 +35,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "hiviewdfx_hilog_native:libhilog",
     "ipc:ipc_core",
   ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   relative_install_dir = "module"
   subsystem_name = "security"

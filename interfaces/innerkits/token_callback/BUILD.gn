@@ -27,6 +27,8 @@ if (is_standard_system) {
 
     public_configs = [ ":token_callback" ]
 
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
+
     include_dirs = [
       "//commonlibrary/c_utils/base/include",
       "include",

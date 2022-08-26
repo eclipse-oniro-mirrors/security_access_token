@@ -27,6 +27,7 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   part_name = "access_token"
 
   public_configs = [ ":accesstoken_communication_adapter_cxx_public_config" ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   include_dirs = [
     "include",

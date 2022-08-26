@@ -67,6 +67,7 @@ if (is_standard_system) {
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
 
     if (dlp_permission_enable == true) {
       cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
