@@ -353,7 +353,7 @@ static void WriteToFile(const cJSON *root)
         strLen = strlen(jsonStr);
         writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
-        if ((size_t)writtenLen != strLen) {
+        if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
         }
