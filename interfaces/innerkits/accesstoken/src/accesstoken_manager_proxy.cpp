@@ -774,6 +774,29 @@ int AccessTokenManagerProxy::UpdateHapToken(
     return result;
 }
 
+int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return RET_FAILED;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::RELOAD_NATIVE_TOKEN_INFO), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+        return RET_FAILED;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    return result;
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)

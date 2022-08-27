@@ -197,11 +197,6 @@ int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
 
 int NativeTokenReceptor::Init()
 {
-    if (ready_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "native token has been inited.");
-        return RET_SUCCESS;
-    }
-
     std::string nativeRawData;
     int ret = ReadCfgFile(nativeRawData);
     if (ret != RET_SUCCESS) {
@@ -216,7 +211,6 @@ int NativeTokenReceptor::Init()
     }
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    ready_ = true;
     ACCESSTOKEN_LOG_INFO(LABEL, "init ok.");
     return RET_SUCCESS;
 }

@@ -1330,6 +1330,18 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ReloadNativeTokenInfo001
+ * @tc.desc: cannot get hap tokenid with invalid bundlename.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TH
+ */
+HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
+{
+    int32_t Info = AccessTokenKit::ReloadNativeTokenInfo();
+    ASSERT_EQ(RET_SUCCESS, Info);
+}
+
+/**
  * @tc.name: AllocHapToken001
  * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delte it again.
  * @tc.type: FUNC

@@ -64,11 +64,12 @@ public:
         AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+    int32_t ReloadNativeTokenInfo();
     int32_t RegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
     int32_t UnRegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
-
+    
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);

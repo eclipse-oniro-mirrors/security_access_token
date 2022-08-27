@@ -56,6 +56,7 @@ public:
         std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
     void DeleteTestToken() const;
     void AllocTestToken() const;
+    
     uint64_t selfTokenId_;
     std::string udid_;
     std::string networkId_;
