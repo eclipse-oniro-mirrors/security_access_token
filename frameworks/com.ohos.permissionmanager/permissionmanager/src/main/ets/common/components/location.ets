@@ -39,9 +39,9 @@ export struct LocationCanvas {
           y: ((this.locationFlag == Constants.LOCATION_UPGRADE) || (this.locationFlag == Constants.LOCATION_BOTH_PRECISE))
             ? Constants.LOCATION_CANVAS_ZOOM_SCALE : Constants.LOCATION_CANVAS_INITIAL_SCALE })
         .animation({
-          duration: Constants.LOCATION_ANIMATION_DURATION, // 动画时长
-          curve: Curve.Smooth, // 动画曲线
-          playMode: PlayMode.Normal // 动画模式
+          duration: Constants.LOCATION_ANIMATION_DURATION, // Animation duration
+          curve: Curve.Smooth, // The animation curve
+          playMode: PlayMode.Normal // The animation mode
         })
       Image($r('app.media.ic_public_gps_filled'))
         .fillColor($r('sys.color.ohos_id_color_emphasize'))
@@ -52,10 +52,10 @@ export struct LocationCanvas {
         .scale({ x: ((this.locationFlag == Constants.LOCATION_UPGRADE) || (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) ? 1 : 0.8,
         y: ((this.locationFlag == Constants.LOCATION_UPGRADE) || (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) ? 1 : 0.8 })
         .animation({
-          duration: Constants.LOCATION_ANIMATION_DURATION / 2, // 动画时长
+          duration: Constants.LOCATION_ANIMATION_DURATION / 2, // Animation duration
           delay: this.locationFlag == Constants.LOCATION_BOTH_PRECISE ? (Constants.LOCATION_ANIMATION_DURATION / 2) : 0,
-          curve: Curve.Smooth, // 动画曲线
-          playMode: PlayMode.Normal // 动画模式
+          curve: Curve.Smooth, // The animation curve
+          playMode: PlayMode.Normal // The animation mode
         })
       Circle({ width: Constants.LOCATION_CIRCLE_DIA, height: Constants.LOCATION_CIRCLE_DIA })
         .position({ x: Constants.LOCATION_CIRCLE_POSITION_X, y: Constants.LOCATION_CIRCLE_POSITION_Y })
@@ -65,9 +65,9 @@ export struct LocationCanvas {
         .scale({ x: ((this.locationFlag == Constants.LOCATION_UPGRADE) || (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) ? 0 : 1,
           y: ((this.locationFlag == Constants.LOCATION_UPGRADE) || (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) ? 0 : 1 })
         .animation({
-          duration: Constants.LOCATION_ANIMATION_DURATION, // 动画时长
-          curve: Curve.Smooth, // 动画曲线
-          playMode: PlayMode.Normal // 动画模式
+          duration: Constants.LOCATION_ANIMATION_DURATION, // Animation duration
+          curve: Curve.Smooth, // The animation curve
+          playMode: PlayMode.Normal // The animation mode
         })
       if(this.locationFlag == Constants.LOCATION_BOTH_PRECISE) {
         Button($r('app.string.precise_location_on'))

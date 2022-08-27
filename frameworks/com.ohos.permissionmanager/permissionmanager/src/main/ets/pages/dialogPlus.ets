@@ -263,7 +263,7 @@ struct dialogPlusPage {
   }
 
   getgrantGroups(stateGroup) {
-    //定位处理
+    //Processing of positioning
     if(this.reqPerms.includes(FUZZY_LOCATION_PERMISSION)) {
       this.locationFlag = Constants.LOCATION_FUZZY
       if(this.reqPerms.includes(PRECISE_LOCATION_PERMISSION)) {
