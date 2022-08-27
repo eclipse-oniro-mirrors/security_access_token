@@ -27,14 +27,11 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool AllocLocalTokenIDFuzzTest(const uint8_t* data, size_t size)
     {
-        bool result = false;
         AccessTokenID TOKENID = 0;
-        if ((data == nullptr) || (size <= 0)) {
-            return result;
-        }
         if (size > 0) {
+            std::string testName(reinterpret_cast<const char*>(data), size);
             AccessTokenID REMOTETOKENID = static_cast<AccessTokenID>(size);
-            TOKENID = AccessTokenKit::AllocLocalTokenID(reinterpret_cast<const char*>(data), REMOTETOKENID);
+            TOKENID = AccessTokenKit::AllocLocalTokenID(testName, REMOTETOKENID);
         }
         return TOKENID != 0;
     }

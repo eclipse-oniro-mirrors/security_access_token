@@ -31,27 +31,26 @@ namespace OHOS {
 
 #ifdef TOKEN_SYNC_ENABLE
 
-        std::string testdata;
         if ((data == nullptr) || (size <= 0)) {
             return result;
         }
         if (size > 0) {
-            testdata = reinterpret_cast<const char*>(data);
+            std::string testName(reinterpret_cast<const char*>(data), size);
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             NativeTokenInfoForSync native1 = {
                 .baseInfo.apl = APL_NORMAL,
                 .baseInfo.ver = 1,
-                .baseInfo.processName = testdata,
-                .baseInfo.dcap = {testdata, testdata},
+                .baseInfo.processName = testName,
+                .baseInfo.dcap = {testName, testName},
                 .baseInfo.tokenID = TOKENID,
                 .baseInfo.tokenAttr = 0,
-                .baseInfo.nativeAcls = {testdata},
+                .baseInfo.nativeAcls = {testName},
             };
 
             std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
             nativeTokenInfoList.emplace_back(native1);
 
-            result = AccessTokenKit::SetRemoteNativeTokenInfo(reinterpret_cast<const char*>(data), nativeTokenInfoList);
+            result = AccessTokenKit::SetRemoteNativeTokenInfo(testName, nativeTokenInfoList);
         }
 
 #endif

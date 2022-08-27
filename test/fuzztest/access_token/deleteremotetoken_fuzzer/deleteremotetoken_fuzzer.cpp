@@ -36,7 +36,8 @@ namespace OHOS {
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            result = AccessTokenKit::DeleteRemoteToken(reinterpret_cast<const char*>(data), TOKENID);
+            std::string testName(reinterpret_cast<const char*>(data), size);
+            result = AccessTokenKit::DeleteRemoteToken(testName, TOKENID);
         }
 
 #endif

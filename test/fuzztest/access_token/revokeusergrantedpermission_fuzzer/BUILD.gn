@@ -40,9 +40,4 @@ ohos_fuzztest("RevokeUserGrantedPermissionFuzzTest") {
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
   ]
-
-  defines = [
-    "ACCOUNT_LOG_TAG = \"AccessTokenFuzzTest\"",
-    "LOG_DOMAIN = 0xD001B00",
-  ]
 }
