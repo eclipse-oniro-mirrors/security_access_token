@@ -26,43 +26,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const int REG_COUNT_LIMIT = 10;
 } // namespace
 static int regCount_ = -1;
-static INodeStateCb *callback_ = nullptr;
 
 bool IsRegCountOK()
 {
     return regCount_ >= 0 && regCount_ < REG_COUNT_LIMIT;
-}
-
-int32_t RegNodeDeviceStateCb(const char *pkgName, INodeStateCb *callback)
-{
-    regCount_++;
-    // reg:0-9
-    if (IsRegCountOK()) {
-        callback_ = const_cast<INodeStateCb *>(callback);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, pkg:%{public}s, count: %{public}d", pkgName, regCount_);
-        return Constant::SUCCESS;
-    }
-
-    // count 10 above alway return failure for retry.
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, count: %{public}d", regCount_);
-    return Constant::FAILURE;
-}
-
-int32_t UnregNodeDeviceStateCb(INodeStateCb *callback)
-{
-    // unreg: 0-9
-    if (IsRegCountOK()) {
-        regCount_--;
-        callback_ = nullptr;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, count: %{public}d", regCount_);
-        return Constant::SUCCESS;
-    }
-
-    if (regCount_ >= 0) {
-        regCount_--;
-    }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, count: %{public}d", regCount_);
-    return Constant::SUCCESS;
 }
 
 int32_t GetLocalNodeDeviceInfo(const char *pkgName, NodeBasicInfo *info)

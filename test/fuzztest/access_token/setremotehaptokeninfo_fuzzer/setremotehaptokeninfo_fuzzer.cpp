@@ -29,21 +29,20 @@ namespace OHOS {
     {
         bool result = false;
 #ifdef TOKEN_SYNC_ENABLE
-        std::string testdata;
         if ((data == nullptr) || (size <= 0)) {
             return result;
         }
         if (size > 0) {
-            testdata = reinterpret_cast<const char*>(data);
+            std::string testName(reinterpret_cast<const char*>(data), size);
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             HapTokenInfo baseInfo = {
                 .apl = APL_NORMAL,
                 .ver = 1,
                 .userID = 1,
-                .bundleName = testdata,
+                .bundleName = testName,
                 .instIndex = 1,
-                .appID = testdata,
-                .deviceID = testdata,
+                .appID = testName,
+                .deviceID = testName,
                 .tokenID = TOKENID,
                 .tokenAttr = 0
             };
@@ -51,8 +50,8 @@ namespace OHOS {
                 .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
                 .grantStatus = {PermissionState::PERMISSION_GRANTED},
                 .isGeneral = true,
-                .permissionName = testdata,
-                .resDeviceID = {testdata}};
+                .permissionName = testName,
+                .resDeviceID = {testName}};
             std::vector<PermissionStateFull> permStateList;
             permStateList.emplace_back(infoManagerTestState);
             HapTokenInfoForSync remoteTokenInfo = {
@@ -60,7 +59,7 @@ namespace OHOS {
                 .permStateList = permStateList
             };
             
-            result = AccessTokenKit::SetRemoteHapTokenInfo(reinterpret_cast<const char*>(data), remoteTokenInfo);
+            result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
         }
 #endif
         return result;

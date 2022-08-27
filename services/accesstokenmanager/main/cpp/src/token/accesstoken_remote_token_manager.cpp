@@ -48,7 +48,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         return 0;
     }
     ATokenTypeEnum tokeType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(remoteID);
-    if ((tokeType < TOKEN_HAP) || (tokeType > TOKEN_SHELL)) {
+    if ((tokeType <= TOKEN_INVALID) || (tokeType >= TOKEN_TYPE_BUTT)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}x type is invalid.", remoteID);
         return 0;

@@ -37,6 +37,7 @@ if (is_standard_system) {
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/services/common/database/include",
       "//third_party/json/include",
+      "//third_party/sqlite/include/",
     ]
 
     sources = [
@@ -59,6 +60,7 @@ if (is_standard_system) {
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
 
     deps = [
       "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
@@ -66,17 +68,13 @@ if (is_standard_system) {
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
-      "//third_party/sqlite:sqlite",
-      "//utils/native/base:utils",
     ]
 
     external_deps = [
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
-      "init:libbegetutil",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
-      "samgr:samgr_proxy",
     ]
   }
 }

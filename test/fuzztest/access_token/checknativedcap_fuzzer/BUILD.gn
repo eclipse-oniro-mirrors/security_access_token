@@ -34,13 +34,10 @@ ohos_fuzztest("CheckNativeDCapFuzzTest") {
 
   deps = [ "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk" ]
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   external_deps = [
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
-  ]
-
-  defines = [
-    "ACCOUNT_LOG_TAG = \"AccessTokenFuzzTest\"",
-    "LOG_DOMAIN = 0xD001B00",
   ]
 }

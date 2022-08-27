@@ -24,6 +24,7 @@
 #include "iremote_broker.h"
 #include "permission_def.h"
 #include "permission_list_state.h"
+#include "permission_list_state_parcel.h"
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
 
@@ -33,6 +34,11 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+constexpr const char* VAGUE_LOCATION_PERMISSION_NAME = "ohos.permission.APPROXIMATELY_LOCATION";
+constexpr const char* ACCURATE_LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
+const int32_t ELEMENT_NOT_FOUND = -1;
+const int32_t ACCURATE_LOCATION_API_VERSION = 9;
+
 class PermissionManager final {
 public:
     static PermissionManager& GetInstance();
@@ -54,16 +60,26 @@ public:
     void RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     void GetSelfPermissionState(
-        std::vector<PermissionStateFull> permsList, PermissionListState &permState);
+        std::vector<PermissionStateFull> permsList, PermissionListState &permState, int32_t apiVersion);
     int32_t AddPermStateChangeCallback(
         const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
+    bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
+    bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, int& vagueIndex,
+        int& accurateIndex);
+    bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion,
+        std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex);
 
 private:
     PermissionManager();
     void UpdateTokenPermissionState(
         AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
+    bool IsPermissionVaild(const std::string& permissionName);
+    bool GetPermissionStatusAndFlag(const std::string& permissionName,
+        const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
+    void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex);
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };

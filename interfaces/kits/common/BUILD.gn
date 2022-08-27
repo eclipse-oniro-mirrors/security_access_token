@@ -17,11 +17,13 @@ ohos_static_library("libnapi_common") {
   include_dirs = [
     "include",
     "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
   ]
 
   sources = [ "src/napi_common.cpp" ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [ "//foundation/arkui/napi:ace_napi" ]
   cflags_cc = [ "-DHILOG_ENABLE" ]

@@ -18,8 +18,7 @@ import window from '@ohos.window';
 import display from '@ohos.display';
 
 var TAG = "PermissionManager_Log:";
-const MAX_WIDTH = 790;
-const MAX_HEIGHT = 1100;
+const BG_COLOR = '#33000000'
 
 export default class ServiceExtensionAbility extends extension {
     /**
@@ -42,10 +41,10 @@ export default class ServiceExtensionAbility extends extension {
 
         display.getDefaultDisplay().then(dis => {
             let navigationBarRect = {
-                left: (dis.width - MAX_WIDTH)/2,
-                top: (dis.height - MAX_HEIGHT)/2,
-                width: MAX_WIDTH,
-                height: MAX_HEIGHT
+                left: 0,
+                top: 0,
+                width: dis.width,
+                height: dis.height
             }
             this.createWindow("permissionDialog" + startId, window.WindowType.TYPE_DIALOG, navigationBarRect)
         })
@@ -71,7 +70,7 @@ export default class ServiceExtensionAbility extends extension {
             await win.moveTo(rect.left, rect.top)
             await win.resetSize(rect.width, rect.height)
             await win.loadContent('pages/dialogPlus')
-            await win.setBackgroundColor('#00000000')
+            await win.setBackgroundColor(BG_COLOR)
             await win.show()
             globalThis.windowNum ++
         } catch {

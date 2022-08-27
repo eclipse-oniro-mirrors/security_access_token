@@ -33,30 +33,29 @@ namespace AccessToken {
 class PermissionUsedRecordCache {
 public:
     static PermissionUsedRecordCache& GetInstance();
-    int32_t AddRecordToBuffer(PermissionRecord& record);
+    void AddRecordToBuffer(PermissionRecord& record);
     void MergeRecord(PermissionRecord& record, std::shared_ptr<PermissionUsedRecordNode> curFindMergePos);
     void AddToPersistQueue(const std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead);
     void ExecuteReadRecordBufferTask();
     int32_t PersistPendingRecords();
     void GetPersistPendingRecordsAndReset();
-    int32_t RemoveRecords(const GenericValues &record);
-    void RemoveRecordsFromPersistPendingBufferQueue(const GenericValues &record,
+    int32_t RemoveRecords(const AccessTokenID tokenId);
+    void RemoveRecordsFromPersistPendingBufferQueue(const AccessTokenID tokenId,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd);
     void GetRecords(const std::vector<std::string>& permissionList,
-        const GenericValues &andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues);
-    void GetAllRecords(const std::vector<std::string>& permissionList,
-        const GenericValues &andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues);
-    void GetRecordsFromPersistPendingBufferQueue(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues, const std::set<int32_t>& opCodeList);
+        std::vector<GenericValues>& findRecordsValues);
+    void GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList,
+        const GenericValues& andConditionValues, const GenericValues& orConditionValues,
+        std::vector<GenericValues>& findRecordsValues);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
-        const GenericValues &andConditionValues, const PermissionRecord &record);
+        const GenericValues& andConditionValues, const PermissionRecord& record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void TransferToOpcode(std::set<int32_t>& opCodeList,
         const std::vector<std::string>& permissionList);
+    void ResetRecordBuffer(const int32_t remainCount,
+        std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
     void AddRecordNode(const PermissionRecord& record);
     void DeleteRecordNode(std::shared_ptr<PermissionUsedRecordNode> deleteRecordNode);
 	    

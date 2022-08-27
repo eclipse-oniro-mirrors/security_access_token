@@ -23,7 +23,10 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "//base/security/access_token/interfaces/innerkits/privacy/include",
     "//base/security/access_token/frameworks/common/include",
     "//commonlibrary/c_utils/base/include",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
   ]
+
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   sources = [
     "src/bundle_used_record_parcel.cpp",
@@ -34,8 +37,5 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/used_record_detail_parcel.cpp",
   ]
 
-  external_deps = [
-    "c_utils:utils",
-    "ipc:ipc_core",
-  ]
+  external_deps = [ "c_utils:utils" ]
 }

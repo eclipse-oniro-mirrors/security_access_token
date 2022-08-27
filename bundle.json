@@ -15,6 +15,7 @@
     "syscap": [
       "SystemCapability.Security.AccessToken"
     ],
+    "features": [ "access_token_feature_coverage = false" ],
     "adapted_system_type": [ "standard" ],
     "rom": "2048KB",
     "ram": "5102KB",

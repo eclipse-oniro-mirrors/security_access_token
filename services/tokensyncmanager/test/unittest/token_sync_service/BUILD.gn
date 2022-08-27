@@ -83,14 +83,14 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }
 
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
   external_deps = [
     "c_utils:utils",
     "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
-    "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
   ]
 }
 

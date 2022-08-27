@@ -36,7 +36,8 @@ namespace OHOS {
             return result;
         }
         if (size > 0) {
-            result = AccessTokenKit::DeleteRemoteDeviceTokens(reinterpret_cast<const char*>(data));
+            std::string testName(reinterpret_cast<const char*>(data), size);
+            result = AccessTokenKit::DeleteRemoteDeviceTokens(testName);
         }
         
 #endif

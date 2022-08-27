@@ -17,7 +17,6 @@
 #include <securec.h>
 #include "constant_common.h"
 #include "device_info_manager.h"
-#include "parameter.h"
 #include "softbus_bus_center.h"
 #include "dm_device_info.h"
 #include "remote_command_manager.h"

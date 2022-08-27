@@ -29,10 +29,9 @@ ohos_unittest("libtokensync_sdk_test") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  deps = [
-    #"//base/security/permission/frameworks/permission_standard/permissioninfrastructure:permission_standard_infrastructure_cxx",
-    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
-  ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
+
+  deps = []
   external_deps = [ "c_utils:utils" ]
 }
 

@@ -27,6 +27,7 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
   part_name = "access_token"
 
   public_configs = [ ":accesstoken_communication_adapter_cxx_public_config" ]
+  configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   include_dirs = [
     "include",
@@ -48,8 +49,5 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_state_full_parcel.cpp",
   ]
 
-  external_deps = [
-    "c_utils:utils",
-    "ipc:ipc_single",
-  ]
+  external_deps = [ "c_utils:utils" ]
 }
