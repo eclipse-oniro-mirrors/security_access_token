@@ -49,8 +49,5 @@ ohos_shared_library("accesstoken_communication_adapter_cxx") {
     "src/permission_state_full_parcel.cpp",
   ]
 
-  external_deps = [
-    "c_utils:utils",
-    "ipc:ipc_single",
-  ]
+  external_deps = [ "c_utils:utils" ]
 }

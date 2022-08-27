@@ -22,7 +22,6 @@
 #include "data_validator.h"
 #include "device_info_repository.h"
 #include "ipc_skeleton.h"
-#include "parameter.h"
 #include "soft_bus_manager.h"
 
 namespace OHOS {

@@ -17,7 +17,10 @@ ohos_shared_library("accesstoken_database_cxx") {
   subsystem_name = "security"
   part_name = "access_token"
 
-  include_dirs = [ "include" ]
+  include_dirs = [
+    "include",
+    "//base/security/access_token/frameworks/common/include",
+  ]
 
   sources = [
     "src/generic_values.cpp",
@@ -29,10 +32,7 @@ ohos_shared_library("accesstoken_database_cxx") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
-  deps = [
-    "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//third_party/sqlite:sqlite",
-  ]
+  deps = [ "//third_party/sqlite:sqlite" ]
 
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   if (build_selinux) {

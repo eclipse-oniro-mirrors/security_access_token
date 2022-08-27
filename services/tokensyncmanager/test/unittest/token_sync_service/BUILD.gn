@@ -89,10 +89,8 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "c_utils:utils",
     "eventhandler:libeventhandler",
     "hiviewdfx_hilog_native:libhilog",
-    "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
   ]
 }
 

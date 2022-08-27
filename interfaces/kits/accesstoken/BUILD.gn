@@ -31,10 +31,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "//foundation/arkui/napi:ace_napi",
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  external_deps = [
-    "hiviewdfx_hilog_native:libhilog",
-    "ipc:ipc_core",
-  ]
+  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   relative_install_dir = "module"
