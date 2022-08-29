@@ -33,20 +33,19 @@ namespace AccessToken {
 class PermissionUsedRecordCache {
 public:
     static PermissionUsedRecordCache& GetInstance();
-    void AddRecordToBuffer(PermissionRecord& record);
+    void AddRecordToBuffer(const PermissionRecord& record);
     void MergeRecord(PermissionRecord& record, std::shared_ptr<PermissionUsedRecordNode> curFindMergePos);
     void AddToPersistQueue(const std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead);
     void ExecuteReadRecordBufferTask();
     int32_t PersistPendingRecords();
-    void GetPersistPendingRecordsAndReset();
     int32_t RemoveRecords(const AccessTokenID tokenId);
-    void RemoveRecordsFromPersistPendingBufferQueue(const AccessTokenID tokenId,
+    void RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
         std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd);
     void GetRecords(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues);
-    void GetRecordsFromPersistPendingBufferQueue(const std::set<int32_t>& opCodeList,
+    void GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
@@ -65,10 +64,11 @@ private:
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
     std::vector<std::shared_ptr<PermissionUsedRecordNode>> persistPendingBufferQueue_;
     int64_t nextPersistTimestamp_ = 0L;
-    const static int32_t INTERVAL = 60 * 15;
+    const static int32_t INTERVAL = 60;
     const static int32_t MAX_PERSIST_SIZE = 100;
-    int32_t persistIsRunning_ = 0;
-    OHOS::Utils::RWLock cacheLock_;
+    bool persistIsRunning_ = false;
+    OHOS::Utils::RWLock cacheLock1_;
+    OHOS::Utils::RWLock cacheLock2_;
     OHOS::ThreadPool readRecordBufferTaskWorker_;
 };
 } // namespace AccessToken
