@@ -790,7 +790,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         if (napi_create_reference(env, argv[PARAM3], 1, &callback) != napi_ok) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
             return false;
-        }  
+        }
     }
     AccessTokenKit* accessTokenKitInfo = nullptr;
     if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
@@ -865,7 +865,6 @@ bool NapiAtManager::FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unr
 
 bool NapiAtManager::IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo)
 {
-    
     PermStateChangeScope targetScopeInfo;
     registerPermStateChangeInfo->subscriber->GetScope(targetScopeInfo);
     std::vector<AccessTokenID> targetTokenIDs = targetScopeInfo.tokenIDs;
