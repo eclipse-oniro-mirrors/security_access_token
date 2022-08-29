@@ -44,7 +44,6 @@ public:
     virtual ~AccessTokenManagerClient();
 
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
-    int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(

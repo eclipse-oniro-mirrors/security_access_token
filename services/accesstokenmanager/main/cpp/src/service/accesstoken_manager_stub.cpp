@@ -73,14 +73,6 @@ void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, Message
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::VerifyNativeTokenInner(MessageParcel& data, MessageParcel& reply)
-{
-    AccessTokenID tokenID = data.ReadUint32();
-    std::string permissionName = data.ReadString();
-    int result = this->VerifyNativeToken(tokenID, permissionName);
-    reply.WriteInt32(result);
-}
-
 void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     std::string permissionName = data.ReadString();
@@ -512,8 +504,6 @@ AccessTokenManagerStub::AccessTokenManagerStub()
 {
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::VERIFY_NATIVETOKEN)] =
-        &AccessTokenManagerStub::VerifyNativeTokenInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSION)] =
         &AccessTokenManagerStub::GetDefPermissionInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSIONS)] =
