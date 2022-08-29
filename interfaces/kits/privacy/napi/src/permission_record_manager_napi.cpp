@@ -609,7 +609,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
         } // get PRARM[2] callback type
         if (valueType != napi_function) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM2] callback matching failed");
-            return false;  
+            return false;
         }
         if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
@@ -680,7 +680,8 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
 
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
-    RegisterPermActiveChangeContext* registerPermActiveChangeContext = new (std::nothrow) RegisterPermActiveChangeContext();
+    RegisterPermActiveChangeContext* registerPermActiveChangeContext =
+        new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
         return nullptr;
@@ -713,7 +714,8 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
 
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
-    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext = new (std::nothrow) UnregisterPermActiveChangeContext();
+    UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
+        new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
         return nullptr;
