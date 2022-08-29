@@ -133,7 +133,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
         Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
         isEmpty = persistPendingBufferQueue_.empty();
         persistIsRunning_ = true;
-        nextPersistTimestamp_ = 0;
+        nextPersistTimestamp_ = TimeUtil::GetCurrentTimestamp() + INTERVAL;
     }
     while (!isEmpty) {
         {
