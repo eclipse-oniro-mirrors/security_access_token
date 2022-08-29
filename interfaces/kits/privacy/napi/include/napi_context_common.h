@@ -22,6 +22,7 @@
 #include "napi/native_node_api.h"
 #include "napi_common.h"
 #include "perm_active_status_customized_cbk.h"
+#include "privacy_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -59,9 +60,7 @@ struct PermActiveChangeContext {
     virtual ~PermActiveChangeContext();
 
     napi_env env = nullptr;
-    napi_async_work work = nullptr;
     napi_ref callbackRef = nullptr;
-    int32_t errCode = RET_FAILED;
     std::string type;
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr;
 };
