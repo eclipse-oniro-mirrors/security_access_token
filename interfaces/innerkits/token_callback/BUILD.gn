@@ -37,17 +37,14 @@ if (is_standard_system) {
       "//base/security/access_token/frameworks/common/include",
     ]
 
-    sources = [
-      "src/token_callback_proxy.cpp",
-      "src/token_callback_stub.cpp",
-    ]
+    sources = [ "src/token_callback_stub.cpp" ]
 
     deps = []
 
     external_deps = [
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
+      "ipc:ipc_single",
     ]
 
     cflags_cc = [

@@ -56,16 +56,6 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
     return proxy->VerifyAccessToken(tokenID, permissionName);
 }
 
-int AccessTokenManagerClient::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return PERMISSION_DENIED;
-    }
-    return proxy->VerifyNativeToken(tokenID, permissionName);
-}
-
 int AccessTokenManagerClient::GetDefPermission(
     const std::string& permissionName, PermissionDef& permissionDefResult)
 {

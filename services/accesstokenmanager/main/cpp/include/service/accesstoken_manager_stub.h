@@ -35,7 +35,6 @@ public:
 
 private:
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
-    void VerifyNativeTokenInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply);

@@ -50,7 +50,6 @@ if (is_standard_system) {
       "src/database/data_translator.cpp",
       "src/database/permission_used_record_db.cpp",
       "src/record/on_permission_used_record_callback_proxy.cpp",
-      "src/record/on_permission_used_record_callback_stub.cpp",
       "src/record/permission_record.cpp",
       "src/record/permission_record_manager.cpp",
       "src/record/permission_record_repository.cpp",
@@ -73,7 +72,7 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
+      "ipc:ipc_single",
       "safwk:system_ability_fwk",
     ]
   }

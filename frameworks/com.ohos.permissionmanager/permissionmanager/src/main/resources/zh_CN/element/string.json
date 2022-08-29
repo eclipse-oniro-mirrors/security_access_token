@@ -87,6 +87,46 @@
     {
       "name": "record_time_limit",
       "value": "近7天访问记录"
+    },
+    {
+      "name": "allow",
+      "value": "允许"
+    },
+    {
+      "name": "ban",
+      "value": "禁止"
+    },
+    {
+      "name": "precise_location",
+      "value": "精确位置"
+    },
+    {
+      "name": "precise_location_on",
+      "value": "精确位置：开启"
+    },
+    {
+      "name": "precise_location_off",
+      "value": "精确位置：关闭"
+    },
+    {
+      "name": "get_the_exact_position",
+      "value": "允许该应用获取您的准确位置。关闭后，应用获取的位置会有偏差。"
+    },
+    {
+      "name": "close_exact_position",
+      "value": "关闭精确位置后，应用获取的位置会有偏差。"
+    },
+    {
+      "name": "whether_to_allow",
+      "value": "是否允许"
+    },
+    {
+      "name": "access_general_location",
+      "value": "访问大致位置？"
+    },
+    {
+      "name": "fuzzy_to_exact",
+      "value": "的位置访问权限从“大致位置”改为“精确位置”？"
     }
   ]
 }

@@ -98,13 +98,6 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     return res;
 }
 
-int AccessTokenManagerService::VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
-        tokenID, permissionName.c_str());
-    return PermissionManager::GetInstance().VerifyNativeToken(tokenID, permissionName);
-}
-
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {

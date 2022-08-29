@@ -16,9 +16,7 @@
 #include "on_permission_used_record_callback_stub.h"
 
 #include "accesstoken_log.h"
-#include "constant.h"
 #include "permission_used_result_parcel.h"
-#include "constant.h"
 #include "string_ex.h"
 
 namespace OHOS {
@@ -28,6 +26,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "OnPermissionUsedRecordCallbackStub"
 };
+static constexpr int32_t RET_NOK = -1;
 }
 
 int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
@@ -37,7 +36,7 @@ int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != OnPermissionUsedRecordCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return Constant::FAILURE;
+        return RET_NOK;
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
@@ -46,12 +45,12 @@ int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
         PermissionUsedResult result;
         if (errCode != NO_ERROR) {
             OnQueried(errCode, result);
-            return Constant::FAILURE;
+            return RET_NOK;
         }
         sptr<PermissionUsedResultParcel> resultSptr = data.ReadParcelable<PermissionUsedResultParcel>();
         if (resultSptr == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-            return Constant::FAILURE;
+            return RET_NOK;
         }
         ACCESSTOKEN_LOG_INFO(LABEL, "errCode: %{public}d", errCode);
         OnQueried(errCode, resultSptr->result);
