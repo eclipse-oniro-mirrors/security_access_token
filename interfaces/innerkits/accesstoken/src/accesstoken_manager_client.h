@@ -68,7 +68,7 @@ public:
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
     int32_t UnRegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
-    
+
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
