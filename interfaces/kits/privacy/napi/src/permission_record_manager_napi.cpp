@@ -57,7 +57,6 @@ static void ParseAddPermissionRecord(
 static void ParseStartAndStopUsingPermission(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------StartUsingPermission begin.");
     size_t argc = ARGS_THREE;
     napi_value argv[ARGS_THREE] = { 0 };
     napi_value thisVar = nullptr;
@@ -67,11 +66,8 @@ static void ParseStartAndStopUsingPermission(
 
     asyncContext.env = env;
     asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------asyncContext.tokenId = %{public}d", asyncContext.tokenId);
     asyncContext.permissionName = ParseString(env, argv[PARAM1]);
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------asyncContext.permissionName = %{public}s", asyncContext.permissionName.c_str());
     if (argc == ARGS_THREE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "------parse callback");
         napi_valuetype valueType = napi_undefined;
         NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_THREE - 1], &valueType))  ;
         if (valueType == napi_function) {
@@ -334,7 +330,6 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 
 static void StartUsingPermissionExecute(napi_env env, void* data)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------StartUsingPermission execute.");
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission execute.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -347,7 +342,6 @@ static void StartUsingPermissionExecute(napi_env env, void* data)
 
 static void StartUsingPermissionComplete(napi_env env, napi_status status, void* data)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------StartUsingPermissionComplete execute.");
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
     if (asyncContext == nullptr) {
@@ -360,10 +354,8 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode,
         &results[PARAM1]));
     if (asyncContext->deferred) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "------asyncContext->deferred.");
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
             results[PARAM1]));
-        ACCESSTOKEN_LOG_ERROR(LABEL, "------napi_resolve_deferred end");
     } else {
         napi_value callback = nullptr;
         napi_value callResult = nullptr;
@@ -379,7 +371,6 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission begin.");
-    ACCESSTOKEN_LOG_ERROR(LABEL, "------StartUsingPermission begin.");
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
