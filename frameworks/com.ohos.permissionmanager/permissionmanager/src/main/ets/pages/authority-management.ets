@@ -21,7 +21,7 @@ import bundle from "@ohos.bundle";
 import Resmgr from '@ohos.resourceManager';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { groups, userGrantPermissions, permissionGroupPermissions, noNeedDisplayApp } from "../common/model/permissionGroup";
-import { permissionGroups, permissionPermissionGroup, permissionGroupIds } from "../common/model/permissionGroup";
+import { permissionGroups, permissionGroupIds } from "../common/model/permissionGroup";
 import { makePy } from "../common/utils/utils";
 import Constants from '../common/utils/constant';
 
@@ -106,6 +106,7 @@ struct authorityManagementPage {
               return ele.groupName === item.group
             })
 
+            globalThis.currentPermissionGroup = item.group
             router.push({
               uri: 'pages/authority-tertiary-groups',
               params: { routerData: dataList, backTitle: item.groupName  }
@@ -374,8 +375,8 @@ struct authorityManagementPage {
     let dePermissions = [];
     let groupIds = [];
     for (let i = 0; i < reqUserPermissions.length; i++) {
-      if(dePermissions.indexOf(permissionPermissionGroup[reqUserPermissions[i]]) == -1){
-        dePermissions.push(permissionPermissionGroup[reqUserPermissions[i]]);
+      if(dePermissions.indexOf(groups[permissionGroupIds[reqUserPermissions[i]]].name) == -1){
+        dePermissions.push(groups[permissionGroupIds[reqUserPermissions[i]]].name);
       }
       if(groupIds.indexOf(permissionGroupIds[reqUserPermissions[i]]) == -1){
         groupIds.push(permissionGroupIds[reqUserPermissions[i]]);

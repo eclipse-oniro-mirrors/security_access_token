@@ -21,6 +21,7 @@ import { Log, getPermissionGroup } from '../common/utils/utils'
 import Constants from '../common/utils/constant'
 import { BundleFlag } from '../common/model/bundle'
 import { permissionGroups, showSubpermissionsGrop } from '../common/model/permissionGroup'
+import { LocationCanvas } from '../common/components/location'
 
 @Extend(Button) function customizeButton() {
   .backgroundColor($r('app.color.default_background_color'))
@@ -29,6 +30,9 @@ import { permissionGroups, showSubpermissionsGrop } from '../common/model/permis
   .height(Constants.BUTTON_HEIGHT)
   .width(Constants.BUTTON_WIDTH)
 }
+
+const FUZZY_LOCATION_PERMISSION = 'ohos.permission.APPROXIMATELY_LOCATION'
+const PRECISE_LOCATION_PERMISSION = 'ohos.permission.LOCATION'
 
 @Entry
 @Component
@@ -43,6 +47,8 @@ struct dialogPlusPage {
   @State appName: string = ""
   @State win: any = ""
   @State proxy: any = ''
+  @State locationFlag: number = Constants.LOCATION_NONE
+  @State resource: any = {}
 
   build() {
     Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
@@ -65,8 +71,7 @@ struct dialogPlusPage {
           Column() {
             Row() {
               Flex({ justifyContent: FlexAlign.Start }) {
-                Text("是否允许" + this.appName +
-                this.grantGroups[this.count].label)
+                Text(this.showTitle())
                   .fontSize(Constants.DIALOG_REQ_FONT_SIZE)
                   .fontColor($r('app.color.first_font_color'))
                   .fontWeight(FontWeight.Medium)
@@ -81,7 +86,7 @@ struct dialogPlusPage {
 
             Row() {
               Flex({ justifyContent: FlexAlign.Start }) {
-                Text(this.grantGroups[this.count].description)
+                Text(this.showReason())
                   .fontSize(Constants.DIALOG_DESP_FONT_SIZE)
                   .fontColor($r('app.color.text_secondary_color'))
                   .fontSize(Constants.DIALOG_DESP_FONT_SIZE)
@@ -94,17 +99,21 @@ struct dialogPlusPage {
                   })
               }
             }
+
+            if(this.locationFlag > Constants.LOCATION_NONE) {
+              LocationCanvas({ locationFlag: $locationFlag })
+            }
           }
         }
         Row() {
           Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-            Button('禁止')
+            Button($r('app.string.ban'))
               .fontSize(Constants.BUTTON_FONT_SIZE)
               .onClick(() => {
                 this.privacyCancel(this.grantGroups[this.count], this.accessTokenId, this.reqPerms, this.userFixedFlag)
               }).customizeButton().margin({ left: Constants.BUTTON_MARGIN_LEFT })
             Text('|').fontSize(Constants.BUTTON_DIVIDER_FONT_SIZE).fontColor($r('app.color.divider_color'))
-            Button('允许')
+            Button($r('app.string.allow'))
               .fontSize(Constants.BUTTON_FONT_SIZE)
               .onClick(() => {
                 this.privacyAccept(this.grantGroups[this.count], this.accessTokenId, this.reqPerms, this.userFixedFlag)
@@ -118,6 +127,27 @@ struct dialogPlusPage {
       .padding({ bottom: Constants.DIALOG_PADDING_BOTTOM })
     }.width(Constants.FULL_WIDTH)
     .height(Constants.FULL_HEIGHT)
+  }
+
+  showTitle() {
+    if(this.grantGroups[this.count].name == 'LOCATION') {
+      if(this.locationFlag == Constants.LOCATION_FUZZY) {
+        return this.resource.whether_to_allow + this.appName + this.resource.access_general_location
+      }
+      if(this.locationFlag == Constants.LOCATION_UPGRADE) {
+        return this.resource.whether_to_allow + this.appName + this.resource.fuzzy_to_exact
+      }
+    }
+    return this.resource.whether_to_allow + this.appName + this.grantGroups[this.count].label
+  }
+
+  showReason() {
+    if(this.grantGroups[this.count].name == 'LOCATION') {
+      if((this.locationFlag == Constants.LOCATION_FUZZY) || (this.locationFlag == Constants.LOCATION_BOTH_FUZZY)) {
+        return $r('app.string.close_exact_position')
+      }
+    }
+    return this.grantGroups[this.count].description
   }
 
   verify() {
@@ -174,6 +204,14 @@ struct dialogPlusPage {
   async privacyAccept(group, accessTokenId, permissionList, userFixedFlag) {
     var acManager = abilityAccessCtrl.createAtManager()
     var num = 0
+    if(group.name == 'LOCATION') {
+      if((this.locationFlag == Constants.LOCATION_UPGRADE) ||
+      (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) {
+        await acManager.grantUserGrantedPermission(accessTokenId, PRECISE_LOCATION_PERMISSION, userFixedFlag)
+        var preciseIndex = permissionList.indexOf(FUZZY_LOCATION_PERMISSION)
+        this.result[preciseIndex] = abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED;
+      }
+    }
     group.permissions.forEach(async permission => {
       let result
       if(showSubpermissionsGrop.indexOf(group.groupName) == -1) {
@@ -203,6 +241,13 @@ struct dialogPlusPage {
 
   async privacyCancel(group, accessTokenId, permissionList, userFixedFlag) {
     var acManager = abilityAccessCtrl.createAtManager()
+    if(group.name == 'LOCATION') {
+      if((this.locationFlag == Constants.LOCATION_UPGRADE) ||
+      (this.locationFlag == Constants.LOCATION_BOTH_FUZZY) ||
+      (this.locationFlag == Constants.LOCATION_BOTH_PRECISE)) {
+        await acManager.revokeUserGrantedPermission(accessTokenId, PRECISE_LOCATION_PERMISSION, userFixedFlag)
+      }
+    }
     group.permissions.forEach(async permission => {
       let result
       if(showSubpermissionsGrop.indexOf(group.groupName) == -1) {
@@ -218,6 +263,18 @@ struct dialogPlusPage {
   }
 
   getgrantGroups(stateGroup) {
+    //Processing of positioning
+    if(this.reqPerms.includes(FUZZY_LOCATION_PERMISSION)) {
+      this.locationFlag = Constants.LOCATION_FUZZY
+      if(this.reqPerms.includes(PRECISE_LOCATION_PERMISSION)) {
+        this.locationFlag = Constants.LOCATION_BOTH_PRECISE
+        var fuzzyIndex = this.reqPerms.indexOf(FUZZY_LOCATION_PERMISSION)
+        if(stateGroup[fuzzyIndex] == Constants.PASS_OPER) {
+          this.locationFlag = Constants.LOCATION_UPGRADE
+        }
+      }
+    }
+
     this.reqPerms.forEach((permission, idx) => {
       //已授权
       if(stateGroup[idx] == Constants.PASS_OPER) {
@@ -321,6 +378,22 @@ struct dialogPlusPage {
     })
   }
 
+  getStrings() {
+    Resmgr.getResourceManager(globalThis.extensionContext, Constants.BUNDLE_NAME).then(item => {
+      item.getString($r("app.string.whether_to_allow").id, (err, val) => {
+        this.resource.whether_to_allow = val
+      })
+      item.getString($r("app.string.access_general_location").id, (err, val) => {
+        this.resource.access_general_location = val
+      })
+      item.getString($r("app.string.fuzzy_to_exact").id, (err, val) => {
+        this.resource.fuzzy_to_exact = val
+      })
+    }).catch(error => {
+      Log.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
+    })
+  }
+
   aboutToAppear() {
     this.count = 0;
     this.initStatus = Constants.INIT_NEED_TO_WAIT
@@ -337,6 +410,7 @@ struct dialogPlusPage {
     Log.info("request permission=" + JSON.stringify(this.reqPerms) + ", tokenId = " + this.accessTokenId)
     Log.info("permission state=" + JSON.stringify(globalThis.abilityWant.parameters['ohos.user.grant.permission.state']));
     this.result = new Array(this.reqPerms.length).fill(-1);
+    this.getStrings()
     this.getgrantGroups(globalThis.abilityWant.parameters['ohos.user.grant.permission.state']);
     this.getApplicationName(globalThis.abilityWant.parameters['ohos.aafwk.param.callerUid'])
   }
