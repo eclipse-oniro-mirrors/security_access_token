@@ -38,6 +38,7 @@ if (is_standard_system) {
     ]
 
     sources = [
+      "src/on_permission_used_record_callback_stub.cpp",
       "src/perm_active_status_change_callback.cpp",
       "src/perm_active_status_change_callback_stub.cpp",
       "src/perm_active_status_customized_cbk.cpp",
