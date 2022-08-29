@@ -41,7 +41,6 @@ public:
     ~AccessTokenManagerProxy() override;
 
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
-    int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(

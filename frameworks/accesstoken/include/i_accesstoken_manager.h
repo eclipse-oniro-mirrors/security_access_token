@@ -43,7 +43,6 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
-    virtual int VerifyNativeToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
@@ -85,36 +84,35 @@ public:
 
     enum class InterfaceCode {
         VERIFY_ACCESSTOKEN = 0xff10,
-        GET_DEF_PERMISSION = 0xff11,
-        GET_DEF_PERMISSIONS = 0xff12,
-        GET_REQ_PERMISSIONS = 0xff13,
-        GET_PERMISSION_FLAG = 0xff14,
-        GRANT_PERMISSION = 0xff15,
-        REVOKE_PERMISSION = 0xff16,
-        CLEAR_USER_GRANT_PERMISSION = 0xff17,
-        ALLOC_TOKEN_HAP = 0xff18,
-        TOKEN_DELETE = 0xff19,
-        GET_TOKEN_TYPE = 0xff20,
-        CHECK_NATIVE_DCAP = 0xff21,
-        GET_HAP_TOKEN_ID = 0xff22,
-        ALLOC_LOCAL_TOKEN_ID = 0xff23,
-        GET_NATIVE_TOKENINFO = 0xff24,
-        GET_HAP_TOKENINFO = 0xff25,
-        UPDATE_HAP_TOKEN = 0xff26,
+        GET_DEF_PERMISSION,
+        GET_DEF_PERMISSIONS,
+        GET_REQ_PERMISSIONS,
+        GET_PERMISSION_FLAG,
+        GRANT_PERMISSION,
+        REVOKE_PERMISSION,
+        CLEAR_USER_GRANT_PERMISSION,
+        ALLOC_TOKEN_HAP,
+        TOKEN_DELETE,
+        GET_TOKEN_TYPE,
+        CHECK_NATIVE_DCAP,
+        GET_HAP_TOKEN_ID,
+        ALLOC_LOCAL_TOKEN_ID,
+        GET_NATIVE_TOKENINFO,
+        GET_HAP_TOKENINFO,
+        UPDATE_HAP_TOKEN,
 
-        GET_HAP_TOKEN_FROM_REMOTE = 0xff27,
-        GET_ALL_NATIVE_TOKEN_FROM_REMOTE = 0xff28,
-        SET_REMOTE_HAP_TOKEN_INFO = 0xff29,
-        SET_REMOTE_NATIVE_TOKEN_INFO = 0xff2a,
-        DELETE_REMOTE_TOKEN_INFO = 0xff2b,
-        DELETE_REMOTE_DEVICE_TOKEN = 0xff2c,
-        VERIFY_NATIVETOKEN = 0xff2d,
-        GET_NATIVE_REMOTE_TOKEN = 0xff2f,
+        GET_HAP_TOKEN_FROM_REMOTE,
+        GET_ALL_NATIVE_TOKEN_FROM_REMOTE,
+        SET_REMOTE_HAP_TOKEN_INFO,
+        SET_REMOTE_NATIVE_TOKEN_INFO,
+        DELETE_REMOTE_TOKEN_INFO,
+        DELETE_REMOTE_DEVICE_TOKEN,
+        GET_NATIVE_REMOTE_TOKEN,
 
-        DUMP_TOKENINFO = 0xff30,
-        GET_PERMISSION_OPER_STATE = 0xff31,
-        REGISTER_PERM_STATE_CHANGE_CALLBACK = 0xff32,
-        UNREGISTER_PERM_STATE_CHANGE_CALLBACK = 0xff33,
+        DUMP_TOKENINFO,
+        GET_PERMISSION_OPER_STATE,
+        REGISTER_PERM_STATE_CHANGE_CALLBACK,
+        UNREGISTER_PERM_STATE_CHANGE_CALLBACK,
     };
 };
 } // namespace AccessToken
