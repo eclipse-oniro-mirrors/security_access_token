@@ -16,6 +16,7 @@
 #include "accesstoken_info_manager.h"
 
 #include <securec.h>
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "accesstoken_remote_token_manager.h"
@@ -673,18 +674,40 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     return RET_SUCCESS;
 }
 
+bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, const HapTokenInfoForSync& hapSync)
+{
+    std::string errReason;
+    if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsDeviceIdValid(hapSync.baseInfo.deviceID)) {
+        errReason = "respond deviceID error";
+    } else if (!DataValidator::IsUserIdValid(hapSync.baseInfo.userID)) {
+        errReason = "respond userID error";
+    } else if (!DataValidator::IsBundleNameValid(hapSync.baseInfo.bundleName)) {
+        errReason = "respond bundleName error";
+    } else if (!DataValidator::IsAplNumValid(hapSync.baseInfo.apl)) {
+        errReason = "respond apl error";
+    } else if (!DataValidator::IsTokenIDValid(hapSync.baseInfo.tokenID)) {
+        errReason = "respond tokenID error";
+    } else if (!DataValidator::IsAppIDDescValid(hapSync.baseInfo.appID)) {
+        errReason = "respond appID error";
+    } else if (!DataValidator::IsDlpTypeValid(hapSync.baseInfo.dlpType)) {
+        errReason = "respond dlpType error";
+    } else if (hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION) {
+        errReason = "respond version error";
+    } else if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
+        errReason = "respond token type error";
+    } else {
+        return true;
+    }
+
+    HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+        HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_RESPONSE_ERROR,
+        "REMOTE_ID", ConstantCommon::EncryptDevId(deviceID), "ERROR_REASON", errReason);
+    return false;
+}
+
 int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync)
 {
-    if (!DataValidator::IsDeviceIdValid(deviceID)
-        || !DataValidator::IsUserIdValid(hapSync.baseInfo.userID)
-        || !DataValidator::IsBundleNameValid(hapSync.baseInfo.bundleName)
-        || !DataValidator::IsAplNumValid(hapSync.baseInfo.apl)
-        || !DataValidator::IsTokenIDValid(hapSync.baseInfo.tokenID)
-        || !DataValidator::IsAppIDDescValid(hapSync.baseInfo.appID)
-        || !DataValidator::IsDeviceIdValid(hapSync.baseInfo.deviceID)
-        || !DataValidator::IsDlpTypeValid(hapSync.baseInfo.dlpType)
-        || hapSync.baseInfo.ver != DEFAULT_TOKEN_VERSION
-        || AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(hapSync.baseInfo.tokenID) != TOKEN_HAP) {
+    if (!IsRemoteHapTokenValid(deviceID, hapSync)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
         return RET_FAILED;
     }
@@ -873,6 +896,9 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid",
             ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
+            "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "deviceID error");
         return 0;
     }
     std::string remoteUdid = GetUdidByNodeId(remoteDeviceID);
@@ -886,6 +912,9 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
+            "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "request hap token error");
         return 0;
     }
 
@@ -912,11 +941,16 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
     std::vector<GenericValues> permDefValues;
     std::vector<GenericValues> permStateValues;
     std::vector<GenericValues> nativeTokenValues;
+    uint64_t lastestUpdateStamp = 0;
     {
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
             if (iter->second != nullptr) {
-                iter->second->StoreHapInfo(hapInfoValues, permStateValues);
+                std::shared_ptr<HapTokenInfoInner>& hapInfo = iter->second;
+                hapInfo->StoreHapInfo(hapInfoValues, permStateValues);
+                if (hapInfo->permUpdateTimestamp_ > lastestUpdateStamp) {
+                    lastestUpdateStamp = hapInfo->permUpdateTimestamp_;
+                }
             }
         }
     }
@@ -935,7 +969,8 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValues);
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
     DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    int res = DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
 }
 
 void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()

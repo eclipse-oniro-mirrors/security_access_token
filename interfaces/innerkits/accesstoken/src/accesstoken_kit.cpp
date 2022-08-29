@@ -16,11 +16,13 @@
 #include "accesstoken_kit.h"
 #include <string>
 #include <vector>
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "accesstoken_manager_client.h"
 #include "constant_common.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
+#include "hisysevent.h"
 #include "permission_def.h"
 #include "perm_state_change_callback_customize.h"
 
@@ -156,6 +158,9 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (tokenID == 0) {
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
+            "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return PERMISSION_DENIED;
     }

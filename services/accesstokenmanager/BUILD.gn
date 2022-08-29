@@ -54,6 +54,7 @@ if (is_standard_system) {
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/sqlite_storage.cpp",
       "main/cpp/src/permission/permission_definition_cache.cpp",
+      "main/cpp/src/permission/permission_grant_event.cpp",
       "main/cpp/src/permission/permission_manager.cpp",
       "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
@@ -88,6 +89,8 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "dsoftbus:softbus_client",
+      "hisysevent_native:libhisysevent",
+      "hitrace_native:hitrace_meter",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_single",
       "safwk:system_ability_fwk",

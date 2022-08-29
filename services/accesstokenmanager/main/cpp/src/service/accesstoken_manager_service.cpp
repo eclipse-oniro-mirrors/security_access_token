@@ -15,9 +15,12 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <sys/types.h>
 #include <thread>
+#include <unistd.h>
 
 #include "access_token.h"
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
@@ -31,12 +34,15 @@
 #endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
+#include "hisysevent.h"
+#include "hitrace_meter.h"
 #include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "privacy_kit.h"
+#include "string_ex.h"
 
 namespace OHOS {
 namespace Security {
@@ -45,6 +51,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerService"
 };
+constexpr int TWO_ARGS = 2;
 }
 
 const bool REGISTER_RESULT =
@@ -92,9 +99,16 @@ void AccessTokenManagerService::OnStop()
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
+    StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
     int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permissionName: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
+    if (res == PERMISSION_DENIED) {
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
+            "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName);
+    }
+    FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     return res;
 }
 
@@ -468,6 +482,38 @@ void AccessTokenManagerService::DestroyDeviceListenner()
 }
 #endif
 
+int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
+{
+    if (fd < 0) {
+        return ERR_INVALID_VALUE;
+    }
+
+    std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
+    if (arg0.compare("-h") == 0) {
+        dprintf(fd, "Usage:\n");
+        dprintf(fd, "       -h: command help\n");
+        dprintf(fd, "       -a: dump all tokens\n");
+        dprintf(fd, "       -t <TOKEN_ID>: dump special token id\n");
+    } else if (arg0.compare("-a") == 0) {
+        std::string dumpStr;
+        DumpTokenInfo(static_cast<AccessTokenID>(0), dumpStr);
+        dprintf(fd, "%s\n", dumpStr.c_str());
+    } else if (arg0.compare("-t") == 0) {
+        if (args.size() < TWO_ARGS) {
+            return ERR_INVALID_VALUE;
+        }
+
+        long long tokenID = atoll(static_cast<const char *>(Str16ToStr8(args.at(1)).c_str()));
+        if (tokenID <= 0) {
+            return ERR_INVALID_VALUE;
+        }
+        std::string dumpStr;
+        DumpTokenInfo(static_cast<AccessTokenID>(tokenID), dumpStr);
+        dprintf(fd, "%s\n", dumpStr.c_str());
+    }
+    return ERR_OK;
+}
+
 bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
@@ -478,6 +524,9 @@ bool AccessTokenManagerService::Initialize()
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif
+    HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
+        "PID_INFO", getpid());
     return true;
 }
 } // namespace AccessToken

@@ -79,6 +79,7 @@ public:
 #endif
 
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
+    int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
     bool Initialize();

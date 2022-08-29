@@ -1,0 +1,42 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+domain: ACCESS_TOKEN
+
+PERMISSION_VERIFY_REPORT:
+  __BASE: {type: SECURITY, level: CRITICAL, desc: permission verification error}
+  CODE: {type: INT32, desc: error code}
+  CALLER_TOKENID: {type: UINT32, desc: caller token id}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+
+PERMISSION_CHECK:
+  __BASE: {type: FAULT, level: CRITICAL, desc: permission check error}
+  CODE: {type: INT32, desc: error code}
+  CALLER_TOKENID: {type: UINT32, desc: caller token id}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+  ERROR_REASON: {type: STRING, desc: error reason}
+
+PERMISSION_CHECK_EVENT:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: permission check event}
+  CODE: {type: INT32, desc: event code}
+  CALLER_TOKENID: {type: UINT32, desc: caller token id}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+  PERMISSION_GRANT_TYPE: {type: INT32, desc: grant type}
+  PID_INFO: {type: INT32, desc: access token service pid}
+  REASON: {type: STRING, desc: reason}
+
+PERMISSION_SYNC:
+  __BASE: {type: FAULT, level: CRITICAL, tag: usability, desc: permission sync error}
+  CODE: {type: INT32, desc: error code}
+  REMOTE_ID: {type: STRING, desc: remote id}
+  REASON: {type: STRING, desc: error reason}

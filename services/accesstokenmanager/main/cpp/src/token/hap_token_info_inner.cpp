@@ -15,6 +15,7 @@
 
 #include "hap_token_info_inner.h"
 
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "data_translator.h"
@@ -29,7 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const std::string DEFAULT_DEVICEID = "0";
 }
 
-HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
+HapTokenInfoInner::HapTokenInfoInner() :  permUpdateTimestamp_(0), isRemote_(false)
 {
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenID = 0;
@@ -42,7 +43,7 @@ HapTokenInfoInner::HapTokenInfoInner() : isRemote_(false)
 }
 
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
-    const HapInfoParams &info, const HapPolicyParams &policy) : isRemote_(false)
+    const HapInfoParams &info, const HapPolicyParams &policy) : permUpdateTimestamp_(0), isRemote_(false)
 {
     tokenInfoBasic_.tokenID = id;
     tokenInfoBasic_.userID = info.userID;
@@ -111,8 +112,9 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.userID = inGenericValues.GetInt(FIELD_USER_ID);
     tokenInfoBasic_.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
     if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "bundleName error");
         return RET_FAILED;
     }
 
@@ -121,8 +123,9 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     tokenInfoBasic_.dlpType = inGenericValues.GetInt(FIELD_DLP_TYPE);
     tokenInfoBasic_.appID = inGenericValues.GetString(FIELD_APP_ID);
     if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "appID error");
         return RET_FAILED;
     }
 
@@ -130,22 +133,26 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
         return RET_FAILED;
     }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
         tokenInfoBasic_.apl = (ATokenAplEnum)aplNum;
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x apl is error, value %{public}d",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x apl is error, value %{public}d",
             tokenInfoBasic_.tokenID, aplNum);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
         return RET_FAILED;
     }
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "tokenID: 0x%{public}x version is error, version %{public}d",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
         return RET_FAILED;
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);

@@ -58,6 +58,7 @@ public:
     bool IsRemote() const;
     void SetRemote(bool isRemote);
 
+    uint64_t permUpdateTimestamp_;
 private:
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
