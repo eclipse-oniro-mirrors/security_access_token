@@ -70,7 +70,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
             }
             curFindMergePos = pre;
         }
-        AddRecordNode(record); // refresh curRecordBUfferPos and readableSize
+        AddRecordNode(mergedRecord); // refresh curRecordBUfferPos and readableSize
         remainCount++;
         if (persistPendingBufferEnd != nullptr) {
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
