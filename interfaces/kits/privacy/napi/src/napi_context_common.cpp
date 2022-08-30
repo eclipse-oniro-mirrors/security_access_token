@@ -19,7 +19,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyContextCommonNapi"};
-}
+} // namespace
 PrivacyAsyncWorkData::PrivacyAsyncWorkData(napi_env envValue)
 {
     env = envValue;

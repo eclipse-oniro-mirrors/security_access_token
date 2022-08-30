@@ -40,11 +40,13 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     PermissionUsedResult result;
     int32_t retCode = -1;
 };
+
 typedef PermActiveChangeContext RegisterPermActiveChangeContext;
 
 struct UnregisterPermActiveChangeContext : public PermActiveChangeContext {
     std::vector<std::string> permList;
 };
+
 napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo);
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo);
 napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo);
