@@ -201,16 +201,14 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    RemoveFromPersistQueueAndDatabase(tokenId, persistPendingBufferHead, persistPendingBufferEnd);
+    RemoveFromPersistQueueAndDatabase(tokenId);
     if (persistPendingBufferEnd != nullptr) { // add to queue
         AddToPersistQueue(persistPendingBufferHead);
     }
     return Constant::SUCCESS;
 }
 
-void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId,
-    std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
-    std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd)
+void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId)
 {
     {
         std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;

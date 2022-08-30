@@ -39,9 +39,7 @@ public:
     void ExecuteReadRecordBufferTask();
     int32_t PersistPendingRecords();
     int32_t RemoveRecords(const AccessTokenID tokenId);
-    void RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId,
-        std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead,
-        std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd);
+    void RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId);
     void GetRecords(const std::vector<std::string>& permissionList,
         const GenericValues& andConditionValues, const GenericValues& orConditionValues,
         std::vector<GenericValues>& findRecordsValues);
