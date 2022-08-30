@@ -57,7 +57,7 @@ PermissionRecordManager::~PermissionRecordManager()
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
-    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(const_cast<PermissionRecord&>(record));
+    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
 bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
