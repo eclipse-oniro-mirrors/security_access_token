@@ -64,7 +64,7 @@ static napi_value Init(napi_env env, napi_value exports)
 
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("PermissionUsageFlag ", permissionUsageFlag),
-        DECLARE_NAPI_PROPERTY("PermActiveStatus ", permActiveStatus)
+        DECLARE_NAPI_PROPERTY("PermissionActiveStatus ", permActiveStatus)
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(exportFuncs[0]), exportFuncs);
 
