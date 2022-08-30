@@ -321,32 +321,28 @@ struct dialogPlusPage {
       Log.info("getApplicationName bundleName:" + data)
       Log.info("getApplicationName userId:" + Math.floor(uid/200000))
       bundle.getApplicationInfo(data, BundleFlag.GET_BUNDLE_DEFAULT, Math.floor(uid/200000)).then(applicationInfo => {
-        Resmgr.getResourceManager(globalThis.extensionContext, data).then(item => {
-          item.getString(applicationInfo.labelId, (err, value) => {
-            if (value == undefined) {
-              this.appName = applicationInfo.label
-            } else {
-              this.appName = value
-            }
-            Log.info("hap label:" + applicationInfo.label + ", value:"+this.appName)
-          })
+        let context = globalThis.extensionContext.createBundleContext(data)
+        context.resourceManager.getString(applicationInfo.labelId, (err, value) => {
+          if (value == undefined) {
+            this.appName = applicationInfo.label
+          } else {
+            this.appName = value
+          }
+          Log.info("hap label:" + applicationInfo.label + ", value:"+this.appName)
         })
       }).catch(err => {
         Log.error("applicationInfo error :" + err)
         this.initStatus = Constants.INIT_NEED_TO_TERMINATED
       })
       bundle.getBundleInfo(data, Constants.PARMETER_BUNDLE_FLAG).then(bundleInfo => {
-        this.grantGroups.forEach((group, idx) => {
+        this.grantGroups.forEach((group) => {
           if(group.description) {
-            Resmgr.getResourceManager(globalThis.extensionContext, Constants.BUNDLE_NAME).then(item => {
-              Promise.all([item.getString($r("app.string.separator").id),
-              item.getString($r("app.string.reason_suffix").id)])
-                .then(values => {
-                  group.description = group.description.join(values[0])
-                  group.description += values[1]
-                  this.getReason(group, bundleInfo, data)
-                })
-            })
+            Promise.all([globalThis.extensionContext.resourceManager.getString($r("app.string.separator").id),
+            globalThis.extensionContext.resourceManager.getString($r("app.string.reason_suffix").id)])
+              .then(values => {
+                group.description = group.description.join(values[0]) + values[1]
+                this.getReason(group, bundleInfo, data)
+              })
           }else {
             this.getReason(group, bundleInfo, data)
           }
@@ -363,14 +359,13 @@ struct dialogPlusPage {
       if(this.reqPerms.indexOf(permission) != -1) {
         bundleInfo.reqPermissionDetails.forEach(reqPermissionDetail => {
           if(reqPermissionDetail.name == permission) {
-            Resmgr.getResourceManager(globalThis.extensionContext, bundleName).then(item => {
-              item.getString(reqPermissionDetail.reasonId, (err, value) => {
-                this.initStatus = Constants.INIT_NEED_TO_REFRESH
-                if (value !== undefined && !group.hasReason) {
-                  group.description += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
-                  group.hasReason = true
-                }
-              })
+            let context = globalThis.extensionContext.createBundleContext(bundleName)
+            context.resourceManager.getString(reqPermissionDetail.reasonId, (err, value) => {
+              this.initStatus = Constants.INIT_NEED_TO_REFRESH
+              if (value !== undefined && !group.hasReason) {
+                group.description += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
+                group.hasReason = true
+              }
             })
           }
         })
@@ -379,18 +374,14 @@ struct dialogPlusPage {
   }
 
   getStrings() {
-    Resmgr.getResourceManager(globalThis.extensionContext, Constants.BUNDLE_NAME).then(item => {
-      item.getString($r("app.string.whether_to_allow").id, (err, val) => {
-        this.resource.whether_to_allow = val
-      })
-      item.getString($r("app.string.access_general_location").id, (err, val) => {
-        this.resource.access_general_location = val
-      })
-      item.getString($r("app.string.fuzzy_to_exact").id, (err, val) => {
-        this.resource.fuzzy_to_exact = val
-      })
-    }).catch(error => {
-      Log.error('Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
+    globalThis.extensionContext.resourceManager.getString($r("app.string.whether_to_allow").id, (err, val) => {
+      this.resource.whether_to_allow = val
+    })
+    globalThis.extensionContext.resourceManager.getString($r("app.string.access_general_location").id, (err, val) => {
+      this.resource.access_general_location = val
+    })
+    globalThis.extensionContext.resourceManager.getString($r("app.string.fuzzy_to_exact").id, (err, val) => {
+      this.resource.fuzzy_to_exact = val
     })
   }
 

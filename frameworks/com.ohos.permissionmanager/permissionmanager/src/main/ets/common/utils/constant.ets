@@ -254,14 +254,11 @@ export default class Constants {
     static RADIO_BAN_GROUP_NAME = 'radio';
 
     //shape
-    static SHAPE_DIA = 24;
-    static SHAPE_BAN_DIA = 23;
-    static SHAPE_BIG_DIA = 48;
-    static SHAPE_OFFSET_X = -24;
-    static SHAPE_BAN_OFFSET = .5;
-    static SHAPE_ALLOW_DIA = 16;
-    static SHAPE_ALLOW_OFFSET = 4;
-    static SHAPE_ZINDEX = 10;
+    static SHAPE_DIA = 20;
+    static SHAPE_BAN_DIA = 18;
+    static SHAPE_BAN_OFFSET = 1;
+    static SHAPE_ALLOW_DIA = 10;
+    static SHAPE_ALLOW_OFFSET = 5;
 
     // utils
     static CHAR_CODE = 0;

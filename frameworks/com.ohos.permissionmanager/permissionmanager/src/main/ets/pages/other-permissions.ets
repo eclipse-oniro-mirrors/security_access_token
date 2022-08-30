@@ -90,7 +90,6 @@ struct appNamePage {
    */
   onPageShow() {
     console.log(TAG + 'onPageShow other-permissions')
-    let isGranted = true;
     permissions.forEach(permission => {
       abilityAccessCtrl.createAtManager().verifyAccessToken(tokenId, permission).then(res => {
         status = res;
@@ -155,7 +154,7 @@ struct appNameItem {
             (item) => {
               this.ListItemLayout(item, Constants.SLICE_START_INDEX)
             }, item => item.toString())
-            ForEach(this.otherPermissionListItem.slice(Constants.SLICE_END), (item, index) => {
+            ForEach(this.otherPermissionListItem.slice(Constants.SLICE_END), (item) => {
               this.ListItemLayout(item, Constants.SLICE_END_INDEX)
             }, item => item.toString())
           }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)

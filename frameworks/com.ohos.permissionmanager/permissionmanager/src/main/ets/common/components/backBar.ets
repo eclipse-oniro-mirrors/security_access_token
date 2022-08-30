@@ -14,7 +14,6 @@
  */
 
 import router from '@system.router';
-import Resmgr from '@ohos.resourceManager'
 import Constants from '../utils/constant';
 
 @Component
@@ -40,6 +39,7 @@ export struct backBar {
             Number(length) == 1 ? globalThis.context.terminateSelf() : router.back()
           })
         Text(JSON.parse(this.title))
+          .align(Alignment.Start)
           .fontColor($r('app.color.text_color'))
           .fontSize(Constants.BACKBAR_TEXT_FONT_SIZE)
           .flexGrow(Constants.BACKBAR_TEXT_FLEX_GROW)
@@ -65,14 +65,12 @@ export struct backBar {
     .height(Constants.BACKBAR_HEIGHT)
     .constraintSize({ minHeight: Constants.BACKBAR_MINHEIGHT })
     .alignItems(HorizontalAlign.Start)
-    .backgroundColor($r('app.color.background_color'))
+    .backgroundColor($r("sys.color.ohos_id_color_sub_background"))
   }
 
   aboutToAppear() {
-    Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-      item.getString($r("app.string.permission_access_record").id, (err, val) => {
-        this.record = val
-      })
+    globalThis.context.resourceManager.getString($r("app.string.permission_access_record").id).then(val => {
+      this.record = val
     })
   }
 }
