@@ -17,7 +17,6 @@
 #define PERMISSION_USED_RECORD_CACHE_H
 
 #include <map>
-#include <memory>
 #include <string>
 #include <set>
 #include <vector>
