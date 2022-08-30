@@ -571,7 +571,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
         return false;
     } // get PRARM[2] callback type
     if (valueType != napi_function) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM2] callback matching failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
         return false;
     }
     if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
@@ -608,7 +608,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
             return false;
         } // get PRARM[2] callback type
         if (valueType != napi_function) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM2] callback matching failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
             return false;
         }
         if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
@@ -632,7 +632,6 @@ static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeConte
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
         if (permList == targetPermList) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
             return true;
         }
     }
@@ -652,7 +651,6 @@ static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeCont
             delete *item;
             *item = nullptr;
             g_permActiveChangeSubscribers.erase(item);
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete permActiveChangeContext");
             return;
         } else {
             ++item;
@@ -670,11 +668,9 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
         if (permList == targetPermList) {
             // targetCallback != nullptr, unregister the subscriber with same permList and callback
             unregisterPermActiveChangeContext->subscriber = item->subscriber;
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "find and get subscriber in map");
             return true;
         }
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "cannot find and get subscriber in map");
     return false;
 }
 
@@ -705,8 +701,6 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
             return nullptr;
         }
         g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "add g_permActiveChangeSubscribers.size = %{public}zu",
-            g_permActiveChangeSubscribers.size());
     }
     callbackPtr.release();
     return nullptr;
