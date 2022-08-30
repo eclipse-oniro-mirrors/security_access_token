@@ -306,6 +306,11 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
     return (int32_t)(idInner->dlpFlag);
 }
 
+int32_t AccessTokenKit::ReloadNativeTokenInfo()
+{
+    return AccessTokenManagerClient::GetInstance().ReloadNativeTokenInfo();
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {

@@ -313,6 +313,11 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
 }
 
+int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
+{
+    return NativeTokenReceptor::GetInstance().Init();
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
