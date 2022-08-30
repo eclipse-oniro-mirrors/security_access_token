@@ -58,7 +58,7 @@
     },
     {
       "name": "shape_allow_color",
-      "value": "#1856D4"
+      "value": "#007DFF"
     },
     {
       "name": "location_circle_color",
@@ -70,7 +70,7 @@
     },
     {
       "name": "shape_ban_color",
-      "value": "#000000"
+      "value": "#66000000"
     },
     {
       "name": "first_font_color",

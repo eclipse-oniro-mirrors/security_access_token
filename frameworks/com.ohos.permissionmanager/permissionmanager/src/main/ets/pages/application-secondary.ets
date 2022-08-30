@@ -258,7 +258,7 @@ struct appNamePlusPage {
                                   (item) => {
                                     this.ListItemLayout(item, Constants.SLICE_START_INDEX, 'allow')
                                   }, item => item.toString())
-                                ForEach(this.allowedListItem.slice(Constants.SLICE_END), (item, index) => {
+                                ForEach(this.allowedListItem.slice(Constants.SLICE_END), (item) => {
                                   this.ListItemLayout(item, Constants.SLICE_END_INDEX, 'allow')
                                 }, item => item.toString())
                               }

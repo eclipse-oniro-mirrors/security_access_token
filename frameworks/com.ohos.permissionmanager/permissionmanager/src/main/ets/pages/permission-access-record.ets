@@ -15,7 +15,6 @@
 
 import bundle from '@ohos.bundle';
 import router from '@system.router';
-import Resmgr from '@ohos.resourceManager'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import privacyManager from '@ohos.privacyManager'
 import { backBar } from "../common/components/backBar";
@@ -370,21 +369,17 @@ struct permissionRecordPage {
   }
 
   getStrings() {
-    Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-      item.getString($r("app.string.visits").id, (err, val) => {
-        this.strings.visits = val
-      })
-      item.getString($r("app.string.recent_visit").id, (err, val) => {
-        this.strings.recent_visit = val
-      })
-      item.getString($r("app.string.morning").id, (err, val) => {
-        this.strings.morning = val
-      })
-      item.getString($r("app.string.afternoon").id, (err, val) => {
-        this.strings.afternoon = val
-      })
-    }).catch(error => {
-      console.error(TAG + 'Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
+    globalThis.context.resourceManager.getString($r("app.string.visits").id, (err, val) => {
+      this.strings.visits = val
+    })
+    globalThis.context.resourceManager.getString($r("app.string.recent_visit").id, (err, val) => {
+      this.strings.recent_visit = val
+    })
+    globalThis.context.resourceManager.getString($r("app.string.morning").id, (err, val) => {
+      this.strings.morning = val
+    })
+    globalThis.context.resourceManager.getString($r("app.string.afternoon").id, (err, val) => {
+      this.strings.afternoon = val
     })
   }
 
@@ -445,18 +440,17 @@ struct permissionRecordPage {
         }
       }
 
-      await Resmgr.getResourceManager(globalThis.context, info.name).then(item => {
-        item.getString(info.appInfo['labelId'], (error, value) => {
-          if (value == undefined) {
-            appInfo['groupName'] = info.appInfo.label;
-          } else {
-            appInfo['groupName'] = value;
-          }
-        })
+      let  context = globalThis.context.createBundleContext(info.name)
+      await context.resourceManager.getString(info.appInfo.labelId, (error, value) => {
+        if (value == undefined) {
+          appInfo.groupName = info.appInfo.label;
+        } else {
+          appInfo.groupName = value;
+        }
+      })
 
-        item.getMediaBase64(info.appInfo['iconId'], (error, value) => {
-          appInfo['icon'] = value;
-        })
+      await context.resourceManager.getMediaBase64(info.appInfo.iconId, (error, value) => {
+        appInfo.icon = value;
       })
 
       appInfo.name = info.appInfo.name
@@ -480,6 +474,8 @@ struct permissionRecordPage {
     let request = {
       "tokenId": 0,
       "isRemote": false,
+      "deviceId": '',
+      "bundleName": '',
       "permissionNames": [],
       "beginTime": 0,
       "endTime": 0,

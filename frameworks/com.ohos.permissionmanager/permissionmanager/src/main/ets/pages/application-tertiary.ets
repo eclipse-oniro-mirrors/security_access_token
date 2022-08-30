@@ -16,9 +16,8 @@
 import { backBar } from "../common/components/backBar";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
-import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
+import { getAppLabel, getAppIcon } from "../common/utils/utils";
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import Resmgr from '@ohos.resourceManager'
 import { authorizeDialog } from "../common/components/dialog";
 import { permissionGroups, showSubpermissionsGrop, polymorphismGroup } from "../common/model/permissionGroup";
 import Constants from '../common/utils/constant';
@@ -40,13 +39,13 @@ class MeidaDocObj {
   name: string
   index: number
   groupName: string
-  accessTokenId: string
+  accessTokenId: number
   permissions: []
   constructor(
     name: string,
     index: number,
     groupName: string,
-    accessTokenId: string,
+    accessTokenId: number,
     permissions: []
   ) {
     this.name = name
@@ -182,14 +181,11 @@ struct mediaDocumentItem {
           }
         })
       })
-      Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-        Promise.all([item.getString($r("app.string.separator").id),
-        item.getString($r("app.string.reason_suffix").id)])
-          .then(values => {
-            reason = reason.join(values[0])
-            reason += values[1]
-          })
-      })
+      Promise.all([globalThis.context.resourceManager.getString($r("app.string.separator").id),
+      globalThis.context.resourceManager.getString($r("app.string.reason_suffix").id)])
+        .then(values => {
+          reason = reason.join(values[0]) + values[1]
+        })
     }else {
       reason = ''
     }
@@ -200,13 +196,12 @@ struct mediaDocumentItem {
       permissions.forEach(permission => {
         res.reqPermissionDetails.forEach(reqPermissionDetail => {
           if(reqPermissionDetail.name == permission) {
-            Resmgr.getResourceManager(globalThis.context, routerData).then(item => {
-              item.getString(reqPermissionDetail.reasonId, (err, value) => {
+            let context = globalThis.context.createBundleContext(routerData)
+            context.resourceManager.getString(reqPermissionDetail.reasonId).then(value => {
                 if (value !== undefined && !hasReason) {
                   reason += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
                   hasReason = true
                 }
-              })
             })
           }
         })
@@ -244,11 +239,11 @@ struct mediaDocumentItem {
       this.mediaListItem = new MediaListObj('', '', '');
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_ALLOW_NAME, Constants.RADIO_ALLOW_INDEX,
-          Constants.RADIO_ALLOW_GROUP_NAME, '', permissions)
+          Constants.RADIO_ALLOW_GROUP_NAME, 0, permissions)
       );
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_BAN_NAME, Constants.RADIO_BAN_INDEX,
-          Constants.RADIO_BAN_GROUP_NAME, '', permissions)
+          Constants.RADIO_BAN_GROUP_NAME, 0, permissions)
       );
     })
     // Get permission status
