@@ -87,8 +87,8 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
     permActiveStatusWorker->ref = ref_;
     permActiveStatusWorker->result = result;
     ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "result: tokenID = %{public}d, permissionName = %{public}s, deviceId = %{public}s, type = %{public}d",
-        result.tokenID, result.permissionName.c_str(), result.deviceId.c_str(), result.type);
+        "result: tokenID = %{public}d, permissionName = %{public}s, type = %{public}d",
+        result.tokenID, result.permissionName.c_str(), result.type);
     permActiveStatusWorker->subscriber = this;
     work->data = reinterpret_cast<void *>(permActiveStatusWorker);
     NAPI_CALL_RETURN_VOID(env_,
