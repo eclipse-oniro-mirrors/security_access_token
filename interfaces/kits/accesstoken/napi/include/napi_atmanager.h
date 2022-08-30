@@ -66,19 +66,17 @@ struct RegisterPermStateChangeWorker {
 struct PermStateChangeContext {
     virtual ~PermStateChangeContext();
     napi_env env = nullptr;
-    napi_async_work work = nullptr;
     napi_ref callbackRef =  nullptr;
     int32_t errCode = RET_FAILED;
     std::string permStateChangeType;
-    PermStateChangeScope scopeInfo;
     AccessTokenKit* accessTokenKit = nullptr;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
 };
 
-struct RegisterPermStateChangeInfo : public PermStateChangeContext {};
+typedef PermStateChangeContext RegisterPermStateChangeInfo;
 
 struct UnregisterPermStateChangeInfo : public PermStateChangeContext {
-    ~UnregisterPermStateChangeInfo();
+    PermStateChangeScope scopeInfo;
 };
 
 struct AtManagerAsyncContext {
@@ -123,14 +121,10 @@ private:
     static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
-    static void RegisterPermStateChangeExecute(napi_env env, void* data);
-    static void RegisterPermStateChangeComplete(napi_env env, napi_status status, void* data);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
-    static void UnregisterPermStateChangeExecute(napi_env env, void* data);
-    static void UnregisterPermStateChangeCompleted(napi_env env, napi_status status, void* data);
     static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
 };
