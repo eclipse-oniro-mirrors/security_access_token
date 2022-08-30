@@ -66,7 +66,9 @@ private:
     const static int32_t MAX_PERSIST_SIZE = 100;
     bool persistIsRunning_ = false;
     OHOS::Utils::RWLock cacheLock1_;
+    // cacheLock1_ is used for locking recordBufferHead_ and curRecordBufferPos_
     OHOS::Utils::RWLock cacheLock2_;
+    // cacheLock2_ is used for locking persistPendingBufferQueue_ and persistIsRunning_
     OHOS::ThreadPool readRecordBufferTaskWorker_;
 };
 } // namespace AccessToken
