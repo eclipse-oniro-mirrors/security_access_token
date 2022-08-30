@@ -128,7 +128,7 @@ struct appNameItem {
           })
           router.push({
             uri: 'pages/authority-tertiary',
-            params: { routerData: dataList.length > 0 ? [dataList[item.index]] : [], backTitle: item.label }
+            params: { routerData: dataList[item.index] ? [dataList[item.index]] : [], backTitle: item.label }
           });
         })
       }
