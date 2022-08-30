@@ -25,7 +25,6 @@
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "time_util.h"
-#include "to_string.h"
 
 namespace OHOS {
 namespace Security {
@@ -314,30 +313,6 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
         return Constant::FAILURE;
     }
     return Constant::SUCCESS;
-}
-
-std::string PermissionRecordManager::DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName)
-{
-    PermissionUsedRequest request;
-    request.tokenId = tokenId;
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    if (!permissionName.empty()) {
-        request.permissionList.emplace_back(permissionName);
-    }
-
-    PermissionUsedResult result;
-    if (!GetRecordsFromLocalDB(request, result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to GetRecordsFromLocalDB");
-        return "";
-    }
-
-    if (result.bundleRecords.empty()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "no record");
-        return "";
-    }
-    std::string dumpInfo;
-    ToString::PermissionUsedResultToString(result, dumpInfo);
-    return dumpInfo;
 }
 
 bool PermissionRecordManager::HasStarted(const PermissionRecord& record)

@@ -46,7 +46,6 @@ if (is_standard_system) {
       "src/active/perm_active_status_change_callback_proxy.cpp",
       "src/common/constant.cpp",
       "src/common/time_util.cpp",
-      "src/common/to_string.cpp",
       "src/database/data_translator.cpp",
       "src/database/permission_used_record_db.cpp",
       "src/record/on_permission_used_record_callback_proxy.cpp",

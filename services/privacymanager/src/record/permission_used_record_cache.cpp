@@ -24,7 +24,6 @@
 #include "permission_record_repository.h"
 #include "permission_used_record_db.h"
 #include "time_util.h"
-#include "to_string.h"
 
 namespace OHOS {
 namespace Security {

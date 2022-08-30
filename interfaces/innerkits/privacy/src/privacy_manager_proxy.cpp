@@ -189,28 +189,6 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     return ret;
 }
 
-std::string PrivacyManagerProxy::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return "";
-    }
-    if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
-        return "";
-    }
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::DUMP_RECORD_INFO, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return "";
-    }
-    std::string dumpInfo = reply.ReadString();
-    return dumpInfo;
-}
-
 int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
     std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {

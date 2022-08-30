@@ -20,6 +20,7 @@
 #include "privacy_kit.h"
 #include "singleton.h"
 #include "status_receiver_host.h"
+#include "to_string.h"
 
 using namespace OHOS::AAFwk;
 
@@ -171,7 +172,7 @@ ErrCode AtmCommand::RunCommandByOperationType(const OptType& type,
             AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
             break;
         case DUMP_RECORD:
-            dumpInfo = PrivacyKit::DumpRecordInfo(tokenId, permissionName);
+            dumpInfo = DumpRecordInfo(tokenId, permissionName);
             break;
         case PERM_GRANT:
         case PERM_REVOKE:
@@ -292,6 +293,25 @@ ErrCode AtmCommand::RunAsCommandExistentOptionArgument(
             break;
     }
     return result;
+}
+
+std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& permissionName)
+{
+    PermissionUsedRequest request;
+    request.tokenId = tokenId;
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    if (!permissionName.empty()) {
+        request.permissionList.emplace_back(permissionName);
+    }
+
+    PermissionUsedResult result;
+    if (PrivacyKit::GetPermissionUsedRecords(request, result) != 0) {
+        return "";
+    }
+
+    std::string dumpInfo;
+    ToString::PermissionUsedResultToString(result, dumpInfo);
+    return dumpInfo;
 }
 } // namespace AccessToken
 } // namespace Security

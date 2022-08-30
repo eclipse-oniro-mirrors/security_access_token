@@ -133,17 +133,6 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     return proxy->GetPermissionUsedRecords(requestParcel, callback);
 }
 
-std::string PrivacyManagerClient::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return "";
-    }
-
-    return proxy->DumpRecordInfo(tokenID, permissionName);
-}
-
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
     const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<IRemoteObject>& callbackObject)
 {

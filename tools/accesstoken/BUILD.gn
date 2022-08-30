@@ -29,6 +29,7 @@ ohos_source_set("tools_atm_source_set") {
     "src/atm_command.cpp",
     "src/atm_receiver_impl.cpp",
     "src/main.cpp",
+    "src/to_string.cpp",
   ]
 
   deps = [
