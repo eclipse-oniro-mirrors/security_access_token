@@ -65,7 +65,9 @@ private:
     const static int32_t INTERVAL = 60 * 15;
     const static int32_t MAX_PERSIST_SIZE = 100;
     bool persistIsRunning_ = false;
+    // cacheLock1_ is used for locking recordBufferHead_ and curRecordBufferPos_
     OHOS::Utils::RWLock cacheLock1_;
+    // cacheLock2_ is used for locking persistPendingBufferQueue_ and persistIsRunning_
     OHOS::Utils::RWLock cacheLock2_;
     OHOS::ThreadPool readRecordBufferTaskWorker_;
 };
