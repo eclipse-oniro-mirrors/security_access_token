@@ -312,6 +312,7 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
 }
+
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
     return NativeTokenReceptor::GetInstance().Init();
