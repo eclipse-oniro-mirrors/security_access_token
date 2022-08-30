@@ -356,6 +356,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     nativeTokenInfoRes = nativeTokenInfoParcel.nativeTokenInfoParams;
     return res;
 }
+
 int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
 {
     auto proxy = GetProxy();
