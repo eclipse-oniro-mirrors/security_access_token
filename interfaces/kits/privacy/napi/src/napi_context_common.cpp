@@ -99,6 +99,7 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
 
 void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
 {
+    (void)status;
     if (work == nullptr || work->data == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
         return;
