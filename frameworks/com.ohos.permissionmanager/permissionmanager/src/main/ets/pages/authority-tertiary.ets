@@ -32,7 +32,7 @@ var TAG = 'PermissionManager_MainAbility:'
   .height(height)
 }
 
-let routerData = router.getParams().routerData; // Routing jump data
+let routerData: any = router.getParams().routerData; // Routing jump data
 let backTitle = router.getParams().backTitle; // return title name
 class ApplicationObj {
   labelId: string
@@ -238,7 +238,7 @@ struct applicationItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    let bundleNames = routerData[0].bundleNames;
+    let bundleNames = routerData.length > 0 ? routerData[0].bundleNames : routerData;
 
     globalThis.context.resourceManager.getString($r("app.string.textInput_placeholder").id).then(val => {
       this.placeholder = val

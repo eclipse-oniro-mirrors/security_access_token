@@ -341,6 +341,12 @@ void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParce
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t result = this->ReloadNativeTokenInfo();
+    reply.WriteInt32(result);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -536,7 +542,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
-
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
+        &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
 #ifdef TOKEN_SYNC_ENABLE
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;

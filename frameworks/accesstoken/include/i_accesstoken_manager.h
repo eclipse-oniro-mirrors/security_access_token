@@ -66,6 +66,7 @@ public:
     virtual int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;
+    virtual int32_t ReloadNativeTokenInfo() = 0;
 
 #ifdef TOKEN_SYNC_ENABLE
     virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
@@ -113,6 +114,7 @@ public:
         GET_PERMISSION_OPER_STATE,
         REGISTER_PERM_STATE_CHANGE_CALLBACK,
         UNREGISTER_PERM_STATE_CHANGE_CALLBACK,
+        RELOAD_NATIVE_TOKEN_INFO,
     };
 };
 } // namespace AccessToken

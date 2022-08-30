@@ -157,8 +157,8 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
         return INVALID_OPER;
     }
 
-    int vagueIndex = ELEMENT_NOT_FOUND;
-    int accurateIndex = ELEMENT_NOT_FOUND;
+    uint32_t vagueIndex = ELEMENT_NOT_FOUND;
+    uint32_t accurateIndex = ELEMENT_NOT_FOUND;
 
     if (apiVersion >= ACCURATE_LOCATION_API_VERSION) {
         if (PermissionManager::GetInstance().GetLocationPermissionIndex(reqPermList, vagueIndex, accurateIndex)) {
@@ -176,7 +176,7 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
         }
 
         PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
-        if (reqPermList[i].permsState.state == DYNAMIC_OPER) {
+        if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
         ACCESSTOKEN_LOG_INFO(LABEL, "perm: 0x%{public}s, state: 0x%{public}d",
@@ -311,6 +311,11 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, InfoParcel.nativeTokenInfoParams);
+}
+
+int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
+{
+    return NativeTokenReceptor::GetInstance().Init();
 }
 
 #ifdef TOKEN_SYNC_ENABLE
