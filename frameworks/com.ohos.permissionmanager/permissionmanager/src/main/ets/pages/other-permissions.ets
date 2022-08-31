@@ -16,7 +16,7 @@
 import { backBar } from "../common/components/backBar";
 import router from '@system.router';
 import Constants from '../common/utils/constant';
-import { otherPermissionsLabel } from '../common/model/permissionGroup'
+import { permissionGroups } from '../common/model/permissionGroup'
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl'
 
 var TAG = 'PermissionManager_MainAbility:'
@@ -29,7 +29,7 @@ let permissions: any = router.getParams().permission; // permissions name
 let otherPermissionList = []; // otherPermission List
 for (let i = 0; i < permissions.length; i++) {
   otherPermissionList.push({
-    permissionLabel: otherPermissionsLabel[permissions[i]],
+    permissionLabel: permissionGroups.filter(item => item.permissionName == permissions[i])[0].label,
     permission: permissions[i]
   })
 }
@@ -90,7 +90,6 @@ struct appNamePage {
    */
   onPageShow() {
     console.log(TAG + 'onPageShow other-permissions')
-    let isGranted = true;
     permissions.forEach(permission => {
       abilityAccessCtrl.createAtManager().verifyAccessToken(tokenId, permission).then(res => {
         status = res;
@@ -155,7 +154,7 @@ struct appNameItem {
             (item) => {
               this.ListItemLayout(item, Constants.SLICE_START_INDEX)
             }, item => item.toString())
-            ForEach(this.otherPermissionListItem.slice(Constants.SLICE_END), (item, index) => {
+            ForEach(this.otherPermissionListItem.slice(Constants.SLICE_END), (item) => {
               this.ListItemLayout(item, Constants.SLICE_END_INDEX)
             }, item => item.toString())
           }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)

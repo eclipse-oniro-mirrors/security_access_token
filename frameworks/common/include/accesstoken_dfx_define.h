@@ -23,15 +23,15 @@ namespace Security {
 namespace AccessToken {
 enum AccessTokenDfxCode {
     VERIFY_TOKEN_ID_ERROR = 101,            // token id is error when verifying permission
-    VERIFY_PERMISSION_ERROR = 102,          // verify permission fail
-    LOAD_DATABASE_ERROR = 103,              // load access token info from database error
-    TOKEN_SYNC_CALL_ERROR = 104,            // token sync send request error
-    TOKEN_SYNC_RESPONSE_ERROR = 105,        // remote device response error
-    PERMISSION_STORE_ERROR = 106,           // permission grant status write to database error
+    VERIFY_PERMISSION_ERROR,                // verify permission fail
+    LOAD_DATABASE_ERROR,                    // load access token info from database error
+    TOKEN_SYNC_CALL_ERROR,                  // token sync send request error
+    TOKEN_SYNC_RESPONSE_ERROR,              // remote device response error
+    PERMISSION_STORE_ERROR,                 // permission grant status write to database error
 
     ACCESS_TOKEN_SERVICE_INIT_EVENT = 201,  // access token service init event
-    USER_GRANT_PERMISSION_EVENT = 202,      // user grant permission event
-    BACKGROUND_CALL_EVENT = 203,            // background call (e.g location or camera) event
+    USER_GRANT_PERMISSION_EVENT,            // user grant permission event
+    BACKGROUND_CALL_EVENT,                  // background call (e.g location or camera) event
 };
 } // namespace AccessToken
 } // namespace Security

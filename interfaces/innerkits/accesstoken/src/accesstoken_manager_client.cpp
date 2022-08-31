@@ -357,6 +357,16 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     return res;
 }
 
+int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return RET_FAILED;
+    }
+    return proxy->ReloadNativeTokenInfo();
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {

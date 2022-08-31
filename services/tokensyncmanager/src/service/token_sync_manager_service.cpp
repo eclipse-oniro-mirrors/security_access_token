@@ -86,13 +86,13 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
 {
     if (!DataValidator::IsDeviceIdValid(deviceID) || tokenID == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Params is wrong.");
-        return RET_FAILED;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
     DeviceInfo devInfo;
     bool result = DeviceInfoRepository::GetInstance().FindDeviceInfo(deviceID, DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
         ACCESSTOKEN_LOG_INFO(LABEL, "FindDeviceInfo failed");
-        return Constant::FAILURE;
+        return TOKEN_SYNC_REMOTE_DEVICE_INVALID;
     }
     std::string udid = devInfo.deviceId.uniqueDeviceId;
     const std::shared_ptr<SyncRemoteHapTokenCommand> syncRemoteHapTokenCommand =
@@ -103,17 +103,17 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
     if (resultCode != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_INFO(LABEL,
             "RemoteExecutorManager executeCommand SyncRemoteHapTokenCommand failed, return %{public}d", resultCode);
-        return resultCode;
+        return TOKEN_SYNC_COMMAND_EXECUTE_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
-    return RET_SUCCESS;
+    return TOKEN_SYNC_SUCCESS;
 }
 
 int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
 {
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Params is wrong, token id is invalid.");
-        return RET_FAILED;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
 
     std::vector<DeviceInfo> devices = DeviceInfoRepository::GetInstance().ListDeviceInfo();
@@ -136,7 +136,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
         }
         ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
     }
-    return RET_SUCCESS;
+    return TOKEN_SYNC_SUCCESS;
 }
 
 int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
@@ -164,7 +164,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
         ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
     }
 
-    return RET_SUCCESS;
+    return TOKEN_SYNC_SUCCESS;
 }
 
 bool TokenSyncManagerService::Initialize()

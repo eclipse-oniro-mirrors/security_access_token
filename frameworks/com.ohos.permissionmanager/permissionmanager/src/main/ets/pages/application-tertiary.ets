@@ -16,35 +16,36 @@
 import { backBar } from "../common/components/backBar";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
-import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
+import { getAppLabel, getAppIcon } from "../common/utils/utils";
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
-import Resmgr from '@ohos.resourceManager'
 import { authorizeDialog } from "../common/components/dialog";
-import { permissionDescriptions, permissionGroups, showSubpermissionsGrop } from "../common/model/permissionGroup";
+import { permissionGroups, showSubpermissionsGrop, polymorphismGroup } from "../common/model/permissionGroup";
 import Constants from '../common/utils/constant';
 
 var TAG = 'PermissionManager_MainAbility:'
 
-let routerData = router.getParams().routerData; // Routing jump data
-let backTitle = router.getParams().backTitle; // return title name
+let routerData: any = router.getParams().routerData; // Routing jump data
+let backTitle: any = router.getParams().backTitle; // return title name
 let status = router.getParams().status; // Status: Allowed, Forbidden
-let permissions = router.getParams().permission; // permissions name
+let permissions: any = router.getParams().permission; // permissions name
 let nowGrantResult = Constants.PERMISSION_NUM; // Authorization results now
 let nowRevokeResult = Constants.PERMISSION_NUM; // Now deauthorize results
 let GrantResultFlag = []; // Authorization result Flag
 let RevokeResultFlag = []; // Cancel authorization result Flag
 let reason = null  // Authorized reason
+let bundleInfo: any = {}
+const PRECISE_LOCATION_PERMISSION = 'ohos.permission.LOCATION'
 class MeidaDocObj {
   name: string
   index: number
   groupName: string
-  accessTokenId: string
+  accessTokenId: number
   permissions: []
   constructor(
     name: string,
     index: number,
     groupName: string,
-    accessTokenId: string,
+    accessTokenId: number,
     permissions: []
   ) {
     this.name = name
@@ -58,17 +59,10 @@ class MediaListObj {
   labelId: string
   iconId: string
   versionName: string
-  description: string
-  constructor(
-    labelId: string,
-    iconId: string,
-    versionName: string,
-    description: string
-  ) {
+  constructor(labelId: string, iconId: string, versionName: string,) {
     this.labelId = labelId
     this.iconId = iconId
     this.versionName = versionName
-    this.description = description
   }
 }; // Permission application information class
 
@@ -133,9 +127,10 @@ struct mediaDocumentItem {
     labelId: '',
     iconId: '',
     versionName: '',
-    description: ''
   }; // application info array
   @State isCheckList: boolean[] = []; // Permission status array
+  @State accurateIsOn: boolean = true;
+  @State reqPermissions: any = []
 
   authorizeDialogController: CustomDialogController = new CustomDialogController({
     builder: authorizeDialog({ }),
@@ -177,7 +172,6 @@ struct mediaDocumentItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    let permissionDescription = permissionDescriptions[backTitle];
     if(showSubpermissionsGrop.indexOf(backTitle) != -1) {
       reason = []
       permissions.forEach(permission => {
@@ -187,38 +181,40 @@ struct mediaDocumentItem {
           }
         })
       })
-      Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-        Promise.all([item.getString($r("app.string.separator").id),
-        item.getString($r("app.string.reason_suffix").id)])
-          .then(values => {
-            reason = reason.join(values[0])
-            reason += values[1]
-          })
-      })
+      Promise.all([globalThis.context.resourceManager.getString($r("app.string.separator").id),
+      globalThis.context.resourceManager.getString($r("app.string.reason_suffix").id)])
+        .then(values => {
+          reason = reason.join(values[0]) + values[1]
+        })
     }else {
       reason = ''
     }
     let hasReason = false
     bundle.getBundleInfo(routerData, Constants.PARMETER_BUNDLE_FLAG).then(res => {
+      this.reqPermissions = res.reqPermissions
+      bundleInfo = res
       permissions.forEach(permission => {
         res.reqPermissionDetails.forEach(reqPermissionDetail => {
           if(reqPermissionDetail.name == permission) {
-            Resmgr.getResourceManager(globalThis.context, routerData).then(item => {
-              item.getString(reqPermissionDetail.reasonId, (err, value) => {
+            let context = globalThis.context.createBundleContext(routerData)
+            context.resourceManager.getString(reqPermissionDetail.reasonId).then(value => {
                 if (value !== undefined && !hasReason) {
                   reason += value.slice(Constants.START_SUBSCRIPT, Constants.END_SUBSCRIPT)
                   hasReason = true
                 }
-              })
             })
           }
         })
+      })
+      var acManager = abilityAccessCtrl.createAtManager()
+      acManager.verifyAccessToken(res.appInfo.accessTokenId, PRECISE_LOCATION_PERMISSION).then(accurateStatus => {
+        accurateStatus == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED ? this.accurateIsOn = true : this.accurateIsOn = false
       })
       Promise.all([getAppLabel(res.appInfo.labelId, res.name),
       getAppIcon(res.appInfo.iconId, res.name)])
         .then((values) => {
           this.mediaListItem = new MediaListObj(
-            String(values[0]), String(values[1]), res.versionName, permissionDescription);
+            String(values[0]), String(values[1]), res.versionName);
         })
       this.mediaDocListItem.push(
         new MeidaDocObj(
@@ -240,14 +236,14 @@ struct mediaDocumentItem {
       );
     }).catch((error) => {
       console.error(TAG + 'bundle.getBundleInfo failed. Cause: ' + JSON.stringify(error));
-      this.mediaListItem = new MediaListObj('', '', '', permissionDescription);
+      this.mediaListItem = new MediaListObj('', '', '');
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_ALLOW_NAME, Constants.RADIO_ALLOW_INDEX,
-          Constants.RADIO_ALLOW_GROUP_NAME, '', permissions)
+          Constants.RADIO_ALLOW_GROUP_NAME, 0, permissions)
       );
       this.mediaDocListItem.push(
         new MeidaDocObj(Constants.RADIO_BAN_NAME, Constants.RADIO_BAN_INDEX,
-          Constants.RADIO_BAN_GROUP_NAME, '', permissions)
+          Constants.RADIO_BAN_GROUP_NAME, 0, permissions)
       );
     })
     // Get permission status
@@ -352,6 +348,9 @@ struct mediaDocumentItem {
                     .height(Constants.LISTITEM_ROW_HEIGHT)
                     .onClick(() => {
                         item.permissions.forEach((permission) => {
+                          if(permission == PRECISE_LOCATION_PERMISSION) {
+                            return false
+                          }
                           if (!item.index) {
                             this.grantUserGrantedPermission(item.accessTokenId, permission)
                             if (nowGrantResult != Constants.PERMISSION_INDEX) {
@@ -418,6 +417,55 @@ struct mediaDocumentItem {
         .padding({
           top: Constants.TERTIARY_LIST_PADDING_TOP, bottom: Constants.TERTIARY_LIST_PADDING_BOTTOM
         })
+
+        if ((polymorphismGroup.indexOf(globalThis.currentPermissionGroup) !== -1) && (this.reqPermissions.includes(PRECISE_LOCATION_PERMISSION))) {
+          Column() {
+            Row() {
+              Text($r('app.string.precise_location'))
+                .fontSize(Constants.TEXT_MIDDLE_FONT_SIZE)
+                .fontColor($r('app.color.label_color'))
+                .fontWeight(FontWeight.Medium)
+                .flexGrow(Constants.FLEX_GROW)
+              Toggle({ type: ToggleType.Switch, isOn: this.accurateIsOn })
+                .selectedColor($r('app.color.button_color'))
+                .switchPointColor($r('app.color.selected_Color'))
+                .onChange((isOn: boolean) => {
+                  var acManager = abilityAccessCtrl.createAtManager()
+                  if (isOn) {
+                    acManager.grantUserGrantedPermission(bundleInfo.appInfo.accessTokenId, PRECISE_LOCATION_PERMISSION, Constants.PERMISSION_FLAG)
+                      .then((res) => { res == abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED ? this.accurateIsOn = true : this.accurateIsOn = false })
+                      .catch(() => { this.accurateIsOn = false })
+                  } else {
+                    acManager.revokeUserGrantedPermission(bundleInfo.appInfo.accessTokenId, PRECISE_LOCATION_PERMISSION, Constants.PERMISSION_FLAG)
+                      .then(() => { this.accurateIsOn = false })
+                      .catch(() => { this.accurateIsOn = true })
+                  }
+                })
+                .padding({ right: 0 })
+                .enabled(this.isCheckList[0])
+            }.width(Constants.FULL_WIDTH)
+            .height(Constants.LISTITEM_ROW_HEIGHT)
+          }.margin({ top: Constants.LOCATION_MARGIN_TOP, bottom: Constants.LOCATION_MARGIN_BOTTOM })
+          .padding({
+            left: Constants.DEFAULT_PADDING_START,
+            right: Constants.DEFAULT_PADDING_END,
+            top: Constants.TERTIARY_LIST_PADDING_TOP,
+            bottom: Constants.TERTIARY_LIST_PADDING_BOTTOM
+          })
+          .borderRadius(Constants.BORDER_RADIUS)
+          .backgroundColor($r('app.color.default_background_color'))
+
+          Row() {
+            Text($r('app.string.get_the_exact_position'))
+              .fontSize(Constants.TEXT_SMAL_FONT_SIZE)
+              .fontColor($r('app.color.label_color_light'))
+              .lineHeight(Constants.TEXT_SMALL_LINE_HEIGHT)
+          }.width(Constants.FULL_WIDTH)
+          .padding({
+            left: Constants.DEFAULT_PADDING_START,
+            right: Constants.DEFAULT_PADDING_END,
+          })
+        }
       }
       .padding({
         left: Constants.LIST_PADDING_LEFT,

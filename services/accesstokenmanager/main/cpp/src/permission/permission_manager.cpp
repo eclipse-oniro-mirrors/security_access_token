@@ -417,7 +417,7 @@ bool PermissionManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& a
 }
 
 bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
-    int& vagueIndex, int& accurateIndex)
+    uint32_t& vagueIndex, uint32_t& accurateIndex)
 {
     int index = 0;
     bool hasFound = false;
@@ -481,7 +481,7 @@ bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permission
 }
 
 void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex)
+    std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex)
 {
     int32_t vagueStatus = PERMISSION_DENIED;
     uint32_t vagueFlag = PERMISSION_DEFAULT_FLAG;
@@ -532,12 +532,12 @@ void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListSt
 }
 
 bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
-    int32_t apiVersion, std::vector<PermissionStateFull> permsList, int vagueIndex, int accurateIndex)
+    int32_t apiVersion, std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex)
 {
     if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex == ELEMENT_NOT_FOUND)) {
         // only vague location permission
         GetSelfPermissionState(permsList, reqPermList[vagueIndex].permsState, apiVersion);
-        if (reqPermList[vagueIndex].permsState.state == DYNAMIC_OPER) {
+        if (static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER) {
             return true;
         }
     }
@@ -551,8 +551,8 @@ bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionLi
 
     // all location permissions
     AllLocationPermissionHandle(reqPermList, permsList, vagueIndex, accurateIndex);
-    return ((reqPermList[vagueIndex].permsState.state == DYNAMIC_OPER) ||
-        (reqPermList[accurateIndex].permsState.state == DYNAMIC_OPER));
+    return ((static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER) ||
+        (static_cast<PermissionOper>(reqPermList[accurateIndex].permsState.state) == DYNAMIC_OPER));
 }
 
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)

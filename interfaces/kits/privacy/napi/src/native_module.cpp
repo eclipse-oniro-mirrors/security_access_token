@@ -29,7 +29,9 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("addPermissionUsedRecord", AddPermissionUsedRecord),
         DECLARE_NAPI_FUNCTION("startUsingPermission", StartUsingPermission),
         DECLARE_NAPI_FUNCTION("stopUsingPermission", StopUsingPermission),
-        DECLARE_NAPI_FUNCTION("getPermissionUsedRecords", GetPermissionUsedRecords)
+        DECLARE_NAPI_FUNCTION("getPermissionUsedRecords", GetPermissionUsedRecords),
+        DECLARE_NAPI_FUNCTION("on", RegisterPermActiveChangeCallback),
+        DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback)
     };
 
     napi_define_properties(env, exports, sizeof(descriptor) / sizeof(descriptor[0]), descriptor);
@@ -45,8 +47,24 @@ static napi_value Init(napi_env env, napi_value exports)
     napi_create_int32(env, FLAG_PERMISSION_USAGE_DETAIL, &prop);
     napi_set_named_property(env, permissionUsageFlag, "FLAG_PERMISSION_USAGE_DETAIL", prop);
 
+    napi_value permActiveStatus = nullptr;
+    napi_create_object(env, &permActiveStatus); // create enmu permActiveStatus
+    
+    prop = nullptr;
+    napi_create_int32(env, PERM_INACTIVE, &prop);
+    napi_set_named_property(env, permActiveStatus, "PERM_INACTIVE", prop);
+
+    prop = nullptr;
+    napi_create_int32(env, PERM_ACTIVE_IN_FOREGROUND, &prop);
+    napi_set_named_property(env, permActiveStatus, "PERM_ACTIVE_IN_FOREGROUND", prop);
+
+    prop = nullptr;
+    napi_create_int32(env, PERM_ACTIVE_IN_BACKGROUND, &prop);
+    napi_set_named_property(env, permActiveStatus, "PERM_ACTIVE_IN_BACKGROUND", prop);
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("PermissionUsageFlag ", permissionUsageFlag),
+        DECLARE_NAPI_PROPERTY("PermissionActiveStatus ", permActiveStatus)
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(exportFuncs[0]), exportFuncs);
 

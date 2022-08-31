@@ -47,7 +47,7 @@ int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, A
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->GetRemoteHapTokenInfo(deviceID, tokenID);
 }
@@ -58,7 +58,7 @@ int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->DeleteRemoteHapTokenInfo(tokenID);
 }
@@ -69,7 +69,7 @@ int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->UpdateRemoteHapTokenInfo(tokenInfo);
 }

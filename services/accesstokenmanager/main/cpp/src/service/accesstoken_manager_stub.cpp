@@ -16,6 +16,7 @@
 #include "accesstoken_manager_stub.h"
 
 #include <unistd.h>
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "ipc_skeleton.h"
 #include "string_ex.h"
@@ -26,6 +27,9 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerStub"};
 constexpr int32_t FOUNDATION_UID = 5523;
+const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 }
 
 int32_t AccessTokenManagerStub::OnRemoteRequest(
@@ -145,10 +149,10 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
-        VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED &&
-        VerifyAccessToken(callingTokenID, "ohos.permission.GET_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(PERMISSION_DEFAULT_FLAG);
         return;
     }
@@ -164,8 +168,11 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(callingTokenID, "ohos.permission.GRANT_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
+            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(RET_FAILED);
         return;
     }
@@ -181,8 +188,11 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
     if (!IsAuthorizedCalling() &&
-        VerifyAccessToken(callingTokenID, "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS") == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
+            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(RET_FAILED);
         return;
     }
@@ -314,6 +324,13 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
 
 void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsAuthorizedCalling() &&
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
     if (scopeParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
@@ -331,6 +348,13 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
 }
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsAuthorizedCalling() &&
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
@@ -338,6 +362,12 @@ void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParce
         return;
     }
     int32_t result = this->UnRegisterPermStateChangeCallback(callback);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    int32_t result = this->ReloadNativeTokenInfo();
     reply.WriteInt32(result);
 }
 
@@ -536,7 +566,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
-
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
+        &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
 #ifdef TOKEN_SYNC_ENABLE
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;

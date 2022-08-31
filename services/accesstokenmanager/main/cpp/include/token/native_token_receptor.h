@@ -40,7 +40,7 @@ public:
     int Init();
 
 private:
-    NativeTokenReceptor() : ready_(false) {}
+    NativeTokenReceptor() {}
     DISALLOW_COPY_AND_MOVE(NativeTokenReceptor);
     int ReadCfgFile(std::string &nativeRawData);
     void FromJson(const nlohmann::json &jsonObject,
@@ -48,7 +48,6 @@ private:
     int32_t ParserNativeRawData(const std::string& nativeRawData,
         std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     void from_json(const nlohmann::json& j, NativeTokenInfo& p);
-    bool ready_;
 };
 } // namespace AccessToken
 } // namespace Security

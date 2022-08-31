@@ -162,6 +162,8 @@ export default class Constants {
     static TERTIARY_LIST_PADDING_RIGHT = 12;
     static TERTIARY_LIST_PADDING_TOP = 4;
     static TERTIARY_LIST_PADDING_BOTTOM = 4;
+    static LOCATION_MARGIN_TOP = 12;
+    static LOCATION_MARGIN_BOTTOM = 8;
 
     // authority-tertiary
     static AUTHORITY_IMAGE_WIDTH = 40;
@@ -252,14 +254,11 @@ export default class Constants {
     static RADIO_BAN_GROUP_NAME = 'radio';
 
     //shape
-    static SHAPE_DIA = 24;
-    static SHAPE_BAN_DIA = 23;
-    static SHAPE_BIG_DIA = 48;
-    static SHAPE_OFFSET_X = -24;
-    static SHAPE_BAN_OFFSET = .5;
-    static SHAPE_ALLOW_DIA = 16;
-    static SHAPE_ALLOW_OFFSET = 4;
-    static SHAPE_ZINDEX = 10;
+    static SHAPE_DIA = 20;
+    static SHAPE_BAN_DIA = 18;
+    static SHAPE_BAN_OFFSET = 1;
+    static SHAPE_ALLOW_DIA = 10;
+    static SHAPE_ALLOW_OFFSET = 5;
 
     // utils
     static CHAR_CODE = 0;
@@ -335,6 +334,34 @@ export default class Constants {
     static RESULT_SUCCESS = 1
     static RESULT_FAILURE = 0
     static RESULT_CODE = 0
+
+    //location status
+    static LOCATION_NONE = 0
+    static LOCATION_FUZZY = 1
+    static LOCATION_UPGRADE = 2
+    static LOCATION_BOTH_PRECISE = 3
+    static LOCATION_BOTH_FUZZY = 4
+
+    //location canvas
+    static LOCATION_CANVAS_HEIGHT = 172;
+    static LOCATION_CANVAS_MARGIN_TOP = 4;
+    static LOCATION_CANVAS_MARGIN_BOTTOM = 8;
+    static LOCATION_CANVAS_INITIAL_SCALE = 1;
+    static LOCATION_CANVAS_ZOOM_SCALE = 1.3;
+    static LOCATION_BUTTON_WIDTH = 120;
+    static LOCATION_BUTTON_HEIGHT = 32;
+    static LOCATION_BUTTON_RADIUS = 16;
+    static LOCATION_BUTTON_POSITION_X = 137.5;
+    static LOCATION_BUTTON_POSITION_Y = 16;
+    static LOCATION_ICON_POSITION_X = 228;
+    static LOCATION_ICON_POSITION_Y = 86.5;
+    static LOCATION_CIRCLE_POSITION_X = 194;
+    static LOCATION_CIRCLE_POSITION_Y = 62.5;
+    static LOCATION_ICON_WIDTH = 24;
+    static LOCATION_ICON_HEIGHT = 29;
+    static LOCATION_CIRCLE_DIA = 94;
+    static LOCATION_CIRCLE_OPACITY = 0.3;
+    static LOCATION_ANIMATION_DURATION = 400;
 
     //
     static SETTING_OPER = -1

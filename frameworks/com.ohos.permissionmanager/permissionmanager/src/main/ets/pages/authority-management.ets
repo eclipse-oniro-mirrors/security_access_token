@@ -18,10 +18,9 @@ import { alphabetIndexerComponent } from "../common/components/alphabeticalIndex
 import { textInput } from "../common/components/search";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
-import Resmgr from '@ohos.resourceManager';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { groups, userGrantPermissions, permissionGroupPermissions, noNeedDisplayApp } from "../common/model/permissionGroup";
-import { permissionGroups, permissionPermissionGroup, permissionGroupIds } from "../common/model/permissionGroup";
+import { permissionGroups, permissionGroupIds } from "../common/model/permissionGroup";
 import { makePy } from "../common/utils/utils";
 import Constants from '../common/utils/constant';
 
@@ -106,6 +105,7 @@ struct authorityManagementPage {
               return ele.groupName === item.group
             })
 
+            globalThis.currentPermissionGroup = item.group
             router.push({
               uri: 'pages/authority-tertiary-groups',
               params: { routerData: dataList, backTitle: item.groupName  }
@@ -374,8 +374,8 @@ struct authorityManagementPage {
     let dePermissions = [];
     let groupIds = [];
     for (let i = 0; i < reqUserPermissions.length; i++) {
-      if(dePermissions.indexOf(permissionPermissionGroup[reqUserPermissions[i]]) == -1){
-        dePermissions.push(permissionPermissionGroup[reqUserPermissions[i]]);
+      if(dePermissions.indexOf(groups[permissionGroupIds[reqUserPermissions[i]]].name) == -1){
+        dePermissions.push(groups[permissionGroupIds[reqUserPermissions[i]]].name);
       }
       if(groupIds.indexOf(permissionGroupIds[reqUserPermissions[i]]) == -1){
         groupIds.push(permissionGroupIds[reqUserPermissions[i]]);
@@ -405,20 +405,17 @@ struct authorityManagementPage {
    * @param {String} labelName Application Name
    */
   updateAppLabel(index, bundleName, labelName) {
-    Resmgr.getResourceManager(globalThis.context, bundleName).then(item => {
-      if (index >= this.allApplicationPermissions.length) {
-        return;
+    let context = globalThis.context.createBundleContext(bundleName)
+    if (index >= this.allApplicationPermissions.length) {
+      return;
+    }
+    var info = this.allApplicationPermissions[index];
+    context.resourceManager.getString(info.labelId, (error, value) => {
+      if (value == undefined) {
+        info.labelId = labelName;
+      } else {
+        info.labelId = value;
       }
-      var info = this.allApplicationPermissions[index];
-      item.getString(info['labelId'], (error, value) => {
-        if (value == undefined) {
-          info['labelId'] = labelName;
-        } else {
-          info['labelId'] = value;
-        }
-      })
-    }).catch(error => {
-      console.error(TAG + 'Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
     })
   }
 
@@ -428,16 +425,13 @@ struct authorityManagementPage {
    * @param {String} bundleName Package names
    */
   updateAppIcon(index, bundleName) {
-    Resmgr.getResourceManager(globalThis.context, bundleName).then(item => {
-      if (index >= this.allApplicationPermissions.length) {
-        return;
-      }
-      var info = this.allApplicationPermissions[index];
-      item.getMediaBase64(info['iconId'], (error, value) => {
-        info['iconId'] = value;
-      })
-    }).catch(error => {
-      console.error(TAG + 'Resmgr.getResourceManager failed. Cause: ' + JSON.stringify(error));
+    let context = globalThis.context.createBundleContext(bundleName)
+    if (index >= this.allApplicationPermissions.length) {
+      return;
+    }
+    var info = this.allApplicationPermissions[index];
+    context.resourceManager.getMediaBase64(info.iconId, (error, value) => {
+      info.iconId = value;
     })
   }
 
@@ -447,10 +441,8 @@ struct authorityManagementPage {
   aboutToAppear() {
     console.log(TAG + 'on aboutToAppear, version 1.01');
     this.getAllBundlePermissions(this.allPermissions, this.allApplicationPermissions);
-    Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-      item.getString($r("app.string.textInput_placeholder").id, (err, val) => {
-        textInput_placeholder = val
-      })
+    globalThis.context.resourceManager.getString($r("app.string.textInput_placeholder").id).then(val => {
+      textInput_placeholder = val
     })
   }
 
@@ -513,7 +505,7 @@ struct authorityManagementPage {
                                           this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).length - 1), (item) => {
                                           this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                                         }, item => item.toString())
-                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.FIXED_GROUP).slice(Constants.SLICE_END), (item) => {
                                           this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                                         }, item => item.toString())
                                       }.backgroundColor($r('app.color.default_background_color'))
@@ -528,7 +520,7 @@ struct authorityManagementPage {
                                           this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).length - 1), (item) => {
                                           this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                                         }, item => item.toString())
-                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_END), (item, index) => {
+                                        ForEach(this.getPermissionGroup(this.allGroupPermission, Constants.CHANGE_GROUP).slice(Constants.SLICE_END), (item) => {
                                           this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                                         }, item => item.toString())
                                       }.backgroundColor($r('app.color.default_background_color'))
@@ -660,7 +652,7 @@ struct applicationItem {
     Column() {
       Row() {
         textInput({
-          placeholder: textInput_placeholder,
+          placeholder: String(textInput_placeholder),
           applicationItem: $applicationItem,
           oldApplicationItem: $oldApplicationItem,
           searchResult: $searchResult
@@ -690,7 +682,7 @@ struct applicationItem {
                         (item) => {
                           this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                         }, item => item.toString())
-                      ForEach(this.applicationItem.slice(Constants.SLICE_END), (item, index) => {
+                      ForEach(this.applicationItem.slice(Constants.SLICE_END), (item) => {
                         this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                       }, item => item.toString())
                     }.backgroundColor($r('app.color.default_background_color'))

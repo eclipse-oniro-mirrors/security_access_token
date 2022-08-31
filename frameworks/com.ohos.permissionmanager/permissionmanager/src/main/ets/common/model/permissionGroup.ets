@@ -22,6 +22,13 @@ export const permissionGroups: any[] = [
         "groupId": 0
     },
     {
+        "permissionName": "ohos.permission.APPROXIMATELY_LOCATION",
+        "groupName": "LOCATION",
+        "label": "模糊位置权限",
+        "description": "允许应用获取模糊位置信息。",
+        "groupId": 0
+    },
+    {
         "permissionName": "ohos.permission.LOCATION",
         "groupName": "LOCATION",
         "label": "前台定位权限",
@@ -195,8 +202,9 @@ export const groups: any[] = [
 	      "label": "访问位置信息？",
         "permissions": [
             "ohos.permission.LOCATION_IN_BACKGROUND",
-            "ohos.permission.LOCATION"
+            "ohos.permission.APPROXIMATELY_LOCATION"
         ],
+        "specialPermission": 'ohos.permission.LOCATION',
         "isShow":true
     },
     {
@@ -335,6 +343,7 @@ export const groups: any[] = [
 export const permissionGroupPermissions: object = {
     "LOCATION": [
         "ohos.permission.LOCATION_IN_BACKGROUND",
+        "ohos.permission.APPROXIMATELY_LOCATION",
         "ohos.permission.LOCATION"
     ],
     "CAMERA": [
@@ -386,6 +395,7 @@ export const permissionGroupPermissions: object = {
 
 export const userGrantPermissions: string[] = [
     "ohos.permission.LOCATION_IN_BACKGROUND",
+    "ohos.permission.APPROXIMATELY_LOCATION",
     "ohos.permission.LOCATION",
     "ohos.permission.CAMERA",
     "ohos.permission.MICROPHONE",
@@ -411,50 +421,9 @@ export const userGrantPermissions: string[] = [
     "ohos.permission.DISTRIBUTED_DATASYNC"
 ];
 
-export const permissionDescriptions: object = {
-    "位置信息": "允许应用在后台运行时获取位置信息。" ,
-    "相机": "允许应用拍摄照片和视频。" ,
-    "麦克风": "允许应用打开或关闭录音通路。" ,
-    "电话": "允许应用接听电话。" ,
-    "信息": "允许应用发送短彩信。" ,
-    "通讯录": "允许应用新建/修改/删除设备上存储的联系人信息。" ,
-    "通话记录": "允许新建/修改/删除设备上的通话记录信息。" ,
-    "媒体和文件": "允许应用访问户媒体文件，如视频、音频、图片等。" ,
-    "日历": "允许应用新建/修改/删除日历。" ,
-    "健身运动": "允许应用程序读取用户的运动状态。" ,
-    "身体传感器": "允许应用程序读取用户的健康数据。" ,
-    "其他权限": "允许应用与远程设备交换用户数据（如图片、音乐、视频、及应用数据等）。"
-};
-
-export const permissionPermissionGroup: object = {
-    "ohos.permission.LOCATION_IN_BACKGROUND": "LOCATION",
-    "ohos.permission.LOCATION": "LOCATION",
-    "ohos.permission.CAMERA": "CAMERA",
-    "ohos.permission.MICROPHONE": "MICROPHONE",
-    "ohos.permission.ANSWER_CALL": "PHONE",
-    "ohos.permission.MANAGE_VOICEMAIL": "PHONE",
-    "ohos.permission.READ_CELL_MESSAGES": "SMS",
-    "ohos.permission.READ_MESSAGES": "SMS",
-    "ohos.permission.RECEIVE_MMS": "SMS",
-    "ohos.permission.RECEIVE_SMS": "SMS",
-    "ohos.permission.RECEIVE_WAP_MESSAGES": "SMS",
-    "ohos.permission.SEND_MESSAGES": "SMS",
-    "ohos.permission.READ_CONTACTS": "CONTACTS",
-    "ohos.permission.WRITE_CONTACTS": "CONTACTS",
-    "ohos.permission.READ_CALL_LOG": "CALL_LOG",
-    "ohos.permission.WRITE_CALL_LOG": "CALL_LOG",
-    "ohos.permission.MEDIA_LOCATION": "MEDIA",
-    "ohos.permission.READ_MEDIA": "MEDIA",
-    "ohos.permission.WRITE_MEDIA": "MEDIA",
-    "ohos.permission.READ_CALENDAR": "CALENDAR",
-    "ohos.permission.WRITE_CALENDAR": "CALENDAR",
-    "ohos.permission.ACTIVITY_MOTION": "SPORT",
-    "ohos.permission.READ_HEALTH_DATA": "HEALTH",
-    "ohos.permission.DISTRIBUTED_DATASYNC": "OTHER"
-};
-
 export const permissionGroupIds: object = {
     "ohos.permission.LOCATION_IN_BACKGROUND": "0",
+    "ohos.permission.APPROXIMATELY_LOCATION": "0",
     "ohos.permission.LOCATION": "0",
     "ohos.permission.CAMERA": "1",
     "ohos.permission.MICROPHONE": "2",
@@ -480,25 +449,6 @@ export const permissionGroupIds: object = {
     "ohos.permission.DISTRIBUTED_DATASYNC": "11"
 };
 
-export const orderGroup: string[] = [
-    "位置信息",
-    "相机",
-    "麦克风",
-    "电话",
-    "信息",
-    "通讯录",
-    "通话记录",
-    "媒体和文件",
-    "日历",
-    "健身运动",
-    "身体传感器",
-    "其他权限"
-];
-
-export const otherPermissionsLabel: object = {
-    "ohos.permission.DISTRIBUTED_DATASYNC": "多设备协同"
-};
-
 export const noNeedDisplayApp: string[] = [
     "com.ohos.launcher"
 ]
@@ -510,3 +460,7 @@ export const showSubpermissionsGrop: string[] = [
     "通讯录",
     "通话记录"
 ];
+
+export const polymorphismGroup: string[] = [
+    "LOCATION"
+]

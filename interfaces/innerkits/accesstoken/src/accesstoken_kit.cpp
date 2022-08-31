@@ -25,6 +25,7 @@
 #include "hisysevent.h"
 #include "permission_def.h"
 #include "perm_state_change_callback_customize.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -160,7 +161,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     if (tokenID == 0) {
         HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
-            "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName);
+            "CALLER_TOKENID", static_cast<AccessTokenID>(GetSelfTokenID()), "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return PERMISSION_DENIED;
     }
@@ -309,6 +310,11 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
     return (int32_t)(idInner->dlpFlag);
+}
+
+int32_t AccessTokenKit::ReloadNativeTokenInfo()
+{
+    return AccessTokenManagerClient::GetInstance().ReloadNativeTokenInfo();
 }
 
 #ifdef TOKEN_SYNC_ENABLE

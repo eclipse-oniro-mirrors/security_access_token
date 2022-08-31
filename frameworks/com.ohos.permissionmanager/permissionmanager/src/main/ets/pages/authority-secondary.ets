@@ -18,7 +18,6 @@ import { permissionGroups, groups } from "../common/model/permissionGroup";
 import router from '@system.router';
 import Constants from '../common/utils/constant';
 
-var TAG = 'PermissionManager_MainAbility:'
 
 class CalendarObj {
   permissionName: string
@@ -92,7 +91,7 @@ struct appNamePage {
 @Component
 struct appNameItem {
   @State calendarListItem: CalendarObj[] = []; // Permission management secondary interface data array
-  private routerData = router.getParams().routerData; // Routing jump data
+  private routerData: any = router.getParams().routerData; // Routing jump data
   private backTitle = router.getParams().backTitle; // return title name
   private allPermissionApplications = router.getParams().allPermissionApplications; // Array of all app permission names
 
@@ -129,7 +128,7 @@ struct appNameItem {
           })
           router.push({
             uri: 'pages/authority-tertiary',
-            params: { routerData: [dataList[item.index]], backTitle: item.label }
+            params: { routerData: dataList[item.index] ? [dataList[item.index]] : [], backTitle: item.label }
           });
         })
       }
@@ -162,7 +161,7 @@ struct appNameItem {
               ForEach(this.calendarListItem.slice(Constants.SLICE_START, this.calendarListItem.length - 1), (item) => {
                 this.ListItemLayout(item, Constants.SLICE_START_INDEX)
               }, item => item.toString())
-              ForEach(this.calendarListItem.slice(Constants.SLICE_END), (item, index) => {
+              ForEach(this.calendarListItem.slice(Constants.SLICE_END), (item) => {
                 this.ListItemLayout(item, Constants.SLICE_END_INDEX)
               }, item => item.toString())
             }.backgroundColor($r('app.color.default_background_color')).borderRadius(Constants.BORDER_RADIUS)

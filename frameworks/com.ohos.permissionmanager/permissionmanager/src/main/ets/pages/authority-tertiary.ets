@@ -18,7 +18,6 @@ import { alphabetIndexerComponent } from "../common/components/alphabeticalIndex
 import { textInput } from "../common/components/search";
 import router from '@system.router';
 import bundle from "@ohos.bundle";
-import Resmgr from '@ohos.resourceManager';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
 import { getAppLabel, getAppIcon, verifyAccessToken } from "../common/utils/utils";
 import { makePy } from "../common/utils/utils";
@@ -33,7 +32,7 @@ var TAG = 'PermissionManager_MainAbility:'
   .height(height)
 }
 
-let routerData = router.getParams().routerData; // Routing jump data
+let routerData: any = router.getParams().routerData; // Routing jump data
 let backTitle = router.getParams().backTitle; // return title name
 class ApplicationObj {
   labelId: string
@@ -239,12 +238,10 @@ struct applicationItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    let bundleNames = routerData[0].bundleNames;
+    let bundleNames = routerData.length > 0 ? routerData[0].bundleNames : routerData;
 
-    Resmgr.getResourceManager(globalThis.context, Constants.BUNDLE_NAME).then(item => {
-      item.getString($r("app.string.textInput_placeholder").id, (err, val) => {
-        this.placeholder = val
-      })
+    globalThis.context.resourceManager.getString($r("app.string.textInput_placeholder").id).then(val => {
+      this.placeholder = val
     })
 
     // initial then fill values when sync return which may cause sync panic
@@ -338,7 +335,7 @@ struct applicationItem {
                         (item) => {
                           this.ListItemLayout(item, Constants.SLICE_START_INDEX)
                         }, item => item.toString())
-                        ForEach(this.applicationList.slice(Constants.SLICE_END), (item, index) => {
+                        ForEach(this.applicationList.slice(Constants.SLICE_END), (item) => {
                           this.ListItemLayout(item, Constants.SLICE_END_INDEX)
                         }, item => item.toString())
                       }
