@@ -24,3 +24,10 @@ if (!defined(global_parts_info) ||
 } else {
   dlp_permission_enable = false
 }
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.ability_ability_base)) {
+  ability_base_enable = true
+} else {
+  ability_base_enable = false
+}
