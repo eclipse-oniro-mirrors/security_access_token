@@ -70,13 +70,6 @@ int32_t PrivacyKit::GetPermissionUsedRecords(
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
 }
 
-std::string PrivacyKit::DumpRecordInfo(AccessTokenID tokenID, const std::string& permissionName)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=%{public}d, permissionName=%{public}s",
-        tokenID, permissionName.c_str());
-    return PrivacyManagerClient::GetInstance().DumpRecordInfo(tokenID, permissionName);
-}
-
 int32_t PrivacyKit::RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback)
 {
     return PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback);

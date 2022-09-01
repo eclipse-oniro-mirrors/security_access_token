@@ -107,11 +107,6 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
-std::string PrivacyManagerService::DumpRecordInfo(AccessTokenID tokenId, const std::string& permissionName)
-{
-    return PermissionRecordManager::GetInstance().DumpRecordInfo(tokenId, permissionName);
-}
-
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {

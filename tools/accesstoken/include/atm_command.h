@@ -73,6 +73,8 @@ private:
 
     ErrCode RunAsCommandMissingOptionArgument(void);
     ErrCode ModifyPermission(const OptType& type, uint32_t& tokenId, std::string& permissionName);
+
+    std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security
