@@ -44,15 +44,6 @@
           }
         },
         {
-          "name": "//base/security/access_token/interfaces/innerkits/token_callback:libtoken_callback_sdk",
-          "header": {
-            "header_files": [
-              "token_callback_stub.h"
-            ],
-            "header_base": "//base/security/access_token/interfaces/innerkits/token_callback/include"
-          }
-        },
-        {
           "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
           "header": {
             "header_files": [
