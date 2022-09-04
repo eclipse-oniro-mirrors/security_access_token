@@ -15,6 +15,7 @@
 
 #include "permission_manager.h"
 #include "access_token.h"
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
@@ -323,6 +324,10 @@ void PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
         CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
+            "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
+        grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
     }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -570,6 +575,11 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     }
 
     permPolicySet->ResetUserGrantPermissionStatus();
+}
+
+void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
+{
+    grantEvent_.NotifyPermGrantStoreResult(result, timestamp);
 }
 
 std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)

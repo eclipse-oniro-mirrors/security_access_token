@@ -16,6 +16,7 @@
 #ifndef PERMISSION_MANAGER_H
 #define PERMISSION_MANAGER_H
 
+#include <mutex>
 #include <vector>
 #include <string>
 
@@ -23,6 +24,7 @@
 #include "hap_token_info_inner.h"
 #include "iremote_broker.h"
 #include "permission_def.h"
+#include "permission_grant_event.h"
 #include "permission_list_state.h"
 #include "permission_list_state_parcel.h"
 #include "permission_state_change_info.h"
@@ -68,6 +70,7 @@ public:
         uint32_t& accurateIndex);
     bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
+    void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
 
 private:
     PermissionManager();
@@ -79,6 +82,8 @@ private:
         const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
     void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
+
+    PermissionGrantEvent grantEvent_;
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };

@@ -15,6 +15,9 @@
     "syscap": [
       "SystemCapability.Security.AccessToken"
     ],
+    "hisysevent_config": [
+      "//base/security/access_token/hisysevent.yaml"
+    ],
     "features": [ "access_token_feature_coverage = false" ],
     "adapted_system_type": [ "standard" ],
     "rom": "2048KB",

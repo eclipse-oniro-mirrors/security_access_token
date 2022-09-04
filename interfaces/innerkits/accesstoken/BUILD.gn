@@ -35,6 +35,7 @@ if (is_standard_system) {
       "//base/security/access_token/frameworks/accesstoken/include",
       "//base/security/access_token/frameworks/common/include",
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+      "//base/security/access_token/interfaces/innerkits/token_setproc/include",
     ]
 
     sources = [
@@ -50,10 +51,12 @@ if (is_standard_system) {
     deps = [
       "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 
     external_deps = [
       "c_utils:utils",
+      "hisysevent_native:libhisysevent",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_single",
       "samgr:samgr_proxy",

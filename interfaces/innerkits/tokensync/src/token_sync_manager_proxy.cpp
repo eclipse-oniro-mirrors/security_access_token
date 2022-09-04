@@ -38,11 +38,11 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write deviceID");
-        return -1;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return -1;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
 
     MessageParcel reply;
@@ -50,13 +50,13 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(ITokenSyncManager::InterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
@@ -70,7 +70,7 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return -1;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
 
     MessageParcel reply;
@@ -78,13 +78,13 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(ITokenSyncManager::InterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
@@ -102,7 +102,7 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
 
     if (!data.WriteParcelable(&tokenInfoParcel)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenInfo");
-        return -1;
+        return TOKEN_SYNC_PARAMS_INVALID;
     }
 
     MessageParcel reply;
@@ -110,13 +110,13 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(ITokenSyncManager::InterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return -1;
+        return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();

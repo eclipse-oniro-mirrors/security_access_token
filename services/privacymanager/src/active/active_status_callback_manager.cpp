@@ -19,6 +19,7 @@
 #include <thread>
 #include <datetime_ex.h>
 
+#include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 
 namespace OHOS {
@@ -116,6 +117,11 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
 
+    if (changeType == PERM_ACTIVE_IN_BACKGROUND) {
+        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,
+            "CALLER_TOKENID", tokenId, "PERMISSION_NAME", permName, "REASON", "background call");
+    }
     auto callbackFunc = [&]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
         std::lock_guard<std::mutex> lock(mutex_);
