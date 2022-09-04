@@ -738,6 +738,21 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 }
 
+
+class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest3(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {}
+    ~CbCustomizeTest3()
+    {}
+    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    {
+        type_ = result.type;
+    }
+    ActiveChangeType type_ = PERM_INACTIVE;
+};
+
 /**
  * @tc.name: RegisterPermActiveStatusCallback002
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
@@ -755,8 +770,13 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     auto callbackPtr2 = std::make_shared<CbCustomizeTest2>(permList2);
     callbackPtr2->type_ = PERM_INACTIVE;
 
+    std::vector<std::string> permList3 = {};
+    auto callbackPtr3 = std::make_shared<CbCustomizeTest2>(permList3);
+    callbackPtr3->type_ = PERM_INACTIVE;
+
     int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1);
     res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr2);
+    res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr3);
 
     res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
     ASSERT_EQ(RET_NO_ERROR, res);
@@ -764,12 +784,14 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr1->type_);
     ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
+    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr3->type_);
 
     res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
     ASSERT_EQ(RET_NO_ERROR, res);
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
+    ASSERT_EQ(PERM_INACTIVE, callbackPtr3->type_);
 
     res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
     ASSERT_EQ(RET_NO_ERROR, res);
@@ -788,6 +810,125 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, res);
     res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr2);
     ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr3);
+    ASSERT_EQ(RET_NO_ERROR, res);
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback003
+ * @tc.desc: Register callback with permList which contains 1025 permissions.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
+{
+    std::vector<std::string> permList;
+    for (int32_t i = 0; i < 1024; i++) { // 1024 is the limitation
+        permList.emplace_back("ohos.permission.CAMERA");
+    }
+    auto callbackPtr1 = std::make_shared<CbCustomizeTest3>(permList);
+    int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1);
+    ASSERT_EQ(RET_NO_ERROR, res);
+
+    permList.emplace_back("ohos.permission.MICROPHONE");
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_ERROR, res);
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback004
+ * @tc.desc: Register callback 201 times.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<std::shared_ptr<CbCustomizeTest3>> callbackList;
+
+    for (int32_t i = 0; i <= 200; i++) { // 200 is the max size
+        if (i == 200) { // 200 is the max size
+            auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+            int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+            ASSERT_EQ(RET_ERROR, res);
+            break;
+        }
+        auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+        int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+        ASSERT_EQ(RET_NO_ERROR, res);
+        callbackList.emplace_back(callbackPtr);
+    }
+    for (int32_t i = 0; i < 200; i++) { // release 200 callback
+        auto callbackPtr = callbackList[i];
+        int32_t res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
+        ASSERT_EQ(RET_NO_ERROR, res);
+    }
+    callbackList.clear();
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback005
+ * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.INVALD"};
+
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_ERROR, res);
+
+    std::vector<std::string> permList1 = {"ohos.permission.INVALD", "ohos.permission.CAMERA"};
+    auto callbackPtr1 = std::make_shared<CbCustomizeTest3>(permList1);
+    res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1);
+    ASSERT_EQ(RET_NO_ERROR, res);
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback006
+ * @tc.desc: UnRegisterPermActiveStatusCallback with invalid callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
+{
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    int32_t res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_ERROR, res);
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback007
+ * @tc.desc: RegisterPermActiveStatusCallback with valid permission repeatedly.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_ERROR, res);
 }
 
 /**
