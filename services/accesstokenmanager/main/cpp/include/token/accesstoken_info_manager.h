@@ -57,6 +57,7 @@ public:
         AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
+    bool IsTokenIdExist(AccessTokenID id);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */

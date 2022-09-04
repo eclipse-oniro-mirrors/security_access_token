@@ -427,10 +427,32 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
-    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+int32_t PermissionRecordManager::PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
 {
-    return ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+    PermissionDef permissionDef;
+    for (const auto& permissionName : listSrc) {
+        if (AccessTokenKit::GetDefPermission(permissionName, permissionDef) != Constant::FAILURE) {
+            listRes.emplace_back(permissionName);
+            continue;
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission %{public}s invalid!", permissionName.c_str());
+    }
+    if ((listRes.empty()) && (!listSrc.empty())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
+        return Constant::FAILURE;
+    }
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
+    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    std::vector<std::string> permListRes;
+    int32_t res = PermissionListFilter(permList, permListRes);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+    return ActiveStatusCallbackManager::GetInstance().AddCallback(permListRes, callback);
 }
 
 int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)

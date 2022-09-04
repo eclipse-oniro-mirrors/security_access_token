@@ -28,7 +28,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackManager"};
-const time_t MAX_TIMEOUT_SEC = 30;
+static const time_t MAX_TIMEOUT_SEC = 30;
+static const uint32_t MAX_CALLBACK_SIZE = 1024;
 }
 
 CallbackManager& CallbackManager::GetInstance()
@@ -54,13 +55,17 @@ int32_t CallbackManager::AddCallback(
         return RET_FAILED;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback size has reached limitation");
+        return RET_FAILED;
+    }
     callback->AddDeathRecipient(callbackDeathRecipient_);
 
     CallbackRecord recordInstance;
     recordInstance.callbackObject_ = callback;
     recordInstance.scopePtr_ = callbackScopePtr;
 
-    std::lock_guard<std::mutex> lock(mutex_);
     callbackInfoList_.emplace_back(recordInstance);
 
     ACCESSTOKEN_LOG_INFO(LABEL, "recordInstance is added");

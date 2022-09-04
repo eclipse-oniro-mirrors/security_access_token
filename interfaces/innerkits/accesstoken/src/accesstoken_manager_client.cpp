@@ -224,7 +224,16 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     PermStateChangeScopeParcel scopeParcel;
     customizedCb->GetScope(scopeParcel.scope);
 
-    return proxy->RegisterPermStateChangeCallback(scopeParcel, callbackObject);
+    result = proxy->RegisterPermStateChangeCallback(scopeParcel, callbackObject);
+    if (result != RET_SUCCESS) {
+        std::lock_guard<std::mutex> lock(callbackMutex_);
+        auto goalCallback = callbackMap_.find(customizedCb);
+        if (goalCallback != callbackMap_.end()) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "clean callbackMap_.");
+            callbackMap_.erase(goalCallback);
+        }
+    }
+    return result;
 }
 
 int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
@@ -475,7 +484,7 @@ void AccessTokenManagerClient::DumpTokenInfo(AccessTokenID tokenID, std::string&
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s: proxy is null", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return;
     }
     proxy->DumpTokenInfo(tokenID, dumpInfo);

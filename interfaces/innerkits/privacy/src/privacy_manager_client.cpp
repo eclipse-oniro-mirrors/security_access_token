@@ -185,7 +185,16 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     std::vector<std::string> permList;
     callback->GetPermList(permList);
 
-    return proxy->RegisterPermActiveStatusCallback(permList, callbackObject);
+    result = proxy->RegisterPermActiveStatusCallback(permList, callbackObject);
+    if (result != RET_SUCCESS) {
+        std::lock_guard<std::mutex> lock(activeCbkMutex_);
+        auto goalCallback = activeCbkMap_.find(callback);
+        if (goalCallback != activeCbkMap_.end()) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "clean activeCbkMap_.");
+            activeCbkMap_.erase(goalCallback);
+        }
+    }
+    return result;
 }
 
 int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(

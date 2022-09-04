@@ -372,15 +372,46 @@ void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::strin
     UpdateTokenPermissionState(tokenID, permissionName, false, flag);
 }
 
+int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes)
+{
+    for (const auto& tokenId : scopeSrc.tokenIDs) {
+        if (AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenId)) {
+            scopeRes.tokenIDs.emplace_back(tokenId);
+            continue;
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d invalid!", tokenId);
+    }
+    for (const auto& permissionName : scopeSrc.permList) {
+        if (PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+            scopeRes.permList.emplace_back(permissionName);
+            continue;
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission %{public}s invalid!", permissionName.c_str());
+    }
+    if ((scopeRes.tokenIDs.empty()) && (!scopeSrc.tokenIDs.empty())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "valid tokenid size is 0!");
+        return RET_FAILED;
+    }
+    if ((scopeRes.permList.empty()) && (!scopeSrc.permList.empty())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
+        return RET_FAILED;
+    }
+    return RET_SUCCESS;
+}
+
 int32_t PermissionManager::AddPermStateChangeCallback(
     const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
-    auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scope);
+    PermStateChangeScope scopeRes;
+    if (ScopeFilter(scope, scopeRes) != RET_SUCCESS) {
+        return RET_FAILED;
+    }
+    auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
     if (callbackScopePtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
+        return RET_FAILED;
     }
-
     return CallbackManager::GetInstance().AddCallback(callbackScopePtr, callback);
 }
 
