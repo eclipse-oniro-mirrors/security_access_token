@@ -727,18 +727,6 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
     }
-    if (unregisterPermActiveChangeContext->callbackRef != nullptr) {
-        napi_value results[ARGS_ONE] = {nullptr};
-        NAPI_CALL(env, napi_get_null(env, &results[PARAM0]));
-        napi_value undefined;
-        NAPI_CALL(env, napi_get_undefined(env, &undefined));
-        napi_value resultout = nullptr;
-        napi_value callback = nullptr;
-        NAPI_CALL(env,
-            napi_get_reference_value(env, unregisterPermActiveChangeContext->callbackRef, &callback));
-        NAPI_CALL(env,
-            napi_call_function(env, undefined, callback, ARGS_ONE, &results[PARAM0], &resultout));
-    }
     return nullptr;
 }
 }  // namespace AccessToken
