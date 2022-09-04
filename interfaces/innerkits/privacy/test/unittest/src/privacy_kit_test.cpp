@@ -855,6 +855,38 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: StartUsingPermission004
+ * @tc.desc: StartUsingPermission basic functional verification
+ * @tc.type: FUNC
+ * @tc.require:IssueI5PHM0
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+}
+
+/**
+ * @tc.name: StartUsingPermission005
+ * @tc.desc: StartUsingPermission with invalid tokenId or permission.
+ * @tc.type: FUNC
+ * @tc.require:IssueI5PHM0
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.UtTestInvalidPermission";
+    int32_t ret = PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_ERROR, ret);
+    ret = PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_ERROR, ret);
+    ret = PrivacyKit::StartUsingPermission(1, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_ERROR, ret);
+}
+
+/**
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
@@ -865,7 +897,55 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
     std::string permissionName = "ohos.permission.CAMERA";
     int32_t ret = PrivacyKit::StopUsingPermission(0, permissionName);
     ASSERT_EQ(RET_ERROR, ret);
-
     ret = PrivacyKit::StopUsingPermission(0, "permissionName");
+    ASSERT_EQ(RET_ERROR, ret);
+}
+
+/**
+ * @tc.name: StopUsingPermission002
+ * @tc.desc: StopUsingPermission cancel permissions that you haven't started using
+ * @tc.type: FUNC
+ * @tc.require:IssueI5PHM0
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_ERROR, ret);
+}
+
+/**
+ * @tc.name: StopUsingPermission003
+ * @tc.desc: StopUsingPermission invalid tokenid, permission
+ * @tc.type: FUNC
+ * @tc.require:IssueI5PHM0
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.uttestpermission");
+    ASSERT_EQ(RET_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(0,permissionName);
+    ASSERT_EQ(RET_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E,permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+}
+
+/**
+ * @tc.name: StopUsingPermission004
+ * @tc.desc: StopUsingPermission stop a use repeatedly
+ * @tc.type: FUNC
+ * @tc.require:IssueI5PHM0
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t ret = PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(RET_NO_ERROR, ret);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
     ASSERT_EQ(RET_ERROR, ret);
 }
