@@ -238,7 +238,10 @@ static void ParseGetPermissionUsedRecords(
 
     property = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "permissionNames", &property));
-    asyncContext.request.permissionList = ParseStringArray(env, property);
+    if (!ParseStringArray(env, property, asyncContext.request.permissionList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+        return;
+    }
 
     property = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "flag", &property));
@@ -563,7 +566,11 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
         return false;
     }
     std::string type = ParseString(env, argv[PARAM0]);
-    std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
+    std::vector<std::string> permList;
+    if (!ParseStringArray(env, argv[PARAM1], permList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+        return false;
+    }
     std::sort(permList.begin(), permList.end());
     napi_valuetype valueType = napi_undefined;
     if (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok) {
@@ -599,7 +606,11 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
         return false;
     }
     std::string type = ParseString(env, argv[PARAM0]);
-    std::vector<std::string> permList = ParseStringArray(env, argv[PARAM1]);
+    std::vector<std::string> permList;
+    if (!ParseStringArray(env, argv[PARAM1], permList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+        return false;
+    }
     std::sort(permList.begin(), permList.end());
     napi_valuetype valueType = napi_undefined;
     if (argc >= ARGS_THREE) {
