@@ -177,7 +177,8 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
 }
 
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
-    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb, sptr<IRemoteObject>& callbackObject)
+    const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
+    sptr<PermissionStateChangeCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(callbackMutex_);
     if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
@@ -187,17 +188,14 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
 
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback != callbackMap_.end()) {
-        callbackObject = goalCallback->second->AsObject();
         ACCESSTOKEN_LOG_ERROR(LABEL, "already has the same callback");
         return RET_FAILED;
     } else {
-        sptr<PermissionStateChangeCallback> callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
+        callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
         if (!callback) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callback failed!");
             return RET_FAILED;
         }
-        callbackObject = callback->AsObject();
-        callbackMap_[customizedCb] = callback;
     }
     return RET_SUCCESS;
 }
@@ -210,8 +208,8 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
         return RET_FAILED;
     }
 
-    sptr<IRemoteObject> callbackObject = nullptr;
-    int32_t result = CreatePermStateChangeCallback(customizedCb, callbackObject);
+    sptr<PermissionStateChangeCallback> callback = nullptr;
+    int32_t result = CreatePermStateChangeCallback(customizedCb, callback);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -224,14 +222,10 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     PermStateChangeScopeParcel scopeParcel;
     customizedCb->GetScope(scopeParcel.scope);
 
-    result = proxy->RegisterPermStateChangeCallback(scopeParcel, callbackObject);
-    if (result != RET_SUCCESS) {
+    result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
+    if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(callbackMutex_);
-        auto goalCallback = callbackMap_.find(customizedCb);
-        if (goalCallback != callbackMap_.end()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "clean callbackMap_.");
-            callbackMap_.erase(goalCallback);
-        }
+        callbackMap_[customizedCb] = callback;
     }
     return result;
 }

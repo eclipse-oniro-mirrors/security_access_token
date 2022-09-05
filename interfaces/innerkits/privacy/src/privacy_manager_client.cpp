@@ -134,7 +134,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
 }
 
 int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
-    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<IRemoteObject>& callbackObject)
+    const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<PermActiveStatusChangeCallback>& callbackWrap)
 {
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
 
@@ -145,19 +145,15 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
 
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback != activeCbkMap_.end()) {
-        callbackObject = goalCallback->second->AsObject();
         ACCESSTOKEN_LOG_ERROR(LABEL, "activeCbkMap_ already has such callback");
         return ERROR;
     } else {
-        sptr<PermActiveStatusChangeCallback> callbackWraped =
+        callbackWrap =
             new (std::nothrow) PermActiveStatusChangeCallback(callback);
-        if (!callbackWraped) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callbackWraped failed!");
+        if (!callbackWrap) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callbackWrap failed!");
             return ERROR;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "callbackObject added");
-        callbackObject = callbackWraped->AsObject();
-        activeCbkMap_[callback] = callbackWraped;
     }
     return RET_SUCCESS;
 }
@@ -171,8 +167,8 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
         return ERROR;
     }
 
-    sptr<IRemoteObject> callbackObject = nullptr;
-    int32_t result = CreateActiveStatusChangeCbk(callback, callbackObject);
+    sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
+    int32_t result = CreateActiveStatusChangeCbk(callback, callbackWrap);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -185,14 +181,11 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     std::vector<std::string> permList;
     callback->GetPermList(permList);
 
-    result = proxy->RegisterPermActiveStatusCallback(permList, callbackObject);
-    if (result != RET_SUCCESS) {
+    result = proxy->RegisterPermActiveStatusCallback(permList, callbackWrap->AsObject());
+    if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(activeCbkMutex_);
-        auto goalCallback = activeCbkMap_.find(callback);
-        if (goalCallback != activeCbkMap_.end()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "clean activeCbkMap_.");
-            activeCbkMap_.erase(goalCallback);
-        }
+        activeCbkMap_[callback] = callbackWrap;
+        ACCESSTOKEN_LOG_INFO(LABEL, "callbackObject added");
     }
     return result;
 }

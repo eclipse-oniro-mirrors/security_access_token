@@ -71,6 +71,8 @@ public:
 
 private:
     PermissionManager();
+    void ScopeToString(
+        const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
     void UpdateTokenPermissionState(
         AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag);

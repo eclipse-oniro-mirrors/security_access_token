@@ -78,6 +78,7 @@ private:
     std::vector<PermissionRecord> GetRecordsAndReset(uint32_t tokenId, int32_t status);
 
     std::string GetDeviceId(AccessTokenID tokenId);
+    void PermListToString(const std::vector<std::string>& permList);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;

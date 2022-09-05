@@ -14,6 +14,11 @@
  */
 
 #include "permission_manager.h"
+
+#include <iostream>
+#include <numeric>
+#include <sstream>
+
 #include "access_token.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
@@ -372,18 +377,38 @@ void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::strin
     UpdateTokenPermissionState(tokenID, permissionName, false, flag);
 }
 
+void PermissionManager::ScopeToString(
+    const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList)
+{
+    std::stringstream str;
+    copy(tokenIDs.begin(), tokenIDs.end(), std::ostream_iterator<uint32_t>(str, ", "));
+    std::string tokenidStr = str.str();
+
+    std::string permStr;
+    permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenidStr = %{public}s permStr =%{public}s",
+        tokenidStr.c_str(), permStr.c_str());
+}
+
 int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes)
 {
+    std::set<uint32_t> tokenIdSet;
     for (const auto& tokenId : scopeSrc.tokenIDs) {
-        if (AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenId)) {
+        if (AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenId) &&
+            (tokenIdSet.count(tokenId) == 0)) {
             scopeRes.tokenIDs.emplace_back(tokenId);
+            tokenIdSet.insert(tokenId);
             continue;
         }
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d invalid!", tokenId);
     }
+    std::set<std::string> permSet;
     for (const auto& permissionName : scopeSrc.permList) {
-        if (PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+        if (PermissionDefinitionCache::GetInstance().HasDefinition(permissionName) &&
+            permSet.count(permissionName) == 0) {
             scopeRes.permList.emplace_back(permissionName);
+            permSet.insert(permissionName);
             continue;
         }
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission %{public}s invalid!", permissionName.c_str());
@@ -396,6 +421,7 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
         ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
         return RET_FAILED;
     }
+    ScopeToString(scopeRes.tokenIDs, scopeRes.permList);
     return RET_SUCCESS;
 }
 
