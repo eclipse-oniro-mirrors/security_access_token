@@ -221,7 +221,7 @@ static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
  * @tc.name: AddPermissionUsedRecord001
  * @tc.desc: cannot AddPermissionUsedRecord with illegal tokenId and permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
 {
@@ -243,7 +243,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord002
  * @tc.desc: cannot AddPermissionUsedRecord with invalid tokenId and permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
 {
@@ -267,7 +267,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord003
  * @tc.desc: cannot AddPermissionUsedRecord with native tokenId.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
 {
@@ -314,7 +314,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord004
  * @tc.desc: AddPermissionUsedRecord user_grant permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
 {
@@ -336,7 +336,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord005
  * @tc.desc: AddPermissionUsedRecord user_grant permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
 {
@@ -367,7 +367,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord006
  * @tc.desc: AddPermissionUsedRecord permission combine records.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
 {
@@ -404,7 +404,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
  * @tc.name: AddPermissionUsedRecord007
  * @tc.desc: AddPermissionUsedRecord user_grant permission.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
 {
@@ -449,7 +449,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
  * @tc.name: RemovePermissionUsedRecords001
  * @tc.desc: cannot RemovePermissionUsedRecords with illegal tokenId and deviceID.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
 {
@@ -460,7 +460,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords001, TestSize.Level1)
  * @tc.name: RemovePermissionUsedRecords002
  * @tc.desc: RemovePermissionUsedRecords with invalid tokenId and deviceID.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
 {
@@ -483,7 +483,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
  * @tc.name: RemovePermissionUsedRecords003
  * @tc.desc: RemovePermissionUsedRecords with valid tokenId and deviceID.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
 {
@@ -502,7 +502,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecords001
  * @tc.desc: cannot GetPermissionUsedRecords with invalid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
 {
@@ -527,7 +527,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords001, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecords002
  * @tc.desc: cannot GetPermissionUsedRecords with valid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
 {
@@ -563,7 +563,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecords003
  * @tc.desc: can GetPermissionUsedRecords with valid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
 {
@@ -594,7 +594,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecords004
  * @tc.desc: can GetPermissionUsedRecords with valid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
 {
@@ -618,7 +618,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecordsAsync001
  * @tc.desc: cannot GetPermissionUsedRecordsAsync with invalid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
 {
@@ -637,7 +637,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync001, TestSize.Level1)
  * @tc.name: GetPermissionUsedRecordsAsync002
  * @tc.desc: cannot GetPermissionUsedRecordsAsync with valid query time.
  * @tc.type: FUNC
- * @tc.require:Issue Number
+ * @tc.require: issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
 {
@@ -702,7 +702,7 @@ public:
  * @tc.name: RegisterPermActiveStatusCallback001
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 {
@@ -742,7 +742,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
  * @tc.name: RegisterPermActiveStatusCallback002
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
@@ -794,7 +794,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
  * @tc.name: StartUsingPermission001
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
 {
@@ -810,7 +810,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
  * @tc.name: StartUsingPermission002
  * @tc.desc: StartUsingPermission is called twice with same permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
 {
@@ -830,7 +830,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
  * @tc.name: StopUsingPermission003
  * @tc.desc: Add record when StopUsingPermission is called.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
 {
@@ -858,7 +858,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
  * @tc.name: StartUsingPermission004
  * @tc.desc: StartUsingPermission basic functional verification
  * @tc.type: FUNC
- * @tc.require:IssueI5PHM0
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
 {
@@ -873,7 +873,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
  * @tc.name: StartUsingPermission005
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require:IssueI5PHM0
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
 {
@@ -890,7 +890,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
 {
@@ -905,7 +905,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
  * @tc.name: StopUsingPermission002
  * @tc.desc: StopUsingPermission cancel permissions that you haven't started using
  * @tc.type: FUNC
- * @tc.require:IssueI5PHM0
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
 {
@@ -918,7 +918,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
  * @tc.name: StopUsingPermission003
  * @tc.desc: StopUsingPermission invalid tokenid, permission
  * @tc.type: FUNC
- * @tc.require:IssueI5PHM0
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
 {
@@ -927,9 +927,9 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, ret);
     ret = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.uttestpermission");
     ASSERT_EQ(RET_ERROR, ret);
-    ret = PrivacyKit::StopUsingPermission(0,permissionName);
+    ret = PrivacyKit::StopUsingPermission(0, permissionName);
     ASSERT_EQ(RET_ERROR, ret);
-    ret = PrivacyKit::StopUsingPermission(g_TokenId_E,permissionName);
+    ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
     ASSERT_EQ(RET_NO_ERROR, ret);
 }
 
@@ -937,7 +937,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
  * @tc.name: StopUsingPermission004
  * @tc.desc: StopUsingPermission stop a use repeatedly
  * @tc.type: FUNC
- * @tc.require:IssueI5PHM0
+ * @tc.require: issueI5NT1X issueI5P4IU
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
 {
