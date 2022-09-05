@@ -40,7 +40,7 @@ int32_t ParseInt32(const napi_env env, const napi_value value);
 int64_t ParseInt64(const napi_env env, const napi_value value);
 uint32_t ParseUint32(const napi_env env, const napi_value value);
 std::string ParseString(const napi_env env, const napi_value value);
-std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value);
+bool ParseStringArray(const napi_env env, const napi_value value, std::vector<std::string>& res);
 bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& res);
 bool IsArray(const napi_env& env, const napi_value& value);
 }  // namespace AccessToken

@@ -702,7 +702,10 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParseAccessTokenIDArray failed");
         return false;
     }
-    scopeInfo.permList = ParseStringArray(env, argv[PARAM2]);
+    if (!ParseStringArray(env, argv[PARAM2], scopeInfo.permList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+        return false;
+    }
     napi_valuetype valueType = napi_undefined;
     napi_typeof(env, argv[PARAM3], &valueType); // get PRARM[3] type
     if (valueType != napi_function) {
@@ -779,7 +782,10 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParseAccessTokenIDArray failed");
         return false;
     }
-    scopeInfo.permList = ParseStringArray(env, argv[PARAM2]);
+    if (!ParseStringArray(env, argv[PARAM2], scopeInfo.permList)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+        return false;
+    }
     if (argc >= ARGS_FOUR) {
         napi_valuetype valueType = napi_undefined;
         napi_typeof(env, argv[PARAM3], &valueType); // get PRARM[3] type

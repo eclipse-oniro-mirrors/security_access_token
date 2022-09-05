@@ -106,26 +106,31 @@ std::string ParseString(const napi_env env, const napi_value value)
     return str;
 }
 
-std::vector<std::string> ParseStringArray(const napi_env env, const napi_value value)
+bool ParseStringArray(const napi_env env, const napi_value value, std::vector<std::string>& res)
 {
-    std::vector<std::string> res;
     if (!IsArray(env, value)) {
-        return res;
+        return false;
     }
-    uint32_t length = 0;
-    napi_valuetype valuetype = napi_undefined;
 
+    uint32_t length = 0;
     napi_get_array_length(env, value, &length);
+
+    if (length == 0) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "array is empty");
+        return true;
+    }
+
     napi_value valueArray;
     for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, value, i, &valueArray);
 
+        napi_valuetype valuetype = napi_undefined;
         napi_typeof(env, valueArray, &valuetype);
         if (valuetype == napi_string) {
             res.emplace_back(ParseString(env, valueArray));
         }
     }
-    return res;
+    return true;
 }
 
 bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& res)
