@@ -250,6 +250,12 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     return nullptr;
 }
 
+bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    return ((hapTokenInfoMap_.count(id) != 0) || (nativeTokenInfoMap_.count(id) != 0));
+}
+
 int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& InfoParcel)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);

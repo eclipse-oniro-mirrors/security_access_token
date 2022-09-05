@@ -3139,7 +3139,6 @@ public:
     explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo)
     {
-        GTEST_LOG_(INFO) << "CbCustomizeTest create";
     }
 
     ~CbCustomizeTest()
@@ -3148,9 +3147,6 @@ public:
     virtual void PermStateChangeCallback(PermStateChangeInfo& result)
     {
         ready_ = true;
-        GTEST_LOG_(INFO) << "CbCustomizeTest PermStateChangeCallback";
-        GTEST_LOG_(INFO) << "tokenid" << result.tokenID;
-        GTEST_LOG_(INFO) << "permissionName" << result.permissionName;
     }
 
     bool ready_;
@@ -3360,7 +3356,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1
 
 /**
  * @tc.name: RegisterPermStateChangeCallback004
- * @tc.desc: RegisterPermStateChangeCallback permList
+ * @tc.desc: RegisterPermStateChangeCallback with invalid tokenId
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
@@ -3373,6 +3369,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_FAILED, res);
 
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
@@ -3418,9 +3415,6 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
     ASSERT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, res);
-
-    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
 }
 

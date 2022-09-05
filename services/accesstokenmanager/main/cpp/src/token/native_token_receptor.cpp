@@ -30,6 +30,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
+static const std::string DEFAULT_DEVICEID = "0";
 }
 
 int32_t NativeReqPermsGet(
@@ -51,7 +52,7 @@ int32_t NativeReqPermsGet(
         }
         permState.permissionName = permReq;
         permState.isGeneral = true;
-        permState.resDeviceID.push_back("");
+        permState.resDeviceID.push_back(DEFAULT_DEVICEID);
         permState.grantStatus.push_back(PERMISSION_GRANTED);
         permState.grantFlags.push_back(PERMISSION_SYSTEM_FIXED);
         permStateList.push_back(permState);

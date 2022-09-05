@@ -46,7 +46,8 @@ public:
     int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     int32_t CreateActiveStatusChangeCbk(
-        const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback, sptr<IRemoteObject>& callbackObject);
+        const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
+        sptr<PermActiveStatusChangeCallback>& callbackWrap);
 
     void OnRemoteDiedHandle();
 private:

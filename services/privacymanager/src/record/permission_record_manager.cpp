@@ -15,6 +15,7 @@
 
 #include "permission_record_manager.h"
 
+#include <numeric>
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
@@ -427,10 +428,44 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
-    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+void PermissionRecordManager::PermListToString(const std::vector<std::string>& permList)
 {
-    return ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+    std::string permStr;
+    permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "permStr =%{public}s",permStr.c_str());
+}
+
+int32_t PermissionRecordManager::PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
+{
+    PermissionDef permissionDef;
+    std::set<std::string> permSet;
+    for (const auto& permissionName : listSrc) {
+        if (AccessTokenKit::GetDefPermission(permissionName, permissionDef) != Constant::FAILURE &&
+            permSet.count(permissionName) == 0) {
+            listRes.emplace_back(permissionName);
+            permSet.insert(permissionName);
+            continue;
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission %{public}s invalid!", permissionName.c_str());
+    }
+    if ((listRes.empty()) && (!listSrc.empty())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
+        return Constant::FAILURE;
+    }
+    PermListToString(listRes);
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
+    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    std::vector<std::string> permListRes;
+    int32_t res = PermissionListFilter(permList, permListRes);
+    if (res != Constant::SUCCESS) {
+        return res;
+    }
+    return ActiveStatusCallbackManager::GetInstance().AddCallback(permListRes, callback);
 }
 
 int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)

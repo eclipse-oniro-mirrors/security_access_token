@@ -58,17 +58,17 @@ int32_t ActiveStatusCallbackManager::AddCallback(
         return RET_FAILED;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (callbackDataList_.size() >= MAX_CALLBACK_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "list size has reached max value");
+        return RET_FAILED;
+    }
     callback->AddDeathRecipient(callbackDeathRecipient_);
 
     CallbackData recordInstance;
     recordInstance.callbackObject_ = callback;
     recordInstance.permList_ = permList;
 
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (callbackDataList_.size() > MAX_CALLBACK_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "list size has reached max value");
-        return RET_FAILED;
-    }
     callbackDataList_.emplace_back(recordInstance);
 
     ACCESSTOKEN_LOG_INFO(LABEL, "recordInstance is added");

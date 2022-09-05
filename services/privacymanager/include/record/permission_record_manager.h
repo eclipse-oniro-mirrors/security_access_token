@@ -50,11 +50,11 @@ public:
     int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
     int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(
-        std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback);
 
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
-
+    int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
@@ -78,6 +78,7 @@ private:
     std::vector<PermissionRecord> GetRecordsAndReset(uint32_t tokenId, int32_t status);
 
     std::string GetDeviceId(AccessTokenID tokenId);
+    void PermListToString(const std::vector<std::string>& permList);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
