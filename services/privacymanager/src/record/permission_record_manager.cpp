@@ -24,6 +24,7 @@
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
+#include "sensitive_resource_manager.h"
 #include "time_util.h"
 
 namespace OHOS {
@@ -56,6 +57,9 @@ PermissionRecordManager::~PermissionRecordManager()
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, timestamp: %{public}lld",
+        record.tokenId, record.opCode, record.status, record.timestamp);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
@@ -75,7 +79,9 @@ bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const s
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
     } else {
-        record.status = PERM_ACTIVE_IN_FOREGROUND;
+        if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
+            return false;
+        }
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
@@ -328,6 +334,67 @@ bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
     return false;
 }
 
+void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
+    uint32_t tokenId, ActiveChangeType status, std::vector<std::string>& permList)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->tokenId == tokenId) && ((it->status) != status)) {
+            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+
+            // update accessDuration and store in database
+            it->accessDuration = curStamp - it->timestamp;
+            AddRecord(*it);
+
+            // update status to input, accessDuration to 0 and timestamp to now in cache
+            it->status = status;
+            it->accessDuration = 0;
+            it->timestamp = curStamp;
+
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            permList.emplace_back(perm);
+
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
+        }
+    }
+}
+
+/*
+ * when foreground change background or background change foreground，change accessDuration and store in database,
+ * change status and accessDuration and timestamp in cache
+*/
+void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status %{public}d", tokenId, status);
+
+    ActiveChangeType currStatus;
+    switch (status) {
+        case APP_FOREGROUND:
+            currStatus = PERM_ACTIVE_IN_FOREGROUND;
+            break;
+        case APP_BACKGROUND:
+            currStatus = PERM_ACTIVE_IN_BACKGROUND;
+            break;
+        case APP_CREATE:
+            return;
+        case APP_DIE:
+            return;
+        default:
+            ACCESSTOKEN_LOG_WARN(LABEL, "status is invalid %{public}d", status);
+            return;
+    }
+
+    std::vector<std::string> permList;
+    // find permissions from startRecordList_ by tokenId which status diff from currStatus
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, currStatus, permList);
+
+    // each permission sends a status change notice
+    for (const auto& perm : permList) {
+        PermissionRecordManager::GetInstance().CallbackExecute(tokenId, perm, currStatus);
+    }
+}
+
 void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
@@ -338,7 +405,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->opCode == opCode) && (tokenId == (it->tokenId))) {
+        if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
             record = *it;
             record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
             startRecordList_.erase(it);
@@ -348,26 +415,16 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
     return false;
 }
 
-void PermissionRecordManager::ResetRecord(PermissionRecord& record, int32_t status)
+bool PermissionRecordManager::IsTokenIdExist(const uint32_t tokenId)
 {
-    record.status = status;
-    record.accessDuration = 0;
-    record.timestamp = TimeUtil::GetCurrentTimestamp();
-}
-
-std::vector<PermissionRecord> PermissionRecordManager::GetRecordsAndReset(uint32_t tokenId, int32_t status)
-{
-    std::vector<PermissionRecord> recordList;
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->tokenId == tokenId) && status != (it->status)) {
-            PermissionRecord record = *it;
-            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
-            recordList.emplace_back(record);
-            ResetRecord(*it, status);
+        if (it->tokenId == tokenId) {
+            return true;
         }
     }
-    return recordList;
+
+    return false;
 }
 
 void PermissionRecordManager::CallbackExecute(
@@ -395,6 +452,13 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (record.status != PERM_INACTIVE) {
         CallbackExecute(tokenId, permissionName, record.status);
     }
+
+    // register app background and forground change callback, unregist when remove
+    if (!SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusListener)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d register app status change callback failed.", tokenId);
+        return Constant::FAILURE;
+    }
+
     return Constant::SUCCESS;
 }
 
@@ -419,11 +483,17 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     }
 
     if (record.status != PERM_INACTIVE) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "AddRecord(tokenId: %{public}d, opCode: %{public}d, status: %{public}d)",
-            record.tokenId, record.opCode, record.status);
         AddRecord(record);
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
+
+    // when StopUsingPermission and there is no permission with tokenId in cache, need to UnRegisterAppStatusChangeCallback
+    if (!IsTokenIdExist(tokenId) && !SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
+        tokenId, AppStatusListener)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d unregiste app status change callback failed.", tokenId);
+        return Constant::FAILURE;
+    }
+
     return Constant::SUCCESS;
 }
 
