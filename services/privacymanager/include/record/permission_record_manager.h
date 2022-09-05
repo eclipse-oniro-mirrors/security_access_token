@@ -71,11 +71,12 @@ private:
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
+    void FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status, std::vector<std::string>& permList);
+    static void AppStatusListener(uint32_t tokenId, int32_t status);
+    bool IsTokenIdExist(const uint32_t tokenId);
     void AddRecordToStartList(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
-    void ResetRecord(PermissionRecord& record, int32_t status);
     bool HasStarted(const PermissionRecord& record);
-    std::vector<PermissionRecord> GetRecordsAndReset(uint32_t tokenId, int32_t status);
 
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
