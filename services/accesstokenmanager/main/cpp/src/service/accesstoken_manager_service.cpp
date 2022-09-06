@@ -488,27 +488,27 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
         return ERR_INVALID_VALUE;
     }
 
+    dprintf(fd, "AccessToken Dump:\n");
     std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
         dprintf(fd, "       -a: dump all tokens\n");
         dprintf(fd, "       -t <TOKEN_ID>: dump special token id\n");
-    } else if (arg0.compare("-a") == 0) {
-        std::string dumpStr;
-        DumpTokenInfo(static_cast<AccessTokenID>(0), dumpStr);
-        dprintf(fd, "%s\n", dumpStr.c_str());
     } else if (arg0.compare("-t") == 0) {
         if (args.size() < TWO_ARGS) {
             return ERR_INVALID_VALUE;
         }
-
         long long tokenID = atoll(static_cast<const char *>(Str16ToStr8(args.at(1)).c_str()));
         if (tokenID <= 0) {
             return ERR_INVALID_VALUE;
         }
         std::string dumpStr;
         DumpTokenInfo(static_cast<AccessTokenID>(tokenID), dumpStr);
+        dprintf(fd, "%s\n", dumpStr.c_str());
+    }  else if (arg0.compare("-a") == 0 || arg0 == "") {
+        std::string dumpStr;
+        DumpTokenInfo(static_cast<AccessTokenID>(0), dumpStr);
         dprintf(fd, "%s\n", dumpStr.c_str());
     }
     return ERR_OK;
