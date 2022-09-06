@@ -15,7 +15,9 @@
 
 #include "permission_record_manager.h"
 
+#include <cinttypes>
 #include <numeric>
+
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
@@ -59,8 +61,8 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, timestamp: %{public}lld",
-        record.tokenId, record.opCode, record.status, static_cast<long long>(record.timestamp));
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, timestamp: %{public}" PRId64,
+        record.tokenId, record.opCode, record.status, record.timestamp);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
