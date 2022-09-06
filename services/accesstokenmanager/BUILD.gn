@@ -92,7 +92,7 @@ if (is_standard_system) {
       "hisysevent_native:libhisysevent",
       "hitrace_native:hitrace_meter",
       "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_single",
+      "ipc:ipc_core",
       "safwk:system_ability_fwk",
     ]
 
