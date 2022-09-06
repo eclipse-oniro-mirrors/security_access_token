@@ -60,7 +60,7 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
         "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, timestamp: %{public}lld",
-        record.tokenId, record.opCode, record.status, record.timestamp);
+        record.tokenId, record.opCode, record.status, static_cast<long long>(record.timestamp));
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
@@ -79,10 +79,9 @@ bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const s
     }
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
-    } else {
-        if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
-            return false;
-        }
+    } else if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
+        return false;
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
