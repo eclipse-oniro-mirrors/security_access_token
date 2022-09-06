@@ -2373,13 +2373,13 @@ HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
     pthread_t tid[2];
     (void)pthread_create(&tid[0], 0, &ThreadTestFunc01, NULL);
     (void)pthread_create(&tid[1], 0, &ThreadTestFunc01, NULL);
-    pthread_join(tid[0], NULL);
-    pthread_join(tid[1], NULL);
+    (void)pthread_join(tid[0], NULL);
+    (void)pthread_join(tid[1], NULL);
 
     (void)pthread_create(&tid[0], 0, &ThreadTestFunc02, NULL);
     (void)pthread_create(&tid[1], 0, &ThreadTestFunc02, NULL);
-    pthread_join(tid[0], NULL);
-    pthread_join(tid[1], NULL);
+    (void)pthread_join(tid[0], NULL);
+    (void)pthread_join(tid[1], NULL);
 
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
