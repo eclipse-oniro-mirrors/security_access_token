@@ -31,7 +31,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerService"
 };
 constexpr int TWO_ARGS = 2;
-constexpr int RECORDS_NUMBER = 100;
 }
 
 const bool REGISTER_RESULT =
@@ -148,7 +147,7 @@ int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& a
         std::string infos;
         int RecordsNum = 0;
         for (int index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
-            if (RecordsNum > 100) {//Print 100 permission usage records
+            if (RecordsNum > 100) { //Print 100 permission usage records
                 break;
             }
             infos.append(R"(  "permissionRecord": [)");
