@@ -116,20 +116,22 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
 }
 
-int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
+int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string> &args)
 {
-  if (fd < 0) {
+    if (fd < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dump fd invalid value");
         return ERR_INVALID_VALUE;
     }
 
     dprintf(fd, "Privacy Dump:\n");
     dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
-    std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
+    std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
         dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump permission used records\n");
-    } else if (arg0.compare("-t") == 0) {
+    }
+    else if (arg0.compare("-t") == 0) {
         if (args.size() < TWO_ARGS) {
             return ERR_INVALID_VALUE;
         }
@@ -144,18 +146,19 @@ int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& a
         request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
         PermissionUsedResult result;
         if (PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result) != 0) {
-        return ERR_INVALID_VALUE;
+            return ERR_INVALID_VALUE;
         }
+        
         std::string infos;
         int RecordsNum = 0;
-        for(int index = result.bundleRecords[0].permissionRecords.size()-1; index >= 0; index--){
-            if(RecordsNum > 100){
+        for (int index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
+            if (RecordsNum > 100) {
                 break;
             }
-        infos.append(R"(  "permissionRecord": [)");
-        infos.append("\n");
-        infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
-            if(result.bundleRecords[0].isRemote){
+            infos.append(R"(  "permissionRecord": [)");
+            infos.append("\n");
+            infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
+            if (result.bundleRecords[0].isRemote) {
                 std::string status = "true";
                 infos.append(R"(    "isRemote": )" + status + ",\n");
             }
@@ -163,15 +166,15 @@ int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& a
                 std::string status = "false";
                 infos.append(R"(    "isRemote": )" + status + ",\n");
             }
-        infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName + R"(")" + ",\n");
-        time_t lastAccessTime = static_cast<time_t> (result.bundleRecords[0].permissionRecords[index].lastAccessTime);
-        std::string LastAccessTime = ctime(&lastAccessTime);
-        infos.append(R"(    "lastAccessTime": )" + LastAccessTime + ",\n");
-        infos.append(R"(    "lastAccessDuration": )" + std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
-        infos.append(R"(    "accessCount": ")" + std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
-        infos.append("  ]");
-        infos.append("\n");
-        RecordsNum++;
+            infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName + R"(")" + ",\n");
+            time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
+            std::string LastAccessTime = ctime(&lastAccessTime);
+            infos.append(R"(    "lastAccessTime": )" + LastAccessTime + ",\n");
+            infos.append(R"(    "lastAccessDuration": )" + std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
+            infos.append(R"(    "accessCount": ")" + std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
+            infos.append("  ]");
+            infos.append("\n");
+            RecordsNum++;
         }
         dprintf(fd, "%s\n", infos.c_str());
     }
