@@ -20,6 +20,8 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#include "string_ex.h"
+#include <ctime>
 
 namespace OHOS {
 namespace Security {
@@ -114,7 +116,7 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
 }
 
-int PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
+int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
   if (fd < 0) {
         return ERR_INVALID_VALUE;
@@ -126,7 +128,7 @@ int PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
-        dprintf(fd, "       -t <TOKEN_ID>: dump specify token id permission used records\n");
+        dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump permission used records\n");
     } else if (arg0.compare("-t") == 0) {
         if (args.size() < TWO_ARGS) {
             return ERR_INVALID_VALUE;
@@ -138,7 +140,7 @@ int PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
             return ERR_INVALID_VALUE;
         }
 
-        request.tokenId = tokenID;
+        request.tokenId = static_cast<unsigned int>(tokenID);
         request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
         PermissionUsedResult result;
         if (PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result) != 0) {
@@ -152,12 +154,21 @@ int PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
             }
         infos.append(R"(  "permissionRecord": [)");
         infos.append("\n");
-        infos.append(R"(  "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
-        infos.append(R"(  "isRemote": )" + std::to_string(result.bundleRecords[0].isRemote) + ",\n");
-        infos.append(R"(  "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName + R"(")" + ",\n");
-        infos.append(R"(  "lastAccessTime": )" + std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessTime) + ",\n");
-        infos.append(R"(  "lastAccessTime": )" + std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
-        infos.append(R"(  "accessCount": ")" + std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
+        infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
+            if(result.bundleRecords[0].isRemote){
+                std::string status = "true";
+                infos.append(R"(    "isRemote": )" + status + ",\n");
+            }
+            else {
+                std::string status = "false";
+                infos.append(R"(    "isRemote": )" + status + ",\n");
+            }
+        infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName + R"(")" + ",\n");
+        time_t lastAccessTime = static_cast<time_t> (result.bundleRecords[0].permissionRecords[index].lastAccessTime);
+        std::string LastAccessTime = ctime(&lastAccessTime);
+        infos.append(R"(    "lastAccessTime": )" + LastAccessTime + ",\n");
+        infos.append(R"(    "lastAccessDuration": )" + std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
+        infos.append(R"(    "accessCount": ")" + std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
         infos.append("  ]");
         infos.append("\n");
         RecordsNum++;
