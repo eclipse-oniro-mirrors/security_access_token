@@ -16,9 +16,9 @@
 #include "privacy_manager_service.h"
 
 #include "accesstoken_log.h"
+#include "constant_common.h"
 #include "constant.h"
 #include <ctime>
-#include "constant_common.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #include "string_ex.h"
@@ -28,132 +28,123 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerService"};
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerService"
+};
 constexpr int TWO_ARGS = 2;
-} // namespace
+constexpr int RECORDS_NUMBER = 100;
+}
 
-const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(
-    DelayedSingleton<PrivacyManagerService>::GetInstance().get());
+const bool REGISTER_RESULT =
+    SystemAbility::MakeAndRegisterAbility(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
 
 PrivacyManagerService::PrivacyManagerService()
-    : SystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, true),
-      state_(ServiceRunningState::STATE_NOT_START) {
-  ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService()");
+    : SystemAbility(SA_ID_PRIVACY_MANAGER_SERVICE, true), state_(ServiceRunningState::STATE_NOT_START)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService()");
 }
 
-PrivacyManagerService::~PrivacyManagerService() {
-  ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyManagerService()");
+PrivacyManagerService::~PrivacyManagerService()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyManagerService()");
 }
 
-void PrivacyManagerService::OnStart() {
-  if (state_ == ServiceRunningState::STATE_RUNNING) {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService has already started!");
-    return;
-  }
-  if (!Initialize()) {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
-    return;
-  }
-  state_ = ServiceRunningState::STATE_RUNNING;
-  bool ret =
-      Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
-  if (!ret) {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
-    return;
-  }
-  ACCESSTOKEN_LOG_INFO(
-      LABEL, "Congratulations, PrivacyManagerService start successfully!");
+void PrivacyManagerService::OnStart()
+{
+    if (state_ == ServiceRunningState::STATE_RUNNING) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService has already started!");
+        return;
+    }
+    if (!Initialize()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        return;
+    }
+    state_ = ServiceRunningState::STATE_RUNNING;
+    bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
+    if (!ret) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, PrivacyManagerService start successfully!");
 }
 
-void PrivacyManagerService::OnStop() {
-  ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
-  state_ = ServiceRunningState::STATE_NOT_START;
+void PrivacyManagerService::OnStop()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
+    state_ = ServiceRunningState::STATE_NOT_START;
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(
-    AccessTokenID tokenId, const std::string &permissionName,
-    int32_t successCount, int32_t failCount) {
-  return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
-      tokenId, permissionName, successCount, failCount);
+    AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
+{
+    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        tokenId, permissionName, successCount, failCount);
 }
 
-int32_t
-PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId,
-                                            const std::string &permissionName) {
-  return PermissionRecordManager::GetInstance().StartUsingPermission(
-      tokenId, permissionName);
+int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName);
 }
 
-int32_t
-PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId,
-                                           const std::string &permissionName) {
-  return PermissionRecordManager::GetInstance().StopUsingPermission(
-      tokenId, permissionName);
+int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName);
 }
 
-int32_t PrivacyManagerService::RemovePermissionUsedRecords(
-    AccessTokenID tokenId, const std::string &deviceID) {
-  PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId,
-                                                                     deviceID);
-  return Constant::SUCCESS;
+int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
+{
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
+    return Constant::SUCCESS;
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
-    const PermissionUsedRequestParcel &request,
-    PermissionUsedResultParcel &result) {
-  PermissionUsedResult permissionRecord;
-  int32_t ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecords(
-      request.request, permissionRecord);
-  result.result = permissionRecord;
-  return ret;
+    const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
+{
+    PermissionUsedResult permissionRecord;
+    int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
+    result.result = permissionRecord;
+    return ret;
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
-    const PermissionUsedRequestParcel &request,
-    const sptr<OnPermissionUsedRecordCallback> &callback) {
-  return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(
-      request.request, callback);
+    const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+{
+    return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
-    std::vector<std::string> &permList, const sptr<IRemoteObject> &callback) {
-  return PermissionRecordManager::GetInstance()
-      .RegisterPermActiveStatusCallback(permList, callback);
+    std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+{
+    return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
 }
 
-int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string> &args)
+int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Dump fd invalid value");
         return ERR_INVALID_VALUE;
     }
-
     dprintf(fd, "Privacy Dump:\n");
     dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
     std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
-        dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump "
-                    "permission used records\n");
+        dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump permission used records\n");
     } else if (arg0.compare("-t") == 0) {
         if (args.size() < TWO_ARGS) {
             return ERR_INVALID_VALUE;
         }
-
-        long long tokenID = atoll(static_cast<const char *>(Str16ToStr8(args.at(1)).c_str()));
+        long long tokenID = atoll(static_cast<const char*>(Str16ToStr8(args.at(1)).c_str()));
         PermissionUsedRequest request;
         if (tokenID <= 0) {
             return ERR_INVALID_VALUE;
         }
-
         request.tokenId = static_cast<unsigned int>(tokenID);
         request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
         PermissionUsedResult result;
         if (PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result) != 0) {
             return ERR_INVALID_VALUE;
         }
-
         std::string infos;
         int RecordsNum = 0;
         for (int index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
@@ -189,15 +180,15 @@ int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string> &a
     return ERR_OK;
 }
 
-int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(
-    const sptr<IRemoteObject> &callback) {
-  return PermissionRecordManager::GetInstance()
-      .UnRegisterPermActiveStatusCallback(callback);
+int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+{
+    return PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
-bool PrivacyManagerService::Initialize() const {
-  PermissionRecordManager::GetInstance().Init();
-  return true;
+bool PrivacyManagerService::Initialize() const
+{
+    PermissionRecordManager::GetInstance().Init();
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security
