@@ -48,7 +48,7 @@ public:
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
-
+    int Dump(int fd, const std::vector<std::u16string>& args) override;
 private:
     bool Initialize() const;
 
