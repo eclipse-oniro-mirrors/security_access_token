@@ -49,7 +49,7 @@ public:
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     enum class InterfaceCode {
-        ADD_PERMISSION_USED_RECORD = 0xf001,,
+        ADD_PERMISSION_USED_RECORD = 0xf001,
         START_USING_PERMISSION,
         STOP_USING_PERMISSION,
         DELETE_PERMISSION_USED_RECORDS,
