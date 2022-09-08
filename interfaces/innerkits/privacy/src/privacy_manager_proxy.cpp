@@ -291,7 +291,6 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
     }
     bool requestResult = SendRequest(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply);
     if (!requestResult) {
-
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail");
         return false;
     }
