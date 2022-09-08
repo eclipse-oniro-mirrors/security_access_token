@@ -58,6 +58,7 @@ public:
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);
+    AccessTokenID GetNativeTokenId(const std::string& processName);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */

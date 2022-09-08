@@ -327,6 +327,11 @@ int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
     return NativeTokenReceptor::GetInstance().Init();
 }
 
+AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& processName)
+{
+    return AccessTokenInfoManager::GetInstance().GetNativeTokenId(processName);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)

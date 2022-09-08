@@ -370,6 +370,16 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
     return proxy->ReloadNativeTokenInfo();
 }
 
+AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& processName)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return TOKEN_INVALID;
+    }
+    return proxy->GetNativeTokenId(processName);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {

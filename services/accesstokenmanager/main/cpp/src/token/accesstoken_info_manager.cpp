@@ -1007,6 +1007,17 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
     });
 }
 
+AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)
+{
+    AccessTokenID tokenID = TOKEN_INVALID;
+    for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
+        if (iter->second != nullptr && iter->second->GetProcessName() == processName) {
+            tokenID = iter->first;
+        }
+    }
+    return tokenID;
+}
+
 void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "get hapTokenInfo");
