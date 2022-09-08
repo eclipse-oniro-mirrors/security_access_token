@@ -1368,7 +1368,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId002, TestSize.Level1)
     int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(true, tokenInfo.GetProcessName() == processName);
+    ASSERT_EQ(true, tokenInfo.processName == processName);
 }
 
 /**
