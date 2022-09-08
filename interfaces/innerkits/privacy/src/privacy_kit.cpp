@@ -82,7 +82,7 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
 
 bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (tokenID == 0) {
+    if (tokenID == TOKEN_INVALID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenID");
         return false;
     }
