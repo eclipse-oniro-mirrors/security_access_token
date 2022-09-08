@@ -222,7 +222,7 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
     }
 }
 
-bool PrivacyManagerStub::IsAccessTokenCalcding() const
+bool PrivacyManagerStub::IsAccessTokenCalling() const
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ACCESSTOKEN_UID;
