@@ -40,6 +40,7 @@ private:
     void GetPermissionUsedRecordsAsyncInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
     bool IsAccessTokenCalling() const;
     bool VerifyPermission(const std::string& permission) const;
     static const int32_t ACCESSTOKEN_UID = 3020;

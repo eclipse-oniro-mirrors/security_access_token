@@ -47,8 +47,9 @@ public:
     virtual int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
+    virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     enum class InterfaceCode {
-        ADD_PERMISSION_USED_RECORD = 0xf001,
+        ADD_PERMISSION_USED_RECORD,
         START_USING_PERMISSION,
         STOP_USING_PERMISSION,
         DELETE_PERMISSION_USED_RECORDS,
@@ -56,6 +57,7 @@ public:
         GET_PERMISSION_USED_RECORDS_ASYNC,
         REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK,
         UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK,
+        IS_ALLOWED_USING_PERMISSION,
     };
 };
 } // namespace AccessToken

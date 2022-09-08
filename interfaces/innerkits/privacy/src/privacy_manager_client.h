@@ -48,7 +48,7 @@ public:
     int32_t CreateActiveStatusChangeCbk(
         const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback,
         sptr<PermActiveStatusChangeCallback>& callbackWrap);
-
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     void OnRemoteDiedHandle();
 private:
     PrivacyManagerClient();

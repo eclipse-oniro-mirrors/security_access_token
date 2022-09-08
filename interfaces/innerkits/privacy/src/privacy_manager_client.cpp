@@ -215,6 +215,16 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     return result;
 }
 
+bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return false;
+    }
+    return proxy->IsAllowedUsingPermission(tokenID, permissionName);
+}
+
 void PrivacyManagerClient::InitProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);

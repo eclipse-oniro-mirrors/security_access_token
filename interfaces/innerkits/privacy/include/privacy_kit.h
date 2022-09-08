@@ -39,6 +39,7 @@ public:
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     static int32_t RegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
     static int32_t UnRegisterPermActiveStatusCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk>& callback);
+    static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
 };
 } // namespace AccessToken
 } // namespace Security

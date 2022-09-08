@@ -66,6 +66,9 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
             UnRegisterPermActiveStatusCallbackInner(data, reply);
             break;
+        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION):
+            IsAllowedUsingPermissionInner(data, reply);
+            break;
         default:
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
@@ -203,7 +206,23 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
     reply.WriteInt32(result);
 }
 
-bool PrivacyManagerStub::IsAccessTokenCalling() const
+void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    AccessTokenID tokenId = data.ReadUint32();
+
+    std::string permissionName = data.ReadString();
+    bool result = this->IsAllowedUsingPermission(tokenId, permissionName);
+    if (!reply.WriteBool(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}s)", permissionName.c_str());
+        return;
+    }
+}
+
+bool PrivacyManagerStub::IsAccessTokenCalcding() const
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ACCESSTOKEN_UID;

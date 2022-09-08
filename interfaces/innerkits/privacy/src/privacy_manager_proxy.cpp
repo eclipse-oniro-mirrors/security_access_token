@@ -273,6 +273,36 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
     return result;
 }
 
+bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return false;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+        return false;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
+        return false;
+    }
+    bool requestResult = SendRequest(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply);
+    if (!requestResult) {
+
+        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail");
+        return false;
+    }
+    bool result;
+    if (!reply.ReadBool(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadBool fail");
+        return false;
+    }
+    return result;
+}
+
 bool PrivacyManagerProxy::SendRequest(
     IPrivacyManager::InterfaceCode code, MessageParcel& data, MessageParcel& reply)
 {
