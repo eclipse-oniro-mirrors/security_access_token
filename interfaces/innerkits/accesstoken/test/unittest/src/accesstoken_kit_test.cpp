@@ -3481,6 +3481,200 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback005, TestSize.Level1
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
 }
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback006
+ * @tc.desc: RegisterPermStateChangeCallback with invaild permission
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback006, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {"ohos.permission.INVALID"};
+    scopeInfo.tokenIDs = {};
+    auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
+    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1);
+    ASSERT_EQ(RET_FAILED, res);
+
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestStateA}
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+
+    scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
+    scopeInfo.permList = {"ohos.permission.INVALID", "ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
+    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(true, callbackPtr->ready_);
+
+    res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback007
+ * @tc.desc: RegisterPermStateChangeCallback with permList, whose size is 1024/1025
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback007, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {};
+    for (int32_t i = 1; i <= 1025; i++) { // 1025 is a invalid size
+        scopeInfo.permList.emplace_back("ohos.permission.GET_BUNDLE_INFO");
+        if (i == 1025) { // 1025 is a invalid size
+            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+            int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+            ASSERT_EQ(RET_FAILED, res);
+            break;
+        }
+        auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+        res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+    }
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback008
+ * @tc.desc: RegisterPermStateChangeCallback with tokenList, whose size is 1024/1025
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback008, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {}
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+
+    for (int32_t i = 1; i <= 1025; i++) { // 1025 is a invalid size
+        scopeInfo.tokenIDs.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
+        if (i == 1025) { // 1025 is a invalid size
+            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+            int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+            ASSERT_EQ(RET_FAILED, res);
+            break;
+        }
+        auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+        res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+    }
+
+    int32_t res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback009
+ * @tc.desc: RegisterPermStateChangeCallback
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback009, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {};
+    std::vector<std::shared_ptr<CbCustomizeTest>> callbackList;
+
+    for (int32_t i = 0; i < 200; i++) { // 200 is the max size
+        if (i == 200) { // 200 is the max size
+            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+            int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+            ASSERT_EQ(RET_FAILED, res);
+            break;
+        }
+        auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+        callbackList.emplace_back(callbackPtr);
+    }
+    for (int32_t i = 0; i < 200; i++) { // release 200 callback
+        auto callbackPtr = callbackList[i];
+        int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        ASSERT_EQ(RET_SUCCESS, res);
+    }
+    callbackList.clear();
+}
+
+/**
+ * @tc.name: UnRegisterPermStateChangeCallback001
+ * @tc.desc: UnRegisterPermStateChangeCallback with invalid input.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback001, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_FAILED, res);
+}
+
+/**
+ * @tc.name: UnRegisterPermStateChangeCallback002
+ * @tc.desc: UnRegisterPermStateChangeCallback repeatedly.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback002, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    scopeInfo.permList = {};
+    scopeInfo.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    callbackPtr->ready_ = false;
+
+    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_FAILED, res);
+    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_FAILED, res);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
