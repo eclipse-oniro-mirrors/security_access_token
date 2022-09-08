@@ -594,9 +594,7 @@ bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionLi
     if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex == ELEMENT_NOT_FOUND)) {
         // only vague location permission
         GetSelfPermissionState(permsList, reqPermList[vagueIndex].permsState, apiVersion);
-        if (static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER) {
-            return true;
-        }
+        return (static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER);
     }
 
     if ((vagueIndex == ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
