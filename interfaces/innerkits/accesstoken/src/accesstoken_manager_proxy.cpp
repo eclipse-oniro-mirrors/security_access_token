@@ -794,7 +794,7 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
         return TOKEN_INVALID;
     }
     AccessTokenID result;
-    if (!reply.ReadInt32(result)) {
+    if (!reply.ReadUint32(result)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "readInt32 failed, result: %{public}d", result);
         return TOKEN_INVALID;
     }
