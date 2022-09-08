@@ -717,7 +717,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, res);
 
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr->type_);
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
 
     res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
     ASSERT_EQ(RET_NO_ERROR, res);
@@ -762,7 +762,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, res);
 
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr1->type_);
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr1->type_);
     ASSERT_EQ(PERM_INACTIVE, callbackPtr2->type_);
 
     res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
@@ -776,7 +776,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_INACTIVE, callbackPtr1->type_);
-    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, callbackPtr2->type_);
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr2->type_);
 
     res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
     ASSERT_EQ(RET_NO_ERROR, res);
