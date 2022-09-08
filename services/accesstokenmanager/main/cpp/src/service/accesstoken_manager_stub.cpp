@@ -505,7 +505,7 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
     std::string deviceID = data.ReadString();
 
     int result = this->DeleteRemoteDeviceTokens(deviceID);
-    reply.WriteInt32(result);
+    reply.WriteUint32(result);
 }
 #endif
 
