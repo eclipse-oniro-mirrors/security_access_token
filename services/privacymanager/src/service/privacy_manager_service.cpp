@@ -118,7 +118,7 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
 
 int32_t PrivacyManagerService::ResponseDumpCommand(int fd, const std::vector<std::u16string>& args)
 {
-    if (args.size() < 2) { // need two args 0:command 1:tokenID
+    if (args.size() < 2) { // 2 :need two args 0:command 1:tokenID
         return ERR_INVALID_VALUE;
     }
     long long tokenID = atoll(static_cast<const char*>(Str16ToStr8(args.at(1)).c_str()));
