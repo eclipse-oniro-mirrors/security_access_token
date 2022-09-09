@@ -500,7 +500,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(TOKEN_INVALID, tokenID);
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
     ASSERT_EQ(RET_SUCCESS, ret);
