@@ -190,6 +190,11 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
     return PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
 
+bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    return false;
+}
+
 bool PrivacyManagerService::Initialize() const
 {
     PermissionRecordManager::GetInstance().Init();

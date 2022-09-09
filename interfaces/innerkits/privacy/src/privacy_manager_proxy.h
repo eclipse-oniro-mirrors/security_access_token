@@ -41,6 +41,7 @@ public:
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
 
 private:
     bool SendRequest(IPrivacyManager::InterfaceCode code, MessageParcel& data, MessageParcel& reply);

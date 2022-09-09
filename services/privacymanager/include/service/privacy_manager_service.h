@@ -48,6 +48,7 @@ public:
     int32_t RegisterPermActiveStatusCallback(
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
     int32_t Dump(int fd, const std::vector<std::u16string>& args) override;
     int32_t ResponseDumpCommand(int fd,  const std::vector<std::u16string>& args);
 private:

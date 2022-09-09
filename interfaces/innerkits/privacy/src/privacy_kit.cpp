@@ -79,6 +79,15 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
 {
     return PrivacyManagerClient::GetInstance().UnRegisterPermActiveStatusCallback(callback);
 }
+
+bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenID");
+        return false;
+    }
+    return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
