@@ -38,7 +38,9 @@ bool PermissionUsedResultParcel::Marshalling(Parcel& out) const
 PermissionUsedResultParcel* PermissionUsedResultParcel::Unmarshalling(Parcel& in)
 {
     auto* resultParcel = new (std::nothrow) PermissionUsedResultParcel();
-    RELEASE_IF_FALSE(resultParcel != nullptr, resultParcel);
+    if (resultParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.beginTimeMillis), resultParcel);
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.endTimeMillis), resultParcel);

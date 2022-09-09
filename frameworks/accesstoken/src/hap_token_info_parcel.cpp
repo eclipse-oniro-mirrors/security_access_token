@@ -38,7 +38,10 @@ bool HapTokenInfoParcel::Marshalling(Parcel& out) const
 HapTokenInfoParcel* HapTokenInfoParcel::Unmarshalling(Parcel& in)
 {
     auto* hapTokenInfoParcel = new (std::nothrow) HapTokenInfoParcel();
-    RELEASE_IF_FALSE(hapTokenInfoParcel != nullptr, hapTokenInfoParcel);
+    if (hapTokenInfoParcel == nullptr) {
+        return nullptr;
+    }
+
     int apl;
     uint8_t ver;
     RELEASE_IF_FALSE(in.ReadInt32(apl), hapTokenInfoParcel);

@@ -45,7 +45,9 @@ bool HapTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 HapTokenInfoForSyncParcel* HapTokenInfoForSyncParcel::Unmarshalling(Parcel& in)
 {
     auto* hapTokenInfoForSyncParcel = new (std::nothrow) HapTokenInfoForSyncParcel();
-    RELEASE_IF_FALSE(hapTokenInfoForSyncParcel != nullptr, hapTokenInfoForSyncParcel);
+    if (hapTokenInfoForSyncParcel == nullptr) {
+        return nullptr;
+    }
 
     sptr<HapTokenInfoParcel> baseInfoParcel = in.ReadParcelable<HapTokenInfoParcel>();
     RELEASE_IF_FALSE(baseInfoParcel != nullptr, hapTokenInfoForSyncParcel);

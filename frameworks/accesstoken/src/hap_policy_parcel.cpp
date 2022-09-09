@@ -56,7 +56,9 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
 HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 {
     auto* hapPolicyParcel = new (std::nothrow) HapPolicyParcel();
-    RELEASE_IF_FALSE(hapPolicyParcel != nullptr, hapPolicyParcel);
+    if (hapPolicyParcel == nullptr) {
+        return nullptr;
+    }
 
     int32_t apl;
     RELEASE_IF_FALSE(in.ReadInt32(apl), hapPolicyParcel);

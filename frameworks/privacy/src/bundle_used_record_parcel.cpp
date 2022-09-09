@@ -40,7 +40,9 @@ bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
 BundleUsedRecordParcel* BundleUsedRecordParcel::Unmarshalling(Parcel& in)
 {
     auto* bundleRecordParcel = new (std::nothrow) BundleUsedRecordParcel();
-    RELEASE_IF_FALSE(bundleRecordParcel != nullptr, bundleRecordParcel);
+    if (bundleRecordParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadUint32(bundleRecordParcel->bundleRecord.tokenId), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadBool(bundleRecordParcel->bundleRecord.isRemote), bundleRecordParcel);

@@ -30,7 +30,9 @@ bool UsedRecordDetailParcel::Marshalling(Parcel& out) const
 UsedRecordDetailParcel* UsedRecordDetailParcel::Unmarshalling(Parcel& in)
 {
     auto* detailRecordParcel = new (std::nothrow) UsedRecordDetailParcel();
-    RELEASE_IF_FALSE(detailRecordParcel != nullptr, detailRecordParcel);
+    if (detailRecordParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadInt32(detailRecordParcel->detail.status), detailRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(detailRecordParcel->detail.timestamp), detailRecordParcel);

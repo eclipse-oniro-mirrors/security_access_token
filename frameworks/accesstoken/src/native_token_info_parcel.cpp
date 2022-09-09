@@ -58,7 +58,9 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
 NativeTokenInfoParcel* NativeTokenInfoParcel::Unmarshalling(Parcel& in)
 {
     auto* nativeTokenInfoParcel = new (std::nothrow) NativeTokenInfoParcel();
-    RELEASE_IF_FALSE(nativeTokenInfoParcel != nullptr, nativeTokenInfoParcel);
+    if (nativeTokenInfoParcel == nullptr) {
+        return nullptr;
+    }
 
     int32_t apl;
     uint8_t ver;
