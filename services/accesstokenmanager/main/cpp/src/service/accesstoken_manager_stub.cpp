@@ -375,7 +375,7 @@ void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageP
 {
     if (!IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(INVALID_TOKENID);
         return;
     }
     std::string processName;
