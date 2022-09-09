@@ -651,10 +651,10 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
 }
 
 /**
- * @tc.name: DeleteRemoteTokenCommand001
- * @tc.desc: test delete remote token command 
+ * @tc.name: SyncNativeTokens005
+ * @tc.desc: test delete remote token command
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require: Issue Number
  */
 HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
 {
