@@ -28,6 +28,8 @@
 #include "base_remote_command.h"
 #include "constant_common.h"
 #include "session.h"
+#include "delete_remote_token_command.h"
+#include "device_info.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
 #include "device_info_manager.h"
@@ -646,6 +648,31 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     ResetSendMessFlagMock();
     std::string uuidMessage = GetUuidMock();
     ASSERT_EQ(uuidMessage, "ec23cd2d-");
+}
+
+/**
+ * @tc.name: SyncNativeTokens005
+ * @tc.desc: test delete remote token command
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
+{
+    std::string srcDeviceId = "001";
+    std::string dstDeviceId = "002";
+    AccessTokenID tokenID = 1;
+    std::shared_ptr<DeleteRemoteTokenCommand> deleteRemoteTokenCommand =
+        RemoteCommandFactory::GetInstance().NewDeleteRemoteTokenCommand(srcDeviceId, dstDeviceId, tokenID);
+    ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.commandName, "DeleteRemoteTokenCommand");
+    ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.uniqueId, "DeleteRemoteTokenCommand");
+    ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.srcDeviceId, srcDeviceId);
+    ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.dstDeviceId, dstDeviceId);
+    ASSERT_EQ(
+        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
+        deleteRemoteTokenCommand->remoteProtocol_.responseVersion, 2);
+    ASSERT_EQ(
+        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
+        deleteRemoteTokenCommand->remoteProtocol_.requestVersion, 2);
 }
 
 namespace {
