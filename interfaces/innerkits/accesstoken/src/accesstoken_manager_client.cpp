@@ -375,7 +375,7 @@ AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& proc
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return TOKEN_INVALID;
+        return INVALID_TOKENID;
     }
     return proxy->GetNativeTokenId(processName);
 }
