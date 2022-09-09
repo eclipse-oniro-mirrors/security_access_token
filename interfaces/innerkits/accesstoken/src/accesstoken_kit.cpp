@@ -321,7 +321,7 @@ AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 {
     if (!DataValidator::IsProcessNameValid(processName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "processName is invalid");
-        return TOKEN_INVALID;
+        return INVALID_TOKENID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenId(processName);
 }
