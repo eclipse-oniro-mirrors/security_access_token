@@ -1365,7 +1365,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId002, TestSize.Level1)
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
     NativeTokenInfo tokenInfo;
-    int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo);
+    AccessTokenID ret = AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo);
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ(true, tokenInfo.processName == processName);
 }
