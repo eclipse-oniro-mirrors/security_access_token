@@ -650,6 +650,12 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     ASSERT_EQ(uuidMessage, "ec23cd2d-");
 }
 
+/**
+ * @tc.name: DeleteRemoteTokenCommand001
+ * @tc.desc: test delete remote token command 
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T5
+ */
 HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
 {
     std::string srcDeviceId = "001";
