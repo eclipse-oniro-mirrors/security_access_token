@@ -29,7 +29,9 @@ bool PermissionListStateParcel::Marshalling(Parcel& out) const
 PermissionListStateParcel* PermissionListStateParcel::Unmarshalling(Parcel& in)
 {
     auto* permissionStateParcel = new (std::nothrow) PermissionListStateParcel();
-    RELEASE_IF_FALSE(permissionStateParcel != nullptr, permissionStateParcel);
+    if (permissionStateParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->permsState.permissionName), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionStateParcel->permsState.state), permissionStateParcel);

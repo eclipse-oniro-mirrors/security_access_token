@@ -26,10 +26,8 @@ namespace AccessToken {
 
 #define RELEASE_IF_FALSE(expr, obj) \
     if (!(expr)) { \
-        if ((obj) != nullptr) { \
-            delete (obj); \
-            (obj) = nullptr; \
-        } \
+        delete (obj); \
+        (obj) = nullptr; \
         return (obj); \
     }
 } // namespace AccessToken

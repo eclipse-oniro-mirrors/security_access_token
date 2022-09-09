@@ -49,7 +49,9 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
 PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in)
 {
     auto* permissionRecordParcel = new (std::nothrow) PermissionUsedRecordParcel();
-    RELEASE_IF_FALSE(permissionRecordParcel != nullptr, permissionRecordParcel);
+    if (permissionRecordParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadString(permissionRecordParcel->permissionRecord.permissionName), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt32(permissionRecordParcel->permissionRecord.accessCount), permissionRecordParcel);

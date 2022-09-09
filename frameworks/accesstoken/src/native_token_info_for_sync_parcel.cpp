@@ -45,7 +45,9 @@ bool NativeTokenInfoForSyncParcel::Marshalling(Parcel& out) const
 NativeTokenInfoForSyncParcel* NativeTokenInfoForSyncParcel::Unmarshalling(Parcel& in)
 {
     auto* nativeTokenInfoForSyncParcel = new (std::nothrow) NativeTokenInfoForSyncParcel();
-    RELEASE_IF_FALSE(nativeTokenInfoForSyncParcel != nullptr, nativeTokenInfoForSyncParcel);
+    if (nativeTokenInfoForSyncParcel == nullptr) {
+        return nullptr;
+    }
 
     sptr<NativeTokenInfoParcel> baseInfoParcel = in.ReadParcelable<NativeTokenInfoParcel>();
     RELEASE_IF_FALSE(baseInfoParcel != nullptr, nativeTokenInfoForSyncParcel);

@@ -33,7 +33,9 @@ bool HapInfoParcel::Marshalling(Parcel& out) const
 HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
 {
     auto* hapInfoParcel = new (std::nothrow) HapInfoParcel();
-    RELEASE_IF_FALSE(hapInfoParcel != nullptr, hapInfoParcel);
+    if (hapInfoParcel == nullptr) {
+        return nullptr;
+    }
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.userID), hapInfoParcel);
     hapInfoParcel->hapInfoParameter.bundleName = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.instIndex), hapInfoParcel);

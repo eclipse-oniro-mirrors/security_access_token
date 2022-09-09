@@ -39,7 +39,9 @@ bool PermissionUsedRequestParcel::Marshalling(Parcel& out) const
 PermissionUsedRequestParcel* PermissionUsedRequestParcel::Unmarshalling(Parcel& in)
 {
     auto* requestParcel = new (std::nothrow) PermissionUsedRequestParcel();
-    RELEASE_IF_FALSE(requestParcel != nullptr, requestParcel);
+    if (requestParcel == nullptr) {
+        return nullptr;
+    }
 
     RELEASE_IF_FALSE(in.ReadUint32(requestParcel->request.tokenId), requestParcel);
     RELEASE_IF_FALSE(in.ReadBool (requestParcel->request.isRemote), requestParcel);

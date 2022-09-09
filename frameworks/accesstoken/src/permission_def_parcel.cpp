@@ -39,7 +39,10 @@ bool PermissionDefParcel::Marshalling(Parcel& out) const
 PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
 {
     auto* permissionDefParcel = new (std::nothrow) PermissionDefParcel();
-    RELEASE_IF_FALSE(permissionDefParcel != nullptr, permissionDefParcel);
+    if (permissionDefParcel == nullptr) {
+        return nullptr;
+    }
+
     permissionDefParcel->permissionDef.permissionName = in.ReadString();
     permissionDefParcel->permissionDef.bundleName = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.grantMode), permissionDefParcel);
