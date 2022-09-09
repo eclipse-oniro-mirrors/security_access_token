@@ -1009,7 +1009,7 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
 
 AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)
 {
-    AccessTokenID tokenID = TOKEN_INVALID;
+    AccessTokenID tokenID = INVALID_TOKENID;
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr && iter->second->GetProcessName() == processName) {
             tokenID = iter->first;
