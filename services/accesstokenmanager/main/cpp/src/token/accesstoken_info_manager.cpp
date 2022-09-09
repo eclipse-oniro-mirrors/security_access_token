@@ -1013,6 +1013,7 @@ AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& proces
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr && iter->second->GetProcessName() == processName) {
             tokenID = iter->first;
+            break;
         }
     }
     return tokenID;
