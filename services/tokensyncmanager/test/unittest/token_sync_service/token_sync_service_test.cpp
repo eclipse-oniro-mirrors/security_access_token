@@ -440,6 +440,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
+    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
@@ -525,6 +526,8 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
         "\"type\":\"response\"}";
 
     threads_.emplace_back(std::thread(SendTaskThread));
+
+    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     sleep(6);
@@ -635,6 +638,7 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
+    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
