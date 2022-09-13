@@ -702,7 +702,7 @@ public:
  * @tc.name: RegisterPermActiveStatusCallback001
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 {
@@ -757,7 +757,7 @@ public:
  * @tc.name: RegisterPermActiveStatusCallback002
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
@@ -935,7 +935,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
  * @tc.name: StartUsingPermission001
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
 {
@@ -951,7 +951,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission001, TestSize.Level1)
  * @tc.name: StartUsingPermission002
  * @tc.desc: StartUsingPermission is called twice with same permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
 {
@@ -971,7 +971,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
  * @tc.name: StopUsingPermission003
  * @tc.desc: Add record when StopUsingPermission is called.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
 {
@@ -999,7 +999,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
  * @tc.name: StartUsingPermission004
  * @tc.desc: StartUsingPermission basic functional verification
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
 {
@@ -1014,7 +1014,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
  * @tc.name: StartUsingPermission005
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
 {
@@ -1031,7 +1031,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
 {
@@ -1046,7 +1046,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
  * @tc.name: StopUsingPermission002
  * @tc.desc: StopUsingPermission cancel permissions that you haven't started using
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
 {
@@ -1059,7 +1059,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
  * @tc.name: StopUsingPermission003
  * @tc.desc: StopUsingPermission invalid tokenid, permission
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
 {
@@ -1078,7 +1078,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
  * @tc.name: StopUsingPermission004
  * @tc.desc: StopUsingPermission stop a use repeatedly
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X issueI5P4IU
+ * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
 {
