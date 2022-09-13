@@ -377,6 +377,11 @@ void AccessTokenKit::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     AccessTokenManagerClient::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
+
+int32_t AccessTokenKit::GetVersion(void)
+{
+    return DEFAULT_TOKEN_VERSION;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
