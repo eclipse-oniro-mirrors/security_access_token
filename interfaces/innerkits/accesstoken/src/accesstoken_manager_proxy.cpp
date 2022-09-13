@@ -768,6 +768,40 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     return result;
 }
 
+AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& processName)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return INVALID_TOKENID;
+    }
+
+    if (!data.WriteString(processName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write processName");
+        return INVALID_TOKENID;
+    }
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        return INVALID_TOKENID;
+    }
+    int32_t requestResult = remote->SendRequest(
+        static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_TOKEN_ID), data, reply, option);
+    if (requestResult != NO_ERROR) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+        return INVALID_TOKENID;
+    }
+    AccessTokenID result;
+    if (!reply.ReadUint32(result)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "readInt32 failed, result: %{public}d", result);
+        return INVALID_TOKENID;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    return result;
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)

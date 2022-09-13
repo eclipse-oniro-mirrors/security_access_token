@@ -371,6 +371,22 @@ void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, Mes
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsNativeProcessCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
+        reply.WriteUint32(INVALID_TOKENID);
+        return;
+    }
+    std::string processName;
+    if (!data.ReadString(processName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "readString fail, processName=%{public}s", processName.c_str());
+        return;
+    }
+    AccessTokenID result = this->GetNativeTokenId(processName);
+    reply.WriteUint32(result);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -568,6 +584,8 @@ AccessTokenManagerStub::AccessTokenManagerStub()
         &AccessTokenManagerStub::UpdateHapTokenInner;
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
         &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_NATIVE_TOKEN_ID)] =
+        &AccessTokenManagerStub::GetNativeTokenIdInner;
 #ifdef TOKEN_SYNC_ENABLE
     requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;

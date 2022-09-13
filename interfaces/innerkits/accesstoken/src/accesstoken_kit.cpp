@@ -317,6 +317,15 @@ int32_t AccessTokenKit::ReloadNativeTokenInfo()
     return AccessTokenManagerClient::GetInstance().ReloadNativeTokenInfo();
 }
 
+AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
+{
+    if (!DataValidator::IsProcessNameValid(processName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "processName is invalid");
+        return INVALID_TOKENID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetNativeTokenId(processName);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {

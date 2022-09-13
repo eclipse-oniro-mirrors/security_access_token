@@ -1342,6 +1342,35 @@ HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetNativeTokenId001
+ * @tc.desc: cannot get native tokenid with invalid processName.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TH
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenId001, TestSize.Level1)
+{
+    std::string processName = "invalid processName";
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
+    ASSERT_EQ(0, tokenID);
+}
+
+/**
+ * @tc.name: GetNativeTokenId002
+ * @tc.desc: get native tokenid with processName.
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6TH
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenId002, TestSize.Level1)
+{
+    std::string processName = "hdcd";
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
+    NativeTokenInfo tokenInfo;
+    AccessTokenID ret = AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(true, tokenInfo.processName == processName);
+}
+
+/**
  * @tc.name: AllocHapToken001
  * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delte it again.
  * @tc.type: FUNC
