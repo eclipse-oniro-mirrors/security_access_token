@@ -28,7 +28,7 @@ namespace AccessToken {
 namespace {
 static constexpr AccessTokenID TEST_TOKEN_ID = 10002;
 static const std::string TEST_PERMISSION_NAME = "ohos.permission.PERMISSION_STATE_CHANGE_INFO";
-
+}
 class PermStateChangeScopeParcelTest : public testing::Test  {
 public:
     static void SetUpTestCase(void);
@@ -69,7 +69,6 @@ HWTEST_F(PermStateChangeScopeParcelTest, PermStateChangeScopeParcel001, TestSize
     for(int32_t i = 0;i < readedData->scope.permList.size(); i++) {
         EXPECT_EQ(true, permStateChangeScopeParcel.scope.permList[i] == readedData->scope.permList[i]);
     } 
-}
 }
 }
 }
