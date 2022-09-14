@@ -79,7 +79,8 @@ HWTEST_F(HapPolicyParcelTest, HapPolicyParcel001, TestSize.Level1)
 
     EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.apl, readedData->hapPolicyParameter.apl);
     EXPECT_EQ(true, hapPolicyParcel.hapPolicyParameter.domain == readedData->hapPolicyParameter.domain);
-    EXPECT_EQ(true, hapPolicyParcel.hapPolicyParameter.permStateList.size() != 0);
+    EXPECT_EQ(true, hapPolicyParcel.hapPolicyParameter.permStateList.size() == readedData->hapPolicyParameter.permStateList.size());
+
     for(int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
         EXPECT_EQ(true, hapPolicyParcel.hapPolicyParameter.permStateList[i].permissionName == readedData->hapPolicyParameter.permStateList[i].permissionName);
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].isGeneral, readedData->hapPolicyParameter.permStateList[i].isGeneral);
