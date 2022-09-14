@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include "accesstoken_log.h"
 #include "access_token.h"
 #include "hap_info_parcel.h"
 #include "parcel.h"
