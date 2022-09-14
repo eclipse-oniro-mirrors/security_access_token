@@ -59,8 +59,8 @@ HWTEST_F(PermStateChangeScopeParcelTest, PermStateChangeScopeParcel001, TestSize
     std::shared_ptr<PermStateChangeScopeParcel> readedData(PermStateChangeScopeParcel::Unmarshalling(parcel));
     EXPECT_EQ(true, readedData != nullptr);
     
-    EXPECT_EQ(true,  readedData->scope.tokenIDs.size() != 0);
-    EXPECT_EQ(true,  readedData->scope.permList.size() != 0);
+    EXPECT_EQ(true,  readedData->scope.tokenIDs.size() == readedData->scope.tokenIDs.size());
+    EXPECT_EQ(true,  readedData->scope.permList.size() == readedData->scope.permList.size());
 
     for(int32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
         EXPECT_EQ(permStateChangeScopeParcel.scope.tokenIDs[i], readedData->scope.tokenIDs[i]);
