@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include "accesstoken_log.h"
 #include "parcel.h"
 #include "permission_state_change_info_parcel.h"
 #include "permission_state_change_info.h"
