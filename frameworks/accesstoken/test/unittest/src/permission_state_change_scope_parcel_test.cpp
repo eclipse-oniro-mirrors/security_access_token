@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include "accesstoken_log.h"
 #include "parcel.h"
 #include "permission_state_change_scope_parcel.h"
 
@@ -66,7 +65,7 @@ HWTEST_F(PermStateChangeScopeParcelTest, PermStateChangeScopeParcel001, TestSize
     for(int32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
         EXPECT_EQ(permStateChangeScopeParcel.scope.tokenIDs[i], readedData->scope.tokenIDs[i]);
     }
-    for(int32_t i = 0;i < readedData->scope.permList.size(); i++) {
+    for(int32_t i = 0; i < readedData->scope.permList.size(); i++) {
         EXPECT_EQ(true, permStateChangeScopeParcel.scope.permList[i] == readedData->scope.permList[i]);
     } 
 }
