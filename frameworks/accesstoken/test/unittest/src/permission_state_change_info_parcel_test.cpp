@@ -30,7 +30,7 @@ namespace {
 static constexpr int32_t TEST_PERMSTATE_CHANGE_TYPE = 10001;
 static constexpr AccessTokenID TEST_TOKEN_ID = 10002;
 static const std::string TEST_PERMISSION_NAME = "ohos.permission.PERMISSION_STATE_CHANGE_INFO";
-
+}
 class PermissionStateChangeInfoParcelTest : public testing::Test  {
 public:
     static void SetUpTestCase(void);
@@ -65,7 +65,6 @@ HWTEST_F(PermissionStateChangeInfoParcelTest, PermissionStateChangeInfoParcel001
     EXPECT_EQ(permissionStateParcel.changeInfo.PermStateChangeType, readedData->changeInfo.PermStateChangeType);
     EXPECT_EQ(permissionStateParcel.changeInfo.tokenID, readedData->changeInfo.tokenID);
     EXPECT_EQ(permissionStateParcel.changeInfo.permissionName, readedData->changeInfo.permissionName);
-}
 }
 }
 }
