@@ -28,14 +28,12 @@ ohos_unittest("libdatabase_values_test") {
 
   sources = [ "unittest/src/generic_values_test.cpp" ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [
+    "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
     "//base/security/access_token/services/common/database:accesstoken_database_cxx",
     "//third_party/sqlite:sqlite",
-    "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
   ]
 
   external_deps = [
