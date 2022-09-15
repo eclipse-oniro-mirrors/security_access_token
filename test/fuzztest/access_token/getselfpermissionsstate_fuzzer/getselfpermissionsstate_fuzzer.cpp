@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "alloclocaltokenid_fuzzer.h"
+#include "getselfpermissionsstate_fuzzer.h"
 
 #include <string>
 #include <vector>
@@ -25,18 +25,23 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool AllocLocalTokenIDFuzzTest(const uint8_t* data, size_t size)
+    bool GetSelfPermissionsStateFuzzTest(const uint8_t* data, size_t size)
     {
-        AccessTokenID TOKENID = 0;
+        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return TOKENID != 0;
+            return result != RET_FAILED;
         }
         if (size > 0) {
+            std::vector<PermissionListState> permsList1;
             std::string testName(reinterpret_cast<const char*>(data), size);
-            AccessTokenID REMOTETOKENID = static_cast<AccessTokenID>(size);
-            TOKENID = AccessTokenKit::AllocLocalTokenID(testName, REMOTETOKENID);
+            PermissionListState perm1 = {
+                .permissionName = testName,
+                .state = -1,
+            };
+            permsList1.emplace_back(perm1);
+            result = AccessTokenKit::GetSelfPermissionsState(permsList1);
         }
-        return TOKENID != 0;
+        return result == RET_SUCCESS;
     }
 }
 
@@ -44,6 +49,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AllocLocalTokenIDFuzzTest(data, size);
+    OHOS::GetSelfPermissionsStateFuzzTest(data, size);
     return 0;
 }

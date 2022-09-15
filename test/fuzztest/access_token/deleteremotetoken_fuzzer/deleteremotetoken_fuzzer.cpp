@@ -27,12 +27,12 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool DeleteRemoteTokenFuzzTest(const uint8_t* data, size_t size)
     {
-        bool result = false;
+        int32_t result = RET_FAILED;
 
 #ifdef TOKEN_SYNC_ENABLE
 
         if ((data == nullptr) || (size <= 0)) {
-            return result;
+            return result != RET_FAILED;
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
@@ -42,7 +42,7 @@ namespace OHOS {
 
 #endif
 
-        return result;
+        return result == RET_SUCCESS;
     }
 }
 
