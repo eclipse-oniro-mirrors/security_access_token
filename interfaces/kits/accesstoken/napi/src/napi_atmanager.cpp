@@ -484,23 +484,21 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
-
-    napi_create_promise(env, &(asyncContext->deferred), &result);
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
 
     napi_value resource = nullptr;
-    napi_create_string_utf8(env, "GetVersion", NAPI_AUTO_LENGTH, &resource);
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetVersion", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work(
-        env, nullptr, resource, GetVersionExecute, GetVersionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetVersionExecute, GetVersionComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
 
-    napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
-
+    context.release();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion end.");
-
     return result;
 }
 
@@ -518,10 +516,10 @@ void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *d
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 
-    napi_create_int32(env, asyncContext->result, &result);
-    napi_resolve_deferred(env, asyncContext->deferred, result);
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
+    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
 
-    napi_delete_async_work(env, asyncContext->work);
+    NAPI_CALL_RETURN_VOID(env, napi_delete_async_work(env, asyncContext->work));
     delete asyncContext;
 }
 
