@@ -312,6 +312,52 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: CheckNativeDCap001
+ * @tc.desc: Verify CheckNativeDCap normal and abnormal branch
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "test CheckNativeDCap001!");
+    
+    // test tokenInfo = nullptr
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
+
+    // test process one
+    NativeTokenInfo info = {.apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test0",
+        .tokenID = 0x28100000,
+        .tokenAttr = 0,
+        .dcap = {"AT_CAP", "ST_CAP"}};
+
+    std::vector<PermissionStateFull> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
+    tokenInfos.emplace_back(nativeToken);
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
+    NativeTokenInfo findInfo;
+    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(findInfo.apl, info.apl);
+    ASSERT_EQ(findInfo.ver, info.ver);
+    ASSERT_EQ(findInfo.processName, info.processName);
+    ASSERT_EQ(findInfo.tokenID, info.tokenID);
+    ASSERT_EQ(findInfo.tokenAttr, info.tokenAttr);
+    ASSERT_EQ(findInfo.dcap, info.dcap);
+
+    std::string dcap = "AT_CAP";
+    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, dcap), RET_SUCCESS);
+    std::string ndcap = "AT";
+    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, ndcap), RET_FAILED);
+    AccessTokenID testId = 1;
+    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(testId, dcap), RET_FAILED);
+    ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
+    ASSERT_EQ(ret, RET_SUCCESS);
+}
+
+/**
  * @tc.name: ProcessNativeTokenInfos002
  * @tc.desc: test add two native tokens.
  * @tc.type: FUNC
