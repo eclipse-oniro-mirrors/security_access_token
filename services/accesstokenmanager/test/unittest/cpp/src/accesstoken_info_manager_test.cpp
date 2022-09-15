@@ -253,14 +253,14 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
     result = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
     ASSERT_EQ(result, RET_FAILED);
 
-    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+    result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "add a hap token";
     result = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
     ASSERT_EQ(result, RET_SUCCESS);
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    result = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "remove the token info";
 }
 
@@ -430,9 +430,8 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
         tokenIdEx.tokenIdExStruct.tokenID, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_FAILED, ret);
-
 }
-
+#ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenSync001
  * @tc.desc: Verify the GetHapTokenSync token function and abnormal branch.
@@ -443,17 +442,17 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int result;
-    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+    result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "add a hap token";
 
     HapTokenInfoForSync hapSync;
     result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
     ASSERT_EQ(result, RET_SUCCESS);
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    result = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "remove the token info";
 
     result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
@@ -469,21 +468,21 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    int result;
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
     HapTokenInfoForSync hapSync;
-    result =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
-    ASSERT_EQ(result, RET_SUCCESS);
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(ret, RET_SUCCESS);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
+#endif
+
 #ifdef SUPPORT_SANDBOX_APP
 static void PrepareJsonData1()
 {

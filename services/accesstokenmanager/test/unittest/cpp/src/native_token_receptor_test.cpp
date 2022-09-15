@@ -323,6 +323,7 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     
     // test tokenInfo = nullptr
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
+    tokenInfos.emplace_back(nullptr);
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
     // test process one
