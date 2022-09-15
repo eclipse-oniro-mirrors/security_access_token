@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,23 +24,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const std::string TEST_BUNDLE_NAME = "ohos";
-static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
-static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
-static const std::string TEST_PERMISSION_NAME_GAMMA = "ohos.permission.GAMMA";
-static const std::string TEST_PKG_NAME = "com.softbus.test";
-static const int TEST_USER_ID = 0;
-static const int TEST_USER_ID_INVALID = -1;
-static const unsigned int TEST_TOKENID_INVALID = 0;
-static const int INVALID_BUNDLENAME_LEN = 260;
-static const int INVALID_APPIDDESC_LEN = 10244;
-static const int INVALID_LABEL_LEN = 260;
-static const int INVALID_DESCRIPTION_LEN = 260;
-static const int INVALID_PERMNAME_LEN = 260;
-static const int CYCLE_TIMES = 100;
-static const int THREAD_NUM = 3;
-static const int INVALID_DCAP_LEN = 1025;
-static const int INVALID_DLP_TYPE = 4;
 class RemoteTokenKitTest : public testing::Test {
 public:
     static void SetUpTestCase();

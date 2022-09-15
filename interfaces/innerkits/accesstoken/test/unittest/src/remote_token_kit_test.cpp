@@ -17,16 +17,23 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "nativetoken_kit.h"
 #include "accesstoken_log.h"
-#include "token_setproc.h"
+#include "nativetoken_kit.h"
 #include "softbus_bus_center.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RemoteTokenKitTest"};
+
+static const std::string TEST_BUNDLE_NAME = "ohos";
+static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
+static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
+static const std::string TEST_PERMISSION_NAME_GAMMA = "ohos.permission.GAMMA";
+static const std::string TEST_PKG_NAME = "com.softbus.test";
+static const int TEST_USER_ID = 0;
 
 PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
@@ -127,7 +134,7 @@ void NativeTokenGet()
 
     infoInstance.processName = "SetUpTestCase";
     tokenId = GetAccessTokenId(&infoInstance);
-    ASSERT_NE(tokenId, 0);
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase tokenId is %{public}llu", tokenId);
     SetSelfTokenID(tokenId);
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
@@ -211,7 +218,7 @@ void RemoteTokenKitTest::AllocTestToken() const
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: set remote hap token info success
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
@@ -276,7 +283,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo002
  * @tc.desc: set remote hap token info, token info is wrong
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
 {
@@ -346,7 +353,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo003
  * @tc.desc: set remote hap token wrong permission grant
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
 {
@@ -397,7 +404,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo004
  * @tc.desc: update remote hap token when remote exist
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
 {
@@ -455,7 +462,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo005
  * @tc.desc: add remote hap token, it can not grant by GrantPermission
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
 {
@@ -512,7 +519,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo006
  * @tc.desc: add remote hap token, it can not revoke by RevokePermission
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
 {
@@ -569,7 +576,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo007
  * @tc.desc: add remote hap token, it can not delete by DeleteToken
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
 {
@@ -620,7 +627,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo008
  * @tc.desc: add remote hap token, it can not update by UpdateHapToken
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
 {
@@ -674,7 +681,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo009
  * @tc.desc: add remote hap token, it can not clear by ClearUserGrantedPermissionState
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
 {
@@ -731,7 +738,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
  * @tc.name: SetRemoteHapTokenInfo010
  * @tc.desc: tokenID is not hap token
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
 {
@@ -771,7 +778,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
  * @tc.name: DeleteRemoteDeviceToken001
  * @tc.desc: delete exist device mapping tokenId
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
 {
@@ -825,7 +832,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
  * @tc.name: DeleteRemoteDeviceToken002
  * @tc.desc: delete exist device mapping tokenId
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
 {
@@ -882,7 +889,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
  * @tc.name: DeleteRemoteDeviceToken003
  * @tc.desc: delete exist device mapping tokenId
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken003, TestSize.Level1)
 {
@@ -898,7 +905,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken003, TestSize.Level1)
  * @tc.name: DeleteRemoteDeviceTokens001
  * @tc.desc: delete all mapping tokens of exist device
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 {
@@ -960,7 +967,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
  * @tc.name: DeleteRemoteDeviceTokens002
  * @tc.desc: delete all mapping tokens of NOT exist device
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
 {
@@ -1019,7 +1026,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
  * @tc.name: GetHapTokenInfoFromRemote001
  * @tc.desc: get normal local tokenInfo
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 {
@@ -1066,7 +1073,7 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
  * @tc.name: GetHapTokenInfoFromRemote002
  * @tc.desc: get remote mapping tokenInfo
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
 {
@@ -1116,7 +1123,7 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
  * @tc.name: GetHapTokenInfoFromRemote003
  * @tc.desc: get wrong tokenInfo
  * @tc.type: FUNC
- * @tc.require:AR000GK6TA
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote003, TestSize.Level1)
 {
@@ -1130,7 +1137,7 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote003, TestSize.Level1)
  * @tc.name: AllocLocalTokenID001
  * @tc.desc: get already mapping tokenInfo, makesure ipc right
  * @tc.type: FUNC
- * @tc.require:AR000GK6T5
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
 {
@@ -1174,7 +1181,7 @@ HWTEST_F(RemoteTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
  * @tc.name: GetAllNativeTokenInfo001
  * @tc.desc: get all native token with dcaps
  * @tc.type: FUNC
- * @tc.require:AR000GK6T6
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 {
@@ -1189,7 +1196,7 @@ HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
  * @tc.name: SetRemoteNativeTokenInfo001
  * @tc.desc: set already mapping tokenInfo
  * @tc.type: FUNC
- * @tc.require:AR000GK6T6
+ * @tc.require:issue I5R4UF
  */
 HWTEST_F(RemoteTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
