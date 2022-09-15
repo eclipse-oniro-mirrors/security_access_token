@@ -167,6 +167,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
         DECLARE_NAPI_FUNCTION("on", RegisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
+        DECLARE_NAPI_FUNCTION("getVersion", GetVersion),
     };
 
     napi_value cons = nullptr;
@@ -410,7 +411,7 @@ void NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
         asyncContext.tokenId, asyncContext.permissionName, asyncContext.flag);
 }
 
-void NapiAtManager::GrantUserGrantedPermissionExcute(napi_env env, void *data)
+void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     PermissionDef permissionDef;
@@ -474,6 +475,54 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
     delete asyncContext;
 }
 
+napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion begin.");
+
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    asyncContext->result = AT_PERM_OPERA_FAIL;
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetVersion", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetVersionExecute, GetVersionComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+
+    context.release();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion end.");
+    return result;
+}
+
+void NapiAtManager::GetVersionExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    asyncContext->result = AccessTokenKit::GetVersion();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
+}
+
+void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    napi_value result;
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
+
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
+    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+
+    NAPI_CALL_RETURN_VOID(env, napi_delete_async_work(env, asyncContext->work));
+    delete asyncContext;
+}
+
 napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission begin.");
@@ -507,7 +556,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     napi_create_string_utf8(env, "GrantUserGrantedPermission", NAPI_AUTO_LENGTH, &resource);
 
     napi_create_async_work( // define work
-        env, nullptr, resource, GrantUserGrantedPermissionExcute, GrantUserGrantedPermissionComplete,
+        env, nullptr, resource, GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
 
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
@@ -517,7 +566,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     return result;
 }
 
-void NapiAtManager::RevokeUserGrantedPermissionExcute(napi_env env, void *data)
+void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     PermissionDef permissionDef;
@@ -614,7 +663,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
     napi_create_string_utf8(env, "RevokeUserGrantedPermission", NAPI_AUTO_LENGTH, &resource);
 
     napi_create_async_work( // define work
-        env, nullptr, resource, RevokeUserGrantedPermissionExcute, RevokeUserGrantedPermissionComplete,
+        env, nullptr, resource, RevokeUserGrantedPermissionExecute, RevokeUserGrantedPermissionComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
 
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
@@ -624,7 +673,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
     return result;
 }
 
-void NapiAtManager::GetPermissionFlagsExcute(napi_env env, void *data)
+void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
@@ -676,7 +725,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resource);
 
     napi_create_async_work( // define work
-        env, nullptr, resource, GetPermissionFlagsExcute, GetPermissionFlagsComplete,
+        env, nullptr, resource, GetPermissionFlagsExecute, GetPermissionFlagsComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
