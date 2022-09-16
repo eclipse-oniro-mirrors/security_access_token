@@ -134,7 +134,7 @@ void NativeTokenGet()
 
     infoInstance.processName = "SetUpTestCase";
     tokenId = GetAccessTokenId(&infoInstance);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase tokenId is %{public}llu", tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase tokenId is %{public}d", static_cast<AccessTokenID>(tokenId));
     SetSelfTokenID(tokenId);
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
