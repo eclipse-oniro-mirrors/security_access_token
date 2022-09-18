@@ -66,7 +66,7 @@ public:
     int32_t ReloadNativeTokenInfo();
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
     int32_t UnRegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
 
@@ -75,7 +75,7 @@ public:
     int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
     int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
+        const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
@@ -87,7 +87,7 @@ public:
 private:
     AccessTokenManagerClient();
     int32_t CreatePermStateChangeCallback(
-        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback,
+        const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb,
         sptr<PermissionStateChangeCallback>& callback);
 
     DISALLOW_COPY_AND_MOVE(AccessTokenManagerClient);

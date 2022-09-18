@@ -15,6 +15,7 @@
 
 #include "permission_record_manager.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <numeric>
 
@@ -326,14 +327,14 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
-    for (const auto& rec : startRecordList_) {
-        if ((rec.opCode == record.opCode) && (rec.tokenId == record.tokenId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
-                record.tokenId, record.opCode);
-            return true;
-        }
+    bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
+        [record](const auto& rec) { return (rec.opCode == record.opCode) && (rec.tokenId == record.tokenId); });
+    if (hasStarted) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
+            record.tokenId, record.opCode);
     }
-    return false;
+
+    return hasStarted;
 }
 
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(

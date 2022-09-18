@@ -61,12 +61,15 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
     PermissionValidator::FilterInvalidPermissionState(permStateList, permStateFilterList);
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+
     for (PermissionStateFull& permStateNew : permStateFilterList) {
-        for (const PermissionStateFull& permStateOld : permStateList_) {
-            if (permStateNew.permissionName == permStateOld.permissionName) {
-                UpdatePermStateFull(permStateOld, permStateNew);
-                break;
-            }
+        auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
+            [permStateNew](const PermissionStateFull& permStateOld) {
+                return permStateNew.permissionName == permStateOld.permissionName;
+            });
+        if (iter != permStateList_.end()) {
+            UpdatePermStateFull(*iter, permStateNew);
+            break;
         }
     }
     permStateList_ = permStateFilterList;
@@ -186,19 +189,20 @@ bool PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionNa
 
     bool ret = false;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (auto& perm : permStateList_) {
-        if (perm.permissionName == permissionName) {
-            if (perm.isGeneral) {
-                int32_t oldStatus = perm.grantStatus[0];
-                perm.grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-                uint32_t currFlag = static_cast<uint32_t>(perm.grantFlags[0]);
-                uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
-                perm.grantFlags[0] = static_cast<int32_t>(newFlag);
-                ret = (oldStatus == perm.grantStatus[0]) ? false : true;
-            } else {
-                ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
-            }
-            break;
+    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
+        [permissionName](const PermissionStateFull& permState) {
+            return permissionName == permState.permissionName;
+        });
+    if (iter != permStateList_.end()) {
+        if (iter->isGeneral) {
+            int32_t oldStatus = iter->grantStatus[0];
+            iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+            uint32_t currFlag = static_cast<uint32_t>(iter->grantFlags[0]);
+            uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
+            iter->grantFlags[0] = static_cast<int32_t>(newFlag);
+            ret = (oldStatus == iter->grantStatus[0]) ? false : true;
+        } else {
+            ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
         }
     }
 

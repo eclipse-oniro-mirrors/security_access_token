@@ -234,16 +234,17 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
         return;
     }
 
-    for (const auto& perm : permsList) {
-        if (perm.permissionName == permState.permissionName) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
-                permState.permissionName.c_str(), perm.grantStatus[0], perm.grantFlags[0]);
-            foundGoal = true;
-            goalGrantStatus = perm.grantStatus[0];
-            goalGrantFlags = static_cast<uint32_t>(perm.grantFlags[0]);
-            break;
-        }
+    auto iter = std::find_if(permsList.begin(), permsList.end(), [permState](const PermissionStateFull& perm) {
+        return permState.permissionName == perm.permissionName;
+    });
+    if (iter != permsList.end()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
+            permState.permissionName.c_str(), iter->grantStatus[0], iter->grantFlags[0]);
+        foundGoal = true;
+        goalGrantStatus = iter->grantStatus[0];
+        goalGrantFlags = static_cast<uint32_t>(iter->grantFlags[0]);
     }
+
     if (foundGoal == false) {
         ACCESSTOKEN_LOG_WARN(LABEL,
             "can not find permission: %{public}s define!", permState.permissionName.c_str());
