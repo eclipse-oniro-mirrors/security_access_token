@@ -43,7 +43,30 @@ ohos_unittest("libperm_active_response_parcel_test") {
   ]
 }
 
+ohos_unittest("libpermission_used_record_parcel_test") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  module_out_path = part_name + "/" + part_name
+
+  sources = [ "unittest/src/permission_used_record_parcel_test.cpp" ]
+
+  configs = [
+    ":accesstoken_test_config",
+    "//base/security/access_token/config:coverage_flags",
+  ]
+
+  deps = [ "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_single",
+  ]
+}
+
 group("unittest") {
   testonly = true
-  deps = [ ":libperm_active_response_parcel_test" ]
+  deps = [
+    ":libperm_active_response_parcel_test",
+    ":libpermission_used_record_parcel_test",
+  ]
 }
