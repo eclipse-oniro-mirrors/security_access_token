@@ -358,6 +358,44 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
+/**
+ * @tc.name: GetAllNativeTokenInfo001
+ * @tc.desc: Verify GetAllNativeTokenInfo normal and abnormal branch
+ * @tc.type: FUNC
+ * @tc.require: Issue I5RJBB
+ */
+HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001!");
+
+    // test nativetokenInfo = nullptr
+    std::vector<NativeTokenInfoForSync> nativeVec;
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
+    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
+    ASSERT_EQ(nativeVec.empty(), false);
+
+    // test process one
+    NativeTokenInfo info = {.apl = APL_NORMAL,
+        .ver = 1,
+        .processName = "native_token_test0",
+        .tokenID = 0x28100000,
+        .tokenAttr = 0,
+        .dcap = {"AT_CAP", "ST_CAP"}};
+
+    std::vector<PermissionStateFull> permStateList = {};
+    std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
+    tokenInfos.emplace_back(nativeToken);
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
+    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
+    ASSERT_EQ(!nativeVec.empty(), true);
+    AccessTokenID resultTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test0");
+    ASSERT_EQ(resultTokenId, info.tokenID);
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
+    ASSERT_EQ(ret, RET_SUCCESS);
+}
+#endif
 /**
  * @tc.name: ProcessNativeTokenInfos002
  * @tc.desc: test add two native tokens.
