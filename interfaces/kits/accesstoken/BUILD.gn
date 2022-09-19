@@ -23,7 +23,10 @@ ohos_shared_library("libabilityaccessctrl") {
     "//foundation/arkui/napi/interfaces/kits",
   ]
 
-  sources = [ "//base/security/access_token/interfaces/kits/accesstoken/napi/src/napi_atmanager.cpp" ]
+  sources = [
+    "//base/security/access_token/interfaces/kits/accesstoken/napi/src/napi_atmanager.cpp",
+    "//base/security/access_token/interfaces/kits/accesstoken/napi/src/napi_context_common.cpp",
+  ]
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",

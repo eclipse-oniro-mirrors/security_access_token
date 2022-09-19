@@ -93,7 +93,9 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
     std::vector<AppExecFwk::AppStateData> foreGroundAppList;
     appMgrProxy->GetForegroundApplications(foreGroundAppList);
 
+    ACCESSTOKEN_LOG_ERROR(LABEL, "chennian %{public}s ", foreGroundAppList.size());
     for (const auto& foreGroundApp : foreGroundAppList) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "chennian %{public}s ", foreGroundApp.bundleName.c_str());
         if (foreGroundApp.bundleName == pkgName) {
             status = PERM_ACTIVE_IN_FOREGROUND;
             return true;

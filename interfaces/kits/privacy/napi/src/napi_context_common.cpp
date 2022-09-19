@@ -27,12 +27,12 @@ PrivacyAsyncWorkData::PrivacyAsyncWorkData(napi_env envValue)
 
 PrivacyAsyncWorkData::~PrivacyAsyncWorkData()
 {
-    if (callbackRef) {
+    if (callbackRef != nullptr) {
         napi_delete_reference(env, callbackRef);
         callbackRef = nullptr;
     }
 
-    if (asyncWork) {
+    if (asyncWork != nullptr) {
         napi_delete_async_work(env, asyncWork);
         asyncWork = nullptr;
     }
@@ -107,10 +107,10 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     PermActiveStatusWorker* permActiveStatusData = reinterpret_cast<PermActiveStatusWorker*>(work->data);
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusData};
-    napi_value result[ARGS_ONE] = {nullptr};
+    napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
-        napi_create_array(permActiveStatusData->env, &result[PARAM0]));
-    if (!ConvertActiveChangeResponse(permActiveStatusData->env, result[PARAM0], permActiveStatusData->result)) {
+        napi_create_array(permActiveStatusData->env, &result));
+    if (!ConvertActiveChangeResponse(permActiveStatusData->env, result, permActiveStatusData->result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertActiveChangeResponse failed");
         return;
     }
@@ -122,7 +122,7 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
         napi_get_reference_value(permActiveStatusData->env, permActiveStatusData->ref, &callback));
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
-        napi_call_function(permActiveStatusData->env, undefined, callback, ARGS_ONE, &result[PARAM0], &resultout));
+        napi_call_function(permActiveStatusData->env, undefined, callback, 1, &result, &resultout));
 }
 
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result)

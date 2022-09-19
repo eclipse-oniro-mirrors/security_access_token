@@ -24,6 +24,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "napi_common.h"
+#include "napi_context_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "perm_state_change_callback_customize.h"
@@ -33,8 +34,6 @@ namespace Security {
 namespace AccessToken {
 const int AT_PERM_OPERA_FAIL = -1;
 const int AT_PERM_OPERA_SUCC = 0;
-const int VERIFY_OR_FLAG_INPUT_MAX_VALUES = 2;
-const int GRANT_OR_REVOKE_INPUT_MAX_VALUES = 4;
 
 enum PermissionStateChangeType {
     PERMISSION_REVOKED_OPER = 0,
@@ -79,17 +78,13 @@ struct UnregisterPermStateChangeInfo : public PermStateChangeContext {
     PermStateChangeScope scopeInfo;
 };
 
-struct AtManagerAsyncContext {
-    napi_env env = nullptr;
-    uint32_t tokenId = 0;
-    char     permissionName[ VALUE_BUFFER_SIZE ] = { 0 };
-    size_t   pNameLen = 0;
-    int      flag = 0;
-    int      result = AT_PERM_OPERA_FAIL; // default failed
+struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
+    explicit AtManagerAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
 
-    napi_deferred   deferred = nullptr; // promise handle
-    napi_ref        callbackRef = nullptr; // callback handle
-    napi_async_work work = nullptr; // work handle
+    uint32_t tokenId = 0;
+    std::string permissionName;
+    int32_t flag = 0;
+    int32_t result = AT_PERM_OPERA_FAIL;
 };
 
 class NapiAtManager {
@@ -106,11 +101,11 @@ private:
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
     static napi_value GetVersion(napi_env env, napi_callback_info info);
 
-    static void ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
+    static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
     static void VerifyAccessTokenExecute(napi_env env, void *data);
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
-    static void ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
+    static bool ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
     static void GrantUserGrantedPermissionExecute(napi_env env, void *data);
     static void GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
