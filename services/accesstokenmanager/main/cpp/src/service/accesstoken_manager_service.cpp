@@ -15,6 +15,7 @@
 
 #include "accesstoken_manager_service.h"
 
+#include <algorithm>
 #include <sys/types.h>
 #include <thread>
 #include <unistd.h>
@@ -372,10 +373,9 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
     ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
-
-    for (const auto& nativeParcel : nativeTokenInfoForSyncParcel) {
-        nativeList.emplace_back(nativeParcel.nativeTokenInfoForSyncParams);
-    }
+    std::transform(nativeTokenInfoForSyncParcel.begin(),
+        nativeTokenInfoForSyncParcel.end(), std::back_inserter(nativeList),
+        [](const auto& nativeParcel) { return nativeParcel.nativeTokenInfoForSyncParams; });
 
     return AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
 }

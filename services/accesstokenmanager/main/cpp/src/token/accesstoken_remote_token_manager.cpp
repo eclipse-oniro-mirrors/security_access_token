@@ -100,9 +100,11 @@ int AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID(const std::string& 
         return RET_FAILED;
     }
 
-    for (const auto& mapEntry : remoteDeviceMap_[deviceID].MappingTokenIDPairMap_) {
-        remoteIDs.emplace_back(mapEntry.first);
-    }
+    std::transform(remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.begin(),
+        remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.end(),
+        std::back_inserter(remoteIDs), [](const auto& mapEntry) {
+            return mapEntry.first;
+        });
     return RET_SUCCESS;
 }
 

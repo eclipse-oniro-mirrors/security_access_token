@@ -149,7 +149,6 @@ void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<Permissio
 
 int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>& permDefRes)
 {
-    std::vector<PermissionDefData> permDataList;
     for (const GenericValues& defValue : permDefRes) {
         PermissionDef def;
         AccessTokenID tokenId = (AccessTokenID)defValue.GetInt(FIELD_TOKEN_ID);
