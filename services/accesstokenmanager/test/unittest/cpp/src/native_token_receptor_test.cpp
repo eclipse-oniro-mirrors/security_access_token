@@ -17,7 +17,6 @@
 
 #include <fcntl.h>
 #include <memory>
-#include <stdint.h>
 #include <string>
 #include <sys/socket.h>
 #include <sys/stat.h>

@@ -16,7 +16,6 @@
 #include "accesstoken_info_manager_test.h"
 
 #include <memory>
-#include <stdint.h>
 #include <string>
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"

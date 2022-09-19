@@ -14,7 +14,6 @@
  */
 
 #include "accesstoken_kit_test.h"
-#include <stdint.h>
 #include <thread>
 
 #include "accesstoken_kit.h"
