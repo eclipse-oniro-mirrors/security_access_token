@@ -61,7 +61,6 @@ private:
 private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
-    std::mutex switchStatusMutex_;
     SafeMap<ResourceType, bool> switchStatusMap_;
     std::mutex mutex_;
     sptr<AppExecFwk::IAppMgr> appMgrProxy_;

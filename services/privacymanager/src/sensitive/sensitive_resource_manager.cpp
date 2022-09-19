@@ -49,8 +49,7 @@ SensitiveResourceManager::~SensitiveResourceManager()
 
 void SensitiveResourceManager::Init()
 {
-    // TODO：从服务获取camera和microphone的全局开关状态
-    switchStatusMap_[ResourceType::CAMERA] = true;  // 相机开发未完成
+    switchStatusMap_[ResourceType::CAMERA] = true;
     switchStatusMap_[ResourceType::MICROPHONE] = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
 }
 
