@@ -21,6 +21,7 @@
 #include <string>
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
+#include "safe_map.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +32,11 @@ enum AppStatus {
     APP_FOREGROUND,
     APP_BACKGROUND,
 };
+enum ResourceType {
+    INVALID = -1,
+    CAMERA = 0,
+    MICROPHONE = 1,
+};
 
 using DialogCallback = std::function<void(int32_t id, const std::string& event, const std::string& param)>;
 class SensitiveResourceManager final {
@@ -38,8 +44,11 @@ public:
     static SensitiveResourceManager& GetInstance();
     SensitiveResourceManager();
     virtual ~SensitiveResourceManager();
+    void Init();
 
     bool GetAppStatus(const std::string& pkgName, int32_t& status);
+    bool GetGlobalSwitch(const ResourceType type);
+    void SetGlobalSwitch(const ResourceType type, bool switchStatus);
 
     // register and unregister app status change callback
     bool RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
@@ -52,6 +61,8 @@ private:
 private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
+    std::mutex switchStatusMutex_;
+    SafeMap<ResourceType, bool> switchStatusMap_;
     std::mutex mutex_;
     sptr<AppExecFwk::IAppMgr> appMgrProxy_;
 };

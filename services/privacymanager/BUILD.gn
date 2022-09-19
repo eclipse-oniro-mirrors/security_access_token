@@ -1,9 +1,3 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,6 +41,8 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/services/common/database/include",
+      "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiomanager/include",
+      "//foundation/ability/ability_runtime/interfaces/kits/native/ability/ability_runtime",
       "//third_party/json/include",
       "//third_party/sqlite/include/",
     ]
@@ -79,16 +75,22 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
+      "//foundation/ability/ability_runtime/interfaces/inner_api/ability_manager:ability_manager",
+      "//third_party/libuv:uv",
     ]
 
     external_deps = [
+      "ability_base:want",
+      "ability_runtime:ability_manager",
       "ability_runtime:app_manager",
       "c_utils:utils",
       "hisysevent_native:libhisysevent",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
+      "multimedia_audio_framework:audio_client",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
+      "window_manager:libwm",
     ]
   }
 }

@@ -15,10 +15,13 @@
 
 #include "sensitive_resource_manager.h"
 #include <semaphore.h>
+#include "ability_manager_client.h"
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
+#include "window_manager.h"
+#include "audio_system_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -42,6 +45,13 @@ SensitiveResourceManager::SensitiveResourceManager()
 
 SensitiveResourceManager::~SensitiveResourceManager()
 {
+}
+
+void SensitiveResourceManager::Init()
+{
+    // TODO：从服务获取camera和microphone的全局开关状态
+    switchStatusMap_[ResourceType::CAMERA] = true;  // 相机开发未完成
+    switchStatusMap_[ResourceType::MICROPHONE] = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
 }
 
 bool SensitiveResourceManager::InitProxy()
@@ -102,6 +112,26 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
 
     status = PERM_ACTIVE_IN_BACKGROUND;
     return true;
+}
+
+bool SensitiveResourceManager::GetGlobalSwitch(const ResourceType type)
+{
+    bool status = true;
+    if (!switchStatusMap_.Find(type, status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid ResourceType.");
+        return true;
+    }
+    return status;
+}
+
+void SensitiveResourceManager::SetGlobalSwitch(const ResourceType type, bool switchStatus)
+{
+    bool status = true;
+    if (!switchStatusMap_.Find(type, status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid ResourceType.");
+        return;
+    }
+    switchStatusMap_[type] = switchStatus;
 }
 
 bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
