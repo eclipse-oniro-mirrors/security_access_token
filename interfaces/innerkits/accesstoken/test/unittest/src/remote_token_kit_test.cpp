@@ -120,24 +120,9 @@ HapPolicyParams g_infoManagerTestPolicyPramsBak = {
 void NativeTokenGet()
 {
     uint64_t tokenId;
-    const char **perms = new const char *[1];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC"; // system_core
-    NativeTokenInfoParams infoInstance = {
-        .dcapsNum = 0,
-        .permsNum = 1,
-        .aclsNum = 0,
-        .dcaps = nullptr,
-        .perms = perms,
-        .acls = nullptr,
-        .aplStr = "system_basic",
-    };
-
-    infoInstance.processName = "SetUpTestCase";
-    tokenId = GetAccessTokenId(&infoInstance);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUpTestCase tokenId is %{public}d", static_cast<AccessTokenID>(tokenId));
+    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    ASSERT_NE(tokenId, 0);
     SetSelfTokenID(tokenId);
-    AccessTokenKit::ReloadNativeTokenInfo();
-    delete[] perms;
 }
 
 void RemoteTokenKitTest::SetUpTestCase()
