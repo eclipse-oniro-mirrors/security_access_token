@@ -12,31 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef PERMISSION_STATE_CHANGE_CALLBACK_H
-#define PERMISSION_STATE_CHANGE_CALLBACK_H
-
-
-#include "permission_state_change_callback_stub.h"
-#include "perm_state_change_callback_customize.h"
-
+ 
+#include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PermissionStateChangeCallback : public PermissionStateChangeCallbackStub {
+class PrivacyParcelTest : public testing::Test  {
 public:
-    explicit PermissionStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
-    ~PermissionStateChangeCallback() override;
+    static void SetUpTestCase();
+    static void TearDownTestCase();
 
-    void PermStateChangeCallback(PermStateChangeInfo& result) override;
-
-    void Stop();
-
-private:
-    std::shared_ptr<PermStateChangeCallbackCustomize> customizedCallback_;
+    void SetUp();
+    void TearDown();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_STATE_CHANGE_CALLBACK_H

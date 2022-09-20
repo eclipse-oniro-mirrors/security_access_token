@@ -429,7 +429,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
 }
 
 int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
+    const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {

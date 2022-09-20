@@ -223,6 +223,32 @@ PermissionStateFull g_locationTestStateAccurate12 = {
 };
 }
 
+void NativeTokenGet()
+{
+    uint64_t tokenId;
+    const char **perms = new const char *[4];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 4,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.processName = "TestCase";
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    delete[] perms;
+}
+
 void AccessTokenKitTest::SetUpTestCase()
 {
     // make test case clean
@@ -233,6 +259,8 @@ void AccessTokenKitTest::SetUpTestCase()
 
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
+
+    NativeTokenGet();
 }
 
 void AccessTokenKitTest::TearDownTestCase()
@@ -949,6 +977,21 @@ HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GrantPermission004
+ * @tc.desc: GrantPermission function abnormal branch
+ * @tc.type: FUNC
+ * @tc.require:Issue I5RJBB
+ */
+HWTEST_F(AccessTokenKitTest, GrantPermission004, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    int32_t invalidFlag = -1;
+    int32_t ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
+    ASSERT_EQ(RET_FAILED, ret);
+}
+
+/**
  * @tc.name: RevokePermission001
  * @tc.desc: Revoke permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
  * @tc.type: FUNC
@@ -1022,6 +1065,21 @@ HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
         ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA);
         ASSERT_EQ(PERMISSION_USER_FIXED, ret);
     }
+}
+
+/**
+ * @tc.name: RevokePermission004
+ * @tc.desc: Revoke permission abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require:Issue I5RJBB
+ */
+HWTEST_F(AccessTokenKitTest, RevokePermission004, TestSize.Level0)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    int invalidFlag = -1;
+    int32_t ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
+    ASSERT_EQ(RET_FAILED, ret);
 }
 
 /**
@@ -1154,6 +1212,32 @@ HWTEST_F(AccessTokenKitTest, GetTokenType001, TestSize.Level0)
     int ret = AccessTokenKit::GetTokenType(tokenID);
     ASSERT_EQ(TOKEN_HAP, ret);
     DeleteTestToken();
+}
+
+/**
+ * @tc.name: GetTokenType002
+ * @tc.desc: get the token type abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require Issue I5RJBB
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenType002, TestSize.Level0)
+{
+    AccessTokenID tokenID = 0;
+    int32_t ret = AccessTokenKit::GetTokenType(tokenID);
+    ASSERT_EQ(TOKEN_INVALID, ret);
+}
+
+/**
+ * @tc.name: GetHapDlpFlag001
+ * @tc.desc: GetHapDlpFlag function abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require Issue Number:I5RJBB
+ */
+HWTEST_F(AccessTokenKitTest, GetHapDlpFlag001, TestSize.Level0)
+{
+    AccessTokenID tokenID = 0;
+    int32_t ret = AccessTokenKit::GetHapDlpFlag(tokenID);
+    ASSERT_EQ(INVALID_DLP_TOKEN_FLAG, ret);
 }
 
 /**

@@ -56,7 +56,6 @@ int RemoteCommandManager::AddCommand(const std::string &udid, const std::shared_
         ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid, or null command");
         return Constant::FAILURE;
     }
-    std::string uniqueId = command->remoteProtocol_.uniqueId;
     ACCESSTOKEN_LOG_INFO(LABEL, "add uniqueId");
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);

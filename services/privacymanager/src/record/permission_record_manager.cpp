@@ -15,6 +15,7 @@
 
 #include "permission_record_manager.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <numeric>
 
@@ -326,14 +327,14 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
-    for (const auto& rec : startRecordList_) {
-        if ((rec.opCode == record.opCode) && (rec.tokenId == record.tokenId)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
-                record.tokenId, record.opCode);
-            return true;
-        }
+    bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
+        [record](const auto& rec) { return (rec.opCode == record.opCode) && (rec.tokenId == record.tokenId); });
+    if (hasStarted) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
+            record.tokenId, record.opCode);
     }
-    return false;
+
+    return hasStarted;
 }
 
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
@@ -489,7 +490,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
 
-    // when StopUsingPermission and there is no permission with tokenId in cache, need to UnRegisterAppStatusChangeCallback
     if (!IsTokenIdExist(tokenId) && !SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
         tokenId, AppStatusListener)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d unregiste app status change callback failed.", tokenId);
@@ -504,10 +504,11 @@ void PermissionRecordManager::PermListToString(const std::vector<std::string>& p
     std::string permStr;
     permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "permStr =%{public}s",permStr.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "permStr =%{public}s", permStr.c_str());
 }
 
-int32_t PermissionRecordManager::PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
+int32_t PermissionRecordManager::PermissionListFilter(
+    const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
 {
     PermissionDef permissionDef;
     std::set<std::string> permSet;

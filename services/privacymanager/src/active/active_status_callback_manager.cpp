@@ -104,12 +104,8 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
     if (permList.empty()) {
         return true;
     }
-    for (const auto& perm : permList) {
-        if (perm == permName) {
-            return true;
-        }
-    }
-    return false;
+    return std::any_of(permList.begin(), permList.end(),
+        [permName](const std::string& perm) { return perm == permName; });
 }
 
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(

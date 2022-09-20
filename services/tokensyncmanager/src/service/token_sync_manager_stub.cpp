@@ -26,6 +26,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerStub"};
+static const int32_t ROOT_UID = 0;
 }
 
 int32_t TokenSyncManagerStub::OnRemoteRequest(
@@ -53,15 +54,29 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
     return NO_ERROR;
 }
 
-void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+bool TokenSyncManagerStub::IsNativeProcessCalling() const
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
-    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling type: %{public}d", type);
+    return type == TOKEN_NATIVE;
+}
+
+bool TokenSyncManagerStub::IsRootCalling() const
+{
+    int callingUid = IPCSkeleton::GetCallingUid();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling uid: %{public}d", callingUid);
+    return callingUid == ROOT_UID;
+}
+
+void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
+
     std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
 
@@ -72,14 +87,11 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 
 void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
-    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
+    if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
-    std::string deviceID = data.ReadString();
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->DeleteRemoteHapTokenInfo(tokenID);
     reply.WriteInt32(result);
@@ -87,13 +99,12 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
 
 void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
-    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
+    if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
         reply.WriteInt32(RET_FAILED);
         return;
     }
+
     sptr<HapTokenInfoForSyncParcel> tokenInfoParcelPtr = data.ReadParcelable<HapTokenInfoForSyncParcel>();
     int result = RET_FAILED;
     if (tokenInfoParcelPtr != nullptr) {

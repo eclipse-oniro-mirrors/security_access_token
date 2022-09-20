@@ -738,7 +738,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
     ASSERT_EQ(PERM_INACTIVE, callbackPtr->type_);
 }
 
-
 class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
 public:
     explicit CbCustomizeTest3(const std::vector<std::string> &permList)
@@ -759,7 +758,6 @@ public:
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X issueI5P4IU issueI5P530
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
 {
     std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
@@ -820,7 +818,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
 {
     std::vector<std::string> permList;
@@ -845,7 +842,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
@@ -877,7 +873,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback004, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.INVALD"};
@@ -900,10 +895,8 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
 {
-
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
     int32_t res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
@@ -916,7 +909,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
@@ -935,9 +927,8 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5RWX3 issueI5RWX8
  */
-
 HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
@@ -981,7 +972,6 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
     ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
     ASSERT_EQ(RET_NO_ERROR, ret);
 }
-
 
 /**
  * @tc.name: StopUsingPermission003

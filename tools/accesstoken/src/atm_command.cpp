@@ -88,40 +88,39 @@ ErrCode AtmCommand::RunAsHelpCommand()
 
 ErrCode AtmCommand::RunAsDumpCommand()
 {
-    ErrCode result = ERR_OK;
+    ErrCode results = ERR_OK;
     OptType type = DEFAULT;
     uint32_t tokenId = 0;
     std::string permissionName = "";
-    int option = -1;
     int counter = 0;
     while (true) {
         counter++;
-        option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
         if (optind < 0 || optind > argc_) {
             return ERR_INVALID_VALUE;
         }
 
         if (option == -1) {
             if (counter == 1) {
-                result = RunAsCommandError();
+                results = RunAsCommandError();
             }
             break;
         }
 
         if (option == '?') {
-            result = RunAsCommandMissingOptionArgument();
+            results = RunAsCommandMissingOptionArgument();
             break;
         }
 
-        result = RunAsCommandExistentOptionArgument(option, type, tokenId, permissionName);
+        results = RunAsCommandExistentOptionArgument(option, type, tokenId, permissionName);
     }
 
-    if (result != ERR_OK) {
+    if (results != ERR_OK) {
         resultReceiver_.append(HELP_MSG_DUMP + "\n");
     } else {
-        result = RunCommandByOperationType(type, tokenId, permissionName);
+        results = RunCommandByOperationType(type, tokenId, permissionName);
     }
-    return result;
+    return results;
 }
 
 ErrCode AtmCommand::RunAsPermCommand()
@@ -130,11 +129,10 @@ ErrCode AtmCommand::RunAsPermCommand()
     OptType type = DEFAULT;
     uint32_t tokenId = 0;
     std::string permissionName = "";
-    int option = -1;
     int counter = 0;
     while (true) {
         counter++;
-        option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
         if (optind < 0 || optind > argc_) {
             return ERR_INVALID_VALUE;
         }
