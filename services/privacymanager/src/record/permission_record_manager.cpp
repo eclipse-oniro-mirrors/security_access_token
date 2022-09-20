@@ -489,7 +489,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
 
-    // when StopUsingPermission and there is no permission with tokenId in cache, need to UnRegisterAppStatusChangeCallback
     if (!IsTokenIdExist(tokenId) && !SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
         tokenId, AppStatusListener)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d unregiste app status change callback failed.", tokenId);
@@ -504,10 +503,11 @@ void PermissionRecordManager::PermListToString(const std::vector<std::string>& p
     std::string permStr;
     permStr = accumulate(permList.begin(), permList.end(), std::string(" "));
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "permStr =%{public}s",permStr.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "permStr =%{public}s", permStr.c_str());
 }
 
-int32_t PermissionRecordManager::PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
+int32_t PermissionRecordManager::PermissionListFilter(
+    const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
 {
     PermissionDef permissionDef;
     std::set<std::string> permSet;
