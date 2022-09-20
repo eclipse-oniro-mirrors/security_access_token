@@ -23,6 +23,8 @@
 #include "perm_active_response_parcel.h"
 #include "permission_used_record_parcel.h"
 #include "permission_used_request_parcel.h"
+#include "permission_used_result_parcel.h"
+#include "used_record_detail_parcel.h"
 
 using namespace testing::ext;
 
@@ -70,6 +72,20 @@ PermissionUsedRecord g_permissionRecord2 = {
     .lastAccessTime = 1L,
     .lastRejectTime = 1L,
     .lastAccessDuration = 1L,
+};
+
+BundleUsedRecord g_bundleUsedRecord1 = {
+    .tokenId = 100,
+    .isRemote = false,
+    .deviceId = "you guess",
+    .bundleName = "com.ohos.camera",
+};
+
+BundleUsedRecord g_bundleUsedRecord2 = {
+    .tokenId = 101,
+    .isRemote = false,
+    .deviceId = "i want to know too",
+    .bundleName = "com.ohos.permissionmanager",
 };
 }
 
@@ -250,6 +266,39 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRequestParcel001, TestSize.Level1)
     for(uint32_t i = 0; i < permissionUsedRequestParcel.request.permissionList.size(); i++) {
         EXPECT_EQ(permissionUsedRequestParcel.request.permissionList[i], readedData->request.permissionList[i]);
     }
+}
+
+/**
+ * @tc.name: PermissionUsedResultParcel001
+ * @tc.desc: Verify the PermissionUsedResultParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWP4
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedResultParcel001, TestSize.Level1)
+{
+    PermissionUsedResultParcel permissionUsedResultParcel;
+
+    permissionUsedResultParcel.result = {
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+    };
+
+    g_bundleUsedRecord1.permissionRecords.emplace_back(g_permissionRecord1);
+    g_bundleUsedRecord1.permissionRecords.emplace_back(g_permissionRecord2);
+    g_bundleUsedRecord2.permissionRecords.emplace_back(g_permissionRecord1);
+    g_bundleUsedRecord2.permissionRecords.emplace_back(g_permissionRecord2);
+
+    permissionUsedResultParcel.result.bundleRecords.emplace_back(g_bundleUsedRecord1);
+    permissionUsedResultParcel.result.bundleRecords.emplace_back(g_bundleUsedRecord2);
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedResultParcel.Marshalling(parcel));
+
+    std::shared_ptr<PermissionUsedResultParcel> readedData(PermissionUsedResultParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    EXPECT_EQ(permissionUsedResultParcel.result.beginTimeMillis, readedData->result.beginTimeMillis);
+    EXPECT_EQ(permissionUsedResultParcel.result.endTimeMillis, readedData->result.endTimeMillis);
 }
 } // namespace AccessToken
 } // namespace Security
