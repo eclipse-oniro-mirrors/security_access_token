@@ -300,6 +300,33 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedResultParcel001, TestSize.Level1)
     EXPECT_EQ(permissionUsedResultParcel.result.beginTimeMillis, readedData->result.beginTimeMillis);
     EXPECT_EQ(permissionUsedResultParcel.result.endTimeMillis, readedData->result.endTimeMillis);
 }
+
+/**
+ * @tc.name: UsedRecordDetailParcel001
+ * @tc.desc: Verify the UsedRecordDetailParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWP4
+ */
+HWTEST_F(PrivacyParcelTest, UsedRecordDetailParcel001, TestSize.Level1)
+{
+    UsedRecordDetailParcel usedRecordDetailParcel;
+
+    usedRecordDetailParcel.detail = {
+        .status = 0,
+        .timestamp = 0L,
+        .accessDuration = 0L,
+    };
+
+    Parcel parcel;
+    EXPECT_EQ(true, usedRecordDetailParcel.Marshalling(parcel));
+
+    std::shared_ptr<UsedRecordDetailParcel> readedData(UsedRecordDetailParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    EXPECT_EQ(usedRecordDetailParcel.detail.status, readedData->detail.status);
+    EXPECT_EQ(usedRecordDetailParcel.detail.timestamp, readedData->detail.timestamp);
+    EXPECT_EQ(usedRecordDetailParcel.detail.accessDuration, readedData->detail.accessDuration);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
