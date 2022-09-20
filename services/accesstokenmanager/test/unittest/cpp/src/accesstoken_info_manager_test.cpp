@@ -568,7 +568,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetUdidByNodeId001, TestSize.Level1)
  * @tc.name: DumpTokenInfo001
  * @tc.desc: Verify the DumpTokenInfo hap token function .
  * @tc.type: FUNC
- * @tc.require: Issue Number:I5RJBB
+ * @tc.require: Issue I5RJBB
  */
 HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
 {
