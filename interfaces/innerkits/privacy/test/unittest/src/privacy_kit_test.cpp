@@ -935,9 +935,8 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
- * @tc.require: issueI5NT1X
+ * @tc.require: issueI5RWX3 issueI5RWX8
  */
-
 HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
