@@ -43,7 +43,7 @@ int RandomMbedtls::GenerateRandomArray(unsigned char *randStr, unsigned int len)
     if (!initFlag_) {
         mbedtls_ctr_drbg_init(&ctrDrbg_);
         mbedtls_entropy_init(&entropy_);
-        ret = mbedtls_ctr_drbg_seed(&ctrDrbg_, mbedtls_entropy_func, &entropy_, NULL, 0);
+        ret = mbedtls_ctr_drbg_seed(&ctrDrbg_, mbedtls_entropy_func, &entropy_, nullptr, 0);
         if (ret != 0) {
             return RET_FAILED;
         }

@@ -21,7 +21,7 @@ namespace Security {
 namespace AccessToken {
 int64_t TimeUtil::GetCurrentTimestamp()
 {
-    const time_t timestamp = time(NULL);
+    const time_t timestamp = time(nullptr);
     return static_cast<int64_t>(timestamp);
 }
 } // namespace AccessToken

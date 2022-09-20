@@ -63,6 +63,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   external_deps = [
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
+    "safwk:system_ability_fwk",
   ]
 }
 

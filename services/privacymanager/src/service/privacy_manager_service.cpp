@@ -30,7 +30,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerService"
 };
-constexpr int PERMISSION_USAGE_RECORDS_MAXNUM = 100;
+constexpr int PERMISSION_USAGE_RECORDS_MAX_NUM = 100;
 }
 
 const bool REGISTER_RESULT =
@@ -116,38 +116,36 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
 }
 
-int32_t PrivacyManagerService::ResponseDumpCommand(int fd, const std::vector<std::u16string>& args)
+int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector<std::u16string>& args)
 {
-    if (args.size() < 2) { // 2 :need two args 0:command 1:tokenID
+    if (args.size() < 2) { // 2 :need two args 0:command 1:tokenId
         return ERR_INVALID_VALUE;
     }
-    long long tokenID = atoll(static_cast<const char*>(Str16ToStr8(args.at(1)).c_str()));
+    long long tokenId = atoll(static_cast<const char*>(Str16ToStr8(args.at(1)).c_str()));
     PermissionUsedRequest request;
-    if (tokenID <= 0) {
+    if (tokenId <= 0) {
         return ERR_INVALID_VALUE;
     }
-    request.tokenId = static_cast<unsigned int>(tokenID);
+    request.tokenId = static_cast<uint32_t>(tokenId);
     request.flag = FLAG_PERMISSION_USAGE_SUMMARY;
     PermissionUsedResult result;
     if (PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result) != 0) {
         return ERR_INVALID_VALUE;
     }
     std::string infos;
-    int RecordsNum = 0;
-    for (int index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
-        if (RecordsNum > PERMISSION_USAGE_RECORDS_MAXNUM) {
+    if (result.bundleRecords.empty() || result.bundleRecords[0].permissionRecords.empty()) {
+        dprintf(fd, "No Record \n");
+        return ERR_OK;
+    }
+    int32_t RecordsNum = 0;
+    for (int32_t index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
+        if (RecordsNum > PERMISSION_USAGE_RECORDS_MAX_NUM) {
             break;
         }
         infos.append(R"(  "permissionRecord": [)");
         infos.append("\n");
         infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
-        if (result.bundleRecords[0].isRemote) {
-            std::string status = "true";
-            infos.append(R"(    "isRemote": )" + status + ",\n");
-        } else {
-            std::string status = "false";
-            infos.append(R"(    "isRemote": )" + status + ",\n");
-        }
+        infos.append(R"(    "isRemote": )" + std::to_string(result.bundleRecords[0].isRemote) + ",\n");
         infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
                      R"(")" + ",\n");
         time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
@@ -165,24 +163,27 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int fd, const std::vector<std
     return ERR_OK;
 }
 
-int32_t PrivacyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
+int32_t PrivacyManagerService::Dump(int32_t fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Dump fd invalid value");
         return ERR_INVALID_VALUE;
     }
-    int ReturnValue = ERR_OK;
+    int32_t ret = ERR_OK;
     dprintf(fd, "Privacy Dump:\n");
-    dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
     std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
         dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump permission used records\n");
     } else if (arg0.compare("-t") == 0) {
-        ReturnValue = PrivacyManagerService::ResponseDumpCommand(fd, args);
+        ret = PrivacyManagerService::ResponseDumpCommand(fd, args);
     }
-    return ReturnValue;
+
+    if (ret != ERR_OK) {
+        dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
+    }
+    return ret;
 }
 
 int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
