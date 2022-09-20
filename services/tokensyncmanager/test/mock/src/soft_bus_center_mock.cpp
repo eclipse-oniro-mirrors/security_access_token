@@ -52,13 +52,13 @@ int32_t GetNodeKeyInfo(const char *pkgName, const char *networkId, NodeDeviceInf
     if (key == NodeDeviceInfoKey::NODE_KEY_UDID) {
         std::string temp = networkId;
         temp += ":udid-001";
-        strncpy_s((char *) info, infoLen, temp.c_str(), temp.length());
+        strncpy_s(reinterpret_cast<char *>(info), infoLen, temp.c_str(), temp.length());
         infoLen = temp.length();
     }
     if (key == NodeDeviceInfoKey::NODE_KEY_UUID) {
         std::string temp = networkId;
         temp += ":uuid-001";
-        strncpy_s((char *) info, infoLen, temp.c_str(), temp.length());
+        strncpy_s(reinterpret_cast<char *>(info), infoLen, temp.c_str(), temp.length());
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "success, count: %{public}d, id: %{public}s", regCount_, info);
     return Constant::SUCCESS;

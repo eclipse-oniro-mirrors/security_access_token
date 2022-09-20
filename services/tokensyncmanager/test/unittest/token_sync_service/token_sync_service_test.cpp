@@ -228,7 +228,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     int count = 0;
     while (!GetSendMessFlagMock() && count < 10) {
         sleep(1);
-        count ++;
+        count++;
     }
     free(recvBuffer);
 
@@ -447,7 +447,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     int count = 0;
     while (!GetSendMessFlagMock() && count < 10) {
         sleep(1);
-        count ++;
+        count++;
     }
     free(recvBuffer);
 
@@ -645,7 +645,7 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     int count = 0;
     while (!GetSendMessFlagMock() && count < 10) {
         sleep(1);
-        count ++;
+        count++;
     }
     free(recvBuffer);
 
