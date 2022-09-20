@@ -141,13 +141,7 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int fd, const std::vector<std
         infos.append(R"(  "permissionRecord": [)");
         infos.append("\n");
         infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
-        if (result.bundleRecords[0].isRemote) {
-            std::string status = "true";
-            infos.append(R"(    "isRemote": )" + status + ",\n");
-        } else {
-            std::string status = "false";
-            infos.append(R"(    "isRemote": )" + status + ",\n");
-        }
+        infos.append(R"(    "isRemote": )" + std::to_string(result.bundleRecords[0].isRemote) + ",\n");
         infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
                      R"(")" + ",\n");
         time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
