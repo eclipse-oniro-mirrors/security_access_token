@@ -563,35 +563,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetUdidByNodeId001, TestSize.Level1)
     ASSERT_EQ(result.empty(), true);
 }
 #endif
-
-/**
- * @tc.name: DumpTokenInfo001
- * @tc.desc: Verify the DumpTokenInfo hap token function .
- * @tc.type: FUNC
- * @tc.require: issueI5RJBB
- */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
-
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, dumpInfo);
-    ASSERT_EQ(dumpInfo.length() > 0, true);
-    GTEST_LOG_(INFO) << dumpInfo;
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, dumpInfo);
-    ASSERT_EQ(dumpInfo.length() > 0, true);
-    GTEST_LOG_(INFO) << dumpInfo;
-}
-
 #ifdef SUPPORT_SANDBOX_APP
 static void PrepareJsonData1()
 {
