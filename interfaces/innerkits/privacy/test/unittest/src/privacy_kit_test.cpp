@@ -903,7 +903,6 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
 
 HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback006, TestSize.Level1)
 {
-
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
     int32_t res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);

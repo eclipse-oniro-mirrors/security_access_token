@@ -92,7 +92,6 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
         reply.WriteInt32(RET_FAILED);
         return;
     }
-
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->DeleteRemoteHapTokenInfo(tokenID);
     reply.WriteInt32(result);
