@@ -104,7 +104,7 @@ int SendBytes(int sessionId, const void *data, unsigned int len)
     if (sessionId == Constant::INVALID_SESSION) {
         return Constant::FAILURE;
     }
-    DecompressMock((unsigned char *) data, len);
+    DecompressMock(reinterpret_cast<unsigned char *>(data), len);
     g_sendMessFlag = true;
     return Constant::SUCCESS;
 }
