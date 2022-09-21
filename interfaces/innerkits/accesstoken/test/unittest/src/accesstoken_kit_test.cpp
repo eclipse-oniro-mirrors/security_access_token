@@ -2450,7 +2450,7 @@ static void *ThreadTestFunc01(void *args)
             GTEST_LOG_(INFO) << "ThreadTestFunc01 failed" << tokenID;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 static void *ThreadTestFunc02(void *args)
@@ -2468,7 +2468,7 @@ static void *ThreadTestFunc02(void *args)
             GTEST_LOG_(INFO) << "ThreadTestFunc02 failed" << tokenID;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -2484,15 +2484,15 @@ HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     pthread_t tid[2];
-    (void)pthread_create(&tid[0], 0, &ThreadTestFunc01, NULL);
-    (void)pthread_create(&tid[1], 0, &ThreadTestFunc01, NULL);
-    (void)pthread_join(tid[0], NULL);
-    (void)pthread_join(tid[1], NULL);
+    (void)pthread_create(&tid[0], 0, &ThreadTestFunc01, nullptr);
+    (void)pthread_create(&tid[1], 0, &ThreadTestFunc01, nullptr);
+    (void)pthread_join(tid[0], nullptr);
+    (void)pthread_join(tid[1], nullptr);
 
-    (void)pthread_create(&tid[0], 0, &ThreadTestFunc02, NULL);
-    (void)pthread_create(&tid[1], 0, &ThreadTestFunc02, NULL);
-    (void)pthread_join(tid[0], NULL);
-    (void)pthread_join(tid[1], NULL);
+    (void)pthread_create(&tid[0], 0, &ThreadTestFunc02, nullptr);
+    (void)pthread_create(&tid[1], 0, &ThreadTestFunc02, nullptr);
+    (void)pthread_join(tid[0], nullptr);
+    (void)pthread_join(tid[1], nullptr);
 
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

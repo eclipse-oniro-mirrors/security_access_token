@@ -26,8 +26,10 @@
 #undef private
 #endif
 #include "permission_manager.h"
+#include "string_ex.h"
 
 using namespace testing::ext;
+using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
@@ -174,10 +176,15 @@ void AccessTokenInfoManagerTest::TearDownTestCase()
 {}
 
 void AccessTokenInfoManagerTest::SetUp()
-{}
+{
+    atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
+    EXPECT_NE(nullptr, atManagerService_);
+}
 
 void AccessTokenInfoManagerTest::TearDown()
-{}
+{
+    atManagerService_ = nullptr;
+}
 
 HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
 {
@@ -942,3 +949,49 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig006, TestSize.Level1)
     GTEST_LOG_(INFO) << "remove the token info";
 }
 #endif
+
+/**
+ * @tc.name: Dump001
+ * @tc.desc: Dump tokeninfo.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
+{
+    int fd = -1;
+    std::vector<std::u16string> args;
+
+    // fd is 0
+    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    fd = 1; // 1: std output
+
+    // hidumper
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    // hidumper -h
+    args.emplace_back(Str8ToStr16("-h"));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    args.clear();
+    // hidumper -a
+    args.emplace_back(Str8ToStr16("-a"));
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    args.clear();
+    // hidumper -t
+    args.emplace_back(Str8ToStr16("-t"));
+    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    args.clear();
+    // hidumper -t
+    args.emplace_back(Str8ToStr16("-t"));
+    args.emplace_back(Str8ToStr16("-1")); // illegal tokenId
+    ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
+
+    args.clear();
+    // hidumper -t
+    args.emplace_back(Str8ToStr16("-t"));
+    args.emplace_back(Str8ToStr16("123")); // invalid tokenId
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
+}

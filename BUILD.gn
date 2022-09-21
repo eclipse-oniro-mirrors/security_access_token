@@ -29,6 +29,9 @@ group("accesstoken_build_module_test") {
       "//base/security/access_token/services/accesstokenmanager/test:unittest",
       "//base/security/access_token/services/common/database/test:unittest",
     ]
+    if (ability_base_enable == true) {
+      deps += [ "//base/security/access_token/services/privacymanager/test/unittest:unittest" ]
+    }
   }
   if (token_sync_enable == true) {
     deps += [
