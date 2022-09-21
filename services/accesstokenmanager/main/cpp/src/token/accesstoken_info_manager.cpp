@@ -367,7 +367,6 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
         return RET_FAILED;
     }
 
-    bool isRemote = false;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
@@ -388,9 +387,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove native token %{public}u ok!", id);
-    if (!isRemote) {
-        RefreshTokenInfoIfNeeded();
-    }
+    RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }
 
