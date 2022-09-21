@@ -13,7 +13,7 @@
 
 import("//build/test.gni")
 
-ohos_unittest("libdatabase_values_test") {
+ohos_unittest("libdatabase_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
@@ -26,7 +26,7 @@ ohos_unittest("libdatabase_values_test") {
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
   ]
 
-  sources = [ "unittest/src/generic_values_test.cpp" ]
+  sources = [ "unittest/database_test.cpp" ]
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
@@ -44,5 +44,5 @@ ohos_unittest("libdatabase_values_test") {
 
 group("unittest") {
   testonly = true
-  deps = [ ":libdatabase_values_test" ]
+  deps = [ ":libdatabase_test" ]
 }
