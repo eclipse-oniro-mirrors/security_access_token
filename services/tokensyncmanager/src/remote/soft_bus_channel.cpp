@@ -16,6 +16,7 @@
 
 #include <securec.h>
 
+#include "constant_common.h"
 #include "device_info_manager.h"
 #include "token_sync_event_handler.h"
 #include "token_sync_manager_service.h"
@@ -63,7 +64,8 @@ int SoftBusChannel::BuildConnection()
 
     std::unique_lock<std::mutex> lock(sessionMutex_);
     if (session_ == Constant::INVALID_SESSION) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "open session with device: %{public}s", (deviceId_.c_str()));
+        ACCESSTOKEN_LOG_INFO(LABEL, "open session with device: %{public}s",
+            ConstantCommon::EncryptDevId(deviceId_).c_str());
         int session = SoftBusManager::GetInstance().OpenSession(deviceId_);
         if (session == Constant::INVALID_SESSION) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "open session failed.");
@@ -96,7 +98,8 @@ void SoftBusChannel::CloseConnection()
         } else {
             SoftBusManager::GetInstance().CloseSession(thisPtr->session_);
             thisPtr->session_ = Constant::INVALID_SESSION;
-            ACCESSTOKEN_LOG_INFO(LABEL, "close session for device: %{public}s", thisPtr->deviceId_.c_str());
+            ACCESSTOKEN_LOG_INFO(LABEL, "close session for device: %{public}s",
+                ConstantCommon::EncryptDevId(thisPtr->deviceId_).c_str());
         }
         thisPtr->isDelayClosing_ = false;
     });
