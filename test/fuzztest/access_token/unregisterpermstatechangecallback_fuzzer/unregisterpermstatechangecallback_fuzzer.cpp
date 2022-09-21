@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "alloclocaltokenid_fuzzer.h"
+#include "unregisterpermstatechangecallback_fuzzer.h"
 
 #include <string>
 #include <vector>
@@ -24,19 +24,41 @@
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
-namespace OHOS {
-    bool AllocLocalTokenIDFuzzTest(const uint8_t* data, size_t size)
+class CbCustomizeTest : public PermStateChangeCallbackCustomize {
+public:
+    explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
+        : PermStateChangeCallbackCustomize(scopeInfo)
     {
-        AccessTokenID TOKENID = 0;
+    }
+
+    ~CbCustomizeTest()
+    {}
+
+    virtual void PermStateChangeCallback(PermStateChangeInfo& result)
+    {
+        ready_ = true;
+    }
+
+    bool ready_;
+};
+
+namespace OHOS {
+    bool UnRegisterPermStateChangeCallbackFuzzTest(const uint8_t* data, size_t size)
+    {
+        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return TOKENID != 0;
+            return result != RET_FAILED;
         }
         if (size > 0) {
+            PermStateChangeScope scopeInfo;
             std::string testName(reinterpret_cast<const char*>(data), size);
-            AccessTokenID REMOTETOKENID = static_cast<AccessTokenID>(size);
-            TOKENID = AccessTokenKit::AllocLocalTokenID(testName, REMOTETOKENID);
+            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+            scopeInfo.permList = { testName };
+            scopeInfo.tokenIDs = { TOKENID };
+            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+            result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
         }
-        return TOKENID != 0;
+        return result == RET_SUCCESS;
     }
 }
 
@@ -44,6 +66,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::AllocLocalTokenIDFuzzTest(data, size);
+    OHOS::UnRegisterPermStateChangeCallbackFuzzTest(data, size);
     return 0;
 }

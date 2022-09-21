@@ -27,9 +27,9 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool UpdateHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
-        bool result = false;
+        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return result;
+            return result != RET_FAILED;
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
@@ -60,7 +60,7 @@ namespace OHOS {
             constexpr int32_t DEFAULT_API_VERSION = 8;
             result = AccessTokenKit::UpdateHapToken(TOKENID, testName, DEFAULT_API_VERSION, TestPolicyPrams);
         }
-        return result;
+        return result == RET_SUCCESS;
     }
 }
 

@@ -27,16 +27,16 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetDefPermissionsFuzzTest(const uint8_t* data, size_t size)
     {
-        bool result = false;
+        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return result;
+            return result != RET_FAILED;
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             std::vector<PermissionDef> permDefList;
             result = AccessTokenKit::GetDefPermissions(TOKENID, permDefList);
         }
-        return result;
+        return result == RET_SUCCESS;
     }
 }
 
