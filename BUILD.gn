@@ -26,6 +26,9 @@ group("accesstoken_build_module_test") {
       "//base/security/access_token/interfaces/innerkits/token_setproc/test:unittest",
       "//base/security/access_token/services/accesstokenmanager/test:unittest",
     ]
+    if (ability_base_enable == true) {
+      deps += [ "//base/security/access_token/services/privacymanager/test/unittest:unittest" ]
+    }
   }
   if (token_sync_enable == true) {
     deps += [

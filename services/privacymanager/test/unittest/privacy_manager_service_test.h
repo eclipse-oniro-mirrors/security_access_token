@@ -13,15 +13,16 @@
  * limitations under the License.
  */
 
-#ifndef ADD_PERMISSION_USED_RECORD_TEST_H
-#define ADD_PERMISSION_USED_RECORD_TEST_H
+#ifndef PRIVACY_MANAGER_SERVICE_TEST_H
+#define PRIVACY_MANAGER_SERVICE_TEST_H
 
 #include <gtest/gtest.h>
+#include "privacy_manager_service.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AddPermissionUsedRecordTest : public testing::Test {
+class PrivacyManagerServiceTest : public testing::Test {
 public:
     static void SetUpTestCase();
 
@@ -30,8 +31,9 @@ public:
     void SetUp();
 
     void TearDown();
+    std::shared_ptr<PrivacyManagerService> privacyManagerService_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ADD_PERMISSION_USED_RECORD_TEST_H
+#endif // PRIVACY_MANAGER_SERVICE_TEST_H
