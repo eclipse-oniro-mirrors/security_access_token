@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include "securec.h"
 #include "nativetoken.h"
+#include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
 
 using namespace testing::ext;
@@ -27,6 +28,7 @@ using namespace OHOS::Security;
 extern NativeTokenList *g_tokenListHead;
 extern int32_t g_isNativeTokenInited;
 extern int32_t GetFileBuff(const char *cfg, char **retBuff);
+extern int32_t AtlibInit(void);
 
 void TokenLibKitTest::SetUpTestCase()
 {}
@@ -47,6 +49,101 @@ void TokenLibKitTest::TearDown()
         free(tmp);
         tmp = nullptr;
     }
+}
+
+static void WriteContentToFile(const cJSON *root)
+{
+    char *jsonString = nullptr;
+    jsonString = cJSON_PrintUnformatted(root);
+    if (jsonString == nullptr) {
+        return;
+    }
+
+    do {
+        int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
+                          S_IRUSR | S_IWUSR | S_IRGRP);
+        if (fd < 0) {
+            break;
+        }
+        size_t strLen = strlen(jsonString);
+        ssize_t writtenLen = write(fd, (void *)jsonString, (size_t)strLen);
+        close(fd);
+        if (writtenLen < 0 || (size_t)writtenLen != strLen) {
+            break;
+        }
+    } while (0);
+
+    cJSON_free(jsonString);
+    return;
+}
+
+void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
+{
+    cJSON *rec = nullptr;
+    int32_t index = -1;
+    bool isFound = false;
+    cJSON_ArrayForEach(rec, record) {
+        index++;
+        cJSON *innerProcessName = cJSON_GetObjectItemCaseSensitive(rec, PROCESS_KEY_NAME);
+        if ((cJSON_IsString(innerProcessName)) && (innerProcessName->valuestring != nullptr)) {
+            if (strcmp(innerProcessName->valuestring, processName) == 0) {
+                isFound = true;
+                break;
+            }
+        }
+    }
+    if (isFound) {
+        cJSON_DeleteItemFromArray(record, index);
+    }
+}
+
+int32_t DeleteNodeInFile(const char *processName)
+{
+    cJSON *record = nullptr;
+    char *fileBuff = nullptr;
+
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+        return ATRET_FAILED;
+    }
+
+    if (fileBuff == nullptr) {
+        record = cJSON_CreateArray();
+    } else {
+        record = cJSON_Parse(fileBuff);
+        free(fileBuff);
+        fileBuff = nullptr;
+    }
+
+    if (record == nullptr) {
+        return ATRET_FAILED;
+    }
+
+    DeleteGoalItemFromRecord(processName, record);
+    WriteContentToFile(record);
+    cJSON_Delete(record);
+
+    return ATRET_SUCCESS;
+}
+
+int32_t DeleteAccessTokenId(const char *processName)
+{
+    int32_t result = 0;
+
+    if ((g_isNativeTokenInited == 0) && (AtlibInit() != ATRET_SUCCESS)) {
+        return INVALID_TOKEN_ID;
+    }
+    NativeTokenList *tokenNode = g_tokenListHead;
+    while (tokenNode->next != nullptr) {
+        if (strcmp(tokenNode->next->processName, processName) == 0) {
+            result = DeleteNodeInFile(processName);
+            NativeTokenList *tokenNodeA = tokenNode->next;
+            tokenNode->next = tokenNode->next->next;
+            free(tokenNodeA);
+            break;
+        }
+        tokenNode = tokenNode->next;
+    }
+    return result;
 }
 
 int32_t Start(const char *processName)
@@ -120,12 +217,14 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
     infoInstance.processName = validProcName01.c_str();
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     /* 256 is valid processName length */
     const std::string validProcName02 (256, 'x');
     infoInstance.processName = validProcName02.c_str();
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
     delete[] dcaps;
     delete[] perms;
 }
@@ -171,6 +270,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId002_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     /* 31 is valid dcapNum */
     dcapNum = 31;
@@ -178,6 +278,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId002_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     delete[] dcaps;
 }
@@ -214,6 +315,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId003_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     dcapNum = 2;
     /* 1025 is invalid dcap length */
@@ -233,6 +335,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId003_03";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     /* 1023 is valid dcap length */
     const std::string validDcap02 (1023, 'x');
@@ -242,6 +345,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId003_04";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     delete[] dcaps;
 }
@@ -293,6 +397,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId005, TestSize.Level1)
     ASSERT_NE(tokenId02, 0);
 
     ASSERT_EQ(tokenId01, tokenId02);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId005"), 0);
 }
 
 /**
@@ -313,6 +418,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
     string s = "GetAccessTokenId006";
     char *pos = strstr(fileBuff, s.c_str());
     ASSERT_NE(pos, nullptr);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId006"), 0);
 }
 
 /**
@@ -356,12 +462,14 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId007_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId007_01"), 0);
 
     permsNum = MAX_PERM_NUM - 1;
     infoInstance.permsNum = permsNum;
     infoInstance.processName = "GetAccessTokenId007_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId007_02"), 0);
 
     delete[] perms;
 }
@@ -396,6 +504,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
     };
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId008"), 0);
 
     delete[] perms;
     delete[] dcaps;
@@ -433,6 +542,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId009_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId009_01"), 0);
 
     permsNum = 2;
     /* 1025 is invalid dcap length */
@@ -451,6 +561,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId009_03";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId009_03"), 0);
 
     const std::string validDcap02 (MAX_PERM_LEN - 1, 'x');
     perms[0] = validDcap02.c_str();
@@ -459,6 +570,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId009_04";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId("GetAccessTokenId009_04"), 0);
 
     delete[] perms;
 }
@@ -488,6 +600,9 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId010, TestSize.Level1)
         ASSERT_NE(pos, nullptr);
     }
     free(fileBuff);
+    for (int32_t i = 0; i < 200; i++) {
+        ASSERT_EQ(DeleteAccessTokenId(processName[i]), 0);
+    }
 }
 
 /**
@@ -500,20 +615,6 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
 {
     Start("process1");
     Start("process2");
-    Start("process3");
-    Start("process4");
-    Start("process5");
-    Start("foundation");
-    Start("process6");
-    Start("process7");
-    Start("process8");
-    Start("process9");
-    Start("process10");
-    Start("process15");
-    Start("process16");
-    Start("process17");
-    Start("process18");
-    Start("process19");
 
     char *fileBuff = nullptr;
     int32_t ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
@@ -522,20 +623,17 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
     ASSERT_NE(pos, nullptr);
     pos = strstr(fileBuff, "process2");
     ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process3");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process4");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process5");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process6");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process7");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process8");
-    ASSERT_NE(pos, nullptr);
-    pos = strstr(fileBuff, "process9");
-    ASSERT_NE(pos, nullptr);
+    free(fileBuff);
+
+    DeleteAccessTokenId("process1");
+    DeleteAccessTokenId("process2");
+    fileBuff = nullptr;
+    ret = GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff);
+    ASSERT_EQ(ret, 0);
+    pos = strstr(fileBuff, "process1");
+    ASSERT_EQ(pos, nullptr);
+    pos = strstr(fileBuff, "process2");
+    ASSERT_EQ(pos, nullptr);
     free(fileBuff);
 }
 
@@ -608,6 +706,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId013_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     aclsNum = 1;
     const std::string invalidAcl (MAX_PERM_LEN + 1, 'x');
@@ -625,6 +724,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId013_03";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     const std::string validcAcl02 (MAX_PERM_LEN - 1, 'x');
     acls[0] = validcAcl02.c_str();
@@ -633,6 +733,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId013_04";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     delete[] acls;
 }
@@ -665,12 +766,14 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
     infoInstance.processName = "GetAccessTokenId014_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     infoInstance.acls = acls;
     infoInstance.aclsNum = 1;
     infoInstance.processName = "GetAccessTokenId014_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     delete[] perms;
     delete[] acls;
@@ -719,6 +822,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId015_01";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     permsNum = MAX_PERM_NUM - 1;
     infoInstance.permsNum = permsNum;
@@ -726,6 +830,7 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
     infoInstance.processName = "GetAccessTokenId015_02";
     tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_NE(tokenId, 0);
+    ASSERT_EQ(DeleteAccessTokenId(infoInstance.processName), 0);
 
     permsNum = MAX_PERM_NUM - 1;
     infoInstance.permsNum = permsNum;

@@ -219,7 +219,7 @@ static int32_t CreateCfgFile(void)
     return ATRET_SUCCESS;
 }
 
-static int32_t AtlibInit(void)
+int32_t AtlibInit(void)
 {
     g_tokenListHead = (NativeTokenList *)malloc(sizeof(NativeTokenList));
     if (g_tokenListHead == NULL) {
