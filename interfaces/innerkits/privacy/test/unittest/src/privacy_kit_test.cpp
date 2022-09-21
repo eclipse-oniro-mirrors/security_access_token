@@ -931,6 +931,22 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: IsAllowedUsingPermission001
+ * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    bool ret = PrivacyKit::IsAllowedUsingPermission(g_TokenId_E, permissionName);
+    ASSERT_EQ(false, ret);
+    ret = PrivacyKit::IsAllowedUsingPermission(0, permissionName);
+    ASSERT_EQ(false, ret);
+}
+
+/**
  * @tc.name: StartUsingPermission001
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
