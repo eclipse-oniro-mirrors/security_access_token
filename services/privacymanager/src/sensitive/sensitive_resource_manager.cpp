@@ -93,14 +93,11 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
     std::vector<AppExecFwk::AppStateData> foreGroundAppList;
     appMgrProxy->GetForegroundApplications(foreGroundAppList);
 
-    for (const auto& foreGroundApp : foreGroundAppList) {
-        if (foreGroundApp.bundleName == pkgName) {
-            status = PERM_ACTIVE_IN_FOREGROUND;
-            return true;
-        }
-    }
-
     status = PERM_ACTIVE_IN_BACKGROUND;
+    if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
+        [pkgName](const auto& foreGroundApp) { return foreGroundApp.bundleName == pkgName; })) {
+            status = PERM_ACTIVE_IN_FOREGROUND;       
+    }
     return true;
 }
 

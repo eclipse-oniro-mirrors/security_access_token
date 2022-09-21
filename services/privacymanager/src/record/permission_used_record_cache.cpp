@@ -175,8 +175,9 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
-    int32_t countPersistPendingNode = 0;
+
     {
+        int32_t countPersistPendingNode = 0;
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
         curFindDeletePos = recordBufferHead_->next;
         persistPendingBufferHead = recordBufferHead_;

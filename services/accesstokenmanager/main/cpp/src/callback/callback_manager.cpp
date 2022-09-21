@@ -102,12 +102,8 @@ bool CallbackManager::CalledAccordingToTokenIdLlist(
     if (tokenIDList.empty()) {
         return true;
     }
-    for (const auto& id : tokenIDList) {
-        if (id == tokenID) {
-            return true;
-        }
-    }
-    return false;
+    return std::any_of(tokenIDList.begin(), tokenIDList.end(),
+        [tokenID](AccessTokenID id) { return id == tokenID; });
 }
 
 bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>& permList, const std::string& permName)
@@ -115,12 +111,8 @@ bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>&
     if (permList.empty()) {
         return true;
     }
-    for (const auto& perm : permList) {
-        if (perm == permName) {
-            return true;
-        }
-    }
-    return false;
+    return std::any_of(permList.begin(), permList.end(),
+        [permName](const std::string& perm) { return perm == permName; });
 }
 
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)

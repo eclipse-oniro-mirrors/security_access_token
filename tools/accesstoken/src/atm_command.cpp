@@ -92,10 +92,10 @@ ErrCode AtmCommand::RunAsDumpCommand()
     OptType type = DEFAULT;
     uint32_t tokenId = 0;
     std::string permissionName = "";
-    int option = -1;
     int counter = 0;
     while (true) {
         counter++;
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
         option = getopt_long(argc_, argv_, SHORT_OPTIONS_DUMP.c_str(), LONG_OPTIONS_DUMP, nullptr);
         if (optind < 0 || optind > argc_) {
             return ERR_INVALID_VALUE;
@@ -130,11 +130,10 @@ ErrCode AtmCommand::RunAsPermCommand()
     OptType type = DEFAULT;
     uint32_t tokenId = 0;
     std::string permissionName = "";
-    int option = -1;
     int counter = 0;
     while (true) {
         counter++;
-        option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
+        int32_t option = getopt_long(argc_, argv_, SHORT_OPTIONS_PERM.c_str(), LONG_OPTIONS_PERM, nullptr);
         if (optind < 0 || optind > argc_) {
             return ERR_INVALID_VALUE;
         }
