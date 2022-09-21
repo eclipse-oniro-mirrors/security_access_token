@@ -22,7 +22,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonNapi"};
 } // namespace
 
-static bool inline Check(const napi_env env, const napi_value value, const napi_valuetype type)
+static bool inline CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type)
 {
     napi_valuetype valuetype = napi_undefined;
     napi_typeof(env, value, &valuetype);
@@ -33,80 +33,75 @@ static bool inline Check(const napi_env env, const napi_value value, const napi_
     return true;
 }
 
-bool ParseBool(const napi_env env, const napi_value value)
+bool ParseBool(const napi_env& env, const napi_value& value, bool& result)
 {
-    if (!Check(env, value, napi_boolean)) {
-        return 0;
+    if (!CheckType(env, value, napi_boolean)) {
+        return false;
     }
-    bool result = 0;
+
     if (napi_get_value_bool(env, value, &result) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value bool");
-        return 0;
+        return false;
     }
-    return result;
+    return true;
 }
 
-int32_t ParseInt32(const napi_env env, const napi_value value)
+bool ParseInt32(const napi_env& env, const napi_value& value, int32_t& result)
 {
-    if (!Check(env, value, napi_number)) {
-        return 0;
+    if (!CheckType(env, value, napi_number)) {
+        return false;
     }
-    int32_t result = 0;
     if (napi_get_value_int32(env, value, &result) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int32");
-        return 0;
+        return false;
     }
-    return result;
+    return true;
 }
 
-int64_t ParseInt64(const napi_env env, const napi_value value)
+bool ParseInt64(const napi_env& env, const napi_value& value, int64_t& result)
 {
-    if (!Check(env, value, napi_number)) {
-        return 0;
+    if (!CheckType(env, value, napi_number)) {
+        return false;
     }
-    int64_t result = 0;
     if (napi_get_value_int64(env, value, &result) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int64");
-        return 0;
+        return false;
     }
-    return result;
+    return true;
 }
 
-uint32_t ParseUint32(const napi_env env, const napi_value value)
+bool ParseUint32(const napi_env& env, const napi_value& value, uint32_t& result)
 {
-    if (!Check(env, value, napi_number)) {
-        return 0;
+    if (!CheckType(env, value, napi_number)) {
+        return false;
     }
-    uint32_t result = 0;
     if (napi_get_value_uint32(env, value, &result) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value uint32");
-        return 0;
+        return false;
     }
-    return result;
+    return true;
 }
 
-std::string ParseString(const napi_env env, const napi_value value)
+bool ParseString(const napi_env& env, const napi_value& value, std::string& result)
 {
-    if (!Check(env, value, napi_string)) {
-        return "";
+    if (!CheckType(env, value, napi_string)) {
+        return false;
     }
     size_t size;
-
     if (napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string size");
-        return "";
+        return false;
     }
-    std::string str;
-    str.reserve(size + 1);
-    str.resize(size);
-    if (napi_get_value_string_utf8(env, value, str.data(), size + 1, &size) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string value");
-        return "";
+    result.reserve(size + 1);
+    result.resize(size);
+    if (napi_get_value_string_utf8(env, value, result.data(), size + 1, &size) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value string");
+        return false;
     }
-    return str;
+    return true;
 }
 
-bool ParseStringArray(const napi_env env, const napi_value value, std::vector<std::string>& res)
+bool ParseStringArray(const napi_env& env, const napi_value& value, std::vector<std::string>& result)
 {
     if (!IsArray(env, value)) {
         return false;
@@ -124,16 +119,16 @@ bool ParseStringArray(const napi_env env, const napi_value value, std::vector<st
     for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, value, i, &valueArray);
 
-        napi_valuetype valuetype = napi_undefined;
-        napi_typeof(env, valueArray, &valuetype);
-        if (valuetype == napi_string) {
-            res.emplace_back(ParseString(env, valueArray));
+        std::string str;
+        if (!ParseString(env, valueArray, str)) {
+            return false;
         }
+        result.emplace_back(str);
     }
     return true;
 }
 
-bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& res)
+bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& result)
 {
     uint32_t length = 0;
     if (!IsArray(env, value)) {
@@ -143,7 +138,11 @@ bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::
     napi_value valueArray;
     for (uint32_t i = 0; i < length; i++) {
         napi_get_element(env, value, i, &valueArray);
-        res.emplace_back(ParseUint32(env, valueArray));
+        uint32_t res;
+        if (!ParseUint32(env, valueArray, res)) {
+            return false;
+        }
+        result.emplace_back(res);
     }
     return true;
 };
@@ -156,6 +155,18 @@ bool IsArray(const napi_env& env, const napi_value& value)
         return false;
     }
     return isArray;
+}
+
+bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& result)
+{
+    if (!CheckType(env, value, napi_function)) {
+        return false;
+    }
+    if (napi_create_reference(env, value, 1, &result) != napi_ok) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value callback");
+        return false;
+    }
+    return true;
 }
 }  // namespace AccessToken
 }  // namespace Security

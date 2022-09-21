@@ -26,55 +26,81 @@ namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermActiveChangeSubscribers;
 std::vector<RegisterPermActiveChangeContext*> g_permActiveChangeSubscribers;
-static const size_t MAX_CALLBACK_SIZE = 200;
+static constexpr size_t MAX_CALLBACK_SIZE = 200;
+static constexpr int32_t ADD_PERMISSION_RECORD_MAX_PARAMS = 5;
+static constexpr int32_t GET_PERMISSION_RECORD_MAX_PARAMS = 2;
+static constexpr int32_t ON_OFF_MAX_PARAMS = 3;
+static constexpr int32_t START_STOP_MAX_PARAMS = 3;
+
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
 } // namespace
-static void ParseAddPermissionRecord(
+static bool ParseAddPermissionRecord(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
-    size_t argc = ARGS_FIVE;
-    napi_value argv[ARGS_FIVE] = { 0 };
+    size_t argc = ADD_PERMISSION_RECORD_MAX_PARAMS;
+    napi_value argv[ADD_PERMISSION_RECORD_MAX_PARAMS] = { 0 };
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
-    NAPI_CALL_RETURN_VOID(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data));
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
     asyncContext.env = env;
-    asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
-    asyncContext.permissionName = ParseString(env, argv[PARAM1]);
-    asyncContext.successCount = ParseInt32(env, argv[PARAM2]);
-    asyncContext.failCount = ParseInt32(env, argv[PARAM3]);
-    if (argc == ARGS_FIVE) {
-        napi_valuetype valueType = napi_undefined;
-        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_FIVE - 1], &valueType));
-        if (valueType == napi_function) {
-            NAPI_CALL_RETURN_VOID(env,
-                napi_create_reference(env, argv[ARGS_FIVE - 1], 1, &asyncContext.callbackRef));
+
+    // 0: the first parameter of argv
+    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        return false;
+    }
+
+    // 1: the second parameter of argv
+    if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        return false;
+    }
+
+    // 2: the third parameter of argv
+    if (!ParseInt32(env, argv[2], asyncContext.successCount)) {
+        return false;
+    }
+
+    // 3: the fourth parameter of argv
+    if (!ParseInt32(env, argv[3], asyncContext.failCount)) {
+        return false;
+    }
+    if (argc == ADD_PERMISSION_RECORD_MAX_PARAMS) {
+        // 4: : the fifth parameter of argv
+        if (!ParseCallback(env, argv[4], asyncContext.callbackRef)) {
+            return false;
         }
     }
+    return true;
 }
 
-static void ParseStartAndStopUsingPermission(
+static bool ParseStartAndStopUsingPermission(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
-    size_t argc = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = { 0 };
+    size_t argc = START_STOP_MAX_PARAMS;
+    napi_value argv[START_STOP_MAX_PARAMS] = { 0 };
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
-    NAPI_CALL_RETURN_VOID(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data));
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
 
     asyncContext.env = env;
-    asyncContext.tokenId = ParseUint32(env, argv[PARAM0]);
-    asyncContext.permissionName = ParseString(env, argv[PARAM1]);
-    if (argc == ARGS_THREE) {
-        napi_valuetype valueType = napi_undefined;
-        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_THREE - 1], &valueType))  ;
-        if (valueType == napi_function) {
-            NAPI_CALL_RETURN_VOID(env, napi_create_reference(env,
-                argv[ARGS_THREE - 1], 1, &asyncContext.callbackRef));
+    // 0: the first parameter of argv
+    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        return false;
+    }
+
+    // 1: the second parameter of argv
+    if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        return false;
+    }
+    if (argc == START_STOP_MAX_PARAMS) {
+        // 2: the third parameter of argv
+        if (!ParseCallback(env, argv[2], asyncContext.callbackRef)) {
+            return false;
         }
     }
+    return true;
 }
 
 static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRecordDetail& detailRecord)
@@ -199,61 +225,89 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "bundleRecords", objBundleRecords));
 }
 
-static void ParseGetPermissionUsedRecords(
-    const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
+static bool ParseRequest(const napi_env& env, const napi_value& value, PermissionUsedRequest& request)
 {
-    size_t argc = ARGS_TWO;
-    napi_value argv[ARGS_TWO] = { 0 };
-    napi_value thisVar = nullptr;
-    void* data = nullptr;
-    napi_valuetype valuetype = napi_undefined;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    napi_typeof(env, argv[PARAM0], &valuetype);
-    if (valuetype != napi_object) {
-        return;
+    napi_valuetype valueType;
+    napi_typeof(env, value, &valueType);
+    if (valueType != napi_object) {
+        return false;
     }
     napi_value property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "tokenId", &property));
-    asyncContext.request.tokenId = ParseUint32(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "isRemote", &property)) ;
-    asyncContext.request.isRemote = ParseBool(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "deviceId", &property));
-    asyncContext.request.deviceId = ParseString(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "bundleName", &property));
-    asyncContext.request.bundleName = ParseString(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "beginTime", &property));
-    asyncContext.request.beginTimeMillis = ParseInt64(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "endTime", &property));
-    asyncContext.request.endTimeMillis = ParseInt64(env, property);
-
-    property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "permissionNames", &property));
-    if (!ParseStringArray(env, property, asyncContext.request.permissionList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
-        return;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "tokenId", &property), false);
+    if (!ParseUint32(env, property, request.tokenId)) {
+        return false;
     }
 
     property = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_named_property(env, argv[PARAM0], "flag", &property));
-    asyncContext.request.flag = (PermissionUsageFlagEnum)ParseInt32(env, property);
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
+    if (!ParseBool(env, property, request.isRemote)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "deviceId", &property), false);
+    if (!ParseString(env, property, request.deviceId)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "bundleName", &property), false);
+    if (!ParseString(env, property, request.bundleName)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "beginTime", &property), false);
+    if (!ParseInt64(env, property, request.beginTimeMillis)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "endTime", &property), false);
+    if (!ParseInt64(env, property, request.endTimeMillis)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "permissionNames", &property), false);
+    if (!ParseStringArray(env, property, request.permissionList)) {
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "flag", &property), false);
+    int32_t flag;
+    if (!ParseInt32(env, property, flag)) {
+        return false;
+    }
+    request.flag = static_cast<PermissionUsageFlagEnum>(flag);
+
+    return true;
+}
+
+static bool ParseGetPermissionUsedRecords(
+    const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
+{
+    size_t argc = GET_PERMISSION_RECORD_MAX_PARAMS;
+    napi_value argv[GET_PERMISSION_RECORD_MAX_PARAMS] = { 0 };
+    napi_value thisVar = nullptr;
+    void* data = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
 
     asyncContext.env = env;
-    if (argc == ARGS_TWO) {
-        NAPI_CALL_RETURN_VOID(env, napi_typeof(env, argv[ARGS_TWO - 1], &valuetype));
-        if (valuetype == napi_function) {
-            NAPI_CALL_RETURN_VOID(env, napi_create_reference(env, argv[ARGS_TWO - 1], 1, &asyncContext.callbackRef));
+
+    // 0: the first parameter of argv
+    if (!ParseRequest(env, argv[0], asyncContext.request)) {
+        return false;
+    }
+
+    if (argc == GET_PERMISSION_RECORD_MAX_PARAMS) {
+        // 1: the second parameter of argv
+        if (!ParseCallback(env, argv[1], asyncContext.callbackRef)) {
+            return false;
         }
     }
+    return true;
 }
 
 static void AddPermissionUsedRecordExecute(napi_env env, void* data)
@@ -279,11 +333,10 @@ static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, vo
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
 
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env,
-        asyncContext->retCode, &results[PARAM1]));
-    if (asyncContext->deferred) {
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_PARAM_DATA]));
+    if (asyncContext->deferred != nullptr) {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
-            results[PARAM1]));
+            results[ASYNC_CALL_BACK_PARAM_DATA]));
     } else {
         napi_value callback = nullptr;
         napi_value callResult = nullptr;
@@ -307,7 +360,9 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
     }
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
-    ParseAddPermissionRecord(env, cbinfo, *asyncContext);
+    if (!ParseAddPermissionRecord(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
@@ -354,11 +409,10 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
 
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode,
-        &results[PARAM1]));
-    if (asyncContext->deferred) {
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_PARAM_DATA]));
+    if (asyncContext->deferred != nullptr) {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
-            results[PARAM1]));
+            results[ASYNC_CALL_BACK_PARAM_DATA]));
     } else {
         napi_value callback = nullptr;
         napi_value callResult = nullptr;
@@ -381,7 +435,9 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
     }
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
-    ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext);
+    if (!ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
@@ -428,11 +484,10 @@ static void StopUsingPermissionComplete(napi_env env, napi_status status, void* 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
 
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode,
-        &results[PARAM1]));
-    if (asyncContext->deferred) {
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode, &results[ASYNC_CALL_BACK_PARAM_DATA]));
+    if (asyncContext->deferred != nullptr) {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
-            results[PARAM1]));
+            results[ASYNC_CALL_BACK_PARAM_DATA]));
     } else {
         napi_value callback = nullptr;
         napi_value callResult = nullptr;
@@ -456,7 +511,9 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
     }
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
-    ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext);
+    if (!ParseStartAndStopUsingPermission(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
@@ -502,12 +559,11 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr};
 
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->retCode, &results[0]));
-    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &results[PARAM1]));
-    ProcessRecordResult(env, results[PARAM1], asyncContext->result);
-    if (asyncContext->deferred) {
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &results[ASYNC_CALL_BACK_PARAM_DATA]));
+    ProcessRecordResult(env, results[ASYNC_CALL_BACK_PARAM_DATA], asyncContext->result);
+    if (asyncContext->deferred != nullptr) {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
-            results[PARAM1]));
+            results[ASYNC_CALL_BACK_PARAM_DATA]));
     } else {
         napi_value callback = nullptr;
         napi_value callResult = nullptr;
@@ -530,7 +586,9 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
     }
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
-    ParseGetPermissionUsedRecords(env, cbinfo, *asyncContext);
+    if (!ParseGetPermissionUsedRecords(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
 
     napi_value result = nullptr;
     if (asyncContext->callbackRef == nullptr) {
@@ -557,32 +615,27 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
     RegisterPermActiveChangeContext& registerPermActiveChangeContext)
 {
-    size_t argc = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = {nullptr};
+    size_t argc = ON_OFF_MAX_PARAMS;
+    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-    std::string type = ParseString(env, argv[PARAM0]);
+    std::string type;
+    // 0: the first parameter of argv
+    if (!ParseString(env, argv[0], type)) {
+        return false;
+    }
     std::vector<std::string> permList;
-    if (!ParseStringArray(env, argv[PARAM1], permList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+    // 1: the second parameter of argv
+    if (!ParseStringArray(env, argv[1], permList)) {
         return false;
     }
     std::sort(permList.begin(), permList.end());
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get napi type failed");
-        return false;
-    } // get PRARM[2] callback type
-    if (valueType != napi_function) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-        return false;
-    }
-    if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
+    // 2: the third parameter of argv
+    if (!ParseCallback(env, argv[2], callback)) {
         return false;
     }
     registerPermActiveChangeContext.env = env;
@@ -597,33 +650,28 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
 static bool ParseInputToUnregister(const napi_env env, const napi_callback_info cbInfo,
     UnregisterPermActiveChangeContext& unregisterPermActiveChangeContext)
 {
-    size_t argc = ARGS_THREE;
-    napi_value argv[ARGS_THREE] = {nullptr};
+    size_t argc = ON_OFF_MAX_PARAMS;
+    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-    std::string type = ParseString(env, argv[PARAM0]);
+    std::string type;
+    // 0: the first parameter of argv
+    if (!ParseString(env, argv[0], type)) {
+        return false;
+    }
+    // 1: the second parameter of argv
     std::vector<std::string> permList;
-    if (!ParseStringArray(env, argv[PARAM1], permList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+    if (!ParseStringArray(env, argv[1], permList)) {
         return false;
     }
     std::sort(permList.begin(), permList.end());
-    napi_valuetype valueType = napi_undefined;
-    if (argc >= ARGS_THREE) {
-        if (napi_typeof(env, argv[PARAM2], &valueType) != napi_ok) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "get napi type failed");
-            return false;
-        } // get PRARM[2] callback type
-        if (valueType != napi_function) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
-            return false;
-        }
-        if (napi_create_reference(env, argv[PARAM2], 1, &callback) != napi_ok) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
+    if (argc == ON_OFF_MAX_PARAMS) {
+        // 2: the first parameter of argv
+        if (!ParseCallback(env, argv[2], callback)) {
             return false;
         }
     }

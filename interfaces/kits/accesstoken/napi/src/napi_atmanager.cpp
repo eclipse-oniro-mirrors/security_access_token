@@ -34,6 +34,9 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
 };
+static constexpr int32_t VERIFY_OR_FLAG_INPUT_MAX_PARAMS = 2;
+static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
+static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
 
 static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const PermStateChangeInfo& result)
 {
@@ -60,11 +63,11 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
     RegisterPermStateChangeWorker* registerPermStateChangeData =
         reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
     std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeData};
-    napi_value result[ARGS_ONE] = {nullptr};
+    napi_value result = {nullptr};
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
-        napi_create_array(registerPermStateChangeData->env, &result[PARAM0]));
+        napi_create_array(registerPermStateChangeData->env, &result));
     if (!ConvertPermStateChangeInfo(registerPermStateChangeData->env,
-        result[PARAM0], registerPermStateChangeData->result)) {
+        result, registerPermStateChangeData->result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertPermStateChangeInfo failed");
         return;
     }
@@ -78,7 +81,7 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
         napi_get_reference_value(registerPermStateChangeData->env, registerPermStateChangeData->ref, &callback));
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
         napi_call_function(registerPermStateChangeData->env,
-        undefined, callback, ARGS_ONE, &result[PARAM0], &resultout));
+        undefined, callback, 1, &result, &resultout));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkPermStateChanged end");
 };
 } // namespace
@@ -210,17 +213,18 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
         ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo is nullptr");
         return nullptr;
     }
-    if (napi_wrap(env, thisVar, objectInfo, [](napi_env env, void* data, void* hint) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
-        if (data != nullptr) {
-            AccessTokenKit* objectInfo = (AccessTokenKit*) data;
-            delete objectInfo;
-        }
-    }, nullptr, nullptr) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_wrap failed");
-        return nullptr;
-    }
 
+    std::unique_ptr<AccessTokenKit> objPtr {objectInfo};
+    NAPI_CALL(env, napi_wrap(env, thisVar, objectInfo,
+        [](napi_env env, void* data, void* hint) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
+            if (data != nullptr) {
+                AccessTokenKit* objectInfo = (AccessTokenKit*)data;
+                delete objectInfo;
+            }
+        },
+        nullptr, nullptr));
+    objPtr.release();
     return thisVar;
 }
 
@@ -231,62 +235,49 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     napi_value instance = nullptr;
     napi_value cons = nullptr;
 
-    if (napi_get_reference_value(env, atManagerRef_, &cons) != napi_ok) {
-        return nullptr;
-    }
-
+    NAPI_CALL(env, napi_get_reference_value(env, atManagerRef_, &cons));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable atManagerRef_ complete");
 
-    if (napi_new_instance(env, cons, 0, nullptr, &instance) != napi_ok) {
-        return nullptr;
-    }
+    NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "New the js instance complete");
-
     return instance;
 }
 
-void NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
+bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = VERIFY_OR_FLAG_INPUT_MAX_VALUES;
+    size_t argc = VERIFY_OR_FLAG_INPUT_MAX_PARAMS;
 
-    napi_value argv[VERIFY_OR_FLAG_INPUT_MAX_VALUES] = { 0 };
+    napi_value argv[VERIFY_OR_FLAG_INPUT_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
 
     void *data = nullptr;
-
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
 
     asyncContext.env = env;
-
-    // parse input tokenId and permissionName
-    for (size_t i = 0; i < argc; i++) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[i], &valueType);
-
-        if (valueType == napi_number) {
-            napi_get_value_uint32(env, argv[i], &(asyncContext.tokenId)); // get tokenId
-        } else if (valueType == napi_string) {
-            napi_get_value_string_utf8(env, argv[i], asyncContext.permissionName,
-                VALUE_BUFFER_SIZE + 1, &(asyncContext.pNameLen)); // get permissionName
-        } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Type matching failed");
-            return;
-        }
+    // 0: the first parameter of argv
+    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        return false;
     }
 
-    asyncContext.result = AT_PERM_OPERA_SUCC;
+    // 1: the second parameter of argv
+    if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        return false;
+    }
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
-        asyncContext.permissionName);
+        asyncContext.permissionName.c_str());
+    return true;
 }
 
 void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
 
-    // use innerkit class method to verify permission
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
         asyncContext->permissionName);
 }
@@ -294,52 +285,48 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
-        asyncContext->tokenId, asyncContext->permissionName, asyncContext->result);
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
 
-    // only resolve, no reject currently
-    napi_create_int32(env, asyncContext->result, &result); // verify result
-    napi_resolve_deferred(env, asyncContext->deferred, result);
-
-    // after return the result, free resources
-    napi_delete_async_work(env, asyncContext->work);
-    delete asyncContext;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
+    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
 }
 
 napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
-        delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
         return nullptr;
     }
 
-    // after get input, keep result default failed
-    asyncContext->result = AT_PERM_OPERA_FAIL;
-
     napi_value result = nullptr;
-    napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
 
-    napi_value resource = nullptr; // resource name
-    napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resource);
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work( // define work
-        env, nullptr, resource, VerifyAccessTokenExecute, VerifyAccessTokenComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
-    napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        VerifyAccessTokenExecute, VerifyAccessTokenComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
-
+    context.release();
     return result;
 }
 
@@ -347,76 +334,73 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
-        delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
         return nullptr;
     }
 
-    // use innerkit class method to verify permission
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
         asyncContext->permissionName);
 
     napi_value result = nullptr;
-    napi_create_int32(env, asyncContext->result, &result); // verify result
+    NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
-
     return result;
 }
 
-void NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
+bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = GRANT_OR_REVOKE_INPUT_MAX_VALUES;
-
-    napi_value argv[GRANT_OR_REVOKE_INPUT_MAX_VALUES] = {nullptr};
+    size_t argc = GRANT_OR_REVOKE_INPUT_MAX_PARAMS;
+    napi_value argv[GRANT_OR_REVOKE_INPUT_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
 
     void *data = nullptr;
-
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
 
     asyncContext.env = env;
+    // 0: the first parameter of argv
+    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        return false;
+    }
 
-    // parse input tokenId and permissionName
-    for (size_t i = 0; i < argc; i++) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[i], &valueType);
+    // 1: the second parameter of argv
+    if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        return false;
+    }
 
-        if ((i == 0) && (valueType == napi_number)) {
-            napi_get_value_uint32(env, argv[i], &(asyncContext.tokenId)); // get tokenId
-        } else if (valueType == napi_string) {
-            napi_get_value_string_utf8(env, argv[i], asyncContext.permissionName,
-                VALUE_BUFFER_SIZE + 1, &(asyncContext.pNameLen)); // get permissionName
-        } else if (valueType == napi_number) {
-            napi_get_value_int32(env, argv[i], &(asyncContext.flag)); // get flag
-        } else if (valueType == napi_function) {
-            napi_create_reference(env, argv[i], 1, &asyncContext.callbackRef); // get probably callback
-        } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Type matching failed");
-            return;
+    // 2: the third parameter of argv
+    if (!ParseInt32(env, argv[2], asyncContext.flag)) {
+        return false;
+    }
+
+    if (argc == GRANT_OR_REVOKE_INPUT_MAX_PARAMS) {
+        // 3: the fourth parameter of argv
+        if (!ParseCallback(env, argv[3], asyncContext.callbackRef)) {
+            return false;
         }
     }
 
-    asyncContext.result = AT_PERM_OPERA_SUCC;
-
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d",
-        asyncContext.tokenId, asyncContext.permissionName, asyncContext.flag);
+        asyncContext.tokenId, asyncContext.permissionName.c_str(), asyncContext.flag);
+    return true;
 }
 
 void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
     PermissionDef permissionDef;
 
-    // struct init, can not use = { 0 } or memset otherwise program crashdump
     permissionDef.grantMode = 0;
     permissionDef.availableLevel = APL_NORMAL;
     permissionDef.provisionEnable = false;
@@ -424,15 +408,12 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
     permissionDef.labelId = 0;
     permissionDef.descriptionId = 0;
 
-    // use innerkit class method to check if the permission grantmode is USER_GRANT-0
-    int ret = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
-    if (ret) {
-        // this means permission is undefined, return failed
+    if (AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef) != AT_PERM_OPERA_SUCC) {
         return;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.", asyncContext->permissionName,
-        permissionDef.grantMode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
+        asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
@@ -441,51 +422,47 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
-            asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
+            asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
     }
 }
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
-
-    // no err, results[0] remain nullptr
-    napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
-
-    if (asyncContext->deferred) {
-        // promise type, no reject currently
-        napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
-    } else {
-        // callback type
-        napi_value callback = nullptr;
-        napi_value thisValue = nullptr; // recv napi value
-        napi_value thatValue = nullptr; // result napi value
-
-        // set call function params->napi_call_function(env, recv, func, argc, argv, result)
-        napi_get_undefined(env, &thisValue); // can not null otherwise js code can not get return
-        napi_create_int32(env, 0, &thatValue); // can not null otherwise js code can not get return
-        napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-        napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue);
-        napi_delete_reference(env, asyncContext->callbackRef); // release callback handle
+    if (asyncContext == nullptr) {
+        return;
     }
+    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; 
 
-    // after return the result, free resources
-    napi_delete_async_work(env, asyncContext->work);
-    delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+
+    if (asyncContext->deferred != nullptr) {
+        NAPI_CALL_RETURN_VOID(
+            env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+    } else {
+        napi_value callback = nullptr;
+        napi_value thisValue = nullptr;
+        napi_value thatValue = nullptr;
+
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
+        NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
+        NAPI_CALL_RETURN_VOID(env,
+            napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
+    }
 }
 
 napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion begin.");
 
-    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
@@ -505,6 +482,9 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
 void NapiAtManager::GetVersionExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
     asyncContext->result = AccessTokenKit::GetVersion();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 }
@@ -512,66 +492,64 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
 void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
     NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
-
-    NAPI_CALL_RETURN_VOID(env, napi_delete_async_work(env, asyncContext->work));
-    delete asyncContext;
 }
 
 napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission begin.");
 
-    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    ParseInputGrantOrRevokePermission(env, info, *asyncContext);
-    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
-        delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext)) {
         return nullptr;
     }
-
-    // after get input, keep result default failed
-    asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
 
     if (asyncContext->callbackRef == nullptr) {
-        // when callback null, create delay promise object for returning result in async work complete function
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        // callback not null, use callback type to return result
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
-    napi_value resource = nullptr; // resource name
-    napi_create_string_utf8(env, "GrantUserGrantedPermission", NAPI_AUTO_LENGTH, &resource);
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GrantUserGrantedPermission", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work( // define work
-        env, nullptr, resource, GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
 
-    napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission end.");
-
+    context.release();
     return result;
 }
 
 void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
     PermissionDef permissionDef;
 
-    // struct init, can not use = { 0 } or memset otherwise program crashdump
     permissionDef.grantMode = 0;
     permissionDef.availableLevel = APL_NORMAL;
     permissionDef.provisionEnable = false;
@@ -579,15 +557,12 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
     permissionDef.labelId = 0;
     permissionDef.descriptionId = 0;
 
-    // use innerkit class method to check if the permission grantmode is USER_GRANT-0
-    int ret = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
-    if (ret) {
-        // this means permission is undefined, return failed
+    if (AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef) != AT_PERM_OPERA_SUCC) {
         return;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.", asyncContext->permissionName,
-        permissionDef.grantMode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
+        asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
@@ -596,80 +571,70 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
 
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
-            asyncContext->tokenId, asyncContext->permissionName, asyncContext->flag, asyncContext->result);
+            asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
     }
 }
 
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
-    // no err, results[0] remain nullptr
-    napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
 
-    if (asyncContext->deferred) {
-        // promise type, no reject currently
-        napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]);
+    if (asyncContext->deferred != nullptr) {
+        NAPI_CALL_RETURN_VOID(
+            env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
     } else {
-        // callback type
         napi_value callback = nullptr;
-        napi_value thisValue = nullptr; // recv napi value
-        napi_value thatValue = nullptr; // result napi value
+        napi_value thisValue = nullptr;
+        napi_value thatValue = nullptr;
 
-        // set call function params->napi_call_function(env, recv, func, argc, argv, result)
-        napi_get_undefined(env, &thisValue); // can not null otherwise js code can not get return
-        napi_create_int32(env, 0, &thatValue); // can not null otherwise js code can not get return
-        napi_get_reference_value(env, asyncContext->callbackRef, &callback);
-        napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue);
-        napi_delete_reference(env, asyncContext->callbackRef); // release callback handle
+        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
+        NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
+        NAPI_CALL_RETURN_VOID(env,
+            napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
     }
-
-    // after return the result, free resources
-    napi_delete_async_work(env, asyncContext->work);
-    delete asyncContext;
 }
 
 napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RevokeUserGrantedPermission begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    ParseInputGrantOrRevokePermission(env, info, *asyncContext);
-    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
-        delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext)) {
         return nullptr;
     }
 
-    // after get input, keep result default failed
-    asyncContext->result = AT_PERM_OPERA_FAIL;
-
     napi_value result = nullptr;
-
     if (asyncContext->callbackRef == nullptr) {
-        // when callback null, create delay promise object for returning result in async work complete function
-        napi_create_promise(env, &(asyncContext->deferred), &result);
+        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
     } else {
-        // callback not null, use callback type to return result
-        napi_get_undefined(env, &result);
+        NAPI_CALL(env, napi_get_undefined(env, &result));
     }
 
-    napi_value resource = nullptr; // resource name
-    napi_create_string_utf8(env, "RevokeUserGrantedPermission", NAPI_AUTO_LENGTH, &resource);
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "RevokeUserGrantedPermission", NAPI_AUTO_LENGTH, &resource));
 
-    napi_create_async_work( // define work
-        env, nullptr, resource, RevokeUserGrantedPermissionExecute, RevokeUserGrantedPermissionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        RevokeUserGrantedPermissionExecute, RevokeUserGrantedPermissionComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
 
-    napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
-
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RevokeUserGrantedPermission end.");
-
+    context.release();
     return result;
 }
 
@@ -677,7 +642,6 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
-    // use innerkit class method to get permission flag
     asyncContext->flag = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
         asyncContext->permissionName);
 }
@@ -685,38 +649,33 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    napi_value result;
+    if (asyncContext == nullptr) {
+        return;
+    }
+    napi_value result = nullptr;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, tokenId = %{public}d, flag = %{public}d.",
-        asyncContext->permissionName, asyncContext->tokenId, asyncContext->flag);
+        asyncContext->permissionName.c_str(), asyncContext->tokenId, asyncContext->flag);
 
-    // only resolve, no reject currently
-    napi_create_int32(env, asyncContext->flag, &result);
-    napi_resolve_deferred(env, asyncContext->deferred, result);
-
-    // after return the result, free resources
-    napi_delete_async_work(env, asyncContext->work);
-    delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->flag, &result));
+    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
 }
 
 napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext);
-    if (asyncContext->result == AT_PERM_OPERA_FAIL) {
-        delete asyncContext;
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
         return nullptr;
     }
-
-    // after get input, keep result default failed
-    asyncContext->result = AT_PERM_OPERA_FAIL;
 
     napi_value result = nullptr;
     napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
@@ -730,41 +689,41 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags end.");
-
+    context.release();
     return result;
 }
 
 bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
-    size_t argc = ARGS_FOUR;
-    napi_value argv[ARGS_FOUR] = {nullptr};
+    size_t argc = ON_OFF_MAX_PARAMS;
+    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
-    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL), false);
+
+    // 0: the first parameter of argv
+    std::string type;
+    if (!ParseString(env, argv[0], type)) {
         return false;
     }
-    std::string type = ParseString(env, argv[PARAM0]);
+
     PermStateChangeScope scopeInfo;
-    if (!ParseAccessTokenIDArray(env, argv[PARAM1], scopeInfo.tokenIDs)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseAccessTokenIDArray failed");
+    // 1: the second parameter of argv
+    if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
         return false;
     }
-    if (!ParseStringArray(env, argv[PARAM2], scopeInfo.permList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+
+    // 2: the third parameter of argv
+    if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
         return false;
     }
-    napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, argv[PARAM3], &valueType); // get PRARM[3] type
-    if (valueType != napi_function) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM3] type matching failed");
+
+    // 3: the fourth parameter of argv
+    if (!ParseCallback(env, argv[3], callback)) {
         return false;
     }
-    if (napi_create_reference(env, argv[PARAM3], 1, &callback) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
-        return false;
-    }
+
     AccessTokenKit* accessTokenKitInfo = nullptr;
     if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_unwrap failed");
@@ -817,41 +776,41 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
 bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
     UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo)
 {
-    size_t argc = ARGS_FOUR;
-    napi_value argv[ARGS_FOUR] = {nullptr};
+    size_t argc = ON_OFF_MAX_PARAMS;
+    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-    std::string type = ParseString(env, argv[PARAM0]);
+
+    // 0: the first parameter of argv
+    std::string type;
+    if (!ParseString(env, argv[0], type)) {
+        return false;
+    }
+
     PermStateChangeScope scopeInfo;
-    if (!ParseAccessTokenIDArray(env, argv[PARAM1], scopeInfo.tokenIDs)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseAccessTokenIDArray failed");
+    // 1: the second parameter of argv
+    if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
         return false;
     }
-    if (!ParseStringArray(env, argv[PARAM2], scopeInfo.permList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ParseStringArray failed");
+
+    // 2: the third parameter of argv
+    if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
         return false;
     }
-    if (argc >= ARGS_FOUR) {
-        napi_valuetype valueType = napi_undefined;
-        napi_typeof(env, argv[PARAM3], &valueType); // get PRARM[3] type
-        if (valueType != napi_function) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "argv[PARAM3] type matching failed");
-            return false;
-        }
-        if (napi_create_reference(env, argv[PARAM3], 1, &callback) != napi_ok) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "napi_create_reference failed");
+
+    if (argc == ON_OFF_MAX_PARAMS) {
+        // 3: the fourth parameter of argv
+        if (!ParseCallback(env, argv[3], callback)) {
             return false;
         }
     }
     AccessTokenKit* accessTokenKitInfo = nullptr;
-    if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_unwrap failed");
-        return false;
-    }
+    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)), false);
+
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     unregisterPermStateChangeInfo.env = env;
