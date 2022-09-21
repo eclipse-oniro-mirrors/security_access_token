@@ -277,7 +277,7 @@ int SoftBusManager::CloseSession(int sessionId)
 std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return "";
     }
 
@@ -307,7 +307,7 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
 std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return "";
     }
     std::string udid = GetUdidByNodeId(nodeId);
@@ -343,8 +343,8 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
     }
     std::string uuid(reinterpret_cast<char *>(info));
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s", nodeId.c_str(),
-        uuid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s",
+        ConstantCommon::EncryptDevId(nodeId).c_str(), uuid.c_str());
     return uuid;
 }
 
@@ -365,7 +365,8 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
     }
     std::string udid(reinterpret_cast<char *>(info));
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s",
+        ConstantCommon::EncryptDevId(nodeId).c_str());
     return udid;
 }
 

@@ -150,7 +150,7 @@ void RemoteCommandManager::Clear()
 int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return Constant::FAILURE;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId:  %{public}s", nodeId.c_str());
@@ -205,7 +205,7 @@ int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return Constant::FAILURE;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId:  %{public}s", nodeId.c_str());
@@ -268,7 +268,7 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
  */
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId:%{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
     if (!DataValidator::IsDeviceIdValid(udid)) {
         ACCESSTOKEN_LOG_WARN(
