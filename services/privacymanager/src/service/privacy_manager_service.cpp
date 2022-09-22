@@ -138,7 +138,7 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector
         return ERR_OK;
     }
     int32_t RecordsNum = 0;
-    for (int32_t index = result.bundleRecords[0].permissionRecords.size() - 1; index >= 0; index--) {
+    for (size_t index = 0; index < result.bundleRecords[0].permissionRecords.size(); index++) {
         if (RecordsNum > PERMISSION_USAGE_RECORDS_MAX_NUM) {
             break;
         }
