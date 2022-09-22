@@ -31,7 +31,8 @@ void FreeStrArray(char **arr, int32_t num)
 uint32_t GetProcessNameFromJson(cJSON *cjsonItem, NativeTokenList *tokenNode)
 {
     cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
-    if (!cJSON_IsString(processNameJson) || (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
+    if (!cJSON_IsString(processNameJson) || (processNameJson->valuestring == NULL) ||
+        (strlen(processNameJson->valuestring) > MAX_PROCESS_NAME_LEN)) {
         AT_LOG_ERROR("[ATLIB-%s]:processNameJson is invalid.", __func__);
         return ATRET_FAILED;
     }
@@ -283,7 +284,7 @@ uint32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *recor
             return ATRET_FAILED;
         }
         cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
-        if (processNameJson == NULL) {
+	if ((processNameJson == NULL) || (processNameJson->valuestring == NULL)) {
             AT_LOG_ERROR("[ATLIB-%s]:processNameJson is null.", __func__);
             return ATRET_FAILED;
         }
