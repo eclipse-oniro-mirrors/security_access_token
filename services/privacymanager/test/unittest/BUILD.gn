@@ -41,6 +41,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "c_utils:utils",
+      "ipc:ipc_core",
       "safwk:system_ability_fwk",
     ]
   }

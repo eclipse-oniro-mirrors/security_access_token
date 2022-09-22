@@ -16,6 +16,12 @@
 #ifndef PARCEL_UTILS_H
 #define PARCEL_UTILS_H
 #define MAX_PERMLIST_SIZE 256
+#define MAX_DCAP_SIZE 32
+#define MAX_ACL_SIZE 64
+#define MAX_DEVICE_ID_SIZE 1024
+#define MAX_RECORD_SIZE 1024
+#define MAX_ACCESS_RECORD_SIZE 10
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {

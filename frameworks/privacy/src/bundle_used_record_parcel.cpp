@@ -28,7 +28,7 @@ bool BundleUsedRecordParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->bundleRecord.deviceId));
     RETURN_IF_FALSE(out.WriteString(this->bundleRecord.bundleName));
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->bundleRecord.permissionRecords.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->bundleRecord.permissionRecords.size()));
     for (const auto& permRecord : this->bundleRecord.permissionRecords) {
         PermissionUsedRecordParcel permRecordParcel;
         permRecordParcel.permissionRecord = permRecord;
@@ -49,9 +49,10 @@ BundleUsedRecordParcel* BundleUsedRecordParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.deviceId), bundleRecordParcel);
     RELEASE_IF_FALSE(in.ReadString(bundleRecordParcel->bundleRecord.bundleName), bundleRecordParcel);
 
-    int32_t permRecordSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(permRecordSize), bundleRecordParcel);
-    for (int32_t i = 0; i < permRecordSize; i++) {
+    uint32_t permRecordSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(permRecordSize), bundleRecordParcel);
+    RELEASE_IF_FALSE(permRecordSize <= MAX_RECORD_SIZE, bundleRecordParcel);
+    for (uint32_t i = 0; i < permRecordSize; i++) {
         sptr<PermissionUsedRecordParcel> permRecord = in.ReadParcelable<PermissionUsedRecordParcel>();
         RELEASE_IF_FALSE(permRecord != nullptr, bundleRecordParcel);
         bundleRecordParcel->bundleRecord.permissionRecords.emplace_back(permRecord->permissionRecord);
