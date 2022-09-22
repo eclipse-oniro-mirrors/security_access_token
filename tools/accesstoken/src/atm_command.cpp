@@ -279,7 +279,7 @@ ErrCode AtmCommand::RunAsCommandExistentOptionArgument(
             break;
         case 'i':
             if (optarg != nullptr) {
-                tokenId = static_cast<const uint32_t>(std::atoi(optarg));
+                tokenId = static_cast<uint32_t>(std::atoi(optarg));
             }
             break;
         case 'p':
