@@ -281,13 +281,11 @@ static NativeAtId CreateNativeTokenId(const char *processName)
 {
     uint32_t rand;
     NativeAtId tokenId;
-    int32_t ret;
     AtInnerInfo *innerId = (AtInnerInfo *)(&tokenId);
     int32_t retry = MAX_RETRY_TIMES;
 
     while (retry > 0) {
-        ret = GetRandomTokenId(&rand);
-        if (ret != ATRET_SUCCESS) {
+        if (GetRandomTokenId(&rand) != ATRET_SUCCESS) {
             return INVALID_TOKEN_ID;
         }
         if (IsTokenUniqueIdExist(rand & (TOKEN_RANDOM_MASK)) == 0) {
@@ -333,9 +331,6 @@ static int32_t GetAplLevel(const char *aplStr)
 
 static void WriteToFile(const cJSON *root)
 {
-    size_t strLen;
-    ssize_t writtenLen;
-
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
     if (jsonStr == NULL) {
@@ -350,8 +345,8 @@ static void WriteToFile(const cJSON *root)
             AT_LOG_ERROR("[ATLIB-%s]:open failed.", __func__);
             break;
         }
-        strLen = strlen(jsonStr);
-        writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
+        size_t strLen = strlen(jsonStr);
+        ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %zu.", __func__, writtenLen);

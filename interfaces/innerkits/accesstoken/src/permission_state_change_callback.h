@@ -26,7 +26,7 @@ namespace Security {
 namespace AccessToken {
 class PermissionStateChangeCallback : public PermissionStateChangeCallbackStub {
 public:
-    explicit PermissionStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& scope);
+    explicit PermissionStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCallback);
     ~PermissionStateChangeCallback() override;
 
     void PermStateChangeCallback(PermStateChangeInfo& result) override;

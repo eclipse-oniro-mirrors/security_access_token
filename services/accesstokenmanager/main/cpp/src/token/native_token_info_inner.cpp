@@ -155,9 +155,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     SetNativeAcls(inGenericValues.GetString(FIELD_NATIVE_ACLS));
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
 
-    std::vector<GenericValues> permDefRes = {};
-    permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId,
-        permStateRes);
+    permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId, permStateRes);
     return RET_SUCCESS;
 }
 

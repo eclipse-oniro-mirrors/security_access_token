@@ -354,7 +354,7 @@ int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
 }
 
 int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
+    const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, deviceID=%{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
     return AccessTokenManagerClient::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);

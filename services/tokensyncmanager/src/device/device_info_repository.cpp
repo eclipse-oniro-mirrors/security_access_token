@@ -35,7 +35,7 @@ std::vector<DeviceInfo> DeviceInfoRepository::ListDeviceInfo()
     itEnd = deviceInfoMap_.end();
     while (it != itEnd) {
         deviceInfo.push_back(it->second);
-        it++;
+        ++it;
     }
     return deviceInfo;
 }
