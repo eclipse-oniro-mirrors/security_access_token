@@ -62,6 +62,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
 HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     const HapTokenInfo &info, const std::vector<PermissionStateFull>& permStateList) : isRemote_(false)
 {
+    permUpdateTimestamp_ = 0;
     tokenInfoBasic_ = info;
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, permStateList);
 }

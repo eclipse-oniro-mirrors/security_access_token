@@ -96,7 +96,7 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
     status = PERM_ACTIVE_IN_BACKGROUND;
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [pkgName](const auto& foreGroundApp) { return foreGroundApp.bundleName == pkgName; })) {
-            status = PERM_ACTIVE_IN_FOREGROUND;       
+        status = PERM_ACTIVE_IN_FOREGROUND;       
     }
     return true;
 }
