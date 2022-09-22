@@ -439,7 +439,7 @@ void AccessTokenKitTest::AllocTestToken() const
  * @tc.name: GetDefPermission001
  * @tc.desc: Get permission definition info after AllocHapToken function has been invoked.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermission001, TestSize.Level1)
 {
@@ -458,7 +458,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission001, TestSize.Level1)
  * @tc.name: GetDefPermission002
  * @tc.desc: Get permission definition info that permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermission002, TestSize.Level1)
 {
@@ -478,7 +478,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission002, TestSize.Level1)
  * @tc.name: GetDefPermission003
  * @tc.desc: GetDefPermission is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
 {
@@ -495,7 +495,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
  * @tc.name: GetDefPermissions001
  * @tc.desc: Get permission definition info list after AllocHapToken function has been invoked.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
 {
@@ -511,7 +511,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
  * @tc.name: GetDefPermissions002
  * @tc.desc: Get permission definition info list after clear permission definition list
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
 {
@@ -536,7 +536,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
  * @tc.name: GetDefPermissions003
  * @tc.desc: Get permission definition info list that tokenID is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
 {
@@ -558,7 +558,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
  * @tc.name: GetDefPermissions004
  * @tc.desc: GetDefPermissions is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
 {
@@ -577,7 +577,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
  * @tc.name: GetReqPermissions001
  * @tc.desc: Get user granted permission state info.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 {
@@ -597,7 +597,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
  * @tc.name: GetReqPermissions002
  * @tc.desc: Get system granted permission state info.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
 {
@@ -617,7 +617,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
  * @tc.name: GetReqPermissions003
  * @tc.desc: Get user granted permission state info after clear request permission list.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
 {
@@ -652,7 +652,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
  * @tc.name: GetReqPermissions004
  * @tc.desc: Get permission state info list that tokenID is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetReqPermissions004, TestSize.Level1)
 {
@@ -674,7 +674,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions004, TestSize.Level1)
  * @tc.name: GetReqPermissions005
  * @tc.desc: GetReqPermissions is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
 {
@@ -694,7 +694,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
  * @tc.name: GetPermissionFlag001
  * @tc.desc: Get permission flag after grant permission.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
 {
@@ -711,7 +711,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
  * @tc.name: GetPermissionFlag002
  * @tc.desc: Get permission flag that tokenID or permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
 {
@@ -741,7 +741,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
  * @tc.name: GetPermissionFlag003
  * @tc.desc: GetPermissionFlag is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
 {
@@ -761,7 +761,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
  * @tc.name: VerifyAccessToken001
  * @tc.desc: Verify user granted permission.
  * @tc.type: FUNC
- * @tc.require:AR000GK6T8 AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken001, TestSize.Level0)
 {
@@ -784,7 +784,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken001, TestSize.Level0)
  * @tc.name: VerifyAccessToken002
  * @tc.desc: Verify system granted permission.
  * @tc.type: FUNC
- * @tc.require:AR000GK6T8
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level0)
 {
@@ -807,7 +807,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level0)
  * @tc.name: VerifyAccessToken003
  * @tc.desc: Verify permission that tokenID or permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GK6T8
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken003, TestSize.Level0)
 {
@@ -836,7 +836,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken003, TestSize.Level0)
  * @tc.name: VerifyAccessToken004
  * @tc.desc: Verify permission after update.
  * @tc.type: FUNC
- * @tc.require:AR000GK6T8
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 {
@@ -876,7 +876,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
  * @tc.name: GrantPermission001
  * @tc.desc: Grant permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level0)
 {
@@ -899,7 +899,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level0)
  * @tc.name: GrantPermission002
  * @tc.desc: Grant permission that tokenID or permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
 {
@@ -929,7 +929,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
  * @tc.name: GrantPermission003
  * @tc.desc: GrantPermission is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
 {
@@ -952,7 +952,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
  * @tc.name: RevokePermission001
  * @tc.desc: Revoke permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level0)
 {
@@ -975,7 +975,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level0)
  * @tc.name: RevokePermission002
  * @tc.desc: Revoke permission that tokenID or permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
 {
@@ -1005,7 +1005,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
  * @tc.name: RevokePermission003
  * @tc.desc: RevokePermission is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
 {
@@ -1028,7 +1028,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
  * @tc.name: ClearUserGrantedPermissionState001
  * @tc.desc: Clear user/system granted permission after ClearUserGrantedPermissionState has been invoked.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
@@ -1048,7 +1048,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level0
  * @tc.name: ClearUserGrantedPermissionState002
  * @tc.desc: Clear user/system granted permission that tokenID or permission is invalid.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState002, TestSize.Level0)
 {
@@ -1068,7 +1068,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState002, TestSize.Level0
  * @tc.name: ClearUserGrantedPermissionState003
  * @tc.desc: ClearUserGrantedPermissionState is invoked multiple times.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState003, TestSize.Level0)
 {
@@ -1088,7 +1088,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState003, TestSize.Level0
  * @tc.name: ClearUserGrantedPermissionState004
  * @tc.desc: Clear user/system granted permission after ClearUserGrantedPermissionState has been invoked.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TF AR000GK6TG
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0)
 {
@@ -1143,7 +1143,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
  * @tc.name: GetTokenType001
  * @tc.desc: get the token type.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetTokenType001, TestSize.Level0)
 {
@@ -1160,7 +1160,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenType001, TestSize.Level0)
  * @tc.name: GetHapTokenInfo001
  * @tc.desc: get the token info and verify.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
 {
@@ -1184,7 +1184,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
  * @tc.name: GetHapTokenInfo002
  * @tc.desc: try to get the token info with invalid tokenId.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenInfo002, TestSize.Level0)
 {
@@ -1197,7 +1197,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo002, TestSize.Level0)
  * @tc.name: DeleteToken001
  * @tc.desc: Cannot get permission definition info after DeleteToken function has been invoked.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TI
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteToken001, TestSize.Level1)
 {
@@ -1219,7 +1219,7 @@ HWTEST_F(AccessTokenKitTest, DeleteToken001, TestSize.Level1)
  * @tc.name: DeleteToken002
  * @tc.desc: Delete invalid tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TI
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteToken002, TestSize.Level1)
 {
@@ -1231,7 +1231,7 @@ HWTEST_F(AccessTokenKitTest, DeleteToken002, TestSize.Level1)
  * @tc.name: DeleteToken002
  * @tc.desc: Delete invalid tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TI
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteToken003, TestSize.Level1)
 {
@@ -1252,7 +1252,7 @@ HWTEST_F(AccessTokenKitTest, DeleteToken003, TestSize.Level1)
  * @tc.name: DeleteToken004
  * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delte it again.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TI
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteToken004, TestSize.Level1)
 {
@@ -1277,7 +1277,7 @@ HWTEST_F(AccessTokenKitTest, DeleteToken004, TestSize.Level1)
  * @tc.name: GetHapTokenID001
  * @tc.desc: get hap tokenid.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenID001, TestSize.Level1)
 {
@@ -1294,7 +1294,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID001, TestSize.Level1)
  * @tc.name: GetHapTokenID002
  * @tc.desc: cannot get hap tokenid with invalid userId.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenID002, TestSize.Level1)
 {
@@ -1307,7 +1307,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID002, TestSize.Level1)
  * @tc.name: GetHapTokenID003
  * @tc.desc: cannot get hap tokenid with invalid bundlename.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenID003, TestSize.Level1)
 {
@@ -1320,7 +1320,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID003, TestSize.Level1)
  * @tc.name: GetHapTokenID003
  * @tc.desc: cannot get hap tokenid with invalid bundlename.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetHapTokenID004, TestSize.Level1)
 {
@@ -1333,7 +1333,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID004, TestSize.Level1)
  * @tc.name: ReloadNativeTokenInfo001
  * @tc.desc: cannot get hap tokenid with invalid bundlename.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
 {
@@ -1345,36 +1345,87 @@ HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
  * @tc.name: GetNativeTokenId001
  * @tc.desc: cannot get native tokenid with invalid processName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetNativeTokenId001, TestSize.Level1)
 {
-    std::string processName = "invalid processName";
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_EQ(0, tokenID);
+    std::string processName = "";
+    ASSERT_EQ(0, AccessTokenKit::GetNativeTokenId(processName));
+
+    processName = "invalid processName";
+    ASSERT_EQ(0, AccessTokenKit::GetNativeTokenId(processName));
 }
 
 /**
  * @tc.name: GetNativeTokenId002
  * @tc.desc: get native tokenid with processName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TH
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetNativeTokenId002, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
+    ASSERT_NE(0, tokenID);
+
     NativeTokenInfo tokenInfo;
-    AccessTokenID ret = AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo));
     ASSERT_EQ(true, tokenInfo.processName == processName);
 }
 
 /**
- * @tc.name: AllocHapToken001
- * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delte it again.
+ * @tc.name: GetNativeTokenId003
+ * @tc.desc: get native tokenid with hap.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenId003, TestSize.Level1)
+{
+    std::string processName = "hdcd";
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    ASSERT_EQ(0, SetSelfTokenID(tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
+
+    tokenID = AccessTokenKit::GetNativeTokenId(processName);
+    ASSERT_NE(0, tokenID);
+
+    NativeTokenInfo tokenInfo;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo));
+    ASSERT_EQ(true, tokenInfo.processName == processName);
+
+    ASSERT_EQ(0, SetSelfTokenID(selfTokenId_));
+}
+
+/**
+ * @tc.name: GetNativeTokenId004
+ * @tc.desc: get native tokenid with hap.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenId004, TestSize.Level1)
+{
+    std::string processName = "hdcd";
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(0, tokenID);
+    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
+
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
+
+    ASSERT_EQ(0, AccessTokenKit::GetNativeTokenId(processName));
+
+    // restore environment
+    setuid(selfUid);
+    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId_));
+}
+
+/**
+ * @tc.name: AllocHapToken001
+ * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delete it again.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken001, TestSize.Level1)
 {
@@ -1396,7 +1447,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken001, TestSize.Level1)
  * @tc.desc: alloc a tokenId successfully,
  *           and fail to alloc it with the same info and policy again.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
 {
@@ -1432,7 +1483,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
  * @tc.name: AllocHapToken003
  * @tc.desc: cannot alloc a tokenId with invalid bundlename.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken003, TestSize.Level1)
 {
@@ -1462,7 +1513,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken003, TestSize.Level1)
  * @tc.name: AllocHapToken004
  * @tc.desc: cannot alloc a tokenId with invalid apl.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken004, TestSize.Level1)
 {
@@ -1489,7 +1540,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken004, TestSize.Level1)
  * @tc.name: AllocHapToken005
  * @tc.desc: can alloc a tokenId when bundlename in permdef is different with bundlename in info.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
 {
@@ -1521,7 +1572,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
  * @tc.name: AllocHapToken006
  * @tc.desc: can alloc a tokenId with a invalid permList permissionName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken006, TestSize.Level1)
 {
@@ -1547,7 +1598,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken006, TestSize.Level1)
  * @tc.name: AllocHapToken007
  * @tc.desc: can alloc a tokenId with invalid permdef.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken007, TestSize.Level1)
 {
@@ -1579,7 +1630,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken007, TestSize.Level1)
  * @tc.name: AllocHapToken008
  * @tc.desc: can alloc a tokenId with invalid permdef.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken008, TestSize.Level1)
 {
@@ -1610,7 +1661,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken008, TestSize.Level1)
  * @tc.name: AllocHapToken009
  * @tc.desc: can alloc a tokenId with invalid permdef.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken009, TestSize.Level1)
 {
@@ -1655,7 +1706,7 @@ static bool ExistInVector(vector<unsigned int> array, unsigned int value)
  * @tc.name: AllocHapToken010
  * @tc.desc: alloc and delete in a loop.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
 {
@@ -1693,7 +1744,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
  * @tc.name: AllocHapToken011
  * @tc.desc: cannot alloc a tokenId with invalid appIDDesc.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken011, TestSize.Level1)
 {
@@ -1713,7 +1764,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken011, TestSize.Level1)
  * @tc.name: AllocHapToken012
  * @tc.desc: cannot alloc a tokenId with invalid bundleName.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken012, TestSize.Level1)
 {
@@ -1731,7 +1782,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken012, TestSize.Level1)
  * @tc.name: AllocHapToken013
  * @tc.desc: cannot alloc a tokenId with invalid appIDDesc.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken013, TestSize.Level1)
 {
@@ -1749,7 +1800,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken013, TestSize.Level1)
  * @tc.name: AllocHapToken014
  * @tc.desc: can alloc a tokenId with permList permissionName as "".
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken014, TestSize.Level1)
 {
@@ -1769,7 +1820,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken014, TestSize.Level1)
  * @tc.name: AllocHapToken015
  * @tc.desc: can alloc a tokenId with permList bundleName as "".
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken015, TestSize.Level1)
 {
@@ -1797,7 +1848,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken015, TestSize.Level1)
  * @tc.name: AllocHapToken016
  * @tc.desc: can alloc a tokenId with label as "".
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken016, TestSize.Level1)
 {
@@ -1822,7 +1873,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken016, TestSize.Level1)
  * @tc.name: AllocHapToken017
  * @tc.desc: cannot alloc a tokenId with invalid permdef.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken017, TestSize.Level1)
 {
@@ -1847,7 +1898,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken017, TestSize.Level1)
  * @tc.name: AllocHapToken018
  * @tc.desc: alloc a tokenId with vaild dlptype.
  * @tc.type: FUNC
- * @tc.require:AR000H4SAB
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
 {
@@ -1936,7 +1987,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
  * @tc.name: AllocHapToken019
  * @tc.desc: cannot alloc a tokenId with invaild dlptype.
  * @tc.type: FUNC
- * @tc.require:AR000H4SAB
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
 {
@@ -1964,7 +2015,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
  * @tc.name: UpdateHapToken001
  * @tc.desc: alloc a tokenId successfully, update it successfully and verify it.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
 {
@@ -2000,7 +2051,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
  * @tc.name: UpdateHapToken002
  * @tc.desc: cannot update hap token info with invalid userId.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken002, TestSize.Level1)
 {
@@ -2013,7 +2064,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken002, TestSize.Level1)
  * @tc.name: UpdateHapToken003
  * @tc.desc: cannot update hap token info with invalid appIDDesc.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
 {
@@ -2045,7 +2096,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
  * @tc.name: UpdateHapToken004
  * @tc.desc: cannot update a tokenId with invalid apl.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 {
@@ -2079,7 +2130,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
  * @tc.name: UpdateHapToken005
  * @tc.desc: cannot update a tokenId with invalid string value.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
 {
@@ -2139,7 +2190,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
  * @tc.name: UpdateHapToken006
  * @tc.desc: update a batch of tokenId.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 {
@@ -2196,7 +2247,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
  * @tc.name: UpdateHapToken007
  * @tc.desc: add new permissdef.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
 {
@@ -2238,7 +2289,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
  * @tc.name: UpdateHapToken008
  * @tc.desc: modify permissdef's grantMode.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
 {
@@ -2283,7 +2334,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
  * @tc.name: UpdateHapToken009
  * @tc.desc: old permission define will not update its grantStatus.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken009, TestSize.Level1)
 {
@@ -2366,7 +2417,7 @@ static void *ThreadTestFunc01(void *args)
             GTEST_LOG_(INFO) << "ThreadTestFunc01 failed" << tokenID;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 static void *ThreadTestFunc02(void *args)
@@ -2384,14 +2435,14 @@ static void *ThreadTestFunc02(void *args)
             GTEST_LOG_(INFO) << "ThreadTestFunc02 failed" << tokenID;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /**
  * @tc.name: AllocHapToken011
  * @tc.desc: Mulitpulthread test.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TJ
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
 {
@@ -2400,15 +2451,15 @@ HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
     pthread_t tid[2];
-    (void)pthread_create(&tid[0], 0, &ThreadTestFunc01, NULL);
-    (void)pthread_create(&tid[1], 0, &ThreadTestFunc01, NULL);
-    (void)pthread_join(tid[0], NULL);
-    (void)pthread_join(tid[1], NULL);
+    (void)pthread_create(&tid[0], 0, &ThreadTestFunc01, nullptr);
+    (void)pthread_create(&tid[1], 0, &ThreadTestFunc01, nullptr);
+    (void)pthread_join(tid[0], nullptr);
+    (void)pthread_join(tid[1], nullptr);
 
-    (void)pthread_create(&tid[0], 0, &ThreadTestFunc02, NULL);
-    (void)pthread_create(&tid[1], 0, &ThreadTestFunc02, NULL);
-    (void)pthread_join(tid[0], NULL);
-    (void)pthread_join(tid[1], NULL);
+    (void)pthread_create(&tid[0], 0, &ThreadTestFunc02, nullptr);
+    (void)pthread_create(&tid[1], 0, &ThreadTestFunc02, nullptr);
+    (void)pthread_join(tid[0], nullptr);
+    (void)pthread_join(tid[1], nullptr);
 
     ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -2431,7 +2482,7 @@ void ConcurrencyTask(unsigned int tokenID)
  * @tc.name: ConcurrencyTest001
  * @tc.desc: Concurrency testing
  * @tc.type: FUNC
- * @tc.require:AR000GM5FC AR000GK6T8 AR000GK6TF
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
 {
@@ -2450,7 +2501,7 @@ HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
  * @tc.name: CheckNativeDCap001
  * @tc.desc: cannot Check native dcap with invalid tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
 {
@@ -2468,7 +2519,7 @@ HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
  * @tc.name: CheckNativeDCap002
  * @tc.desc: cannot Check native dcap with invalid dcap.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, CheckNativeDCap002, TestSize.Level1)
 {
@@ -2482,7 +2533,7 @@ HWTEST_F(AccessTokenKitTest, CheckNativeDCap002, TestSize.Level1)
  * @tc.name: GetNativeTokenInfo001
  * @tc.desc: cannot get native token with invalid tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
 {
@@ -2500,7 +2551,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
  * @tc.name: GetTokenTypeFlag001
  * @tc.desc: cannot get token type with tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag001, TestSize.Level1)
 {
@@ -2513,7 +2564,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag001, TestSize.Level1)
  * @tc.name: GetTokenTypeFlag002
  * @tc.desc: Get token type with native tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 {
@@ -2538,7 +2589,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
  * @tc.name: GetSelfPermissionsState001
  * @tc.desc: get permission list state
  * @tc.type: FUNC
- * @tc.require:AR000GK6T6
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
 {
@@ -3087,7 +3138,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
  * @tc.name: GetTokenTypeFlag003
  * @tc.desc: Get token type with hap tokenID.
  * @tc.type: FUNC
- * @tc.require:AR000GK6TD
+ * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
 {
@@ -3703,18 +3754,6 @@ HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback002, TestSize.Leve
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_FAILED, res);
-}
-
-/**
- * @tc.name: GetVersion001
- * @tc.desc: GetVersion001 test.
- * @tc.type: FUNC
- * @tc.require: issueI5NT1X
- */
-HWTEST_F(AccessTokenKitTest, GetVersion001, TestSize.Level1)
-{
-    int32_t res = AccessTokenKit::GetVersion();
-    ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
 }
 } // namespace AccessToken
 } // namespace Security
