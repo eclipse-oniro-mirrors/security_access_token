@@ -71,12 +71,15 @@ private:
 
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
 
-    bool IsAuthorizedCalling() const;
-    bool IsAccessTokenCalling() const;
+    bool IsPrivilegedCalling() const;
+    bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
+    bool IsFoundationCalling() const;
     static const int32_t SYSTEM_UID = 1000;
     static const int32_t ROOT_UID = 0;
     static const int32_t ACCESSTOKEN_UID = 3020;
+
+    AccessTokenID tokenSyncId_ = 0;
 
     using RequestFuncType = void (AccessTokenManagerStub::*)(MessageParcel &data, MessageParcel &reply);
     std::map<uint32_t, RequestFuncType> requestFuncMap_;

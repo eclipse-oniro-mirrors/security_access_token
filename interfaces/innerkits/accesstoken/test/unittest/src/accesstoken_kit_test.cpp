@@ -223,6 +223,32 @@ PermissionStateFull g_locationTestStateAccurate12 = {
 };
 }
 
+void NativeTokenGet()
+{
+    uint64_t tokenId;
+    const char **perms = new const char *[4];
+    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+
+    NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 0,
+        .permsNum = 4,
+        .aclsNum = 0,
+        .dcaps = nullptr,
+        .perms = perms,
+        .acls = nullptr,
+        .aplStr = "system_core",
+    };
+
+    infoInstance.processName = "TestCase";
+    tokenId = GetAccessTokenId(&infoInstance);
+    SetSelfTokenID(tokenId);
+    AccessTokenKit::ReloadNativeTokenInfo();
+    delete[] perms;
+}
+
 void AccessTokenKitTest::SetUpTestCase()
 {
     // make test case clean
@@ -233,6 +259,8 @@ void AccessTokenKitTest::SetUpTestCase()
 
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
+
+    NativeTokenGet();
 }
 
 void AccessTokenKitTest::TearDownTestCase()

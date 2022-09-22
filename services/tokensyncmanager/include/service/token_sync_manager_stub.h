@@ -34,6 +34,9 @@ private:
     void GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void UpdateRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+
+    bool IsNativeProcessCalling() const;
+    bool IsRootCalling() const;
 };
 } // namespace AccessToken
 } // namespace Security
