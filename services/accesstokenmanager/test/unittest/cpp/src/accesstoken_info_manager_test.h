@@ -17,6 +17,7 @@
 #define ACCESSTOKEN_INFO_MANAGER_TEST_H
 
 #include <gtest/gtest.h>
+#include "accesstoken_manager_service.h"
 
 namespace OHOS {
 namespace Security {
@@ -30,6 +31,8 @@ public:
     void SetUp();
 
     void TearDown();
+
+    std::shared_ptr<AccessTokenManagerService> atManagerService_;
 };
 } // namespace AccessToken
 } // namespace Security
