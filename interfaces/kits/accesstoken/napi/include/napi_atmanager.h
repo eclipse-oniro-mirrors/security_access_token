@@ -104,6 +104,7 @@ private:
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
+    static napi_value GetVersion(napi_env env, napi_callback_info info);
 
     static void ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
@@ -111,11 +112,13 @@ private:
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
     static void ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
-    static void GrantUserGrantedPermissionExcute(napi_env env, void *data);
+    static void GrantUserGrantedPermissionExecute(napi_env env, void *data);
     static void GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
-    static void RevokeUserGrantedPermissionExcute(napi_env env, void *data);
+    static void RevokeUserGrantedPermissionExecute(napi_env env, void *data);
     static void RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data);
-    static void GetPermissionFlagsExcute(napi_env env, void *data);
+    static void GetVersionExecute(napi_env env, void *data);
+    static void GetVersionComplete(napi_env env, napi_status status, void *data);
+    static void GetPermissionFlagsExecute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
     static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,

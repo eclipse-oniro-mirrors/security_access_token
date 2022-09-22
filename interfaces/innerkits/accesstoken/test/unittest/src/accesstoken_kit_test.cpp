@@ -3783,6 +3783,18 @@ HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback002, TestSize.Leve
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_FAILED, res);
 }
+
+/**
+ * @tc.name: GetVersion001
+ * @tc.desc: GetVersion001 test.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, GetVersion001, TestSize.Level1)
+{
+    int32_t res = AccessTokenKit::GetVersion();
+    ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
