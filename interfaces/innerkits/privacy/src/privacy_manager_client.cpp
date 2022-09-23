@@ -16,7 +16,6 @@
 
 #include <algorithm>
 #include "accesstoken_log.h"
-#include "data_validator.h"
 #include "iservice_registry.h"
 #include "privacy_manager_proxy.h"
 
@@ -47,11 +46,6 @@ PrivacyManagerClient::~PrivacyManagerClient()
 int32_t PrivacyManagerClient::AddPermissionUsedRecord(
     AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
-        (successCount < 0 || failCount < 0)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
-        return ERROR;
-    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -62,10 +56,6 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(
 
 int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
-        return ERROR;
-    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -76,10 +66,6 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const 
 
 int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
-        return ERROR;
-    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
@@ -90,10 +76,6 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
 
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
-        return ERROR;
-    }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
