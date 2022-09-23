@@ -119,8 +119,7 @@ HapPolicyParams g_infoManagerTestPolicyPramsBak = {
 
 void NativeTokenGet()
 {
-    uint64_t tokenId;
-    tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    uint64_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     ASSERT_NE(tokenId, 0);
     SetSelfTokenID(tokenId);
 }

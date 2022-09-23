@@ -552,7 +552,7 @@ bool AccessTokenManagerStub::IsFoundationCalling() const
 
 bool AccessTokenManagerStub::IsAccessTokenCalling()
 {
-    int tokenCaller = IPCSkeleton::GetCallingTokenID();
+    int32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
     if (tokenSyncId_ == 0) {
         tokenSyncId_ = this->GetNativeTokenId("token_sync_service");
     }
