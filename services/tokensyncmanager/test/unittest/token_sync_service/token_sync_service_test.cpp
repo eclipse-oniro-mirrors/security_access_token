@@ -422,6 +422,56 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetRemoteHapTokenInfo008
+ * @tc.desc: test remote hap recv func, tokenID is not exist
+ * @tc.type: FUNC
+ * @tc.require:AR000GK6T5 AR000GK6T9
+ */
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo008 start.");
+    // create local token
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+                                                          g_infoManagerTestInfoParms.bundleName,
+                                                          g_infoManagerTestInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
+
+    // tokenID is not exist
+    std::string jsonBefore =
+        "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
+        "\"{\\\"HapTokenInfo\\\":{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
+        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":null,\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
+        "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
+        "\\\"requestTokenId\\\":";
+    std::string tokenJsonStr = std::to_string(tokenID);
+    std::string jsonAfter = ",\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
+        "\\\"srcDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
+        "\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
+
+    // create recv message
+    std::string recvJson = jsonBefore + tokenJsonStr + jsonAfter;
+    unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
+    int recvLen = 0x1000;
+    CompressMock(recvJson, recvBuffer, recvLen);
+
+    ResetSendMessFlagMock();
+    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
+
+    int count = 0;
+    while (!GetSendMessFlagMock() && count < 10) {
+        sleep(1);
+        count ++;
+    }
+    free(recvBuffer);
+
+    ResetSendMessFlagMock();
+    std::string uuidMessage = GetUuidMock();
+    ASSERT_EQ(uuidMessage, "0065e65f-");
+}
+
+/**
  * @tc.name: SyncNativeTokens001
  * @tc.desc: when device is online, sync remote nativetokens which have dcap
  * @tc.type: FUNC
