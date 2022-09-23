@@ -28,7 +28,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "//base/security/access_token/frameworks/common/include",
   ]
 
-  sources = [ "unittest/src/accesstoken_kit_test.cpp" ]
+  sources = [ 
+    "unittest/src/accesstoken_kit_test.cpp",
+    "unittest/src/remote_token_kit_test.cpp",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
