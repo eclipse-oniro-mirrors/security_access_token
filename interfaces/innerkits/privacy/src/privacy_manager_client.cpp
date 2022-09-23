@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "accesstoken_log.h"
 #include "iservice_registry.h"
+#include "privacy_error.h"
 #include "privacy_manager_proxy.h"
 
 namespace OHOS {
@@ -28,7 +29,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 } // namespace
 
-const static int32_t ERROR = -1;
 const static int32_t MAX_PERM_LIST_SIZE = 200;
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
@@ -49,7 +49,7 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
 }
@@ -59,7 +59,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->StartUsingPermission(tokenID, permissionName);
 }
@@ -69,7 +69,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->StopUsingPermission(tokenID, permissionName);
 }
@@ -79,7 +79,7 @@ int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID,
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->RemovePermissionUsedRecords(tokenID, deviceID);
 }
@@ -90,14 +90,14 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     PermissionUsedRequestParcel requestParcel;
-    PermissionUsedResultParcel reultParcel;
+    PermissionUsedResultParcel resultParcel;
     requestParcel.request = request;
-    int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, reultParcel);
-    result = reultParcel.result;
+    int32_t ret = proxy->GetPermissionUsedRecords(requestParcel, resultParcel);
+    result = resultParcel.result;
     return ret;
 }
 
@@ -107,7 +107,7 @@ int32_t PrivacyManagerClient::GetPermissionUsedRecords(const PermissionUsedReque
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     PermissionUsedRequestParcel requestParcel;
@@ -122,19 +122,19 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
 
     if (activeCbkMap_.size() == MAX_PERM_LIST_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of subscribers has been reached");
-        return ERROR;
+        return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
 
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback != activeCbkMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "activeCbkMap_ already has such callback");
-        return ERROR;
+        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callbackWrap =
             new (std::nothrow) PermActiveStatusChangeCallback(callback);
         if (!callbackWrap) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callbackWrap failed!");
-            return ERROR;
+            return PrivacyError::ERR_MALLOC_FAILED;
         }
     }
     return RET_SUCCESS;
@@ -146,7 +146,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCb is nullptr");
-        return ERROR;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     sptr<PermActiveStatusChangeCallback> callbackWrap = nullptr;
@@ -158,7 +158,7 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<std::string> permList;
     callback->GetPermList(permList);
@@ -181,13 +181,13 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback == activeCbkMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "goalCallback already is not exist");
-        return ERROR;
+        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
     }
 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return ERROR;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
