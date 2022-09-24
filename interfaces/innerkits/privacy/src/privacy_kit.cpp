@@ -20,6 +20,8 @@
 
 #include "accesstoken_log.h"
 #include "constant_common.h"
+#include "data_validator.h"
+#include "privacy_error.h"
 #include "privacy_manager_client.h"
 
 namespace OHOS {
@@ -34,6 +36,11 @@ int32_t PrivacyKit::AddPermissionUsedRecord(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s,",
         tokenID, permissionName.c_str());
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
+        (successCount < 0 || failCount < 0)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(
         tokenID, permissionName, successCount, failCount);
 }
@@ -42,6 +49,10 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName);
 }
 
@@ -49,6 +60,10 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, permissionName);
 }
 
@@ -56,17 +71,37 @@ int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, deviceID=%{public}s",
         tokenID, ConstantCommon::EncryptDevId(deviceID).c_str());
+    if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().RemovePermissionUsedRecords(tokenID, deviceID);
+}
+
+static bool IsPermissionFlagValid(const PermissionUsedRequest& request)
+{
+    int64_t begin = request.beginTimeMillis;
+    int64_t end = request.endTimeMillis;
+    if ((begin < 0) || (end < 0) || (begin > end)) {
+        return false;
+    }
+    return ((request.flag == FLAG_PERMISSION_USAGE_SUMMARY) || (request.flag == FLAG_PERMISSION_USAGE_DETAIL));
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
+    if (!IsPermissionFlagValid(request)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, result);
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(
     const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
+    if (!IsPermissionFlagValid(request)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
     return PrivacyManagerClient::GetInstance().GetPermissionUsedRecords(request, callback);
 }
 
@@ -82,8 +117,8 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
 
 bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenID");
+    if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
         return false;
     }
     return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName);

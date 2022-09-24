@@ -39,12 +39,12 @@ void CommonTest::SetUp() {}
 void CommonTest::TearDown() {}
 
 /**
- * @tc.name: BundleUsedRecordParcel001
- * @tc.desc: Verify the CreateHapTokenInfo add one hap token function.
+ * @tc.name: EncryptDevId001
+ * @tc.desc: Test EncryptDevId001 function.
  * @tc.type: FUNC
  * @tc.require: issueI5RUCC
  */
-HWTEST_F(CommonTest, BundleUsedRecordParcel001, TestSize.Level1)
+HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 {
     std::string res;
     res = ConstantCommon::EncryptDevId("");

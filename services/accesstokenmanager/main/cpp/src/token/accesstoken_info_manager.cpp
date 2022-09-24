@@ -367,7 +367,6 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
         return RET_FAILED;
     }
 
-    bool isRemote = false;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
@@ -388,9 +387,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove native token %{public}u ok!", id);
-    if (!isRemote) {
-        RefreshTokenInfoIfNeeded();
-    }
+    RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }
 
@@ -1029,7 +1026,7 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
             if (infoPtr != nullptr) {
                 infoPtr->ToString(dumpInfo);
             }
-        } else if (type == TOKEN_NATIVE) {
+        } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
             std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
             if (infoPtr != nullptr) {
                 infoPtr->ToString(dumpInfo);
@@ -1056,7 +1053,6 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
             dumpInfo.append("\n");
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get tokeninfo: %{public}s", dumpInfo.c_str());
 }
 } // namespace AccessToken
 } // namespace Security

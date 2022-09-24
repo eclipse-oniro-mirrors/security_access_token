@@ -16,6 +16,7 @@
 #include "privacy_manager_proxy.h"
 
 #include "accesstoken_log.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -25,8 +26,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerProxy"
 };
 }
-
-const static int32_t ERROR = -1;
 
 PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<IPrivacyManager>(impl) {
@@ -42,29 +41,27 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(successCount)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(successCount)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(failCount)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(failCount)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "add result fail, result: %{public}d", requestResult);
+    if (!SendRequest(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
@@ -73,21 +70,19 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::START_USING_PERMISSION, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "add result fail, result: %{public}d", requestResult);
+    if (!SendRequest(IPrivacyManager::InterfaceCode::START_USING_PERMISSION, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
@@ -96,21 +91,19 @@ int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const st
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "add result fail, result: %{public}d", requestResult);
+    if (!SendRequest(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
@@ -119,21 +112,19 @@ int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, 
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(deviceID)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "add result fail, result: %{public}d", requestResult);
+    if (!SendRequest(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
@@ -143,25 +134,21 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteParcelable(&request)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(request)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return ERROR;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     sptr<PermissionUsedResultParcel> resultSptr = reply.ReadParcelable<PermissionUsedResultParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-        return ERROR;
+        return ERR_READ_PARCEL_FAILED;
     }
     result = *resultSptr;
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
@@ -171,106 +158,71 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteParcelable(&request)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(request)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback->AsObject())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteRemoteObject(callback)");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    int32_t requestResult = SendRequest(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return ERROR;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
-    return ret;
+
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
     std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called.");
     MessageParcel data;
     if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     uint32_t listSize = permList.size();
     if (!data.WriteUint32(listSize)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write listSize");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     for (uint32_t i = 0; i < listSize; i++) {
         if (!data.WriteString(permList[i])) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permList[%{public}d], %{public}s", i, permList[i].c_str());
-            return ERROR;
+            return PrivacyError::ERR_WRITE_PARCEL_FAILED;
         }
     }
 
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return ERROR;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK),
-        data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
-        return ERROR;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t result;
-    if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
-        return ERROR;
-    }
-    return result;
+    return reply.ReadInt32();
 }
 
 int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called.");
     MessageParcel data;
     if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
-        return ERROR;
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return ERROR;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK),
-        data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d.", requestResult);
-        return ERROR;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    int32_t result;
-    if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
-        return ERROR;
-    }
-    return result;
+    return reply.ReadInt32();
 }
 
 bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
@@ -289,17 +241,11 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
         return false;
     }
-    bool requestResult = SendRequest(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply);
-    if (!requestResult) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail");
-        return false;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    bool result;
-    if (!reply.ReadBool(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadBool fail");
-        return false;
-    }
-    return result;
+
+    return reply.ReadBool();
 }
 
 bool PrivacyManagerProxy::SendRequest(
