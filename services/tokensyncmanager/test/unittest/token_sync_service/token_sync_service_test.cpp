@@ -237,6 +237,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     CompressMock(recvJson, recvBuffer, recvLen);
 
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
 
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
@@ -274,9 +275,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
 
-    threads_.emplace_back(std::thread(SendTaskThread));
-
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
+    threads_.emplace_back(std::thread(SendTaskThread));
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
@@ -307,9 +308,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
 
-    threads_.emplace_back(std::thread(SendTaskThread));
-
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
+    threads_.emplace_back(std::thread(SendTaskThread));
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
@@ -341,10 +342,10 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
 
-    threads_.emplace_back(std::thread(SendTaskThread));
-
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
 
+    threads_.emplace_back(std::thread(SendTaskThread));
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
 
@@ -374,10 +375,11 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
         "\\\"requestTokenId\\\":537919488,\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\""
         ",\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\","
         "\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"response\"}";
+    
+    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
 
     threads_.emplace_back(std::thread(SendTaskThread));
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
@@ -409,10 +411,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
         "\\\"statusCode\\\":-2,\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\","
         "\"type\":\"response\"}";
 
-    threads_.emplace_back(std::thread(SendTaskThread));
-
-
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
+    threads_.emplace_back(std::thread(SendTaskThread));
 
     OHOS::DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRemoteHapTokenInfo(
         g_udid, 0x20100000);
@@ -455,8 +456,9 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
-    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+
+    ResetSendMessFlagMock();
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
     int count = 0;
@@ -465,55 +467,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
         count ++;
     }
     free(recvBuffer);
-
-    ResetSendMessFlagMock();
-    std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "0065e65f-");
-}
-
-/**
- * @tc.name: SyncNativeTokens001
- * @tc.desc: when device is online, sync remote nativetokens which have dcap
- * @tc.type: FUNC
- * @tc.require:AR000GK6T6
- */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens001 start.");
-    g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
-    g_jsonAfter =
-        "\",\"jsonPayload\":\"{\\\"NativeTokenInfos\\\":[{\\\"apl\\\":3,\\\"processName\\\":\\\"attest\\\","
-        "\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088640,\\\"version\\\":1,"
-        "\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]},"
-        "{\\\"apl\\\":3,\\\"processName\\\":\\\"attest1\\\",\\\"tokenAttr\\\":0,\\\"tokenId\\\":671088641,"
-        "\\\"version\\\":1,\\\"dcaps\\\":[\\\"SYSDCAP\\\",\\\"DMSDCAP\\\"]}],"
-        "\\\"commandName\\\":\\\"SyncRemoteNativeTokenCommand\\\","
-        "\\\"dstDeviceId\\\":\\\"deviceid-1:udid-001\\\","
-        "\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
-        "\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"deviceid-1:udid-001\\\","
-        "\\\"responseVersion\\\":2,\\\"srcDeviceId\\\":\\\"local:udid-001\\\","
-        "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
-        "\"type\":\"response\"}";
-
-    threads_.emplace_back(std::thread(SendTaskThread));
-
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
-    sleep(6);
-
-    AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_NE(mapID, (AccessTokenID)0);
-    int ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
-
-    mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_NE(mapID, (AccessTokenID)0);
-    ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
+    AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0);
+    ASSERT_EQ(mapID, (AccessTokenID)0);
 }
 
 /**
@@ -540,11 +495,11 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
         "\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":0,\\\"uniqueId\\\":\\\"SyncRemoteNativeTokenCommand\\\"}\","
         "\"type\":\"response\"}";
 
-    threads_.emplace_back(std::thread(SendTaskThread));
+    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
 
     ResetSendMessFlagMock();
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-
+    threads_.emplace_back(std::thread(SendTaskThread));
     sleep(6);
 
     AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
@@ -653,8 +608,10 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
-    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
+    sleep(3);
+
+    ResetSendMessFlagMock();
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
     int count = 0;
