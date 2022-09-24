@@ -23,8 +23,10 @@
 #include "token_setproc.h"
 
 using namespace testing::ext;
-using namespace OHOS::Security::AccessToken;
 
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RemoteTokenKitTest"};
 
@@ -1222,4 +1224,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.baseInfo.tokenAttr);
 }
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
 #endif

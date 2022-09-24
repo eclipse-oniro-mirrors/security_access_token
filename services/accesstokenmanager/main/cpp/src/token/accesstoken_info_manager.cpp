@@ -1029,7 +1029,7 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
             if (infoPtr != nullptr) {
                 infoPtr->ToString(dumpInfo);
             }
-        } else if (type == TOKEN_NATIVE) {
+        } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
             std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
             if (infoPtr != nullptr) {
                 infoPtr->ToString(dumpInfo);
@@ -1056,7 +1056,6 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
             dumpInfo.append("\n");
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get tokeninfo: %{public}s", dumpInfo.c_str());
 }
 } // namespace AccessToken
 } // namespace Security
