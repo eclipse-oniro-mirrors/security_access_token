@@ -115,13 +115,13 @@ HapPolicyParams g_infoManagerTestPolicyPramsBak = {
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
-}
 
 void NativeTokenGet()
 {
     uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     ASSERT_NE(tokenId, 0);
     SetSelfTokenID(tokenId);
+}
 }
 
 void RemoteTokenKitTest::SetUpTestCase()
