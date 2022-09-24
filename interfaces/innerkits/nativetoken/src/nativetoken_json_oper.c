@@ -284,7 +284,7 @@ uint32_t UpdateGoalItemFromRecord(const NativeTokenList *tokenNode, cJSON *recor
             return ATRET_FAILED;
         }
         cJSON *processNameJson = cJSON_GetObjectItem(cjsonItem, PROCESS_KEY_NAME);
-        if ((processNameJson == NULL) || (processNameJson->valuestring == NULL)) {
+        if ((processNameJson == NULL) || (!cJSON_IsString(processNameJson)) || (processNameJson->valuestring == NULL)) {
             AT_LOG_ERROR("[ATLIB-%s]:processNameJson is null.", __func__);
             return ATRET_FAILED;
         }
