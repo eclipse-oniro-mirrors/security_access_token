@@ -103,8 +103,8 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
 
 bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
 {
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
+    if (tokenId == 0 || callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
         return false;
     }
     
@@ -141,15 +141,15 @@ bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId,
     appStateCallbacks_.emplace_back(listener);
     appMgrProxy->RegisterApplicationStateObserver(listener);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "register callback(%{public}p),  add TokenId(%{public}d).", callback, tokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "register callback(%{public}p),  add TokenId(%{public}d).", callback, tokenId);
 
     return true;
 }
 
 bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
 {
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
+    if (tokenId == 0 || callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
         return false;
     }
     
@@ -175,7 +175,7 @@ bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenI
         appStateCallbacks_.erase(iter);
     }
     
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister callback(%{public}p).", callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
     return true;
 }
