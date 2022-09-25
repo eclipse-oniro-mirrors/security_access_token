@@ -947,6 +947,19 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: IsAllowedUsingPermission002
+ * @tc.desc: IsAllowedUsingPermission with no permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX3 issueI5RWX8
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
+{
+    SetSelfTokenID(g_selfTokenId);
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_TokenId_E, permissionName));
+}
+
+/**
  * @tc.name: StartUsingPermission001
  * @tc.desc: StartUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
