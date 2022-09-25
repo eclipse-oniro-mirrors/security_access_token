@@ -328,7 +328,7 @@ std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
 
 std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
 {
-    uint8_t *info = new uint8_t[UDID_MAX_LENGTH + 1];
+    uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
@@ -350,7 +350,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
 
 std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
 {
-    uint8_t *info = new uint8_t[UDID_MAX_LENGTH + 1];
+    uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
