@@ -165,17 +165,20 @@ int32_t PrivacyManagerService::Dump(int32_t fd, const std::vector<std::u16string
     }
     int32_t ret = ERR_OK;
     dprintf(fd, "Privacy Dump:\n");
-    std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
+    if (args.size() == 0) {
+        dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
+        return ret;
+    }
+    std::string arg0 = Str16ToStr8(args.at(0));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
         dprintf(fd, "       -t <TOKEN_ID>: according to specific token id dump permission used records\n");
     } else if (arg0.compare("-t") == 0) {
         ret = PrivacyManagerService::ResponseDumpCommand(fd, args);
-    }
-
-    if (ret != ERR_OK) {
+    } else {
         dprintf(fd, "please use hidumper -s said -a '-h' command help\n");
+        ret = ERR_INVALID_VALUE;
     }
     return ret;
 }

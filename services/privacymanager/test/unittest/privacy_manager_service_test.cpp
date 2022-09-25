@@ -13,22 +13,25 @@
  * limitations under the License.
  */
 
-#include "privacy_manager_service_test.h"
+#include <gtest/gtest.h>
+
 #include "accesstoken_kit.h"
 #include "string_ex.h"
+#include "privacy_manager_service.h"
 
 using namespace testing::ext;
-using namespace OHOS;
-using namespace OHOS::Security::AccessToken;
 
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
 namespace {
 constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 
 static HapPolicyParams g_PolicyPrams = {
@@ -44,8 +47,20 @@ static HapInfoParams g_InfoParms = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
 };
-
 }
+
+class PrivacyManagerServiceTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+
+    static void TearDownTestCase();
+
+    void SetUp();
+
+    void TearDown();
+    std::shared_ptr<PrivacyManagerService> privacyManagerService_;
+};
+
 void PrivacyManagerServiceTest::SetUpTestCase()
 {
 }
@@ -101,7 +116,12 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
     args.clear();
     // hidumper -t
     args.emplace_back(Str8ToStr16("-t"));
-    args.emplace_back(Str8ToStr16("-1")); // illegal tokenId // illegal tokenId
+    args.emplace_back(Str8ToStr16("-1")); // illegal tokenId
+    ASSERT_NE(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
+
+    args.clear();
+    // hidumper -t
+    args.emplace_back(Str8ToStr16("-s"));
     ASSERT_NE(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
 
     args.clear();
@@ -119,7 +139,7 @@ HWTEST_F(PrivacyManagerServiceTest, Dump001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 {
-    int32_t fd = 1; // 1: std output
+    int32_t fd = 123; // 123: invalid fd
     std::vector<std::u16string> args;
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
                                                           g_InfoParms.bundleName,
@@ -140,3 +160,6 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
     privacyManagerService_->AddPermissionUsedRecord(tokenId, permission, 1, 0);
     ASSERT_EQ(RET_SUCCESS, privacyManagerService_->Dump(fd, args));
 }
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
