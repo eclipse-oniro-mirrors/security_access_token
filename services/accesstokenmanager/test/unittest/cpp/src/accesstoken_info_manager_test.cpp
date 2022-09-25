@@ -25,7 +25,9 @@
 #include "dlp_permission_set_parser.h"
 #undef private
 #endif
+#define private public
 #include "permission_manager.h"
+#undef private
 #include "string_ex.h"
 
 using namespace testing::ext;
@@ -194,12 +196,10 @@ HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
 
     std::string dumpInfo;
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(getTokenId, dumpInfo);
-    GTEST_LOG_(INFO) << "dump all:" << dumpInfo.c_str();
 
     // delete test token
     if (getTokenId != 0) {
-        int ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(getTokenId);
-        ASSERT_EQ(RET_SUCCESS, ret);
+        ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(getTokenId));
     }
 
     ASSERT_EQ(RET_SUCCESS, RET_SUCCESS);
@@ -710,6 +710,79 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig006, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
+
+static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapTokenInfo& baseInfo)
+{
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(g_infoManagerTestState1);
+    HapTokenInfoForSync remoteTokenInfo = {
+        .baseInfo = baseInfo,
+        .permStateList = permStateList
+    };
+
+    return RET_SUCCESS == AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo("", remoteTokenInfo);
+}
+
+/**
+ * @tc.name: SetRemoteHapTokenInfo001
+ * @tc.desc: set remote hap token info, token info is wrong
+ * @tc.type: FUNC
+ * @tc.require: issue5RJBB
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
+{
+    std::string deviceID = "deviceId";
+    HapTokenInfo rightBaseInfo = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .userID = 1,
+        .bundleName = "com.ohos.access_token",
+        .instIndex = 1,
+        .appID = "testtesttesttest",
+        .deviceID = "deviceId",
+        .tokenID = 0x20100000,
+        .tokenAttr = 0
+    };
+    HapTokenInfo wrongBaseInfo = rightBaseInfo;
+    std::string wrongStr(10241, 'x');
+    
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest("", wrongBaseInfo));
+
+    wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.userID = -1; // wrong userID
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.tokenID = 0; // wrong tokenID
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.appID = wrongStr; // wrong appID
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.dlpType = (HapDlpType)11;; // wrong dlpType
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.ver = 2; // 2: wrong version
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.tokenID = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
+    EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+}
 #endif
 
 /**
@@ -726,7 +799,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
     // fd is 0
     ASSERT_NE(RET_SUCCESS, atManagerService_->Dump(fd, args));
 
-    fd = 1; // 1: std output
+    fd = 123; // 123：valid fd
 
     // hidumper
     ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
@@ -756,4 +829,145 @@ HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
     args.emplace_back(Str8ToStr16("-t"));
     args.emplace_back(Str8ToStr16("123")); // invalid tokenId
     ASSERT_EQ(RET_SUCCESS, atManagerService_->Dump(fd, args));
+}
+
+/**
+ * @tc.name: ScopeFilter001
+ * @tc.desc: Test filter scopes.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx);
+
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    EXPECT_NE(0, tokenId);
+    PermStateChangeScope inScopeInfo;
+    PermStateChangeScope outScopeInfo;
+    PermStateChangeScope emptyScopeInfo;
+
+    // both empty
+    inScopeInfo.permList = {};
+    inScopeInfo.tokenIDs = {};
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+
+    outScopeInfo = emptyScopeInfo;
+    inScopeInfo.tokenIDs = {123};
+    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(true, outScopeInfo.tokenIDs.empty());
+
+    outScopeInfo = emptyScopeInfo;
+    inScopeInfo.tokenIDs.clear();
+    inScopeInfo.tokenIDs = {123, tokenId, tokenId};
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(1, outScopeInfo.tokenIDs.size());
+
+    outScopeInfo = emptyScopeInfo;
+    inScopeInfo.tokenIDs.clear();
+    inScopeInfo.permList = {"ohos.permission.test"};
+    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(true, outScopeInfo.permList.empty());
+
+    outScopeInfo = emptyScopeInfo;
+    inScopeInfo.permList.clear();
+    inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(1, outScopeInfo.permList.size());
+    
+    outScopeInfo = emptyScopeInfo;
+    inScopeInfo.permList.clear();
+    inScopeInfo.tokenIDs = {123, tokenId, tokenId};
+    inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(1, outScopeInfo.tokenIDs.size());
+    EXPECT_EQ(1, outScopeInfo.permList.size());
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: AddPermStateChangeCallback001
+ * @tc.desc: Test AddPermStateChangeCallback.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback001, TestSize.Level1)
+{
+    PermStateChangeScope inScopeInfo;
+    inScopeInfo.tokenIDs = {123};
+
+    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
+
+    inScopeInfo.permList = {"ohos.permission.CAMERA"};
+    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
+    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
+}
+
+/**
+ * @tc.name: DumpTokenInfo001
+ * @tc.desc: Test DumpTokenInfo with invalid tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+
+    dumpInfo.clear();
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(123, dumpInfo);
+    EXPECT_EQ("invalid tokenId", dumpInfo);
+}
+
+/**
+ * @tc.name: DumpTokenInfo002
+ * @tc.desc: Test DumpTokenInfo with hap tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx);
+
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    EXPECT_NE(0, tokenId);
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
+ * @tc.name: DumpTokenInfo003
+ * @tc.desc: Test DumpTokenInfo with native tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
+        AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service"), dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
+ * @tc.name: DumpTokenInfo004
+ * @tc.desc: Test DumpTokenInfo with shell tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
+        AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd"), dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
 }
