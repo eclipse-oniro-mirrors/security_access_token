@@ -114,11 +114,11 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback002, TestS
 }
 
 typedef void (*AppChangeCallback)(uint32_t tokenId, int32_t status);
-std::map<uint32_t, uint32_t> g_listers;
-static bool RegisterAppStatusChangeCallbackTest(uint32_t tokenId, uint32_t cbAddr)
+std::map<uint32_t, uint64_t> g_listers;
+static bool RegisterAppStatusChangeCallbackTest(uint32_t tokenId, uint64_t cbAddr)
 {
     AppChangeCallback callback = (AppChangeCallback)cbAddr;
-    g_listers[tokenId] = (uint32_t)callback;
+    g_listers[tokenId] = cbAddr;
     return SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, callback);
 }
 
@@ -137,7 +137,7 @@ static bool UnregisterAppStatusChangeCallbackTest(uint32_t tokenId)
 HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback003, TestSize.Level1)
 {
     uint32_t tokenId = 1; // 1: tokenId
-    uint32_t addr = 0x12345678; // 0x12345678: simulated address
+    uint64_t addr = 0x12345678; // 0x12345678: simulated address
     for (size_t i = 0; i < MAX_CALLBACK_SIZE; i++) {
         ASSERT_EQ(true, RegisterAppStatusChangeCallbackTest(tokenId, addr));
         tokenId++;
