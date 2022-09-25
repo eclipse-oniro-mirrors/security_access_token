@@ -57,7 +57,7 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
 bool TokenSyncManagerStub::IsNativeProcessCalling() const
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
-    int type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
+    uint32_t type = (reinterpret_cast<AccessTokenIDInner *>(&tokenCaller))->type;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling type: %{public}d", type);
     return type == TOKEN_NATIVE;
 }
