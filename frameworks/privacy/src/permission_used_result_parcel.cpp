@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include "permission_used_result_parcel.h"
-#include "refbase.h"
 #include "bundle_used_record_parcel.h"
 #include "parcel_utils.h"
+#include "permission_used_result_parcel.h"
+#include "refbase.h"
 
 namespace OHOS {
 namespace Security {
@@ -26,7 +26,7 @@ bool PermissionUsedResultParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt64(this->result.beginTimeMillis));
     RETURN_IF_FALSE(out.WriteInt64(this->result.endTimeMillis));
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->result.bundleRecords.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->result.bundleRecords.size()));
     for (const auto& bundRecord : this->result.bundleRecords) {
         BundleUsedRecordParcel bundleParcel;
         bundleParcel.bundleRecord = bundRecord;
@@ -45,9 +45,10 @@ PermissionUsedResultParcel* PermissionUsedResultParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.beginTimeMillis), resultParcel);
     RELEASE_IF_FALSE(in.ReadInt64(resultParcel->result.endTimeMillis), resultParcel);
 
-    int32_t bundResponseSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(bundResponseSize), resultParcel);
-    for (int32_t i = 0; i < bundResponseSize; i++) {
+    uint32_t bundResponseSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(bundResponseSize), resultParcel);
+    RELEASE_IF_FALSE(bundResponseSize <= MAX_RECORD_SIZE, resultParcel);
+    for (uint32_t i = 0; i < bundResponseSize; i++) {
         sptr<BundleUsedRecordParcel> bunRecordParcel = in.ReadParcelable<BundleUsedRecordParcel>();
         RELEASE_IF_FALSE(bunRecordParcel != nullptr, resultParcel);
         resultParcel->result.bundleRecords.emplace_back(bunRecordParcel->bundleRecord);

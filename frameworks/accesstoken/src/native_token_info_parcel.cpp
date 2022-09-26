@@ -32,21 +32,21 @@ bool NativeTokenInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenID));
     RETURN_IF_FALSE(out.WriteUint32(this->nativeTokenInfoParams.tokenAttr));
 
-    if ((this->nativeTokenInfoParams.dcap).size() > INT32_MAX) {
+    if ((this->nativeTokenInfoParams.dcap).size() > MAX_DCAP_SIZE) {
         return false;
     }
-    int32_t dcapSize = static_cast<int32_t>((this->nativeTokenInfoParams.dcap).size());
-    RETURN_IF_FALSE(out.WriteInt32(dcapSize));
+    uint32_t dcapSize = (this->nativeTokenInfoParams.dcap).size();
+    RETURN_IF_FALSE(out.WriteUint32(dcapSize));
 
     for (const auto& dcapItem : this->nativeTokenInfoParams.dcap) {
         RETURN_IF_FALSE(out.WriteString(dcapItem));
     }
 
-    if ((this->nativeTokenInfoParams.nativeAcls).size() > INT32_MAX) {
+    if ((this->nativeTokenInfoParams.nativeAcls).size() > MAX_ACL_SIZE) {
         return false;
     }
-    int32_t nativeAclSize = static_cast<int32_t>((this->nativeTokenInfoParams.nativeAcls).size());
-    RETURN_IF_FALSE(out.WriteInt32(nativeAclSize));
+    uint32_t nativeAclSize = (this->nativeTokenInfoParams.nativeAcls).size();
+    RETURN_IF_FALSE(out.WriteUint32(nativeAclSize));
 
     for (const auto& item : this->nativeTokenInfoParams.nativeAcls) {
         RETURN_IF_FALSE(out.WriteString(item));
@@ -73,8 +73,9 @@ NativeTokenInfoParcel* NativeTokenInfoParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint32(nativeTokenInfoParcel->nativeTokenInfoParams.tokenID), nativeTokenInfoParcel);
     RELEASE_IF_FALSE(in.ReadUint32(nativeTokenInfoParcel->nativeTokenInfoParams.tokenAttr), nativeTokenInfoParcel);
 
-    int32_t dcapSize;
-    RELEASE_IF_FALSE(in.ReadInt32(dcapSize), nativeTokenInfoParcel);
+    uint32_t dcapSize;
+    RELEASE_IF_FALSE(in.ReadUint32(dcapSize), nativeTokenInfoParcel);
+    RELEASE_IF_FALSE(dcapSize <= MAX_DCAP_SIZE, nativeTokenInfoParcel);
 
     for (int32_t i = 0; i < dcapSize; i++) {
         std::string dcapsItem;
@@ -82,8 +83,9 @@ NativeTokenInfoParcel* NativeTokenInfoParcel::Unmarshalling(Parcel& in)
         nativeTokenInfoParcel->nativeTokenInfoParams.dcap.emplace_back(dcapsItem);
     }
 
-    int32_t nativeAclSize;
-    RELEASE_IF_FALSE(in.ReadInt32(nativeAclSize), nativeTokenInfoParcel);
+    uint32_t nativeAclSize;
+    RELEASE_IF_FALSE(in.ReadUint32(nativeAclSize), nativeTokenInfoParcel);
+    RELEASE_IF_FALSE(nativeAclSize <= MAX_ACL_SIZE, nativeTokenInfoParcel);
 
     for (int32_t i = 0; i < nativeAclSize; i++) {
         std::string item;
