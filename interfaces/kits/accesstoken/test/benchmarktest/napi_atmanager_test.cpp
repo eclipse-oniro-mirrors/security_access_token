@@ -20,6 +20,7 @@
 #include <thread>
 #undef private
 #include "accesstoken_kit.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "permission_def.h"
 
@@ -134,7 +135,8 @@ BENCHMARK_F(NapiAtmanagerTest, GrantPermissionTestCase005)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest GrantPermissionTestCase005 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), -1);
+        EXPECT_EQ(AccessTokenKit::GrantPermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
+            AccessTokenError::ERR_PARAM_INVALID);
     }
 }
 

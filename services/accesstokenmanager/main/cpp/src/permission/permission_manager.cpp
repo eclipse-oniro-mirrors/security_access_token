@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
@@ -296,23 +297,23 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return permPolicySet->QueryPermissionFlag(permissionName);
 }
 
-void PermissionManager::UpdateTokenPermissionState(
+int32_t PermissionManager::UpdateTokenPermissionState(
     AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_OPERATE_FAILED;
     }
 
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
     }
 #ifdef SUPPORT_SANDBOX_APP
     int32_t dlpType = infoPtr->GetDlpType();
@@ -321,11 +322,16 @@ void PermissionManager::UpdateTokenPermissionState(
         if (DlpPermissionSetManager::GetInstance().IsPermStateNeedUpdate(dlpType, dlpMode)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
                 tokenID, permissionName.c_str());
-            return;
+            return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_OPERATE_FAILED;
         }
     }
 #endif
-    bool isUpdated = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+    bool isUpdated = false;
+    int32_t ret =
+        permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag), isUpdated);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     if (isUpdated) {
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
@@ -339,27 +345,28 @@ void PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
+    return RET_SUCCESS;
 }
 
-void PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_NOT_EXIT;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
     }
-    UpdateTokenPermissionState(tokenID, permissionName, true, flag);
+    return UpdateTokenPermissionState(tokenID, permissionName, true, flag);
 }
 
 void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)

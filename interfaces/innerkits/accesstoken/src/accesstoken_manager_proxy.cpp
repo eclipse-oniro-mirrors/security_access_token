@@ -16,6 +16,7 @@
 #include "accesstoken_manager_proxy.h"
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 
 #include "parcel.h"
 #include "string_ex.h"
@@ -270,15 +271,15 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     if (!data.WriteInt32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     MessageParcel reply;
@@ -286,13 +287,13 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GRANT_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
