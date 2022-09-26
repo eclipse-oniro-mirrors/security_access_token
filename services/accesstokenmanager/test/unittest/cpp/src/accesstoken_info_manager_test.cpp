@@ -28,6 +28,7 @@
 #define private public
 #include "permission_manager.h"
 #undef private
+#include "permission_state_change_callback_stub.h"
 #include "string_ex.h"
 
 using namespace testing::ext;
@@ -38,7 +39,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManagerTest"
 };
-
+static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
@@ -1143,6 +1144,50 @@ HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback001, TestSize.Lev
     inScopeInfo.permList = {"ohos.permission.CAMERA"};
     EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
     EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
+}
+
+class PermChangeCallback : public PermissionStateChangeCallbackStub {
+public:
+    PermChangeCallback() = default;
+    virtual ~PermChangeCallback() = default;
+
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
+};
+
+void PermChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
+{
+}
+
+/**
+ * @tc.name: AddPermStateChangeCallback002
+ * @tc.desc: Test AddPermStateChangeCallback with exceed limitation.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback002, TestSize.Level1)
+{
+    PermStateChangeScope inScopeInfo;
+    inScopeInfo.tokenIDs = {};
+    inScopeInfo.permList = {"ohos.permission.CAMERA"};
+    std::vector<sptr<PermChangeCallback>> callbacks;
+
+    for (size_t i = 0; i < MAX_CALLBACK_SIZE; ++i) {
+        sptr<PermChangeCallback> callback = new (std::nothrow) PermChangeCallback();
+        ASSERT_NE(nullptr, callback);
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, callback->AsObject()));
+        callbacks.emplace_back(callback);
+    }
+
+    sptr<PermChangeCallback> callback = new (std::nothrow) PermChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_NE(RET_SUCCESS,
+        PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, callback->AsObject()));
+
+    for (size_t i = 0; i < callbacks.size(); ++i) {
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionManager::GetInstance().RemovePermStateChangeCallback(callbacks[i]->AsObject()));
+    }
 }
 
 /**

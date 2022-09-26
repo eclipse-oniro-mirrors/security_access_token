@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <cstddef>
 #include <gtest/gtest.h>
 
@@ -107,7 +107,7 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback002, TestS
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback1));
     ASSERT_EQ(true,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId2, AppStatusChangeCallback1));
-    
+
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback);
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId2, AppStatusChangeCallback);
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback1);
