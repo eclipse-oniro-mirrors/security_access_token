@@ -1,4 +1,4 @@
-# 访问控制<a name="ZH-CN_TOPIC_0000001101239136"></a>
+# 访问控制部件<a name="ZH-CN_TOPIC_0000001101239136"></a>
 
  - [简介<a name="section11660541593"></a>](#简介)
  - [目录<a name="section161941989596"></a>](#目录)
@@ -19,22 +19,35 @@ ATM模块主要提供如下功能：
 -   提供基于TokenID的应用权限校验机制，应用访问敏感数据或者API时可以检查是否有对应的权限。
 -   提供基于TokenID的Accesstoken信息查询，应用可以根据TokenID查询自身的APL等级等信息。
 
+ATM部件的架构图如下所示：
+![](figures/framework.png)
+
 ## 目录<a name="section161941989596"></a>
 
 ```
 /base/security/access_token
 ├── frameworks                  # 框架层，基础功能代码存放目录
 │   ├── accesstoken             # Accesstoken管理框架代码存放目录
-│   ├── tokensync               # Accesstoken信息同步框架代码存放目录
-│   └── common                  # 框架公共代码存放目录
+│   ├── common                  # 框架公共代码存放目录
+│   ├── privacy                 # privacy管理框架代码存放目录
+│   └── tokensync               # Accesstoken信息同步框架代码存放目录
 ├── interfaces                  # 接口层
 │   └── innerkits               # 内部接口层
-│       ├── accesstoken         # Accesstoken内部接口代码存放目录
-│       ├── nativetoken         # nativetoken内部接口代码存放目录
-│       └── tokensync           # Accesstoken信息同步内部接口代码存放目录
+│   │   ├── accesstoken         # Accesstoken内部接口代码存放目录
+│   │   ├── nativetoken         # nativetoken内部接口代码存放目录
+│   │   ├── privacy             # privacy内部接口代码存放目录
+│   │   ├── token_callback      # 回调内部接口代码存放目录
+│   │   ├── token_setproc       # tokenid内核交互内部接口代码存放目录
+│   │   └── tokensync           # Accesstoken信息同步内部接口代码存放目录
+│   └── kits                    # 外部接口层
+│   │   ├── accesstoken         # Accesstoken外部接口代码存放目录
+│   │   ├── common              # 外部接口公共代码存放目录
+│   │   └── privacy             # privacy信息外部接口代码存放目录
 └── services                    # 服务层
     ├── accesstokenmanager      # Accesstoken管理服务代码存放目录
+    ├── privacymanager          # privacy管理服务代码存放目录
     └── tokensyncmanager        # Accesstoken信息同步服务代码存放目录
+
 ```
 
 ## 使用<a name="section137768191623"></a>
