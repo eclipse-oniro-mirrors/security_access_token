@@ -16,10 +16,14 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
+#include "constant.h"
 #include "string_ex.h"
+#define private public
 #include "permission_record_manager.h"
+#undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_manager_service.h"
+#include "sensitive_resource_manager.h"
 
 using namespace testing::ext;
 
@@ -37,18 +41,68 @@ static PermissionStateFull g_testState = {
     .grantFlags = {1}
 };
 
-static HapPolicyParams g_PolicyPrams = {
+static HapPolicyParams g_PolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
     .permList = {},
     .permStateList = {g_testState}
 };
 
-static HapInfoParams g_InfoParms = {
+static HapInfoParams g_InfoParms1 = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundleA",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
+};
+
+static HapPolicyParams g_PolicyPrams2 = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.B",
+    .permList = {},
+    .permStateList = {g_testState}
+};
+
+static HapInfoParams g_InfoParms2 = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleB",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleB"
+};
+
+static PermissionRecord g_recordA1 = {
+    .opCode = Constant::OP_CAMERA,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordA2 = {
+    .opCode = Constant::OP_MICROPHONE,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordB1 = {
+    .opCode = Constant::OP_CAMERA,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordB2 = {
+    .opCode = Constant::OP_MICROPHONE,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
 };
 }
 
@@ -76,15 +130,18 @@ void PrivacyManagerServiceTest::SetUp()
 {
     privacyManagerService_ = DelayedSingleton<PrivacyManagerService>::GetInstance();
     EXPECT_NE(nullptr, privacyManagerService_);
-    AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+    AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
+    AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
 }
 
 void PrivacyManagerServiceTest::TearDown()
 {
     privacyManagerService_ = nullptr;
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
-                                                          g_InfoParms.bundleName,
-                                                          g_InfoParms.instIndex);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
+        g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
 }
 
@@ -144,9 +201,8 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
 {
     int32_t fd = 123; // 123: invalid fd
     std::vector<std::u16string> args;
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
-                                                          g_InfoParms.bundleName,
-                                                          g_InfoParms.instIndex);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
     args.emplace_back(Str8ToStr16("-t"));
     std::string tokenIdStr = std::to_string(tokenId);
     args.emplace_back(Str8ToStr16(tokenIdStr));
@@ -230,6 +286,40 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallback001, TestS
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     ASSERT_NE(RET_SUCCESS,
             PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+}
+
+/*
+ * @tc.name: AppStatusListener001
+ * @tc.desc: register and startusing permissions then use AppStatusListener
+ * @tc.type: FUNC
+ * @tc.require: issueI5SZHG
+ */
+HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
+{
+    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(0, tokenId1);
+    AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
+        g_InfoParms2.instIndex);
+    ASSERT_NE(0, tokenId2);
+
+    g_recordA1.tokenId = tokenId1;
+    g_recordA2.tokenId = tokenId1;
+    g_recordB1.tokenId = tokenId2;
+    g_recordB2.tokenId = tokenId2;
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA2);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
+
+    PermissionRecordManager::AppStatusListener(tokenId1, APP_FOREGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId2, APP_FOREGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId1, APP_FOREGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId2, APP_FOREGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
+    PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
 }
 } // namespace AccessToken
 } // namespace Security

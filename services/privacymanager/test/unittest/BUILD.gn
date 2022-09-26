@@ -25,6 +25,8 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/frameworks/common/include",
       "//base/security/access_token/frameworks/privacy/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
+      "//base/security/access_token/services/common/database/include",
+      "//base/security/access_token/services/privacymanager/include/common",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
       "//base/security/access_token/services/privacymanager/include/service",
