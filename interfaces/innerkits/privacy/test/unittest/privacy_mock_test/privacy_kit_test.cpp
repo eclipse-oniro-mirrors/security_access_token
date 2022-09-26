@@ -25,35 +25,12 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
-static HapPolicyParams g_PolicyPramsA = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.A",
-};
-
-static HapInfoParams g_InfoParmsA = {
-    .userID = 1,
-    .bundleName = "ohos.privacy_test.bundleA",
-    .instIndex = 0,
-    .appIDDesc = "privacy_test.bundleA"
-};
-
-static void DeleteTestToken()
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParmsA.userID,
-                                                          g_InfoParmsA.bundleName,
-                                                          g_InfoParmsA.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-}
-
-static AccessTokenID g_TokenId_A = 0;
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
 void PrivacyKitTest::SetUpTestCase()
 {
-    DeleteTestToken();
 }
 
 void PrivacyKitTest::TearDownTestCase()
@@ -62,16 +39,10 @@ void PrivacyKitTest::TearDownTestCase()
 
 void PrivacyKitTest::SetUp()
 {
-    AccessTokenKit::AllocHapToken(g_InfoParmsA, g_PolicyPramsA);
-
-    g_TokenId_A = AccessTokenKit::GetHapTokenID(g_InfoParmsA.userID,
-                                                g_InfoParmsA.bundleName,
-                                                g_InfoParmsA.instIndex);
 }
 
 void PrivacyKitTest::TearDown()
 {
-    DeleteTestToken();
 }
 
 /**
@@ -82,6 +53,7 @@ void PrivacyKitTest::TearDown()
  */
 HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
+    AccessTokenID g_TokenId_A = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
     bool ret = PrivacyKit::IsAllowedUsingPermission(g_TokenId_A, permissionName);
     ASSERT_EQ(false, ret);
