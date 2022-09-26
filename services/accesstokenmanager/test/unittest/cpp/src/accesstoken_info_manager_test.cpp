@@ -1196,6 +1196,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     std::shared_ptr<PermissionPolicySet> infoPtrNull =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(invalidTokenId);
+    ASSERT_EQ(nullptr, infoPtrNull);
     infoPtr->SetPermissionPolicySet(infoPtrNull);
     ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
