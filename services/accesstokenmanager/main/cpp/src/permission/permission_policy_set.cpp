@@ -207,7 +207,7 @@ int32_t PermissionPolicySet::UpdatePermissionStatus(
         }
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return RET_SUCCESS;

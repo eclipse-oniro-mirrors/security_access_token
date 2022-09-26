@@ -303,17 +303,17 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_OPERATE_FAILED;
+        return AccessTokenError::ERR_PERMISSION_OPERATE_FAILED;
     }
 
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 #ifdef SUPPORT_SANDBOX_APP
     int32_t dlpType = infoPtr->GetDlpType();
@@ -322,7 +322,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         if (DlpPermissionSetManager::GetInstance().IsPermStateNeedUpdate(dlpType, dlpMode)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
                 tokenID, permissionName.c_str());
-            return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_OPERATE_FAILED;
+            return AccessTokenError::ERR_PERMISSION_OPERATE_FAILED;
         }
     }
 #endif
@@ -355,16 +355,16 @@ int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::str
         __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_ACCESS_TOKEN_PERMISSION_NOT_EXIT;
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_ACCESS_TOKEN_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return UpdateTokenPermissionState(tokenID, permissionName, true, flag);
 }
