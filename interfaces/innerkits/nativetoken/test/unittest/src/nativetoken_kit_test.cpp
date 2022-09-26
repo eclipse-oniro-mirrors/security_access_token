@@ -28,7 +28,6 @@ using namespace OHOS::Security;
 extern NativeTokenList *g_tokenListHead;
 extern int32_t g_isNativeTokenInited;
 extern int32_t GetFileBuff(const char *cfg, char **retBuff);
-extern int32_t AtlibInit(void);
 
 void TokenLibKitTest::SetUpTestCase()
 {}
@@ -77,7 +76,7 @@ static void WriteContentToFile(const cJSON *root)
     return;
 }
 
-void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
+static void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
 {
     cJSON *rec = nullptr;
     int32_t index = -1;
@@ -97,7 +96,7 @@ void DeleteGoalItemFromRecord(const char *processName, cJSON *record)
     }
 }
 
-int32_t DeleteNodeInFile(const char *processName)
+static int32_t DeleteNodeInFile(const char *processName)
 {
     cJSON *record = nullptr;
     char *fileBuff = nullptr;
@@ -125,7 +124,7 @@ int32_t DeleteNodeInFile(const char *processName)
     return ATRET_SUCCESS;
 }
 
-int32_t DeleteAccessTokenId(const char *processName)
+static int32_t DeleteAccessTokenId(const char *processName)
 {
     int32_t result = 0;
 
