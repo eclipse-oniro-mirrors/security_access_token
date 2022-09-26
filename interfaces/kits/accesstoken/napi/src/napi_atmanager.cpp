@@ -312,7 +312,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -347,7 +347,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -634,7 +634,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RevokeUserGrantedPermission begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
@@ -703,7 +703,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags begin.");
 
-    auto *asyncContext = new AtManagerAsyncContext(); // for async work deliver data
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
