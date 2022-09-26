@@ -525,16 +525,18 @@ bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permission
         return false;
     }
 
-    for (const auto& perm : permsList) {
-        if (perm.permissionName == permissionName) {
-            status = perm.grantStatus[0];
-            flag = static_cast<uint32_t>(perm.grantFlags[0]);
+    auto iter = std::find_if(permsList.begin(), permsList.end(), [permissionName](const PermissionStateFull& perm) {
+        return permissionName == perm.permissionName;
+    });
+    if (iter != permsList.end()) {
+        status = iter->grantStatus[0];
+        flag = static_cast<uint32_t>(iter->grantFlags[0]);
 
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "permission:%{public}s, status:%{public}d, flag:%{public}d!",
-                permissionName.c_str(), status, flag);
-            return true;
-        }
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "permission:%{public}s, status:%{public}d, flag:%{public}d!",
+            permissionName.c_str(), status, flag);
+        return true;
     }
+
     return false;
 }
 
