@@ -30,14 +30,14 @@ bool PermissionUsedRecordParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastRejectTime));
     RETURN_IF_FALSE(out.WriteInt64(this->permissionRecord.lastAccessDuration));
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permissionRecord.accessRecords.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->permissionRecord.accessRecords.size()));
     for (const auto& accRecord : this->permissionRecord.accessRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = accRecord;
         out.WriteParcelable(&detailParcel);
     }
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permissionRecord.rejectRecords.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->permissionRecord.rejectRecords.size()));
     for (const auto& rejRecord : this->permissionRecord.rejectRecords) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = rejRecord;
@@ -60,17 +60,19 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
     RELEASE_IF_FALSE(in.ReadInt64(permissionRecordParcel->permissionRecord.lastRejectTime), permissionRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(permissionRecordParcel->permissionRecord.lastAccessDuration), permissionRecordParcel);
 
-    int32_t accRecordSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(accRecordSize), permissionRecordParcel);
-    for (int32_t i = 0; i < accRecordSize; i++) {
+    uint32_t accRecordSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(accRecordSize), permissionRecordParcel);
+    RELEASE_IF_FALSE(accRecordSize <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);
+    for (uint32_t i = 0; i < accRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.accessRecords.emplace_back(detailParcel->detail);
     }
     
-    int32_t rejRecordSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(rejRecordSize), permissionRecordParcel);
-    for (int32_t i = 0; i < rejRecordSize; i++) {
+    uint32_t rejRecordSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(rejRecordSize), permissionRecordParcel);
+    RELEASE_IF_FALSE(rejRecordSize <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);
+    for (uint32_t i = 0; i < rejRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.rejectRecords.emplace_back(detailParcel->detail);

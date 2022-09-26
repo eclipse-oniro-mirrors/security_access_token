@@ -19,6 +19,7 @@
 
 #include "bundle_used_record_parcel.h"
 #include "parcel.h"
+#include "parcel_utils.h"
 #include "perm_active_response_parcel.h"
 #include "permission_used_record_parcel.h"
 #include "permission_used_request_parcel.h"
@@ -323,6 +324,179 @@ HWTEST_F(PrivacyParcelTest, UsedRecordDetailParcel001, TestSize.Level1)
     EXPECT_EQ(usedRecordDetailParcel.detail.status, readedData->detail.status);
     EXPECT_EQ(usedRecordDetailParcel.detail.timestamp, readedData->detail.timestamp);
     EXPECT_EQ(usedRecordDetailParcel.detail.accessDuration, readedData->detail.accessDuration);
+}
+
+void BundleUsedRecordData(Parcel& out, uint32_t size)
+{
+    EXPECT_EQ(true, out.WriteUint32(100)); // 100: tokenid
+    EXPECT_EQ(true, out.WriteBool(false));
+    EXPECT_EQ(true, out.WriteString("device"));
+    EXPECT_EQ(true, out.WriteString("bundleName"));
+
+    EXPECT_EQ(true, out.WriteUint32(size));
+
+    g_permissionRecord1.accessRecords.emplace_back(g_accessRecord1);
+
+    for (uint32_t i = 0; i < size; i++) {
+        PermissionUsedRecordParcel permRecordParcel;
+        permRecordParcel.permissionRecord = g_permissionRecord1;
+        out.WriteParcelable(&permRecordParcel);
+    }
+}
+/**
+ * @tc.name: BundleUsedRecordParcel002
+ * @tc.desc: Test BundleUsedRecordParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require: issueI5QKZF
+ */
+HWTEST_F(PrivacyParcelTest, BundleUsedRecordParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    BundleUsedRecordData(parcel, MAX_RECORD_SIZE);
+    std::shared_ptr<BundleUsedRecordParcel> readedData(BundleUsedRecordParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    Parcel parcel1;
+    BundleUsedRecordData(parcel1, MAX_RECORD_SIZE + 1);
+    std::shared_ptr<BundleUsedRecordParcel> readedData1(BundleUsedRecordParcel::Unmarshalling(parcel1));
+    EXPECT_EQ(true, readedData1 == nullptr);
+}
+
+void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
+{
+    UsedRecordDetail detailIns = {0, 0L, 0L};
+    EXPECT_EQ(true, out.WriteString("permissionName"));
+    EXPECT_EQ(true, out.WriteInt32(1));
+    EXPECT_EQ(true, out.WriteInt32(1));
+    EXPECT_EQ(true, out.WriteInt64(0L));
+    EXPECT_EQ(true, out.WriteInt64(0L));
+    EXPECT_EQ(true, out.WriteInt64(0L));
+
+    EXPECT_EQ(true, out.WriteUint32(accessSize));
+    for (uint32_t i = 0; i < accessSize; i++) {
+        UsedRecordDetailParcel detailParcel;
+        detailParcel.detail = detailIns;
+        out.WriteParcelable(&detailParcel);
+    }
+
+    EXPECT_EQ(true, out.WriteUint32(rejectSize));
+    for (uint32_t i = 0; i < rejectSize; i++) {
+        UsedRecordDetailParcel detailParcel;
+        detailParcel.detail = detailIns;
+        out.WriteParcelable(&detailParcel);
+    }
+}
+
+/**
+ * @tc.name: PermissionUsedRecordParcel002
+ * @tc.desc: Test PermissionUsedRecordParcel Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require: issueI5QKZF
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel002, TestSize.Level1)
+{
+    Parcel parcel;
+    DataMarshalling(parcel, MAX_ACCESS_RECORD_SIZE, MAX_ACCESS_RECORD_SIZE);
+    std::shared_ptr<PermissionUsedRecordParcel> readedData(PermissionUsedRecordParcel::Unmarshalling(parcel));
+    EXPECT_EQ(true, readedData != nullptr);
+
+    Parcel parcel1;
+    DataMarshalling(parcel1, MAX_ACCESS_RECORD_SIZE, MAX_ACCESS_RECORD_SIZE + 1);
+    std::shared_ptr<PermissionUsedRecordParcel> readedData1(PermissionUsedRecordParcel::Unmarshalling(parcel1));
+    EXPECT_EQ(true, readedData1 == nullptr);
+
+    Parcel parcel2;
+    DataMarshalling(parcel2, MAX_ACCESS_RECORD_SIZE + 1, MAX_ACCESS_RECORD_SIZE);
+    std::shared_ptr<PermissionUsedRecordParcel> readedData2(PermissionUsedRecordParcel::Unmarshalling(parcel2));
+    EXPECT_EQ(true, readedData2 == nullptr);
+}
+
+/**
+ * @tc.name: PermissionUsedRequestParcel002
+ * @tc.desc: Verify the PermissionUsedRequestParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RUP1
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedRequestParcel002, TestSize.Level1)
+{
+    PermissionUsedRequestParcel permissionUsedRequestParcel;
+
+    permissionUsedRequestParcel.request = {
+        .tokenId = 100,
+        .isRemote = false,
+        .deviceId = "deviceId",
+        .bundleName = "com.ohos.permissionmanager",
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+        .flag = FLAG_PERMISSION_USAGE_SUMMARY,
+    };
+    for (uint32_t i = 0; i < MAX_PERMLIST_SIZE; i++) {
+        permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.CAMERA");
+    }
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedRequestParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionUsedRequestParcel> readedData(PermissionUsedRequestParcel::Unmarshalling(parcel));
+    EXPECT_NE(readedData, nullptr);
+
+    permissionUsedRequestParcel.request.permissionList.emplace_back("ohos.permission.CAMERA");
+    Parcel parcel1;
+    EXPECT_EQ(true, permissionUsedRequestParcel.Marshalling(parcel1));
+    std::shared_ptr<PermissionUsedRequestParcel> readedData1(PermissionUsedRequestParcel::Unmarshalling(parcel1));
+    EXPECT_EQ(readedData1, nullptr);
+}
+
+/**
+ * @tc.name: PermissionUsedResultParcel002
+ * @tc.desc: Verify the PermissionUsedResultParcel Marshalling and Unmarshalling function.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWP4
+ */
+HWTEST_F(PrivacyParcelTest, PermissionUsedResultParcel002, TestSize.Level1)
+{
+    PermissionUsedResultParcel permissionUsedResultParcel;
+
+    permissionUsedResultParcel.result = {
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+    };
+
+    g_bundleUsedRecord1.permissionRecords.emplace_back(g_permissionRecord1);
+    g_bundleUsedRecord1.permissionRecords.emplace_back(g_permissionRecord2);
+
+    for (uint32_t i = 0; i < 1024; i++) {
+        permissionUsedResultParcel.result.bundleRecords.emplace_back(g_bundleUsedRecord1);
+    }
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionUsedResultParcel.Marshalling(parcel));
+    auto* resultParcel = new (std::nothrow) PermissionUsedResultParcel();
+    ASSERT_NE(resultParcel, nullptr);
+    EXPECT_EQ(true, parcel.ReadInt64(resultParcel->result.beginTimeMillis));
+    EXPECT_EQ(true, parcel.ReadInt64(resultParcel->result.endTimeMillis));
+    uint32_t bundResponseSize = 0;
+    EXPECT_EQ(true, parcel.ReadUint32(bundResponseSize));
+    EXPECT_EQ(true, bundResponseSize <= MAX_RECORD_SIZE);
+    EXPECT_EQ(true, resultParcel != nullptr);
+    delete resultParcel;
+    permissionUsedResultParcel.result.bundleRecords.emplace_back(g_bundleUsedRecord1);
+
+    Parcel parcel1;
+    EXPECT_EQ(true, permissionUsedResultParcel.Marshalling(parcel1));
+    auto* resultParcel2 = new (std::nothrow) PermissionUsedResultParcel();
+    ASSERT_NE(resultParcel2, nullptr);
+    EXPECT_EQ(true, parcel1.ReadInt64(resultParcel2->result.beginTimeMillis));
+    EXPECT_EQ(true, parcel1.ReadInt64(resultParcel2->result.endTimeMillis));
+    uint32_t bundResponseSize1 = 0;
+    EXPECT_EQ(true, parcel1.ReadUint32(bundResponseSize1));
+    GTEST_LOG_(INFO) << "bundResponseSize1 :" << bundResponseSize1;
+    EXPECT_EQ(true, bundResponseSize1 > MAX_RECORD_SIZE);
+    delete resultParcel2;
+
+    Parcel parcel2;
+    EXPECT_EQ(true, permissionUsedResultParcel.Marshalling(parcel2));
+    std::shared_ptr<PermissionUsedResultParcel> readedData1(PermissionUsedResultParcel::Unmarshalling(parcel2));
+    EXPECT_EQ(readedData1, nullptr);
 }
 } // namespace AccessToken
 } // namespace Security

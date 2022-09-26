@@ -24,17 +24,17 @@ bool PermissionStateFullParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->permStatFull.permissionName));
     RETURN_IF_FALSE(out.WriteBool(this->permStatFull.isGeneral));
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.resDeviceID.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->permStatFull.resDeviceID.size()));
     for (auto devId : this->permStatFull.resDeviceID) {
         RETURN_IF_FALSE(out.WriteString(devId));
     }
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.grantStatus.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->permStatFull.grantStatus.size()));
     for (auto grantStat : this->permStatFull.grantStatus) {
         RETURN_IF_FALSE(out.WriteInt32(grantStat));
     }
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->permStatFull.grantFlags.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->permStatFull.grantFlags.size()));
     for (auto grantFlag : this->permStatFull.grantFlags) {
         RETURN_IF_FALSE(out.WriteInt32(grantFlag));
     }
@@ -51,25 +51,28 @@ PermissionStateFullParcel* PermissionStateFullParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->permStatFull.permissionName), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadBool(permissionStateParcel->permStatFull.isGeneral), permissionStateParcel);
 
-    int resIdSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(resIdSize), permissionStateParcel);
-    for (int i = 0; i < resIdSize; i++) {
+    uint32_t resIdSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(resIdSize), permissionStateParcel);
+    RELEASE_IF_FALSE(resIdSize <= MAX_DEVICE_ID_SIZE, permissionStateParcel);
+    for (uint32_t i = 0; i < resIdSize; i++) {
         std::string resId;
         RELEASE_IF_FALSE(in.ReadString(resId), permissionStateParcel);
         permissionStateParcel->permStatFull.resDeviceID.emplace_back(resId);
     }
 
-    int grantStatsSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(grantStatsSize), permissionStateParcel);
-    for (int i = 0; i < grantStatsSize; i++) {
+    uint32_t grantStatsSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(grantStatsSize), permissionStateParcel);
+    RELEASE_IF_FALSE(grantStatsSize <= MAX_DEVICE_ID_SIZE, permissionStateParcel);
+    for (uint32_t i = 0; i < grantStatsSize; i++) {
         int grantStat;
         RELEASE_IF_FALSE(in.ReadInt32(grantStat), permissionStateParcel);
         permissionStateParcel->permStatFull.grantStatus.emplace_back(grantStat);
     }
 
-    int grantFlagSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(grantFlagSize), permissionStateParcel);
-    for (int i = 0; i < grantFlagSize; i++) {
+    uint32_t grantFlagSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(grantFlagSize), permissionStateParcel);
+    RELEASE_IF_FALSE(grantFlagSize <= MAX_DEVICE_ID_SIZE, permissionStateParcel);
+    for (uint32_t i = 0; i < grantFlagSize; i++) {
         int flag;
         RELEASE_IF_FALSE(in.ReadInt32(flag), permissionStateParcel);
         permissionStateParcel->permStatFull.grantFlags.emplace_back(flag);

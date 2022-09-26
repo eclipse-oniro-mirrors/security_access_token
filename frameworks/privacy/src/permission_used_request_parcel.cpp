@@ -26,7 +26,7 @@ bool PermissionUsedRequestParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->request.deviceId));
     RETURN_IF_FALSE(out.WriteString(this->request.bundleName));
 
-    RETURN_IF_FALSE(out.WriteInt32((int32_t)(this->request.permissionList.size())));
+    RETURN_IF_FALSE(out.WriteUint32(this->request.permissionList.size()));
     for (const auto& perm : this->request.permissionList) {
         RETURN_IF_FALSE(out.WriteString(perm));
     }
@@ -48,9 +48,10 @@ PermissionUsedRequestParcel* PermissionUsedRequestParcel::Unmarshalling(Parcel& 
     RELEASE_IF_FALSE(in.ReadString(requestParcel->request.deviceId), requestParcel);
     RELEASE_IF_FALSE(in.ReadString(requestParcel->request.bundleName), requestParcel);
 
-    int32_t permSize = 0;
-    RELEASE_IF_FALSE(in.ReadInt32(permSize), requestParcel);
-    for (int32_t i = 0; i < permSize; i++) {
+    uint32_t permSize = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(permSize), requestParcel);
+    RELEASE_IF_FALSE(permSize <= MAX_PERMLIST_SIZE, requestParcel);
+    for (uint32_t i = 0; i < permSize; i++) {
         std::string perm;
         RELEASE_IF_FALSE(in.ReadString(perm), requestParcel);
         requestParcel->request.permissionList.emplace_back(perm);

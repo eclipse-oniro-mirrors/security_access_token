@@ -30,10 +30,10 @@ bool NativeTokenInfoForSyncParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteParcelable(&baseInfoParcel));
 
     const std::vector<PermissionStateFull>& permStateList = this->nativeTokenInfoForSyncParams.permStateList;
-    int32_t permStateListSize = static_cast<int32_t>(permStateList.size());
-    RETURN_IF_FALSE(out.WriteInt32(permStateListSize));
-    RETURN_IF_FALSE((permStateListSize <= MAX_PERMLIST_SIZE));
-    for (int i = 0; i < permStateListSize; i++) {
+    uint32_t permStateListSize = permStateList.size();
+    RETURN_IF_FALSE(permStateListSize <= MAX_PERMLIST_SIZE);
+    RETURN_IF_FALSE(out.WriteUint32(permStateListSize));
+    for (uint32_t i = 0; i < permStateListSize; i++) {
         PermissionStateFullParcel permStateParcel;
         permStateParcel.permStatFull = permStateList[i];
         RETURN_IF_FALSE(out.WriteParcelable(&permStateParcel));
@@ -53,9 +53,10 @@ NativeTokenInfoForSyncParcel* NativeTokenInfoForSyncParcel::Unmarshalling(Parcel
     RELEASE_IF_FALSE(baseInfoParcel != nullptr, nativeTokenInfoForSyncParcel);
     nativeTokenInfoForSyncParcel->nativeTokenInfoForSyncParams.baseInfo = baseInfoParcel->nativeTokenInfoParams;
 
-    int permStateListSize;
-    RELEASE_IF_FALSE(in.ReadInt32(permStateListSize), nativeTokenInfoForSyncParcel);
-    for (int i = 0; i < permStateListSize; i++) {
+    uint32_t permStateListSize;
+    RELEASE_IF_FALSE(in.ReadUint32(permStateListSize), nativeTokenInfoForSyncParcel);
+    RELEASE_IF_FALSE(permStateListSize <= MAX_PERMLIST_SIZE, nativeTokenInfoForSyncParcel);
+    for (uint32_t i = 0; i < permStateListSize; i++) {
         sptr<PermissionStateFullParcel> permissionStateParcel = in.ReadParcelable<PermissionStateFullParcel>();
         RELEASE_IF_FALSE(permissionStateParcel != nullptr, nativeTokenInfoForSyncParcel);
         nativeTokenInfoForSyncParcel->nativeTokenInfoForSyncParams.permStateList.emplace_back(
