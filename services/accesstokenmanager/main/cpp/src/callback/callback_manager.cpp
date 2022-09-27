@@ -118,23 +118,28 @@ bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>&
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
-
     auto callbackStart = [&]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
-        std::lock_guard<std::mutex> lock(mutex_);
-        for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
-            std::shared_ptr<PermStateChangeScope> scopePtr_ = (*it).scopePtr_;
-            if (scopePtr_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "scopePtr_ is nullptr");
-                continue;
-            }
-            if (!CalledAccordingToTokenIdLlist(scopePtr_->tokenIDs, tokenID) ||
-                !CalledAccordingToPermLlist(scopePtr_->permList, permName)) {
-                    ACCESSTOKEN_LOG_INFO(LABEL,
-                        "tokenID is %{public}u, permName is  %{public}s", tokenID, permName.c_str());
+        std::vector<sptr<IRemoteObject>> list;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
+                std::shared_ptr<PermStateChangeScope> scopePtr_ = (*it).scopePtr_;
+                if (scopePtr_ == nullptr) {
+                    ACCESSTOKEN_LOG_ERROR(LABEL, "scopePtr_ is nullptr");
                     continue;
+                }
+                if (!CalledAccordingToTokenIdLlist(scopePtr_->tokenIDs, tokenID) ||
+                    !CalledAccordingToPermLlist(scopePtr_->permList, permName)) {
+                        ACCESSTOKEN_LOG_INFO(LABEL,
+                            "tokenID is %{public}u, permName is  %{public}s", tokenID, permName.c_str());
+                        continue;
+                }
+                list.emplace_back((*it).callbackObject_);
             }
-            auto callback = iface_cast<IPermissionStateCallback>((*it).callbackObject_);
+        }
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            auto callback = iface_cast<IPermissionStateCallback>(*it);
             if (callback != nullptr) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "callback excute");
                 PermStateChangeInfo resInfo;
