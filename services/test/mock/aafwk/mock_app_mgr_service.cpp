@@ -53,7 +53,7 @@ int32_t MockAppMgrService::UnregisterApplicationStateObserver(const sptr<IApplic
 void MockAppMgrService::SwitchForeOrBackGround(uint32_t tokenId, int32_t flag)
 {
     if (observer_ == nullptr) {
-        return -1;
+        return;
     }
     AppStateData data;
     data.bundleName = "ohos.test.access_token";
