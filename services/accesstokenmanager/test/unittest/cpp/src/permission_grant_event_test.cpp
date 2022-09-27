@@ -31,7 +31,9 @@ void PermissionGrantEventTest::SetUpTestCase()
 {}
 
 void PermissionGrantEventTest::TearDownTestCase()
-{}
+{
+    sleep(3); // delay 3 minutes
+}
 
 void PermissionGrantEventTest::SetUp()
 {}

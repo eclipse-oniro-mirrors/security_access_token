@@ -53,7 +53,9 @@ void NativeTokenReceptorTest::SetUpTestCase()
 }
 
 void NativeTokenReceptorTest::TearDownTestCase()
-{}
+{
+    sleep(3); // delay 3 minutes
+}
 
 void NativeTokenReceptorTest::SetUp()
 {}
