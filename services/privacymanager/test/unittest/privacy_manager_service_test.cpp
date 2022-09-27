@@ -20,6 +20,7 @@
 #define private public
 #include "permission_record_manager.h"
 #undef private
+#include "perm_active_status_change_callback_stub.h"
 #include "privacy_manager_service.h"
 #include "sensitive_resource_manager.h"
 #include "string_ex.h"
