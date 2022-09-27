@@ -931,6 +931,38 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: RegisterPermActiveStatusCallback008
+ * @tc.desc: register and startusing three permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5SZHG
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level1)
+{
+    std::vector<std::string> permList = {
+        "ohos.permission.CAMERA",
+        "ohos.permission.MICROPHONE",
+        "ohos.permission.LOCATION"
+    };
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    int32_t res = PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.LOCATION");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.CAMERA");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.MICROPHONE");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.LOCATION");
+    ASSERT_EQ(RET_NO_ERROR, res);
+    res = PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr);
+    ASSERT_EQ(RET_NO_ERROR, res);
+}
+
+/**
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
@@ -1117,4 +1149,16 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, ret);
     ret = PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName);
     ASSERT_EQ(RET_ERROR, ret);
+}
+
+/**
+ * @tc.name: StopUsingPermission005
+ * @tc.desc: stop use whith native token
+ * @tc.type: FUNC
+ * @tc.require: issueI5SZHG
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_EQ(RET_ERROR, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
 }
