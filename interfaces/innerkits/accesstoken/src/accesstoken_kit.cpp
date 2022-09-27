@@ -18,6 +18,7 @@
 #include <vector>
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "accesstoken_manager_client.h"
 #include "constant_common.h"
 #include "data_validator.h"
@@ -245,15 +246,15 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
         tokenID, permissionName.c_str(), flag);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "flag is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GrantPermission(tokenID, permissionName, flag);
 }

@@ -16,6 +16,7 @@
 #include "accesstoken_manager_client.h"
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "accesstoken_manager_proxy.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
@@ -151,7 +152,7 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     return proxy->GrantPermission(tokenID, permissionName, flag);
 }

@@ -57,7 +57,7 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName);
-    void GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
     void GetSelfPermissionState(
@@ -77,7 +77,7 @@ private:
     void ScopeToString(
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
-    void UpdateTokenPermissionState(
+    int32_t UpdateTokenPermissionState(
         AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);

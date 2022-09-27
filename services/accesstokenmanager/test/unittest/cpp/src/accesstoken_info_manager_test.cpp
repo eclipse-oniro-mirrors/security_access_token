@@ -19,6 +19,7 @@
 #include <string>
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
@@ -892,6 +893,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig004, TestSize.Level1)
         "ohos.permission.MICROPHONE", PERMISSION_USER_FIXED);
     PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
     PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.READ_CALL_LOG", PERMISSION_USER_FIXED);
 
@@ -1208,6 +1210,49 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: UpdateTokenPermissionState001
+ * @tc.desc: Test UpdateTokenPermissionState abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: issueI5SSXG
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    AccessTokenID invalidTokenId = 1;
+    ret = PermissionManager::GetInstance().GrantPermission(
+        invalidTokenId, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    ASSERT_NE(nullptr, infoPtr);
+    infoPtr->SetRemote(true);
+    ret = PermissionManager::GetInstance().GrantPermission(
+        tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_OPERATE_FAILED, ret);
+    infoPtr->SetRemote(false);
+
+    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+    std::shared_ptr<PermissionPolicySet> infoPtrNull =
+        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(invalidTokenId);
+    ASSERT_EQ(nullptr, infoPtrNull);
+    infoPtr->SetPermissionPolicySet(infoPtrNull);
+    ret = PermissionManager::GetInstance().GrantPermission(
+        tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
  * @tc.name: DumpTokenInfo002
  * @tc.desc: Test DumpTokenInfo with hap tokenId.
  * @tc.type: FUNC
@@ -1253,4 +1298,23 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(
         AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd"), dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
+ * @tc.name: GrantPermission001
+ * @tc.desc: Test GrantPermission abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: issueI5SSXG
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GrantPermission001, TestSize.Level1)
+{
+    int32_t ret;
+    AccessTokenID tokenID = 0;
+    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    int32_t invalidFlag = -1;
+    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }

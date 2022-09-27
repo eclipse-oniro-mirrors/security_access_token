@@ -45,7 +45,7 @@ public:
     void GetDefPermissions(std::vector<PermissionDef>& permList);
     void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);
     int QueryPermissionFlag(const std::string& permissionName);
-    bool UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag);
+    int32_t UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated);
     void ToString(std::string& info);
     bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
         const std::vector<std::string>& nativeAcls);

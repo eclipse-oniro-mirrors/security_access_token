@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "token_setproc.h"
 #include "softbus_bus_center.h"
 
@@ -938,14 +939,14 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
     ret = AccessTokenKit::GrantPermission(tokenID, invalidPerm, PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     ret = AccessTokenKit::GrantPermission(TEST_TOKENID_INVALID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     AccessTokenKit::DeleteToken(tokenID);
 
@@ -988,7 +989,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission004, TestSize.Level0)
     ASSERT_NE(0, tokenID);
     int32_t invalidFlag = -1;
     int32_t ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**

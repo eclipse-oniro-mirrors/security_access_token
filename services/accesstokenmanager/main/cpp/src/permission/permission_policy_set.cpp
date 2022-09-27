@@ -16,6 +16,7 @@
 #include "permission_policy_set.h"
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_storage.h"
 #include "data_translator.h"
 #include "field_const.h"
@@ -183,11 +184,11 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
     return PERMISSION_DEFAULT_FLAG;
 }
 
-bool PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
+int32_t PermissionPolicySet::UpdatePermissionStatus(
+    const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName %{public}s.", permissionName.c_str());
 
-    bool ret = false;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
         [permissionName](const PermissionStateFull& permState) {
@@ -200,13 +201,16 @@ bool PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionNa
             uint32_t currFlag = static_cast<uint32_t>(iter->grantFlags[0]);
             uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
             iter->grantFlags[0] = static_cast<int32_t>(newFlag);
-            ret = (oldStatus == iter->grantStatus[0]) ? false : true;
+            isUpdated = (oldStatus == iter->grantStatus[0]) ? false : true;
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
         }
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    return ret;
+    return RET_SUCCESS;
 }
 
 void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
