@@ -23,6 +23,7 @@
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_manager_service.h"
 #include "sensitive_resource_manager.h"
+#include "perm_active_status_change_callback_stub.h"
 #include "string_ex.h"
 
 using namespace testing::ext;
