@@ -711,6 +711,139 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig006, TestSize.Level1)
     GTEST_LOG_(INFO) << "remove the token info";
 }
 
+/**
+ * @tc.name: GetHapTokenSync001
+ * @tc.desc: Verify the GetHapTokenSync token function and abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int result;
+    result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, result);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    HapTokenInfoForSync hapSync;
+    result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(result, RET_SUCCESS);
+
+    result = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, result);
+    GTEST_LOG_(INFO) << "remove the token info";
+
+    result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(result, RET_FAILED);
+}
+
+/**
+ * @tc.name: GetHapTokenInfoFromRemote001
+ * @tc.desc: Verify the GetHapTokenInfoFromRemote token function .
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    HapTokenInfoForSync hapSync;
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: RemoteHapTest001001
+ * @tc.desc: Verify the RemoteHap token function .
+ * @tc.type: FUNC
+ * @tc.require: issueI5RJBB
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    std::string deviceId = "device_1";
+    std::string deviceId2 = "device_2";
+    AccessTokenID mapID =
+        AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(mapID == 0, true);
+    HapTokenInfoForSync hapSync;
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceId, hapSync);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceId);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceId2);
+    ASSERT_EQ(RET_FAILED, ret);
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+#enfif
+
+#ifdef TOKEN_SYNC_ENABLE
+/**
+ * @tc.name: DeleteRemoteToken001
+ * @tc.desc: Verify the DeleteRemoteToken normal and abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RJBB
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    std::string deviceId = "device_1";
+    std::string deviceId2 = "device_2";
+    AccessTokenID mapId =
+        AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(mapId == 0, true);
+    HapTokenInfoForSync hapSync;
+    ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceId, hapSync);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId2, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_FAILED, ret);
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GetUdidByNodeId001
+ * @tc.desc: Verify the GetUdidByNodeId abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: issue5RJBB
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetUdidByNodeId001, TestSize.Level1)
+{
+    std::string nodeId = "test";
+    std::string result = AccessTokenInfoManager::GetInstance().GetUdidByNodeId(nodeId);
+    ASSERT_EQ(result.empty(), true);
+}
+
 static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapTokenInfo& baseInfo)
 {
     std::vector<PermissionStateFull> permStateList;
