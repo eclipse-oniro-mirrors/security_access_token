@@ -174,7 +174,7 @@ void DecompressMock(const unsigned char *bytes, const int length)
     free(buf);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
 
-    int id_post = str.find("\"id\":");
+    std::size_t id_post = str.find("\"id\":");
 
     std::string id_string = str.substr(id_post + 6, 9);
     uuid = id_string;
