@@ -60,7 +60,57 @@ if (is_standard_system && ability_base_enable == true) {
   }
 }
 
+######################################################################
+if (is_standard_system && ability_base_enable == true) {
+  import("//base/security/access_token/services/test/mock.gni")
+  ohos_unittest("libsensitive_manager_mock_test") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    module_out_path = part_name + "/" + part_name
+
+    include_dirs = [
+      "//base/security/access_token/interfaces/innerkits/privacy/include",
+      "//base/security/access_token/services/common/database/include",
+      "//base/security/access_token/services/privacymanager/include/common",
+      "//base/security/access_token/services/privacymanager/include/record",
+      "//base/security/access_token/services/privacymanager/include/sensitive",
+      "//base/security/access_token/services/privacymanager/include/service",
+      "//third_party/googletest/include",
+      "//base/security/access_token/services/common/database/include",
+      "//commonlibrary/c_utils/base/include",
+      "//base/security/access_token/services/test/mock/aafwk",
+      "${ability_runtime_innerkits_path}/ability_manager/include",
+    ]
+
+    sources = [
+      "//base/security/access_token/services/test/mock/aafwk/mock_app_mgr_service.cpp",
+      "//base/security/access_token/services/test/mock/aafwk/mock_service_registry.cpp",
+      "sensitive_resource_mock_test.cpp",
+    ]
+
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
+
+    deps = [
+      "//base/security/access_token/services/privacymanager:privacy_manager_service",
+      "//third_party/googletest:gmock_main",
+      "//third_party/googletest:gtest_main",
+    ]
+
+    external_deps = [
+      "ability_base:want",
+      "ability_runtime:app_manager",
+      "access_token:libaccesstoken_sdk",
+      "bundle_framework:appexecfwk_base",
+      "c_utils:utils",
+      "hiviewdfx_hilog_native:libhilog",
+      "ipc:ipc_core",
+    ]
+  }
+}
 group("unittest") {
   testonly = true
-  deps = [ ":libprivacy_manager_service_standard_test" ]
+  deps = [
+    ":libprivacy_manager_service_standard_test",
+    ":libsensitive_manager_mock_test",
+  ]
 }
