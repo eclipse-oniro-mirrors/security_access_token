@@ -32,7 +32,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
+static constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
+static constexpr uint32_t MAX_CALLBACK_SIZE = 200;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -251,6 +252,74 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
     PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
     PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
     PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
+}
+
+class PermActiveStatusChangeCallback : public PermActiveStatusChangeCallbackStub {
+public:
+    PermActiveStatusChangeCallback() = default;
+    virtual ~PermActiveStatusChangeCallback() = default;
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
+};
+
+void PermActiveStatusChangeCallback::ActiveStatusChangeCallback(ActiveChangeResponse& result)
+{
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback001
+ * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    ASSERT_NE(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback002
+ * @tc.desc: RegisterPermActiveStatusCallback with exceed limitation.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<sptr<PermActiveStatusChangeCallback>> callbacks;
+
+    for (size_t i = 0; i < MAX_CALLBACK_SIZE; ++i) {
+        sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+        ASSERT_NE(nullptr, callback);
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+        callbacks.emplace_back(callback);
+    }
+
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_NE(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+
+    for (size_t i = 0; i < callbacks.size(); ++i) {
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callbacks[i]->AsObject()));
+    }
+}
+
+/**
+ * @tc.name: UnRegisterPermActiveStatusCallback001
+ * @tc.desc: UnRegisterPermActiveStatusCallback with invalid parameter.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallback001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    ASSERT_NE(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
 }
 } // namespace AccessToken
 } // namespace Security
