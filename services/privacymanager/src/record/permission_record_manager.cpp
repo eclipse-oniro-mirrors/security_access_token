@@ -28,6 +28,7 @@
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
+#include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "time_util.h"
 
@@ -40,6 +41,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const std::string DEFAULT_DEVICEID = "0";
 static const std::string FIELD_COUNT_NUMBER = "count";
+static const SUCCESS = 0;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -67,18 +69,18 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
-bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
+int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return false;
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
-        return false;
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
@@ -93,7 +95,7 @@ bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const s
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
-    return true;
+    return Constant::SUCCESS;
 }
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,

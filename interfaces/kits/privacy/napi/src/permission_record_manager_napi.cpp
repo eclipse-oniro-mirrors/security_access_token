@@ -361,6 +361,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
     if (!ParseAddPermissionRecord(env, cbinfo, *asyncContext)) {
+        napi_throw(enc, );
         return nullptr;
     }
 

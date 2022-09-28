@@ -248,9 +248,12 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
 {
-    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, "ohos.permission.test", 1, 0));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(123, "ohos.permission.CAMERA", 1, 0));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, "ohos.permission.READ_CONTACTS", 0, 0));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, "ohos.permission.test", 1, 0));
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST,
+        PrivacyKit::AddPermissionUsedRecord(123, "ohos.permission.CAMERA", 1, 0));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::AddPermissionUsedRecord(g_TokenId_A, "ohos.permission.READ_CONTACTS", 0, 0));
 
     PermissionUsedRequest request;
     PermissionUsedResult result;
@@ -299,7 +302,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     delete[] dcaps;
     delete[] acls;
 
-    ASSERT_EQ(RET_ERROR, PrivacyKit::AddPermissionUsedRecord(
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::AddPermissionUsedRecord(
         tokenId, "ohos.permission.READ_CONTACTS", 1, 0));
 
     PermissionUsedRequest request;
@@ -819,7 +822,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
 
     permList.emplace_back("ohos.permission.MICROPHONE");
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
-    ASSERT_EQ(RET_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 }
 
 /**
@@ -862,7 +865,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback005, TestSize.Level1)
     std::vector<std::string> permList = {"ohos.permission.INVALD"};
 
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
-    ASSERT_EQ(RET_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     std::vector<std::string> permList1 = {"ohos.permission.INVALD", "ohos.permission.CAMERA"};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest3>(permList1);
@@ -967,7 +970,8 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission002, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
 }
 
@@ -1019,9 +1023,9 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission004, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.UtTestInvalidPermission";
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA"));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StartUsingPermission(1, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::StartUsingPermission(1, "ohos.permission.CAMERA"));
 }
 
 /**
@@ -1045,7 +1049,8 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission001, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, StopUsingPermission002, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
+    ASSERT_EQ(
+        PrivacyError::ERR_PERMISSION_NOT_START_USING, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
 }
 
 /**
@@ -1058,7 +1063,8 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission003, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.uttestpermission"));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PrivacyKit::StopUsingPermission(g_TokenId_E, "ohos.permission.uttestpermission"));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(0, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
 }
@@ -1074,7 +1080,8 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
+    ASSERT_EQ(
+        PrivacyError::ERR_PERMISSION_NOT_START_USING, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
 }
 
 /**
@@ -1086,5 +1093,5 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
 HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_EQ(RET_ERROR, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
 }

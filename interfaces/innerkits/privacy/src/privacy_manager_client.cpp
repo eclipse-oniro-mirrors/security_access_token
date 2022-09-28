@@ -29,7 +29,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 } // namespace
 
-const static int32_t MAX_PERM_LIST_SIZE = 200;
+const static int32_t MAX_CALLBACK_SIZE = 200;
+const static int32_t MAX_PERM_LIST_SIZE = 1024;
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
 {
@@ -120,7 +121,7 @@ int32_t PrivacyManagerClient::CreateActiveStatusChangeCbk(
 {
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
 
-    if (activeCbkMap_.size() == MAX_PERM_LIST_SIZE) {
+    if (activeCbkMap_.size() == MAX_CALLBACK_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of subscribers has been reached");
         return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
@@ -162,6 +163,9 @@ int32_t PrivacyManagerClient::RegisterPermActiveStatusCallback(
     }
     std::vector<std::string> permList;
     callback->GetPermList(permList);
+    if (permList.size() > MAX_PERM_LIST_SIZE) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
 
     result = proxy->RegisterPermActiveStatusCallback(permList, callbackWrap->AsObject());
     if (result == RET_SUCCESS) {

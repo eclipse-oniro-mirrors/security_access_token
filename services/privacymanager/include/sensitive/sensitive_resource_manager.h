@@ -51,8 +51,8 @@ public:
     void SetGlobalSwitch(const ResourceType type, bool switchStatus);
 
     // register and unregister app status change callback
-    bool RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
-    bool UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
+    int32_t RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
+    int32_t UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
 
 private:
     bool InitProxy();

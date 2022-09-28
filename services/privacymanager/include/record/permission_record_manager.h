@@ -61,7 +61,7 @@ private:
 
     bool GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
-    bool GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();

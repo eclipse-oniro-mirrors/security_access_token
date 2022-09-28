@@ -145,7 +145,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     sptr<PermissionUsedResultParcel> resultSptr = reply.ReadParcelable<PermissionUsedResultParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-        return ERR_READ_PARCEL_FAILED;
+        return PrivacyError::ERR_READ_PARCEL_FAILED;
     }
     result = *resultSptr;
     return reply.ReadInt32();

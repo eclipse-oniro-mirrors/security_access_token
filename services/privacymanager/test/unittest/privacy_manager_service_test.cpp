@@ -22,6 +22,7 @@
 #include "permission_record_manager.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
+#include "privacy_error.h"
 #include "privacy_manager_service.h"
 #include "sensitive_resource_manager.h"
 
@@ -241,7 +242,7 @@ void PermActiveStatusChangeCallback::ActiveStatusChangeCallback(ActiveChangeResp
 HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
-    ASSERT_NE(RET_SUCCESS,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
             PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
 }
 
@@ -266,7 +267,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallback002, TestSiz
 
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
-    ASSERT_NE(RET_SUCCESS,
+    ASSERT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
         PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
 
     for (size_t i = 0; i < callbacks.size(); ++i) {
@@ -284,7 +285,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallback002, TestSiz
 HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallback001, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
-    ASSERT_NE(RET_SUCCESS,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
             PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
 }
 

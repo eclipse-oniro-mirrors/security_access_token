@@ -90,8 +90,7 @@ int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const 
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
-    return Constant::SUCCESS;
+    return PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedRecords(

@@ -13,29 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef INTERFACES_INNERKITS_PRIVACY_ERROR_H
-#define INTERFACES_INNERKITS_PRIVACY_ERROR_H
+#ifndef PRIVACY_KIT_PERM_TEST_H
+#define PRIVACY_KIT_PERM_TEST_H
+
+#include <gtest/gtest.h>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum PrivacyError {
-    ERR_PARAM_INVALID = 1,
-    ERR_SERVICE_ABNORMAL,
-    ERR_READ_PARCEL_FAILED,
-    ERR_WRITE_PARCEL_FAILED,
-    ERR_IPC_PARCEL_FAILED,
-    ERR_MALLOC_FAILED,
-    ERR_TOKENID_NOT_EXIST,
-    ERR_PERMISSION_NOT_EXIST,
-    ERR_CALLBACK_ALREADY_EXIST,
-    ERR_CALLBACK_NOT_EXIST,
-    ERR_CALLBACKS_EXCEED_LIMITATION,
-    ERR_PERMISSION_ALREADY_START_USING,
-    ERR_PERMISSION_NOT_START_USING,
-    ERR_GET_UDID_FAILED,
-    ERR_PERMISSION_DENIED,
+class PermDenyTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif
+#endif // PRIVACY_KIT_PERM_TEST_H
