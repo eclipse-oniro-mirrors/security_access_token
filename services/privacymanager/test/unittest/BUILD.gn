@@ -42,7 +42,9 @@ if (is_standard_system && ability_base_enable == true) {
 
     deps = [
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
       "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
+      "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy_manager_service",
       "//third_party/googletest:gtest_main",
     ]
@@ -51,6 +53,7 @@ if (is_standard_system && ability_base_enable == true) {
       "ability_runtime:app_manager",
       "access_token:libaccesstoken_sdk",
       "c_utils:utils",
+      "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
       "multimedia_audio_framework:audio_client",
       "ipc:ipc_core",
