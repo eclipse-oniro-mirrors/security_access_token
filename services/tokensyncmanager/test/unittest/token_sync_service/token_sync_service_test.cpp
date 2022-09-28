@@ -235,12 +235,17 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
+    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    sleep(3);
-
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-
     int count = 0;
+    while (!GetSendMessFlagMock() && count < 10) {
+        sleep(1);
+        count++;
+    }
+
+    ResetSendMessFlagMock();
+    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
+    count = 0;
     while (!GetSendMessFlagMock() && count < 10) {
         sleep(1);
         count++;
@@ -607,20 +612,23 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
+    ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    sleep(3);
+    int count = 0;
+    while (!GetSendMessFlagMock() && count < 10) {
+        sleep(1);
+        count++;
+    }
 
     ResetSendMessFlagMock();
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-
-    int count = 0;
+    count = 0;
     while (!GetSendMessFlagMock() && count < 10) {
         sleep(1);
         count++;
     }
     free(recvBuffer);
 
-    ResetSendMessFlagMock();
     std::string uuidMessage = GetUuidMock();
     ASSERT_EQ(uuidMessage, "ec23cd2d-");
 }
