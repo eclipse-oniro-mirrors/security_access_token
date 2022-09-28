@@ -50,6 +50,10 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
