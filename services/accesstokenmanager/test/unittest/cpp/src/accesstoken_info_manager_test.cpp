@@ -176,7 +176,9 @@ void AccessTokenInfoManagerTest::SetUpTestCase()
 {}
 
 void AccessTokenInfoManagerTest::TearDownTestCase()
-{}
+{
+    sleep(3); // delay 3 minutes
+}
 
 void AccessTokenInfoManagerTest::SetUp()
 {
