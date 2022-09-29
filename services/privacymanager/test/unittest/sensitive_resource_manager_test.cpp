@@ -252,15 +252,15 @@ HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest001, TestSize.Level1)
  */
 HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest002, TestSize.Level1)
 {
-    bool MicrophoneStatus = SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE);
+    bool microphoneStatus = SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE);
 
     SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, true);
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(MicrophoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    ASSERT_EQ(microphoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
 
     SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, false);
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(MicrophoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    ASSERT_EQ(microphoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
 }
 
 /**
