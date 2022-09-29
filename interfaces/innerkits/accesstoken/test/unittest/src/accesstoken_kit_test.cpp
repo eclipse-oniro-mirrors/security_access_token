@@ -29,7 +29,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-static constexpr int32_t VAGUE_LOCATION_API_VERSION = 9;
+static constexpr int32_t VAGUE_LOCATION_API_VERSION = 10;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitTest"};
 
 PermissionStateFull g_grantPermissionReq = {
@@ -3198,7 +3198,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(2, permsList.size());
-    ASSERT_EQ(INVALID_OPER, permsList[0].state);
+    ASSERT_EQ(PASS_OPER, permsList[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
