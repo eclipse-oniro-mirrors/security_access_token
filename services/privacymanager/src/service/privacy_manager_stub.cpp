@@ -30,6 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerStub"
 };
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
+static const int32_t ERROR = -1;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 }
 
@@ -128,11 +129,12 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    PermissionUsedResultParcel responseParcel;
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteParcelable(&responseParcel);
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    PermissionUsedResultParcel responseParcel;
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");

@@ -59,7 +59,7 @@ private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
-    bool GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
+    void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
@@ -67,7 +67,7 @@ private:
     void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    bool GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
+    void GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 

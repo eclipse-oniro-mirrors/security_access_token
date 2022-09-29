@@ -37,7 +37,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     sources = [
       "privacy_manager_service_test.cpp",
-      "sensitive_resource_manger_test.cpp",
+      "sensitive_resource_manager_test.cpp",
     ]
 
     configs = [ "//base/security/access_token/config:coverage_flags" ]
@@ -107,6 +107,7 @@ if (is_standard_system && ability_base_enable == true) {
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
+      "multimedia_audio_framework:audio_client",
     ]
   }
 }

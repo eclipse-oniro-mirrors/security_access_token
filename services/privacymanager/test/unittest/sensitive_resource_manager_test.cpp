@@ -74,6 +74,20 @@ void AppStatusChangeCallback1(uint32_t tokenId, int32_t status)
     GTEST_LOG_(INFO) << "tokenId: " << tokenId << "status: " << status;
 }
 
+
+static bool g_micStatus = false;
+static void OnChangeMicGlobalSwitch(bool isMute)
+{
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_before_set: " << g_micStatus;
+    g_micStatus = !(isMute);
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_after_set: " << g_micStatus;
+}
+
+static void ResetEnv()
+{
+    g_micStatus = false;
+}
+
 /**
  * @tc.name: RegisterAppStatusChangeCallback001
  * @tc.desc: Test RegisterAppStatusChangeCallback with invalid parameter.
@@ -232,6 +246,123 @@ HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest002, TestSize.Level1)
     SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, false);
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(isMicrophoneMute, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+}
+
+/**
+ * @tc.name: FlowWindowStatusTest001
+ * @tc.desc: Verify the SetFlowWindowStatus IsFlowWindowShow.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, FlowWindowStatusTest001, TestSize.Level1)
+{
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(true);
+
+    ASSERT_TRUE(SensitiveResourceManager::GetInstance().IsFlowWindowShow());
+
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(false);
+
+    ASSERT_FALSE(SensitiveResourceManager::GetInstance().IsFlowWindowShow());
+}
+
+/**
+ * @tc.name: RegisterMicGlobalSwitchChangeCallbackTest001
+ * @tc.desc: call RegisterMicGlobalSwitchChangeCallback ShowDialog once.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(SensitiveResourceManagerTest, RegisterMicGlobalSwitchChangeCallbackTest001, TestSize.Level1)
+{
+    SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
+
+    bool isMute = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
+
+    ResetEnv();
+
+    AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(true);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_TRUE(g_micStatus);
+
+    ResetEnv();
+
+    AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(g_micStatus);
+    
+    ResetEnv();
+    AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(isMute);
+    SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
+}
+
+
+/**
+ * @tc.name: RegisterMicGlobalSwitchChangeCallbackTest002
+ * @tc.desc: Verify the RegisterMicGlobalSwitchChangeCallback abnormal branch callback is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(SensitiveResourceManagerTest, RegisterMicGlobalSwitchChangeCallbackTest002, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(nullptr));
+
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch));
+    ASSERT_EQ(ERR_CALLBACK_ALREADY_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch));
+
+    SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
+}
+
+/**
+ * @tc.name: UnRegisterMicGlobalSwitchChangeCallbackTest001
+ * @tc.desc: Verify the UnRegisterMicGlobalSwitchChangeCallback with vaild callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTest001, TestSize.Level1)
+{
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch));
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch));
+}
+
+/**
+ * @tc.name: UnRegisterMicGlobalSwitchChangeCallbackTest002
+ * @tc.desc: Verify the UnRegisterMicGlobalSwitchChangeCallback abnormal branch callback is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTest002, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(nullptr));
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch));
+}
+
+/**
+ * @tc.name: ShowDialogTest001
+ * @tc.desc: call ShowDialog once with valid ResourceType.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest001, TestSize.Level1)
+{
+    EXPECT_EQ(RET_SUCCESS, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::MICROPHONE));
+    EXPECT_EQ(RET_SUCCESS, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::CAMERA));
+}
+
+/**
+ * @tc.name: ShowDialogTest002
+ * @tc.desc: Verify the ShowDialog abnormal branch with invalid ResourceType.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest002, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_PARAM_INVALID, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::INVALID));
 }
 } // namespace AccessToken
 } // namespace Security

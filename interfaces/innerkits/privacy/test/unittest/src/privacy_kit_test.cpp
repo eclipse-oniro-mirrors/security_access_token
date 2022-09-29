@@ -26,7 +26,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
-const static int32_t RET_ERROR = -1;
 
 static HapPolicyParams g_PolicyPramsA = {
     .apl = APL_NORMAL,
@@ -614,7 +613,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     if (result.bundleRecords.size() < 2) {
-        ASSERT_EQ(RET_NO_ERROR, RET_ERROR);
+        ASSERT_TRUE(false);
     }
 }
 

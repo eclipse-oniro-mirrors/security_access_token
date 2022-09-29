@@ -27,7 +27,10 @@ ohos_unittest("libprivacy_sdk_test") {
     "//base/security/access_token/interfaces/innerkits/token_setproc/include",
   ]
 
-  sources = [ "unittest/src/privacy_kit_test.cpp" ]
+  sources = [
+    "unittest/src/permission_deny_test.cpp",
+    "unittest/src/privacy_kit_test.cpp",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
