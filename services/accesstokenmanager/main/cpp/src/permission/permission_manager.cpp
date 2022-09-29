@@ -230,13 +230,14 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     // api8 require vague location permission refuse directlty beause there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) &&
        (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
-        permState.state = INVALID_OPER;
+        permState.state = PASS_OPER;
         return;
     }
 
     auto iter = std::find_if(permsList.begin(), permsList.end(), [permState](const PermissionStateFull& perm) {
         return permState.permissionName == perm.permissionName;
     });
+
     if (iter != permsList.end()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
             permState.permissionName.c_str(), iter->grantStatus[0], iter->grantFlags[0]);

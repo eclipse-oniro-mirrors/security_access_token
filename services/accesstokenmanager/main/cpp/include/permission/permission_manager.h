@@ -39,7 +39,7 @@ namespace AccessToken {
 constexpr const char* VAGUE_LOCATION_PERMISSION_NAME = "ohos.permission.APPROXIMATELY_LOCATION";
 constexpr const char* ACCURATE_LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 const uint32_t ELEMENT_NOT_FOUND = -1;
-const int32_t ACCURATE_LOCATION_API_VERSION = 9;
+const int32_t ACCURATE_LOCATION_API_VERSION = 10;
 
 class PermissionManager final {
 public:
