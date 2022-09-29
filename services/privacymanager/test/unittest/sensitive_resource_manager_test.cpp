@@ -252,15 +252,15 @@ HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest001, TestSize.Level1)
  */
 HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest002, TestSize.Level1)
 {
-    bool isMicrophoneMute = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
+    bool MicrophoneStatus = SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE);
 
     SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, true);
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(isMicrophoneMute, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    ASSERT_EQ(MicrophoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
 
     SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, false);
     usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(isMicrophoneMute, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    ASSERT_EQ(MicrophoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
 }
 
 /**
@@ -366,6 +366,7 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTe
 HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest001, TestSize.Level1)
 {
     EXPECT_EQ(RET_SUCCESS, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::MICROPHONE));
+    sleep(3);
     EXPECT_EQ(RET_SUCCESS, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::CAMERA));
 }
 
