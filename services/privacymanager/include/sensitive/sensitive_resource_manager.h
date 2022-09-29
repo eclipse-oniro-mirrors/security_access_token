@@ -21,7 +21,9 @@
 #include <string>
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
+#include "mic_global_switch_change_callback.h"
 #include "safe_map.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -49,11 +51,17 @@ public:
     bool GetAppStatus(const std::string& pkgName, int32_t& status);
     bool GetGlobalSwitch(const ResourceType type);
     void SetGlobalSwitch(const ResourceType type, bool switchStatus);
-
+    bool IsFlowWindowShow(void);
+    void SetFlowWindowStatus(bool isShow);
+    int32_t ShowDialog(const ResourceType& type);
+    
     // register and unregister app status change callback
     bool RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
     bool UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
-
+    
+    // mic global switch
+    int32_t RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
+    int32_t UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
 private:
     bool InitProxy();
     OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
@@ -62,6 +70,10 @@ private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
     SafeMap<ResourceType, bool> switchStatusMap_;
+    std::mutex flowWindowStatusMutex_;
+    bool flowWindowStatus_ = false;
+    std::mutex micGlobalSwitchMutex_;
+    std::vector<std::shared_ptr<MicGlobalSwitchChangeCallback>> micGlobalSwitchCallbacks_;
     std::mutex mutex_;
     sptr<AppExecFwk::IAppMgr> appMgrProxy_;
 };

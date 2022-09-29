@@ -33,6 +33,13 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const size_t MAX_CALLBACK_SIZE = 200;
 }
 
+using namespace OHOS::Rosen;
+using namespace OHOS::AudioStandard;
+
+static const std::string PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
+static const std::string PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
+static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
+
 SensitiveResourceManager& SensitiveResourceManager::GetInstance()
 {
     static SensitiveResourceManager instance;
@@ -50,7 +57,7 @@ SensitiveResourceManager::~SensitiveResourceManager()
 void SensitiveResourceManager::Init()
 {
     switchStatusMap_[ResourceType::CAMERA] = true;
-    switchStatusMap_[ResourceType::MICROPHONE] = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
+    switchStatusMap_[ResourceType::MICROPHONE] = !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
 }
 
 bool SensitiveResourceManager::InitProxy()
@@ -130,6 +137,43 @@ void SensitiveResourceManager::SetGlobalSwitch(const ResourceType type, bool swi
     switchStatusMap_[type] = switchStatus;
 }
 
+bool SensitiveResourceManager::IsFlowWindowShow(void)
+{
+    std::lock_guard<std::mutex> lock(flowWindowStatusMutex_);
+    return flowWindowStatus_;
+}
+
+void SensitiveResourceManager::SetFlowWindowStatus(bool isShow)
+{
+    std::lock_guard<std::mutex> lock(flowWindowStatusMutex_);
+    flowWindowStatus_ = isShow;
+}
+
+int32_t SensitiveResourceManager::ShowDialog(const ResourceType& type)
+{
+    AAFwk::Want want;
+    want.SetElementName(PERMISSION_MANAGER_BUNDLE_NAME, PERMISSION_MANAGER_DIALOG_ABILITY);
+    std::string typeStr = "";
+    switch (type) {
+        case ResourceType::CAMERA:
+            typeStr = "camera";
+            break;
+        case ResourceType::MICROPHONE:
+            typeStr = "microphone";
+            break;
+        default:
+            ACCESSTOKEN_LOG_ERROR(LABEL, "type is invalid, type:%{public}d", type);
+            return ERR_PARAM_INVALID;
+    }
+    want.SetParam(RESOURCE_KEY, typeStr);
+    ErrCode err = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want, nullptr);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
+        return ERR_SERVICE_ABNORMAL;
+    }
+    return RET_SUCCESS;
+}
+
 bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
 {
     if (tokenId == 0 || callback == nullptr) {
@@ -207,6 +251,60 @@ bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenI
     ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
     return true;
+}
+
+int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback)
+{
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
+        return ERR_CALLBACK_NOT_EXIST;
+    }
+    
+    std::lock_guard<std::mutex> lock(micGlobalSwitchMutex_);
+    auto iter = std::find_if(micGlobalSwitchCallbacks_.begin(), micGlobalSwitchCallbacks_.end(),
+        [callback](const std::shared_ptr<MicGlobalSwitchChangeCallback>& rec) {
+        return callback == rec->GetCallback();
+    });
+    if (iter != micGlobalSwitchCallbacks_.end()) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "callback is already registered");
+        return ERR_CALLBACK_ALREADY_EXIST;
+    }
+
+    std::shared_ptr<MicGlobalSwitchChangeCallback> listener = std::make_shared<MicGlobalSwitchChangeCallback>(
+        MicGlobalSwitchChangeCallback());
+    if (listener == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new fail.");
+        return ERR_MALLOC_FAILED;
+    }
+    listener->SetCallback(callback);
+    micGlobalSwitchCallbacks_.emplace_back(listener);
+
+    AudioStandard::AudioRoutingManager::GetInstance()->SetMicStateChangeCallback(listener);
+    ACCESSTOKEN_LOG_INFO(LABEL, "register Microphone callback(%{public}p).", callback);
+
+    return RET_SUCCESS;
+}
+
+int32_t SensitiveResourceManager::UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback)
+{
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
+        return ERR_CALLBACK_NOT_EXIST;
+    }
+
+    std::lock_guard<std::mutex> lock(micGlobalSwitchMutex_);
+    auto iter = std::find_if(micGlobalSwitchCallbacks_.begin(), micGlobalSwitchCallbacks_.end(),
+        [callback](const std::shared_ptr<MicGlobalSwitchChangeCallback>& rec) {
+        return callback == rec->GetCallback();
+    });
+    if (iter == micGlobalSwitchCallbacks_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is not found.");
+        return ERR_CALLBACK_NOT_EXIST;
+    }
+
+    micGlobalSwitchCallbacks_.erase(iter);
+    ACCESSTOKEN_LOG_INFO(LABEL, "unregister callback(%{public}p).", callback);
+    return RET_SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -161,6 +161,18 @@ HWTEST_F(SensitiveResourceMockTest, UnRegisterAppStatusChangeCallback002, TestSi
     ASSERT_TRUE(
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 }
+
+/**
+ * @tc.name: ShowDialogTest001
+ * @tc.desc: Verify the ShowDialog abnormal branch StartAbility failed.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceMockTest, ShowDialogTest001, TestSize.Level1)
+{
+    ResetProxy(0);
+    ASSERT_EQ(ERR_SERVICE_ABNORMAL, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::MICROPHONE));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
