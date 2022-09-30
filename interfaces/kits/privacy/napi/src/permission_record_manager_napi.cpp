@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "napi_context_common.h"
 #include "napi_common.h"
+#include "napi_error.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -43,31 +44,46 @@ static bool ParseAddPermissionRecord(
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
+    std::string errMsg;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    asyncContext.env = env;
+    if (argc < ADD_PERMISSION_RECORD_MAX_PARAMS - 1) {
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
 
+    asyncContext.env = env;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        errMsg = GetParamErrorMsg("tokenID", "number");
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
 
     // 2: the third parameter of argv
     if (!ParseInt32(env, argv[2], asyncContext.successCount)) {
+        errMsg = GetParamErrorMsg("successCount", "number");
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
 
     // 3: the fourth parameter of argv
     if (!ParseInt32(env, argv[3], asyncContext.failCount)) {
+        errMsg = GetParamErrorMsg("failCount", "number");
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     if (argc == ADD_PERMISSION_RECORD_MAX_PARAMS) {
         // 4: : the fifth parameter of argv
         if (!ParseCallback(env, argv[4], asyncContext.callbackRef)) {
+            errMsg = GetParamErrorMsg("callback", "AsyncCallback");
+            napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg));
             return false;
         }
     }
@@ -83,6 +99,10 @@ static bool ParseStartAndStopUsingPermission(
     void* data = nullptr;
 
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc < START_STOP_MAX_PARAMS - 1) {
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
 
     asyncContext.env = env;
     // 0: the first parameter of argv
@@ -293,6 +313,10 @@ static bool ParseGetPermissionUsedRecords(
     napi_value thisVar = nullptr;
     void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc < GET_PERMISSION_RECORD_MAX_PARAMS - 1) {
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
 
     asyncContext.env = env;
 
@@ -619,10 +643,12 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
-    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
+    if (argc < ON_OFF_MAX_PARAMS) {
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
+
     std::string type;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
@@ -654,10 +680,12 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
-    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
+    if (argc < ON_OFF_MAX_PARAMS - 1) {
+        napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
+
     std::string type;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
