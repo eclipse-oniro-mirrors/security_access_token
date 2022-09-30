@@ -20,6 +20,7 @@
 #include <datetime_ex.h>
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "perm_state_callback_death_recipient.h"
 
 
@@ -52,13 +53,13 @@ int32_t CallbackManager::AddCallback(
 {
     if ((callbackScopePtr == nullptr) || (callback == nullptr)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback size has reached limitation");
-        return RET_FAILED;
+        return AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT;
     }
     callback->AddDeathRecipient(callbackDeathRecipient_);
 
@@ -76,7 +77,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback is nullptr");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);

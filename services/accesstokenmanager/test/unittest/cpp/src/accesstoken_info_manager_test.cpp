@@ -276,8 +276,8 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetHapTokenInfo001
- * @tc.desc: Verify the GetHapTokenInfo abnormal and normal branch.
+ * @tc.name: GetHapPermissionPolicySet001
+ * @tc.desc: Verify the GetHapPermissionPolicySet abnormal and normal branch.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -1100,7 +1100,8 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs = {123};
-    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+        PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.tokenIDs.empty());
 
     outScopeInfo = emptyScopeInfo;
@@ -1112,7 +1113,8 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs.clear();
     inScopeInfo.permList = {"ohos.permission.test"};
-    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+        PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.permList.empty());
 
     outScopeInfo = emptyScopeInfo;
@@ -1143,11 +1145,14 @@ HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback001, TestSize.Lev
     PermStateChangeScope inScopeInfo;
     inScopeInfo.tokenIDs = {123};
 
-    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+        PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
 
     inScopeInfo.permList = {"ohos.permission.CAMERA"};
-    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
-    EXPECT_EQ(RET_FAILED, PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+        PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+        PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
 }
 
 class PermChangeCallback : public PermissionStateChangeCallbackStub {
@@ -1272,6 +1277,11 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
     std::string dumpInfo;
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
+        tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
 }
 
 /**
@@ -1319,4 +1329,26 @@ HWTEST_F(AccessTokenInfoManagerTest, GrantPermission001, TestSize.Level1)
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: RevokePermission001
+ * @tc.desc: Test RevokePermission abnormal branch.
+ * @tc.type: FUNC
+ * @tc.require: issueI5SSXG
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
+{
+  int32_t ret;
+  AccessTokenID tokenID = 0;
+  ret = PermissionManager::GetInstance().RevokePermission(
+      tokenID, "", PERMISSION_USER_FIXED);
+  ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+  ret = PermissionManager::GetInstance().RevokePermission(
+      tokenID, "ohos.perm", PERMISSION_USER_FIXED);
+  ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+  int32_t invalidFlag = -1;
+  ret = PermissionManager::GetInstance().RevokePermission(
+      tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+  ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }

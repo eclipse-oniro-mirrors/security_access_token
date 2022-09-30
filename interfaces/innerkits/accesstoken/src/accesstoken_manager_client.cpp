@@ -162,7 +162,7 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     return proxy->RevokePermission(tokenID, permissionName, flag);
 }
@@ -184,18 +184,18 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     std::lock_guard<std::mutex> lock(callbackMutex_);
     if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
-        return RET_FAILED;
+        return AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT;
     }
 
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback != callbackMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "already has the same callback");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     } else {
         callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
         if (!callback) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callback failed!");
-            return RET_FAILED;
+            return AccessTokenError::ERR_SA_WORK_ABNORMAL;
         }
     }
     return RET_SUCCESS;
@@ -206,7 +206,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 {
     if (customizedCb == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCb is nullptr");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     sptr<PermissionStateChangeCallback> callback = nullptr;
@@ -217,12 +217,16 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     PermStateChangeScopeParcel scopeParcel;
     customizedCb->GetScope(scopeParcel.scope);
 
+    if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
+        scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
+      return AccessTokenError::ERR_PARAM_INVALID;
+    }
     result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(callbackMutex_);
@@ -238,13 +242,13 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback == callbackMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "goalCallback already is not exist");
-        return RET_FAILED;
+        return AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER;
     }
 
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = proxy->UnRegisterPermStateChangeCallback(goalCallback->second->AsObject());

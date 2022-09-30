@@ -265,15 +265,15 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
         tokenID, permissionName.c_str(), flag);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "flag is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag);
 }
