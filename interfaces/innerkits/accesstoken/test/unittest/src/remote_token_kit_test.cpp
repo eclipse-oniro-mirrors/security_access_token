@@ -54,43 +54,43 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
     .label = "label",
     .labelId = 1,
     .description = "open the door",
     .descriptionId = 1,
-    .availableLevel = APL_NORMAL
 };
 
 PermissionDef g_infoManagerTestPermDef2 = {
     .permissionName = "ohos.permission.test2",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
     .label = "label",
     .labelId = 1,
     .description = "break the door",
     .descriptionId = 1,
-    .availableLevel = APL_NORMAL
 };
 
 PermissionStateFull g_infoManagerTestState1 = {
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .isGeneral = true,
     .permissionName = "ohos.permission.test1",
-    .resDeviceID = {"local"}
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1},
 };
 
 PermissionStateFull g_infoManagerTestState2 = {
     .permissionName = "ohos.permission.test2",
     .isGeneral = false,
-    .grantFlags = {1, 2},
+    .resDeviceID = {"device 1", "device 2"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
-    .resDeviceID = {"device 1", "device 2"}
+    .grantFlags = {1, 2},
 };
 
 HapInfoParams g_infoManagerTestInfoParms = {
-    .bundleName = "accesstoken_test",
     .userID = 1,
+    .bundleName = "accesstoken_test",
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
@@ -103,8 +103,8 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
 };
 
 HapInfoParams g_infoManagerTestInfoParmsBak = {
-    .bundleName = "accesstoken_test",
     .userID = 1,
+    .bundleName = "accesstoken_test",
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
@@ -222,11 +222,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+         .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -290,11 +290,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
     wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -357,11 +357,12 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {11}, // wrong flags
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {11}, // wrong flags
+        };
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -408,11 +409,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -466,11 +467,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -523,11 +524,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED}, // first grant
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED}, // first grant
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -580,11 +581,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -632,11 +633,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED}, // first denied
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -685,11 +686,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -741,11 +742,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo010, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -782,11 +783,11 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken001, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -836,11 +837,11 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceToken002, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -910,11 +911,11 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -972,11 +973,11 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteDeviceTokens002, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -1077,11 +1078,11 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote002, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
@@ -1141,11 +1142,11 @@ HWTEST_F(RemoteTokenKitTest, AllocLocalTokenID001, TestSize.Level1)
     };
 
     PermissionStateFull infoManagerTestState = {
-        .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .isGeneral = true,
         .permissionName = "ohos.permission.test1",
-        .resDeviceID = {"local"}};
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_USER_SET}};
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(infoManagerTestState);
 
