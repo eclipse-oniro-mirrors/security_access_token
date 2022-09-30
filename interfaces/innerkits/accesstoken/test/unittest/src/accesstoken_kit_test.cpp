@@ -1030,14 +1030,14 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ret = AccessTokenKit::RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     std::string invalidPerm(INVALID_PERMNAME_LEN, 'a');
     ret = AccessTokenKit::RevokePermission(tokenID, invalidPerm, PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     ret = AccessTokenKit::RevokePermission(TEST_TOKENID_INVALID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     AccessTokenKit::DeleteToken(tokenID);
 
@@ -1080,7 +1080,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission004, TestSize.Level0)
     ASSERT_NE(0, tokenID);
     int invalidFlag = -1;
     int32_t ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -3505,7 +3505,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
@@ -3631,7 +3631,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback006, TestSize.Level1
     scopeInfo.tokenIDs = {};
     auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -3683,7 +3683,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback007, TestSize.Level1
         if (i == 1025) { // 1025 is a invalid size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(RET_FAILED, res);
+            ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
@@ -3723,7 +3723,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback008, TestSize.Level1
         if (i == 1025) { // 1025 is a invalid size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(RET_FAILED, res);
+            ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
@@ -3754,7 +3754,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback009, TestSize.Level1
         if (i == 200) { // 200 is the max size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(RET_FAILED, res);
+            ASSERT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
@@ -3785,7 +3785,7 @@ HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback001, TestSize.Leve
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
 }
 
 /**
@@ -3805,11 +3805,11 @@ HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback002, TestSize.Leve
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
 }
 
 /**

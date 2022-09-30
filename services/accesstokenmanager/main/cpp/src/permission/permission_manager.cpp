@@ -369,25 +369,25 @@ int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::str
     return UpdateTokenPermissionState(tokenID, permissionName, true, flag);
 }
 
-void PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return;
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
-    UpdateTokenPermissionState(tokenID, permissionName, false, flag);
+    return UpdateTokenPermissionState(tokenID, permissionName, false, flag);
 }
 
 void PermissionManager::ScopeToString(
@@ -428,11 +428,11 @@ int32_t PermissionManager::ScopeFilter(const PermStateChangeScope& scopeSrc, Per
     }
     if ((scopeRes.tokenIDs.empty()) && (!scopeSrc.tokenIDs.empty())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "valid tokenid size is 0!");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if ((scopeRes.permList.empty()) && (!scopeSrc.permList.empty())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     ScopeToString(scopeRes.tokenIDs, scopeRes.permList);
     return RET_SUCCESS;
@@ -443,13 +443,14 @@ int32_t PermissionManager::AddPermStateChangeCallback(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     PermStateChangeScope scopeRes;
-    if (ScopeFilter(scope, scopeRes) != RET_SUCCESS) {
-        return RET_FAILED;
+    int32_t result = ScopeFilter(scope, scopeRes);
+    if (result != RET_SUCCESS) {
+      return result;
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
     if (callbackScopePtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
-        return RET_FAILED;
+        return AccessTokenError::ERR_MALLOC_FAILED;
     }
     return CallbackManager::GetInstance().AddCallback(callbackScopePtr, callback);
 }
