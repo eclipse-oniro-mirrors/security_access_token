@@ -18,10 +18,11 @@
 #include "ability_manager_client.h"
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
+#include "audio_system_manager.h"
 #include "iservice_registry.h"
+#include "privacy_error.h"
 #include "system_ability_definition.h"
 #include "window_manager.h"
-#include "audio_system_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "SensitiveResourceManager"
 };
 static const size_t MAX_CALLBACK_SIZE = 200;
+static constexpr int32_t SUCCESS = 0;
 }
 
 using namespace OHOS::Rosen;
@@ -174,11 +176,11 @@ int32_t SensitiveResourceManager::ShowDialog(const ResourceType& type)
     return RET_SUCCESS;
 }
 
-bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
+int32_t SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
 {
     if (tokenId == 0 || callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
-        return false;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
     
     std::lock_guard<std::mutex> lock(appStatusMutex_);
@@ -189,18 +191,18 @@ bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId,
     if (iter != appStateCallbacks_.end()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "callback is already registered, add TokenId(%{public}d).", tokenId);
         (*iter)->AddTokenId(tokenId);
-        return true;
+        return SUCCESS;
     }
 
     if (appStateCallbacks_.size() >= MAX_CALLBACK_SIZE) {
         ACCESSTOKEN_LOG_INFO(LABEL, "callback counts reach the max.");
-        return false;
+        return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
 
     sptr<ApplicationStatusChangeCallback> listener = new (std::nothrow) ApplicationStatusChangeCallback();
     if (listener == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new fail.");
-        return false;
+        return PrivacyError::ERR_MALLOC_FAILED;
     }
     listener->SetCallback(callback);
     listener->AddTokenId(tokenId);
@@ -208,7 +210,7 @@ bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId,
     auto appMgrProxy = GetAppManagerProxy();
     if (appMgrProxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
-        return false;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     appStateCallbacks_.emplace_back(listener);
@@ -216,14 +218,15 @@ bool SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t tokenId,
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "register callback(%{public}p),  add TokenId(%{public}d).", callback, tokenId);
 
-    return true;
+    return SUCCESS;
 }
 
-bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback)
+int32_t SensitiveResourceManager::UnRegisterAppStatusChangeCallback(
+    uint32_t tokenId, OnAppStatusChangeCallback callback)
 {
     if (tokenId == 0 || callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
-        return false;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
     
     std::lock_guard<std::mutex> lock(appStatusMutex_);
@@ -233,13 +236,13 @@ bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenI
     });
     if (iter == appStateCallbacks_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback is not found.");
-        return false;
+        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
     }
 
     auto appMgrProxy = GetAppManagerProxy();
     if (appMgrProxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
-        return false;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     (*iter)->RemoveTokenId(tokenId);
@@ -250,7 +253,7 @@ bool SensitiveResourceManager::UnRegisterAppStatusChangeCallback(uint32_t tokenI
     
     ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
-    return true;
+    return SUCCESS;
 }
 
 int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback)

@@ -28,6 +28,7 @@
 #include "field_const.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
+#include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "time_util.h"
 
@@ -67,24 +68,24 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
-bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
+int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return false;
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
-        return false;
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
     } else if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-        return false;
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
@@ -93,7 +94,7 @@ bool PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const s
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
-    return true;
+    return Constant::SUCCESS;
 }
 
 int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
@@ -102,12 +103,13 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
     ExecuteDeletePermissionRecordTask();
 
     PermissionRecord record;
-    if (!GetPermissionRecord(tokenId, permissionName, successCount, failCount, record)) {
-        return Constant::FAILURE;
+    int32_t result = GetPermissionRecord(tokenId, permissionName, successCount, failCount, record);
+    if (result != Constant::SUCCESS) {
+        return result;
     }
 
     if (record.status == PERM_INACTIVE) {
-        return Constant::FAILURE;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     AddRecord(record);
@@ -144,7 +146,7 @@ int32_t PermissionRecordManager::GetPermissionUsedRecords(
 
     if (!request.isRemote && !GetRecordsFromLocalDB(request, result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to GetRecordsFromLocalDB");
-        return  Constant::FAILURE;
+        return  PrivacyError::ERR_PARAM_INVALID;
     }
     return Constant::SUCCESS;
 }
@@ -155,15 +157,15 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     auto task = [request, callback]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedRecordsAsync task called");
         PermissionUsedResult result;
-        int32_t ret = PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
-        callback->OnQueried(ret, result);
+        int32_t retCode = PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
+        callback->OnQueried(retCode, result);
     };
     std::thread recordThread(task);
     recordThread.detach();
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList)
+void PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList)
 {
     std::vector<GenericValues> results;
     {
@@ -176,7 +178,6 @@ bool PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>&
     for (const auto& res : results) {
         tokenIdList.emplace(res.GetInt(FIELD_TOKEN_ID));
     }
-    return true;
 }
 
 bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
@@ -204,13 +205,12 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
             andConditionValues, orConditionValues, findRecordsValues); // find records from cache and database
         andConditionValues.Remove(FIELD_TOKEN_ID);
         BundleUsedRecord bundleRecord;
-        CreateBundleUsedRecord(tokenId, bundleRecord);
-        if (!findRecordsValues.empty()) {
-            if (!GetRecords(request.flag, findRecordsValues, bundleRecord, result)) {
-                return false;
-            }
+        if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
+            continue;
         }
-
+        if (!findRecordsValues.empty()) {
+            GetRecords(request.flag, findRecordsValues, bundleRecord, result);
+        }
         if (!bundleRecord.permissionRecords.empty()) {
             result.bundleRecords.emplace_back(bundleRecord);
         }
@@ -232,7 +232,7 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     return true;
 }
 
-bool PermissionRecordManager::GetRecords(
+void PermissionRecordManager::GetRecords(
     int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
 {
     std::vector<PermissionUsedRecord> permissionRecords;
@@ -263,7 +263,6 @@ bool PermissionRecordManager::GetRecords(
         }
     }
     bundleRecord.permissionRecords = permissionRecords;
-    return true;
 }
 
 void PermissionRecordManager::UpdateRecords(
@@ -443,12 +442,13 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     int32_t failCount = 0;
 
     PermissionRecord record = { 0 };
-    if (!GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record)) {
-        return Constant::FAILURE;
+    int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);
+    if (result != Constant::SUCCESS) {
+        return result;
     }
 
     if (HasStarted(record)) {
-        return Constant::FAILURE;
+        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
     AddRecordToStartList(record);
@@ -457,9 +457,9 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     }
 
     // register app background and forground change callback, unregist when remove
-    if (!SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusListener)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d register app status change callback failed.", tokenId);
-        return Constant::FAILURE;
+    int32_t ret = SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusListener);
+    if (ret != Constant::SUCCESS) {
+        return ret;
     }
 
     return Constant::SUCCESS;
@@ -471,18 +471,18 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return Constant::FAILURE;
+        return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
 
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
-        return Constant::FAILURE;
+        return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
 
     PermissionRecord record;
     if (!GetRecordFromStartList(tokenId, opCode, record)) {
-        return Constant::FAILURE;
+        return PrivacyError::ERR_PERMISSION_NOT_START_USING;
     }
 
     if (record.status != PERM_INACTIVE) {
@@ -490,12 +490,13 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
 
-    if (!IsTokenIdExist(tokenId) && !SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
-        tokenId, AppStatusListener)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}d unregiste app status change callback failed.", tokenId);
-        return Constant::FAILURE;
+    if (!IsTokenIdExist(tokenId)) {
+        int32_t ret = SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
+            tokenId, AppStatusListener);
+        if (ret != Constant::SUCCESS) {
+            return ret;
+        }
     }
-
     return Constant::SUCCESS;
 }
 
@@ -523,7 +524,7 @@ int32_t PermissionRecordManager::PermissionListFilter(
     }
     if ((listRes.empty()) && (!listSrc.empty())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "valid permission size is 0!");
-        return Constant::FAILURE;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
     PermListToString(listRes);
     return Constant::SUCCESS;

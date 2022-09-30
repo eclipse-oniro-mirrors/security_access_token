@@ -18,6 +18,7 @@
 
 #include "accesstoken_kit.h"
 #include "audio_system_manager.h"
+#include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "token_setproc.h"
 
@@ -95,9 +96,9 @@ static void ResetEnv()
  */
 HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback001, TestSize.Level1)
 {
-    ASSERT_EQ(false,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(0, AppStatusChangeCallback));
-    ASSERT_EQ(false,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId_, nullptr));
 }
 
@@ -111,15 +112,15 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback002, TestS
 {
     uint32_t tokenId1 = 123;
     uint32_t tokenId2 = 456;
-    ASSERT_EQ(true,
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback));
-    ASSERT_EQ(true,
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback));
-    ASSERT_EQ(true,
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId2, AppStatusChangeCallback));
-    ASSERT_EQ(true,
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback1));
-    ASSERT_EQ(true,
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId2, AppStatusChangeCallback1));
 
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId1, AppStatusChangeCallback);
@@ -130,14 +131,14 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback002, TestS
 
 typedef void (*AppChangeCallback)(uint32_t tokenId, int32_t status);
 std::map<uint32_t, uint64_t> g_listers;
-static bool RegisterAppStatusChangeCallbackTest(uint32_t tokenId, uint64_t cbAddr)
+static int32_t RegisterAppStatusChangeCallbackTest(uint32_t tokenId, uint64_t cbAddr)
 {
     AppChangeCallback callback = (AppChangeCallback)cbAddr;
     g_listers[tokenId] = cbAddr;
     return SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, callback);
 }
 
-static bool UnregisterAppStatusChangeCallbackTest(uint32_t tokenId)
+static int32_t UnregisterAppStatusChangeCallbackTest(uint32_t tokenId)
 {
     AppChangeCallback callback = (AppChangeCallback)g_listers[tokenId];
     return SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId, callback);
@@ -154,15 +155,15 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback003, TestS
     uint32_t tokenId = 1; // 1: tokenId
     uint64_t addr = 0x12345678; // 0x12345678: simulated address
     for (size_t i = 0; i < MAX_CALLBACK_SIZE; i++) {
-        ASSERT_EQ(true, RegisterAppStatusChangeCallbackTest(tokenId, addr));
+        ASSERT_EQ(RET_SUCCESS, RegisterAppStatusChangeCallbackTest(tokenId, addr));
         tokenId++;
         addr++;
     }
-    ASSERT_EQ(false, RegisterAppStatusChangeCallbackTest(tokenId, addr));
+    ASSERT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION, RegisterAppStatusChangeCallbackTest(tokenId, addr));
 
     tokenId = 1; // 1: tokenId
     for (size_t i = 0; i < MAX_CALLBACK_SIZE; i++) {
-        ASSERT_EQ(true, UnregisterAppStatusChangeCallbackTest(tokenId));
+        ASSERT_EQ(RET_SUCCESS, UnregisterAppStatusChangeCallbackTest(tokenId));
         tokenId++;
     }
 }
@@ -175,27 +176,11 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterAppStatusChangeCallback003, TestS
  */
 HWTEST_F(SensitiveResourceManagerTest, UnRegisterAppStatusChangeCallback001, TestSize.Level1)
 {
-    ASSERT_EQ(false,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(0, AppStatusChangeCallback));
-    ASSERT_EQ(false,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, nullptr));
-    ASSERT_EQ(false,
-        SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, AppStatusChangeCallback));
-}
-
-/**
- * @tc.name: UnRegisterAppStatusChangeCallback002
- * @tc.desc: Test UnRegisterAppStatusChangeCallback wit invalid parameter.
- * @tc.type: FUNC
- * @tc.require: issueI5RWXA issueI5RWXF
- */
-HWTEST_F(SensitiveResourceManagerTest, UnRegisterAppStatusChangeCallback002, TestSize.Level1)
-{
-    ASSERT_EQ(false,
-        SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(0, AppStatusChangeCallback));
-    ASSERT_EQ(false,
-        SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, nullptr));
-    ASSERT_EQ(false,
+    ASSERT_EQ(PrivacyError::ERR_CALLBACK_NOT_EXIST,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, AppStatusChangeCallback));
 }
 

@@ -56,8 +56,8 @@ public:
     int32_t ShowDialog(const ResourceType& type);
     
     // register and unregister app status change callback
-    bool RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
-    bool UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
+    int32_t RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
+    int32_t UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
     
     // mic global switch
     int32_t RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);

@@ -21,6 +21,7 @@
 
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -55,13 +56,13 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", (IRemoteObject *)callback);
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
-        return RET_FAILED;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (callbackDataList_.size() >= MAX_CALLBACK_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "list size has reached max value");
-        return RET_FAILED;
+        return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
     callback->AddDeathRecipient(callbackDeathRecipient_);
 
@@ -80,7 +81,7 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback is nullptr");
-        return RET_FAILED;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);

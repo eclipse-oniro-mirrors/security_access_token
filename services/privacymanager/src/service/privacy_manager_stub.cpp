@@ -19,6 +19,7 @@
 #include "accesstoken_log.h"
 
 #include "ipc_skeleton.h"
+#include "privacy_error.h"
 #include "string_ex.h"
 
 namespace OHOS {
@@ -78,7 +79,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
@@ -92,7 +93,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
@@ -104,7 +105,7 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
@@ -116,7 +117,7 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling() && !VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
 
@@ -128,16 +129,17 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    PermissionUsedResultParcel responseParcel;
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteParcelable(&responseParcel);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    PermissionUsedResultParcel responseParcel;
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
         reply.WriteParcelable(&responseParcel);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
@@ -148,13 +150,13 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
 void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
@@ -165,7 +167,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     uint32_t permListSize = data.ReadUint32();
@@ -182,7 +184,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->RegisterPermActiveStatusCallback(permList, callback);
@@ -192,13 +194,13 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
 void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
 
@@ -209,7 +211,7 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
 void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteBool(false);
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
