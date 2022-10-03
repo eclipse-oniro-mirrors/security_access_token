@@ -41,6 +41,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const std::string DEFAULT_DEVICEID = "0";
 static const std::string FIELD_COUNT_NUMBER = "count";
+constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -57,6 +59,16 @@ PermissionRecordManager::~PermissionRecordManager()
     }
     deleteTaskWorker_.Stop();
     hasInited_ = false;
+
+    int32_t ret = SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(
+        MicSwitchChangeListener);
+    if (ret != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "unregister microphone global switch change callback failed.");
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "unregister microphone global switch change callback success.");
+
+    hasRegisted_ = false;
 }
 
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -436,10 +448,135 @@ void PermissionRecordManager::CallbackExecute(
         tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
 }
 
+void PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen)
+{
+    // only manage camera and microphone global switch now, other default true
+    ResourceType type;
+    if (permissionName == CAMERA_PERMISSION_NAME) {
+        type = ResourceType::CAMERA;
+    } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        type = ResourceType::MICROPHONE;
+    } else {
+        type = ResourceType::INVALID;
+    }
+
+    isOpen = SensitiveResourceManager::GetInstance().GetGlobalSwitch(type);
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "type is %{public}d(-1-invalid 0-camera 1-microphone), status is %{public}d", type, isOpen);
+}
+
+/*
+ * StartUsing when close and choose open, update status to foreground or background from inactive
+ * StartUsing when open and choose close, update status to inactive and store in database
+ */
+void PermissionRecordManager::OnMicGlobalSwitchChange(PermissionRecord& record, bool switchStatus)
+{
+    int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+    if (switchStatus) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is open, update microphone record from inactive");
+
+        if (record.status == PERM_INACTIVE) {
+            // no need to store in database when status from inactive to foreground or background
+            HapTokenInfo tokenInfo;
+            if (AccessTokenKit::GetHapTokenInfo(record.tokenId, tokenInfo) != Constant::SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", record.tokenId);
+                return;
+            }
+
+            if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
+                return;
+            }
+
+            CallbackExecute(record.tokenId, MICROPHONE_PERMISSION_NAME, record.status);
+
+            record.accessDuration = curStamp;
+
+            return;
+        }
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is close, update microphone record to inactive");
+
+        if (record.status != PERM_INACTIVE) {
+            // update accessDuration and store in database
+            record.accessDuration = curStamp - record.timestamp;
+            AddRecord(record);
+
+            // update status to input, accessDuration to 0 and timestamp to now in cache
+            record.status = PERM_INACTIVE;
+            record.accessDuration = 0;
+            record.timestamp = curStamp;
+        }
+
+        return;
+    }
+}
+
+void PermissionRecordManager::GetMicrophoneRecords(bool switchStatus)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> lk(startRecordListRWLock_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode) != Constant::OP_MICROPHONE) {
+            continue;
+        }
+
+        OnMicGlobalSwitchChange(*it, switchStatus);
+    }
+}
+
+void PermissionRecordManager::MicSwitchChangeListener(bool switchStatus)
+{
+    PermissionRecordManager::GetInstance().GetMicrophoneRecords(switchStatus);
+}
+
+int32_t PermissionRecordManager::ShowPermissionDialog(const std::string& permissionName)
+{
+    // location switch has not been managed yet
+    if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
+        return RET_SUCCESS;
+    }
+
+    ResourceType type;
+    if (permissionName == CAMERA_PERMISSION_NAME) {
+        type = ResourceType::CAMERA;
+
+        ACCESSTOKEN_LOG_INFO(LABEL, "show camera dialog");
+    } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        type = ResourceType::MICROPHONE;
+
+        ACCESSTOKEN_LOG_INFO(LABEL, "show microphone dialog");
+    }
+
+    int32_t result = SensitiveResourceManager::GetInstance().ShowDialog(type);
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "show dialog failed.");
+        return result;
+    }
+
+    return RET_SUCCESS;
+}
+
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
     int32_t accessCount = 1;
     int32_t failCount = 0;
+
+    {
+        // regist mic global switch change callback on first use StartUsingPermission
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!hasRegisted_) {
+            int32_t ret = SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(
+                PermissionRecordManager::MicSwitchChangeListener);
+            if (ret != Constant::SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register microphone global switch change callback failed.");
+                return ret;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "register microphone global switch change callback success.");
+            hasRegisted_ = true;
+        }
+    }
 
     PermissionRecord record = { 0 };
     int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);
@@ -451,12 +588,25 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
-    AddRecordToStartList(record);
+    bool isOpen = true; // only location, camera and microphone has global switch, so default true
+    GetGlobalSwitchStatus(permissionName, isOpen);
+
+    if (!isOpen) {
+        int32_t result = ShowPermissionDialog(permissionName);
+        if (result != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
+            return result;
+        }
+        record.status = PERM_INACTIVE;
+    }
+
     if (record.status != PERM_INACTIVE) {
         CallbackExecute(tokenId, permissionName, record.status);
     }
 
-    // register app background and forground change callback, unregist when remove
+    AddRecordToStartList(record);
+
+    // register app background and forground change callback, unregist when stop
     int32_t ret = SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusListener);
     if (ret != Constant::SUCCESS) {
         return ret;

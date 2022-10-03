@@ -46,11 +46,9 @@ public:
     static SensitiveResourceManager& GetInstance();
     SensitiveResourceManager();
     virtual ~SensitiveResourceManager();
-    void Init();
 
     bool GetAppStatus(const std::string& pkgName, int32_t& status);
     bool GetGlobalSwitch(const ResourceType type);
-    void SetGlobalSwitch(const ResourceType type, bool switchStatus);
     bool IsFlowWindowShow(void);
     void SetFlowWindowStatus(bool isShow);
     int32_t ShowDialog(const ResourceType& type);
@@ -69,7 +67,6 @@ private:
 private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
-    SafeMap<ResourceType, bool> switchStatusMap_;
     std::mutex flowWindowStatusMutex_;
     bool flowWindowStatus_ = false;
     std::mutex micGlobalSwitchMutex_;

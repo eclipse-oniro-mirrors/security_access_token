@@ -56,12 +56,6 @@ SensitiveResourceManager::~SensitiveResourceManager()
 {
 }
 
-void SensitiveResourceManager::Init()
-{
-    switchStatusMap_[ResourceType::CAMERA] = true;
-    switchStatusMap_[ResourceType::MICROPHONE] = !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
-}
-
 bool SensitiveResourceManager::InitProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -121,22 +115,11 @@ bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t&
 
 bool SensitiveResourceManager::GetGlobalSwitch(const ResourceType type)
 {
-    bool status = true;
-    if (!switchStatusMap_.Find(type, status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid ResourceType.");
-        return true;
+    if (type == MICROPHONE) {
+        return !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
     }
-    return status;
-}
 
-void SensitiveResourceManager::SetGlobalSwitch(const ResourceType type, bool switchStatus)
-{
-    bool status = true;
-    if (!switchStatusMap_.Find(type, status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid ResourceType.");
-        return;
-    }
-    switchStatusMap_[type] = switchStatus;
+    return true;
 }
 
 bool SensitiveResourceManager::IsFlowWindowShow(void)
@@ -285,7 +268,7 @@ int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlo
     AudioStandard::AudioRoutingManager::GetInstance()->SetMicStateChangeCallback(listener);
     ACCESSTOKEN_LOG_INFO(LABEL, "register Microphone callback(%{public}p).", callback);
 
-    return RET_SUCCESS;
+    return SUCCESS;
 }
 
 int32_t SensitiveResourceManager::UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback)
@@ -307,7 +290,7 @@ int32_t SensitiveResourceManager::UnRegisterMicGlobalSwitchChangeCallback(OnMicG
 
     micGlobalSwitchCallbacks_.erase(iter);
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister callback(%{public}p).", callback);
-    return RET_SUCCESS;
+    return SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security
