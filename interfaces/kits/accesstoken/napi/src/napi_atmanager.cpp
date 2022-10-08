@@ -512,10 +512,10 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    //1: grant and revoke required minnum argc
+    // 1: grant and revoke required minnum argc
     if (argc < GRANT_OR_REVOKE_INPUT_MAX_PARAMS - 1) {
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
     }
     asyncContext.env = env;
@@ -606,13 +606,13 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
 
     if (asyncContext->deferred != nullptr) {
         if (asyncContext->result == RET_SUCCESS) {
-            NAPI_CALL_RETURN_VOID(
-                env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(
+                env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1])); // 1: success result index
         } else {
             results[ASYNC_CALL_BACK_VALUES_NUM - 2] =
-                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
-            NAPI_CALL_RETURN_VOID(
-                env, napi_reject_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 2]));
+                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result)); // 2: reject result index
+            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred,
+                results[ASYNC_CALL_BACK_VALUES_NUM - 2])); // 2: reject result index
         }
     } else {
         napi_value callback = nullptr;
@@ -760,18 +760,19 @@ void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_statu
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
-    //1: success result index
+    // 1: success result index
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
 
     if (asyncContext->deferred != nullptr) {
         if (asyncContext->result == RET_SUCCESS) {
-            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred
-                (env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));//1: success result index
+            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
+                results[ASYNC_CALL_BACK_VALUES_NUM - 1])); // 1: success result index
         } else {
-            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =GenerateBusinessError
-                (env, asyncContext->result, GetErrorMessage(asyncContext->result));//2: reject result index
-            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred
-                (env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 2]));//2: reject result index
+            // 2: reject result index
+            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =
+                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
+            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred,
+                results[ASYNC_CALL_BACK_VALUES_NUM - 2])); // 2: reject result index
         }
     } else {
         napi_value callback = nullptr;
@@ -893,8 +894,8 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL), false);
     if (argc < ON_OFF_MAX_PARAMS) {
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
     }
     // 0: the first parameter of argv
@@ -932,7 +933,7 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_unwrap failed");
         return false;
-    }   
+    }
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     registerPermStateChangeInfo.env = env;
