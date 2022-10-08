@@ -260,8 +260,8 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
     if (argc < VERIFY_OR_FLAG_INPUT_MAX_PARAMS) {
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
     }
     asyncContext.env = env;
@@ -609,8 +609,9 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
             NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(
                 env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1])); // 1: success result index
         } else {
-            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =
-                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result)); // 2: reject result index
+            // 2: reject result index
+            results[ASYNC_CALL_BACK_VALUES_NUM - 2] = GenerateBusinessError(env, asyncContext->result,
+                GetErrorMessage(asyncContext->result));
             NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred,
                 results[ASYNC_CALL_BACK_VALUES_NUM - 2])); // 2: reject result index
         }
@@ -893,40 +894,35 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL), false);
-    if (argc < ON_OFF_MAX_PARAMS) {
-        NAPI_CALL_BASE(env, napi_throw(env,
-            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
-        return false;
+        if (argc < ON_OFF_MAX_PARAMS) {
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+            return false;
     }
     // 0: the first parameter of argv
     std::string type;
     std::string errMsg;
     if (!ParseString(env, argv[0], type)) {
         errMsg = GetParamErrorMsg("type", "string");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     PermStateChangeScope scopeInfo;
     // 1: the second parameter of argv
     if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
         errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     // 2: the third parameter of argv
     if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
         errMsg = GetParamErrorMsg("tokenIDList", "Array<string>");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     // 3: the fourth parameter of argv
     if (!ParseCallback(env, argv[3], callback)) {
         errMsg = GetParamErrorMsg("tokenIDList", "Callback<PermissionStateChangeInfo>");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     AccessTokenKit* accessTokenKitInfo = nullptr;
@@ -995,46 +991,42 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-    //1: off required minnum argc
+    // 1: off required minnum argc
     if (argc < ON_OFF_MAX_PARAMS - 1) {
-        NAPI_CALL_BASE(env, napi_throw(env,
-            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
     // 0: the first parameter of argv
     std::string type;
     if (!ParseString(env, argv[0], type)) {
         errMsg = GetParamErrorMsg("type", "permissionStateChange");
-        NAPI_CALL_BASE(env, napi_throw(env,
-            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     PermStateChangeScope scopeInfo;
     // 1: the second parameter of argv
     if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
         errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     // 2: the third parameter of argv
     if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
         errMsg = GetParamErrorMsg("permissionNameList", "Array<string>");
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
     if (argc == ON_OFF_MAX_PARAMS) {
         // 3: the fourth parameter of argv
         if (!ParseCallback(env, argv[3], callback)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");
-            NAPI_CALL_BASE(env,
-                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
             return false;
         }
     }
     AccessTokenKit* accessTokenKitInfo = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)), false);
+
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     unregisterPermStateChangeInfo.env = env;
