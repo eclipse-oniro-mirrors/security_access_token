@@ -24,6 +24,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "napi_common.h"
+#include "napi_error.h"
 #include "napi_context_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -85,6 +86,8 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     std::string permissionName;
     int32_t flag = 0;
     int32_t result = AT_PERM_OPERA_FAIL;
+    int32_t errorCode = 0;
+    std::string errorMessage;
 };
 
 class NapiAtManager {
@@ -98,6 +101,8 @@ private:
     static napi_value VerifyAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
+    static napi_value CheckAccessToken(napi_env env, napi_callback_info info);
+    static napi_value CheckAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
     static napi_value GetVersion(napi_env env, napi_callback_info info);
 
@@ -105,6 +110,8 @@ private:
         AtManagerAsyncContext& asyncContext);
     static void VerifyAccessTokenExecute(napi_env env, void *data);
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
+    static void CheckAccessTokenExecute(napi_env env, void* data);
+    static void CheckAccessTokenComplete(napi_env env, napi_status status, void* data);
     static bool ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
     static void GrantUserGrantedPermissionExecute(napi_env env, void *data);

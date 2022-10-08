@@ -156,7 +156,12 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         reply.WriteInt32(PERMISSION_DEFAULT_FLAG);
         return;
     }
-    int result = this->GetPermissionFlag(tokenID, permissionName);
+    int32_t flag;
+    int result = this->GetPermissionFlag(tokenID, permissionName, flag);
+    if (result == RET_SUCCESS) {
+        reply.WriteInt32(flag);
+        return;
+    }
     reply.WriteInt32(result);
 }
 

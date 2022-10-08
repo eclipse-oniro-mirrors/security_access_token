@@ -167,7 +167,7 @@ void PermissionPolicySet::GetPermissionStateFulls(std::vector<PermissionStateFul
     permList.assign(permStateList_.begin(), permStateList_.end());
 }
 
-int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
+int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, int& flag)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& perm : permStateList_) {
@@ -175,13 +175,14 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName)
             if (perm.isGeneral) {
                 uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
                 uint32_t unmaskedFlag = (oldFlag) & (~PERMISSION_GRANTED_BY_POLICY);
-                return static_cast<int32_t>(unmaskedFlag);
+                flag = static_cast<int32_t>(unmaskedFlag);
+                return RET_SUCCESS;
             } else {
-                return PERMISSION_DEFAULT_FLAG;
+                return AccessTokenError::ERR_PARAM_INVALID;
             }
         }
     }
-    return PERMISSION_DEFAULT_FLAG;
+    return AccessTokenError::ERR_PARAM_INVALID;
 }
 
 int32_t PermissionPolicySet::UpdatePermissionStatus(

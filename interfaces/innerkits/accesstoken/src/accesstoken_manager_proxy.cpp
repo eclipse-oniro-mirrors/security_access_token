@@ -74,7 +74,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     MessageParcel reply;
@@ -82,19 +82,19 @@ int AccessTokenManagerProxy::GetDefPermission(
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSION), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     sptr<PermissionDefParcel> resultSptr = reply.ReadParcelable<PermissionDefParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read permission def parcel fail");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     permissionDefResult = *resultSptr;
     int32_t result = reply.ReadInt32();
@@ -186,17 +186,17 @@ int AccessTokenManagerProxy::GetReqPermissions(
     return result;
 }
 
-int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     MessageParcel reply;
@@ -204,17 +204,22 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_PERMISSION_FLAG), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    if (result == PERMISSION_USER_SET || result == PERMISSION_USER_FIXED || result == PERMISSION_SYSTEM_FIXED ||
+        result == PERMISSION_GRANTED_BY_POLICY) {
+        flag = result;
+        return RET_SUCCESS;
+    }
     return result;
 }
 

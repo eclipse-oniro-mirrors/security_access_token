@@ -16,6 +16,7 @@
 #ifndef  INTERFACES_PRIVACY_KITS_NAPI_ERROR_H
 #define  INTERFACES_PRIVACY_KITS_NAPI_ERROR_H
 #include "string"
+#include "access_token.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 
@@ -23,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 typedef enum {
+    JS_OK = 0,
     JS_ERROR_PERMISSION_DENIED = 201,
     JS_ERROR_PARAM_ILLEGAL = 401,
     JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT = 801,
@@ -39,6 +41,7 @@ typedef enum {
 std::string GetParamErrorMsg(std::string param, std::string type);
 napi_value GenerateBusinessError(napi_env env, int32_t errCode, std::string errMsg);
 std::string GetErrorMessage(uint32_t errCode);
+void CreateNapiRetMsg(napi_env env, int32_t errCode, napi_value* result);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

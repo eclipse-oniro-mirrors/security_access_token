@@ -63,7 +63,7 @@ int AccessTokenManagerClient::GetDefPermission(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return RET_FAILED;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     PermissionDefParcel permissionDefParcel;
     int result = proxy->GetDefPermission(permissionName, permissionDefParcel);
@@ -104,14 +104,14 @@ int AccessTokenManagerClient::GetReqPermissions(
     return result;
 }
 
-int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
-    return proxy->GetPermissionFlag(tokenID, permissionName);
+    return proxy->GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList)

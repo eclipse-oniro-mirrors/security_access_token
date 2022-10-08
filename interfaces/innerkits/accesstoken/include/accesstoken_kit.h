@@ -53,7 +53,7 @@ public:
     static int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     static int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
-    static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName);
+    static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
     static PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList);
     static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);

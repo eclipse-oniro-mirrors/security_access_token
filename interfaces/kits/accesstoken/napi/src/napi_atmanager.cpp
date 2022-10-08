@@ -20,9 +20,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "napi/native_api.h"
+#include "napi_error.h"
 #include "napi/native_node_api.h"
 
 namespace OHOS {
@@ -37,6 +39,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static constexpr int32_t VERIFY_OR_FLAG_INPUT_MAX_PARAMS = 2;
 static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
+static constexpr int32_t MAX_LENGTH = 256;
 
 static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const PermStateChangeInfo& result)
 {
@@ -167,6 +170,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("verifyAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
+        DECLARE_NAPI_FUNCTION("checkAccessToken", CheckAccessToken),
+        DECLARE_NAPI_FUNCTION("checkAccessTokenSync", CheckAccessTokenSync),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
         DECLARE_NAPI_FUNCTION("on", RegisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
@@ -251,18 +256,28 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
 
     napi_value argv[VERIFY_OR_FLAG_INPUT_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
-
+    std::string errMsg;
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-
+    if (argc < VERIFY_OR_FLAG_INPUT_MAX_PARAMS) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
     asyncContext.env = env;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        errMsg = GetParamErrorMsg("tokenId", "number");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
@@ -277,9 +292,13 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
-
-    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
-        asyncContext->permissionName);
+    if (asyncContext->tokenId == 0 || asyncContext->permissionName.empty() ||
+        asyncContext->permissionName.length() > MAX_LENGTH) {
+        asyncContext->errorCode = JsErrorCode::JS_ERROR_PARAM_INVALID;
+        asyncContext->errorMessage = GetErrorMessage(asyncContext->errorCode);
+        return;
+    }
+    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
 }
 
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
@@ -293,9 +312,14 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
+    if (asyncContext->errorCode == 0) {
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
 
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
-    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    } else {
+        napi_value errorMessage = GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage);
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, errorMessage));
+    }
 }
 
 napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info info)
@@ -330,9 +354,59 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     return result;
 }
 
-napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
+void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken begin.");
+    if (data == nullptr) {
+        return;
+    }
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+    if (asyncContext->tokenId == 0) {
+        std::string errMsg = GetParamErrorMsg("tokenID", "number");
+        asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
+        asyncContext->errorMessage = errMsg;
+        return;
+    }
+    if (asyncContext->permissionName.empty() || (asyncContext->permissionName.length() > MAX_LENGTH)) {
+        std::string errMsg = GetParamErrorMsg("permissionName", "string");
+        asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
+        asyncContext->errorMessage = errMsg;
+        return;
+    }
+
+    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
+        asyncContext->permissionName);
+}
+
+void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
+{
+    if (data == nullptr) {
+        return;
+    }
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
+
+    if (asyncContext->errorCode != 0) {
+        napi_value errorMessage = GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage);
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, errorMessage));
+    } else {
+        napi_value result;
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    }
+}
+
+napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessToken begin.");
 
     auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
@@ -345,13 +419,87 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return nullptr;
     }
 
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "CheckAccessToken", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource,
+        CheckAccessTokenExecute, CheckAccessTokenComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessToken end.");
+    context.release();
+    return result;
+}
+
+napi_value NapiAtManager::CheckAccessTokenSync(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync begin.");
+
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
+        return nullptr;
+    }
+    if (asyncContext->tokenId == 0) {
+        std::string errMsg = GetParamErrorMsg("tokenID", "number");
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
+        return nullptr;
+    }
+    if (asyncContext->permissionName.empty() || (asyncContext->permissionName.length() > MAX_LENGTH)) {
+        std::string errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
+        return nullptr;
+    }
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
         asyncContext->permissionName);
 
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync end.");
+    return result;
+}
+
+napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync begin.");
+
+    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
+        return nullptr;
+    }
+    if (asyncContext->tokenId == 0 || asyncContext->permissionName.empty() ||
+        asyncContext->permissionName.length() > MAX_LENGTH) {
+        asyncContext->errorCode = JsErrorCode::JS_ERROR_PARAM_INVALID;
+        asyncContext->errorMessage = GetErrorMessage(asyncContext->errorCode);
+        NAPI_CALL(env, napi_throw(env,
+            GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage)));
+        return nullptr;
+    }
+
+    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
+        asyncContext->permissionName);
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync end.");
     return result;
 }
 
@@ -364,26 +512,43 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-
+    //1: grant and revoke required minnum argc
+    if (argc < GRANT_OR_REVOKE_INPUT_MAX_PARAMS - 1) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
     asyncContext.env = env;
+    std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        errMsg = GetParamErrorMsg("tokenId", "number");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
     // 2: the third parameter of argv
     if (!ParseInt32(env, argv[2], asyncContext.flag)) {
+        errMsg = GetParamErrorMsg("flag", "number");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
     if (argc == GRANT_OR_REVOKE_INPUT_MAX_PARAMS) {
         // 3: the fourth parameter of argv
         if (!ParseCallback(env, argv[3], asyncContext.callbackRef)) {
+            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
+                                GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_ILLEGAL))), false);
             return false;
         }
     }
@@ -408,7 +573,9 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
     permissionDef.labelId = 0;
     permissionDef.descriptionId = 0;
 
-    if (AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef) != AT_PERM_OPERA_SUCC) {
+    int32_t result = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    if (result != AT_PERM_OPERA_SUCC) {
+        asyncContext->result = result;
         return;
     }
 
@@ -438,13 +605,20 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
 
     if (asyncContext->deferred != nullptr) {
-        NAPI_CALL_RETURN_VOID(
-            env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+        if (asyncContext->result == RET_SUCCESS) {
+            NAPI_CALL_RETURN_VOID(
+                env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+        } else {
+            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =
+                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
+            NAPI_CALL_RETURN_VOID(
+                env, napi_reject_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 2]));
+        }
     } else {
         napi_value callback = nullptr;
         napi_value thisValue = nullptr;
         napi_value thatValue = nullptr;
-
+        CreateNapiRetMsg(env, asyncContext->result, results);
         NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
         NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
         NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
@@ -557,7 +731,9 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
     permissionDef.labelId = 0;
     permissionDef.descriptionId = 0;
 
-    if (AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef) != AT_PERM_OPERA_SUCC) {
+    int32_t result = AccessTokenKit::GetDefPermission(asyncContext->permissionName, permissionDef);
+    if (result != AT_PERM_OPERA_SUCC) {
+        asyncContext->result = result;
         return;
     }
 
@@ -584,16 +760,24 @@ void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_statu
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+    //1: success result index
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
 
     if (asyncContext->deferred != nullptr) {
-        NAPI_CALL_RETURN_VOID(
-            env, napi_resolve_deferred(env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+        if (asyncContext->result == RET_SUCCESS) {
+            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred
+                (env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1]));//1: success result index
+        } else {
+            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =GenerateBusinessError
+                (env, asyncContext->result, GetErrorMessage(asyncContext->result));//2: reject result index
+            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred
+                (env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 2]));//2: reject result index
+        }
     } else {
         napi_value callback = nullptr;
         napi_value thisValue = nullptr;
         napi_value thatValue = nullptr;
-
+        CreateNapiRetMsg(env, asyncContext->result, results);
         NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
         NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
         NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
@@ -642,8 +826,8 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
 
-    asyncContext->flag = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
-        asyncContext->permissionName);
+    asyncContext->result = AccessTokenKit::GetPermissionFlag(asyncContext->tokenId,
+        asyncContext->permissionName, asyncContext->flag);
 }
 
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
@@ -658,8 +842,15 @@ void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status,
         asyncContext->permissionName.c_str(), asyncContext->tokenId, asyncContext->flag);
 
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->flag, &result));
-    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    if (asyncContext->result == RET_SUCCESS) {
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->flag, &result));
+        NAPI_CALL_RETURN_VOID(
+            env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    } else {
+        result = GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
+        NAPI_CALL_RETURN_VOID(
+            env, napi_reject_deferred(env, asyncContext->deferred, result));
+    }
 }
 
 napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info info)
@@ -681,7 +872,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
 
     napi_value resource = nullptr; // resource name
-    napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resource);
+    napi_create_string_utf8(env, "GetPermissionFlags", NAPI_AUTO_LENGTH, &resource);
 
     napi_create_async_work( // define work
         env, nullptr, resource, GetPermissionFlagsExecute, GetPermissionFlagsComplete,
@@ -701,35 +892,47 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL), false);
-
-    // 0: the first parameter of argv
-    std::string type;
-    if (!ParseString(env, argv[0], type)) {
+    if (argc < ON_OFF_MAX_PARAMS) {
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
     }
-
+    // 0: the first parameter of argv
+    std::string type;
+    std::string errMsg;
+    if (!ParseString(env, argv[0], type)) {
+        errMsg = GetParamErrorMsg("type", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
     PermStateChangeScope scopeInfo;
     // 1: the second parameter of argv
     if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
+        errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     // 2: the third parameter of argv
     if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
+        errMsg = GetParamErrorMsg("tokenIDList", "Array<string>");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     // 3: the fourth parameter of argv
     if (!ParseCallback(env, argv[3], callback)) {
+        errMsg = GetParamErrorMsg("tokenIDList", "Callback<PermissionStateChangeInfo>");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     AccessTokenKit* accessTokenKitInfo = nullptr;
     if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_unwrap failed");
         return false;
-    }
-    
+    }   
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     registerPermStateChangeInfo.env = env;
@@ -756,10 +959,16 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     }
     if (IsExistRegister(registerPermStateChangeInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribe failed. The current subscriber has been existed");
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if (AccessTokenKit::RegisterPermStateChangeCallback(registerPermStateChangeInfo->subscriber) != RET_SUCCESS) {
+    int32_t result = AccessTokenKit::RegisterPermStateChangeCallback(registerPermStateChangeInfo->subscriber);
+    if (result != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermStateChangeCallback failed");
+        registerPermStateChangeInfo->errCode = result;
+        std::string errMsg = GetErrorMessage(result);
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, result, errMsg)));
         return nullptr;
     }
     {
@@ -780,37 +989,51 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
+    std::string errMsg;
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-
+    //1: off required minnum argc
+    if (argc < ON_OFF_MAX_PARAMS - 1) {
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
     // 0: the first parameter of argv
     std::string type;
     if (!ParseString(env, argv[0], type)) {
+        errMsg = GetParamErrorMsg("type", "permissionStateChange");
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     PermStateChangeScope scopeInfo;
     // 1: the second parameter of argv
     if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
+        errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     // 2: the third parameter of argv
     if (!ParseStringArray(env, argv[2], scopeInfo.permList)) {
+        errMsg = GetParamErrorMsg("permissionNameList", "Array<string>");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
     if (argc == ON_OFF_MAX_PARAMS) {
         // 3: the fourth parameter of argv
         if (!ParseCallback(env, argv[3], callback)) {
+            errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");
+            NAPI_CALL_BASE(env,
+                napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
             return false;
         }
     }
     AccessTokenKit* accessTokenKitInfo = nullptr;
     NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)), false);
-
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     unregisterPermStateChangeInfo.env = env;
@@ -835,12 +1058,18 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     }
     if (!FindAndGetSubscriberInMap(unregisterPermStateChangeInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
+        NAPI_CALL(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if (AccessTokenKit::UnRegisterPermStateChangeCallback(unregisterPermStateChangeInfo->subscriber) == RET_SUCCESS) {
+    int32_t result = AccessTokenKit::UnRegisterPermStateChangeCallback(unregisterPermStateChangeInfo->subscriber);
+    if (result == RET_SUCCESS) {
         DeleteRegisterInMap(unregisterPermStateChangeInfo->accessTokenKit, unregisterPermStateChangeInfo->scopeInfo);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
+        std::string errMsg = GetErrorMessage(result);
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, result, errMsg)));
     }
     return nullptr;
 }

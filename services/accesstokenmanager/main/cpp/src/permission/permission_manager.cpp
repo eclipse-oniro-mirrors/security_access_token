@@ -172,12 +172,12 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permissionName: %{public}s", __func__, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return RET_FAILED;
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
     }
     return PermissionDefinitionCache::GetInstance().FindByPermissionName(permissionName, permissionDefResult);
 }
@@ -275,26 +275,26 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     return;
 }
 
-int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
+int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, permissionName: %{public}s",
         __func__, tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return permPolicySet->QueryPermissionFlag(permissionName);
+    return permPolicySet->QueryPermissionFlag(permissionName, flag);
 }
 
 int32_t PermissionManager::UpdateTokenPermissionState(
