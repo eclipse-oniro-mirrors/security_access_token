@@ -203,11 +203,11 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     return PASS_OPER;
 }
 
-int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
         tokenID, permissionName.c_str());
-    return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName);
+    return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)

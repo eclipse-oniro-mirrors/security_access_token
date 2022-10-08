@@ -63,6 +63,27 @@ napi_value GenerateBusinessError(napi_env env, int32_t errCode, std::string errM
 
     return businessError;
 }
+
+void CreateNapiRetMsg(napi_env env, int32_t errCode, napi_value* result)
+{
+    if (errCode == RET_SUCCESS) {
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, RET_SUCCESS, result));
+        return;
+    }
+    std::string msg = GetErrorMessage(errCode);
+
+    napi_value errInfoJs = nullptr;
+    napi_value errorCodeJs = nullptr;
+    napi_value errMsgJs = nullptr;
+
+    NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &errInfoJs));
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, errCode, &errorCodeJs));
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, msg.c_str(), NAPI_AUTO_LENGTH, &errMsgJs));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, errInfoJs, "code", errorCodeJs));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, errInfoJs, "message", errMsgJs));
+
+    result[0] = errInfoJs;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

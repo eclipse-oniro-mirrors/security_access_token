@@ -193,7 +193,7 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, permissionName=%{public}s", permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     int ret = AccessTokenManagerClient::GetInstance().GetDefPermission(permissionName, permissionDefResult);
@@ -225,19 +225,19 @@ int AccessTokenKit::GetReqPermissions(
     return AccessTokenManagerClient::GetInstance().GetReqPermissions(tokenID, reqPermList, isSystemGrant);
 }
 
-int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName)
+int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
-        return PERMISSION_DEFAULT_FLAG;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName);
+    return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)

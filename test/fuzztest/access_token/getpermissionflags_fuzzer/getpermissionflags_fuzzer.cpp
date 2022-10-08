@@ -33,8 +33,9 @@ namespace OHOS {
         }
         if (size > 0) {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+            int32_t flag;
             std::string testName(reinterpret_cast<const char*>(data), size);
-            result = AccessTokenKit::GetPermissionFlag(TOKENID, testName);
+            result = AccessTokenKit::GetPermissionFlag(TOKENID, testName, flag);
         }
         return result == RET_SUCCESS;
     }

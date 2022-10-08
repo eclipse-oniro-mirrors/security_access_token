@@ -81,7 +81,9 @@ BENCHMARK_F(NapiAtmanagerTest, GetPermissionFlagsTestCase002)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest GetPermissionFlagsTestCase002 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), 0);
+        int32_t flag;
+        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, flag),
+            AccessTokenError::ERR_PARAM_INVALID);
     }
 }
 

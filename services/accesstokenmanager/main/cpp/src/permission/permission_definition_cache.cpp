@@ -16,6 +16,7 @@
 #include "permission_definition_cache.h"
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "field_const.h"
 #include "generic_values.h"
@@ -82,7 +83,7 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
     if (it == permissionDefinitionMap_.end()) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "can not find definition info for permission: %{public}s",
             permissionName.c_str());
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     info = it->second.permDef;
     return RET_SUCCESS;
