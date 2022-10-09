@@ -292,12 +292,6 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
-    if (asyncContext->tokenId == 0 || asyncContext->permissionName.empty() ||
-        asyncContext->permissionName.length() > MAX_LENGTH) {
-        asyncContext->errorCode = JsErrorCode::JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = GetErrorMessage(asyncContext->errorCode);
-        return;
-    }
     asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
 }
 
@@ -312,14 +306,9 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
-    if (asyncContext->errorCode == 0) {
-        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
 
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
-    } else {
-        napi_value errorMessage = GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage);
-        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, errorMessage));
-    }
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
+    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
 }
 
 napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info info)
@@ -482,14 +471,6 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
-        return nullptr;
-    }
-    if (asyncContext->tokenId == 0 || asyncContext->permissionName.empty() ||
-        asyncContext->permissionName.length() > MAX_LENGTH) {
-        asyncContext->errorCode = JsErrorCode::JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = GetErrorMessage(asyncContext->errorCode);
-        NAPI_CALL(env, napi_throw(env,
-            GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage)));
         return nullptr;
     }
 
