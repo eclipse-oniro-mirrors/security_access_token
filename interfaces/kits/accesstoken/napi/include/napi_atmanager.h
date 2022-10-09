@@ -102,7 +102,6 @@ private:
     static napi_value GrantUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value RevokeUserGrantedPermission(napi_env env, napi_callback_info info);
     static napi_value CheckAccessToken(napi_env env, napi_callback_info info);
-    static napi_value CheckAccessTokenSync(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
     static napi_value GetVersion(napi_env env, napi_callback_info info);
 

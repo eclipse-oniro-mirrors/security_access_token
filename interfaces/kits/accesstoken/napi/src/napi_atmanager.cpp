@@ -171,7 +171,6 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("checkAccessToken", CheckAccessToken),
-        DECLARE_NAPI_FUNCTION("checkAccessTokenSync", CheckAccessTokenSync),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
         DECLARE_NAPI_FUNCTION("on", RegisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
@@ -425,7 +424,7 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
     return result;
 }
 
-napi_value NapiAtManager::CheckAccessTokenSync(napi_env env, napi_callback_info info)
+napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync begin.");
 
@@ -456,31 +455,6 @@ napi_value NapiAtManager::CheckAccessTokenSync(napi_env env, napi_callback_info 
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync end.");
-    return result;
-}
-
-napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync begin.");
-
-    auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
-    if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
-        return nullptr;
-    }
-
-    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (!ParseInputVerifyPermissionOrGetFlag(env, info, *asyncContext)) {
-        return nullptr;
-    }
-
-    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
-        asyncContext->permissionName);
-
-    napi_value result = nullptr;
-    NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync end.");
     return result;
 }
 
