@@ -426,7 +426,7 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
 
 napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync begin.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync begin.");
 
     auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
@@ -454,7 +454,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessTokenSync end.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync end.");
     return result;
 }
 
