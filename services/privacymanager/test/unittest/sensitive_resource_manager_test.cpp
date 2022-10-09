@@ -56,7 +56,6 @@ void SensitiveResourceManagerTest::TearDownTestCase()
 void SensitiveResourceManagerTest::SetUp()
 {
     tokenId_ = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
-    SensitiveResourceManager::GetInstance().Init();
 }
 
 void SensitiveResourceManagerTest::TearDown()
@@ -192,13 +191,8 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterAppStatusChangeCallback001, Tes
  */
 HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest001, TestSize.Level1)
 {
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::MICROPHONE, true);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(true, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
-
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::MICROPHONE, false);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(false, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    // MICROPHONE is not sure without SetGlobalSwitch interface
+    ASSERT_EQ(true, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
 }
 
 /**
@@ -210,42 +204,6 @@ HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest001, TestSize.Level1)
 HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest002, TestSize.Level1)
 {
     ASSERT_EQ(true, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::INVALID));
-}
-
-/**
- * @tc.name: SetGlobalSwitchTest001
- * @tc.desc: Verify the SetGlobalSwitch with valid ResourceType.
- * @tc.type: FUNC
- * @tc.require: issueI5RWXA issueI5RWXF
- */
-HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest001, TestSize.Level1)
-{
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::CAMERA, true);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(true, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
-
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::CAMERA, false);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(false, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
-}
-
-/**
- * @tc.name: SetGlobalSwitchTest002
- * @tc.desc: Verify the SetGlobalSwitch abnormal branch ResourceType is invalid.
- * @tc.type: FUNC
- * @tc.require: issueI5RWXA issueI5RWXF
- */
-HWTEST_F(SensitiveResourceManagerTest, SetGlobalSwitchTest002, TestSize.Level1)
-{
-    bool microphoneStatus = SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE);
-
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, true);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(microphoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
-
-    SensitiveResourceManager::GetInstance().SetGlobalSwitch(ResourceType::INVALID, false);
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(microphoneStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
 }
 
 /**
