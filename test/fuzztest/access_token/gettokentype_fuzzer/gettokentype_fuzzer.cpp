@@ -15,8 +15,8 @@
 
 #include "gettokentype_fuzzer.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include "accesstoken_kit.h"
 
 using namespace OHOS::Security::AccessToken;

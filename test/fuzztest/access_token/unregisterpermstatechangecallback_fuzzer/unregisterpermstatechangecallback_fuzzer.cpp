@@ -18,20 +18,19 @@
 #include <string>
 #include <vector>
 #include <thread>
-#undef private
 #include "accesstoken_kit.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
-class CbCustomizeTest : public PermStateChangeCallbackCustomize {
+class CbCustomizeTest1 : public PermStateChangeCallbackCustomize {
 public:
-    explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
+    explicit CbCustomizeTest1(const PermStateChangeScope &scopeInfo)
         : PermStateChangeCallbackCustomize(scopeInfo)
     {
     }
 
-    ~CbCustomizeTest()
+    ~CbCustomizeTest1()
     {}
 
     virtual void PermStateChangeCallback(PermStateChangeInfo& result)
@@ -55,7 +54,7 @@ namespace OHOS {
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
             scopeInfo.permList = { testName };
             scopeInfo.tokenIDs = { TOKENID };
-            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+            auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfo);
             result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
         }
         return result == RET_SUCCESS;

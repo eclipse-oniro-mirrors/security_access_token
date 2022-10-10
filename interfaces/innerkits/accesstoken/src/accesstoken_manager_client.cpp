@@ -225,7 +225,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 
     if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
         scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
-      return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
     if (result == RET_SUCCESS) {

@@ -34,8 +34,10 @@
 
 using namespace testing::ext;
 using namespace OHOS;
-using namespace OHOS::Security::AccessToken;
 
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManagerTest"
@@ -1100,7 +1102,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs = {123};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.tokenIDs.empty());
 
@@ -1113,7 +1115,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs.clear();
     inScopeInfo.permList = {"ohos.permission.test"};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.permList.empty());
 
@@ -1145,13 +1147,13 @@ HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback001, TestSize.Lev
     PermStateChangeScope inScopeInfo;
     inScopeInfo.tokenIDs = {123};
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
 
     inScopeInfo.permList = {"ohos.permission.CAMERA"};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, 
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
         PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
 }
 
@@ -1339,16 +1341,16 @@ HWTEST_F(AccessTokenInfoManagerTest, GrantPermission001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
 {
-  int32_t ret;
-  AccessTokenID tokenID = 0;
-  ret = PermissionManager::GetInstance().RevokePermission(
-      tokenID, "", PERMISSION_USER_FIXED);
-  ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-  ret = PermissionManager::GetInstance().RevokePermission(
-      tokenID, "ohos.perm", PERMISSION_USER_FIXED);
-  ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
-  int32_t invalidFlag = -1;
-  ret = PermissionManager::GetInstance().RevokePermission(
-      tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
-  ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    int32_t ret;
+    AccessTokenID tokenID = 0;
+    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    int32_t invalidFlag = -1;
+    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS

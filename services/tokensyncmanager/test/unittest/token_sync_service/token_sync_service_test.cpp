@@ -70,7 +70,7 @@ TokenSyncServiceTest::~TokenSyncServiceTest()
 
 void NativeTokenGet()
 {
-    uint64_t tokenId;
+    uint64_t tokenId = 0;
     tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     ASSERT_NE(tokenId, 0);
     SetSelfTokenID(tokenId);
