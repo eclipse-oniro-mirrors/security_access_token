@@ -41,7 +41,7 @@ typedef enum {
 std::string GetParamErrorMsg(std::string param, std::string type);
 napi_value GenerateBusinessError(napi_env env, int32_t errCode, std::string errMsg);
 std::string GetErrorMessage(uint32_t errCode);
-void CreateNapiRetMsg(napi_env env, int32_t errCode, napi_value* result);
+napi_value GetNapiNull(napi_env env);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

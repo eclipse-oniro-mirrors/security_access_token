@@ -41,6 +41,35 @@ static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
 static constexpr int32_t MAX_LENGTH = 256;
 
+
+static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
+{
+    if (context.result != RET_SUCCESS) {
+        napi_value businessError = GenerateBusinessError(env, context.result, GetErrorMessage(context.result));
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
+    } else {
+        NAPI_CALL_RETURN_VOID(env,napi_resolve_deferred(env, context.deferred, result));   
+    }
+}
+
+static void ReturnCallbackResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
+{
+    napi_value businessError = GetNapiNull(env);
+    if (context.result != RET_SUCCESS) {
+        businessError = GenerateBusinessError(env, context.result, GetErrorMessage(context.result));
+    }
+    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
+
+    napi_value callback = nullptr;
+    napi_value thisValue = nullptr;
+    napi_value thatValue = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
+    NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, context.callbackRef, &callback));
+    NAPI_CALL_RETURN_VOID(env,
+        napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
+}
+
 static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const PermStateChangeInfo& result)
 {
     napi_value element;
@@ -380,17 +409,9 @@ void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, v
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
-        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
-
-    if (asyncContext->errorCode != 0) {
-        napi_value errorMessage = GenerateBusinessError(env, asyncContext->errorCode, asyncContext->errorMessage);
-        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, errorMessage));
-    } else {
-        napi_value result;
-        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
-        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
-    }
+    napi_value result = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
+    ReturnPromiseResult(env, *asyncContext, result);
 }
 
 napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info)
@@ -580,32 +601,13 @@ void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status
     if (asyncContext == nullptr) {
         return;
     }
-    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; 
-
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
+    napi_value result = GetNapiNull(env);
 
     if (asyncContext->deferred != nullptr) {
-        if (asyncContext->result == RET_SUCCESS) {
-            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(
-                env, asyncContext->deferred, results[ASYNC_CALL_BACK_VALUES_NUM - 1])); // 1: success result index
-        } else {
-            // 2: reject result index
-            results[ASYNC_CALL_BACK_VALUES_NUM - 2] = GenerateBusinessError(env, asyncContext->result,
-                GetErrorMessage(asyncContext->result));
-            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred,
-                results[ASYNC_CALL_BACK_VALUES_NUM - 2])); // 2: reject result index
-        }
+        ReturnPromiseResult(env, *asyncContext, result);
     } else {
-        napi_value callback = nullptr;
-        napi_value thisValue = nullptr;
-        napi_value thatValue = nullptr;
-        CreateNapiRetMsg(env, asyncContext->result, results);
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
-        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
-        NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-        NAPI_CALL_RETURN_VOID(env,
-            napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
+        ReturnCallbackResult(env, *asyncContext, result);
     }
 }
 
@@ -739,33 +741,13 @@ void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_statu
     if (asyncContext == nullptr) {
         return;
     }
-    napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = {nullptr}; // for AsyncCallback <err, data>
 
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
-    // 1: success result index
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &results[ASYNC_CALL_BACK_VALUES_NUM - 1]));
-
+    napi_value result = GetNapiNull(env);
     if (asyncContext->deferred != nullptr) {
-        if (asyncContext->result == RET_SUCCESS) {
-            NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred,
-                results[ASYNC_CALL_BACK_VALUES_NUM - 1])); // 1: success result index
-        } else {
-            // 2: reject result index
-            results[ASYNC_CALL_BACK_VALUES_NUM - 2] =
-                GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
-            NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred,
-                results[ASYNC_CALL_BACK_VALUES_NUM - 2])); // 2: reject result index
-        }
+        ReturnPromiseResult(env, *asyncContext, result);
     } else {
-        napi_value callback = nullptr;
-        napi_value thisValue = nullptr;
-        napi_value thatValue = nullptr;
-        CreateNapiRetMsg(env, asyncContext->result, results);
-        NAPI_CALL_RETURN_VOID(env, napi_get_undefined(env, &thisValue));
-        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, 0, &thatValue));
-        NAPI_CALL_RETURN_VOID(env, napi_get_reference_value(env, asyncContext->callbackRef, &callback));
-        NAPI_CALL_RETURN_VOID(env,
-            napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
+        ReturnCallbackResult(env, *asyncContext, result);
     }
 }
 
@@ -819,21 +801,12 @@ void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status,
     if (asyncContext == nullptr) {
         return;
     }
-    napi_value result = nullptr;
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, tokenId = %{public}d, flag = %{public}d.",
-        asyncContext->permissionName.c_str(), asyncContext->tokenId, asyncContext->flag);
-
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
-    if (asyncContext->result == RET_SUCCESS) {
-        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->flag, &result));
-        NAPI_CALL_RETURN_VOID(
-            env, napi_resolve_deferred(env, asyncContext->deferred, result));
-    } else {
-        result = GenerateBusinessError(env, asyncContext->result, GetErrorMessage(asyncContext->result));
-        NAPI_CALL_RETURN_VOID(
-            env, napi_reject_deferred(env, asyncContext->deferred, result));
-    }
+
+    napi_value result = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->flag, &result));
+
+    ReturnPromiseResult(env, *asyncContext, result);
 }
 
 napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info info)
