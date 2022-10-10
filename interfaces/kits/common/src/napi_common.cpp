@@ -22,7 +22,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonNapi"};
 } // namespace
 
-static bool inline CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type)
+bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type)
 {
     napi_valuetype valuetype = napi_undefined;
     napi_typeof(env, value, &valuetype);

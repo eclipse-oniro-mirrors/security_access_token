@@ -36,6 +36,7 @@ bool ParseStringArray(const napi_env& env, const napi_value& value, std::vector<
 bool ParseAccessTokenIDArray(const napi_env& env, const napi_value& value, std::vector<AccessTokenID>& result);
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& result);
 bool IsArray(const napi_env& env, const napi_value& value);
+bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
