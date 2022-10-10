@@ -77,7 +77,7 @@ static int32_t GetJsErrorCode(uint32_t errCode)
     return jsCode;
 }
 
-static void ParamResolveErrorThrow(const napi_env& env, const std::string param, const std::string type)
+static void ParamResolveErrorThrow(const napi_env& env, const std::string& param, const std::string& type)
 {
     std::string errMsg = GetParamErrorMsg(param, type);
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
