@@ -77,7 +77,7 @@ static int32_t GetJsErrorCode(uint32_t errCode)
     return jsCode;
 }
 
-static void ParseRequestErrorThrow(const napi_env& env, const std::string param, const std::string type)
+static void ParamResolveErrorThrow(const napi_env& env, const std::string param, const std::string type)
 {
     std::string errMsg = GetParamErrorMsg(param, type);
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
@@ -132,36 +132,31 @@ static bool ParseAddPermissionRecord(
     asyncContext.env = env;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
-        errMsg = GetParamErrorMsg("tokenID", "number");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "tokenID", "number");
         return false;
     }
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "permissionName", "string");
         return false;
     }
 
     // 2: the third parameter of argv
     if (!ParseInt32(env, argv[2], asyncContext.successCount)) {
-        errMsg = GetParamErrorMsg("successCount", "number");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "successCount", "number");
         return false;
     }
 
     // 3: the fourth parameter of argv
     if (!ParseInt32(env, argv[3], asyncContext.failCount)) {
-        errMsg = GetParamErrorMsg("failCount", "number");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "failCount", "number");
         return false;
     }
     if (argc == ADD_PERMISSION_RECORD_MAX_PARAMS) {
         // 4: : the fifth parameter of argv
         if (!ParseCallback(env, argv[4], asyncContext.callbackRef)) {
-            errMsg = GetParamErrorMsg("callback", "AsyncCallback");
-            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
     }
@@ -187,22 +182,19 @@ static bool ParseStartAndStopUsingPermission(
     std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
-        errMsg = GetParamErrorMsg("tokenId", "number");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "tokenId", "number");
         return false;
     }
 
     // 1: the second parameter of argv
     if (!ParseString(env, argv[1], asyncContext.permissionName)) {
-        errMsg = GetParamErrorMsg("permissionName", "string");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "permissionName", "string");
         return false;
     }
     if (argc == START_STOP_MAX_PARAMS) {
         // 2: the third parameter of argv
         if (!ParseCallback(env, argv[2], asyncContext.callbackRef)) {
-            errMsg = GetParamErrorMsg("callback", "AsyncCallback");
-            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
     }
@@ -333,56 +325,57 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
 
 static bool ParseRequest(const napi_env& env, const napi_value& value, PermissionUsedRequest& request)
 {
-    if(!CheckType(env, value, napi_object)) {
+    if(!CheckType(env, value, napi_object))
+    {
         return false;
     }
     napi_value property = nullptr;
     std::string errMsg;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "tokenId", &property), false);
     if (!ParseUint32(env, property, request.tokenId)) {
-        ParseRequestErrorThrow(env, "request:tokenId", "number");
+        ParamResolveErrorThrow(env, "request:tokenId", "number");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
     if (!ParseBool(env, property, request.isRemote)) {
-        ParseRequestErrorThrow(env, "request:isRemote", "boolean");
+        ParamResolveErrorThrow(env, "request:isRemote", "boolean");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "deviceId", &property), false);
     if (!ParseString(env, property, request.deviceId)) {
-        ParseRequestErrorThrow(env, "request:deviceId", "string");
+        ParamResolveErrorThrow(env, "request:deviceId", "string");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "bundleName", &property), false);
     if (!ParseString(env, property, request.bundleName)) {
-        ParseRequestErrorThrow(env, "request:bundleName", "string");
+        ParamResolveErrorThrow(env, "request:bundleName", "string");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "beginTime", &property), false);
     if (!ParseInt64(env, property, request.beginTimeMillis)) {
-        ParseRequestErrorThrow(env, "request:beginTime", "number");
+        ParamResolveErrorThrow(env, "request:beginTime", "number");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "endTime", &property), false);
     if (!ParseInt64(env, property, request.endTimeMillis)) {
-        ParseRequestErrorThrow(env, "request:endTime", "number");
+        ParamResolveErrorThrow(env, "request:endTime", "number");
         return false;
     }
 
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "permissionNames", &property), false);
     if (!ParseStringArray(env, property, request.permissionList)) {
-        ParseRequestErrorThrow(env, "request:permissionNames", "Array<string>");
+        ParamResolveErrorThrow(env, "request:permissionNames", "Array<string>");
         return false;
     }
 
@@ -390,7 +383,7 @@ static bool ParseRequest(const napi_env& env, const napi_value& value, Permissio
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "flag", &property), false);
     int32_t flag;
     if (!ParseInt32(env, property, flag)) {
-        ParseRequestErrorThrow(env, "request:flag", "number");
+        ParamResolveErrorThrow(env, "request:flag", "number");
         return false;
     }
     request.flag = static_cast<PermissionUsageFlagEnum>(flag);
@@ -422,8 +415,7 @@ static bool ParseGetPermissionUsedRecords(
     if (argc == GET_PERMISSION_RECORD_MAX_PARAMS) {
         // 1: the second parameter of argv
         if (!ParseCallback(env, argv[1], asyncContext.callbackRef)) {
-            std::string errMsg = GetParamErrorMsg("callback", "AsyncCallback");
-            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
     }
@@ -711,22 +703,19 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
-        errMsg = GetParamErrorMsg("type", "string");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "type", "string");
         return false;
     }
     std::vector<std::string> permList;
     // 1: the second parameter of argv
     if (!ParseStringArray(env, argv[1], permList)) {
-        errMsg = GetParamErrorMsg("permList", "Array<string>");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "permList", "Array<string>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
     // 2: the third parameter of argv
     if (!ParseCallback(env, argv[2], callback)) {
-        errMsg = GetParamErrorMsg("callback", "AsyncCallback");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "callback", "AsyncCallback");
         return false;
     }
     registerPermActiveChangeContext.env = env;
@@ -763,16 +752,14 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     // 1: the second parameter of argv
     std::vector<std::string> permList;
     if (!ParseStringArray(env, argv[1], permList)) {
-        errMsg = GetParamErrorMsg("permList", "Array<string>");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "permList", "Array<string>");
         return false;
     }
     std::sort(permList.begin(), permList.end());
     if (argc == ON_OFF_MAX_PARAMS) {
         // 2: the first parameter of argv
         if (!ParseCallback(env, argv[2], callback)) {
-            errMsg = GetParamErrorMsg("callback", "AsyncCallback");
-            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
     }
