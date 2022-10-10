@@ -93,7 +93,7 @@ typedef struct StrArrayAttribute {
 } StrArrayAttr;
 
 extern int32_t GetFileBuff(const char *cfg, char **retBuff);
-extern int32_t AtlibInit();
+extern int32_t AtlibInit(void);
 #ifdef __cplusplus
 }
 #endif

@@ -15,8 +15,8 @@
 
 #include "gethaptokenid_fuzzer.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include "accesstoken_kit.h"
 
 using namespace std;
@@ -34,7 +34,6 @@ namespace OHOS {
             std::string testName(reinterpret_cast<const char*>(data), size);
             int instIndex = static_cast<int>(size);
             result = AccessTokenKit::GetHapTokenID(userID, testName, instIndex);
-
         }
         return result == RET_SUCCESS;
     }

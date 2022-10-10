@@ -445,7 +445,7 @@ int32_t PermissionManager::AddPermStateChangeCallback(
     PermStateChangeScope scopeRes;
     int32_t result = ScopeFilter(scope, scopeRes);
     if (result != RET_SUCCESS) {
-      return result;
+        return result;
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
     if (callbackScopePtr == nullptr) {

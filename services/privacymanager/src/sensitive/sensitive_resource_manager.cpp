@@ -280,8 +280,8 @@ int32_t SensitiveResourceManager::UnRegisterMicGlobalSwitchChangeCallback(OnMicG
 
     std::lock_guard<std::mutex> lock(micGlobalSwitchMutex_);
     auto iter = std::find_if(micGlobalSwitchCallbacks_.begin(), micGlobalSwitchCallbacks_.end(),
-        [callback](const std::shared_ptr<MicGlobalSwitchChangeCallback>& rec) {
-        return callback == rec->GetCallback();
+        [callback](const std::shared_ptr<MicGlobalSwitchChangeCallback>& res) {
+        return callback == res->GetCallback();
     });
     if (iter == micGlobalSwitchCallbacks_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback is not found.");

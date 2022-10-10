@@ -151,7 +151,7 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
     EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList.size(),
         readedData->hapPolicyParameter.permStateList.size());
 
-    for(int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permList.size(); i++) {
+    for (int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permList.size(); i++) {
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].permissionName,
             readedData->hapPolicyParameter.permList[i].permissionName);
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].bundleName,
@@ -170,7 +170,7 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
             readedData->hapPolicyParameter.permList[i].descriptionId);
     }
 
-    for(int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
+    for (int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].permissionName,
             readedData->hapPolicyParameter.permStateList[i].permissionName);
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].isGeneral,
@@ -228,12 +228,12 @@ HWTEST_F(AccessTokenParcelTest, PermStateChangeScopeParcel001, TestSize.Level1)
     EXPECT_EQ(true,  permStateChangeScopeParcel.scope.tokenIDs.size() == readedData->scope.tokenIDs.size());
     EXPECT_EQ(true,  permStateChangeScopeParcel.scope.permList.size() == readedData->scope.permList.size());
 
-    for(int32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
+    for (int32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
         EXPECT_EQ(permStateChangeScopeParcel.scope.tokenIDs[i], readedData->scope.tokenIDs[i]);
     }
-    for(int32_t i = 0; i < readedData->scope.permList.size(); i++) {
+    for (int32_t i = 0; i < readedData->scope.permList.size(); i++) {
         EXPECT_EQ(true, permStateChangeScopeParcel.scope.permList[i] == readedData->scope.permList[i]);
-    } 
+    }
 }
 
 /**
@@ -542,7 +542,6 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel002, TestSize.Level1)
     std::shared_ptr<NativeTokenInfoParcel> readedData(NativeTokenInfoParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

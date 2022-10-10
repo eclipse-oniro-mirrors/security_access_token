@@ -206,7 +206,7 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
     EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.lastAccessDuration,
         readedData->permissionRecord.lastAccessDuration);
 
-    for(uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.accessRecords.size(); i++) {
+    for (uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.accessRecords.size(); i++) {
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].status,
             readedData->permissionRecord.accessRecords[i].status);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].timestamp,
@@ -215,7 +215,7 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
             readedData->permissionRecord.accessRecords[i].accessDuration);
     }
 
-    for(uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.rejectRecords.size(); i++) {
+    for (uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.rejectRecords.size(); i++) {
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].status,
             readedData->permissionRecord.rejectRecords[i].status);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].timestamp,
@@ -261,7 +261,7 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRequestParcel001, TestSize.Level1)
     EXPECT_EQ(permissionUsedRequestParcel.request.endTimeMillis, readedData->request.endTimeMillis);
     EXPECT_EQ(permissionUsedRequestParcel.request.flag, readedData->request.flag);
 
-    for(uint32_t i = 0; i < permissionUsedRequestParcel.request.permissionList.size(); i++) {
+    for (uint32_t i = 0; i < permissionUsedRequestParcel.request.permissionList.size(); i++) {
         EXPECT_EQ(permissionUsedRequestParcel.request.permissionList[i], readedData->request.permissionList[i]);
     }
 }

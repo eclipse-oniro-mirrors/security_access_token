@@ -15,8 +15,8 @@
 
 #include "gethaptokeninfo_fuzzer.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include "accesstoken_kit.h"
 #include "hap_token_info.h"
 

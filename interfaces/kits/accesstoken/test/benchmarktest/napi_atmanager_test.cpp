@@ -119,7 +119,7 @@ BENCHMARK_F(NapiAtmanagerTest, RevokeUserGrantedPermissionTestCase004)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest RevokeUserGrantedPermissionTestCase004 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0), 
+        EXPECT_EQ(AccessTokenKit::RevokePermission(TOKENID, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
             AccessTokenError::ERR_PARAM_INVALID);
     }
 }

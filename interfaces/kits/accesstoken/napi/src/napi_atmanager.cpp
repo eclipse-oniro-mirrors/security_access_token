@@ -510,10 +510,10 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 {
     size_t argc = GRANT_OR_REVOKE_INPUT_MAX_PARAMS;
     napi_value argv[GRANT_OR_REVOKE_INPUT_MAX_PARAMS] = {nullptr};
-    napi_value thisVar = nullptr;
+    napi_value thatVar = nullptr;
 
     void *data = nullptr;
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
     // 1: grant and revoke required minnum argc
     if (argc < GRANT_OR_REVOKE_INPUT_MAX_PARAMS - 1) {
         NAPI_CALL_BASE(env, napi_throw(env,
