@@ -121,7 +121,6 @@ static bool ParseAddPermissionRecord(
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
-    std::string errMsg;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
     if (argc < ADD_PERMISSION_RECORD_MAX_PARAMS - 1) {
         NAPI_CALL_BASE(env,
@@ -179,7 +178,6 @@ static bool ParseStartAndStopUsingPermission(
     }
 
     asyncContext.env = env;
-    std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
         ParamResolveErrorThrow(env, "tokenId", "number");
@@ -325,12 +323,10 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
 
 static bool ParseRequest(const napi_env& env, const napi_value& value, PermissionUsedRequest& request)
 {
-    if(!CheckType(env, value, napi_object))
-    {
+    if (!CheckType(env, value, napi_object)) {
         return false;
     }
     napi_value property = nullptr;
-    std::string errMsg;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "tokenId", &property), false);
     if (!ParseUint32(env, property, request.tokenId)) {
         ParamResolveErrorThrow(env, "request:tokenId", "number");
@@ -700,7 +696,6 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     }
 
     std::string type;
-    std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
         ParamResolveErrorThrow(env, "type", "string");
@@ -742,11 +737,9 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     }
 
     std::string type;
-    std::string errMsg;
     // 0: the first parameter of argv
     if (!ParseString(env, argv[0], type)) {
-        errMsg = GetParamErrorMsg("type", "string");
-        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        ParamResolveErrorThrow(env, "permList", "Array<string>");
         return false;
     }
     // 1: the second parameter of argv
