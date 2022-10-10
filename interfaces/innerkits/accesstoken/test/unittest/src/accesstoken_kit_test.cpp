@@ -766,7 +766,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
 }
 
 /**

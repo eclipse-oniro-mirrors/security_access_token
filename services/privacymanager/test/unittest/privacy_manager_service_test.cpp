@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
+#include "audio_policy_manager.h"
 #include "constant.h"
 #define private public
 #include "permission_record_manager.h"
@@ -358,6 +359,127 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
 {
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: GetGlobalSwitchStatus001
+ * @tc.desc: GetGlobalSwitchStatus function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetGlobalSwitchStatus001, TestSize.Level1)
+{
+    bool isOpen = false;
+    PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME, isOpen);
+    ASSERT_EQ(true, isOpen);
+
+    // microphone is not sure
+    isOpen = false;
+    PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME, isOpen);
+    ASSERT_EQ(true, isOpen);
+}
+
+/*
+ * @tc.name: ShowPermissionDialog001
+ * @tc.desc: ShowPermissionDialog function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, ShowPermissionDialog001, TestSize.Level1)
+{
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(CAMERA_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(LOCATION_PERMISSION_NAME)); // no dialog
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener001
+ * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener001, TestSize.Level1)
+{
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    PermissionRecordManager::MicSwitchChangeListener(true); // fill opCode not mic branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener002
+ * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener002, TestSize.Level1)
+{
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is background
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    PermissionRecordManager::MicSwitchChangeListener(true); // fill true status is not inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener003
+ * @tc.desc: MicSwitchChangeListener function test mic golbal switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener003, TestSize.Level1)
+{
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(true); // true means close
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is inactive
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::MicSwitchChangeListener(true); // fill true status is inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener004
+ * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener004, TestSize.Level1)
+{
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is background
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    PermissionRecordManager::MicSwitchChangeListener(false); // fill false status is not inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener005
+ * @tc.desc: MicSwitchChangeListener function test mic golbal switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
+{
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(true); // true means close
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is inactive
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::MicSwitchChangeListener(false); // fill false status is inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
 }
 } // namespace AccessToken
 } // namespace Security
