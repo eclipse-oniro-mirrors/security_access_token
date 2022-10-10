@@ -15,10 +15,11 @@
 
 #include "privacy_manager_service.h"
 
+#include <ctime>
+
 #include "accesstoken_log.h"
 #include "constant_common.h"
 #include "constant.h"
-#include <ctime>
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #include "string_ex.h"
@@ -190,7 +191,7 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
 
 bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    return false;
+    return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
 
 bool PrivacyManagerService::Initialize() const

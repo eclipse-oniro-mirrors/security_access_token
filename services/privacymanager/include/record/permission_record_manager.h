@@ -55,6 +55,7 @@ public:
 
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
+    bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);

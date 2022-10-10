@@ -680,6 +680,30 @@ int32_t PermissionRecordManager::PermissionListFilter(
     return Constant::SUCCESS;
 }
 
+bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    // when app in foreground, return true, only for camera and microphone
+    if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
+        return false;
+    }
+
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        return false;
+    }
+
+    int32_t status = 0;
+    if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
+        return false;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
+
+    return status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND;
+}
+
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
     const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {

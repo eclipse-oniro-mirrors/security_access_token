@@ -17,7 +17,6 @@
 
 #include "accesstoken_kit.h"
 #include "constant.h"
-#include "string_ex.h"
 #define private public
 #include "permission_record_manager.h"
 #undef private
@@ -25,6 +24,8 @@
 #include "privacy_error.h"
 #include "privacy_manager_service.h"
 #include "sensitive_resource_manager.h"
+#include "string_ex.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 
@@ -34,6 +35,9 @@ namespace AccessToken {
 namespace {
 static constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
 static constexpr uint32_t MAX_CALLBACK_SIZE = 200;
+constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -117,6 +121,7 @@ public:
 
     void TearDown();
     std::shared_ptr<PrivacyManagerService> privacyManagerService_;
+    uint64_t selfTokenId_;
 };
 
 void PrivacyManagerServiceTest::SetUpTestCase()
@@ -133,6 +138,7 @@ void PrivacyManagerServiceTest::SetUp()
     EXPECT_NE(nullptr, privacyManagerService_);
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
     AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
+    selfTokenId_ = GetSelfTokenID();
 }
 
 void PrivacyManagerServiceTest::TearDown()
@@ -144,6 +150,7 @@ void PrivacyManagerServiceTest::TearDown()
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    SetSelfTokenID(selfTokenId_);
 }
 
 /**
@@ -321,6 +328,36 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
     PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
     PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
     PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
+}
+
+/*
+ * @tc.name: IsAllowedUsingPermission001
+ * @tc.desc: IsAllowedUsingPermission function test permissionName branch
+ * @tc.type: FUNC
+ * @tc.require: issueI5UPRK
+ */
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(0, tokenId);
+    SetSelfTokenID(tokenId);
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(0, tokenId);
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: IsAllowedUsingPermission002
+ * @tc.desc: IsAllowedUsingPermission function test invalid tokenId
+ * @tc.type: FUNC
+ * @tc.require: issueI5UPRK
+ */
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
+{
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
 }
 } // namespace AccessToken
 } // namespace Security
