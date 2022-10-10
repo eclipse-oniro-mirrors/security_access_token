@@ -218,7 +218,7 @@ int32_t SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t token
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "register callback(%{public}p),  add TokenId(%{public}d).", callback, tokenId);
 
-    return SUCCESS;
+    return RET_SUCCESS;
 }
 
 int32_t SensitiveResourceManager::UnRegisterAppStatusChangeCallback(
@@ -253,7 +253,7 @@ int32_t SensitiveResourceManager::UnRegisterAppStatusChangeCallback(
     
     ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
-    return SUCCESS;
+    return RET_SUCCESS;
 }
 
 int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback)

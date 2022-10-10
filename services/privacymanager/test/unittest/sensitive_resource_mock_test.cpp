@@ -101,7 +101,7 @@ void AppStatusChangeCallback(uint32_t tokenId, int32_t status)
 HWTEST_F(SensitiveResourceMockTest, RegisterAppStatusChangeCallback001, TestSize.Level1)
 {
     ResetProxy(0); // proxy is null
-    ASSERT_FALSE(
+    ASSERT_EQ(ERR_SERVICE_ABNORMAL,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(123, AppStatusChangeCallback));
 }
 
@@ -117,17 +117,17 @@ HWTEST_F(SensitiveResourceMockTest, UnRegisterAppStatusChangeCallback001, TestSi
     uint32_t tokenId = 123;
 
     // register with valid
-    ASSERT_TRUE(
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 
     // unregister with proxy is null
     ResetProxy(0);
-    ASSERT_FALSE(
+    ASSERT_EQ(ERR_SERVICE_ABNORMAL,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 
     // clear environment
     ResetProxy(2);
-    ASSERT_TRUE(
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 }
 
@@ -143,7 +143,7 @@ HWTEST_F(SensitiveResourceMockTest, UnRegisterAppStatusChangeCallback002, TestSi
     uint32_t tokenId = 123;
 
     // register with valid
-    ASSERT_TRUE(
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 
     SwitchForeOrBackGround(tokenId, ACTIVE_FOREGROUND);
@@ -158,7 +158,7 @@ HWTEST_F(SensitiveResourceMockTest, UnRegisterAppStatusChangeCallback002, TestSi
 
     // clear environment
     ResetProxy(2);
-    ASSERT_TRUE(
+    ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 }
 
