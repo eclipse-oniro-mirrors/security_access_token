@@ -83,6 +83,24 @@ static void ParamResolveErrorThrow(const napi_env& env, const std::string& param
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
 }
 
+static bool ParseRequestResolveSomeParam(const napi_env& env, const napi_value& value, PermissionUsedRequest& request, napi_value& property)
+{
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
+    if (!ParseBool(env, property, request.isRemote)) {
+        ParamResolveErrorThrow(env, "request:isRemote", "boolean");
+        return false;
+    }
+
+    property = nullptr;
+    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "deviceId", &property), false);
+    if (!ParseString(env, property, request.deviceId)) {
+        ParamResolveErrorThrow(env, "request:deviceId", "string");
+        return false;
+    }
+    return true;
+}
+
 static void ReturnPromiseResult(napi_env env, const RecordManagerAsyncContext& context, napi_value result)
 {
     if (context.retCode != RET_SUCCESS) {
@@ -333,17 +351,7 @@ static bool ParseRequest(const napi_env& env, const napi_value& value, Permissio
         return false;
     }
 
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
-    if (!ParseBool(env, property, request.isRemote)) {
-        ParamResolveErrorThrow(env, "request:isRemote", "boolean");
-        return false;
-    }
-
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "deviceId", &property), false);
-    if (!ParseString(env, property, request.deviceId)) {
-        ParamResolveErrorThrow(env, "request:deviceId", "string");
+    if (!ParseRequestResolveSomeParam(env, value, request, property)) {
         return false;
     }
 
