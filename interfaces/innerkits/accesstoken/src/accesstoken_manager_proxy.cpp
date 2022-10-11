@@ -79,6 +79,7 @@ int AccessTokenManagerProxy::GetDefPermission(
 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
+
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");

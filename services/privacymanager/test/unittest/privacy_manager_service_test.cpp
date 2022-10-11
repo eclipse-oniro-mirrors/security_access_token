@@ -396,7 +396,7 @@ HWTEST_F(PrivacyManagerServiceTest, ShowPermissionDialog001, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener001
- * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.desc: MicSwitchChangeListener function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -413,7 +413,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener001, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener002
- * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.desc: MicSwitchChangeListener function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -430,7 +430,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener002, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener003
- * @tc.desc: MicSwitchChangeListener function test mic golbal switch is close
+ * @tc.desc: MicSwitchChangeListener function test mic global switch is close
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -448,7 +448,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener003, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener004
- * @tc.desc: MicSwitchChangeListener function test mic golbal switch is open
+ * @tc.desc: MicSwitchChangeListener function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -465,7 +465,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener004, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener005
- * @tc.desc: MicSwitchChangeListener function test mic golbal switch is close
+ * @tc.desc: MicSwitchChangeListener function test mic global switch is close
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */

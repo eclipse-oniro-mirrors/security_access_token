@@ -49,12 +49,12 @@ namespace OHOS {
             return result != RET_FAILED;
         }
         if (size > 0) {
-            PermStateChangeScope scopeInfo;
+            PermStateChangeScope scopeInfos;
             std::string testName(reinterpret_cast<const char*>(data), size);
             AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            scopeInfo.permList = { testName };
-            scopeInfo.tokenIDs = { TOKENID };
-            auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfo);
+            scopeInfos.permList = { testName };
+            scopeInfos.tokenIDs = { TOKENID };
+            auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfos);
             result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
         }
         return result == RET_SUCCESS;

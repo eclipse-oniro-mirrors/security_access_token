@@ -48,7 +48,7 @@ static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& conte
         napi_value businessError = GenerateBusinessError(env, context.result, GetErrorMessage(context.result));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
-        NAPI_CALL_RETURN_VOID(env,napi_resolve_deferred(env, context.deferred, result));   
+        NAPI_CALL_RETURN_VOID(env,napi_resolve_deferred(env, context.deferred, result));
     }
 }
 
@@ -345,7 +345,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
 
     auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct failed.");
         return nullptr;
     }
 
@@ -357,11 +357,11 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
 
-    napi_value resource = nullptr;
-    NAPI_CALL(env, napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resource));
+    napi_value resources = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "VerifyAccessToken", NAPI_AUTO_LENGTH, &resources));
 
     NAPI_CALL(env, napi_create_async_work(
-        env, nullptr, resource,
+        env, nullptr, resources,
         VerifyAccessTokenExecute, VerifyAccessTokenComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
     NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
