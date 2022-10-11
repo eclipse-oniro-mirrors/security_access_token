@@ -664,7 +664,7 @@ int32_t PermissionRecordManager::PermissionListFilter(
     PermissionDef permissionDef;
     std::set<std::string> permSet;
     for (const auto& permissionName : listSrc) {
-        if (AccessTokenKit::GetDefPermission(permissionName, permissionDef) != Constant::FAILURE &&
+        if (AccessTokenKit::GetDefPermission(permissionName, permissionDef) == Constant::SUCCESS &&
             permSet.count(permissionName) == 0) {
             listRes.emplace_back(permissionName);
             permSet.insert(permissionName);
