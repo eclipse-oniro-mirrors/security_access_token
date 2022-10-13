@@ -105,7 +105,7 @@ static void ReturnPromiseResult(napi_env env, const RecordManagerAsyncContext& c
 {
     if (context.retCode != RET_SUCCESS) {
         uint32_t jsCode = GetJsErrorCode(context.retCode);
-        napi_value businessError = GenerateBusinessError(env, context.retCode, GetErrorMessage(jsCode));
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
@@ -117,7 +117,7 @@ static void ReturnCallbackResult(napi_env env, const RecordManagerAsyncContext& 
     napi_value businessError = GetNapiNull(env);
     if (context.retCode != RET_SUCCESS) {
         uint32_t jsCode = GetJsErrorCode(context.retCode);
-        businessError = GenerateBusinessError(env, context.retCode, GetErrorMessage(jsCode));
+        businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
 
