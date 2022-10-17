@@ -13,16 +13,14 @@
  * limitations under the License.
  */
 
-#include "state_change_callback.h"
-
-#include "access_token.h"
 #include "accesstoken_log.h"
+#include "state_change_callback.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "StateChangeCallback"
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "StateChangeCallback"
 };
 StateChangeCallback::StateChangeCallback(
     const std::shared_ptr<StateCustomizedCbk> &customizedCallback)
@@ -32,14 +30,14 @@ StateChangeCallback::StateChangeCallback(
 StateChangeCallback::~StateChangeCallback()
 {}
 
-void StateChangeCallback::CameraStateChangeNotice(AccessTokenID tokenId, bool isShowing)
+void StateChangeCallback::StateChangeNotify(uint32_t tokenId, bool isShowing)
 {
     if (customizedCallback_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
         return;
     }
 
-    customizedCallback_->CameraStateChangeNotice(tokenId, isShowing);
+    customizedCallback_->StateChangeNotify(tokenId, isShowing);
 }
 
 void StateChangeCallback::Stop()

@@ -32,4 +32,5 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+
 #endif // STATAE_CHANGE_CALLBACK_STUB_H

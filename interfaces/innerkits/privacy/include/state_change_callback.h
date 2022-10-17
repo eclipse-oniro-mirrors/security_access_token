@@ -24,10 +24,10 @@ namespace Security {
 namespace AccessToken {
 class StateChangeCallback : public StateChangeCallbackStub {
 public:
-    StateChangeCallback(const std::shared_ptr<StateCustomizedCbk> &subscriber);
+    StateChangeCallback(const std::shared_ptr<StateCustomizedCbk> &customizedCallback);
     ~StateChangeCallback() override;
 
-    void CameraStateChangeNotice(AccessTokenID tokenId, bool isShowing) override;
+    void StateChangeNotify(uint32_t tokenId, bool isShowing) override;
 
     void Stop();
 

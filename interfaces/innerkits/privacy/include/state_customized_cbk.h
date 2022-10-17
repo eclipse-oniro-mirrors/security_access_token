@@ -16,7 +16,7 @@
 #ifndef STATE_CUSTOMIZED_CBK_H
 #define STATE_CUSTOMIZED_CBK_H
 
-#include "access_token.h"
+#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
@@ -26,7 +26,7 @@ public:
     StateCustomizedCbk();
     virtual ~StateCustomizedCbk();
 
-    virtual void CameraStateChangeNotice(AccessTokenID tokenId, bool isShowing) = 0;
+    virtual void StateChangeNotify(uint32_t tokenId, bool isShowing) = 0;
 };
 } // namespace AccessToken
 } // namespace Security

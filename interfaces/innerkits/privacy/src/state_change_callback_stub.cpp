@@ -38,12 +38,12 @@ int32_t StateChangeCallbackStub::OnRemoteRequest(
         return RET_FAILED;
     }
 
-    int32_t msgCode =  static_cast<int32_t>(code);
-    if (msgCode == IStateChangeCallback::CAMERA_STATE_CHANGE_CALLBACK) {
+    int32_t msgCode = static_cast<int32_t>(code);
+    if (msgCode == IStateChangeCallback::STATE_CHANGE_CALLBACK) {
         AccessTokenID tokenId = data.ReadUint32();
         bool isShowing = data.ReadBool();
 
-        CameraStateChangeNotice(tokenId, isShowing);
+        StateChangeNotify(tokenId, isShowing);
     } else {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }

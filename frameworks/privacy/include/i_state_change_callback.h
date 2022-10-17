@@ -17,18 +17,18 @@
 #define I_STATE_CHANGE_CALLBACK_H
 
 #include "iremote_broker.h"
-#include "access_token.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 class IStateChangeCallback : public IRemoteBroker {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IStateChangeCallback");
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.privacy.IStateChangeCallback");
 
-    virtual void CameraStateChangeNotice(AccessTokenID tokenId, bool isShowing) = 0;
+    virtual void StateChangeNotify(uint32_t tokenId, bool isShowing) = 0;
 
     enum {
-        CAMERA_STATE_CHANGE_CALLBACK = 0,
+        STATE_CHANGE_CALLBACK = 0,
     };
 };
 } // namespace AccessToken
