@@ -645,6 +645,7 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
     napi_value result = GetNapiNull(env);
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
     ProcessRecordResult(env, result, asyncContext->result);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
