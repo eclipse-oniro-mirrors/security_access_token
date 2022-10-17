@@ -46,6 +46,9 @@ if (is_standard_system) {
       "src/privacy_kit.cpp",
       "src/privacy_manager_client.cpp",
       "src/privacy_manager_proxy.cpp",
+      "src/state_change_callback.cpp",
+      "src/state_change_callback_stub.cpp",
+      "src/state_customized_cbk.cpp",
     ]
 
     deps = [
