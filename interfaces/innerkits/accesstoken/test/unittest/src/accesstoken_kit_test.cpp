@@ -1567,10 +1567,10 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
     ASSERT_NE(0, tokenID);
 
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
-
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(tokenID, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_FAILED, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**

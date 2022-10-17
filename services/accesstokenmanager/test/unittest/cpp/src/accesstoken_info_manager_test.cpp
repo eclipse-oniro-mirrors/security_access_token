@@ -346,19 +346,19 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
     AccessTokenIDEx tokenIdEx1 = {0};
     ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams, tokenIdEx1);
-    ASSERT_EQ(RET_FAILED, ret);
-    ASSERT_EQ(0, tokenIdEx1.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "add same hap token";
 
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
-    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
+    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
     ASSERT_NE(nullptr, tokenInfo);
 
     std::string infoDes;
     tokenInfo->ToString(infoDes);
     GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
 
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx1.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }

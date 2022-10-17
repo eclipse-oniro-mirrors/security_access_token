@@ -189,7 +189,7 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         return RET_FAILED;
     }
     AccessTokenID id = info->GetTokenID();
-
+    AccessTokenID idRemoved = INVALID_TOKENID;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) > 0) {
@@ -200,12 +200,15 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         if (!info->IsRemote()) {
             std::string HapUniqueKey = GetHapUniqueStr(info);
             if (hapTokenIdMap_.count(HapUniqueKey) > 0) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u Unique info has exist.", id);
-                return RET_FAILED;
+                ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u Unique info has exist, update.", id);
+                idRemoved = hapTokenIdMap_[HapUniqueKey];
             }
             hapTokenIdMap_[HapUniqueKey] = id;
         }
         hapTokenInfoMap_[id] = info;
+    }
+    if (idRemoved != INVALID_TOKENID) {
+        RemoveHapTokenInfo(idRemoved);
     }
     return RET_SUCCESS;
 }
@@ -342,7 +345,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
             return RET_FAILED;
         }
         std::string HapUniqueKey = GetHapUniqueStr(info);
-        if (hapTokenIdMap_.count(HapUniqueKey) != 0) {
+        if ((hapTokenIdMap_.count(HapUniqueKey) != 0) && (hapTokenIdMap_[HapUniqueKey] == id)) {
             hapTokenIdMap_.erase(HapUniqueKey);
         }
         hapTokenInfoMap_.erase(id);
