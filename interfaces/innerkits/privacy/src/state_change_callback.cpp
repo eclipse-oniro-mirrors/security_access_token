@@ -32,7 +32,7 @@ StateChangeCallback::StateChangeCallback(
 StateChangeCallback::~StateChangeCallback()
 {}
 
-void StateChangeCallback::StateChangeNotice(AccessTokenID tokenId, bool isShowing)
+void StateChangeCallback::CameraStateChangeNotice(AccessTokenID tokenId, bool isShowing)
 {
     if (customizedCallback_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");

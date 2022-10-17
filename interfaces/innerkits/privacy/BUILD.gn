@@ -38,9 +38,9 @@ if (is_standard_system) {
     ]
 
     sources = [
-      "src/camera_use_state_change_callback.cpp",
-      "src/camera_use_state_change_callback_stub.cpp",
-      "src/camera_use_state_customized_cbk.cpp",
+      "src/state_change_callback.cpp",
+      "src/state_change_callback_stub.cpp",
+      "src/state_customized_cbk.cpp",
       "src/on_permission_used_record_callback_stub.cpp",
       "src/perm_active_status_change_callback.cpp",
       "src/perm_active_status_change_callback_stub.cpp",

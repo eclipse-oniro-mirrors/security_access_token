@@ -17,7 +17,7 @@
 #define I_STATE_CHANGE_CALLBACK_H
 
 #include "iremote_broker.h"
-
+#include "access_token.h"
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
