@@ -48,6 +48,8 @@ public:
     int32_t GetPermissionUsedRecordsAsync(
         const PermissionUsedRequest& request, const sptr<OnPermissionUsedRecordCallback>& callback);
     int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback);
     int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
     int32_t RegisterPermActiveStatusCallback(
         const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
@@ -82,7 +84,7 @@ private:
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     void GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen);
-    void OnMicGlobalSwitchChange(PermissionRecord& record, bool switchStatus);
+    void savePermissionRecords(PermissionRecord& record, bool switchStatus);
     void GetMicrophoneRecords(bool switchStatus);
     static void MicSwitchChangeListener(bool switchStatus);
     int32_t ShowPermissionDialog(const std::string& permissionName);

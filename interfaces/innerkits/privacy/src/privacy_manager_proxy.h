@@ -32,6 +32,8 @@ public:
     int32_t AddPermissionUsedRecord(
         AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback) override;
     int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) override;
     int32_t GetPermissionUsedRecords(

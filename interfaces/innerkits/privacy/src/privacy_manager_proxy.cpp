@@ -85,6 +85,35 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     return reply.ReadInt32();
 }
 
+int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(IPrivacyManager::InterfaceCode::START_USING_PERMISSION_CALLBACK, data, reply)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest fail");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t ret = reply.ReadInt32();
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", ret);
+    return ret;
+}
+
 int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     MessageParcel data;

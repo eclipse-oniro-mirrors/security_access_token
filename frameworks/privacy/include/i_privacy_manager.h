@@ -38,6 +38,8 @@ public:
     virtual int32_t AddPermissionUsedRecord(
         AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID) = 0;
     virtual int32_t GetPermissionUsedRecords(
@@ -51,6 +53,7 @@ public:
     enum class InterfaceCode {
         ADD_PERMISSION_USED_RECORD = 0xf001,
         START_USING_PERMISSION,
+        START_USING_PERMISSION_CALLBACK,
         STOP_USING_PERMISSION,
         DELETE_PERMISSION_USED_RECORDS,
         GET_PERMISSION_USED_RECORDS,

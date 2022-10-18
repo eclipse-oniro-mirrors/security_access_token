@@ -84,6 +84,12 @@ int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const
     return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName);
 }
 
+int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    const sptr<IRemoteObject>& callback)
+{
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, callback);
+}
+
 int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
     return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName);
