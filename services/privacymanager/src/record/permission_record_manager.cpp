@@ -677,7 +677,12 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 
     if (permissionName != CAMERA_PERMISSION_NAME) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "only camera permission can use this.");
-        return PrivacyError::ERR_PERMISSION_DENIED;
+        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+    }
+
+    if (record.status == PERM_ACTIVE_IN_BACKGROUND) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "refuse use camera background.");
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     ret = StartUsingPermissionCommon(tokenId, permissionName);
