@@ -13,28 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef PERM_ACTIVE_STATUS_CHANGE_CALLBACK_PROXY_H
-#define PERM_ACTIVE_STATUS_CHANGE_CALLBACK_PROXY_H
+#ifndef CAMERA_FLOAT_WINDOW_CALLBACK_H
+#define CAMERA_FLOAT_WINDOW_CALLBACK_H
 
-#include "i_state_change_callback.h"
-
-#include "iremote_proxy.h"
-#include "nocopyable.h"
+#include "accesstoken_kit.h"
+#include "window_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class StateChangeCallbackProxy : public IRemoteProxy<IStateChangeCallback> {
+typedef void (*OnCameraFloatWindowChangeCallback)(AccessTokenID tokenId, bool isShowing);
+class CameraFloatWindowChangeCallback : public Rosen::ICameraFloatWindowChangedListener {
 public:
-    explicit StateChangeCallbackProxy(const sptr<IRemoteObject>& impl);
-    ~StateChangeCallbackProxy() override;
+    void OnCameraFloatWindowChange(AccessTokenID accessTokenId, bool isShowing) override;
+    
+    void SetCallback(OnCameraFloatWindowChangeCallback callback);
+    OnCameraFloatWindowChangeCallback GetCallback() const;
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;
 private:
-    static inline BrokerDelegator<StateChangeCallbackProxy> delegator_;
+    OnCameraFloatWindowChangeCallback callback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PERM_ACTIVE_STATUS_CHANGE_CALLBACK_PROXY_H
+#endif // CAMERA_FLOAT_WINDOW_CALLBACK_H

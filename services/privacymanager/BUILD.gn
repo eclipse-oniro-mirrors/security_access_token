@@ -67,6 +67,7 @@ if (is_standard_system && ability_base_enable == true) {
       "src/record/permission_record_repository.cpp",
       "src/record/permission_used_record_cache.cpp",
       "src/sensitive/application_status_change_callback.cpp",
+      "src/sensitive/camera_float_window_change_callback.cpp",
       "src/sensitive/mic_global_switch_change_callback.cpp",
       "src/sensitive/sensitive_resource_manager.cpp",
       "src/service/privacy_manager_service.cpp",
