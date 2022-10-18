@@ -49,6 +49,9 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION):
             StartUsingPermissionInner(data, reply);
             break;
+        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION_CALLBACK):
+            StartUsingPermissionCallbackInner(data, reply);
+            break;
         case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION):
             StopUsingPermissionInner(data, reply);
             break;
@@ -99,6 +102,24 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
     AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int32_t result = this->StartUsingPermission(tokenId, permissionName);
+    reply.WriteInt32(result);
+}
+
+void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    AccessTokenID tokenId = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
+        reply.WriteInt32(RET_FAILED);
+        return;
+    }
+    int32_t result = this->StartUsingPermission(tokenId, permissionName, callback);
     reply.WriteInt32(result);
 }
 

@@ -470,7 +470,7 @@ void PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
  */
-void PermissionRecordManager::OnMicGlobalSwitchChange(PermissionRecord& record, bool switchStatus)
+void PermissionRecordManager::savePermissionRecords(PermissionRecord& record, bool switchStatus)
 {
     int64_t curStamp = TimeUtil::GetCurrentTimestamp();
     if (switchStatus) {
@@ -521,7 +521,7 @@ void PermissionRecordManager::GetMicrophoneRecords(bool switchStatus)
             continue;
         }
 
-        OnMicGlobalSwitchChange(*it, switchStatus);
+        savePermissionRecords(*it, switchStatus);
     }
 }
 
@@ -612,6 +612,12 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return ret;
     }
 
+    return Constant::SUCCESS;
+}
+
+int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    const sptr<IRemoteObject>& callback)
+{
     return Constant::SUCCESS;
 }
 

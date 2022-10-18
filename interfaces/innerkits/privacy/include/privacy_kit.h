@@ -23,6 +23,7 @@
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 #include "perm_active_status_customized_cbk.h"
+#include "state_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {
@@ -32,6 +33,8 @@ public:
     static int32_t AddPermissionUsedRecord(
         AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
     static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+        const std::shared_ptr<StateCustomizedCbk>& callback);
     static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     static int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     static int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);

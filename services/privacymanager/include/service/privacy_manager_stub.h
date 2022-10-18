@@ -34,6 +34,7 @@ public:
 private:
     void AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply);
     void StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
+    void StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply);
     void StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply);

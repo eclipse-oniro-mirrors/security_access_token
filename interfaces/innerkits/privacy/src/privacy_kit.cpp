@@ -56,6 +56,18 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
     return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName);
 }
 
+int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    const std::shared_ptr<StateCustomizedCbk>& callback)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s, callback",
+        tokenID, permissionName.c_str());
+    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName, callback);
+}
+
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",

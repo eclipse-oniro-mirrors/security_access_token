@@ -25,6 +25,8 @@
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_death_recipient.h"
+#include "state_change_callback.h"
+#include "state_customized_cbk.h"
 
 namespace OHOS {
 namespace Security {
@@ -38,6 +40,10 @@ public:
     int32_t AddPermissionUsedRecord(
         AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t CreateStateChangeCbk(const std::shared_ptr<StateCustomizedCbk>& callback,
+        sptr<StateChangeCallback>& callbackWrap);
+    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+        const std::shared_ptr<StateCustomizedCbk>& callback);
     int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
@@ -63,6 +69,8 @@ private:
 private:
     std::mutex activeCbkMutex_;
     std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
+    std::mutex stateCbkMutex_;
+    std::map<std::shared_ptr<StateCustomizedCbk>, sptr<StateChangeCallback>> stateCbkMap_;
 };
 } // namespace AccessToken
 } // namespace Security
