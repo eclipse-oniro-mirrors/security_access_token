@@ -34,6 +34,7 @@
 #include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "time_util.h"
+#include "state_change_callback_proxy.h"
 
 namespace OHOS {
 namespace Security {
@@ -74,7 +75,7 @@ PermissionRecordManager::~PermissionRecordManager()
     hasRegisted_ = false;
 
     ret = SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(CameraFloatWindowListener);
-    if(ret != RET_SUCCESS) {
+    if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "unregister float window change callback failed.");
         return;
     }
@@ -102,7 +103,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid  (%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (successCount == 0 && failCount == 0) {
@@ -365,7 +366,8 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId(%{public}d), status(%{public}d), curr[tokenId(%{public}d), status(%{public}d)].", it->tokenId, it->status, tokenId, status);
+        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId(%{public}d), status(%{public}d), curr[tokenId(%{public}d), status(%{public}d)].",
+            it->tokenId, it->status, tokenId, status);
         if ((it->tokenId == tokenId) && ((it->status) != status)) {
             int64_t curStamp = TimeUtil::GetCurrentTimestamp();
 
@@ -407,7 +409,6 @@ void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status
             ACCESSTOKEN_LOG_WARN(LABEL, "status is invalid %{public}d", status);
             return;
     }
-    ACCESSTOKEN_LOG_WARN(LABEL, "ActiveChangeType status is %{public}d", currStatus);
     std::vector<std::string> permList;
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, currStatus, permList);
@@ -416,7 +417,7 @@ void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status
     for (const auto& perm : permList) {
         // app use camera background without float window
         bool isShow = SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
-        if ((perm == CAMERA_PERMISSION_NAME) && (currStatus = PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
+        if ((perm == CAMERA_PERMISSION_NAME) && (currStatus == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
             PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, isShow);
         }
@@ -459,6 +460,7 @@ bool PermissionRecordManager::IsTokenIdExist(const uint32_t tokenId)
 void PermissionRecordManager::CallbackExecute(
     AccessTokenID tokenId, const std::string& permissionName, int32_t status)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "entry ExecuteCallbackAsync, int32_t status is %{public}d", status);
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
         tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
 }
@@ -590,7 +592,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         }
     }
     int ret = StartUsingPermissionCommon(tokenId, permissionName);
-    if(ret != Constant::SUCCESS) {
+    if (ret != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
         return ret;
     }
@@ -615,7 +617,11 @@ void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, bool isShowing)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
-    
+    auto cameracallback = PermissionRecordManager::GetInstance().GetCameraCallback();
+    if (cameracallback == nullptr) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "cameracallback is null");
+        return;
+    }
     auto callback = iface_cast<IStateChangeCallback>(PermissionRecordManager::GetInstance().GetCameraCallback());
     if (callback != nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
@@ -630,7 +636,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
 void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, bool isShowing)
 {
     SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, isShowing);
-    
+    ACCESSTOKEN_LOG_INFO(LABEL, "set camera float window status %{public}d", isShowing);
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
@@ -656,7 +662,7 @@ void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, b
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
-{   
+{
     int32_t ret;
     {
         // regist mic global switch change callback on first use StartUsingPermission
@@ -680,7 +686,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     }
 
     ret = StartUsingPermissionCommon(tokenId, permissionName);
-    if(ret != Constant::SUCCESS) {
+    if (ret != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
         return ret;
     }
@@ -822,8 +828,8 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
     
-    if(permissionName == CAMERA_PERMISSION_NAME) {
-        if(status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
+    if (permissionName == CAMERA_PERMISSION_NAME) {
+        if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
             return true;
         } else if (status == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) {
             return SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
