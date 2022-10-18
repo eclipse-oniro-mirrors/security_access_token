@@ -20,7 +20,6 @@
 #include <cstdlib>
 #include <future>
 #include <numeric>
-#include <thread>
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -537,7 +536,7 @@ void PermissionRecordManager::GetMicrophoneRecords(bool switchStatus)
             continue;
         }
 
-        savePermissionRecords(*it, switchStatus);
+        SavePermissionRecords(*it, switchStatus);
     }
 }
 
@@ -679,7 +678,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         ACCESSTOKEN_LOG_ERROR(LABEL, "only camera permission can use this.");
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     }
-    
+
     ret = StartUsingPermissionCommon(tokenId, permissionName);
     if(ret != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
