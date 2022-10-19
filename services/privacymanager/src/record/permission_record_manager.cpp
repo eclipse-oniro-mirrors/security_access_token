@@ -366,8 +366,6 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId(%{public}d), status(%{public}d), curr[tokenId(%{public}d), status(%{public}d)].",
-            it->tokenId, it->status, tokenId, status);
         if ((it->tokenId == tokenId) && ((it->status) != status)) {
             int64_t curStamp = TimeUtil::GetCurrentTimestamp();
 

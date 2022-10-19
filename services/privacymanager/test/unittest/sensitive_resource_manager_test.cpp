@@ -16,16 +16,22 @@
 #include <cstddef>
 #include <gtest/gtest.h>
 
+#include "ability_context_impl.h"
 #include "accesstoken_kit.h"
 #include "audio_system_manager.h"
 #include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "token_setproc.h"
+#include "window.h"
+#include "window_scene.h"
+#include "wm_common.h"
 
 using namespace testing;
 using namespace testing::ext;
 using namespace OHOS;
+using namespace OHOS::Rosen;
 using namespace OHOS::AudioStandard;
+using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
 namespace Security {
@@ -34,6 +40,8 @@ namespace {
 static const size_t MAX_CALLBACK_SIZE = 200;
 static uint32_t g_tokenId = 0;
 static int32_t g_status = 0;
+static bool g_micStatus = false;
+static bool g_isShowing = false;
 }
 class SensitiveResourceManagerTest : public testing::Test {
 public:
@@ -43,7 +51,47 @@ public:
     void TearDown();
 
     uint32_t tokenId_;
+
+    static sptr<WindowScene> CreateWindowScene();
+    static sptr<Window> CreateAppFloatingWindow(WindowType type, Rect rect);
+    static Rect GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h);
+    static inline float virtualPixelRatio_ = 1.0;
+    static inline std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext_ = nullptr;
 };
+
+
+static void OnChangeCameraFloatWindow(AccessTokenID tokenId, bool isShowing)
+{
+    GTEST_LOG_(INFO) << " OnChangeCameraFloatWindow isShowing_beforeSet:" << g_isShowing;
+    g_isShowing = isShowing;
+    GTEST_LOG_(INFO) << " OnChangeCameraFloatWindow isShowing_afterSet:" << g_isShowing;
+}
+
+static void OnChangeMicGlobalSwitch(bool isMute)
+{
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_before_set: " << g_micStatus;
+    g_micStatus = !(isMute);
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_after_set: " << g_micStatus;
+}
+
+void AppStatusChangeCallback(uint32_t tokenId, int32_t status)
+{
+    g_tokenId = tokenId;
+    g_status = status;
+}
+
+void AppStatusChangeCallback1(uint32_t tokenId, int32_t status)
+{
+    GTEST_LOG_(INFO) << "tokenId: " << tokenId << "status: " << status;
+}
+
+static void ResetEnv()
+{
+    g_micStatus = false;
+    g_isShowing = false;
+    g_status = 0;
+    g_tokenId = 0;
+}
 
 void SensitiveResourceManagerTest::SetUpTestCase()
 {
@@ -60,31 +108,37 @@ void SensitiveResourceManagerTest::SetUp()
 
 void SensitiveResourceManagerTest::TearDown()
 {
+    SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow);
+    SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
+    SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, AppStatusChangeCallback);
 }
 
-void AppStatusChangeCallback(uint32_t tokenId, int32_t status)
+sptr<WindowScene> SensitiveResourceManagerTest::CreateWindowScene()
 {
-    g_tokenId = tokenId;
-    g_status = status;
+    sptr<IWindowLifeCycle> listener = nullptr;
+    abilityContext_ = std::make_shared<AbilityRuntime::AbilityContextImpl>();
+
+    sptr<WindowScene> scene = new WindowScene();
+    scene->Init(0, abilityContext_, listener);
+    return scene;
 }
 
-void AppStatusChangeCallback1(uint32_t tokenId, int32_t status)
+sptr<Window> SensitiveResourceManagerTest::CreateAppFloatingWindow(WindowType type, Rect rect)
 {
-    GTEST_LOG_(INFO) << "tokenId: " << tokenId << "status: " << status;
+    sptr<WindowOption> option = new WindowOption();
+    option->SetWindowType(type);
+    option->SetWindowRect(rect);
+
+    static int cnt = 0;
+    std::string winName = "FloatingWindowTest" + std::to_string(cnt++);
+
+    return Window::Create(winName, option, abilityContext_);
 }
 
-
-static bool g_micStatus = false;
-static void OnChangeMicGlobalSwitch(bool isMute)
+inline Rect SensitiveResourceManagerTest::GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h)
 {
-    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_before_set: " << g_micStatus;
-    g_micStatus = !(isMute);
-    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_after_set: " << g_micStatus;
-}
-
-static void ResetEnv()
-{
-    g_micStatus = false;
+    auto vpr = virtualPixelRatio_;
+    return {x, y, static_cast<uint32_t>(w * vpr), static_cast<uint32_t>(h * vpr)};
 }
 
 /**
@@ -214,13 +268,45 @@ HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest002, TestSize.Level1)
  */
 HWTEST_F(SensitiveResourceManagerTest, FlowWindowStatusTest001, TestSize.Level1)
 {
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(true);
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId_, true);
 
-    ASSERT_TRUE(SensitiveResourceManager::GetInstance().IsFlowWindowShow());
+    ASSERT_TRUE(SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId_));
 
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(false);
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId_, false);
 
-    ASSERT_FALSE(SensitiveResourceManager::GetInstance().IsFlowWindowShow());
+    ASSERT_FALSE(SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId_));
+}
+
+/**
+ * @tc.name: IsFlowWindowShowTest001
+ * @tc.desc: Verify the IsFlowWindowShow abnormal branch tokenId is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, IsFlowWindowShowTest001, TestSize.Level1)
+{
+    uint32_t tokenId1 = 123;
+
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId_, true);
+
+    ASSERT_TRUE(SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId_));
+
+    ASSERT_FALSE(SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId1));
+}
+
+/**
+ * @tc.name: SetFlowWindowStatusTest001
+ * @tc.desc: Verify the SetFlowWindowStatus abnormal branch tokenId is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, SetFlowWindowStatusTest001, TestSize.Level1)
+{
+    uint32_t tokenId1 = 123;
+
+    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId1, true);
+
+    ASSERT_FALSE(SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId_));
 }
 
 /**
@@ -322,6 +408,86 @@ HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest001, TestSize.Level1)
 HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest002, TestSize.Level1)
 {
     EXPECT_EQ(ERR_PARAM_INVALID, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::INVALID));
+}
+
+HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTest001, TestSize.Level1)
+{
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
+    sptr<WindowScene> scene = CreateWindowScene();
+    ASSERT_NE(nullptr, scene);
+
+    Rect fltWindRect = GetRectWithVpr(0, 0, 400, 600);
+    sptr<Window> fltWin = CreateAppFloatingWindow(WindowType::WINDOW_TYPE_FLOAT_CAMERA, fltWindRect);
+    ASSERT_NE(nullptr, fltWin);
+
+    ResetEnv();
+
+    ASSERT_EQ(WMError::WM_OK, scene->GoForeground());
+    ASSERT_EQ(WMError::WM_OK, fltWin->Show());
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_TRUE(g_isShowing);
+
+    ResetEnv();
+
+    ASSERT_EQ(WMError::WM_OK, fltWin->Hide());
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(g_isShowing);
+
+    ResetEnv();
+
+    ASSERT_EQ(WMError::WM_OK, fltWin->Destroy());
+    ASSERT_EQ(WMError::WM_OK, scene->GoDestroy());
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(g_isShowing);
+}
+
+/**
+ * @tc.name: RegisterCameraFloatWindowChangeCallbackTest002
+ * @tc.desc: Verify the RegisterCameraFloatWindowChangeCallback abnormal branch callback is nullptr.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTest002, TestSize.Level1)
+{
+    ASSERT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(nullptr));
+
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
+    ASSERT_EQ(ERR_CALLBACK_ALREADY_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow)); 
+}
+
+/**
+ * @tc.name: UnRegisterCameraFloatWindowChangeCallbackTest_001
+ * @tc.desc: Verify the UnRegisterCameraFloatWindowChangeCallback with vaild callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterCameraFloatWindowChangeCallbackTest_001, TestSize.Level1)
+{
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
+}
+
+/**
+ * @tc.name: UnRegisterCameraFloatWindowChangeCallbackTest_002
+ * @tc.desc: Verify the UnRegisterCameraFloatWindowChangeCallback abnormal branch callback is nullptr.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterCameraFloatWindowChangeCallbackTest_002, TestSize.Level1)
+{
+    ASSERT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(nullptr));
+    ASSERT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
 }
 } // namespace AccessToken
 } // namespace Security

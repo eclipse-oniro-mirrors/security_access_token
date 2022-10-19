@@ -125,7 +125,6 @@ bool SensitiveResourceManager::IsFlowWindowShow(AccessTokenID tokenId)
 {
     std::lock_guard<std::mutex> lock(flowWindowMutex_);
     if (tokenId != flowWindowId_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}d is not FlowWindowStatusId, currId: %{public}d", tokenId, flowWindowId_);
         return false;
     }
 

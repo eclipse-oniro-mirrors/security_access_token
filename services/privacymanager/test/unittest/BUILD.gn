@@ -94,6 +94,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//commonlibrary/c_utils/base/include",
       "//base/security/access_token/services/test/mock/aafwk",
       "${ability_runtime_innerkits_path}/ability_manager/include",
+      "//foundation/window/window_manager/wm/include",
     ]
 
     sources = [
@@ -119,6 +120,7 @@ if (is_standard_system && ability_base_enable == true) {
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
       "multimedia_audio_framework:audio_client",
+      "window_manager:libwm",
     ]
   }
 }
