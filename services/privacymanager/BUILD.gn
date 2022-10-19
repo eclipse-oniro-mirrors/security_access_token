@@ -47,8 +47,6 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/services/common/database/include",
-      "//foundation/multimedia/audio_framework/interfaces/inner_api/native/audiomanager/include",
-      "//foundation/ability/ability_runtime/interfaces/kits/native/ability/ability_runtime",
       "//third_party/json/include",
       "//third_party/sqlite/include/",
     ]
@@ -85,7 +83,6 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
       "//foundation/ability/ability_runtime/interfaces/inner_api/ability_manager:ability_manager",
-      "//third_party/libuv:uv",
     ]
 
     external_deps = [

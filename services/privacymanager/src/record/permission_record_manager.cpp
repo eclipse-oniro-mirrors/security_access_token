@@ -17,8 +17,6 @@
 
 #include <algorithm>
 #include <cinttypes>
-#include <cstdlib>
-#include <future>
 #include <numeric>
 
 #include "accesstoken_kit.h"
@@ -103,7 +101,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid  (%{public}s)", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid (%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
     if (successCount == 0 && failCount == 0) {
@@ -592,10 +590,9 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     int ret = StartUsingPermissionCommon(tokenId, permissionName);
     if (ret != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
-        return ret;
     }
 
-    return Constant::SUCCESS;
+    return ret;
 }
 
 sptr<IRemoteObject> PermissionRecordManager::GetCameraCallback()
@@ -614,10 +611,10 @@ void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
 
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, bool isShowing)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "entry");
-    auto cameracallback = PermissionRecordManager::GetInstance().GetCameraCallback();
-    if (cameracallback == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "cameracallback is null");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "entry");
+    auto cameraCallback = PermissionRecordManager::GetInstance().GetCameraCallback();
+    if (cameraCallback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
         return;
     }
     auto callback = iface_cast<IStateChangeCallback>(PermissionRecordManager::GetInstance().GetCameraCallback());
@@ -625,7 +622,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
         ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
         callback->StateChangeNotify(tokenId, isShowing);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }
 
 /*
@@ -634,7 +631,7 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, 
 void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, bool isShowing)
 {
     SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, isShowing);
-    ACCESSTOKEN_LOG_INFO(LABEL, "set camera float window status %{public}d", isShowing);
+
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
@@ -649,7 +646,7 @@ void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, b
 
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
 
-    if (status == PERM_ACTIVE_IN_BACKGROUND && !(isShowing)) {
+    if (status == PERM_ACTIVE_IN_BACKGROUND && !isShowing) {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
 
         PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, isShowing);
@@ -680,7 +677,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 
     if (permissionName != CAMERA_PERMISSION_NAME) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "only camera permission can use this.");
-        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+        return PrivacyError::ERR_PERMISSION_DENIED;
     }
 
     ret = StartUsingPermissionCommon(tokenId, permissionName);
@@ -772,6 +769,8 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
             return ret;
         }
     }
+    SetCameraCallback(nullptr);
+    
     return Constant::SUCCESS;
 }
 

@@ -410,6 +410,12 @@ HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest002, TestSize.Level1)
     EXPECT_EQ(ERR_PARAM_INVALID, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::INVALID));
 }
 
+/**
+ * @tc.name: RegisterCameraFloatWindowChangeCallbackTest001
+ * @tc.desc: Verify the RegisterCameraFloatWindowChangeCallback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5
+ */
 HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTest001, TestSize.Level1)
 {
     ASSERT_EQ(RET_SUCCESS,
@@ -459,7 +465,7 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTe
     ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
     ASSERT_EQ(ERR_CALLBACK_ALREADY_EXIST,
-        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow)); 
+        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
 }
 
 /**

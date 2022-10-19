@@ -270,7 +270,7 @@ int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlo
     micGlobalSwitchCallbacks_.emplace_back(listener);
 
     AudioStandard::AudioRoutingManager::GetInstance()->SetMicStateChangeCallback(listener);
-    ACCESSTOKEN_LOG_INFO(LABEL, "register Microphone callback(%{public}p).", callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "register Microphone callback(%{public}p).", callback);
 
     return RET_SUCCESS;
 }
@@ -293,7 +293,7 @@ int32_t SensitiveResourceManager::UnRegisterMicGlobalSwitchChangeCallback(OnMicG
     }
 
     micGlobalSwitchCallbacks_.erase(iter);
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister callback(%{public}p).", callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
     return RET_SUCCESS;
 }
 
@@ -324,7 +324,7 @@ int32_t SensitiveResourceManager::RegisterCameraFloatWindowChangeCallback(OnCame
     cameraFloatWindowCallbacks_.emplace_back(listener);
     Rosen::WindowManager::GetInstance().RegisterCameraFloatWindowChangedListener(listener);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "register callback(%{public}p).", callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "register callback(%{public}p).", callback);
 
     return RET_SUCCESS;
 }
@@ -349,7 +349,7 @@ int32_t SensitiveResourceManager::UnRegisterCameraFloatWindowChangeCallback(OnCa
     WindowManager::GetInstance().UnregisterCameraFloatWindowChangedListener(*iter);
     cameraFloatWindowCallbacks_.erase(iter);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister callback(%{public}p).", callback);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
     return RET_SUCCESS;
 }
