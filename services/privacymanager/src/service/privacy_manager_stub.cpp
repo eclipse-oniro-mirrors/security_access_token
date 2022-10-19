@@ -153,14 +153,12 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
     PermissionUsedResultParcel responseParcel;
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
-        reply.WriteParcelable(&responseParcel);
         return;
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
-        reply.WriteParcelable(&responseParcel);
         return;
     }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
