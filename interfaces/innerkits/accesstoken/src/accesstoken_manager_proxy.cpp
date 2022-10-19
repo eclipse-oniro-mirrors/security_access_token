@@ -225,7 +225,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
 
     int32_t result = reply.ReadInt32();
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
-    if(result != RET_SUCCESS) {
+    if (result != RET_SUCCESS) {
         return result;
     }
     flag = reply.ReadInt32();
