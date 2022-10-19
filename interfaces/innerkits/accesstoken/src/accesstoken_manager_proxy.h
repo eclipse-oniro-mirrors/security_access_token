@@ -80,6 +80,7 @@ public:
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:
+    bool SendRequest(IAccessTokenManager::InterfaceCode code, MessageParcel& data, MessageParcel& reply);
     static inline BrokerDelegator<AccessTokenManagerProxy> delegator_;
 };
 } // namespace AccessToken
