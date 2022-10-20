@@ -171,8 +171,7 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
     int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), networkId.c_str(),
         SESSION_GROUP_ID.c_str(), &SESSION_ATTR);
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "session info: sessionId: %{public}d, uuid: %{public}s, udid: %{public}s", sessionId,
-        info.deviceId.universallyUniqueId.c_str(), info.deviceId.uniqueDeviceId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "async open session");
 
     // wait session opening
     int retryTimes = 0;
@@ -307,8 +306,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
     }
     std::string udid((char *) info);
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s, udid: %{public}s", nodeId.c_str(),
-        udid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s", nodeId.c_str());
     return udid;
 }
 
@@ -341,8 +339,8 @@ int SoftBusManager::FulfillLocalDeviceInfo()
 
     DeviceInfoManager::GetInstance().AddDeviceInfo(info.networkId, uuid, udid, info.deviceName,
         std::to_string(info.deviceTypeId));
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished, networkId:%{public}s, uuid:%{public}s, udid:%{public}s",
-        info.networkId, uuid.c_str(), udid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished, networkId:%{public}s",
+        info.networkId);
 
     fulfillMutex_.unlock();
     return Constant::SUCCESS;
