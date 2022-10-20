@@ -84,16 +84,25 @@ private:
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     void GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen);
-    void savePermissionRecords(PermissionRecord& record, bool switchStatus);
+    void SavePermissionRecords(PermissionRecord& record, bool switchStatus);
     void GetMicrophoneRecords(bool switchStatus);
     static void MicSwitchChangeListener(bool switchStatus);
     int32_t ShowPermissionDialog(const std::string& permissionName);
+    
+    static void CameraFloatWindowListener(AccessTokenID tokenId, bool isShow);
+    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, bool isShowing);
+    sptr<IRemoteObject> GetCameraCallback();
+    void SetCameraCallback(sptr<IRemoteObject>);
+    int32_t StartUsingPermissionCommon(AccessTokenID tokenId, const std::string& permissionName);
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
+    bool floatWindowHasRegisted_;
     OHOS::Utils::RWLock rwLock_;
     OHOS::Utils::RWLock startRecordListRWLock_;
     std::vector<PermissionRecord> startRecordList_;
+    std::mutex cameraMutex_;
+    sptr<IRemoteObject> cameraCallback_;
     std::mutex mutex_;
     bool hasRegisted_ = false;
 };

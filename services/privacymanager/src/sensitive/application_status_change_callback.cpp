@@ -33,8 +33,15 @@ void ApplicationStatusChangeCallback::OnForegroundApplicationChanged(const AppEx
 
     uint32_t tokenId = appStateData.accessTokenId;
 
+    int32_t status = APP_INVALID;
+    if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_FOREGROUND) {
+        status = APP_FOREGROUND;
+    } else if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_BACKGROUND) {
+        status = APP_BACKGROUND;
+    }
+
     if (callback_ != nullptr) {
-        callback_(tokenId, appStateData.state);
+        callback_(tokenId, status);
     }
 }
 

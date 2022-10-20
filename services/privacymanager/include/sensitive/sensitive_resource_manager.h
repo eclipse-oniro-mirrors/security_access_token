@@ -21,6 +21,7 @@
 #include <string>
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
+#include "camera_float_window_change_callback.h"
 #include "mic_global_switch_change_callback.h"
 #include "safe_map.h"
 #include "privacy_error.h"
@@ -29,8 +30,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 enum AppStatus {
-    APP_CREATE = 0,
-    APP_DIE,
+    APP_INVALID = 0,
     APP_FOREGROUND,
     APP_BACKGROUND,
 };
@@ -49,8 +49,9 @@ public:
 
     bool GetAppStatus(const std::string& pkgName, int32_t& status);
     bool GetGlobalSwitch(const ResourceType type);
-    bool IsFlowWindowShow(void);
-    void SetFlowWindowStatus(bool isShow);
+    bool IsFlowWindowShow(AccessTokenID tokenId);
+    void SetFlowWindowStatus(AccessTokenID tokenId, bool isShow);
+
     int32_t ShowDialog(const ResourceType& type);
     
     // register and unregister app status change callback
@@ -60,6 +61,10 @@ public:
     // mic global switch
     int32_t RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
     int32_t UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
+    
+    // camera float window
+    int32_t RegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
+    int32_t UnRegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
 private:
     bool InitProxy();
     OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
@@ -67,10 +72,13 @@ private:
 private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
-    std::mutex flowWindowStatusMutex_;
+    std::mutex flowWindowMutex_;
     bool flowWindowStatus_ = false;
+    AccessTokenID flowWindowId_ = INVALID_TOKENID;
     std::mutex micGlobalSwitchMutex_;
     std::vector<std::shared_ptr<MicGlobalSwitchChangeCallback>> micGlobalSwitchCallbacks_;
+    std::mutex cameraFloatWindowMutex_;
+    std::vector<OHOS::sptr<CameraFloatWindowChangeCallback>> cameraFloatWindowCallbacks_;
     std::mutex mutex_;
     sptr<AppExecFwk::IAppMgr> appMgrProxy_;
 };
