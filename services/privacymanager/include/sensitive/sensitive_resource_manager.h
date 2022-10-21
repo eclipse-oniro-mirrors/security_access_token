@@ -29,8 +29,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 enum AppStatus {
-    APP_CREATE = 0,
-    APP_DIE,
+    APP_INVALID = 0,
     APP_FOREGROUND,
     APP_BACKGROUND,
 };
