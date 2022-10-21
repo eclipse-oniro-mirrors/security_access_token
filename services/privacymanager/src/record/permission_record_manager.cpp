@@ -483,11 +483,12 @@ void PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
  */
-void PermissionRecordManager::SavePermissionRecords(PermissionRecord& record, bool switchStatus)
+void PermissionRecordManager::SavePermissionRecords(
+    const std::string& permissionName, PermissionRecord& record, bool switchStatus)
 {
     int64_t curStamp = TimeUtil::GetCurrentTimestamp();
     if (switchStatus) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is open, update microphone record from inactive");
+        ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
 
         if (record.status == PERM_INACTIVE) {
             // no need to store in database when status from inactive to foreground or background
@@ -502,7 +503,7 @@ void PermissionRecordManager::SavePermissionRecords(PermissionRecord& record, bo
                 return;
             }
 
-            CallbackExecute(record.tokenId, MICROPHONE_PERMISSION_NAME, record.status);
+            CallbackExecute(record.tokenId, permissionName, record.status);
 
             record.accessDuration = curStamp;
 
@@ -526,21 +527,34 @@ void PermissionRecordManager::SavePermissionRecords(PermissionRecord& record, bo
     }
 }
 
-void PermissionRecordManager::GetMicrophoneRecords(bool switchStatus)
+void PermissionRecordManager::GetRecords(const std::string& permissionName, bool switchStatus)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(startRecordListRWLock_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->opCode) != Constant::OP_MICROPHONE) {
-            continue;
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        Utils::UniqueWriteGuard<Utils::RWLock> lk(startRecordListRWLock_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            if ((it->opCode) != Constant::OP_MICROPHONE) {
+                continue;
+            }
+            SavePermissionRecords(MICROPHONE_PERMISSION_NAME, *it, switchStatus);
         }
-
-        SavePermissionRecords(*it, switchStatus);
+    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            if ((it->opCode) != Constant::OP_CAMERA) {
+                continue;
+            }
+            SavePermissionRecords(CAMERA_PERMISSION_NAME, *it, switchStatus);
+        }
     }
 }
 
 void PermissionRecordManager::MicSwitchChangeListener(bool switchStatus)
 {
-    PermissionRecordManager::GetInstance().GetMicrophoneRecords(switchStatus);
+    PermissionRecordManager::GetInstance().GetRecords(MICROPHONE_PERMISSION_NAME, switchStatus);
+}
+
+void PermissionRecordManager::CameraSwitchChangeListener(bool switchStatus)
+{
+    PermissionRecordManager::GetInstance().GetRecords(CAMERA_PERMISSION_NAME, switchStatus);
 }
 
 int32_t PermissionRecordManager::ShowPermissionDialog(const std::string& permissionName)

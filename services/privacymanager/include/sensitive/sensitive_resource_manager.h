@@ -22,6 +22,7 @@
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
 #include "camera_float_window_change_callback.h"
+#include "camera_global_switch_change_callback.h"
 #include "mic_global_switch_change_callback.h"
 #include "safe_map.h"
 #include "privacy_error.h"
@@ -62,6 +63,10 @@ public:
     int32_t RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
     int32_t UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
     
+    // camera global switch
+    int32_t RegisterCameraGlobalSwitchChangeCallback(OnCameraGlobalSwitchChangeCallback callback);
+    int32_t UnRegisterCameraGlobalSwitchChangeCallback(OnCameraGlobalSwitchChangeCallback callback);
+    
     // camera float window
     int32_t RegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
     int32_t UnRegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
@@ -77,6 +82,8 @@ private:
     AccessTokenID flowWindowId_ = INVALID_TOKENID;
     std::mutex micGlobalSwitchMutex_;
     std::vector<std::shared_ptr<MicGlobalSwitchChangeCallback>> micGlobalSwitchCallbacks_;
+    std::mutex CameraGlobalSwitchMutex_;
+    std::vector<std::shared_ptr<CameraGlobalSwitchChangeCallback>> CameraGlobalSwitchCallbacks_;
     std::mutex cameraFloatWindowMutex_;
     std::vector<OHOS::sptr<CameraFloatWindowChangeCallback>> cameraFloatWindowCallbacks_;
     std::mutex mutex_;

@@ -13,29 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H
-#define MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#ifndef CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#define CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H
 
-#include "audio_routing_manager.h"
+#include "camera_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef void (*OnMicGlobalSwitchChangeCallback)(bool switchStatus);
-class MicGlobalSwitchChangeCallback : public AudioStandard::AudioManagerMicStateChangeCallback {
+typedef void (*OnCameraGlobalSwitchChangeCallback)(bool switchStatus);
+class CameraGlobalSwitchChangeCallback : public CameraStandard::CameraMuteListener {
 public:
-    MicGlobalSwitchChangeCallback() = default;
-    virtual ~MicGlobalSwitchChangeCallback() {}
-    void OnMicStateUpdated(const AudioStandard::MicStateChangeEvent &micStateChangeEvent) override;
+    CameraGlobalSwitchChangeCallback() = default;
+    virtual ~CameraGlobalSwitchChangeCallback() {}
+    void OnCameraMute(bool muteMode) const override;
 
-    void SetCallback(OnMicGlobalSwitchChangeCallback callback);
-    OnMicGlobalSwitchChangeCallback GetCallback() const;
+    void SetCallback(OnCameraGlobalSwitchChangeCallback callback);
+    OnCameraGlobalSwitchChangeCallback GetCallback() const;
 
 private:
-    OnMicGlobalSwitchChangeCallback callback_ = nullptr;
+    OnCameraGlobalSwitchChangeCallback callback_ = nullptr;
 };
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#endif // CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H
