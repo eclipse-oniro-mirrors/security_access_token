@@ -31,6 +31,7 @@ using namespace testing::ext;
 using namespace OHOS;
 using namespace OHOS::Rosen;
 using namespace OHOS::AudioStandard;
+using namespace OHOS::CameraStandard;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
@@ -42,6 +43,7 @@ static uint32_t g_tokenId = 0;
 static int32_t g_status = 0;
 static bool g_micStatus = false;
 static bool g_isShowing = false;
+static bool g_cameraStauts = false;
 }
 class SensitiveResourceManagerTest : public testing::Test {
 public:
@@ -51,12 +53,6 @@ public:
     void TearDown();
 
     uint32_t tokenId_;
-
-    static sptr<WindowScene> CreateWindowScene();
-    static sptr<Window> CreateAppFloatingWindow(WindowType type, Rect rect);
-    static Rect GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h);
-    static inline float virtualPixelRatio_ = 1.0;
-    static inline std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext_ = nullptr;
 };
 
 
@@ -72,6 +68,13 @@ static void OnChangeMicGlobalSwitch(bool isMute)
     GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_before_set: " << g_micStatus;
     g_micStatus = !(isMute);
     GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch mic_isMute_after_set: " << g_micStatus;
+}
+
+static void OnChangeCameraGlobalSwitch(bool isMute)
+{
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch camera_status_before_set: " << g_cameraStauts;
+    g_cameraStauts = isMute;
+    GTEST_LOG_(INFO) << " OnChangeMicGlobalSwitch camera_status_after_set: " << g_cameraStauts;
 }
 
 void AppStatusChangeCallback(uint32_t tokenId, int32_t status)
@@ -110,35 +113,8 @@ void SensitiveResourceManagerTest::TearDown()
 {
     SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow);
     SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
+    SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, AppStatusChangeCallback);
-}
-
-sptr<WindowScene> SensitiveResourceManagerTest::CreateWindowScene()
-{
-    sptr<IWindowLifeCycle> listener = nullptr;
-    abilityContext_ = std::make_shared<AbilityRuntime::AbilityContextImpl>();
-
-    sptr<WindowScene> scene = new WindowScene();
-    scene->Init(0, abilityContext_, listener);
-    return scene;
-}
-
-sptr<Window> SensitiveResourceManagerTest::CreateAppFloatingWindow(WindowType type, Rect rect)
-{
-    sptr<WindowOption> option = new WindowOption();
-    option->SetWindowType(type);
-    option->SetWindowRect(rect);
-
-    static int cnt = 0;
-    std::string winName = "FloatingWindowTest" + std::to_string(cnt++);
-
-    return Window::Create(winName, option, abilityContext_);
-}
-
-inline Rect SensitiveResourceManagerTest::GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h)
-{
-    auto vpr = virtualPixelRatio_;
-    return {x, y, static_cast<uint32_t>(w * vpr), static_cast<uint32_t>(h * vpr)};
 }
 
 /**
@@ -387,6 +363,36 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTe
 }
 
 /**
+ * @tc.name: RegisterCameraGlobalSwitchChangeCallbackTest001
+ * @tc.desc: call RegisterMicGlobalSwitchChangeCallback ShowDialog once.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackTest001, TestSize.Level1)
+{
+    SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+
+    bool isMute = CameraManager::GetInstance()->IsCameraMuted();
+
+    CameraManager::GetInstance()->MuteCamera(false);
+    ResetEnv();
+
+    CameraManager::GetInstance()->MuteCamera(true);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(g_cameraStauts);
+
+    ResetEnv();
+
+    CameraManager::GetInstance()->MuteCamera(false);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_TRUE(g_cameraStauts);
+    
+    ResetEnv();
+    CameraManager::GetInstance()->MuteCamera(isMute);
+    SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+}
+
+/**
  * @tc.name: ShowDialogTest001
  * @tc.desc: call ShowDialog once with valid ResourceType.
  * @tc.type: FUNC
@@ -420,35 +426,6 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTe
 {
     ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
-    sptr<WindowScene> scene = CreateWindowScene();
-    ASSERT_NE(nullptr, scene);
-
-    Rect fltWindRect = GetRectWithVpr(0, 0, 400, 600);
-    sptr<Window> fltWin = CreateAppFloatingWindow(WindowType::WINDOW_TYPE_FLOAT_CAMERA, fltWindRect);
-    ASSERT_NE(nullptr, fltWin);
-
-    ResetEnv();
-
-    ASSERT_EQ(WMError::WM_OK, scene->GoForeground());
-    ASSERT_EQ(WMError::WM_OK, fltWin->Show());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_TRUE(g_isShowing);
-
-    ResetEnv();
-
-    ASSERT_EQ(WMError::WM_OK, fltWin->Hide());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(g_isShowing);
-
-    ResetEnv();
-
-    ASSERT_EQ(WMError::WM_OK, fltWin->Destroy());
-    ASSERT_EQ(WMError::WM_OK, scene->GoDestroy());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(g_isShowing);
 }
 
 /**

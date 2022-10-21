@@ -84,9 +84,10 @@ private:
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     void GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen);
-    void SavePermissionRecords(PermissionRecord& record, bool switchStatus);
-    void GetMicrophoneRecords(bool switchStatus);
+    void SavePermissionRecords(const std::string& permissionName, PermissionRecord& record, bool switchStatus);
+    void GetRecords(const std::string& permissionName, bool switchStatus);
     static void MicSwitchChangeListener(bool switchStatus);
+    static void CameraSwitchChangeListener(bool switchStatus);
     int32_t ShowPermissionDialog(const std::string& permissionName);
     
     static void CameraFloatWindowListener(AccessTokenID tokenId, bool isShow);
