@@ -390,10 +390,6 @@ void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status
         case APP_BACKGROUND:
             currStatus = PERM_ACTIVE_IN_BACKGROUND;
             break;
-        case APP_CREATE:
-            return;
-        case APP_DIE:
-            return;
         default:
             ACCESSTOKEN_LOG_WARN(LABEL, "status is invalid %{public}d", status);
             return;
