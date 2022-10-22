@@ -16,7 +16,7 @@
 #ifndef PERM_ACTIVE_STATUS_CHANGE_CALLBACK_PROXY_H
 #define PERM_ACTIVE_STATUS_CHANGE_CALLBACK_PROXY_H
 
-#include "i_camera_use_state_change_callback.h"
+#include "i_state_change_callback.h"
 
 #include "iremote_proxy.h"
 #include "nocopyable.h"
@@ -29,7 +29,7 @@ public:
     explicit StateChangeCallbackProxy(const sptr<IRemoteObject>& impl);
     ~StateChangeCallbackProxy() override;
 
-    virtual void StateChangeNotice(AccessTokenID tokenId, bool isShowing) override;
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;
 private:
     static inline BrokerDelegator<StateChangeCallbackProxy> delegator_;
 };

@@ -30,7 +30,8 @@ namespace Security {
 namespace AccessToken {
 uint32_t g_tokenId = 0;
 int32_t g_status = INACTIVE;
-
+int32_t APP_STATE_FOREGROUND = 2;
+int32_t APP_STATE_BACKGROUND = 4;
 class SensitiveResourceMockTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -146,13 +147,13 @@ HWTEST_F(SensitiveResourceMockTest, UnRegisterAppStatusChangeCallback002, TestSi
     ASSERT_EQ(RET_SUCCESS,
         SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusChangeCallback));
 
-    SwitchForeOrBackGround(tokenId, ACTIVE_FOREGROUND);
+    SwitchForeOrBackGround(tokenId, APP_STATE_FOREGROUND);
     ASSERT_EQ(tokenId, g_tokenId);
     ASSERT_EQ(ACTIVE_FOREGROUND, g_status);
 
     g_tokenId = 0;
     g_status = 0;
-    SwitchForeOrBackGround(tokenId, ACTIVE_BACKGROUND);
+    SwitchForeOrBackGround(tokenId, APP_STATE_BACKGROUND);
     ASSERT_EQ(tokenId, g_tokenId);
     ASSERT_EQ(ACTIVE_BACKGROUND, g_status);
 

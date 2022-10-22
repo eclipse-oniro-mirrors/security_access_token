@@ -13,27 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef I_STATE_CHANGE_CALLBACK_H
-#define I_STATE_CHANGE_CALLBACK_H
+#ifndef CAMERA_FLOAT_WINDOW_CALLBACK_H
+#define CAMERA_FLOAT_WINDOW_CALLBACK_H
 
-#include "iremote_broker.h"
-#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "window_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class IStateChangeCallback : public IRemoteBroker {
+typedef void (*OnCameraFloatWindowChangeCallback)(AccessTokenID tokenId, bool isShowing);
+class CameraFloatWindowChangeCallback : public Rosen::ICameraFloatWindowChangedListener {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.privacy.IStateChangeCallback");
+    void OnCameraFloatWindowChange(AccessTokenID accessTokenId, bool isShowing) override;
+    
+    void SetCallback(OnCameraFloatWindowChangeCallback callback);
+    OnCameraFloatWindowChangeCallback GetCallback() const;
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) = 0;
-
-    enum {
-        STATE_CHANGE_CALLBACK = 0,
-    };
+private:
+    OnCameraFloatWindowChangeCallback callback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // I_STATE_CHANGE_CALLBACK_H
+#endif // CAMERA_FLOAT_WINDOW_CALLBACK_H

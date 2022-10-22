@@ -13,27 +13,37 @@
  * limitations under the License.
  */
 
-#ifndef I_STATE_CHANGE_CALLBACK_H
-#define I_STATE_CHANGE_CALLBACK_H
-
-#include "iremote_broker.h"
-#include "access_token.h"
+#include "camera_global_switch_change_callback.h"
+#include "accesstoken_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class IStateChangeCallback : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.privacy.IStateChangeCallback");
-
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) = 0;
-
-    enum {
-        STATE_CHANGE_CALLBACK = 0,
-    };
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "GlobalSwitchChangeCallback"
 };
+}
+
+void CameraGlobalSwitchChangeCallback::OnCameraMute(bool muteMode) const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(CameraGlobalStatus=%{public}d)", !muteMode);
+
+    if (callback_ != nullptr) {
+        callback_(!muteMode);
+    }
+}
+
+void CameraGlobalSwitchChangeCallback::SetCallback(OnCameraGlobalSwitchChangeCallback callback)
+{
+    callback_ = callback;
+}
+
+OnCameraGlobalSwitchChangeCallback CameraGlobalSwitchChangeCallback::GetCallback() const
+{
+    return callback_;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // I_STATE_CHANGE_CALLBACK_H

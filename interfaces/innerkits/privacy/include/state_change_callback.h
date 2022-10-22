@@ -27,7 +27,7 @@ public:
     StateChangeCallback(const std::shared_ptr<StateCustomizedCbk> &customizedCallback);
     ~StateChangeCallback() override;
 
-    void StateChangeNotify(uint32_t tokenId, bool isShowing) override;
+    void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;
 
     void Stop();
 

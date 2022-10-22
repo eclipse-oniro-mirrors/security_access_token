@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef GLOBAL_SWITCH_CHANGE_CALLBACK_H
-#define GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#ifndef MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#define MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H
 
 #include "audio_routing_manager.h"
 
@@ -38,4 +38,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#endif // MIC_GLOBAL_SWITCH_CHANGE_CALLBACK_H

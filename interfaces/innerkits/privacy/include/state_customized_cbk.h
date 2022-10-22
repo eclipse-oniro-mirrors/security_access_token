@@ -17,6 +17,7 @@
 #define STATE_CUSTOMIZED_CBK_H
 
 #include <stdint.h>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -26,7 +27,7 @@ public:
     StateCustomizedCbk();
     virtual ~StateCustomizedCbk();
 
-    virtual void StateChangeNotify(uint32_t tokenId, bool isShowing) = 0;
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) = 0;
 };
 } // namespace AccessToken
 } // namespace Security
