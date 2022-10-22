@@ -83,7 +83,8 @@ static void ParamResolveErrorThrow(const napi_env& env, const std::string& param
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
 }
 
-static bool ParseRequestResolveSomeParam(const napi_env& env, const napi_value& value, PermissionUsedRequest& request, napi_value& property)
+static bool ParseRequestResolveSomeParam(
+    const napi_env& env, const napi_value& value, PermissionUsedRequest& request, napi_value& property)
 {
     property = nullptr;
     NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
