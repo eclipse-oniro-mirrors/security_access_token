@@ -131,7 +131,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     char uuidbuf[uuidStrLen];
     random_uuid(uuidbuf, uuidStrLen);
     std::string uuid(uuidbuf);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid");
 
     int len = (signed)(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
     unsigned char *buf = new unsigned char[len + 1];
@@ -148,7 +148,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
 
     std::unique_lock<std::mutex> lock(sessionMutex_);
     std::function<void(const std::string &)> callback = [&](const std::string &result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "onResponse called, data: %{public}s", result.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "onResponse called, data");
         responseResult_ = std::string(result);
         loadedCond_.notify_all();
         ACCESSTOKEN_LOG_DEBUG(LABEL, "onResponse called end");
@@ -231,7 +231,7 @@ int SoftBusChannel::PrepareBytes(const std::string &type, const std::string &id,
 {
     SoftBusMessage messageEntity(type, id, commandName, jsonPayload);
     std::string json = messageEntity.ToJson();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "softbus message json: %{public}s", json.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "softbus message json");
     return Compress(json, bytes, bytesLength);
 }
 
@@ -278,7 +278,7 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
     buf[len] = '\0';
     std::string str((char *) buf);
     delete[] buf;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output");
     return str;
 }
 

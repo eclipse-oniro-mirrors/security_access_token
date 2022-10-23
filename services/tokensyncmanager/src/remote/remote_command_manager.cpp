@@ -80,11 +80,11 @@ void RemoteCommandManager::RemoveCommand(const std::string &udid)
 int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::shared_ptr<BaseRemoteCommand> &command)
 {
     if (udid.empty() || command == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s, or null command", udid.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid or null command");
         return Constant::FAILURE;
     }
     std::string uniqueId = command->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid: %{public}s , uniqueId: %{public}s ", udid.c_str(), uniqueId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid");
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
@@ -100,19 +100,19 @@ int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::sha
 int RemoteCommandManager::ProcessDeviceCommandImmediately(const std::string &udid)
 {
     if (udid.empty()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid: %{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid udid");
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid:%{public}s ", udid.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "start with udid");
     auto executorIt = executors_.find(udid);
     if (executorIt == executors_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no executor found, udid:%{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no executor found");
         return Constant::FAILURE;
     }
 
     auto executor = executorIt->second;
     if (executor == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor is null for udid %{public}s ", udid.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "RemoteCommandExecutor is null for udid");
         return Constant::FAILURE;
     }
 
@@ -149,10 +149,10 @@ void RemoteCommandManager::Clear()
 int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId");
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId:  %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId");
 
     auto executor = GetOrCreateRemoteCommandExecutor(nodeId);
     std::unique_lock<std::mutex> lock(mutex_);
@@ -204,10 +204,10 @@ int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "invalid nodeId");
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId:  %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "operation start with nodeId");
 
     auto channel = GetExecutorChannel(nodeId);
     if (channel != nullptr) {
@@ -243,7 +243,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
 
 std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCommandExecutor(const std::string &nodeId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "begin, nodeId %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "begin, nodeId");
 
     std::unique_lock<std::mutex> lock(mutex_);
     auto executorIter = executors_.find(nodeId);
@@ -253,12 +253,12 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
 
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
     if (executor == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "cannot create remote command executor, nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_INFO(LABEL, "cannot create remote command executor, nodeId");
         return nullptr;
     }
 
     executors_.insert(std::pair<std::string, std::shared_ptr<RemoteCommandExecutor>>(nodeId, executor));
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "executor added, nodeId: %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "executor added, nodeId");
     return executor;
 }
 
@@ -267,11 +267,11 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
  */
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId:%{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "convert udid start, nodeId");
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
     if (!DataValidator::IsDeviceIdValid(udid)) {
         ACCESSTOKEN_LOG_WARN(
-            LABEL, "converted udid is invalid, nodeId:%{public}s", nodeId.c_str());
+            LABEL, "converted udid is invalid, nodeId");
         return nullptr;
     }
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>>::iterator iter = executors_.find(udid);
