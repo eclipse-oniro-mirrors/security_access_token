@@ -161,11 +161,11 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (result == false) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{private}s", deviceId.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId");
         return Constant::FAILURE;
     }
     std::string networkId = info.deviceId.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId");
 
     // async open session, should waitting for OnSessionOpened event.
     int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), networkId.c_str(),
@@ -218,20 +218,20 @@ int SoftBusManager::CloseSession(int sessionId)
 std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId");
         return "";
     }
 
     std::string uuid = GetUuidByNodeId(nodeId);
     if (uuid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string [%{public}s]", uuid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string");
         return "";
     }
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(uuid, DeviceIdType::UNIVERSALLY_UNIQUE_ID, info);
     if (result == false) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s", uuid.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid");
     } else {
         std::string dimUuid = info.deviceId.universallyUniqueId;
         if (uuid == dimUuid) {
@@ -248,12 +248,12 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
 std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", nodeId.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId");
         return "";
     }
     std::string udid = GetUdidByNodeId(nodeId);
     if (udid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string: %{public}s", udid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string");
         return "";
     }
     char localUdid[Constant::DEVICE_UUID_LENGTH] = {0};
@@ -284,8 +284,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
     }
     std::string uuid((char *) info);
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s", nodeId.c_str(),
-        uuid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished");
     return uuid;
 }
 
@@ -306,7 +305,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
     }
     std::string udid((char *) info);
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s", nodeId.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished");
     return udid;
 }
 
@@ -326,8 +325,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
         return Constant::FAILURE;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished, networkId:%{public}s, name:%{public}s, type:%{public}d",
-        info.networkId, info.deviceName, info.deviceTypeId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished");
 
     std::string uuid = GetUuidByNodeId(info.networkId);
     std::string udid = GetUdidByNodeId(info.networkId);

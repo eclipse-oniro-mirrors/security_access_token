@@ -41,10 +41,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
 
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
-        networkId.c_str(),
-        uuid.c_str(),
-        udid.c_str());
+        "networkId:, uuid:, udid");
 
     if (uuid != "" && udid != "") {
         DeviceInfoManager::GetInstance().AddDeviceInfo(
@@ -63,10 +60,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
-        networkId.c_str(),
-        uuid.c_str(),
-        udid.c_str());
+        "networkId:,  uuid:, udid");
 
     if (uuid != "" && udid != "") {
         RemoteCommandManager::GetInstance().NotifyDeviceOffline(uuid);
@@ -80,13 +74,13 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 void SoftBusDeviceConnectionListener::OnDeviceReady(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "networkId");
 }
 
 void SoftBusDeviceConnectionListener::OnDeviceChanged(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "networkId");
 }
 }  // namespace AccessToken
 }  // namespace Security
