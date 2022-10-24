@@ -48,7 +48,7 @@ static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& conte
         napi_value businessError = GenerateBusinessError(env, context.result, GetErrorMessage(context.result));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, context.deferred, businessError));
     } else {
-        NAPI_CALL_RETURN_VOID(env,napi_resolve_deferred(env, context.deferred, result));
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, context.deferred, result));
     }
 }
 
