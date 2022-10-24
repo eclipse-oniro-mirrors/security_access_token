@@ -120,14 +120,20 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     }
     auto callbackFunc = [&]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
-        std::lock_guard<std::mutex> lock(mutex_);
-        for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
-            std::vector<std::string> permList = (*it).permList_;
-            if (!NeedCalled(permList, permName)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
-                continue;
+        std::vector<sptr<IRemoteObject>> list;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
+                std::vector<std::string> permList = (*it).permList_;
+                if (!NeedCalled(permList, permName)) {
+                    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
+                    continue;
+                }
+                list.emplace_back((*it).callbackObject_);
             }
-            auto callback = iface_cast<IPermActiveStatusCallback>((*it).callbackObject_);
+        }
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            auto callback = iface_cast<IPermActiveStatusCallback>(*it);
             if (callback != nullptr) {
                 ActiveChangeResponse resInfo;
                 resInfo.type = changeType;
