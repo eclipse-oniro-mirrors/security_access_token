@@ -74,7 +74,8 @@ private:
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
-    void FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status, std::vector<std::string>& permList);
+    void FindRecordsToUpdateAndExecuted(uint32_t tokenId,
+        ActiveChangeType status, std::vector<std::string>& permList, std::vector<std::string>& camPermList);
     static void AppStatusListener(uint32_t tokenId, int32_t status);
     bool IsTokenIdExist(const uint32_t tokenId);
     void AddRecordToStartList(const PermissionRecord& record);
@@ -83,16 +84,15 @@ private:
 
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
-    void GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen);
+    bool GetGlobalSwitchStatus(const std::string& permissionName);
     void SavePermissionRecords(const std::string& permissionName, PermissionRecord& record, bool switchStatus);
     void GetRecords(const std::string& permissionName, bool switchStatus);
     static void MicSwitchChangeListener(bool switchStatus);
     static void CameraSwitchChangeListener(bool switchStatus);
     int32_t ShowPermissionDialog(const std::string& permissionName);
-    
+
     static void CameraFloatWindowListener(AccessTokenID tokenId, bool isShow);
-    void ExecuteCameraCallbackAsync(AccessTokenID tokenId, bool isShowing);
-    sptr<IRemoteObject> GetCameraCallback();
+    void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
     void SetCameraCallback(sptr<IRemoteObject>);
     int32_t StartUsingPermissionCommon(AccessTokenID tokenId, const std::string& permissionName);
 
@@ -100,9 +100,9 @@ private:
     bool hasInited_;
     bool floatWindowHasRegisted_;
     OHOS::Utils::RWLock rwLock_;
-    OHOS::Utils::RWLock startRecordListRWLock_;
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
+    std::mutex startRecordListMutex_;
     sptr<IRemoteObject> cameraCallback_;
     std::mutex mutex_;
     bool hasRegisted_ = false;

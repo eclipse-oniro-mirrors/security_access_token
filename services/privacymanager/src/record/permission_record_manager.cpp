@@ -78,7 +78,6 @@ PermissionRecordManager::~PermissionRecordManager()
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera flow window change callback success.");
-    SetCameraCallback(nullptr);
     floatWindowHasRegisted_ = false;
 }
 
@@ -348,7 +347,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 
 bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
         [record](const auto& rec) { return (rec.opCode == record.opCode) && (rec.tokenId == record.tokenId); });
     if (hasStarted) {
@@ -359,14 +358,27 @@ bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
     return hasStarted;
 }
 
-void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
-    uint32_t tokenId, ActiveChangeType status, std::vector<std::string>& permList)
+void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
+    ActiveChangeType status, std::vector<std::string>& permList, std::vector<std::string>& camPermList)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->tokenId == tokenId) && ((it->status) != status)) {
-            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            if (!GetGlobalSwitchStatus(perm)) {
+                continue;
+            }
 
+            // app use camera background without float window
+            bool isShow = SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
+            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
+                camPermList.emplace_back(perm);
+                continue;
+            }
+            permList.emplace_back(perm);
+            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
             // update accessDuration and store in database
             it->accessDuration = curStamp - it->timestamp;
             AddRecord(*it);
@@ -375,11 +387,6 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
             it->status = status;
             it->accessDuration = 0;
             it->timestamp = curStamp;
-
-            std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
-            permList.emplace_back(perm);
-
             ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
         }
     }
@@ -406,30 +413,28 @@ void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status
             return;
     }
     std::vector<std::string> permList;
+    std::vector<std::string> camPermList;
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, currStatus, permList);
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, currStatus, permList, camPermList);
 
+    if (!camPermList.empty()) {
+        PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+    }
     // each permission sends a status change notice
     for (const auto& perm : permList) {
-        // app use camera background without float window
-        bool isShow = SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
-        if ((perm == CAMERA_PERMISSION_NAME) && (currStatus == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-            PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, isShow);
-        }
         PermissionRecordManager::GetInstance().CallbackExecute(tokenId, perm, currStatus);
     }
 }
 
 void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     startRecordList_.emplace_back(record);
 }
 
 bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
             record = *it;
@@ -443,7 +448,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
 
 bool PermissionRecordManager::IsTokenIdExist(const uint32_t tokenId)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->startRecordListRWLock_);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if (it->tokenId == tokenId) {
             return true;
@@ -461,8 +466,9 @@ void PermissionRecordManager::CallbackExecute(
         tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
 }
 
-void PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName, bool& isOpen)
+bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
 {
+    bool isOpen = true;
     // only manage camera and microphone global switch now, other default true
     ResourceType type;
     if (permissionName == CAMERA_PERMISSION_NAME) {
@@ -477,6 +483,7 @@ void PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
 
     ACCESSTOKEN_LOG_INFO(LABEL,
         "type is %{public}d(-1-invalid 0-camera 1-microphone), status is %{public}d", type, isOpen);
+    return isOpen;
 }
 
 /*
@@ -530,7 +537,7 @@ void PermissionRecordManager::SavePermissionRecords(
 void PermissionRecordManager::GetRecords(const std::string& permissionName, bool switchStatus)
 {
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(startRecordListRWLock_);
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
         for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
             if ((it->opCode) != Constant::OP_MICROPHONE) {
                 continue;
@@ -609,32 +616,29 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     return ret;
 }
 
-sptr<IRemoteObject> PermissionRecordManager::GetCameraCallback()
-{
-    std::lock_guard<std::mutex> lock(cameraMutex_);
-
-    return cameraCallback_;
-}
-
 void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
 {
     std::lock_guard<std::mutex> lock(cameraMutex_);
-
     cameraCallback_ = callback;
 }
 
-void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId, bool isShowing)
+void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "entry");
-    auto cameraCallback = PermissionRecordManager::GetInstance().GetCameraCallback();
-    if (cameraCallback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
-        return;
+    sptr<IRemoteObject> cameraCallback = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(cameraMutex_);
+        cameraCallback = cameraCallback_;
+        if (cameraCallback == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
+            return;
+        }
     }
-    auto callback = iface_cast<IStateChangeCallback>(PermissionRecordManager::GetInstance().GetCameraCallback());
+    auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
     if (callback != nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
-        callback->StateChangeNotify(tokenId, isShowing);
+        callback->StateChangeNotify(tokenId, false);
+        SetCameraCallback(nullptr);
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }
@@ -663,7 +667,7 @@ void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, b
     if (status == PERM_ACTIVE_IN_BACKGROUND && !isShowing) {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
 
-        PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, isShowing);
+        PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is show!");
     }
@@ -672,6 +676,10 @@ void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, b
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null.");
+        return ERR_CALLBACK_NOT_EXIST;
+    }
     int32_t ret;
     {
         // regist mic global switch change callback on first use StartUsingPermission
@@ -699,14 +707,8 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
         return ret;
     }
-
-    if (GetCameraCallback() != nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback has been used.");
-        return PrivacyError::ERR_CALLBACK_NOT_EXIST;
-    }
-
+    
     SetCameraCallback(callback);
-
     return Constant::SUCCESS;
 }
 
@@ -725,10 +727,7 @@ int32_t PermissionRecordManager::StartUsingPermissionCommon(AccessTokenID tokenI
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
-    bool isOpen = true; // only location, camera and microphone has global switch, so default true
-    GetGlobalSwitchStatus(permissionName, isOpen);
-
-    if (!isOpen) {
+    if (!GetGlobalSwitchStatus(permissionName)) {
         int32_t result = ShowPermissionDialog(permissionName);
         if (result != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
@@ -759,7 +758,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
         return PrivacyError::ERR_TOKENID_NOT_EXIST;
     }
-
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission(%{public}s)", permissionName.c_str());
@@ -783,8 +781,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
             return ret;
         }
     }
-    SetCameraCallback(nullptr);
-    
     return Constant::SUCCESS;
 }
 
