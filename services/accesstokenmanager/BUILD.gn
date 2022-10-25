@@ -96,6 +96,11 @@ if (is_standard_system) {
       "safwk:system_ability_fwk",
     ]
 
+    if (hicollie_enable == true) {
+      external_deps += [ "hicollie_native:libhicollie" ]
+      cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+    }
+
     if (token_sync_enable == true) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
 

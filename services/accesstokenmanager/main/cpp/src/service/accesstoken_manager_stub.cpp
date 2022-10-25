@@ -20,6 +20,9 @@
 #include "accesstoken_log.h"
 #include "ipc_skeleton.h"
 #include "string_ex.h"
+#ifdef HICOLLIE_ENABLE
+#include "xcollie/xcollie.h"
+#endif // HICOLLIE_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -30,6 +33,9 @@ constexpr int32_t FOUNDATION_UID = 5523;
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+#ifdef HICOLLIE_ENABLE
+constexpr uint32_t TIMEOUT = 10; // 10s
+#endif // HICOLLIE_ENABLE
 }
 
 int32_t AccessTokenManagerStub::OnRemoteRequest(
@@ -41,6 +47,12 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return -1;
     }
+
+#ifdef HICOLLIE_ENABLE
+    std::string name = "AtmTimer";
+    int timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
+        HiviewDFX::XCOLLIE_FLAG_LOG);
+#endif // HICOLLIE_ENABLE
     auto itFunc = requestFuncMap_.find(code);
     if (itFunc != requestFuncMap_.end()) {
         auto requestFunc = itFunc->second;
@@ -53,6 +65,10 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
     } else {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option); // when code invalid
     }
+
+#ifdef HICOLLIE_ENABLE
+    HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
+#endif // HICOLLIE_ENABLE
 
     return NO_ERROR;
 }
