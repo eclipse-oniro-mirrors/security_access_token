@@ -369,14 +369,10 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
  */
 HWTEST_F(PrivacyManagerServiceTest, GetGlobalSwitchStatus001, TestSize.Level1)
 {
-    bool isOpen = false;
-    PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME, isOpen);
-    ASSERT_EQ(true, isOpen);
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME));
 
     // microphone is not sure
-    isOpen = false;
-    PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME, isOpen);
-    ASSERT_EQ(true, isOpen);
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME));
 }
 
 /*

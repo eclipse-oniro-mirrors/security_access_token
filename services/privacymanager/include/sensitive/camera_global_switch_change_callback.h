@@ -13,27 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef I_STATE_CHANGE_CALLBACK_H
-#define I_STATE_CHANGE_CALLBACK_H
+#ifndef CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H
+#define CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H
 
-#include "iremote_broker.h"
-#include "access_token.h"
+#include "camera_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class IStateChangeCallback : public IRemoteBroker {
+typedef void (*OnCameraGlobalSwitchChangeCallback)(bool switchStatus);
+class CameraGlobalSwitchChangeCallback : public CameraStandard::CameraMuteListener {
 public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.privacy.IStateChangeCallback");
+    CameraGlobalSwitchChangeCallback() = default;
+    virtual ~CameraGlobalSwitchChangeCallback() {}
+    void OnCameraMute(bool muteMode) const override;
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) = 0;
+    void SetCallback(OnCameraGlobalSwitchChangeCallback callback);
+    OnCameraGlobalSwitchChangeCallback GetCallback() const;
 
-    enum {
-        STATE_CHANGE_CALLBACK = 0,
-    };
+private:
+    OnCameraGlobalSwitchChangeCallback callback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // I_STATE_CHANGE_CALLBACK_H
+#endif // CAMERA_GLOBAL_SWITCH_CHANGE_CALLBACK_H

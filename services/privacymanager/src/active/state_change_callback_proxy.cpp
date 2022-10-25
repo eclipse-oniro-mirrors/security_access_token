@@ -34,7 +34,7 @@ StateChangeCallbackProxy::StateChangeCallbackProxy(const sptr<IRemoteObject>& im
 StateChangeCallbackProxy::~StateChangeCallbackProxy()
 {}
 
-void StateChangeCallbackProxy::StateChangeNotice(AccessTokenID tokenId, bool isShowing)
+void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isShowing)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IStateChangeCallback::GetDescriptor());
