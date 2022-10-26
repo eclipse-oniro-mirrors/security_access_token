@@ -70,7 +70,7 @@ private:
     std::mutex activeCbkMutex_;
     std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
     std::mutex stateCbkMutex_;
-    std::map<std::shared_ptr<StateCustomizedCbk>, sptr<StateChangeCallback>> stateCbkMap_;
+    sptr<StateChangeCallback> stateChangeCallback_;
 };
 } // namespace AccessToken
 } // namespace Security
