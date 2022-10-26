@@ -105,7 +105,8 @@ private:
     std::mutex startRecordListMutex_;
     sptr<IRemoteObject> cameraCallback_;
     std::mutex mutex_;
-    bool hasRegisted_ = false;
+    bool micHasRegisted_ = false;
+    bool camerHasRegisted_ = false;
 };
 } // namespace AccessToken
 } // namespace Security
