@@ -70,14 +70,8 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(
 {
     std::lock_guard<std::mutex> lock(stateCbkMutex_);
 
-    if (stateCbkMap_.size() >= MAX_PERM_LIST_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "the max number of subscribers has been reached");
-        return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
-    }
-
-    auto goalCallback = stateCbkMap_.find(callback);
-    if (goalCallback != stateCbkMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "stateCbkMap_ already has such callback");
+    if (stateChangeCallback_ != nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, " callback has been used");
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callbackWrap = new (std::nothrow) StateChangeCallback(callback);
@@ -112,7 +106,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const 
     result = proxy->StartUsingPermission(tokenId, permissionName, callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        stateCbkMap_[callback] = callbackWrap;
+        stateChangeCallback_ = callbackWrap;
         ACCESSTOKEN_LOG_INFO(LABEL, "callbackObject added");
     }
     return result;
@@ -125,6 +119,11 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
+    {
+        std::lock_guard<std::mutex> lock(stateCbkMutex_);
+        stateChangeCallback_ = nullptr;
+    }
+            
     return proxy->StopUsingPermission(tokenID, permissionName);
 }
 
