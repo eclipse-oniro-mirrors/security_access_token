@@ -221,8 +221,11 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterAppStatusChangeCallback001, Tes
  */
 HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest001, TestSize.Level1)
 {
-    // MICROPHONE is not sure without SetGlobalSwitch interface
-    ASSERT_EQ(true, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
+    bool micStatus = !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
+    bool cameraStatus = !(CameraManager::GetInstance()->IsCameraMuted());
+
+    EXPECT_EQ(micStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    EXPECT_EQ(cameraStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
 }
 
 /**
@@ -287,7 +290,7 @@ HWTEST_F(SensitiveResourceManagerTest, SetFlowWindowStatusTest001, TestSize.Leve
 
 /**
  * @tc.name: RegisterMicGlobalSwitchChangeCallbackTest001
- * @tc.desc: call RegisterMicGlobalSwitchChangeCallback ShowDialog once.
+ * @tc.desc: call RegisterMicGlobalSwitchChangeCallback once.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
@@ -364,9 +367,9 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTe
 
 /**
  * @tc.name: RegisterCameraGlobalSwitchChangeCallbackTest001
- * @tc.desc: call RegisterMicGlobalSwitchChangeCallback ShowDialog once.
+ * @tc.desc: call RegisterMicGlobalSwitchChangeCallback once.
  * @tc.type: FUNC
- * @tc.require: issueI5RWX8
+ * @tc.require: issueI5RWXA
  */
 HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackTest001, TestSize.Level1)
 {
@@ -390,6 +393,53 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackT
     ResetEnv();
     CameraManager::GetInstance()->MuteCamera(isMute);
     SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+}
+
+/**
+ * @tc.name: RegisterCameraGlobalSwitchChangeCallbackTest002
+ * @tc.desc: Verify the RegisterCameraGlobalSwitchChangeCallback abnormal branch callback is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackTest002, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(nullptr));
+
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
+    ASSERT_EQ(ERR_CALLBACK_ALREADY_EXIST,
+        SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
+
+    SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+}
+
+/**
+ * @tc.name: UnRegisterCameraGlobalSwitchChangeCallbackTest001
+ * @tc.desc: Verify the UnRegisterCameraGlobalSwitchChangeCallback with vaild callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterCameraGlobalSwitchChangeCallbackTest001, TestSize.Level1)
+{
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
+}
+
+/**
+ * @tc.name: UnRegisterCameraGlobalSwitchChangeCallbackTest002
+ * @tc.desc: Verify the UnRegisterCameraGlobalSwitchChangeCallback abnormal branch callback is invalid.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXA
+ */
+HWTEST_F(SensitiveResourceManagerTest, UnRegisterCameraGlobalSwitchChangeCallbackTest002, TestSize.Level1)
+{
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(nullptr));
+    EXPECT_EQ(ERR_CALLBACK_NOT_EXIST,
+        SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
 }
 
 /**
