@@ -70,7 +70,17 @@ PermissionRecordManager::~PermissionRecordManager()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister microphone global switch change callback success.");
 
-    hasRegisted_ = false;
+    micHasRegisted_ = false;
+
+    ret = SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(
+        CameraSwitchChangeListener);
+    if (ret != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "unregister camera global switch change callback failed.");
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera global switch change callback success.");
+
+    camerHasRegisted_ = false;
 
     ret = SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(CameraFloatWindowListener);
     if (ret != RET_SUCCESS) {
@@ -509,12 +519,7 @@ void PermissionRecordManager::SavePermissionRecords(
                 ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
                 return;
             }
-
-            CallbackExecute(record.tokenId, permissionName, record.status);
-
             record.accessDuration = curStamp;
-
-            return;
         }
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is close, update microphone record to inactive");
@@ -523,14 +528,12 @@ void PermissionRecordManager::SavePermissionRecords(
             // update accessDuration and store in database
             record.accessDuration = curStamp - record.timestamp;
             AddRecord(record);
-
             // update status to input, accessDuration to 0 and timestamp to now in cache
             record.status = PERM_INACTIVE;
             record.accessDuration = 0;
             record.timestamp = curStamp;
+            CallbackExecute(record.tokenId, permissionName, PERM_INACTIVE);
         }
-
-        return;
     }
 }
 
@@ -596,7 +599,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     {
         // regist mic global switch change callback on first use StartUsingPermission
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!hasRegisted_) {
+        if (!micHasRegisted_) {
             int32_t ret = SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(
                 PermissionRecordManager::MicSwitchChangeListener);
             if (ret != Constant::SUCCESS) {
@@ -605,7 +608,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             }
 
             ACCESSTOKEN_LOG_INFO(LABEL, "register microphone global switch change callback success.");
-            hasRegisted_ = true;
+            micHasRegisted_ = true;
         }
     }
     int ret = StartUsingPermissionCommon(tokenId, permissionName);
@@ -682,7 +685,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     }
     int32_t ret;
     {
-        // regist mic global switch change callback on first use StartUsingPermission
+        // regist camera float window change callback on first use StartUsingPermission
         std::lock_guard<std::mutex> lock(mutex_);
         if (!floatWindowHasRegisted_) {
             ret = SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(
@@ -694,6 +697,21 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 
             ACCESSTOKEN_LOG_INFO(LABEL, "register cameraflowwindow change callback success.");
             floatWindowHasRegisted_ = true;
+        }
+    }
+    {
+        // regist camera global switch change callback on first use StartUsingPermission
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!camerHasRegisted_) {
+            ret = SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(
+                PermissionRecordManager::CameraSwitchChangeListener);
+            if (ret != Constant::SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register camera global switch change callback failed.");
+                return ret;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "register camera global switch change callback success.");
+            camerHasRegisted_ = true;
         }
     }
 
@@ -739,7 +757,6 @@ int32_t PermissionRecordManager::StartUsingPermissionCommon(AccessTokenID tokenI
     if (record.status != PERM_INACTIVE) {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-
     AddRecordToStartList(record);
 
     // register app background and forground change callback, unregist when stop
