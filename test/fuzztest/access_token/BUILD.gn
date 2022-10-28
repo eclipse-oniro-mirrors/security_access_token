@@ -17,6 +17,7 @@ group("fuzztest") {
 
   deps += [
     # deps file
+    "addpermissionusedrecord_fuzzer:AddPermissionUsedRecordFuzzTest",
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
     "checknativedcap_fuzzer:CheckNativeDCapFuzzTest",
@@ -34,6 +35,9 @@ group("fuzztest") {
     "getnativetokenid_fuzzer:GetNativeTokenIdFuzzTest",
     "getnativetokeninfo_fuzzer:GetNativeTokenInfoFuzzTest",
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
+    "getpermissionusedrecords001_fuzzer:GetPermissionUsedRecords001FuzzTest",
+    "getpermissionusedrecords_fuzzer:GetPermissionUsedRecordsFuzzTest",
+    "getremotenativetokenid_fuzzer:GetRemoteNativeTokenIDFuzzTest",
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
