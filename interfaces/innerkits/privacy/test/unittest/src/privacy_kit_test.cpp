@@ -750,6 +750,18 @@ public:
     ActiveChangeType type_ = PERM_INACTIVE;
 };
 
+class CbCustomizeTest4 : public StateCustomizedCbk {
+public:
+    CbCustomizeTest4()
+    {}
+
+    ~CbCustomizeTest4()
+    {}
+
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {}
+};
+
 /**
  * @tc.name: RegisterPermActiveStatusCallback002
  * @tc.desc: RegisterPermActiveStatusCallback with valid permission.
@@ -1025,6 +1037,82 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission005, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::StartUsingPermission(1, "ohos.permission.CAMERA"));
+}
+
+/**
+ * @tc.name: StartUsingPermission006
+ * @tc.desc: StartUsingPermission with invalid tokenId or permission or callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level1)
+{
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(0, "ohos.permission.CAMERA", callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(g_TokenId_E, "", callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::StartUsingPermission(g_TokenId_E, "ohos.permission.CAMERA", nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::StartUsingPermission(g_TokenId_E, "permissionName", callbackPtr));
+}
+
+/**
+ * @tc.name: StartUsingPermission007
+ * @tc.desc: StartUsingPermission is called twice with same callback.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission007, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName, callbackPtr));
+    ASSERT_EQ(PrivacyError::ERR_CALLBACK_ALREADY_EXIST,
+        PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
+}
+
+/**
+ * @tc.name: StopUsingPermission008
+ * @tc.desc: Add record when StopUsingPermission is called.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName, callbackPtr));
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_TokenId_E, GetLocalDeviceUdid(), g_InfoParmsE.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(g_TokenId_E, result.bundleRecords[0].tokenId);
+    ASSERT_EQ(g_InfoParmsE.bundleName, result.bundleRecords[0].bundleName);
+    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+}
+
+/**
+ * @tc.name: StartUsingPermission009
+ * @tc.desc: StartUsingPermission basic functional verification
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_TokenId_E, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_TokenId_E, permissionName));
 }
 
 /**
