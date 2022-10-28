@@ -13,12 +13,17 @@
  * limitations under the License.
  */
 
-#include "sensitive_resource_manager.h"
+#include "active_change_response_info.h"
+#include "mock_sensitive_resource_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
+static uint32_t g_mockFlag = 0;
+void SetFlag(uint32_t flag)
+{
+    g_mockFlag = flag;
+}
 SensitiveResourceManager::SensitiveResourceManager()
 {
 }
@@ -29,9 +34,17 @@ SensitiveResourceManager::~SensitiveResourceManager()
 
 bool SensitiveResourceManager::GetAppStatus(const std::string& pkgName, int32_t& status)
 {
-    return false;
+    if (g_mockFlag == INVALID) {
+        return false;
+    } else if (g_mockFlag == INACTIVE) {
+        status = ActiveChangeType::PERM_INACTIVE;
+    } else if (g_mockFlag == FOREGROUND) {
+        status = ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND;
+    } else if (g_mockFlag == BACKGROUND) {
+        status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND;
+    }
+    return true;
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
