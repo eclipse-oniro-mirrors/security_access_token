@@ -19,6 +19,10 @@
 #include "ability_context_impl.h"
 #include "accesstoken_kit.h"
 #include "audio_system_manager.h"
+#include "constant.h"
+#define private public
+#include "permission_record_manager.h"
+#undef private
 #include "privacy_error.h"
 #include "sensitive_resource_manager.h"
 #include "token_setproc.h"
@@ -44,6 +48,28 @@ static int32_t g_status = 0;
 static bool g_micStatus = false;
 static bool g_isShowing = false;
 static bool g_cameraStauts = false;
+
+static PermissionStateFull g_testState = {
+    .permissionName = "ohos.permission.MANAGE_CAMERA_CONFIG",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
+static HapPolicyParams g_PolicyPrams1 = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.A",
+    .permList = {},
+    .permStateList = {g_testState}
+};
+
+static HapInfoParams g_InfoParms1 = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleA",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleA"
+};
 }
 class SensitiveResourceManagerTest : public testing::Test {
 public:
@@ -53,6 +79,7 @@ public:
     void TearDown();
 
     uint32_t tokenId_;
+    uint64_t selfTokenId_;
 };
 
 
@@ -92,6 +119,7 @@ static void ResetEnv()
 {
     g_micStatus = false;
     g_isShowing = false;
+    g_cameraStauts = false;
     g_status = 0;
     g_tokenId = 0;
 }
@@ -106,6 +134,9 @@ void SensitiveResourceManagerTest::TearDownTestCase()
 
 void SensitiveResourceManagerTest::SetUp()
 {
+    AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
+
+    selfTokenId_ = GetSelfTokenID();
     tokenId_ = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
 }
 
@@ -115,6 +146,12 @@ void SensitiveResourceManagerTest::TearDown()
     SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeMicGlobalSwitch);
     SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
     SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(tokenId_, AppStatusChangeCallback);
+
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+
+    SetSelfTokenID(selfTokenId_);
 }
 
 /**
@@ -373,6 +410,11 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterMicGlobalSwitchChangeCallbackTe
  */
 HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackTest001, TestSize.Level1)
 {
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+
+    SetSelfTokenID(tokenId);
+
     SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
 
     bool isMute = CameraManager::GetInstance()->IsCameraMuted();
