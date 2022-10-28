@@ -16,13 +16,14 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
+#include "camera_manager.h"
 #define private public
 #include "permission_record_manager.h"
 #undef private
 #include "privacy_error.h"
 #include "privacy_manager_service.h"
 #include "token_setproc.h"
-#include "mock_test.h"
+#include "mock_sensitive_resource_manager.h"
 
 using namespace testing::ext;
 
@@ -104,8 +105,18 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(0, tokenId);
-
+    SetFlag(INVALID); // return fasle
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    
+    SetFlag(INACTIVE);
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    SetFlag(FOREGROUND);
+    ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    
+    SetFlag(BACKGROUND);
+    ASSERT_EQ(false,
+        privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 }
 } // namespace AccessToken
 } // namespace Security
