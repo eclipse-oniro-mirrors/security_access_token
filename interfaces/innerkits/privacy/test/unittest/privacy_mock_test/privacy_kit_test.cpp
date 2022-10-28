@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "parameter.h"
+#include "privacy_error.h"
 #include "privacy_kit.h"
 #include "token_setproc.h"
 
@@ -46,18 +47,46 @@ void PrivacyKitTest::TearDown()
 }
 
 /**
- * @tc.name: IsAllowedUsingPermission001
+ * @tc.name: IsAllowedUsingPermissionTest001
  * @tc.desc: Verify the IsAllowedUsingPermission abnormal branch return nullptr proxy.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX3 issueI5RWX8
  */
-HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermissionTest001, TestSize.Level1)
 {
     AccessTokenID g_TokenId_A = 0xff;
     std::string permissionName = "ohos.permission.CAMERA";
     bool ret = PrivacyKit::IsAllowedUsingPermission(g_TokenId_A, permissionName);
     ASSERT_EQ(false, ret);
 }
-}  // namespace AccessToken
-}  // namespace Security
+
+class CbCustomizeTest4 : public StateCustomizedCbk {
+public:
+    CbCustomizeTest4()
+    {}
+
+    ~CbCustomizeTest4()
+    {}
+
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {}
+};
+
+/**
+ * @tc.name: StartUsingPermissionTest001
+ * @tc.desc: Verify the StartUsingPermission abnormal branch return nullptr proxy.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermissionTest001, TestSize.Level1)
+{
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    AccessTokenID g_TokenId_A = 0xff;
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(PrivacyError::ERR_SERVICE_ABNORMAL,
+        PrivacyKit::StartUsingPermission(g_TokenId_A, permissionName, callbackPtr));
 }
+
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
