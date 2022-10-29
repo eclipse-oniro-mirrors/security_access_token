@@ -71,8 +71,8 @@ int RemoveSessionServer(const char *pkgName, const char *sessionName)
 static int sessionCount_ = -1;
 bool IsSessionCountOK()
 {
-    return sessionCount_ >= 0 && sessionCount_ < SESSION_COUNT_LIMIT;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "SESSION_COUNT_LIMIT: %{public}d", SESSION_COUNT_LIMIT);
+    return sessionCount_ >= 0 && sessionCount_ < SESSION_COUNT_LIMIT;
 }
 
 int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerDeviceId, const char *groupId,
@@ -155,22 +155,22 @@ void DecompressMock(const unsigned char *bytes, const int length)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "input length: %{public}d", length);
     uLong len = 1048576;
-    unsigned char *buf = (unsigned char *) malloc(len + 1);
+    unsigned char *buf = static_cast<unsigned char *>(malloc(len + 1));
     if (buf == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory!");
         return;
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
-    int result = uncompress(buf, &len, (unsigned char *) bytes, length);
+    int result = uncompress(buf, &len, const_cast<unsigned char *>(bytes), length);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
-            (int) len, length);
+            static_cast<int>(len), length);
         free(buf);
         return;
     }
     buf[len] = '\0';
-    std::string str((char *) buf);
+    std::string str(reinterpret_cast<char *>(buf));
     free(buf);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
 
@@ -194,7 +194,8 @@ void CompressMock(const std::string &json, const unsigned char *compressedBytes,
         return ;
     }
 
-    int result = compress((Byte *) compressedBytes, &len, (unsigned char *) json.c_str(), json.size() + 1);
+    int result = compress(const_cast<Byte *>(compressedBytes), &len,
+        reinterpret_cast<unsigned char *>(const_cast<char *>(json.c_str())), json.size() + 1);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "compress failed! error code: %{public}d", result);
         return;

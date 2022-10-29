@@ -38,8 +38,8 @@ typedef enum {
     JS_ERROR_OUT_OF_MEMORY,
 } JsErrorCode;
 
-std::string GetParamErrorMsg(std::string param, std::string type);
-napi_value GenerateBusinessError(napi_env env, int32_t errCode, std::string errMsg);
+std::string GetParamErrorMsg(const std::string& param, const std::string& type);
+napi_value GenerateBusinessError(napi_env env, int32_t errCode, const std::string& errMsg);
 std::string GetErrorMessage(uint32_t errCode);
 napi_value GetNapiNull(napi_env env);
 }  // namespace AccessToken

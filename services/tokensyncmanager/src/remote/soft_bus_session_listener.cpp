@@ -108,7 +108,7 @@ void SoftBusSessionListener::OnBytesReceived(int32_t sessionId, const void *data
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetExecutorChannel, failed, networkId: %{public}s", contents);
         return;
     }
-    channel->HandleDataReceived(sessionId, (unsigned char *) data, dataLen);
+    channel->HandleDataReceived(sessionId, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
 }
 
 int64_t SoftBusSessionListener::GetSessionState(int32_t sessionId)

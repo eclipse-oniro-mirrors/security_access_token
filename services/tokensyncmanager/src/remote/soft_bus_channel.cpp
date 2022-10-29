@@ -249,7 +249,8 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
         return Constant::FAILURE;
     }
 
-    int result = compress((Byte *) compressedBytes, &len, (unsigned char *) json.c_str(), json.size() + 1);
+    int result = compress(const_cast<Byte *>(compressedBytes), &len,
+        reinterpret_cast<unsigned char *>(const_cast<char *>(json.c_str())), json.size() + 1);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "compress failed! error code: %{public}d", result);
         return result;
@@ -270,7 +271,7 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
         return "";
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
-    int result = uncompress(buf, &len, (unsigned char *) bytes, length);
+    int result = uncompress(buf, &len, const_cast<unsigned char *>(bytes), length);
     if (result != Z_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "uncompress failed, error code: %{public}d, bound length: %{public}d, buffer length: %{public}d", result,
