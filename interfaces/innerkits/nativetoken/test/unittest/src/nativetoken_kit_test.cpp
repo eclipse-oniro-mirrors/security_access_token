@@ -65,9 +65,9 @@ static void WriteContentToFile(const cJSON *root)
             break;
         }
         size_t strLen = strlen(jsonString);
-        ssize_t writtenLen = write(fd, (void *)jsonString, (size_t)strLen);
+        ssize_t writtenLen = write(fd, static_cast<void *>(jsonString), strLen);
         close(fd);
-        if (writtenLen < 0 || (size_t)writtenLen != strLen) {
+        if (writtenLen < 0 || static_cast<size_t>(writtenLen) != strLen) {
             break;
         }
     } while (0);

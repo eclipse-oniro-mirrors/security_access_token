@@ -55,7 +55,6 @@ void DlpPermissionSetManager::ProcessDlpPermInfos(const std::vector<PermissionDl
             continue;
         }
         dlpPermissionModeMap_[iter->permissionName] = iter->dlpMode;
-        continue;
     }
 }
 

@@ -31,7 +31,7 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_OUT_OF_MEMORY, "Out of memory."},
 };
 
-std::string GetParamErrorMsg(std::string param, std::string type)
+std::string GetParamErrorMsg(const std::string& param, const std::string& type)
 {
     std::string msg = "Parameter Error. The type of \"" + param + "\" must be " + type + ".";
     return msg;
@@ -47,7 +47,7 @@ std::string GetErrorMessage(uint32_t errCode)
     return errMsg;
 }
 
-napi_value GenerateBusinessError(napi_env env, int32_t errCode, std::string errMsg)
+napi_value GenerateBusinessError(napi_env env, int32_t errCode, const std::string& errMsg)
 {
     napi_value businessError = nullptr;
 
