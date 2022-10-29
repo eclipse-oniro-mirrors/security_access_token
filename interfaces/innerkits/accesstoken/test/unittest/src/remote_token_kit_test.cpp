@@ -157,7 +157,7 @@ void RemoteTokenKitTest::SetUp()
     ASSERT_EQ(res, RET_SUCCESS);
     char udid[128] = {0}; // 128 is udid length
     ::GetNodeKeyInfo(TEST_PKG_NAME.c_str(), deviceInfo.networkId,
-        NodeDeviceInfoKey::NODE_KEY_UDID, (uint8_t *)udid, 128); // 128 is udid length
+        NodeDeviceInfoKey::NODE_KEY_UDID, reinterpret_cast<uint8_t *>(udid), 128); // 128 is udid length
 
     udid_.append(udid);
     networkId_.append(deviceInfo.networkId);

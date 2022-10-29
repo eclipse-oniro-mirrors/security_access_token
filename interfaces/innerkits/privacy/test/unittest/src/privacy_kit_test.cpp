@@ -147,8 +147,8 @@ std::string PrivacyKitTest::GetLocalDeviceUdid()
     return udid;
 }
 
-void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId, const std::string deviceId, const std::string& bundleName,
-    const std::vector<std::string> permissionList, PermissionUsedRequest& request)
+void PrivacyKitTest::BuildQueryRequest(AccessTokenID tokenId, const std::string &deviceId,
+    const std::string &bundleName, const std::vector<std::string> &permissionList, PermissionUsedRequest &request)
 {
     request.tokenId = tokenId;
     request.isRemote = false;

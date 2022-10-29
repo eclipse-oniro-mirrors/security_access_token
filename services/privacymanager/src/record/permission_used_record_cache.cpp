@@ -214,7 +214,7 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
         std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         if (!persistPendingBufferQueue_.empty()) {
-            for (auto& persistHead : persistPendingBufferQueue_) {
+            for (const auto& persistHead : persistPendingBufferQueue_) {
                 curFindDeletePos = persistHead->next;
                 while (curFindDeletePos != nullptr) {
                     auto next = curFindDeletePos->next;
@@ -280,7 +280,7 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         if (!persistPendingBufferQueue_.empty()) {
-            for (auto& persistHead : persistPendingBufferQueue_) {
+            for (const auto& persistHead : persistPendingBufferQueue_) {
                 curFindPos = persistHead->next;
                 while (curFindPos != nullptr) {
                     auto next = curFindPos->next;

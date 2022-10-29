@@ -746,7 +746,7 @@ int32_t PermissionRecordManager::StartUsingPermissionCommon(AccessTokenID tokenI
     }
 
     if (!GetGlobalSwitchStatus(permissionName)) {
-        int32_t result = ShowPermissionDialog(permissionName);
+        result = ShowPermissionDialog(permissionName);
         if (result != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
             return result;
