@@ -251,21 +251,6 @@ HWTEST_F(SensitiveResourceManagerTest, UnRegisterAppStatusChangeCallback001, Tes
 }
 
 /**
- * @tc.name: GetGlobalSwitchTest001
- * @tc.desc: Verify the GetGlobalSwitch with valid ResourceType.
- * @tc.type: FUNC
- * @tc.require: issueI5RWXA issueI5RWXF
- */
-HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest001, TestSize.Level1)
-{
-    bool micStatus = !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
-    bool cameraStatus = !(CameraManager::GetInstance()->IsCameraMuted());
-
-    EXPECT_EQ(micStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
-    EXPECT_EQ(cameraStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
-}
-
-/**
  * @tc.name: GetGlobalSwitchTest002
  * @tc.desc: Verify the GetGlobalSwitch abnormal branch ResourceType is invalid.
  * @tc.type: FUNC
@@ -415,12 +400,14 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackT
 
     SetSelfTokenID(tokenId);
 
-    SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+    ASSERT_EQ(RET_SUCCESS,
+        SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch));
 
     bool isMute = CameraManager::GetInstance()->IsCameraMuted();
 
     CameraManager::GetInstance()->MuteCamera(false);
     ResetEnv();
+    usleep(500000); // 500000us = 0.5s
 
     CameraManager::GetInstance()->MuteCamera(true);
     usleep(500000); // 500000us = 0.5s
@@ -434,7 +421,22 @@ HWTEST_F(SensitiveResourceManagerTest, RegisterCameraGlobalSwitchChangeCallbackT
     
     ResetEnv();
     CameraManager::GetInstance()->MuteCamera(isMute);
-    SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+    SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(OnChangeCameraGlobalSwitch);
+}
+
+/**
+ * @tc.name: GetGlobalSwitchTest001
+ * @tc.desc: Verify the GetGlobalSwitch with valid ResourceType.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXA issueI5RWXF
+ */
+HWTEST_F(SensitiveResourceManagerTest, GetGlobalSwitchTest001, TestSize.Level1)
+{
+    bool micStatus = !(AudioSystemManager::GetInstance()->IsMicrophoneMute());
+    bool cameraStatus = !(CameraManager::GetInstance()->IsCameraMuted());
+    usleep(500000); // 500000us = 0.5s
+    EXPECT_EQ(micStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::MICROPHONE));
+    EXPECT_EQ(cameraStatus, SensitiveResourceManager::GetInstance().GetGlobalSwitch(ResourceType::CAMERA));
 }
 
 /**

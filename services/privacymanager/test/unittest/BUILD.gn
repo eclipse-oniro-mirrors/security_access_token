@@ -26,6 +26,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/frameworks/privacy/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/services/common/database/include",
+      "//base/security/access_token/services/privacymanager/include/active",
       "//base/security/access_token/services/privacymanager/include/common",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
@@ -40,6 +41,7 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = [
+      "permission_record_manager_test.cpp",
       "privacy_manager_service_test.cpp",
       "sensitive_resource_manager_test.cpp",
     ]
