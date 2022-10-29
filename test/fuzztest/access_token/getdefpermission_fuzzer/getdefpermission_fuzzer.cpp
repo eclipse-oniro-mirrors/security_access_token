@@ -30,12 +30,12 @@ namespace OHOS {
     bool GetDefPermissionFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            PermissionDef PERMISSIONDEF = {
+
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        PermissionDef PERMISSIONDEF = {
             .permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
@@ -44,9 +44,9 @@ namespace OHOS {
             .description = testName,
             .availableLevel = APL_NORMAL,
             .descriptionId = 1
-            };
-            result = AccessTokenKit::GetDefPermission(testName, PERMISSIONDEF);
-        }
+        };
+        result = AccessTokenKit::GetDefPermission(testName, PERMISSIONDEF);
+
         return result == RET_SUCCESS;
     }
 }

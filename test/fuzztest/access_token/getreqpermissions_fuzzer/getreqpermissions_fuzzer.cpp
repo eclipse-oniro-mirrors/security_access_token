@@ -27,14 +27,14 @@ namespace OHOS {
     bool GetReqPermissionsFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            std::vector<PermissionStateFull> permStatSystemList;
-            result = AccessTokenKit::GetReqPermissions(TOKENID, permStatSystemList, true);
-        }
+
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        std::vector<PermissionStateFull> permStatSystemList;
+        result = AccessTokenKit::GetReqPermissions(TOKENID, permStatSystemList, true);
+
         return result == RET_SUCCESS;
     }
 }

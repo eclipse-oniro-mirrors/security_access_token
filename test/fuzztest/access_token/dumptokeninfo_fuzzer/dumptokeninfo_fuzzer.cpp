@@ -29,16 +29,15 @@ namespace OHOS {
     bool DumpTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
         AccessTokenID tokenId = 0;
-        if ((data == nullptr) || (size <= 0)) {
-            return tokenId != 0;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            tokenId = static_cast<AccessTokenID>(size);
-            std::string dumpInfo;
+        tokenId = static_cast<AccessTokenID>(size);
+        std::string dumpInfo;
 
-            AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
-        }
+        AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
+ 
         return tokenId != 0;
     }
 }

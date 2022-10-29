@@ -30,18 +30,15 @@ namespace OHOS {
         int32_t result = RET_FAILED;
 
 #ifdef TOKEN_SYNC_ENABLE
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
 
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
-        }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            result = AccessTokenKit::DeleteRemoteToken(testName, TOKENID);
-        }
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        result = AccessTokenKit::DeleteRemoteToken(testName, TOKENID);
 
 #endif
-
         return result == RET_SUCCESS;
     }
 }

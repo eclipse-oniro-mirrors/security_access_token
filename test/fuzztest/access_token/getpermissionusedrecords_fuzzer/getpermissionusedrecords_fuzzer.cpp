@@ -29,33 +29,32 @@ namespace OHOS {
     bool GetPermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            std::vector<std::string> permissionList;
-            permissionList.emplace_back(testName);
-            int64_t beginTimeMillis = static_cast<int64_t>(size);
-            int64_t endTimeMillis = static_cast<int64_t>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        std::vector<std::string> permissionList;
+        permissionList.emplace_back(testName);
+        int64_t beginTimeMillis = static_cast<int64_t>(size);
+        int64_t endTimeMillis = static_cast<int64_t>(size);
 
-            PermissionUsedRequest request = {
-                .tokenId = tokenId,
-                .isRemote = false,
-                .deviceId = testName,
-                .bundleName = testName,
-                .permissionList = permissionList,
-                .beginTimeMillis = beginTimeMillis,
-                .endTimeMillis = endTimeMillis,
-                .flag = FLAG_PERMISSION_USAGE_SUMMARY
-            };
+        PermissionUsedRequest request = {
+            .tokenId = tokenId,
+            .isRemote = false,
+            .deviceId = testName,
+            .bundleName = testName,
+            .permissionList = permissionList,
+            .beginTimeMillis = beginTimeMillis,
+            .endTimeMillis = endTimeMillis,
+            .flag = FLAG_PERMISSION_USAGE_SUMMARY
+        };
 
-            PermissionUsedResult res;
+        PermissionUsedResult res;
 
-            result = PrivacyKit::GetPermissionUsedRecords(request, res);
-        }
+        result = PrivacyKit::GetPermissionUsedRecords(request, res);
+
         return result == RET_SUCCESS;
     }
 }

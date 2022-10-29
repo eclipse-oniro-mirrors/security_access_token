@@ -26,15 +26,15 @@ namespace OHOS {
     bool GetHapTokenIDFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size >= 0) {
-            int userID = static_cast<int>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            int instIndex = static_cast<int>(size);
-            result = AccessTokenKit::GetHapTokenID(userID, testName, instIndex);
-        }
+
+        int userID = static_cast<int>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        int instIndex = static_cast<int>(size);
+        result = AccessTokenKit::GetHapTokenID(userID, testName, instIndex);
+
         return result == RET_SUCCESS;
     }
 }

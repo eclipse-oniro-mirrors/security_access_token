@@ -29,17 +29,17 @@ namespace OHOS {
     bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            int32_t successCount = static_cast<int32_t>(size);
-            int32_t failCount = static_cast<int32_t>(size);
 
-            result = PrivacyKit::AddPermissionUsedRecord(tokenId, testName, successCount, failCount);
-        }
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        int32_t successCount = static_cast<int32_t>(size);
+        int32_t failCount = static_cast<int32_t>(size);
+
+        result = PrivacyKit::AddPermissionUsedRecord(tokenId, testName, successCount, failCount);
+
         return result == RET_SUCCESS;
     }
 }

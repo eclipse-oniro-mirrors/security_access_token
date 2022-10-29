@@ -28,19 +28,19 @@ namespace OHOS {
     bool GetSelfPermissionsStateFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::vector<PermissionListState> permsList1;
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            PermissionListState perm1 = {
-                .permissionName = testName,
-                .state = -1,
-            };
-            permsList1.emplace_back(perm1);
-            result = AccessTokenKit::GetSelfPermissionsState(permsList1);
-        }
+
+        std::vector<PermissionListState> permsList1;
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        PermissionListState perm1 = {
+            .permissionName = testName,
+            .state = -1,
+        };
+        permsList1.emplace_back(perm1);
+        result = AccessTokenKit::GetSelfPermissionsState(permsList1);
+
         return result == RET_SUCCESS;
     }
 }
