@@ -27,26 +27,26 @@ namespace OHOS {
     {
         int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+            return false;
         }
-        if (size > 0) {
-            int num = static_cast<int>(size);
-            char ver = static_cast<char>(size);
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            HapTokenInfo HapTokenInfotest = {
-                .ver = ver,
-                .userID = num,
-                .bundleName = testName,
-                .instIndex = num,
-                .dlpType = num,
-                .appID = testName,
-                .deviceID = testName,
-                .tokenID = TOKENID,
-                .tokenAttr = TOKENID,
-            };
-            result = AccessTokenKit::GetHapTokenInfo(TOKENID, HapTokenInfotest);
-        }
+
+        int num = static_cast<int>(size);
+        char ver = static_cast<char>(size);
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        HapTokenInfo HapTokenInfotest = {
+            .ver = ver,
+            .userID = num,
+            .bundleName = testName,
+            .instIndex = num,
+            .dlpType = num,
+            .appID = testName,
+            .deviceID = testName,
+            .tokenID = TOKENID,
+            .tokenAttr = TOKENID,
+        };
+        result = AccessTokenKit::GetHapTokenInfo(TOKENID, HapTokenInfotest);
+
         return result == RET_SUCCESS;
     }
 }

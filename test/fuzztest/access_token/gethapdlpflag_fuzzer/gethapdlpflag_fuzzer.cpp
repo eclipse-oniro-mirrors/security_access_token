@@ -29,15 +29,14 @@ namespace OHOS {
     bool GetHapDlpFlagFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
 
-            result = AccessTokenKit::GetHapDlpFlag(tokenId);
-        }
+        result = AccessTokenKit::GetHapDlpFlag(tokenId);
+
         return result == RET_SUCCESS;
     }
 }

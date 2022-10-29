@@ -38,25 +38,25 @@ public:
         ready_ = true;
     }
 
-    bool ready_;
+    bool ready_ = false;
 };
 
 namespace OHOS {
     bool RegisterPermStateChangeCallbackFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            PermStateChangeScope scopeInfo;
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            scopeInfo.permList = { testName };
-            scopeInfo.tokenIDs = { TOKENID };
-            auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
-            result = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-        }
+
+        PermStateChangeScope scopeInfo;
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        scopeInfo.permList = { testName };
+        scopeInfo.tokenIDs = { TOKENID };
+        auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
+        result = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+
         return result == RET_SUCCESS;
     }
 }

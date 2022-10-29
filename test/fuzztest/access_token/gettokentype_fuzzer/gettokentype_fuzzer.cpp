@@ -27,13 +27,13 @@ namespace OHOS {
         int32_t result = RET_FAILED;
         ATokenTypeEnum ATokenType;
         if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            ATokenType = AccessTokenKit::GetTokenType(TOKENID);
-            result = true;
-        }
+
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        ATokenType = AccessTokenKit::GetTokenType(TOKENID);
+        result = true;
+
         return result == RET_SUCCESS;
     }
 }

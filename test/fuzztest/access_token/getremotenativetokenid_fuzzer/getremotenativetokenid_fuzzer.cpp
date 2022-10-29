@@ -30,16 +30,14 @@ namespace OHOS {
     {
         AccessTokenID tokenId = 0;
 #ifdef TOKEN_SYNC_ENABLE
-        if ((data == nullptr) || (size <= 0)) {
-            return tokenId != 0;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            AccessTokenID nativeTokenId = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID nativeTokenId = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
 
-            tokenId = AccessTokenKit::GetRemoteNativeTokenID(testName, nativeTokenId);
-        }
+        tokenId = AccessTokenKit::GetRemoteNativeTokenID(testName, nativeTokenId);
 #endif
         return tokenId != 0;
     }
