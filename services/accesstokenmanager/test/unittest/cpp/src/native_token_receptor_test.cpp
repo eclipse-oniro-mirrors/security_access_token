@@ -461,7 +461,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
 
     std::vector<PermissionStateFull> permList;
     permPolicySet->GetPermissionStateFulls(permList);
-    for (auto& perm : permList) {
+    for (const auto& perm : permList) {
         GTEST_LOG_(INFO) <<"perm.permissionName: " << perm.permissionName;
     }
 
@@ -692,7 +692,6 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
 HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test init001!");
-    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
 
     const char *dcaps[1];
     dcaps[0] = "AT_CAP_01";

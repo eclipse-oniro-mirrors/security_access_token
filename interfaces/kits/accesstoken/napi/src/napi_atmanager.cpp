@@ -252,7 +252,7 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
         [](napi_env env, void* data, void* hint) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
             if (data != nullptr) {
-                AccessTokenKit* objectInfo = (AccessTokenKit*)data;
+                AccessTokenKit* objectInfo = reinterpret_cast<AccessTokenKit*>(data);
                 delete objectInfo;
             }
         },
