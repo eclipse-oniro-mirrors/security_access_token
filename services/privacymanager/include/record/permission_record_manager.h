@@ -98,15 +98,15 @@ private:
 
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
-    bool floatWindowHasRegisted_;
+    bool floatWindowHasRegistered_ = false;
     OHOS::Utils::RWLock rwLock_;
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
     std::mutex startRecordListMutex_;
     sptr<IRemoteObject> cameraCallback_;
     std::mutex mutex_;
-    bool micHasRegisted_ = false;
-    bool camerHasRegisted_ = false;
+    bool micHasRegistered_ = false;
+    bool camerHasRegistered_ = false;
 };
 } // namespace AccessToken
 } // namespace Security
