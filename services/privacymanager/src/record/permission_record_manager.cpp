@@ -70,7 +70,7 @@ PermissionRecordManager::~PermissionRecordManager()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister microphone global switch change callback success.");
 
-    micHasRegisted_ = false;
+    micHasRegistered_ = false;
 
     ret = SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(
         CameraSwitchChangeListener);
@@ -80,7 +80,7 @@ PermissionRecordManager::~PermissionRecordManager()
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera global switch change callback success.");
 
-    camerHasRegisted_ = false;
+    camerHasRegistered_ = false;
 
     ret = SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(CameraFloatWindowListener);
     if (ret != RET_SUCCESS) {
@@ -88,7 +88,7 @@ PermissionRecordManager::~PermissionRecordManager()
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera flow window change callback success.");
-    floatWindowHasRegisted_ = false;
+    floatWindowHasRegistered_ = false;
 }
 
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -599,7 +599,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     {
         // regist mic global switch change callback on first use StartUsingPermission
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!micHasRegisted_) {
+        if (!micHasRegistered_) {
             int32_t ret = SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(
                 PermissionRecordManager::MicSwitchChangeListener);
             if (ret != Constant::SUCCESS) {
@@ -608,7 +608,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             }
 
             ACCESSTOKEN_LOG_INFO(LABEL, "register microphone global switch change callback success.");
-            micHasRegisted_ = true;
+            micHasRegistered_ = true;
         }
     }
     int ret = StartUsingPermissionCommon(tokenId, permissionName);
@@ -687,7 +687,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     {
         // regist camera float window change callback on first use StartUsingPermission
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!floatWindowHasRegisted_) {
+        if (!floatWindowHasRegistered_) {
             ret = SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(
                 PermissionRecordManager::CameraFloatWindowListener);
             if (ret != RET_SUCCESS) {
@@ -696,13 +696,13 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             }
 
             ACCESSTOKEN_LOG_INFO(LABEL, "register cameraflowwindow change callback success.");
-            floatWindowHasRegisted_ = true;
+            floatWindowHasRegistered_ = true;
         }
     }
     {
         // regist camera global switch change callback on first use StartUsingPermission
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!camerHasRegisted_) {
+        if (!camerHasRegistered_) {
             ret = SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(
                 PermissionRecordManager::CameraSwitchChangeListener);
             if (ret != Constant::SUCCESS) {
@@ -711,7 +711,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             }
 
             ACCESSTOKEN_LOG_INFO(LABEL, "register camera global switch change callback success.");
-            camerHasRegisted_ = true;
+            camerHasRegistered_ = true;
         }
     }
 
