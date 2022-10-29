@@ -31,17 +31,14 @@ namespace OHOS {
         int32_t result = RET_FAILED;
 
 #ifdef TOKEN_SYNC_ENABLE
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
 
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
-        }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            result = AccessTokenKit::DeleteRemoteDeviceTokens(testName);
-        }
-        
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        result = AccessTokenKit::DeleteRemoteDeviceTokens(testName);
+
 #endif
-
         return result == RET_SUCCESS;
     }
 }

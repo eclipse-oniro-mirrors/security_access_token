@@ -29,15 +29,13 @@ namespace OHOS {
     bool GetNativeTokenIdFuzzTest(const uint8_t* data, size_t size)
     {
         AccessTokenID tokenId = 0;
-        if ((data == nullptr) || (size <= 0)) {
-            return tokenId != 0;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
 
-            tokenId = AccessTokenKit::GetNativeTokenId(testName);
-        }
+        tokenId = AccessTokenKit::GetNativeTokenId(testName);
 
         return tokenId != 0;
     }

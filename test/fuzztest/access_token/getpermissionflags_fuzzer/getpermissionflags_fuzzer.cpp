@@ -28,15 +28,15 @@ namespace OHOS {
     bool GetPermissionFlagsFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            int32_t flag;
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            result = AccessTokenKit::GetPermissionFlag(TOKENID, testName, flag);
-        }
+
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        int32_t flag;
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        result = AccessTokenKit::GetPermissionFlag(TOKENID, testName, flag);
+
         return result == RET_SUCCESS;
     }
 }

@@ -28,38 +28,38 @@ namespace OHOS {
     bool UpdateHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            PermissionDef TestPermDef = {
-                .permissionName = testName,
-                .bundleName = testName,
-                .grantMode = 1,
-                .availableLevel = APL_NORMAL,
-                .label = testName,
-                .labelId = 1,
-                .description = testName,
-                .descriptionId = 1
-            };
-            PermissionStateFull TestState = {
-                .permissionName = testName,
-                .isGeneral = true,
-                .resDeviceID = {testName},
-                .grantStatus = {PermissionState::PERMISSION_GRANTED},
-                .grantFlags = {1},
-            };
-            HapPolicyParams TestPolicyPrams = {
-                .apl = APL_NORMAL,
-                .domain = testName,
-                .permList = {TestPermDef},
-                .permStateList = {TestState}
-            };
-            constexpr int32_t DEFAULT_API_VERSION = 8;
-            result = AccessTokenKit::UpdateHapToken(TOKENID, testName, DEFAULT_API_VERSION, TestPolicyPrams);
-        }
+
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        PermissionDef TestPermDef = {
+            .permissionName = testName,
+            .bundleName = testName,
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = testName,
+            .labelId = 1,
+            .description = testName,
+            .descriptionId = 1
+        };
+        PermissionStateFull TestState = {
+            .permissionName = testName,
+            .isGeneral = true,
+            .resDeviceID = {testName},
+            .grantStatus = {PermissionState::PERMISSION_GRANTED},
+            .grantFlags = {1},
+        };
+        HapPolicyParams TestPolicyPrams = {
+            .apl = APL_NORMAL,
+            .domain = testName,
+            .permList = {TestPermDef},
+            .permStateList = {TestState}
+        };
+        constexpr int32_t DEFAULT_API_VERSION = 8;
+        result = AccessTokenKit::UpdateHapToken(TOKENID, testName, DEFAULT_API_VERSION, TestPolicyPrams);
+
         return result == RET_SUCCESS;
     }
 }

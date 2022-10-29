@@ -30,16 +30,14 @@ namespace OHOS {
     {
         int result = RET_FAILED;
 #ifdef TOKEN_SYNC_ENABLE
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-            HapTokenInfoForSync hapSync;
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        HapTokenInfoForSync hapSync;
 
-            result = AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync);
-        }
+        result = AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync);
 #endif
         return result == RET_SUCCESS;
     }

@@ -47,17 +47,17 @@ namespace OHOS {
     bool RegisterPermActiveStatusCallbackFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            std::vector<std::string> permList = {testName};
-            auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
-            callback->type_ = PERM_INACTIVE;
 
-            result = PrivacyKit::RegisterPermActiveStatusCallback(callback);
-        }
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        std::vector<std::string> permList = {testName};
+        auto callback = std::make_shared<RegisterActiveFuzzTest>(permList);
+        callback->type_ = PERM_INACTIVE;
+
+        result = PrivacyKit::RegisterPermActiveStatusCallback(callback);
+
         return result == RET_SUCCESS;
     }
 }
