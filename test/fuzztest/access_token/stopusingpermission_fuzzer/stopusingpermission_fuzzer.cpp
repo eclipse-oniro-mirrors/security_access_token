@@ -29,16 +29,15 @@ namespace OHOS {
     bool StopUsingPermissionFuzzTest(const uint8_t* data, size_t size)
     {
         int32_t result = RET_FAILED;
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
 
-        if (size > 0) {
-            AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-            std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
 
-            result = PrivacyKit::StopUsingPermission(tokenId, testName);
-        }
+        result = PrivacyKit::StopUsingPermission(tokenId, testName);
+
         return result == RET_SUCCESS;
     }
 }

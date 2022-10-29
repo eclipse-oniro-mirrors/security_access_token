@@ -29,38 +29,38 @@ namespace OHOS {
     {
         int32_t result = RET_FAILED;
 #ifdef TOKEN_SYNC_ENABLE
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            HapTokenInfo baseInfo = {
-                .apl = APL_NORMAL,
-                .ver = 1,
-                .userID = 1,
-                .bundleName = testName,
-                .instIndex = 1,
-                .appID = testName,
-                .deviceID = testName,
-                .tokenID = TOKENID,
-                .tokenAttr = 0
-            };
-            PermissionStateFull infoManagerTestState = {
-                .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
-                .grantStatus = {PermissionState::PERMISSION_GRANTED},
-                .isGeneral = true,
-                .permissionName = testName,
-                .resDeviceID = {testName}};
-            std::vector<PermissionStateFull> permStateList;
-            permStateList.emplace_back(infoManagerTestState);
-            HapTokenInfoForSync remoteTokenInfo = {
-                .baseInfo = baseInfo,
-                .permStateList = permStateList
-            };
-            
-            result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
-        }
+
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        HapTokenInfo baseInfo = {
+            .apl = APL_NORMAL,
+            .ver = 1,
+            .userID = 1,
+            .bundleName = testName,
+            .instIndex = 1,
+            .appID = testName,
+            .deviceID = testName,
+            .tokenID = TOKENID,
+            .tokenAttr = 0
+        };
+        PermissionStateFull infoManagerTestState = {
+            .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED},
+            .grantStatus = {PermissionState::PERMISSION_GRANTED},
+            .isGeneral = true,
+            .permissionName = testName,
+            .resDeviceID = {testName}};
+        std::vector<PermissionStateFull> permStateList;
+        permStateList.emplace_back(infoManagerTestState);
+        HapTokenInfoForSync remoteTokenInfo = {
+            .baseInfo = baseInfo,
+            .permStateList = permStateList
+        };
+        
+        result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
+
 #endif
         return result == RET_SUCCESS;
     }

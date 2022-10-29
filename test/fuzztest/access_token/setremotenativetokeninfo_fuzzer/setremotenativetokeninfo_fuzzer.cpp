@@ -30,31 +30,28 @@ namespace OHOS {
         int32_t result = RET_FAILED;
 
 #ifdef TOKEN_SYNC_ENABLE
-
-        if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            NativeTokenInfoForSync native1 = {
-                .baseInfo.apl = APL_NORMAL,
-                .baseInfo.ver = 1,
-                .baseInfo.processName = testName,
-                .baseInfo.dcap = {testName, testName},
-                .baseInfo.tokenID = TOKENID,
-                .baseInfo.tokenAttr = 0,
-                .baseInfo.nativeAcls = {testName},
-            };
 
-            std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
-            nativeTokenInfoList.emplace_back(native1);
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        NativeTokenInfoForSync native1 = {
+            .baseInfo.apl = APL_NORMAL,
+            .baseInfo.ver = 1,
+            .baseInfo.processName = testName,
+            .baseInfo.dcap = {testName, testName},
+            .baseInfo.tokenID = TOKENID,
+            .baseInfo.tokenAttr = 0,
+            .baseInfo.nativeAcls = {testName},
+        };
 
-            result = AccessTokenKit::SetRemoteNativeTokenInfo(testName, nativeTokenInfoList);
-        }
+        std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
+        nativeTokenInfoList.emplace_back(native1);
+
+        result = AccessTokenKit::SetRemoteNativeTokenInfo(testName, nativeTokenInfoList);
 
 #endif
-
         return result == RET_SUCCESS;
     }
 }

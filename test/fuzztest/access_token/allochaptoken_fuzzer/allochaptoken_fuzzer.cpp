@@ -29,43 +29,43 @@ namespace OHOS {
     bool AllocHapTokenFuzzTest(const uint8_t* data, size_t size)
     {
         AccessTokenIDEx tokenIdEx = {0};
-        if ((data == nullptr) || (size <= 0)) {
-            return tokenIdEx.tokenIdExStruct.tokenID != 0;
+        if ((data == nullptr) || (size == 0)) {
+            return false;
         }
-        if (size > 0) {
-            std::string testName(reinterpret_cast<const char*>(data), size);
-            PermissionDef TestPermDef = {
-                .permissionName = testName,
-                .bundleName = testName,
-                .grantMode = 1,
-                .availableLevel = APL_NORMAL,
-                .label = testName,
-                .labelId = 1,
-                .description = testName,
-                .descriptionId = 1
-            };
-            PermissionStateFull TestState = {
-                .permissionName = testName,
-                .isGeneral = true,
-                .resDeviceID = {testName},
-                .grantStatus = {PermissionState::PERMISSION_GRANTED},
-                .grantFlags = {1},
-            };
-            HapInfoParams TestInfoParms = {
-                .userID = 1,
-                .bundleName = testName,
-                .instIndex = 0,
-                .appIDDesc = testName
-            };
-            HapPolicyParams TestPolicyPrams = {
-                .apl = APL_NORMAL,
-                .domain = testName,
-                .permList = {TestPermDef},
-                .permStateList = {TestState}
-            };
 
-            tokenIdEx = AccessTokenKit::AllocHapToken(TestInfoParms, TestPolicyPrams);
-        }
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        PermissionDef TestPermDef = {
+            .permissionName = testName,
+            .bundleName = testName,
+            .grantMode = 1,
+            .availableLevel = APL_NORMAL,
+            .label = testName,
+            .labelId = 1,
+            .description = testName,
+            .descriptionId = 1
+        };
+        PermissionStateFull TestState = {
+            .permissionName = testName,
+            .isGeneral = true,
+            .resDeviceID = {testName},
+            .grantStatus = {PermissionState::PERMISSION_GRANTED},
+            .grantFlags = {1},
+        };
+        HapInfoParams TestInfoParms = {
+            .userID = 1,
+            .bundleName = testName,
+            .instIndex = 0,
+            .appIDDesc = testName
+        };
+        HapPolicyParams TestPolicyPrams = {
+            .apl = APL_NORMAL,
+            .domain = testName,
+            .permList = {TestPermDef},
+            .permStateList = {TestState}
+        };
+
+        tokenIdEx = AccessTokenKit::AllocHapToken(TestInfoParms, TestPolicyPrams);
+
         return tokenIdEx.tokenIdExStruct.tokenID != 0;
     }
 }

@@ -29,13 +29,13 @@ namespace OHOS {
     {
         int32_t result = RET_FAILED;
         if ((data == nullptr) || (size <= 0)) {
-            return result != RET_FAILED;
+            return false;
         }
-        if (size > 0) {
-            AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-            std::vector<PermissionDef> permDefList;
-            result = AccessTokenKit::GetDefPermissions(TOKENID, permDefList);
-        }
+
+        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        std::vector<PermissionDef> permDefList;
+        result = AccessTokenKit::GetDefPermissions(TOKENID, permDefList);
+ 
         return result == RET_SUCCESS;
     }
 }
