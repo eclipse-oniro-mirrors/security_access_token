@@ -93,7 +93,6 @@ void PrivacyManagerServiceTest::TearDown()
     SetSelfTokenID(selfTokenId_);
 }
 
-
 /*
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission function test permissionName branch
@@ -105,16 +104,24 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(0, tokenId);
-    SetFlag(INVALID); // return fasle
+    PermissionRecordManager::GetInstance().CameraFloatWindowListener(0, false);
+    
+    SetFlag(INVALID); // GetAppStatus return fasle
+    PermissionRecordManager::GetInstance().CameraFloatWindowListener(tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
     
     SetFlag(INACTIVE);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 
     SetFlag(FOREGROUND);
+    PermissionRecordManager::GetInstance().CameraFloatWindowListener(tokenId, false);
     ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
     
     SetFlag(BACKGROUND);
+    PermissionRecordManager::GetInstance().CameraFloatWindowListener(tokenId, true);
+    ASSERT_EQ(true,
+        privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    PermissionRecordManager::GetInstance().CameraFloatWindowListener(tokenId, false);
     ASSERT_EQ(false,
         privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 }
