@@ -39,7 +39,7 @@ public:
         isShowing_ = true;
     }
 
-    bool isShowing_;
+    bool isShowing_ = false;
 };
 
 namespace OHOS {

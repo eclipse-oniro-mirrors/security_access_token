@@ -26,7 +26,7 @@ namespace OHOS {
     {
         int32_t result = RET_FAILED;
         ATokenTypeEnum ATokenType;
-        if ((data == nullptr) || (size <= 0)) {
+        if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
