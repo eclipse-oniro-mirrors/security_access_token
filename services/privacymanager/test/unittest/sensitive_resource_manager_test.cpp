@@ -80,41 +80,7 @@ public:
 
     uint32_t tokenId_;
     uint64_t selfTokenId_;
-    
-    static sptr<WindowScene> CreateWindowScene();
-    static sptr<Window> CreateAppFloatingWindow(WindowType type, Rosen::Rect rect);
-    static Rosen::Rect GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h);
-    static inline float virtualPixelRatio_ = 1.0;
-    static inline std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext_ = nullptr;
 };
-
-sptr<WindowScene> SensitiveResourceManagerTest::CreateWindowScene()
-{
-    sptr<IWindowLifeCycle> listener = nullptr;
-    abilityContext_ = std::make_shared<AbilityRuntime::AbilityContextImpl>();
-
-    sptr<WindowScene> scene = new WindowScene();
-    scene->Init(0, abilityContext_, listener);
-    return scene;
-}
-
-sptr<Window> SensitiveResourceManagerTest::CreateAppFloatingWindow(WindowType type, Rosen::Rect rect)
-{
-    sptr<WindowOption> option = new WindowOption();
-    option->SetWindowType(type);
-    option->SetWindowRect(rect);
-
-    static int cnt = 0;
-    std::string winName = "FloatingWindowTest" + std::to_string(cnt++);
-
-    return Window::Create(winName, option, abilityContext_);
-}
-
-inline Rosen::Rect SensitiveResourceManagerTest::GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h)
-{
-    auto vpr = virtualPixelRatio_;
-    return {x, y, static_cast<uint32_t>(w * vpr), static_cast<uint32_t>(h * vpr)};
-}
 
 static void OnChangeCameraFloatWindow(AccessTokenID tokenId, bool isShowing)
 {
@@ -541,47 +507,6 @@ HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest001, TestSize.Level1)
 HWTEST_F(SensitiveResourceManagerTest, ShowDialogTest002, TestSize.Level1)
 {
     EXPECT_EQ(ERR_PARAM_INVALID, SensitiveResourceManager::GetInstance().ShowDialog(ResourceType::INVALID));
-}
-
-/**
- * @tc.name: RegisterCameraFloatWindowChangeCallbackTest001
- * @tc.desc: Verify the RegisterCameraFloatWindowChangeCallback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5
- */
-HWTEST_F(SensitiveResourceManagerTest, RegisterCameraFloatWindowChangeCallbackTest001, TestSize.Level1)
-{
-    ASSERT_EQ(RET_SUCCESS,
-        SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(OnChangeCameraFloatWindow));
-    sptr<WindowScene> scene = CreateWindowScene();
-    ASSERT_NE(nullptr, scene);
-
-    Rosen::Rect fltWindRect = GetRectWithVpr(0, 0, 400, 600);
-    sptr<Window> fltWin = CreateAppFloatingWindow(WindowType::WINDOW_TYPE_FLOAT_CAMERA, fltWindRect);
-    ASSERT_NE(nullptr, fltWin);
-
-    ResetEnv();
-
-    ASSERT_EQ(Rosen::WMError::WM_OK, scene->GoForeground());
-    ASSERT_EQ(Rosen::WMError::WM_OK, fltWin->Show());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_TRUE(g_isShowing);
-
-    ResetEnv();
-
-    ASSERT_EQ(Rosen::WMError::WM_OK, fltWin->Hide());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(g_isShowing);
-
-    ResetEnv();
-
-    ASSERT_EQ(Rosen::WMError::WM_OK, fltWin->Destroy());
-    ASSERT_EQ(Rosen::WMError::WM_OK, scene->GoDestroy());
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_FALSE(g_isShowing);
 }
 
 /**
