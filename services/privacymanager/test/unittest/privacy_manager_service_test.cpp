@@ -18,8 +18,10 @@
 #include "accesstoken_kit.h"
 #include "audio_policy_manager.h"
 #include "constant.h"
+#include "field_const.h"
 #define private public
 #include "permission_record_manager.h"
+#include "permission_used_record_db.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
@@ -450,13 +452,9 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener003, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener004, TestSize.Level1)
 {
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    // status is background
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    PermissionRecordManager::MicSwitchChangeListener(false); // fill false status is not inactive branch
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    std::vector<GenericValues> values;
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    PermissionUsedRecordDb::GetInstance().Add(type, values);
 }
 
 /*
@@ -476,6 +474,450 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
     PermissionRecordManager::MicSwitchChangeListener(false); // fill false status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+}
+
+/*
+ * @tc.name: Add001
+ * @tc.desc: PermissionUsedRecordDb::Add function test miss not null field
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, Add001, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(FIELD_TOKEN_ID, 0);
+    value1.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(FIELD_REJECT_COUNT, 0);
+
+    GenericValues value2;
+    value2.Put(FIELD_TOKEN_ID, 0);
+    value2.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(FIELD_ACCESS_COUNT, 1);
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    ASSERT_NE(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+}
+
+/*
+ * @tc.name: Add002
+ * @tc.desc: PermissionUsedRecordDb::Add function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, Add002, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(FIELD_TOKEN_ID, 0);
+    value1.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(FIELD_ACCESS_COUNT, 1);
+    value1.Put(FIELD_REJECT_COUNT, 0);
+
+    GenericValues value2;
+    value2.Put(FIELD_TOKEN_ID, 1);
+    value2.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(FIELD_ACCESS_COUNT, 1);
+    value1.Put(FIELD_REJECT_COUNT, 0);
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value1));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value2));
+}
+
+/*
+ * @tc.name: Modify001
+ * @tc.desc: PermissionUsedRecordDb::Modify function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, Modify001, TestSize.Level1)
+{
+    GenericValues modifyValues;
+    modifyValues.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+
+    GenericValues conditions;
+    conditions.Put(FIELD_TOKEN_ID, 0);
+    conditions.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    conditions.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    conditions.Put(FIELD_ACCESS_COUNT, 1);
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Modify(type, modifyValues, conditions));
+}
+
+/*
+ * @tc.name: FindByConditions001
+ * @tc.desc: PermissionUsedRecordDb::FindByConditions function test no column
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, FindByConditions001, TestSize.Level1)
+{
+    GenericValues andConditions;
+    GenericValues orConditions;
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
+}
+
+/*
+ * @tc.name: FindByConditions002
+ * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, FindByConditions002, TestSize.Level1)
+{
+    GenericValues andConditions;
+    andConditions.Put(FIELD_TIMESTAMP, 0);
+    andConditions.Put(FIELD_ACCESS_DURATION, 0);
+    andConditions.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+
+    GenericValues orConditions;
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
+}
+
+/*
+ * @tc.name: GetDistinctValue001
+ * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test no column
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::string condition = "";
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
+}
+
+/*
+ * @tc.name: GetDistinctValue002
+ * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field token_id
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::string condition = "token_id";
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
+}
+
+/*
+ * @tc.name: GetDistinctValue003
+ * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field device_id
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue003, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::string condition = "device_id";
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
+}
+
+/*
+ * @tc.name: GetDistinctValue004
+ * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field timestamp
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue004, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::string condition = "timestamp";
+    std::vector<GenericValues> results;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
+}
+
+/*
+ * @tc.name: DeleteExpireRecords001
+ * @tc.desc: PermissionUsedRecordDb::DeleteExpireRecords function test andColumns empty
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, DeleteExpireRecords001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    GenericValues andConditions;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(type, andConditions));
+}
+
+/*
+ * @tc.name: DeleteExcessiveRecords001
+ * @tc.desc: PermissionUsedRecordDb::DeleteExcessiveRecords function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, DeleteExcessiveRecords001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    uint32_t excessiveSize = 10;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(type, excessiveSize));
+}
+
+/*
+ * @tc.name: CreateInsertPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateInsertPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateInsertPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
+}
+
+/*
+ * @tc.name: CreateInsertPrepareSqlCmd002
+ * @tc.desc: PermissionUsedRecordDb::CreateInsertPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateInsertPrepareSqlCmd002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateInsertPrepareSqlCmd(type));
+}
+
+/*
+ * @tc.name: CreateDeletePrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateDeletePrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateDeletePrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::vector<std::string> columnNames;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeletePrepareSqlCmd(type, columnNames));
+}
+
+/*
+ * @tc.name: CreateUpdatePrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd function test modifyColumns empty
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<std::string> modifyColumns;
+    std::vector<std::string> conditionColumns;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
+        conditionColumns));
+}
+
+/*
+ * @tc.name: CreateUpdatePrepareSqlCmd002
+ * @tc.desc: PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::vector<std::string> modifyColumns;
+    modifyColumns.emplace_back(FIELD_TOKEN_ID);
+    std::vector<std::string> conditionColumns;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
+        conditionColumns));
+}
+
+/*
+ * @tc.name: CreateUpdatePrepareSqlCmd003
+ * @tc.desc: PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd function test conditionColumns empty
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd003, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<std::string> modifyColumns;
+    modifyColumns.emplace_back(FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    std::vector<std::string> conditionColumns;
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
+        conditionColumns));
+}
+
+/*
+ * @tc.name: CreateUpdatePrepareSqlCmd004
+ * @tc.desc: PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd function test conditionColumns empty
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd004, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<std::string> modifyColumns;
+    modifyColumns.emplace_back(FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    std::vector<std::string> conditionColumns;
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
+        conditionColumns));
+}
+
+/*
+ * @tc.name: CreateUpdatePrepareSqlCmd005
+ * @tc.desc: PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd005, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<std::string> modifyColumns;
+    modifyColumns.emplace_back(FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    std::vector<std::string> conditionColumns;
+    modifyColumns.emplace_back(FIELD_STATUS);
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
+        conditionColumns));
+}
+
+/*
+ * @tc.name: CreateSelectByConditionPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateSelectByConditionPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::vector<std::string> andColumns;
+    std::vector<std::string> orColumns;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, andColumns,
+        orColumns));
+}
+
+/*
+ * @tc.name: CreateSelectByConditionPrepareSqlCmd002
+ * @tc.desc: PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateSelectByConditionPrepareSqlCmd002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<std::string> andColumns;
+    andColumns.emplace_back(FIELD_TIMESTAMP_BEGIN);
+    std::vector<std::string> orColumns;
+    orColumns.emplace_back(FIELD_TIMESTAMP);
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, andColumns,
+        orColumns));
+}
+
+/*
+ * @tc.name: CreateCountPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateCountPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateCountPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateCountPrepareSqlCmd(type));
+}
+
+/*
+ * @tc.name: CreateDeleteExpireRecordsPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExpireRecordsPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::vector<std::string> andColumns;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
+}
+
+/*
+ * @tc.name: CreateDeleteExpireRecordsPrepareSqlCmd002
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExpireRecordsPrepareSqlCmd002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::vector<std::string> andColumns;
+    andColumns.emplace_back(FIELD_TIMESTAMP_BEGIN);
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
+}
+
+/*
+ * @tc.name: CreateDeleteExcessiveRecordsPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExcessiveRecordsPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    uint32_t excessiveSize = 10;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize));
+}
+
+/*
+ * @tc.name: CreateDeleteExcessiveRecordsPrepareSqlCmd002
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExcessiveRecordsPrepareSqlCmd002, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    uint32_t excessiveSize = 10;
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize));
+}
+
+/*
+ * @tc.name: CreateGetDistinctValue001
+ * @tc.desc: PermissionUsedRecordDb::CreateGetDistinctValue function test type not found
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreateGetDistinctValue001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::string conditionColumns;
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateGetDistinctValue(type, conditionColumns));
+}
+
+/*
+ * @tc.name: CreatePermissionRecordTable001
+ * @tc.desc: PermissionUsedRecordDb::CreatePermissionRecordTable function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PrivacyManagerServiceTest, CreatePermissionRecordTable001, TestSize.Level1)
+{
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
 }
 } // namespace AccessToken
 } // namespace Security
