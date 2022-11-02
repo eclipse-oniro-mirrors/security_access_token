@@ -41,6 +41,8 @@ if (is_standard_system && ability_base_enable == true) {
       "include/database",
       "include/record",
       "include/sensitive",
+      "include/sensitive/agent/window_manager/",
+      "include/sensitive/agent/ability_manager/",
       "include/service",
       "//base/security/access_token/frameworks/privacy/include",
       "//base/security/access_token/frameworks/common/include",
@@ -66,8 +68,14 @@ if (is_standard_system && ability_base_enable == true) {
       "src/record/permission_record_manager.cpp",
       "src/record/permission_record_repository.cpp",
       "src/record/permission_used_record_cache.cpp",
+      "src/sensitive/agent/ability_manager/ability_manager_privacy_client.cpp",
+      "src/sensitive/agent/ability_manager/ability_manager_privacy_death_recipient.cpp",
+      "src/sensitive/agent/ability_manager/ability_manager_privacy_proxy.cpp",
+      "src/sensitive/agent/window_manager/window_manager_privacy_agent.cpp",
+      "src/sensitive/agent/window_manager/window_manager_privacy_client.cpp",
+      "src/sensitive/agent/window_manager/window_manager_privacy_death_recipient.cpp",
+      "src/sensitive/agent/window_manager/window_manager_privacy_proxy.cpp",
       "src/sensitive/application_status_change_callback.cpp",
-      "src/sensitive/camera_float_window_change_callback.cpp",
       "src/sensitive/camera_global_switch_change_callback.cpp",
       "src/sensitive/mic_global_switch_change_callback.cpp",
       "src/sensitive/sensitive_resource_manager.cpp",
@@ -84,13 +92,11 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
-      "//foundation/ability/ability_runtime/interfaces/inner_api/ability_manager:ability_manager",
       "//foundation/graphic/graphic_2d:libsurface",
     ]
 
     external_deps = [
       "ability_base:want",
-      "ability_runtime:ability_manager",
       "ability_runtime:app_manager",
       "c_utils:utils",
       "hisysevent_native:libhisysevent",
@@ -100,7 +106,6 @@ if (is_standard_system && ability_base_enable == true) {
       "multimedia_camera_framework:camera_framework",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
-      "window_manager:libwm",
     ]
   }
 }
