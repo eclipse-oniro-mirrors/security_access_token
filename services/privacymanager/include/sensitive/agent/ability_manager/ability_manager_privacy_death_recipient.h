@@ -13,27 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef CAMERA_FLOAT_WINDOW_CALLBACK_H
-#define CAMERA_FLOAT_WINDOW_CALLBACK_H
 
-#include "accesstoken_kit.h"
-#include "window_manager.h"
+#ifndef ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+#define ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+
+#include "iremote_object.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef void (*OnCameraFloatWindowChangeCallback)(AccessTokenID tokenId, bool isShowing);
-class CameraFloatWindowChangeCallback : public Rosen::ICameraFloatWindowChangedListener {
+class AbilityManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    void OnCameraFloatWindowChange(AccessTokenID accessTokenId, bool isShowing) override;
-    
-    void SetCallback(OnCameraFloatWindowChangeCallback callback);
-    OnCameraFloatWindowChangeCallback GetCallback() const;
-
-private:
-    OnCameraFloatWindowChangeCallback callback_ = nullptr;
+    AbilityManagerPrivacyDeathRecipient() {}
+    virtual ~AbilityManagerPrivacyDeathRecipient() = default;
+    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
-} // namespace AccessToken
+}  // namespace AccessToken
 } // namespace Security
-} // namespace OHOS
-#endif // CAMERA_FLOAT_WINDOW_CALLBACK_H
+}  // namespace OHOS
+#endif  // ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+

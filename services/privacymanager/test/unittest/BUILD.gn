@@ -30,6 +30,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/common",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
+      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
       "//base/security/access_token/services/privacymanager/include/service",
       "//third_party/googletest/include",
       "//base/security/access_token/services/common/database/include",
@@ -72,7 +73,6 @@ if (is_standard_system && ability_base_enable == true) {
       "multimedia_audio_framework:audio_client",
       "multimedia_camera_framework:camera_framework",
       "safwk:system_ability_fwk",
-      "window_manager:libwm",
     ]
   }
 }
@@ -91,6 +91,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/common",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
+      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
       "//base/security/access_token/services/privacymanager/include/service",
       "//third_party/googletest/include",
       "//base/security/access_token/services/common/database/include",
@@ -127,7 +128,6 @@ if (is_standard_system && ability_base_enable == true) {
       "ipc:ipc_core",
       "multimedia_audio_framework:audio_client",
       "multimedia_camera_framework:camera_framework",
-      "window_manager:libwm",
     ]
   }
 }
@@ -147,6 +147,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/common",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
+      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
       "//base/security/access_token/services/privacymanager/include/service",
       "//third_party/googletest/include",
       "//base/security/access_token/services/common/database/include",
@@ -182,7 +183,6 @@ if (is_standard_system && ability_base_enable == true) {
       "ipc:ipc_core",
       "multimedia_audio_framework:audio_client",
       "multimedia_camera_framework:camera_framework",
-      "window_manager:libwm",
     ]
   }
 }

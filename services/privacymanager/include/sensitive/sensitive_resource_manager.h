@@ -21,15 +21,18 @@
 #include <string>
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
-#include "camera_float_window_change_callback.h"
 #include "camera_global_switch_change_callback.h"
 #include "mic_global_switch_change_callback.h"
 #include "safe_map.h"
 #include "privacy_error.h"
+#include "accesstoken_kit.h"
+#include "window_manager_privacy_client.h"
+#include "window_manager_privacy_agent.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+typedef void (*OnCameraFloatWindowChangeCallback)(AccessTokenID tokenId, bool isShowing);
 enum AppStatus {
     APP_INVALID = 0,
     APP_FOREGROUND,
@@ -54,26 +57,26 @@ public:
     void SetFlowWindowStatus(AccessTokenID tokenId, bool isShow);
 
     int32_t ShowDialog(const ResourceType& type);
-    
+
     // register and unregister app status change callback
     int32_t RegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
     int32_t UnRegisterAppStatusChangeCallback(uint32_t tokenId, OnAppStatusChangeCallback callback);
-    
+
     // mic global switch
     int32_t RegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
     int32_t UnRegisterMicGlobalSwitchChangeCallback(OnMicGlobalSwitchChangeCallback callback);
-    
+
     // camera global switch
     int32_t RegisterCameraGlobalSwitchChangeCallback(OnCameraGlobalSwitchChangeCallback callback);
     int32_t UnRegisterCameraGlobalSwitchChangeCallback(OnCameraGlobalSwitchChangeCallback callback);
-    
+
     // camera float window
     int32_t RegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
     int32_t UnRegisterCameraFloatWindowChangeCallback(OnCameraFloatWindowChangeCallback callback);
 private:
     bool InitProxy();
     OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
-    
+
 private:
     std::mutex appStatusMutex_;
     std::vector<OHOS::sptr<ApplicationStatusChangeCallback>> appStateCallbacks_;
@@ -84,8 +87,7 @@ private:
     std::vector<std::shared_ptr<MicGlobalSwitchChangeCallback>> micGlobalSwitchCallbacks_;
     std::mutex CameraGlobalSwitchMutex_;
     std::vector<std::shared_ptr<CameraGlobalSwitchChangeCallback>> CameraGlobalSwitchCallbacks_;
-    std::mutex cameraFloatWindowMutex_;
-    std::vector<OHOS::sptr<CameraFloatWindowChangeCallback>> cameraFloatWindowCallbacks_;
+    sptr<WindowManagerPrivacyAgent> floatAgent_;
     std::mutex mutex_;
     sptr<AppExecFwk::IAppMgr> appMgrProxy_;
 };
