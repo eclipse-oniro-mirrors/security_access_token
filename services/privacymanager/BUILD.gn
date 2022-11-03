@@ -70,6 +70,7 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/camera_float_window_change_callback.cpp",
       "src/sensitive/camera_global_switch_change_callback.cpp",
       "src/sensitive/mic_global_switch_change_callback.cpp",
+      "src/sensitive/sensitive_death_recipient.cpp",
       "src/sensitive/sensitive_resource_manager.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
