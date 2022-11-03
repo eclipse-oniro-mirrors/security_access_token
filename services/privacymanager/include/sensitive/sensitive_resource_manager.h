@@ -24,6 +24,7 @@
 #include "camera_global_switch_change_callback.h"
 #include "mic_global_switch_change_callback.h"
 #include "safe_map.h"
+#include "sensitive_death_recipient.h"
 #include "privacy_error.h"
 #include "accesstoken_kit.h"
 #include "window_manager_privacy_client.h"
@@ -55,6 +56,7 @@ public:
     bool GetGlobalSwitch(const ResourceType type);
     bool IsFlowWindowShow(AccessTokenID tokenId);
     void SetFlowWindowStatus(AccessTokenID tokenId, bool isShow);
+    void OnRemoteDiedHandle();
 
     int32_t ShowDialog(const ResourceType& type);
 
@@ -76,6 +78,7 @@ public:
 private:
     bool InitProxy();
     OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
+    sptr<SensitiveDeathRecipient> sensitiveDeathObserver_ = nullptr;
 
 private:
     std::mutex appStatusMutex_;
