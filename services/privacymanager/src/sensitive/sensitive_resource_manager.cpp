@@ -15,14 +15,13 @@
 
 #include "sensitive_resource_manager.h"
 #include <semaphore.h>
-#include "ability_manager_client.h"
+#include "ability_manager_privacy_client.h"
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "audio_system_manager.h"
 #include "iservice_registry.h"
 #include "privacy_error.h"
 #include "system_ability_definition.h"
-#include "window_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,7 +33,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const size_t MAX_CALLBACK_SIZE = 200;
 }
 
-using namespace OHOS::Rosen;
 using namespace OHOS::AudioStandard;
 using namespace OHOS::CameraStandard;
 
@@ -172,7 +170,7 @@ int32_t SensitiveResourceManager::ShowDialog(const ResourceType& type)
             return ERR_PARAM_INVALID;
     }
     want.SetParam(RESOURCE_KEY, typeStr);
-    ErrCode err = AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want, nullptr);
+    ErrCode err = AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return ERR_SERVICE_ABNORMAL;
@@ -186,7 +184,7 @@ int32_t SensitiveResourceManager::RegisterAppStatusChangeCallback(uint32_t token
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    
+
     std::lock_guard<std::mutex> lock(appStatusMutex_);
     auto iter = std::find_if(appStateCallbacks_.begin(), appStateCallbacks_.end(),
         [callback](const sptr<ApplicationStatusChangeCallback>& rec) {
@@ -232,7 +230,7 @@ int32_t SensitiveResourceManager::UnRegisterAppStatusChangeCallback(
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId or callback is invalid.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    
+
     std::lock_guard<std::mutex> lock(appStatusMutex_);
     auto iter = std::find_if(appStateCallbacks_.begin(), appStateCallbacks_.end(),
         [callback](const sptr<ApplicationStatusChangeCallback>& rec) {
@@ -254,7 +252,7 @@ int32_t SensitiveResourceManager::UnRegisterAppStatusChangeCallback(
         appMgrProxy->UnregisterApplicationStateObserver(*iter);
         appStateCallbacks_.erase(iter);
     }
-    
+
     ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
 
     return RET_SUCCESS;
@@ -266,7 +264,7 @@ int32_t SensitiveResourceManager::RegisterMicGlobalSwitchChangeCallback(OnMicGlo
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
         return ERR_CALLBACK_NOT_EXIST;
     }
-    
+
     std::lock_guard<std::mutex> lock(micGlobalSwitchMutex_);
     auto iter = std::find_if(micGlobalSwitchCallbacks_.begin(), micGlobalSwitchCallbacks_.end(),
         [callback](const std::shared_ptr<MicGlobalSwitchChangeCallback>& rec) {
@@ -320,7 +318,7 @@ int32_t SensitiveResourceManager::RegisterCameraGlobalSwitchChangeCallback(OnCam
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
         return ERR_CALLBACK_NOT_EXIST;
     }
-    
+
     std::lock_guard<std::mutex> lock(CameraGlobalSwitchMutex_);
     auto iter = std::find_if(CameraGlobalSwitchCallbacks_.begin(), CameraGlobalSwitchCallbacks_.end(),
         [callback](const std::shared_ptr<CameraGlobalSwitchChangeCallback>& rec) {
@@ -330,7 +328,6 @@ int32_t SensitiveResourceManager::RegisterCameraGlobalSwitchChangeCallback(OnCam
         ACCESSTOKEN_LOG_WARN(LABEL, "callback is already registered");
         return ERR_CALLBACK_ALREADY_EXIST;
     }
-
     std::shared_ptr<CameraGlobalSwitchChangeCallback> listener = std::make_shared<CameraGlobalSwitchChangeCallback>(
         CameraGlobalSwitchChangeCallback());
     if (listener == nullptr) {
@@ -342,6 +339,7 @@ int32_t SensitiveResourceManager::RegisterCameraGlobalSwitchChangeCallback(OnCam
 
     CameraManager::GetInstance()->RegisterCameraMuteListener(listener);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "register Camera callback(%{public}p).", callback);
+
     return RET_SUCCESS;
 }
 
@@ -374,29 +372,27 @@ int32_t SensitiveResourceManager::RegisterCameraFloatWindowChangeCallback(OnCame
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
         return ERR_CALLBACK_NOT_EXIST;
     }
-    
-    std::lock_guard<std::mutex> lock(cameraFloatWindowMutex_);
-    auto iter = std::find_if(cameraFloatWindowCallbacks_.begin(), cameraFloatWindowCallbacks_.end(),
-        [callback](const sptr<CameraFloatWindowChangeCallback>& rec) {
-        return callback == rec->GetCallback();
-    });
-    if (iter != cameraFloatWindowCallbacks_.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "callback is already registered");
+
+    if (floatAgent_ != nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
         return ERR_CALLBACK_ALREADY_EXIST;
     }
-
-    sptr<CameraFloatWindowChangeCallback> listener = new (std::nothrow) CameraFloatWindowChangeCallback();
-    if (listener == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new fail.");
+    floatAgent_ = new (std::nothrow) WindowManagerPrivacyAgent();
+    if (floatAgent_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "floatAgent_ create fail.");
         return ERR_MALLOC_FAILED;
     }
-    listener->SetCallback(callback);
 
-    cameraFloatWindowCallbacks_.emplace_back(listener);
-    Rosen::WindowManager::GetInstance().RegisterCameraFloatWindowChangedListener(listener);
+    floatAgent_->SetCallBack(callback);
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "register callback(%{public}p).", callback);
+    bool result = WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
+        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatAgent_);
+    if (!result) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "register floatAgent_ fail.");
+        return ERR_SERVICE_ABNORMAL;
+    }
 
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "register Camera float window result success.");
     return RET_SUCCESS;
 }
 
@@ -406,22 +402,14 @@ int32_t SensitiveResourceManager::UnRegisterCameraFloatWindowChangeCallback(OnCa
         ACCESSTOKEN_LOG_ERROR(LABEL, "callback could not be null.");
         return ERR_CALLBACK_NOT_EXIST;
     }
-    
-    std::lock_guard<std::mutex> lock(cameraFloatWindowMutex_);
-    auto iter = std::find_if(cameraFloatWindowCallbacks_.begin(), cameraFloatWindowCallbacks_.end(),
-        [callback](const sptr<CameraFloatWindowChangeCallback>& rec) {
-        return callback == rec->GetCallback();
-    });
-    if (iter == cameraFloatWindowCallbacks_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is not found.");
+
+    if (floatAgent_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "floatAgent_ is not exist.");
         return ERR_CALLBACK_NOT_EXIST;
     }
-
-    WindowManager::GetInstance().UnregisterCameraFloatWindowChangedListener(*iter);
-    cameraFloatWindowCallbacks_.erase(iter);
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "unregister callback(%{public}p).", callback);
-
+    WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
+        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatAgent_);
+    floatAgent_ = nullptr;
     return RET_SUCCESS;
 }
 } // namespace AccessToken
