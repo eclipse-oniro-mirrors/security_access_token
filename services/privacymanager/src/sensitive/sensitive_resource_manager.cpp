@@ -57,27 +57,41 @@ SensitiveResourceManager::~SensitiveResourceManager()
 bool SensitiveResourceManager::InitProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-
-    sptr<ISystemAbilityManager> systemAbilityManager =
-        SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if (systemAbilityManager == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
-        return false;
-    }
-
-    sptr<IRemoteObject> object = systemAbilityManager->GetSystemAbility(APP_MGR_SERVICE_ID);
-    if (object == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null", APP_MGR_SERVICE_ID);
-        return false;
-    }
-
-    appMgrProxy_ = iface_cast<AppExecFwk::IAppMgr>(object);
     if (appMgrProxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
-        return false;
-    }
+        sptr<ISystemAbilityManager> systemAbilityManager =
+            SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (systemAbilityManager == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+            return false;
+        }
 
+        sptr<IRemoteObject> object = systemAbilityManager->GetSystemAbility(APP_MGR_SERVICE_ID);
+        if (object == nullptr) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null", APP_MGR_SERVICE_ID);
+            return false;
+        }
+
+        sensitiveDeathObserver_ = new (std::nothrow) SensitiveDeathRecipient();
+        if (sensitiveDeathObserver_ != nullptr) {
+            object->AddDeathRecipient(sensitiveDeathObserver_);
+        }
+
+        appMgrProxy_ = iface_cast<AppExecFwk::IAppMgr>(object);
+        if (appMgrProxy_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+            return false;
+        }
+    }
     return true;
+}
+
+void SensitiveResourceManager::OnRemoteDiedHandle()
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        appMgrProxy_ = nullptr;
+    }
+    InitProxy();
 }
 
 OHOS::sptr<OHOS::AppExecFwk::IAppMgr> SensitiveResourceManager::GetAppManagerProxy()
