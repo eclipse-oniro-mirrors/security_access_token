@@ -506,21 +506,17 @@ void PermissionRecordManager::SavePermissionRecords(
     int64_t curStamp = TimeUtil::GetCurrentTimestamp();
     if (switchStatus) {
         ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
-
-        if (record.status == PERM_INACTIVE) {
-            // no need to store in database when status from inactive to foreground or background
-            HapTokenInfo tokenInfo;
-            if (AccessTokenKit::GetHapTokenInfo(record.tokenId, tokenInfo) != Constant::SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", record.tokenId);
-                return;
-            }
-
-            if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-                return;
-            }
-            record.accessDuration = curStamp;
+        HapTokenInfo tokenInfo;
+        if (AccessTokenKit::GetHapTokenInfo(record.tokenId, tokenInfo) != Constant::SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", record.tokenId);
+            return;
         }
+
+        if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
+            return;
+        }
+        record.timestamp = curStamp;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is close, update microphone record to inactive");
 
@@ -532,9 +528,9 @@ void PermissionRecordManager::SavePermissionRecords(
             record.status = PERM_INACTIVE;
             record.accessDuration = 0;
             record.timestamp = curStamp;
-            CallbackExecute(record.tokenId, permissionName, PERM_INACTIVE);
         }
     }
+    CallbackExecute(record.tokenId, permissionName, record.status);
 }
 
 void PermissionRecordManager::GetRecords(const std::string& permissionName, bool switchStatus)
