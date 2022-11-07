@@ -35,8 +35,4 @@ ohos_shared_library("accesstoken_database_cxx") {
   deps = [ "//third_party/sqlite:sqlite" ]
 
   external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
-  if (build_selinux) {
-    external_deps += [ "selinux:librestorecon" ]
-    cflags_cc += [ "-DWITH_SELINUX" ]
-  }
 }
