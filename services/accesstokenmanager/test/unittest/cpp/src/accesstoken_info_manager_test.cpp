@@ -17,7 +17,7 @@
 
 #include <memory>
 #include <string>
-#include "accesstoken_info_manager.h"
+#include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #ifdef SUPPORT_SANDBOX_APP
@@ -27,7 +27,11 @@
 #undef private
 #endif
 #define private public
+#include "accesstoken_info_manager.h"
+#include "hap_token_info_inner.h"
+#include "native_token_info_inner.h"
 #include "permission_manager.h"
+#include "permission_policy_set.h"
 #undef private
 #include "permission_state_change_callback_stub.h"
 #include "string_ex.h"
@@ -44,51 +48,53 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
+static constexpr int USER_ID = 100;
+static constexpr int INST_INDEX = 0;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "open the door",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 
 static PermissionDef g_infoManagerTestPermDef2 = {
     .permissionName = "break the door",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "break the door",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 
 static PermissionStateFull g_infoManagerTestState1 = {
-    .grantFlags = {1},
-    .grantStatus = {1},
-    .isGeneral = true,
     .permissionName = "open the door",
-    .resDeviceID = {"local"}
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {1},
+    .grantFlags = {1}
 };
 
 static PermissionStateFull g_infoManagerTestState2 = {
     .permissionName = "break the door",
     .isGeneral = false,
-    .grantFlags = {1, 2},
+    .resDeviceID = {"device 1", "device 2"},
     .grantStatus = {1, 3},
-    .resDeviceID = {"device 1", "device 2"}
+    .grantFlags = {1, 2}
 };
 
 static HapInfoParams g_infoManagerTestInfoParms = {
-    .bundleName = "accesstoken_test",
     .userID = 1,
+    .bundleName = "accesstoken_test",
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
@@ -101,77 +107,77 @@ static HapPolicyParams g_infoManagerTestPolicyPrams = {
 };
 
 static PermissionStateFull g_infoManagerTestStateA = {
-    .grantFlags = {1},
-    .grantStatus = {PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 static PermissionStateFull g_infoManagerTestStateB = {
-    .grantFlags = {1},
-    .grantStatus = {PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 static PermissionStateFull g_infoManagerTestStateC = {
-    .grantFlags = {1},
-    .grantStatus = {PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 static PermissionStateFull g_infoManagerTestStateD = {
-    .grantFlags = {1},
-    .grantStatus = {PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 
 static PermissionDef g_infoManagerPermDef1 = {
     .permissionName = "ohos.permission.MEDIA_LOCATION",
     .bundleName = "accesstoken_test",
     .grantMode = USER_GRANT,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "MEDIA_LOCATION",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 static PermissionDef g_infoManagerPermDef2 = {
     .permissionName = "ohos.permission.MICROPHONE",
     .bundleName = "accesstoken_test",
     .grantMode = USER_GRANT,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "MICROPHONE",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 static PermissionDef g_infoManagerPermDef3 = {
     .permissionName = "ohos.permission.READ_CALENDAR",
     .bundleName = "accesstoken_test",
     .grantMode = USER_GRANT,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "READ_CALENDAR",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 static PermissionDef g_infoManagerPermDef4 = {
     .permissionName = "ohos.permission.READ_CALL_LOG",
     .bundleName = "accesstoken_test",
     .grantMode = USER_GRANT,
+    .availableLevel = APL_NORMAL,
+    .provisionEnable = false,
+    .distributedSceneEnable = false,
     .label = "label",
     .labelId = 1,
     .description = "READ_CALL_LOG",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL,
-    .provisionEnable = false,
-    .distributedSceneEnable = false
+    .descriptionId = 1
 };
 }
 
@@ -238,6 +244,139 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
 
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(nullptr, tokenInfo);
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo002
+ * @tc.desc: Verify the CreateHapTokenInfo add one hap token twice function.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "AddHapToken001 fill data");
+
+    AccessTokenIDEx tokenIdEx = {0};
+    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenIDEx tokenIdEx1 = {0};
+    ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx1);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
+    GTEST_LOG_(INFO) << "add same hap token";
+
+    std::shared_ptr<HapTokenInfoInner> tokenInfo;
+    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
+    ASSERT_NE(nullptr, tokenInfo);
+
+    std::string infoDes;
+    tokenInfo->ToString(infoDes);
+    GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx1.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo003
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test userID invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = -1
+    };
+    HapPolicyParams policy;
+    AccessTokenIDEx tokenIdEx;
+
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo004
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test bundleName invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = ""
+    };
+    HapPolicyParams policy;
+    AccessTokenIDEx tokenIdEx;
+
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo005
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test appIDDesc invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "ohos.com.testtesttest",
+        .appIDDesc = ""
+    };
+    HapPolicyParams policy;
+    AccessTokenIDEx tokenIdEx;
+
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo006
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test domain invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "ohos.com.testtesttest",
+        .appIDDesc = "who cares"
+    };
+    HapPolicyParams policy = {
+        .domain = ""
+    };
+    AccessTokenIDEx tokenIdEx;
+
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo007
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test dlpType invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
+{
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "ohos.com.testtesttest",
+        .dlpType = -1,
+        .appIDDesc = "who cares"
+    };
+    HapPolicyParams policy = {
+        .domain = "who cares"
+    };
+    AccessTokenIDEx tokenIdEx;
+
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -328,39 +467,71 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
 }
 
 /**
- * @tc.name: CreateHapTokenInfo002
- * @tc.desc: Verify the CreateHapTokenInfo add one hap token twice function.
+ * @tc.name: RemoveHapTokenInfo002
+ * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test count(id)
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require: issueI5YR8M
  */
-HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "AddHapToken001 fill data");
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
 
-    AccessTokenIDEx tokenIdEx = {0};
-    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "add a hap token";
+/**
+ * @tc.name: RemoveHapTokenInfo003
+ * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test info is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo003, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
 
-    AccessTokenIDEx tokenIdEx1 = {0};
-    ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx1);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
-    GTEST_LOG_(INFO) << "add same hap token";
+/**
+ * @tc.name: RemoveHapTokenInfo004
+ * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test count(HapUniqueKey) == 0
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo004, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    info->tokenInfoBasic_.userID = USER_ID;
+    info->tokenInfoBasic_.bundleName = "com.ohos.testtesttest";
+    info->tokenInfoBasic_.instIndex = INST_INDEX;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+}
 
-    std::shared_ptr<HapTokenInfoInner> tokenInfo;
-    tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
-    ASSERT_NE(nullptr, tokenInfo);
-
-    std::string infoDes;
-    tokenInfo->ToString(infoDes);
-    GTEST_LOG_(INFO) << "get hap token info:" << infoDes.c_str();
-
-    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx1.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
+/**
+ * @tc.name: RemoveHapTokenInfo005
+ * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test hapTokenIdMap_[HapUniqueKey] != id
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo005, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    AccessTokenID tokenId2 = 537919486; // 537919486: 001 00 0 000000 11111111111111111110
+    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    info->tokenInfoBasic_.userID = USER_ID;
+    info->tokenInfoBasic_.bundleName = "com.ohos.testtesttest";
+    info->tokenInfoBasic_.instIndex = INST_INDEX;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
+    std::string hapUniqueKey = "com.ohos.testtesttest&" + std::to_string(USER_ID) + "&" + std::to_string(INST_INDEX);
+    AccessTokenInfoManager::GetInstance().hapTokenIdMap_[hapUniqueKey] = tokenId2;
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    AccessTokenInfoManager::GetInstance().hapTokenIdMap_.erase(hapUniqueKey);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 }
 
 /**
@@ -444,6 +615,26 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
         tokenIdEx.tokenIdExStruct.tokenID, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_FAILED, ret);
 }
+
+/**
+ * @tc.name: UpdateHapToken003
+ * @tc.desc: AccessTokenInfoManager::UpdateHapToken function test IsRemote_ true
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    info->isRemote_ = true;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
+    std::string appIDDesc = "who cares";
+    int32_t apiVersion = DEFAULT_API_VERSION;
+    HapPolicyParams policy;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenId, appIDDesc, apiVersion, policy));
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenSync001
@@ -470,6 +661,23 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
 
     result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
     ASSERT_EQ(result, RET_FAILED);
+}
+
+/**
+ * @tc.name: GetHapTokenSync002
+ * @tc.desc: AccessTokenInfoManager::GetHapTokenSync function test permSetPtr is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    info->permPolicySet_ = nullptr;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
+    HapTokenInfoForSync hapSync;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenId, hapSync));
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
 /**
@@ -1090,7 +1298,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
 
     AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    EXPECT_NE(0, tokenId);
+    EXPECT_NE(0, static_cast<int>(tokenId));
     PermStateChangeScope inScopeInfo;
     PermStateChangeScope outScopeInfo;
     PermStateChangeScope emptyScopeInfo;
@@ -1110,7 +1318,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     inScopeInfo.tokenIDs.clear();
     inScopeInfo.tokenIDs = {123, tokenId, tokenId};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
-    EXPECT_EQ(1, outScopeInfo.tokenIDs.size());
+    EXPECT_EQ(1, static_cast<int>(outScopeInfo.tokenIDs.size()));
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs.clear();
@@ -1123,15 +1331,15 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     inScopeInfo.permList.clear();
     inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
-    EXPECT_EQ(1, outScopeInfo.permList.size());
+    EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
     
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.permList.clear();
     inScopeInfo.tokenIDs = {123, tokenId, tokenId};
     inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
-    EXPECT_EQ(1, outScopeInfo.tokenIDs.size());
-    EXPECT_EQ(1, outScopeInfo.permList.size());
+    EXPECT_EQ(1, static_cast<int>(outScopeInfo.tokenIDs.size()));
+    EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
@@ -1219,6 +1427,59 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DumpTokenInfo002
+ * @tc.desc: Test DumpTokenInfo with hap tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams, tokenIdEx);
+
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    EXPECT_NE(0, static_cast<int>(tokenId));
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
+        tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: DumpTokenInfo003
+ * @tc.desc: Test DumpTokenInfo with native tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
+        AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service"), dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
+ * @tc.name: DumpTokenInfo004
+ * @tc.desc: Test DumpTokenInfo with shell tokenId.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
+        AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd"), dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
  * @tc.name: UpdateTokenPermissionState001
  * @tc.desc: Test UpdateTokenPermissionState abnormal branch.
  * @tc.type: FUNC
@@ -1262,59 +1523,6 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
 }
 
 /**
- * @tc.name: DumpTokenInfo002
- * @tc.desc: Test DumpTokenInfo with hap tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
-
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
-        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-    EXPECT_NE(0, tokenId);
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
-        tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    GTEST_LOG_(INFO) << "remove the token info";
-}
-
-/**
- * @tc.name: DumpTokenInfo003
- * @tc.desc: Test DumpTokenInfo with native tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
-{
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
-        AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service"), dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
- * @tc.name: DumpTokenInfo004
- * @tc.desc: Test DumpTokenInfo with shell tokenId.
- * @tc.type: FUNC
- * @tc.require: issueI4V02P
- */
-HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
-{
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
-        AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd"), dumpInfo);
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
  * @tc.name: GrantPermission001
  * @tc.desc: Test GrantPermission abnormal branch.
  * @tc.type: FUNC
@@ -1350,6 +1558,165 @@ HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: AccessTokenInfoManager001
+ * @tc.desc: AccessTokenInfoManager::~AccessTokenInfoManager+Init function test hasInited_ is false
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
+{
+    AccessTokenInfoManager::GetInstance().hasInited_ = true;
+    AccessTokenInfoManager::GetInstance().Init();
+    AccessTokenInfoManager::GetInstance().hasInited_ = false;
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().hasInited_);
+}
+
+/**
+ * @tc.name: GetHapUniqueStr001
+ * @tc.desc: AccessTokenInfoManager::GetHapUniqueStr function test info is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
+{
+    std::shared_ptr<HapTokenInfoInner> info = nullptr;
+    ASSERT_EQ("", AccessTokenInfoManager::GetInstance().GetHapUniqueStr(info));
+}
+
+/**
+ * @tc.name: AddHapTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::AddHapTokenInfo function test info is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
+{
+    std::shared_ptr<HapTokenInfoInner> info = nullptr;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+}
+
+/**
+ * @tc.name: AddHapTokenInfo002
+ * @tc.desc: AccessTokenInfoManager::AddHapTokenInfo function test count(id) > 0
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.photos", INST_INDEX);
+    std::shared_ptr<HapTokenInfoInner> info = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+}
+
+/**
+ * @tc.name: AddNativeTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test info is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo001, TestSize.Level1)
+{
+    std::shared_ptr<NativeTokenInfoInner> info = nullptr;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info));
+}
+
+/**
+ * @tc.name: AddNativeTokenInfo002
+ * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test count(id) > 0
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    info->tokenInfoBasic_.tokenID = tokenId;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info));
+}
+
+/**
+ * @tc.name: RemoveNativeTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test count(id) == 0
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: RemoveNativeTokenInfo002
+ * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test isRemote_ true
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo002, TestSize.Level1)
+{
+    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    info->isRemote_ = true;
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
+}
+
+/**
+ * @tc.name: RemoveNativeTokenInfo003
+ * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test count(processName) == 0
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo003, TestSize.Level1)
+{
+    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
+    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    info->isRemote_ = false;
+    info->tokenInfoBasic_.processName = "testtesttest";
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+}
+
+/**
+ * @tc.name: TryUpdateExistNativeToken001
+ * @tc.desc: AccessTokenInfoManager::TryUpdateExistNativeToken function test infoPtr is null
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, TryUpdateExistNativeToken001, TestSize.Level1)
+{
+    std::shared_ptr<NativeTokenInfoInner> infoPtr = nullptr;
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr));
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos001
+ * @tc.desc: AccessTokenInfoManager::ProcessNativeTokenInfos function test AddNativeTokenInfo fail
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    AccessTokenID tokenId2 = 672137214; // 672137214: 001 01 0 000000 11111111111111111110
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
+    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    info->tokenInfoBasic_.tokenID = tokenId2;
+    info->tokenInfoBasic_.processName = "testtesttest";
+    ASSERT_NE("", info->tokenInfoBasic_.processName);
+    tokenInfos.emplace_back(info);
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
+    AccessTokenInfoManager::GetInstance().nativeTokenIdMap_["testtesttest"] = tokenId;
+    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
+    AccessTokenInfoManager::GetInstance().nativeTokenIdMap_.erase("testtesttest");
 }
 } // namespace AccessToken
 } // namespace Security
