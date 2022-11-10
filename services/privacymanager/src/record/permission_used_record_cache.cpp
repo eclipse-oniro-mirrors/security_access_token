@@ -310,7 +310,7 @@ void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
     tmpRecordBufferHead->next = persistPendingBufferEnd->next;
     persistPendingBufferEnd->next.reset();
     recordBufferHead_ = tmpRecordBufferHead;
-    
+
     if (persistPendingBufferEnd == curRecordBufferPos_) {
         // persistPendingBufferEnd == curRecordBufferPos, reset curRecordBufferPos
         curRecordBufferPos_ = recordBufferHead_;

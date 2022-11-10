@@ -15,6 +15,7 @@
 #include "window_manager_privacy_death_recipient.h"
 #include "accesstoken_log.h"
 #include "window_manager_privacy_client.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,6 +29,7 @@ void WindowManagerPrivacyDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>&
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     WindowManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
+    PermissionRecordManager::GetInstance().OnWindowMgrRemoteDiedHandle();
 }
 }  // namespace AccessToken
 }  // namespace Security

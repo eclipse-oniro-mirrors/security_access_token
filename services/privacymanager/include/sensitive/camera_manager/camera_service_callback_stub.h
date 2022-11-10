@@ -13,23 +13,26 @@
  * limitations under the License.
  */
 
+#ifndef PRIVACY_CAMERA_SERVICE_CALLBACK_STUB_H
+#define PRIVACY_CAMERA_SERVICE_CALLBACK_STUB_H
 
-#ifndef SENSITIVE_DEATH_RECIPIENT_H
-#define SENSITIVE_DEATH_RECIPIENT_H
-
-#include "iremote_object.h"
+#include "iremote_stub.h"
+#include "nocopyable.h"
+#include "camera_manager_privacy_proxy.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class SensitiveDeathRecipient : public IRemoteObject::DeathRecipient {
+typedef void (*OnCameraGlobalSwitchChangeCallback)(bool switchStatus);
+class CameraServiceCallbackStub : public IRemoteStub<ICameraMuteServiceCallback> {
 public:
-    SensitiveDeathRecipient() {}
-    virtual ~SensitiveDeathRecipient() = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
-};
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
-#endif  // SENSITIVE_DEATH_RECIPIENT_H
+    CameraServiceCallbackStub();
+    virtual ~CameraServiceCallbackStub();
 
+    int OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+    int32_t OnCameraMute(bool muteMode) override;
+};
+}
+} // namespace AccessToken
+} // namespace OHOS
+#endif // PRIVACY_CAMERA_SERVICE_CALLBACK_STUB_H

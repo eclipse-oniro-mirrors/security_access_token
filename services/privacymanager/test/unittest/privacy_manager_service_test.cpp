@@ -16,10 +16,8 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
-#include "app_mgr_constants.h"
-#include "app_state_data.h"
-#include "application_status_change_callback.h"
 #include "audio_policy_manager.h"
+#include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "data_translator.h"
 #include "field_const.h"
@@ -30,7 +28,6 @@
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
 #include "privacy_manager_service.h"
-#include "sensitive_resource_manager.h"
 #include "string_ex.h"
 #include "token_setproc.h"
 
@@ -142,6 +139,7 @@ void PrivacyManagerServiceTest::TearDownTestCase()
 void PrivacyManagerServiceTest::SetUp()
 {
     privacyManagerService_ = DelayedSingleton<PrivacyManagerService>::GetInstance();
+    PermissionRecordManager::GetInstance().Register();
     EXPECT_NE(nullptr, privacyManagerService_);
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
     AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
@@ -305,7 +303,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallback001, TestS
 
 /*
  * @tc.name: AppStatusListener001
- * @tc.desc: register and startusing permissions then use AppStatusListener
+ * @tc.desc: register and startusing permissions then use NotifyAppStateChange
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
@@ -327,14 +325,14 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
 
-    PermissionRecordManager::AppStatusListener(tokenId1, APP_FOREGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId2, APP_FOREGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId1, APP_FOREGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId2, APP_FOREGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId1, APP_BACKGROUND);
-    PermissionRecordManager::AppStatusListener(tokenId2, APP_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
 }
 
 /*
@@ -351,7 +349,10 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
+    ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME));
 }
@@ -365,6 +366,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
 {
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, "test"));
 }
 
 /*
@@ -375,30 +377,40 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
  */
 HWTEST_F(PrivacyManagerServiceTest, GetGlobalSwitchStatus001, TestSize.Level1)
 {
+    bool isMuteMic = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    ASSERT_EQ(false, AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute());
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(MICROPHONE_PERMISSION_NAME));
+    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(isMuteMic);
+
+    bool isMuteCam = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
+    ASSERT_EQ(false, CameraManagerPrivacyClient::GetInstance().IsCameraMuted());
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME));
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(isMuteCam);
 
     // microphone is not sure
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME));
 }
 
 /*
- * @tc.name: ShowPermissionDialog001
- * @tc.desc: ShowPermissionDialog function test
+ * @tc.name: ShowGlobalDialog001
+ * @tc.desc: ShowGlobalDialog function test
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
-HWTEST_F(PrivacyManagerServiceTest, ShowPermissionDialog001, TestSize.Level1)
+HWTEST_F(PrivacyManagerServiceTest, ShowGlobalDialog001, TestSize.Level1)
 {
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(MICROPHONE_PERMISSION_NAME));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(MICROPHONE_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().ShowPermissionDialog(LOCATION_PERMISSION_NAME)); // no dialog
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(LOCATION_PERMISSION_NAME)); // no dialog
 }
 
 /*
  * @tc.name: MicSwitchChangeListener001
- * @tc.desc: MicSwitchChangeListener function test mic global switch is open
+ * @tc.desc: NotifyMicChange function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -409,13 +421,13 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener001, TestSize.Level1)
         g_InfoParms1.instIndex);
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 
-    PermissionRecordManager::MicSwitchChangeListener(true); // fill opCode not mic branch
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill opCode not mic branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 }
 
 /*
  * @tc.name: MicSwitchChangeListener002
- * @tc.desc: MicSwitchChangeListener function test mic global switch is open
+ * @tc.desc: NotifyMicChange function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -426,13 +438,13 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener002, TestSize.Level1)
         g_InfoParms1.instIndex);
     // status is background
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    PermissionRecordManager::MicSwitchChangeListener(true); // fill true status is not inactive branch
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is not inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
 }
 
 /*
  * @tc.name: MicSwitchChangeListener003
- * @tc.desc: MicSwitchChangeListener function test mic global switch is close
+ * @tc.desc: NotifyMicChange function test mic global switch is close
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -444,13 +456,13 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener003, TestSize.Level1)
     // status is inactive
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
-    PermissionRecordManager::MicSwitchChangeListener(true); // fill true status is inactive branch
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
 }
 
 /*
  * @tc.name: MicSwitchChangeListener004
- * @tc.desc: MicSwitchChangeListener function test mic global switch is open
+ * @tc.desc: NotifyMicChange function test mic global switch is open
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -463,7 +475,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener004, TestSize.Level1)
 
 /*
  * @tc.name: MicSwitchChangeListener005
- * @tc.desc: MicSwitchChangeListener function test mic global switch is close
+ * @tc.desc: NotifyMicChange function test mic global switch is close
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
@@ -475,7 +487,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
     // status is inactive
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
-    PermissionRecordManager::MicSwitchChangeListener(false); // fill false status is inactive branch
+    PermissionRecordManager::GetInstance().NotifyMicChange(false); // fill false status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
 }
@@ -589,7 +601,7 @@ HWTEST_F(PrivacyManagerServiceTest, FindByConditions001, TestSize.Level1)
 
     GenericValues orConditions;
     std::vector<GenericValues> results;
-    
+
     GenericValues andConditions; // no column
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
 
@@ -644,7 +656,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue002, TestSize.Level1)
     std::vector<GenericValues> values;
     values.emplace_back(value);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
-    
+
     std::string condition = FIELD_TOKEN_ID;
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
@@ -940,30 +952,14 @@ HWTEST_F(PrivacyManagerServiceTest, OnForegroundApplicationChanged001, TestSize.
     appStateData.state = static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_FOREGROUND);
 
     sptr<ApplicationStatusChangeCallback> callback = new (std::nothrow) ApplicationStatusChangeCallback();
-    callback->SetCallback(nullptr);
     callback->OnForegroundApplicationChanged(appStateData);
 
     ASSERT_EQ(0, appStateData.uid);
 }
 
 /*
- * @tc.name: RemoveTokenId001
- * @tc.desc: ApplicationStatusChangeCallback::RemoveTokenId function test tokenId is not found
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(PrivacyManagerServiceTest, RemoveTokenId001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-
-    sptr<ApplicationStatusChangeCallback> callback = new (std::nothrow) ApplicationStatusChangeCallback();
-    callback->RemoveTokenId(tokenId);
-}
-
-/*
  * @tc.name: OnCameraMute001
- * @tc.desc: CameraGlobalSwitchChangeCallback::OnCameraMute function test callback_ is null
+ * @tc.desc: CameraServiceCallbackStub::OnCameraMute function test callback_ is null
  * @tc.type: FUNC
  * @tc.require: issueI6024A
  */
@@ -972,9 +968,8 @@ HWTEST_F(PrivacyManagerServiceTest, OnCameraMute001, TestSize.Level1)
     bool muteMode = false;
     ASSERT_EQ(false, muteMode);
 
-    std::shared_ptr<CameraGlobalSwitchChangeCallback> callback = std::make_shared<CameraGlobalSwitchChangeCallback>(
-        CameraGlobalSwitchChangeCallback());
-    callback->SetCallback(nullptr);
+    std::shared_ptr<CameraServiceCallbackStub> callback = std::make_shared<CameraServiceCallbackStub>(
+        CameraServiceCallbackStub());
     callback->OnCameraMute(muteMode);
 }
 
@@ -992,7 +987,6 @@ HWTEST_F(PrivacyManagerServiceTest, OnMicStateUpdated001, TestSize.Level1)
 
     std::shared_ptr<MicGlobalSwitchChangeCallback> callback = std::make_shared<MicGlobalSwitchChangeCallback>(
         MicGlobalSwitchChangeCallback());
-    callback->SetCallback(nullptr);
     callback->OnMicStateUpdated(micStateChangeEvent);
 }
 

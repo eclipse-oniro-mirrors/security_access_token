@@ -13,32 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef MOCK_RESOURCE_MANAGER_H
-#define MOCK_RESOURCE_MANAGER_H
 
-#include <string>
-#include "app_mgr_proxy.h"
-#include "application_status_change_callback.h"
+#ifndef CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+#define CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+
+#include "iremote_object.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum FlagType {
-    INVALID = -1,
-    INACTIVE = 0,
-    FOREGROUND = 1,
-    BACKGROUND = 2,
-};
-void SetFlag(uint32_t flag);
-class SensitiveResourceManager final {
+class CameraManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
-    static SensitiveResourceManager& GetInstance();
-    SensitiveResourceManager();
-    virtual ~SensitiveResourceManager();
-    
-    bool GetAppStatus(const std::string& pkgName, int32_t& status);
+    CameraManagerPrivacyDeathRecipient() {}
+    virtual ~CameraManagerPrivacyDeathRecipient() = default;
+    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
-} // namespace AccessToken
+}  // namespace AccessToken
 } // namespace Security
-} // namespace OHOS
-#endif // MOCK_RESOURCE_MANAGER_H
+}  // namespace OHOS
+#endif  // CAMERA_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+

@@ -184,7 +184,7 @@ int32_t SetNativeTokenJsonObject(const NativeTokenList *curr, cJSON *object)
     if (ret != ATRET_SUCCESS) {
         return ret;
     }
-    
+
     ret = AddStrArrayInfo(object, curr->acls, curr->aclsNum, ACLS_KEY_NAME);
     return ret;
 }
