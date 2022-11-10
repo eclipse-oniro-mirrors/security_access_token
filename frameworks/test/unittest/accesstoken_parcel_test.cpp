@@ -151,7 +151,7 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
     EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList.size(),
         readedData->hapPolicyParameter.permStateList.size());
 
-    for (int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permList.size(); i++) {
+    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permList.size(); i++) {
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].permissionName,
             readedData->hapPolicyParameter.permList[i].permissionName);
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permList[i].bundleName,
@@ -170,7 +170,7 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
             readedData->hapPolicyParameter.permList[i].descriptionId);
     }
 
-    for (int32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
+    for (uint32_t i = 0; i < hapPolicyParcel.hapPolicyParameter.permStateList.size(); i++) {
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].permissionName,
             readedData->hapPolicyParameter.permStateList[i].permissionName);
         EXPECT_EQ(hapPolicyParcel.hapPolicyParameter.permStateList[i].isGeneral,
@@ -228,10 +228,10 @@ HWTEST_F(AccessTokenParcelTest, PermStateChangeScopeParcel001, TestSize.Level1)
     EXPECT_EQ(true,  permStateChangeScopeParcel.scope.tokenIDs.size() == readedData->scope.tokenIDs.size());
     EXPECT_EQ(true,  permStateChangeScopeParcel.scope.permList.size() == readedData->scope.permList.size());
 
-    for (int32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
+    for (uint32_t i = 0; i < readedData->scope.tokenIDs.size(); i++) {
         EXPECT_EQ(permStateChangeScopeParcel.scope.tokenIDs[i], readedData->scope.tokenIDs[i]);
     }
-    for (int32_t i = 0; i < readedData->scope.permList.size(); i++) {
+    for (uint32_t i = 0; i < readedData->scope.permList.size(); i++) {
         EXPECT_EQ(true, permStateChangeScopeParcel.scope.permList[i] == readedData->scope.permList[i]);
     }
 }
@@ -535,12 +535,56 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel002, TestSize.Level1)
     nativeTokenInfoParcel.nativeTokenInfoParams.dcap = {"AT_CAP"};
     nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
     nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
-    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = { };
+    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = {};
 
     Parcel parcel;
     EXPECT_EQ(true, nativeTokenInfoParcel.Marshalling(parcel));
     std::shared_ptr<NativeTokenInfoParcel> readedData(NativeTokenInfoParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
+}
+
+/*
+ * @tc.name: NativeTokenInfoParcel003
+ * @tc.desc: NativeTokenInfoParcel::Marshalling function test dcap size > 32
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel003, TestSize.Level1)
+{
+    std::vector<std::string> vec(33, "AT_CAP");
+    NativeTokenInfoParcel nativeTokenInfoParcel;
+    nativeTokenInfoParcel.nativeTokenInfoParams.apl = APL_NORMAL;
+    nativeTokenInfoParcel.nativeTokenInfoParams.ver = 0;
+    nativeTokenInfoParcel.nativeTokenInfoParams.processName = "processName";
+    nativeTokenInfoParcel.nativeTokenInfoParams.dcap = vec; // size is 33
+    nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
+    nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
+    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = {};
+
+    Parcel parcel;
+    EXPECT_NE(true, nativeTokenInfoParcel.Marshalling(parcel));
+}
+
+/*
+ * @tc.name: NativeTokenInfoParcel004
+ * @tc.desc: NativeTokenInfoParcel::Marshalling function test nativeAcls size > 64
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel004, TestSize.Level1)
+{
+    std::vector<std::string> vec(65, "AT_CAP");
+    NativeTokenInfoParcel nativeTokenInfoParcel;
+    nativeTokenInfoParcel.nativeTokenInfoParams.apl = APL_NORMAL;
+    nativeTokenInfoParcel.nativeTokenInfoParams.ver = 0;
+    nativeTokenInfoParcel.nativeTokenInfoParams.processName = "processName";
+    nativeTokenInfoParcel.nativeTokenInfoParams.dcap = {"AT_CAP"};
+    nativeTokenInfoParcel.nativeTokenInfoParams.tokenID = 12; // 12 : tokenid
+    nativeTokenInfoParcel.nativeTokenInfoParams.tokenAttr = 0;
+    nativeTokenInfoParcel.nativeTokenInfoParams.nativeAcls = vec; // size is 65
+
+    Parcel parcel;
+    EXPECT_NE(true, nativeTokenInfoParcel.Marshalling(parcel));
 }
 } // namespace AccessToken
 } // namespace Security

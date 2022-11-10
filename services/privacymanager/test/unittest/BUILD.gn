@@ -35,6 +35,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
       "//base/security/access_token/services/privacymanager/include/service",
       "//commonlibrary/c_utils/base/include",
+      "//foundation/ability/ability_runtime/interfaces/inner_api/app_manager/include/appmgr",
       "//foundation/arkui/napi",
       "//foundation/graphic/graphic_2d/frameworks/surface/include",
       "//foundation/window/window_manager/wm/include",

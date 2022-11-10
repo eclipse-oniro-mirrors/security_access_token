@@ -16,8 +16,12 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
+#include "app_mgr_constants.h"
+#include "app_state_data.h"
+#include "application_status_change_callback.h"
 #include "audio_policy_manager.h"
 #include "constant.h"
+#include "data_translator.h"
 #include "field_const.h"
 #define private public
 #include "permission_record_manager.h"
@@ -309,10 +313,10 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
 {
     AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId1);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId1);
     AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
-    ASSERT_NE(0, tokenId2);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId2);
 
     g_recordA1.tokenId = tokenId1;
     g_recordA2.tokenId = tokenId1;
@@ -342,11 +346,11 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     SetSelfTokenID(tokenId);
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME));
@@ -563,38 +567,46 @@ HWTEST_F(PrivacyManagerServiceTest, Modify001, TestSize.Level1)
 
 /*
  * @tc.name: FindByConditions001
- * @tc.desc: PermissionUsedRecordDb::FindByConditions function test no column
+ * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
 HWTEST_F(PrivacyManagerServiceTest, FindByConditions001, TestSize.Level1)
 {
-    GenericValues andConditions;
-    GenericValues orConditions;
+    GenericValues value;
+    value.Put(FIELD_TOKEN_ID, 0);
+    value.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value.Put(FIELD_ACCESS_COUNT, 1);
+    value.Put(FIELD_REJECT_COUNT, 0);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
-}
-
-/*
- * @tc.name: FindByConditions002
- * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PrivacyManagerServiceTest, FindByConditions002, TestSize.Level1)
-{
-    GenericValues andConditions;
-    andConditions.Put(FIELD_TIMESTAMP, 0);
-    andConditions.Put(FIELD_ACCESS_DURATION, 0);
-    andConditions.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
 
     GenericValues orConditions;
-
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> results;
+    
+    GenericValues andConditions; // no column
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
+
+    GenericValues andConditions1; // field timestamp
+    andConditions1.Put(FIELD_TIMESTAMP, 0);
+
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions1, orConditions, results));
+
+    GenericValues andConditions2; // field access_duration
+    andConditions2.Put(FIELD_ACCESS_DURATION, 0);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions2, orConditions, results));
+
+    GenericValues andConditions3; // field not timestamp or access_duration
+    andConditions3.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions3, orConditions, results));
+
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
 }
 
 /*
@@ -606,7 +618,7 @@ HWTEST_F(PrivacyManagerServiceTest, FindByConditions002, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue001, TestSize.Level1)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::string condition = "";
+    std::string condition;
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
 }
@@ -619,38 +631,28 @@ HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue002, TestSize.Level1)
 {
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::string condition = "token_id";
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
-}
+    GenericValues value;
+    value.Put(FIELD_TOKEN_ID, 0);
+    value.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(FIELD_TIMESTAMP, 123); // 123 is random input
+    value.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value.Put(FIELD_ACCESS_COUNT, 1);
+    value.Put(FIELD_REJECT_COUNT, 0);
 
-/*
- * @tc.name: GetDistinctValue003
- * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field device_id
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue003, TestSize.Level1)
-{
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::string condition = "device_id";
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    
+    std::string condition = FIELD_TOKEN_ID;
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
-}
+    results.clear();
 
-/*
- * @tc.name: GetDistinctValue004
- * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field timestamp
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue004, TestSize.Level1)
-{
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::string condition = "timestamp";
-    std::vector<GenericValues> results;
+    condition = FIELD_TIMESTAMP;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
 }
 
 /*
@@ -845,29 +847,20 @@ HWTEST_F(PrivacyManagerServiceTest, CreateCountPrepareSqlCmd001, TestSize.Level1
 
 /*
  * @tc.name: CreateDeleteExpireRecordsPrepareSqlCmd001
- * @tc.desc: PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd function test type not found
+ * @tc.desc: PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd function test
  * @tc.type: FUNC
  * @tc.require: issueI5YL6H
  */
 HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExpireRecordsPrepareSqlCmd001, TestSize.Level1)
 {
-    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100); // type not found
     std::vector<std::string> andColumns;
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
-}
 
-/*
- * @tc.name: CreateDeleteExpireRecordsPrepareSqlCmd002
- * @tc.desc: PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd function test
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExpireRecordsPrepareSqlCmd002, TestSize.Level1)
-{
-    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
-    std::vector<std::string> andColumns;
+    type = PermissionUsedRecordDb::PERMISSION_RECORD; // field timestamp_begin and timestamp_end
     andColumns.emplace_back(FIELD_TIMESTAMP_BEGIN);
-    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
+    andColumns.emplace_back(FIELD_TIMESTAMP_END);
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
 }
 
 /*
@@ -918,6 +911,136 @@ HWTEST_F(PrivacyManagerServiceTest, CreateGetDistinctValue001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, CreatePermissionRecordTable001, TestSize.Level1)
 {
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission001
+ * @tc.desc: Constant::TransferOpcodeToPermission function test return false
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, TransferOpcodeToPermission001, TestSize.Level1)
+{
+    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    std::string permissionName;
+    ASSERT_EQ(false, Constant::TransferOpcodeToPermission(opCode, permissionName));
+}
+
+/*
+ * @tc.name: OnForegroundApplicationChanged001
+ * @tc.desc: ApplicationStatusChangeCallback::OnForegroundApplicationChanged function test callback_ is null
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, OnForegroundApplicationChanged001, TestSize.Level1)
+{
+    OHOS::AppExecFwk::AppStateData appStateData;
+    appStateData.bundleName = "com.ohos.photo";
+    appStateData.uid = 0;
+    appStateData.state = static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_FOREGROUND);
+
+    sptr<ApplicationStatusChangeCallback> callback = new (std::nothrow) ApplicationStatusChangeCallback();
+    callback->SetCallback(nullptr);
+    callback->OnForegroundApplicationChanged(appStateData);
+
+    ASSERT_EQ(0, appStateData.uid);
+}
+
+/*
+ * @tc.name: RemoveTokenId001
+ * @tc.desc: ApplicationStatusChangeCallback::RemoveTokenId function test tokenId is not found
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, RemoveTokenId001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    sptr<ApplicationStatusChangeCallback> callback = new (std::nothrow) ApplicationStatusChangeCallback();
+    callback->RemoveTokenId(tokenId);
+}
+
+/*
+ * @tc.name: OnCameraMute001
+ * @tc.desc: CameraGlobalSwitchChangeCallback::OnCameraMute function test callback_ is null
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, OnCameraMute001, TestSize.Level1)
+{
+    bool muteMode = false;
+    ASSERT_EQ(false, muteMode);
+
+    std::shared_ptr<CameraGlobalSwitchChangeCallback> callback = std::make_shared<CameraGlobalSwitchChangeCallback>(
+        CameraGlobalSwitchChangeCallback());
+    callback->SetCallback(nullptr);
+    callback->OnCameraMute(muteMode);
+}
+
+/*
+ * @tc.name: OnMicStateUpdated001
+ * @tc.desc: MicGlobalSwitchChangeCallback::OnMicStateUpdated function test callback_ is null
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, OnMicStateUpdated001, TestSize.Level1)
+{
+    AudioStandard::MicStateChangeEvent micStateChangeEvent;
+    micStateChangeEvent.mute = false;
+    ASSERT_EQ(false, micStateChangeEvent.mute);
+
+    std::shared_ptr<MicGlobalSwitchChangeCallback> callback = std::make_shared<MicGlobalSwitchChangeCallback>(
+        MicGlobalSwitchChangeCallback());
+    callback->SetCallback(nullptr);
+    callback->OnMicStateUpdated(micStateChangeEvent);
+}
+
+/*
+ * @tc.name: TranslationIntoGenericValues001
+ * @tc.desc: DataTranslator::TranslationIntoGenericValues function test
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, TranslationIntoGenericValues001, TestSize.Level1)
+{
+    PermissionUsedRequest request = {
+        .beginTimeMillis = -1, // begin < 0
+        .endTimeMillis = -2 // end < 0
+    };
+    GenericValues andGenericValues;
+    GenericValues orGenericValues;
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+
+    request.beginTimeMillis = 10; // begin != 0
+    request.endTimeMillis = 20; // end != 0
+    request.flag = static_cast<PermissionUsageFlag>(2); // request.flag != FLAG_PERMISSION_USAGE_DETAIL
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    request.permissionList.emplace_back("ohos.com.CAMERA"); // Constant::TransferPermissionToOpcode(perm, opCode) true
+    ASSERT_EQ(Constant::SUCCESS,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+}
+
+/*
+ * @tc.name: TranslationGenericValuesIntoPermissionUsedRecord001
+ * @tc.desc: DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(PrivacyManagerServiceTest, TranslationGenericValuesIntoPermissionUsedRecord001, TestSize.Level1)
+{
+    GenericValues inGenericValues;
+    // !Constant::TransferOpcodeToPermission(opCode, permission) false
+    inGenericValues.Put(FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_CAMERA));
+    PermissionUsedRecord permissionRecord;
+    permissionRecord.lastAccessTime = 0; // permissionRecord.lastAccessTime > 0 false
+    permissionRecord.lastRejectTime = 10; // permissionRecord.lastRejectTime > 0
+    ASSERT_EQ(Constant::SUCCESS,
+        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
 }
 } // namespace AccessToken
 } // namespace Security
