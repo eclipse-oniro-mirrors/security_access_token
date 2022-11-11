@@ -2485,14 +2485,14 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken010, TestSize.Level1)
 
     uint32_t apiVersion = DEFAULT_API_VERSION - 1;
     int ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
-    
+
     HapTokenInfo hapTokenInfoRes;
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
 
     apiVersion = DEFAULT_API_VERSION + 1;
     ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
-    
+
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
 }

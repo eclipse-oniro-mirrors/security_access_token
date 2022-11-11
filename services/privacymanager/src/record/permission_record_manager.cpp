@@ -19,20 +19,27 @@
 #include <cinttypes>
 #include <numeric>
 
+#include "ability_manager_privacy_client.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
+#include "audio_system_manager.h"
+#include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
 #include "field_const.h"
 #include "i_state_change_callback.h"
+#include "iservice_registry.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
-#include "sensitive_resource_manager.h"
-#include "time_util.h"
 #include "state_change_callback_proxy.h"
+#include "system_ability_definition.h"
+#include "time_util.h"
+#include "window_manager_privacy_client.h"
+
+using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace Security {
@@ -45,6 +52,9 @@ static const std::string DEFAULT_DEVICEID = "0";
 static const std::string FIELD_COUNT_NUMBER = "count";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+static const std::string PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
+static const std::string PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
+static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -61,34 +71,7 @@ PermissionRecordManager::~PermissionRecordManager()
     }
     deleteTaskWorker_.Stop();
     hasInited_ = false;
-
-    int32_t ret = SensitiveResourceManager::GetInstance().UnRegisterMicGlobalSwitchChangeCallback(
-        MicSwitchChangeListener);
-    if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "unregister microphone global switch change callback failed.");
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister microphone global switch change callback success.");
-
-    micHasRegistered_ = false;
-
-    ret = SensitiveResourceManager::GetInstance().UnRegisterCameraGlobalSwitchChangeCallback(
-        CameraSwitchChangeListener);
-    if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "unregister camera global switch change callback failed.");
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera global switch change callback success.");
-
-    camerHasRegistered_ = false;
-
-    ret = SensitiveResourceManager::GetInstance().UnRegisterCameraFloatWindowChangeCallback(CameraFloatWindowListener);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "unregister float window change callback failed.");
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "unregister camera flow window change callback success.");
-    floatWindowHasRegistered_ = false;
+    Unregister();
 }
 
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -115,9 +98,8 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     }
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
-    } else if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    } else {
+        record.status = IsForegroundApp(tokenId);
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
@@ -221,7 +203,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         ACCESSTOKEN_LOG_ERROR(LABEL, "query time or flag is invalid");
         return false;
     }
-    
+
     std::set<AccessTokenID> tokenIdList;
     if (request.tokenId == 0) {
         GetLocalRecordTokenIdList(tokenIdList);
@@ -381,7 +363,7 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
             }
 
             // app use camera background without float window
-            bool isShow = SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
+            bool isShow = IsFlowWindowShow(tokenId);
             if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
                 camPermList.emplace_back(perm);
@@ -406,33 +388,20 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
  * when foreground change background or background change foreground，change accessDuration and store in database,
  * change status and accessDuration and timestamp in cache
 */
-void PermissionRecordManager::AppStatusListener(uint32_t tokenId, int32_t status)
+void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status %{public}d", tokenId, status);
-
-    ActiveChangeType currStatus;
-    switch (status) {
-        case APP_FOREGROUND:
-            currStatus = PERM_ACTIVE_IN_FOREGROUND;
-            break;
-        case APP_BACKGROUND:
-            currStatus = PERM_ACTIVE_IN_BACKGROUND;
-            break;
-        default:
-            ACCESSTOKEN_LOG_WARN(LABEL, "status is invalid %{public}d", status);
-            return;
-    }
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, currStatus, permList, camPermList);
+    FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
 
     if (!camPermList.empty()) {
-        PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+        ExecuteCameraCallbackAsync(tokenId);
     }
     // each permission sends a status change notice
     for (const auto& perm : permList) {
-        PermissionRecordManager::GetInstance().CallbackExecute(tokenId, perm, currStatus);
+        CallbackExecute(tokenId, perm, status);
     }
 }
 
@@ -456,18 +425,6 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
     return false;
 }
 
-bool PermissionRecordManager::IsTokenIdExist(const uint32_t tokenId)
-{
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if (it->tokenId == tokenId) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void PermissionRecordManager::CallbackExecute(
     AccessTokenID tokenId, const std::string& permissionName, int32_t status)
 {
@@ -480,19 +437,13 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
 {
     bool isOpen = true;
     // only manage camera and microphone global switch now, other default true
-    ResourceType type;
-    if (permissionName == CAMERA_PERMISSION_NAME) {
-        type = ResourceType::CAMERA;
-    } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        type = ResourceType::MICROPHONE;
-    } else {
-        type = ResourceType::INVALID;
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        isOpen = !AudioSystemManager::GetInstance()->IsMicrophoneMute();
+    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+        isOpen = !CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     }
 
-    isOpen = SensitiveResourceManager::GetInstance().GetGlobalSwitch(type);
-
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "type is %{public}d(-1-invalid 0-camera 1-microphone), status is %{public}d", type, isOpen);
+    ACCESSTOKEN_LOG_INFO(LABEL, "permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     return isOpen;
 }
 
@@ -506,20 +457,11 @@ void PermissionRecordManager::SavePermissionRecords(
     int64_t curStamp = TimeUtil::GetCurrentTimestamp();
     if (switchStatus) {
         ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
-        HapTokenInfo tokenInfo;
-        if (AccessTokenKit::GetHapTokenInfo(record.tokenId, tokenInfo) != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", record.tokenId);
-            return;
-        }
-
-        if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, record.status)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-            return;
-        }
+        // no need to store in database when status from inactive to foreground or background
+        record.status = IsForegroundApp(record.tokenId);
         record.timestamp = curStamp;
     } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "microphone global switch is close, update microphone record to inactive");
-
+        ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
         if (record.status != PERM_INACTIVE) {
             // update accessDuration and store in database
             record.accessDuration = curStamp - record.timestamp;
@@ -533,86 +475,81 @@ void PermissionRecordManager::SavePermissionRecords(
     CallbackExecute(record.tokenId, permissionName, record.status);
 }
 
-void PermissionRecordManager::GetRecords(const std::string& permissionName, bool switchStatus)
+void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
-    if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            if ((it->opCode) != Constant::OP_MICROPHONE) {
-                continue;
-            }
-            SavePermissionRecords(MICROPHONE_PERMISSION_NAME, *it, switchStatus);
+    ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode) != Constant::OP_MICROPHONE) {
+            continue;
         }
-    } else if (permissionName == CAMERA_PERMISSION_NAME) {
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            if ((it->opCode) != Constant::OP_CAMERA) {
-                continue;
-            }
-            SavePermissionRecords(CAMERA_PERMISSION_NAME, *it, switchStatus);
-        }
+        SavePermissionRecords("ohos.permission.MICROPHONE", *it, switchStatus);
     }
 }
 
-void PermissionRecordManager::MicSwitchChangeListener(bool switchStatus)
+void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
-    PermissionRecordManager::GetInstance().GetRecords(MICROPHONE_PERMISSION_NAME, switchStatus);
-}
-
-void PermissionRecordManager::CameraSwitchChangeListener(bool switchStatus)
-{
-    PermissionRecordManager::GetInstance().GetRecords(CAMERA_PERMISSION_NAME, switchStatus);
-}
-
-int32_t PermissionRecordManager::ShowPermissionDialog(const std::string& permissionName)
-{
-    // location switch has not been managed yet
-    if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
-        return RET_SUCCESS;
+    ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode) != Constant::OP_CAMERA) {
+            continue;
+        }
+        SavePermissionRecords("ohos.permission.CAMERA", *it, switchStatus);
     }
+}
 
-    ResourceType type;
+bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
+{
+    std::string resource;
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        type = ResourceType::CAMERA;
-
-        ACCESSTOKEN_LOG_INFO(LABEL, "show camera dialog");
+        resource = "camera";
     } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        type = ResourceType::MICROPHONE;
-
-        ACCESSTOKEN_LOG_INFO(LABEL, "show microphone dialog");
+        resource = "microphone";
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "invalid permissionName(%{public}s).", permissionName.c_str());
+        return true;
     }
 
-    int32_t result = SensitiveResourceManager::GetInstance().ShowDialog(type);
-    if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "show dialog failed.");
-        return result;
+    AAFwk::Want want;
+    want.SetElementName(PERMISSION_MANAGER_BUNDLE_NAME, PERMISSION_MANAGER_DIALOG_ABILITY);
+    want.SetParam(RESOURCE_KEY, resource);
+    ErrCode err = AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
+        return false;
     }
-
-    return RET_SUCCESS;
+    return true;
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    {
-        // regist mic global switch change callback on first use StartUsingPermission
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!micHasRegistered_) {
-            int32_t ret = SensitiveResourceManager::GetInstance().RegisterMicGlobalSwitchChangeCallback(
-                PermissionRecordManager::MicSwitchChangeListener);
-            if (ret != Constant::SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register microphone global switch change callback failed.");
-                return ret;
-            }
+    ACCESSTOKEN_LOG_INFO(LABEL, "==========chennian StartUsingPermission %{public}s", permissionName.c_str());
+    if (!Register()) {
+        return PrivacyError::ERR_MALLOC_FAILED;
+    }
+    int32_t accessCount = 1;
+    int32_t failCount = 0;
 
-            ACCESSTOKEN_LOG_INFO(LABEL, "register microphone global switch change callback success.");
-            micHasRegistered_ = true;
+    PermissionRecord record = { 0 };
+    int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);
+    if (result != Constant::SUCCESS) {
+        return result;
+    }
+
+    if (HasStarted(record)) {
+        return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
+    }
+
+    if (!GetGlobalSwitchStatus(permissionName)) {
+        if (!ShowGlobalDialog(permissionName)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
+            return ERR_SERVICE_ABNORMAL;
         }
+        record.status = PERM_INACTIVE;
+    } else {
+        CallbackExecute(tokenId, permissionName, record.status);
     }
-    int ret = StartUsingPermissionCommon(tokenId, permissionName);
-    if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
-    }
-
-    return ret;
+    AddRecordToStartList(record);
+    return Constant::SUCCESS;
 }
 
 void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
@@ -645,28 +582,13 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
 /*
  * when camera float window is not show, notice camera service to use StopUsingPermission
  */
-void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, bool isShowing)
+void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing)
 {
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, isShowing);
-
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return;
-    }
-
-    int32_t status = 0;
-    if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-        return;
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
-
-    if (status == PERM_ACTIVE_IN_BACKGROUND && !isShowing) {
+    camFloatWindowShowing_ = isShowing;
+    floatWindowTokenId_ = tokenId;
+    if (!IsForegroundApp(tokenId) && !isShowing) {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-
-        PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+        ExecuteCameraCallbackAsync(tokenId);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is show!");
     }
@@ -675,59 +597,14 @@ void PermissionRecordManager::CameraFloatWindowListener(AccessTokenID tokenId, b
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null.");
-        return ERR_CALLBACK_NOT_EXIST;
+    if (callback == nullptr || permissionName != CAMERA_PERMISSION_NAME) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ERR_PARAM_INVALID is null.");
+        return PrivacyError::ERR_PARAM_INVALID;
     }
-    int32_t ret;
-    {
-        // regist camera float window change callback on first use StartUsingPermission
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!floatWindowHasRegistered_) {
-            ret = SensitiveResourceManager::GetInstance().RegisterCameraFloatWindowChangeCallback(
-                PermissionRecordManager::CameraFloatWindowListener);
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register cameraflowwindow change callback failed.");
-                return ret;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "register cameraflowwindow change callback success.");
-            floatWindowHasRegistered_ = true;
-        }
-    }
-    {
-        // regist camera global switch change callback on first use StartUsingPermission
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (!camerHasRegistered_) {
-            ret = SensitiveResourceManager::GetInstance().RegisterCameraGlobalSwitchChangeCallback(
-                PermissionRecordManager::CameraSwitchChangeListener);
-            if (ret != Constant::SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register camera global switch change callback failed.");
-                return ret;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "register camera global switch change callback success.");
-            camerHasRegistered_ = true;
-        }
+    if (!Register()) {
+        return PrivacyError::ERR_MALLOC_FAILED;
     }
 
-    if (permissionName != CAMERA_PERMISSION_NAME) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "only camera permission can use this.");
-        return PrivacyError::ERR_PERMISSION_DENIED;
-    }
-
-    ret = StartUsingPermissionCommon(tokenId, permissionName);
-    if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "StartUsingPermissionCommon failed.");
-        return ret;
-    }
-    
-    SetCameraCallback(callback);
-    return Constant::SUCCESS;
-}
-
-int32_t PermissionRecordManager::StartUsingPermissionCommon(AccessTokenID tokenId, const std::string& permissionName)
-{
     int32_t accessCount = 1;
     int32_t failCount = 0;
 
@@ -742,24 +619,17 @@ int32_t PermissionRecordManager::StartUsingPermissionCommon(AccessTokenID tokenI
     }
 
     if (!GetGlobalSwitchStatus(permissionName)) {
-        result = ShowPermissionDialog(permissionName);
+        result = ShowGlobalDialog(permissionName);
         if (result != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
             return result;
         }
         record.status = PERM_INACTIVE;
-    }
-
-    if (record.status != PERM_INACTIVE) {
+    } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
     AddRecordToStartList(record);
-
-    // register app background and forground change callback, unregist when stop
-    int32_t ret = SensitiveResourceManager::GetInstance().RegisterAppStatusChangeCallback(tokenId, AppStatusListener);
-    if (ret != Constant::SUCCESS) {
-        return ret;
-    }
+    SetCameraCallback(callback);
     return Constant::SUCCESS;
 }
 
@@ -785,14 +655,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     if (record.status != PERM_INACTIVE) {
         AddRecord(record);
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
-    }
-
-    if (!IsTokenIdExist(tokenId)) {
-        int32_t ret = SensitiveResourceManager::GetInstance().UnRegisterAppStatusChangeCallback(
-            tokenId, AppStatusListener);
-        if (ret != Constant::SUCCESS) {
-            return ret;
-        }
     }
     return Constant::SUCCESS;
 }
@@ -835,29 +697,20 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     }
 
     HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
         return false;
     }
 
-    int32_t status = 0;
-    if (!SensitiveResourceManager::GetInstance().GetAppStatus(tokenInfo.bundleName, status)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppStatus failed");
-        return false;
-    }
-
+    int32_t status = IsForegroundApp(tokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
-    
-    if (permissionName == CAMERA_PERMISSION_NAME) {
-        if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
-            return true;
-        } else if (status == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) {
-            return SensitiveResourceManager::GetInstance().IsFlowWindowShow(tokenId);
-        } else {
-            return false;
-        }
+
+    if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
+        return true;
+    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+        return IsFlowWindowShow(tokenId);
     }
-    return status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND;
+    return false;
 }
 
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
@@ -886,6 +739,168 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
         return ConstantCommon::GetLocalDeviceId();
     }
     return tokenInfo.deviceID;
+}
+
+int32_t PermissionRecordManager::IsForegroundApp(AccessTokenID tokenId)
+{
+    int32_t status = PERM_INACTIVE;
+    auto appMgrProxy = GetAppManagerProxy();
+    if (appMgrProxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
+        return status;
+    }
+
+    HapTokenInfo tokenInfo;
+    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        return status;
+    }
+    status = PERM_ACTIVE_IN_BACKGROUND;
+    std::vector<AppExecFwk::AppStateData> foreGroundAppList;
+    appMgrProxy->GetForegroundApplications(foreGroundAppList);
+
+    if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
+        [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
+        status = PERM_ACTIVE_IN_FOREGROUND;
+    }
+    return status;
+}
+
+bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
+{
+    return floatWindowTokenId_ == tokenId && camFloatWindowShowing_;
+}
+
+bool PermissionRecordManager::Register()
+{
+    if (hasRegistered_) {
+        return true;
+    }
+    if (micMuteCallback_ == nullptr) {
+        micMuteCallback_ = std::make_shared<MicGlobalSwitchChangeCallback>();
+        if (micMuteCallback_ == nullptr) {
+            return false;
+        }
+        AudioRoutingManager::GetInstance()->SetMicStateChangeCallback(micMuteCallback_);
+    }
+    if (camMuteCallback_ == nullptr) {
+        camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
+        if (camMuteCallback_ == nullptr) {
+            return false;
+        }
+        CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
+    }
+    if (appStateCallback_ == nullptr) {
+        appStateCallback_ = new(std::nothrow) ApplicationStatusChangeCallback();
+        if (appStateCallback_ == nullptr) {
+            return false;
+        }
+        auto appMgrProxy = GetAppManagerProxy();
+        if (appMgrProxy == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
+            return false;
+        }
+        appMgrProxy->RegisterApplicationStateObserver(appStateCallback_);
+    }
+    if (floatWindowCallback_ == nullptr) {
+        floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
+        if (floatWindowCallback_ == nullptr) {
+            return false;
+        }
+        WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
+            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
+    }
+    hasRegistered_ = true;
+    return true;
+}
+
+void PermissionRecordManager::Unregister()
+{
+    if (appStateCallback_ != nullptr) {
+        auto appMgrProxy = GetAppManagerProxy();
+        if (appMgrProxy == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
+            return;
+        }
+        appMgrProxy->UnregisterApplicationStateObserver(appStateCallback_);
+        appStateCallback_= nullptr;
+    }
+    if (floatWindowCallback_ == nullptr) {
+        WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
+            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
+        floatWindowCallback_ = nullptr;
+    }
+    hasRegistered_ = false;
+}
+
+bool PermissionRecordManager::InitProxy()
+{
+    std::lock_guard<std::mutex> lock(appProxyMutex_);
+    if (appMgrProxy_ == nullptr) {
+        sptr<ISystemAbilityManager> systemAbilityManager =
+            SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        if (systemAbilityManager == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
+            return false;
+        }
+
+        sptr<IRemoteObject> object = systemAbilityManager->GetSystemAbility(APP_MGR_SERVICE_ID);
+        if (object == nullptr) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null", APP_MGR_SERVICE_ID);
+            return false;
+        }
+
+        appMgrDeathObserver_ = new (std::nothrow) AppMgrDeathRecipient();
+        if (appMgrDeathObserver_ != nullptr) {
+            object->AddDeathRecipient(appMgrDeathObserver_);
+        }
+
+        appMgrProxy_ = iface_cast<AppExecFwk::IAppMgr>(object);
+        if (appMgrProxy_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+            return false;
+        }
+    }
+    return true;
+}
+
+void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
+{
+    {
+        std::lock_guard<std::mutex> lock(appProxyMutex_);
+        appMgrProxy_ = nullptr;
+    }
+    hasRegistered_ = false;
+    InitProxy();
+}
+
+void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
+{
+    hasRegistered_ = false;
+    micMuteCallback_ = nullptr;
+}
+
+void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
+{
+    hasRegistered_ = false;
+    camMuteCallback_ = nullptr;
+}
+
+void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
+{
+    hasRegistered_ = false;
+    floatWindowCallback_ = nullptr;
+}
+
+OHOS::sptr<OHOS::AppExecFwk::IAppMgr> PermissionRecordManager::GetAppManagerProxy()
+{
+    if (appMgrProxy_ == nullptr) {
+        if (!InitProxy()) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "InitProxy failed");
+            return nullptr;
+        }
+    }
+    return appMgrProxy_;
 }
 
 void PermissionRecordManager::Init()

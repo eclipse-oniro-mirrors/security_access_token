@@ -818,7 +818,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     };
     HapTokenInfo wrongBaseInfo = rightBaseInfo;
     std::string wrongStr(10241, 'x');
-    
+
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest("", wrongBaseInfo));
 
     wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
@@ -1332,7 +1332,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
-    
+
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.permList.clear();
     inScopeInfo.tokenIDs = {123, tokenId, tokenId};
@@ -1516,7 +1516,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    
+
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";

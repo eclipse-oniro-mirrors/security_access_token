@@ -15,6 +15,7 @@
 
 #include "window_manager_privacy_agent.h"
 #include "accesstoken_log.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -47,18 +48,10 @@ int WindowManagerPrivacyAgent::OnRemoteRequest(uint32_t code, MessageParcel& dat
     return 0;
 }
 
-void WindowManagerPrivacyAgent::SetCallBack(OnCameraFloatWindowChangeCallback callback)
-{
-    callback_ = callback;
-}
-
 void WindowManagerPrivacyAgent::UpdateCameraFloatWindowStatus(uint32_t accessTokenId, bool isShowing)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(tokenId=%{public}d, isShow=%{public}d)", accessTokenId, isShowing);
-
-    if (callback_ != nullptr) {
-        callback_(accessTokenId, isShowing);
-    }
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(accessTokenId, isShowing);
 }
 } // namespace AccessToken
 }

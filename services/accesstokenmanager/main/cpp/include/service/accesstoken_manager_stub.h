@@ -57,7 +57,7 @@ private:
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply);
-    
+
 #ifdef TOKEN_SYNC_ENABLE
     void GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply);
     void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);

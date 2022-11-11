@@ -49,7 +49,7 @@ static napi_value Init(napi_env env, napi_value exports)
 
     napi_value permActiveStatus = nullptr;
     napi_create_object(env, &permActiveStatus); // create enmu permActiveStatus
-    
+
     prop = nullptr;
     napi_create_int32(env, PERM_INACTIVE, &prop);
     napi_set_named_property(env, permActiveStatus, "PERM_INACTIVE", prop);

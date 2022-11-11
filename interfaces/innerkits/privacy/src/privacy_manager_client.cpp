@@ -123,7 +123,7 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
         stateChangeCallback_ = nullptr;
     }
-            
+
     return proxy->StopUsingPermission(tokenID, permissionName);
 }
 

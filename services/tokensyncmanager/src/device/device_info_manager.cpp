@@ -56,7 +56,7 @@ void DeviceInfoManager::AddDeviceInfo(const std::string &networkId, const std::s
 void DeviceInfoManager::RemoveAllRemoteDeviceInfo()
 {
     std::string localDevice = ConstantCommon::GetLocalDeviceId();
-    
+
     DeviceInfo localDeviceInfoOpt;
     if (DeviceInfoRepository::GetInstance().FindDeviceInfo(
         localDevice, DeviceIdType::UNIQUE_DISABILITY_ID, localDeviceInfoOpt)) {

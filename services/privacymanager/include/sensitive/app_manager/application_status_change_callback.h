@@ -26,15 +26,6 @@ typedef void (*OnAppStatusChangeCallback)(uint32_t tokenId, int32_t status);
 class ApplicationStatusChangeCallback : public AppExecFwk::ApplicationStateObserverStub {
 public:
     void OnForegroundApplicationChanged(const AppExecFwk::AppStateData& appStateData) override;
-
-    bool IsHasListener() const;
-    void SetCallback(OnAppStatusChangeCallback callback);
-    OnAppStatusChangeCallback GetCallback() const;
-    void AddTokenId(uint32_t tokenId);
-    void RemoveTokenId(uint32_t tokenId);
-private:
-    OnAppStatusChangeCallback callback_ = nullptr;
-    std::vector<uint32_t> tokenIdList_;
 };
 } // namespace AccessToken
 } // namespace Security

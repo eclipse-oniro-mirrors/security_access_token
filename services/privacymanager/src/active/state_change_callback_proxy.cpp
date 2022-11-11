@@ -48,7 +48,7 @@ void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isS
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Write isShowing");
         return;
     }
-    
+
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
