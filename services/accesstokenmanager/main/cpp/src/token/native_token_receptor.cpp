@@ -77,7 +77,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     if (j.find(JSON_APL) != j.end()) {
         int aplNum = j.at(JSON_APL).get<int>();
         if (DataValidator::IsAplNumValid(aplNum)) {
-            native.apl = (ATokenAplEnum)aplNum;
+            native.apl = static_cast<ATokenAplEnum>(aplNum);
         } else {
             return;
         }

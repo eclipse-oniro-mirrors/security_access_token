@@ -41,7 +41,7 @@ enum PermissionStateChangeType {
     PERMISSION_GRANTED_OPER = 1,
 };
 
-static thread_local napi_ref atManagerRef_;
+static thread_local napi_ref g_atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
 
 class RegisterPermStateChangeScopePtr : public PermStateChangeCallbackCustomize {
@@ -124,11 +124,11 @@ private:
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
     static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
-    static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
+    static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
-    static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbinfo);
+    static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
 };

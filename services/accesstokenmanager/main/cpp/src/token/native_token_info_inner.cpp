@@ -70,7 +70,7 @@ int NativeTokenInfoInner::Init(AccessTokenID id, const std::string& processName,
             tokenInfoBasic_.tokenID, apl);
         return RET_FAILED;
     }
-    tokenInfoBasic_.apl = (ATokenAplEnum)apl;
+    tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(apl);
     tokenInfoBasic_.dcap = dcap;
     tokenInfoBasic_.nativeAcls = nativeAcls;
 
@@ -105,13 +105,13 @@ std::string NativeTokenInfoInner::NativeAclsToString(const std::vector<std::stri
 
 int NativeTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, (int)tokenInfoBasic_.tokenID);
+    outGenericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
     outGenericValues.Put(FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
     outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
     outGenericValues.Put(FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
-    outGenericValues.Put(FIELD_TOKEN_ATTR, (int)tokenInfoBasic_.tokenAttr);
+    outGenericValues.Put(FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
 
     return RET_SUCCESS;
 }
@@ -139,7 +139,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
             "ERROR_REASON", "native token apl error");
         return RET_FAILED;
     }
-    tokenInfoBasic_.apl = (ATokenAplEnum)aplNum;
+    tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
@@ -159,15 +159,15 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     return RET_SUCCESS;
 }
 
-void NativeTokenInfoInner::TranslateToNativeTokenInfo(NativeTokenInfo& InfoParcel) const
+void NativeTokenInfoInner::TranslateToNativeTokenInfo(NativeTokenInfo& infoParcel) const
 {
-    InfoParcel.apl = tokenInfoBasic_.apl;
-    InfoParcel.ver = tokenInfoBasic_.ver;
-    InfoParcel.processName = tokenInfoBasic_.processName;
-    InfoParcel.dcap = tokenInfoBasic_.dcap;
-    InfoParcel.nativeAcls = tokenInfoBasic_.nativeAcls;
-    InfoParcel.tokenID = tokenInfoBasic_.tokenID;
-    InfoParcel.tokenAttr = tokenInfoBasic_.tokenAttr;
+    infoParcel.apl = tokenInfoBasic_.apl;
+    infoParcel.ver = tokenInfoBasic_.ver;
+    infoParcel.processName = tokenInfoBasic_.processName;
+    infoParcel.dcap = tokenInfoBasic_.dcap;
+    infoParcel.nativeAcls = tokenInfoBasic_.nativeAcls;
+    infoParcel.tokenID = tokenInfoBasic_.tokenID;
+    infoParcel.tokenAttr = tokenInfoBasic_.tokenAttr;
 }
 
 void NativeTokenInfoInner::StoreNativeInfo(std::vector<GenericValues>& valueList,

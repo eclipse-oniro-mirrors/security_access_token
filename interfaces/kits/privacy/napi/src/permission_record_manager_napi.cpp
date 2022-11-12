@@ -136,7 +136,7 @@ static bool ParseAddPermissionRecord(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     size_t argc = ADD_PERMISSION_RECORD_MAX_PARAMS;
-    napi_value argv[ADD_PERMISSION_RECORD_MAX_PARAMS] = { 0 };
+    napi_value argv[ADD_PERMISSION_RECORD_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
@@ -185,7 +185,7 @@ static bool ParseStartAndStopUsingPermission(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     size_t argc = START_STOP_MAX_PARAMS;
-    napi_value argv[START_STOP_MAX_PARAMS] = { 0 };
+    napi_value argv[START_STOP_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     void* data = nullptr;
 
@@ -400,7 +400,7 @@ static bool ParseGetPermissionUsedRecords(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
     size_t argc = GET_PERMISSION_RECORD_MAX_PARAMS;
-    napi_value argv[GET_PERMISSION_RECORD_MAX_PARAMS] = { 0 };
+    napi_value argv[GET_PERMISSION_RECORD_MAX_PARAMS] = { nullptr };
     napi_value thisVar = nullptr;
     void* data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);

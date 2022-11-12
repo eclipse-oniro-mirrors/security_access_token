@@ -88,14 +88,14 @@ void HapTokenInfoInner::Update(const std::string& appIDDesc, int32_t apiVersion,
     return;
 }
 
-void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const
+void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
 {
-    InfoParcel = tokenInfoBasic_;
+    infoParcel = tokenInfoBasic_;
 }
 
 void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, (int)tokenInfoBasic_.tokenID);
+    outGenericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
     outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
     outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
     outGenericValues.Put(FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
@@ -105,7 +105,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
     outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
-    outGenericValues.Put(FIELD_TOKEN_ATTR, (int)tokenInfoBasic_.tokenAttr);
+    outGenericValues.Put(FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)
@@ -140,7 +140,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
     }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
-        tokenInfoBasic_.apl = (ATokenAplEnum)aplNum;
+        tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x apl is error, value %{public}d",
             tokenInfoBasic_.tokenID, aplNum);

@@ -109,8 +109,8 @@ void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const Per
         return;
     }
     nlohmann::json permConfigsJson;
-    int size = (signed)state.resDeviceID.size();
-    for (int i = 0; i < size; i++) {
+    int size = state.resDeviceID.size();
+    for (uint32_t i = 0; i < size; i++) {
         nlohmann::json permConfigJson = nlohmann::json {
             {"resDeviceID", state.resDeviceID[i]},
             {"grantStatus", state.grantStatus[i]},
@@ -182,7 +182,7 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
     if (hapTokenJson.find("apl") != hapTokenJson.end() && hapTokenJson.at("apl").is_number()) {
         int apl = hapTokenJson.at("apl").get<int>();
         if (DataValidator::IsAplNumValid(apl)) {
-            hapTokenBasicInfo.apl = (ATokenAplEnum)apl;
+            hapTokenBasicInfo.apl = static_cast<ATokenAplEnum>(apl);
         }
     }
 }
@@ -252,7 +252,7 @@ void BaseRemoteCommand::FromNativeTokenInfoJson(const nlohmann::json& nativeToke
     if (nativeTokenJson.find("apl") != nativeTokenJson.end() && nativeTokenJson.at("apl").is_number()) {
         int apl = nativeTokenJson.at("apl").get<int>();
         if (DataValidator::IsAplNumValid(apl)) {
-            nativeTokenInfo.baseInfo.apl = (ATokenAplEnum)apl;
+            nativeTokenInfo.baseInfo.apl = static_cast<ATokenAplEnum>(apl);
         }
     }
     if (nativeTokenJson.find("version") != nativeTokenJson.end() && nativeTokenJson.at("version").is_number()) {

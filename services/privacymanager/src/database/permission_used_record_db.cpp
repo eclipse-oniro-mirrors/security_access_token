@@ -233,7 +233,7 @@ std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) con
     int32_t i = 1;
     for (const auto& columnName : it->second.tableColumnNames_) {
         sql.append(":" + columnName);
-        if (i < (int32_t) it->second.tableColumnNames_.size()) {
+        if (i < static_cast<int32_t>(it->second.tableColumnNames_.size())) {
             sql.append(",");
         }
         i += 1;
@@ -273,7 +273,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
     int32_t i = 1;
     for (const auto& columnName : modifyColumns) {
         sql.append(columnName + "=:" + columnName);
-        if (i < (int32_t) modifyColumns.size()) {
+        if (i < static_cast<int32_t>(modifyColumns.size())) {
             sql.append(",");
         }
         i += 1;
