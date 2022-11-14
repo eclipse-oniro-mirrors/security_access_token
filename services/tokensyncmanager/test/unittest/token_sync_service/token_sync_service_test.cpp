@@ -27,13 +27,14 @@
 #include "accesstoken_log.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
-#include "session.h"
 #include "delete_remote_token_command.h"
+#include "device_info_manager.h"
+#include "device_info_repository.h"
 #include "device_info.h"
+#include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
 #include "token_setproc.h"
-#include "device_info_manager.h"
 
 #define private public
 #include "token_sync_manager_service.h"
@@ -151,43 +152,43 @@ static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
     .label = "label",
     .labelId = 1,
     .description = "open the door",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL
+    .descriptionId = 1
 };
 
 static PermissionDef g_infoManagerTestPermDef2 = {
     .permissionName = "ohos.permission.test2",
     .bundleName = "accesstoken_test",
     .grantMode = 1,
+    .availableLevel = APL_NORMAL,
     .label = "label",
     .labelId = 1,
     .description = "break the door",
-    .descriptionId = 1,
-    .availableLevel = APL_NORMAL
+    .descriptionId = 1
 };
 
 static PermissionStateFull g_infoManagerTestState1 = {
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .isGeneral = true,
     .permissionName = "ohos.permission.test1",
-    .resDeviceID = {"local"}
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 
 static PermissionStateFull g_infoManagerTestState2 = {
     .permissionName = "ohos.permission.test2",
     .isGeneral = false,
-    .grantFlags = {1, 2},
+    .resDeviceID = {"device 1", "device 2"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
-    .resDeviceID = {"device 1", "device 2"}
+    .grantFlags = {1, 2}
 };
 
 static HapInfoParams g_infoManagerTestInfoParms = {
-    .bundleName = "accesstoken_test",
     .userID = 1,
+    .bundleName = "accesstoken_test",
     .instIndex = 0,
     .appIDDesc = "testtesttesttest"
 };
@@ -659,21 +660,284 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
         deleteRemoteTokenCommand->remoteProtocol_.requestVersion, 2);
 }
 
+/**
+ * @tc.name: AddDeviceInfo001
+ * @tc.desc: DeviceInfoManager::AddDeviceInfo function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level1)
+{
+    std::string networkId;
+    std::string universallyUniqueId;
+    std::string uniqueDeviceId;
+    std::string deviceName;
+    std::string deviceType;
+    ASSERT_EQ("", networkId);
+    ASSERT_EQ("", universallyUniqueId);
+    ASSERT_EQ("", uniqueDeviceId);
+    ASSERT_EQ("", deviceName);
+    ASSERT_EQ("", deviceType);
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // all empty
+
+    networkId = "123";
+    universallyUniqueId = "123";
+    uniqueDeviceId = "123";
+    deviceName = "123";
+    deviceType = "123";
+    ASSERT_NE("", networkId);
+    ASSERT_NE("", universallyUniqueId);
+    ASSERT_NE("", uniqueDeviceId);
+    ASSERT_NE("", deviceName);
+    ASSERT_NE("", deviceType);
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // all valued
+
+    std::string nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: RemoveAllRemoteDeviceInfo001
+ * @tc.desc: DeviceInfoManager::RemoveAllRemoteDeviceInfo function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level1)
+{
+    DeviceInfoManager::GetInstance().RemoveAllRemoteDeviceInfo(); // FindDeviceInfo false
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId;
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    uniqueDeviceId = ConstantCommon::GetLocalDeviceId();
+    ASSERT_EQ("local:udid-001", uniqueDeviceId);
+
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType);
+    DeviceInfoManager::GetInstance().RemoveAllRemoteDeviceInfo(); // FindDeviceInfo true
+
+    std::string nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: RemoveRemoteDeviceInfo001
+ * @tc.desc: DeviceInfoManager::RemoveRemoteDeviceInfo function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level1)
+{
+    std::string nodeId;
+    DeviceIdType deviceIdType = DeviceIdType::UNKNOWN;
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType); // nodeId invalid
+    ASSERT_EQ("", nodeId);
+
+    nodeId = "123";
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType); // FindDeviceInfo false
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add 123 nodeid
+
+    networkId = "456";
+    universallyUniqueId = "456";
+    uniqueDeviceId = ConstantCommon::GetLocalDeviceId();
+    ASSERT_EQ("local:udid-001", uniqueDeviceId);
+    deviceName = "456";
+    deviceType = "456";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add local unique deviceid
+
+    nodeId = "123";
+    deviceIdType = DeviceIdType::UNIQUE_DISABILITY_ID;
+    // FindDeviceInfo true + uniqueDeviceId != localDevice true
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType); // delete 123
+
+    nodeId = uniqueDeviceId;
+    // FindDeviceInfo true + uniqueDeviceId != localDevice false
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType);
+
+    nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete local unique deviceid
+}
+
+/**
+ * @tc.name: ConvertToUniversallyUniqueIdOrFetch001
+ * @tc.desc: DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level1)
+{
+    std::string nodeId;
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId)); // nodeId invalid
+
+    nodeId = "123";
+    // FindDeviceInfo false
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId));
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add 123 nodeid
+
+    nodeId = "123";
+    // FindDeviceInfo true + universallyUniqueId is not empty
+    DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(nodeId);
+
+    nodeId = uniqueDeviceId;
+    // FindDeviceInfo true + uniqueDeviceId != localDevice false
+    DeviceIdType deviceIdType = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType);
+
+    nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: ConvertToUniqueDeviceIdOrFetch001
+ * @tc.desc: DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level1)
+{
+    std::string nodeId;
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId)); // nodeId invalid
+
+    nodeId = "123";
+    // FindDeviceInfo false
+    ASSERT_EQ("", DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId));
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add 123 nodeid
+
+    nodeId = "123";
+    // FindDeviceInfo true + universallyUniqueId is not empty
+    DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(nodeId);
+
+    nodeId = uniqueDeviceId;
+    // FindDeviceInfo true + uniqueDeviceId != localDevice false
+    DeviceIdType deviceIdType = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoManager::GetInstance().RemoveRemoteDeviceInfo(nodeId, deviceIdType);
+
+    nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: IsDeviceUniversallyUniqueId001
+ * @tc.desc: DeviceInfoManager::IsDeviceUniversallyUniqueId function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level1)
+{
+    std::string nodeId;
+    ASSERT_EQ(false, DeviceInfoManager::GetInstance().IsDeviceUniversallyUniqueId(nodeId)); // nodeId invalid
+
+    nodeId = "123";
+    ASSERT_EQ(false, DeviceInfoManager::GetInstance().IsDeviceUniversallyUniqueId(nodeId)); // FindDeviceInfo false
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add 123 nodeid
+
+    ASSERT_EQ(true, DeviceInfoManager::GetInstance().IsDeviceUniversallyUniqueId(nodeId)); // FindDeviceInfo true
+
+    nodeId = uniqueDeviceId;
+    DeviceIdType type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: FindDeviceInfo001
+ * @tc.desc: DeviceInfoRepository::FindDeviceInfo function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level1)
+{
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+
+    DeviceId deviceId;
+    deviceId.networkId = networkId;
+    deviceId.universallyUniqueId = universallyUniqueId;
+    deviceId.uniqueDeviceId = uniqueDeviceId;
+    DeviceInfo deviceInfo;
+    // count > 0 false
+    DeviceIdType type = DeviceIdType::UNKNOWN;
+    ASSERT_EQ(false, DeviceInfoRepository::GetInstance().FindDeviceInfo("456", type, deviceInfo));
+
+    DeviceInfoRepository::GetInstance().SaveDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add 123 nodeid
+
+    type = DeviceIdType::NETWORK_ID;
+    // count > 0 true
+    ASSERT_EQ(true, DeviceInfoRepository::GetInstance().FindDeviceInfo(networkId, type, deviceInfo));
+
+    type = DeviceIdType::UNIVERSALLY_UNIQUE_ID;
+    // count > 0 true
+    ASSERT_EQ(true, DeviceInfoRepository::GetInstance().FindDeviceInfo(universallyUniqueId, type, deviceInfo));
+
+    type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    // count > 0 true
+    ASSERT_EQ(true, DeviceInfoRepository::GetInstance().FindDeviceInfo(uniqueDeviceId, type, deviceInfo));
+
+    type = DeviceIdType::UNKNOWN;
+    // count > 0 true
+    ASSERT_EQ(true, DeviceInfoRepository::GetInstance().FindDeviceInfo(networkId, type, deviceInfo));
+
+    std::string nodeId = uniqueDeviceId;
+    type = DeviceIdType::UNIQUE_DISABILITY_ID;
+    DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
 namespace {
 PermissionStateFull g_infoManagerTestUpdateState1 = {
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .isGeneral = true,
     .permissionName = "ohos.permission.CAMERA",
-    .resDeviceID = {"local"}
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {1}
 };
 
 PermissionStateFull g_infoManagerTestUpdateState2 = {
     .permissionName = "ohos.permission.ANSWER_CALL",
     .isGeneral = false,
-    .grantFlags = {1, 2},
+    .resDeviceID = {"device 1", "device 2"},
     .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-    .resDeviceID = {"device 1", "device 2"}
+    .grantFlags = {1, 2}
 };
 
 HapTokenInfo g_remoteHapInfoBasic = {

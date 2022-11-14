@@ -20,20 +20,25 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
-    "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
+    "//base/security/access_token/frameworks/common/include",
+    "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/src",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/callback",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/device",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/service",
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/token",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
     "//base/security/access_token/services/common/database/include",
-    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
-    "//third_party/json/include",
-    "//third_party/googletest/include",
     "//commonlibrary/c_utils/base/include",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
+    "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
+    "//third_party/googletest/include",
+    "//third_party/json/include",
   ]
 
   sources = [
@@ -57,7 +62,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
-    "//base/security/access_token/services/accesstokenmanager/:accesstoken_manager_service",
+    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
+    "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
     "//base/security/access_token/services/common/database:accesstoken_database_cxx",
     "//third_party/googletest:gtest_main",
   ]
