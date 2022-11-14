@@ -82,8 +82,11 @@ void AccessTokenManagerStub::GetDefPermissionInner(MessageParcel& data, MessageP
     std::string permissionName = data.ReadString();
     PermissionDefParcel permissionDefParcel;
     int result = this->GetDefPermission(permissionName, permissionDefParcel);
-    reply.WriteParcelable(&permissionDefParcel);
     reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteParcelable(&permissionDefParcel);
 }
 
 void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply)
@@ -92,12 +95,15 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     std::vector<PermissionDefParcel> permList;
 
     int result = this->GetDefPermissions(tokenID, permList);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}d", __func__, (int) permList.size());
     reply.WriteInt32((int32_t)permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
     }
-    reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply)
@@ -107,12 +113,15 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     std::vector<PermissionStateFullParcel> permList;
 
     int result = this->GetReqPermissions(tokenID, permList, isSystemGrant);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}d", (int) permList.size());
     reply.WriteInt32((int32_t)permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
     }
-    reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
@@ -158,11 +167,11 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
     }
     int32_t flag;
     int result = this->GetPermissionFlag(tokenID, permissionName, flag);
-    if (result == RET_SUCCESS) {
-        reply.WriteInt32(flag);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
         return;
     }
-    reply.WriteInt32(result);
+    reply.WriteInt32(flag);
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -319,8 +328,11 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
     HapTokenInfoParcel hapTokenInfoParcel;
     AccessTokenID tokenID = data.ReadUint32();
     int result = this->GetHapTokenInfo(tokenID, hapTokenInfoParcel);
-    reply.WriteParcelable(&hapTokenInfoParcel);
     reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteParcelable(&hapTokenInfoParcel);
 }
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
@@ -333,8 +345,11 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
     AccessTokenID tokenID = data.ReadUint32();
     NativeTokenInfoParcel nativeTokenInfoParcel;
     int result = this->GetNativeTokenInfo(tokenID, nativeTokenInfoParcel);
-    reply.WriteParcelable(&nativeTokenInfoParcel);
     reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteParcelable(&nativeTokenInfoParcel);
 }
 
 void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -417,8 +432,11 @@ void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data,
     HapTokenInfoForSyncParcel hapTokenParcel;
 
     int result = this->GetHapTokenInfoFromRemote(tokenID, hapTokenParcel);
-    reply.WriteParcelable(&hapTokenParcel);
     reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteParcelable(&hapTokenParcel);
 }
 
 void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
@@ -430,11 +448,14 @@ void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, Mes
     }
     std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
     int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
     reply.WriteUint32(nativeTokenInfosRes.size());
     for (const auto& native : nativeTokenInfosRes) {
         reply.WriteParcelable(&native);
     }
-    reply.WriteInt32(result);
 }
 
 void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)

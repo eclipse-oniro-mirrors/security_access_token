@@ -171,13 +171,17 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
+    int32_t ret = reply.ReadInt32();
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
     sptr<PermissionUsedResultParcel> resultSptr = reply.ReadParcelable<PermissionUsedResultParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
         return PrivacyError::ERR_READ_PARCEL_FAILED;
     }
     result = *resultSptr;
-    return reply.ReadInt32();
+    return ret;
 }
 
 int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedRequestParcel& request,
