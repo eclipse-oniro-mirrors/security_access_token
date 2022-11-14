@@ -619,10 +619,9 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     }
 
     if (!GetGlobalSwitchStatus(permissionName)) {
-        result = ShowGlobalDialog(permissionName);
-        if (result != RET_SUCCESS) {
+        if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
-            return result;
+            return ERR_SERVICE_ABNORMAL;
         }
         record.status = PERM_INACTIVE;
     } else {
