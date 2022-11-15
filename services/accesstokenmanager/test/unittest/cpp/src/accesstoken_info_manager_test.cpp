@@ -20,6 +20,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
+#include "atm_device_state_callback.h"
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
@@ -28,6 +29,7 @@
 #endif
 #define private public
 #include "accesstoken_info_manager.h"
+#include "dm_device_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
 #include "permission_manager.h"
@@ -35,6 +37,7 @@
 #undef private
 #include "permission_state_change_callback_stub.h"
 #include "string_ex.h"
+#include "token_sync_manager_client.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -1717,6 +1720,21 @@ HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
     AccessTokenInfoManager::GetInstance().nativeTokenIdMap_.erase("testtesttest");
+}
+
+/**
+ * @tc.name: OnDeviceOnline001
+ * @tc.desc: AtmDeviceStateCallbackTest::OnDeviceOnline function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
+{
+    ASSERT_NE(nullptr, TokenSyncManagerClient::GetInstance().GetRemoteObject());
+
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    std::shared_ptr<AtmDeviceStateCallback> callback = std::make_shared<AtmDeviceStateCallback>();
+    callback->OnDeviceOnline(deviceInfo); // remote object is not nullptr
 }
 } // namespace AccessToken
 } // namespace Security
