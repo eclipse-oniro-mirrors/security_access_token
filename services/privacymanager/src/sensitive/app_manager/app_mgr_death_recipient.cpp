@@ -12,24 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "app_mgr_death_recipient.h"
 
-#ifndef PERMISSION_UESD_RECORD_NODE_H
-#define PERMISSION_UESD_RECORD_NODE_H
+#include "accesstoken_log.h"
+#include "permission_record_manager.h"
 
-#include <memory>
-#include "permission_record.h"
-#include "rwlock.h"
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedRecordNode {
-    std::weak_ptr<PermissionUsedRecordNode> pre;
-    std::shared_ptr<PermissionUsedRecordNode> next;
-    PermissionRecord record;
-
-    PermissionUsedRecordNode() = default;
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppMgrDeathRecipient"
 };
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-#endif // PERMISSION_UESD_RECORD_NODE_H
+} // namespace
+
+void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
+}
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS

@@ -1060,7 +1060,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission006, TestSize.Level1)
         PrivacyKit::StartUsingPermission(g_tokenIdE, "", callbackPtr));
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "ohos.permission.CAMERA", nullptr));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
         PrivacyKit::StartUsingPermission(g_tokenIdE, "permissionName", callbackPtr));
 }
 

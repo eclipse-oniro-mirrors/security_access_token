@@ -13,23 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_UESD_RECORD_NODE_H
-#define PERMISSION_UESD_RECORD_NODE_H
 
-#include <memory>
-#include "permission_record.h"
-#include "rwlock.h"
+#ifndef AUDIO_MGR_DEATH_RECIPIENT_H
+#define AUDIO_MGR_DEATH_RECIPIENT_H
+
+#include "iremote_object.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionUsedRecordNode {
-    std::weak_ptr<PermissionUsedRecordNode> pre;
-    std::shared_ptr<PermissionUsedRecordNode> next;
-    PermissionRecord record;
-
-    PermissionUsedRecordNode() = default;
+class AudioMgrDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    AudioMgrDeathRecipient() {}
+    virtual ~AudioMgrDeathRecipient() = default;
+    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-#endif // PERMISSION_UESD_RECORD_NODE_H
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
+#endif  // AUDIO_MGR_DEATH_RECIPIENT_H
+

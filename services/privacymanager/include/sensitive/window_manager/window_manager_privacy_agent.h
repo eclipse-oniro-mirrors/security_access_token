@@ -25,7 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
-typedef void (*OnCameraFloatWindowChangeCallback)(AccessTokenID tokenId, bool isShowing);
 class WindowManagerPrivacyAgent : public IRemoteStub<IWindowManagerAgent> {
 public:
     WindowManagerPrivacyAgent() = default;
@@ -33,10 +32,6 @@ public:
 
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
     void UpdateCameraFloatWindowStatus(uint32_t accessTokenId, bool isShowing) override;
-    void SetCallBack(OnCameraFloatWindowChangeCallback callback);
-
-private:
-    OnCameraFloatWindowChangeCallback callback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

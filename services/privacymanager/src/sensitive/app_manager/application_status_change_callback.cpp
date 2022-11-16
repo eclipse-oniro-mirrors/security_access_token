@@ -15,7 +15,7 @@
 
 #include "application_status_change_callback.h"
 #include "accesstoken_log.h"
-#include "sensitive_resource_manager.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,52 +33,13 @@ void ApplicationStatusChangeCallback::OnForegroundApplicationChanged(const AppEx
 
     uint32_t tokenId = appStateData.accessTokenId;
 
-    int32_t status = APP_INVALID;
+    ActiveChangeType status = PERM_INACTIVE;
     if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_FOREGROUND) {
-        status = APP_FOREGROUND;
+        status = PERM_ACTIVE_IN_FOREGROUND;
     } else if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_BACKGROUND) {
-        status = APP_BACKGROUND;
+        status = PERM_ACTIVE_IN_BACKGROUND;
     }
-
-    if (callback_ != nullptr) {
-        callback_(tokenId, status);
-    }
-}
-
-void ApplicationStatusChangeCallback::SetCallback(OnAppStatusChangeCallback callback)
-{
-    callback_ = callback;
-}
-
-OnAppStatusChangeCallback ApplicationStatusChangeCallback::GetCallback() const
-{
-    return callback_;
-}
-
-void ApplicationStatusChangeCallback::AddTokenId(uint32_t tokenId)
-{
-    if (std::find(tokenIdList_.begin(), tokenIdList_.end(), tokenId) == tokenIdList_.end()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "AddTokenId, tokenId=%{public}d", tokenId);
-        tokenIdList_.emplace_back(tokenId);
-    } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "AddTokenId, tokenId(%{public}d) is already exist", tokenId);
-    }
-}
-
-void ApplicationStatusChangeCallback::RemoveTokenId(uint32_t tokenId)
-{
-    auto iter = std::find(tokenIdList_.begin(), tokenIdList_.end(), tokenId);
-    if (iter != tokenIdList_.end()) {
-        tokenIdList_.erase(iter);
-        ACCESSTOKEN_LOG_INFO(LABEL, "RemoveTokenId, tokenId=%{public}d", tokenId);
-    } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "RemoveTokenId, tokenId(%{public}d) is not exist", tokenId);
-    }
-}
-
-bool ApplicationStatusChangeCallback::IsHasListener() const
-{
-    return !tokenIdList_.empty();
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 }
 } // namespace AccessToken
 } // namespace Security

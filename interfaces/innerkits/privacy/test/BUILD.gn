@@ -49,7 +49,7 @@ ohos_unittest("libprivacy_sdk_test") {
   ]
 }
 
-ohos_unittest("privacy_mock_test") {
+ohos_unittest("libprivacy_mock_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
@@ -103,7 +103,7 @@ ohos_unittest("privacy_mock_test") {
 group("unittest") {
   testonly = true
   deps = [
+    ":libprivacy_mock_test",
     ":libprivacy_sdk_test",
-    ":privacy_mock_test",
   ]
 }
