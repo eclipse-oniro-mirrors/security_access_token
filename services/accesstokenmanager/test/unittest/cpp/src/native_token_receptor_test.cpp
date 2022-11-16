@@ -89,13 +89,13 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
     ASSERT_NE(nullptr, tokenInfos[1]);
 
     ASSERT_EQ("process6", tokenInfos[0]->GetProcessName());
-    ASSERT_EQ(685266937, tokenInfos[0]->GetTokenID());
+    ASSERT_EQ(static_cast<AccessTokenID>(685266937), tokenInfos[0]->GetTokenID());
     ASSERT_EQ(2, tokenInfos[0]->GetDcap().size());
     ASSERT_EQ("AT_CAP", (tokenInfos[0]->GetDcap())[0]);
     ASSERT_EQ("ST_CAP", (tokenInfos[0]->GetDcap())[1]);
 
     ASSERT_EQ("process5", tokenInfos[1]->GetProcessName());
-    ASSERT_EQ(678065606, tokenInfos[1]->GetTokenID());
+    ASSERT_EQ(static_cast<AccessTokenID>(678065606), tokenInfos[1]->GetTokenID());
     ASSERT_EQ(2, tokenInfos[1]->GetDcap().size());
     ASSERT_EQ("AT_CAP", (tokenInfos[1]->GetDcap())[0]);
     ASSERT_EQ("ST_CAP", (tokenInfos[1]->GetDcap())[1]);
@@ -267,9 +267,9 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test0",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     std::vector<PermissionStateFull> permStateList = {};
@@ -322,7 +322,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
 HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "test CheckNativeDCap001!");
-    
+
     // test tokenInfo = nullptr
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     tokenInfos.emplace_back(nullptr);
@@ -332,9 +332,9 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     NativeTokenInfo info = {.apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test0",
+        .dcap = {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
-        .tokenAttr = 0,
-        .dcap = {"AT_CAP", "ST_CAP"}};
+        .tokenAttr = 0};
 
     std::vector<PermissionStateFull> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
@@ -381,9 +381,9 @@ HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
     NativeTokenInfo info = {.apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test0",
+        .dcap = {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
-        .tokenAttr = 0,
-        .dcap = {"AT_CAP", "ST_CAP"}};
+        .tokenAttr = 0};
 
     std::vector<PermissionStateFull> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
@@ -413,42 +413,42 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test1",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100001,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     NativeTokenInfo info2 = {
         .apl = APL_SYSTEM_BASIC,
         .ver = 1,
         .processName = "native_token_test2",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100002,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     PermissionStateFull infoManagerTestState1 = {
-        .grantFlags = {0},
-        .grantStatus = {0},
-        .isGeneral = true,
         .permissionName = "ohos.permission.ACCELEROMETER",
-        .resDeviceID = {"local"}
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {0},
+        .grantFlags = {0}
     };
 
     PermissionStateFull infoManagerTestState2 = {
         .permissionName = "ohos.permission.MANAGE_USER_IDM",
         .isGeneral = true,
-        .grantFlags = {0, 2},
+        .resDeviceID = {"device 1", "device 2"},
         .grantStatus = {0, 0},
-        .resDeviceID = {"device 1", "device 2"}
+        .grantFlags = {0, 2}
     };
 
     PermissionStateFull infoManagerTestState3 = {
         .permissionName = "ohos.permission.USER_TEAT",
         .isGeneral = true,
-        .grantFlags = {0, 2},
+        .resDeviceID = {"device 1", "device 2"},
         .grantStatus = {0, 0},
-        .resDeviceID = {"device 1", "device 2"}
+        .grantFlags = {0, 2}
     };
 
     std::vector<PermissionStateFull> permStateList = {
@@ -542,18 +542,18 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos004, TestSize.Level1)
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test3",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100003,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     NativeTokenInfo info4 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test4",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100003,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
     std::vector<PermissionStateFull> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken3 = std::make_shared<NativeTokenInfoInner>(info3, permStateList);
@@ -593,18 +593,18 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test5",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100005,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     NativeTokenInfo info6 = {
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test5",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100006,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
     std::vector<PermissionStateFull> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken5 = std::make_shared<NativeTokenInfoInner>(info5, permStateList);
@@ -647,18 +647,18 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos006, TestSize.Level1)
         .apl = APL_NORMAL,
         .ver = 1,
         .processName = "native_token_test7",
+        .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100007,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP", "ST_CAP"}
+        .tokenAttr = 0
     };
 
     NativeTokenInfo info8 = {
         .apl = APL_SYSTEM_BASIC,
         .ver = 1,
         .processName = "native_token_test7",
+        .dcap =  {"AT_CAP"},
         .tokenID = 0x28100007,
-        .tokenAttr = 0,
-        .dcap =  {"AT_CAP"}
+        .tokenAttr = 0
     };
     std::vector<PermissionStateFull> permStateList = {};
     std::shared_ptr<NativeTokenInfoInner> nativeToken7 = std::make_shared<NativeTokenInfoInner>(info7, permStateList);

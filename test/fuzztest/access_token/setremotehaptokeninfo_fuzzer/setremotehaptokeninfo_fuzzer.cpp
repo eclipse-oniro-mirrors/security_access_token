@@ -58,7 +58,7 @@ namespace OHOS {
             .baseInfo = baseInfo,
             .permStateList = permStateList
         };
-        
+
         result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
 
 #endif

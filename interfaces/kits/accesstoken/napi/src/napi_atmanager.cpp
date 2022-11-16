@@ -103,7 +103,7 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertPermStateChangeInfo failed");
         return;
     }
-    
+
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
     napi_value resultout = nullptr;

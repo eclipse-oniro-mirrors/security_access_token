@@ -68,7 +68,7 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
         permissionRecordParcel->permissionRecord.accessRecords.emplace_back(detailParcel->detail);
     }
-    
+
     uint32_t rejRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(rejRecordSize), permissionRecordParcel);
     RELEASE_IF_FALSE(rejRecordSize <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);

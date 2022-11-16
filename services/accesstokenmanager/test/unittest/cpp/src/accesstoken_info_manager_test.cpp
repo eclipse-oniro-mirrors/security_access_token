@@ -20,6 +20,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
+#include "atm_device_state_callback.h"
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
@@ -28,6 +29,7 @@
 #endif
 #define private public
 #include "accesstoken_info_manager.h"
+#include "dm_device_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
 #include "permission_manager.h"
@@ -35,6 +37,7 @@
 #undef private
 #include "permission_state_change_callback_stub.h"
 #include "string_ex.h"
+#include "token_sync_manager_client.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -818,7 +821,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     };
     HapTokenInfo wrongBaseInfo = rightBaseInfo;
     std::string wrongStr(10241, 'x');
-    
+
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest("", wrongBaseInfo));
 
     wrongBaseInfo.apl = (ATokenAplEnum)11; // wrong apl
@@ -1332,7 +1335,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
-    
+
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.permList.clear();
     inScopeInfo.tokenIDs = {123, tokenId, tokenId};
@@ -1516,7 +1519,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    
+
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
@@ -1717,6 +1720,21 @@ HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
     AccessTokenInfoManager::GetInstance().nativeTokenIdMap_.erase("testtesttest");
+}
+
+/**
+ * @tc.name: OnDeviceOnline001
+ * @tc.desc: AtmDeviceStateCallbackTest::OnDeviceOnline function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
+{
+    ASSERT_NE(nullptr, TokenSyncManagerClient::GetInstance().GetRemoteObject());
+
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    std::shared_ptr<AtmDeviceStateCallback> callback = std::make_shared<AtmDeviceStateCallback>();
+    callback->OnDeviceOnline(deviceInfo); // remote object is not nullptr
 }
 } // namespace AccessToken
 } // namespace Security

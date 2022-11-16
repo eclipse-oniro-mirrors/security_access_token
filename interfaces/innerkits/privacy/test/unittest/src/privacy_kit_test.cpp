@@ -432,7 +432,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
         BuildQueryRequest(g_TokenId_List[i], GetLocalDeviceUdid(),
             g_InfoParms_List[i].bundleName, permissionList, request);
         request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-        
+
         ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
         ASSERT_EQ(1, result.bundleRecords.size());
         ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());

@@ -36,7 +36,7 @@ void ToString::DetailUsedRecordToString(
         infos.append("              },");
         infos.append("\n");
     }
-    
+
     infos.append("          ]");
     infos.append("\n");
 }
