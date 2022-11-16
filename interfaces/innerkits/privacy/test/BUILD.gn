@@ -20,11 +20,13 @@ ohos_unittest("libprivacy_sdk_test") {
 
   include_dirs = [
     "//commonlibrary/c_utils/base/include",
-    "//third_party/googletest/include",
+    "//base/security/access_token/frameworks/privacy/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
+    "//base/security/access_token/interfaces/innerkits/privacy/src",
     "//base/security/access_token/interfaces/innerkits/token_setproc/include",
+    "//third_party/googletest/include",
   ]
 
   sources = [
@@ -37,6 +39,7 @@ ohos_unittest("libprivacy_sdk_test") {
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [
+    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
     "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
