@@ -16,13 +16,14 @@ import("//build/test.gni")
 
 config("accesstoken_test_config") {
   include_dirs = [
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/googletest/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/privacy/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/privacy/include",
+    "//commonlibrary/c_utils/base/include",
+    "//third_party/googletest/include",
+    "//third_party/mbedtls/include",
   ]
 }
 
@@ -45,7 +46,7 @@ ohos_unittest("libaccesstoken_framework_test") {
   deps = [
     "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx"
+    "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
   ]
 
   external_deps = [
@@ -58,4 +59,3 @@ group("unittest") {
   testonly = true
   deps = [ ":libaccesstoken_framework_test" ]
 }
-

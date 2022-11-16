@@ -2485,14 +2485,14 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken010, TestSize.Level1)
 
     uint32_t apiVersion = DEFAULT_API_VERSION - 1;
     int ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
-    
+
     HapTokenInfo hapTokenInfoRes;
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
 
     apiVersion = DEFAULT_API_VERSION + 1;
     ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
-    
+
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
 }
@@ -3261,6 +3261,7 @@ HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
     ASSERT_EQ("invalid tokenId", info);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: DeleteRemoteToken001
  * @tc.desc: DeleteRemoteToken with invalid parameters.
@@ -3279,6 +3280,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
     res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
     ASSERT_EQ(RET_FAILED, res);
 }
+#endif // TOKEN_SYNC_ENABLE
 
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
 public:
