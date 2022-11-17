@@ -33,6 +33,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
+static const int INVALID_DLP_TOKEN_FLAG = -1;
 } // namespace
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
@@ -103,7 +104,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
         return TOKEN_INVALID;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
-    return (ATokenTypeEnum)(idInner->type);
+    return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
 int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
@@ -151,7 +152,7 @@ int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& n
 
 PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionListState>& permList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, permList.size=%{public}d.", (int)permList.size());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, permList.size=%{public}u.", permList.size());
     return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList);
 }
 
@@ -310,7 +311,7 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
         return INVALID_DLP_TOKEN_FLAG;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
-    return (int32_t)(idInner->dlpFlag);
+    return static_cast<int32_t>(idInner->dlpFlag);
 }
 
 int32_t AccessTokenKit::ReloadNativeTokenInfo()

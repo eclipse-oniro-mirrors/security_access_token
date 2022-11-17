@@ -41,9 +41,9 @@ public:
     ~AccessTokenInfoManager();
     void Init();
     std::shared_ptr<HapTokenInfoInner> GetHapTokenInfoInner(AccessTokenID id);
-    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& InfoParcel);
+    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
-    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& InfoParcel);
+    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& infoParcel);
     std::shared_ptr<PermissionPolicySet> GetNativePermissionPolicySet(AccessTokenID id);
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);

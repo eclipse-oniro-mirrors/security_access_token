@@ -42,28 +42,28 @@ public:
      *
      * @param deviceInfo node info
      */
-    void OnDeviceOnline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOnline(const DistributedHardware::DmDeviceInfo &info) override;
 
     /**
      * @brief node offline callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info) override;
 
     /**
      * @brief node ready callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceReady(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceReady(const DistributedHardware::DmDeviceInfo &info) override;
 
     /**
      * @brief node changed callback
      *
      * @param deviceInfo node info
      */
-    void OnDeviceChanged(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
+    void OnDeviceChanged(const DistributedHardware::DmDeviceInfo &info) override;
 };
 }  // namespace AccessToken
 }  // namespace Security

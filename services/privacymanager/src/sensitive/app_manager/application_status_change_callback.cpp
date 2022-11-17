@@ -34,9 +34,9 @@ void ApplicationStatusChangeCallback::OnForegroundApplicationChanged(const AppEx
     uint32_t tokenId = appStateData.accessTokenId;
 
     ActiveChangeType status = PERM_INACTIVE;
-    if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_FOREGROUND) {
+    if (appStateData.state == static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_FOREGROUND)) {
         status = PERM_ACTIVE_IN_FOREGROUND;
-    } else if (appStateData.state == (int32_t)AppExecFwk::ApplicationState::APP_STATE_BACKGROUND) {
+    } else if (appStateData.state == static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_BACKGROUND)) {
         status = PERM_ACTIVE_IN_BACKGROUND;
     }
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);

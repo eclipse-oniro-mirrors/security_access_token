@@ -23,7 +23,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct AtManagerAsyncWorkData {
-    explicit AtManagerAsyncWorkData(napi_env env);
+    explicit AtManagerAsyncWorkData(napi_env envValue);
     virtual ~AtManagerAsyncWorkData();
 
     napi_env        env = nullptr;

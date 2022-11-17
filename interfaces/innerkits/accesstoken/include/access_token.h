@@ -26,7 +26,6 @@ static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 static const int INVALID_TOKENID = 0;
-static const int INVALID_DLP_TOKEN_FLAG = -1;
 
 enum AccessTokenKitRet {
     RET_FAILED = -1,

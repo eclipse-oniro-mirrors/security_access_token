@@ -57,8 +57,8 @@ public:
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;
     AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
-    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& InfoParcel) override;
-    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& InfoParcel) override;
+    int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
+    int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
     int UpdateHapToken(AccessTokenID tokenID,
         const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel) override;
     int32_t RegisterPermStateChangeCallback(
