@@ -54,7 +54,7 @@ public:
         std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
     void AddRecordNode(const PermissionRecord& record);
     void DeleteRecordNode(std::shared_ptr<PermissionUsedRecordNode> deleteRecordNode);
-	    
+
 private:
     int32_t readableSize_ = 0;
     std::shared_ptr<PermissionUsedRecordNode> recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();

@@ -27,12 +27,6 @@ public:
     MicGlobalSwitchChangeCallback() = default;
     virtual ~MicGlobalSwitchChangeCallback() {}
     void OnMicStateUpdated(const AudioStandard::MicStateChangeEvent &micStateChangeEvent) override;
-
-    void SetCallback(OnMicGlobalSwitchChangeCallback callback);
-    OnMicGlobalSwitchChangeCallback GetCallback() const;
-
-private:
-    OnMicGlobalSwitchChangeCallback callback_ = nullptr;
 };
 
 } // namespace AccessToken

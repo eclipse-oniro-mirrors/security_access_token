@@ -17,14 +17,15 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "camera_manager_privacy_client.h"
 #include "constant.h"
 #define private public
 #include "permission_record_manager.h"
 #undef private
 #include "privacy_error.h"
 #include "privacy_kit.h"
-#include "sensitive_resource_manager.h"
 #include "state_change_callback.h"
+#include "token_setproc.h"
 
 using namespace testing;
 using namespace testing::ext;
@@ -34,8 +35,17 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static PermissionStateFull g_testState = {
+static AccessTokenID g_selfTokenId = 0;
+static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
+static PermissionStateFull g_testState2 = {
+    .permissionName = "ohos.permission.MANAGE_CAMERA_CONFIG",
     .isGeneral = true,
     .resDeviceID = {"local"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
@@ -46,7 +56,7 @@ static HapPolicyParams g_PolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
     .permList = {},
-    .permStateList = {g_testState}
+    .permStateList = {g_testState1, g_testState2}
 };
 
 static HapInfoParams g_InfoParms1 = {
@@ -69,6 +79,7 @@ public:
 
 void PermissionRecordManagerTest::SetUpTestCase()
 {
+    g_selfTokenId = GetSelfTokenID();
 }
 
 void PermissionRecordManagerTest::TearDownTestCase()
@@ -85,6 +96,7 @@ void PermissionRecordManagerTest::TearDown()
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    SetSelfTokenID(g_selfTokenId);
 }
 
 class CbCustomizeTest1 : public StateCustomizedCbk {
@@ -120,27 +132,31 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    SetSelfTokenID(tokenId);
+
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
 
     PermissionRecord record1 = {
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, false);
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
 
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
-    PermissionRecordManager::GetInstance().AppStatusListener(tokenId, status);
-    
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    
-    ASSERT_EQ(1, camPermList.size());
+
+    ASSERT_EQ(static_cast<size_t>(1), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -154,7 +170,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
 
     PermissionRecord record1 = {
@@ -162,18 +178,18 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
         .opCode = Constant::OP_MICROPHONE,
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
-    
+
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
-    PermissionRecordManager::GetInstance().AppStatusListener(tokenId, status);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    
-    ASSERT_EQ(0, camPermList.size());
+
+    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -187,7 +203,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
 
     PermissionRecord record1 = {
@@ -195,17 +211,17 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
         .opCode = Constant::OP_CAMERA,
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
-    
+
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
-    
+
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    
-    ASSERT_EQ(0, camPermList.size());
+
+    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -219,25 +235,25 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
-    
+
     PermissionRecord record1 = {
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
-    SensitiveResourceManager::GetInstance().SetFlowWindowStatus(tokenId, true);
+    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
-    
+
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
-    
+
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    
-    ASSERT_EQ(0, camPermList.size());
+
+    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -256,8 +272,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     ASSERT_NE(nullptr, callbackWrap);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
-    ASSERT_EQ(ERR_CALLBACK_NOT_EXIST,
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_EQ(ERR_PARAM_INVALID,
         PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, nullptr));
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
         PermissionRecordManager::GetInstance().StartUsingPermission(0, permissionName, callbackWrap->AsObject()));
@@ -278,49 +294,9 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
     ASSERT_NE(nullptr, callbackWrap);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
-    ASSERT_EQ(ERR_PERMISSION_DENIED, PermissionRecordManager::GetInstance().StartUsingPermission(
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.LOCATION", callbackWrap->AsObject()));
-}
-
-/*
- * @tc.name: GetRecordsTest001
- * @tc.desc: Verify the GetRecords abnormal branch function test with.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GetRecordsTest001, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
-
-    std::string permissionName1 = "ohos.permission.CAMERA";
-    std::string permissionName2 = "ohos.permission.MICROPHONE";
-    
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_CAMERA,
-    };
-
-    PermissionRecord record2 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-    };
-
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record2);
-    
-    PermissionRecordManager::GetInstance().GetRecords(permissionName1, false);
-    PermissionRecordManager::GetInstance().GetRecords(permissionName2, false);
-
-    PermissionRecord record3;
-    PermissionRecord record4;
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record3);
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record2.tokenId, record2.opCode, record4);
-
-    ASSERT_EQ(record3.tokenId, tokenId);
-    ASSERT_EQ(record4.tokenId, tokenId);
 }
 
 /*
@@ -333,7 +309,7 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(0, tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     auto callbackPtr = std::make_shared<CbCustomizeTest1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);

@@ -22,12 +22,18 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "app_mgr_proxy.h"
+#include "application_status_change_callback.h"
+#include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
+#include "mic_global_switch_change_callback.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "app_mgr_death_recipient.h"
+#include "window_manager_privacy_agent.h"
 
 #include "rwlock.h"
 #include "thread_pool.h"
@@ -58,6 +64,16 @@ public:
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+
+    void NotifyMicChange(bool switchStatus);
+    void NotifyCameraChange(bool switchStatus);
+    void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
+    void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
+    void OnAppMgrRemoteDiedHandle();
+    void OnAudioMgrRemoteDiedHandle();
+    void OnCameraMgrRemoteDiedHandle();
+    void OnWindowMgrRemoteDiedHandle();
+
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
@@ -76,8 +92,6 @@ private:
 
     void FindRecordsToUpdateAndExecuted(uint32_t tokenId,
         ActiveChangeType status, std::vector<std::string>& permList, std::vector<std::string>& camPermList);
-    static void AppStatusListener(uint32_t tokenId, int32_t status);
-    bool IsTokenIdExist(const uint32_t tokenId);
     void AddRecordToStartList(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
     bool HasStarted(const PermissionRecord& record);
@@ -86,27 +100,44 @@ private:
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     void SavePermissionRecords(const std::string& permissionName, PermissionRecord& record, bool switchStatus);
-    void GetRecords(const std::string& permissionName, bool switchStatus);
-    static void MicSwitchChangeListener(bool switchStatus);
-    static void CameraSwitchChangeListener(bool switchStatus);
-    int32_t ShowPermissionDialog(const std::string& permissionName);
+    bool ShowGlobalDialog(const std::string& permissionName);
 
-    static void CameraFloatWindowListener(AccessTokenID tokenId, bool isShow);
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
     void SetCameraCallback(sptr<IRemoteObject>);
-    int32_t StartUsingPermissionCommon(AccessTokenID tokenId, const std::string& permissionName);
 
+    bool IsFlowWindowShow(AccessTokenID tokenId);
+    int32_t IsForegroundApp(AccessTokenID tokenId);
+    bool InitProxy();
+    OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
+
+    bool Register();
+    void Unregister();
+
+private:
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
-    bool floatWindowHasRegistered_ = false;
     OHOS::Utils::RWLock rwLock_;
+    std::mutex startRecordListMutex_;
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
-    std::mutex startRecordListMutex_;
     sptr<IRemoteObject> cameraCallback_;
-    std::mutex mutex_;
-    bool micHasRegistered_ = false;
-    bool camerHasRegistered_ = false;
+
+    bool hasRegistered_ = false;
+    // microphone
+    std::shared_ptr<MicGlobalSwitchChangeCallback> micMuteCallback_ = nullptr;
+
+    // camera
+    sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
+
+    // camera float window
+    AccessTokenID floatWindowTokenId_ = 0;
+    bool camFloatWindowShowing_ = false;
+    sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
+
+    sptr<ApplicationStatusChangeCallback> appStateCallback_ = nullptr;
+    std::mutex appProxyMutex_;
+    sptr<AppExecFwk::IAppMgr> appMgrProxy_;
+    sptr<AppMgrDeathRecipient> appMgrDeathObserver_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

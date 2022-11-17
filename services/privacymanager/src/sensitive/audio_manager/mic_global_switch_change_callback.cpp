@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-#include "camera_global_switch_change_callback.h"
+#include "mic_global_switch_change_callback.h"
 #include "accesstoken_log.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -25,25 +26,12 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-void CameraGlobalSwitchChangeCallback::OnCameraMute(bool muteMode) const
+void MicGlobalSwitchChangeCallback::OnMicStateUpdated(const AudioStandard::MicStateChangeEvent &micStateChangeEvent)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(CameraGlobalStatus=%{public}d)", !muteMode);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(MicGlobalStatus=%{public}d)", micStateChangeEvent.mute);
 
-    if (callback_ != nullptr) {
-        callback_(!muteMode);
-    }
+    PermissionRecordManager::GetInstance().NotifyMicChange(!micStateChangeEvent.mute);
 }
-
-void CameraGlobalSwitchChangeCallback::SetCallback(OnCameraGlobalSwitchChangeCallback callback)
-{
-    callback_ = callback;
-}
-
-OnCameraGlobalSwitchChangeCallback CameraGlobalSwitchChangeCallback::GetCallback() const
-{
-    return callback_;
-}
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

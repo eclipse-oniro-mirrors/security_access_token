@@ -113,7 +113,6 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
-
     if (changeType == PERM_ACTIVE_IN_BACKGROUND) {
         HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,

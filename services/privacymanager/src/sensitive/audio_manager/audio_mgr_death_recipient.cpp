@@ -12,37 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "audio_mgr_death_recipient.h"
 
-#include "mic_global_switch_change_callback.h"
 #include "accesstoken_log.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "GlobalSwitchChangeCallback"
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AudioMgrDeathRecipient"
 };
-}
+} // namespace
 
-void MicGlobalSwitchChangeCallback::OnMicStateUpdated(const AudioStandard::MicStateChangeEvent &micStateChangeEvent)
+void AudioMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(MicGlobalStatus=%{public}d)", micStateChangeEvent.mute);
-
-    if (callback_ != nullptr) {
-        callback_(!micStateChangeEvent.mute);
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    PermissionRecordManager::GetInstance().OnAudioMgrRemoteDiedHandle();
 }
-
-void MicGlobalSwitchChangeCallback::SetCallback(OnMicGlobalSwitchChangeCallback callback)
-{
-    callback_ = callback;
-}
-
-OnMicGlobalSwitchChangeCallback MicGlobalSwitchChangeCallback::GetCallback() const
-{
-    return callback_;
-}
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS

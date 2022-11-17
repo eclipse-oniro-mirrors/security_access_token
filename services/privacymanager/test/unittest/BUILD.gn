@@ -32,7 +32,10 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/database",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
-      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
+      "//base/security/access_token/services/privacymanager/include/sensitive/app_manager",
+      "//base/security/access_token/services/privacymanager/include/sensitive/audio_manager",
+      "//base/security/access_token/services/privacymanager/include/sensitive/window_manager",
+      "//base/security/access_token/services/privacymanager/include/sensitive/camera_manager",
       "//base/security/access_token/services/privacymanager/include/service",
       "//commonlibrary/c_utils/base/include",
       "//foundation/arkui/napi",
@@ -45,7 +48,6 @@ if (is_standard_system && ability_base_enable == true) {
     sources = [
       "permission_record_manager_test.cpp",
       "privacy_manager_service_test.cpp",
-      "sensitive_resource_manager_test.cpp",
     ]
 
     configs = [ "//base/security/access_token/config:coverage_flags" ]
@@ -56,7 +58,6 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy_manager_service",
-      "//foundation/ability/ability_runtime/interfaces/inner_api/ability_manager:ability_manager",
       "//foundation/arkui/ace_engine/interfaces/inner_api/ui_service_manager:ui_service_mgr",
       "//foundation/graphic/graphic_2d:libsurface",
       "//third_party/googletest:gtest_main",
@@ -64,134 +65,19 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     external_deps = [
-      "ability_runtime:ability_context_native",
-      "ability_runtime:ability_manager",
+      "ability_base:want",
       "ability_runtime:app_manager",
       "access_token:libaccesstoken_sdk",
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
       "multimedia_audio_framework:audio_client",
-      "multimedia_camera_framework:camera_framework",
       "safwk:system_ability_fwk",
     ]
   }
 }
 
-######################################################################
-if (is_standard_system && ability_base_enable == true) {
-  import("//base/security/access_token/services/test/mock.gni")
-  ohos_unittest("libsensitive_manager_mock_test") {
-    subsystem_name = "security"
-    part_name = "access_token"
-    module_out_path = part_name + "/" + part_name
-
-    include_dirs = [
-      "//base/security/access_token/interfaces/innerkits/privacy/include",
-      "//base/security/access_token/services/common/database/include",
-      "//base/security/access_token/services/privacymanager/include/common",
-      "//base/security/access_token/services/privacymanager/include/record",
-      "//base/security/access_token/services/privacymanager/include/sensitive",
-      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
-      "//base/security/access_token/services/privacymanager/include/service",
-      "//third_party/googletest/include",
-      "//base/security/access_token/services/common/database/include",
-      "//commonlibrary/c_utils/base/include",
-      "//base/security/access_token/services/test/mock/aafwk",
-      "${ability_runtime_innerkits_path}/ability_manager/include",
-      "//foundation/window/window_manager/wm/include",
-      "//foundation/graphic/graphic_2d/frameworks/surface/include",
-    ]
-
-    sources = [
-      "//base/security/access_token/services/test/mock/aafwk/mock_app_mgr_service.cpp",
-      "//base/security/access_token/services/test/mock/aafwk/mock_service_registry.cpp",
-      "sensitive_resource_mock_test.cpp",
-    ]
-
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
-
-    deps = [
-      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
-      "//base/security/access_token/services/privacymanager:privacy_manager_service",
-      "//foundation/graphic/graphic_2d:libsurface",
-      "//third_party/googletest:gmock_main",
-      "//third_party/googletest:gtest_main",
-    ]
-
-    external_deps = [
-      "ability_base:want",
-      "ability_runtime:app_manager",
-      "access_token:libaccesstoken_sdk",
-      "bundle_framework:appexecfwk_base",
-      "c_utils:utils",
-      "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
-      "multimedia_audio_framework:audio_client",
-      "multimedia_camera_framework:camera_framework",
-    ]
-  }
-}
-
-######################################################################
-if (is_standard_system && ability_base_enable == true) {
-  import("//base/security/access_token/services/test/mock.gni")
-  ohos_unittest("libprivacy_manager_mock_test") {
-    subsystem_name = "security"
-    part_name = "access_token"
-    module_out_path = part_name + "/" + part_name
-
-    include_dirs = [
-      "//base/security/access_token/interfaces/innerkits/privacy/include",
-      "//base/security/access_token/frameworks/privacy/include",
-      "//base/security/access_token/services/common/database/include",
-      "//base/security/access_token/services/privacymanager/include/common",
-      "//base/security/access_token/services/privacymanager/include/record",
-      "//base/security/access_token/services/privacymanager/include/sensitive",
-      "//base/security/access_token/services/privacymanager/include/sensitive/agent/window_manager",
-      "//base/security/access_token/services/privacymanager/include/service",
-      "//third_party/googletest/include",
-      "//base/security/access_token/services/common/database/include",
-      "//commonlibrary/c_utils/base/include",
-      "//base/security/access_token/services/test/mock/aafwk",
-      "${ability_runtime_innerkits_path}/ability_manager/include",
-      "//foundation/window/window_manager/wm/include",
-      "//foundation/graphic/graphic_2d/frameworks/surface/include",
-    ]
-
-    sources = [
-      "//base/security/access_token/services/test/mock/aafwk/mock_sensitive_resource_manager.cpp",
-      "privacy_manager_mock_test.cpp",
-    ]
-
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
-
-    deps = [
-      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
-      "//base/security/access_token/services/privacymanager:privacy_manager_service",
-      "//foundation/graphic/graphic_2d:libsurface",
-      "//third_party/googletest:gmock_main",
-      "//third_party/googletest:gtest_main",
-    ]
-
-    external_deps = [
-      "ability_base:want",
-      "ability_runtime:app_manager",
-      "access_token:libaccesstoken_sdk",
-      "bundle_framework:appexecfwk_base",
-      "c_utils:utils",
-      "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
-      "multimedia_audio_framework:audio_client",
-      "multimedia_camera_framework:camera_framework",
-    ]
-  }
-}
 group("unittest") {
   testonly = true
-  deps = [
-    ":libprivacy_manager_mock_test",
-    ":libprivacy_manager_service_standard_test",
-    ":libsensitive_manager_mock_test",
-  ]
+  deps = [ ":libprivacy_manager_service_standard_test" ]
 }
