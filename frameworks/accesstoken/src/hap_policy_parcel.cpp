@@ -68,6 +68,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 
     int permListSize;
     RELEASE_IF_FALSE(in.ReadInt32(permListSize), hapPolicyParcel);
+    RELEASE_IF_FALSE((permListSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
 
     for (int i = 0; i < permListSize; i++) {
         sptr<PermissionDefParcel> permDefParcel = in.ReadParcelable<PermissionDefParcel>();
@@ -77,6 +78,7 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
 
     int permStateListSize;
     RELEASE_IF_FALSE(in.ReadInt32(permStateListSize), hapPolicyParcel);
+    RELEASE_IF_FALSE((permStateListSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
     for (int i = 0; i < permStateListSize; i++) {
         sptr<PermissionStateFullParcel> permissionStateParcel = in.ReadParcelable<PermissionStateFullParcel>();
         RELEASE_IF_FALSE(permissionStateParcel != nullptr, hapPolicyParcel);

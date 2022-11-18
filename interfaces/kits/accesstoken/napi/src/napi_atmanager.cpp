@@ -210,14 +210,14 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     NAPI_CALL(env, napi_define_class(env, ATMANAGER_CLASS_NAME.c_str(), ATMANAGER_CLASS_NAME.size(),
         JsConstructor, nullptr, sizeof(properties) / sizeof(napi_property_descriptor), properties, &cons));
 
-    NAPI_CALL(env, napi_create_reference(env, cons, 1, &atManagerRef_));
+    NAPI_CALL(env, napi_create_reference(env, cons, 1, &g_atManagerRef_));
     NAPI_CALL(env, napi_set_named_property(env, exports, ATMANAGER_CLASS_NAME.c_str(), cons));
 
-    napi_value GrantStatus = nullptr;
-    napi_create_object(env, &GrantStatus);
+    napi_value grantStatus = nullptr;
+    napi_create_object(env, &grantStatus);
 
-    SetNamedProperty(env, GrantStatus, PERMISSION_DENIED, "PERMISSION_DENIED");
-    SetNamedProperty(env, GrantStatus, PERMISSION_GRANTED, "PERMISSION_GRANTED");
+    SetNamedProperty(env, grantStatus, PERMISSION_DENIED, "PERMISSION_DENIED");
+    SetNamedProperty(env, grantStatus, PERMISSION_GRANTED, "PERMISSION_GRANTED");
 
     napi_value permStateChangeType = nullptr;
     napi_create_object(env, &permStateChangeType);
@@ -226,7 +226,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     SetNamedProperty(env, permStateChangeType, PERMISSION_GRANTED_OPER, "PERMISSION_GRANTED_OPER");
 
     napi_property_descriptor exportFuncs[] = {
-        DECLARE_NAPI_PROPERTY("GrantStatus", GrantStatus),
+        DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
@@ -268,8 +268,8 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     napi_value instance = nullptr;
     napi_value cons = nullptr;
 
-    NAPI_CALL(env, napi_get_reference_value(env, atManagerRef_, &cons));
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable atManagerRef_ complete");
+    NAPI_CALL(env, napi_get_reference_value(env, g_atManagerRef_, &cons));
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable g_atManagerRef_ complete");
 
     NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
 
@@ -821,7 +821,7 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL), false);
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
         if (argc < ON_OFF_MAX_PARAMS) {
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
             return false;
@@ -915,7 +915,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     std::string errMsg;
-    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, NULL) != napi_ok) {
+    if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
@@ -1081,14 +1081,14 @@ EXTERN_C_END
 /*
  * Module define
  */
-static napi_module _module = {
+static napi_module g_module = {
     .nm_version = 1,
     .nm_flags = 0,
     .nm_filename = nullptr,
     .nm_register_func = Init,
     .nm_modname = "abilityAccessCtrl",
-    .nm_priv = ((void *)0),
-    .reserved = {0}
+    .nm_priv = ((void *)nullptr),
+    .reserved = {nullptr}
 };
 
 /*
@@ -1096,5 +1096,5 @@ static napi_module _module = {
  */
 extern "C" __attribute__((constructor)) void AbilityAccessCtrlmoduleRegister(void)
 {
-    napi_module_register(&_module);
+    napi_module_register(&g_module);
 }

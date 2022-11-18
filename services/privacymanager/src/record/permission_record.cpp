@@ -21,7 +21,7 @@ namespace Security {
 namespace AccessToken {
 void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values)
 {
-    values.Put(FIELD_TOKEN_ID, (int32_t)record.tokenId);
+    values.Put(FIELD_TOKEN_ID, static_cast<int32_t>(record.tokenId));
     values.Put(FIELD_OP_CODE, record.opCode);
     values.Put(FIELD_STATUS, record.status);
     values.Put(FIELD_TIMESTAMP, record.timestamp);

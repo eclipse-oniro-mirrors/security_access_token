@@ -55,7 +55,7 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
         ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
         return RET_FAILED;
     }
-    outPermissionDef.availableLevel = (ATokenAplEnum)aplNum;
+    outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
     outPermissionDef.provisionEnable = (inGenericValues.GetInt(FIELD_PROVISION_ENABLE) == 1);
     outPermissionDef.distributedSceneEnable = (inGenericValues.GetInt(FIELD_DISTRIBUTED_SCENE_ENABLE) == 1);
     outPermissionDef.label = inGenericValues.GetString(FIELD_LABEL);

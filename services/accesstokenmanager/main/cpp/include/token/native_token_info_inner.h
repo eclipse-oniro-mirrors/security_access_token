@@ -51,7 +51,7 @@ public:
         const std::vector<PermissionStateFull>& permStateList);
     void StoreNativeInfo(std::vector<GenericValues>& valueList,
         std::vector<GenericValues>& permStateValues) const;
-    void TranslateToNativeTokenInfo(NativeTokenInfo& InfoParcel) const;
+    void TranslateToNativeTokenInfo(NativeTokenInfo& infoParcel) const;
     void SetDcaps(const std::string& dcapStr);
     void SetNativeAcls(const std::string& AclsStr);
     void ToString(std::string& info) const;

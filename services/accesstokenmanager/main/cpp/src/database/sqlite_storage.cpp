@@ -215,7 +215,7 @@ std::string SqliteStorage::CreateInsertPrepareSqlCmd(const DataType type) const
     int i = 1;
     for (const auto& columnName : it->second.tableColumnNames_) {
         sql.append(":" + columnName);
-        if (i < (int) it->second.tableColumnNames_.size()) {
+        if (i < static_cast<int32_t>(it->second.tableColumnNames_.size())) {
             sql.append(",");
         }
         i += 1;
@@ -255,7 +255,7 @@ std::string SqliteStorage::CreateUpdatePrepareSqlCmd(const DataType type, const 
     int i = 1;
     for (const auto& columnName : modifyColumns) {
         sql.append(columnName + "=:" + columnName);
-        if (i < (int) modifyColumns.size()) {
+        if (i < static_cast<int32_t>(modifyColumns.size())) {
             sql.append(",");
         }
         i += 1;
