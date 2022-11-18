@@ -115,7 +115,7 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     if (result != RET_SUCCESS) {
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}u", __func__, permList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
     reply.WriteUint32(permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
@@ -133,7 +133,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     if (result != RET_SUCCESS) {
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}u", permList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}zu", permList.size());
     reply.WriteUint32(permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
