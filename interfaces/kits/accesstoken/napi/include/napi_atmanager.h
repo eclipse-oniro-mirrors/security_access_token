@@ -55,7 +55,6 @@ private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
 };
-
 struct RegisterPermStateChangeWorker {
     napi_env env = nullptr;
     napi_ref ref = nullptr;

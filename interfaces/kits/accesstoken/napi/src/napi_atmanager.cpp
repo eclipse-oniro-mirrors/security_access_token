@@ -26,12 +26,16 @@
 #include "napi/native_api.h"
 #include "napi_error.h"
 #include "napi/native_node_api.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermStateChangeRegisters;
 std::map<AccessTokenKit*, std::vector<RegisterPermStateChangeInfo*>> g_permStateChangeRegisters;
+std::mutex g_lockCache;
+std::map<std::string, uint32_t> g_cache;
+
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
@@ -469,8 +473,19 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
-        asyncContext->permissionName);
+    // check self permission
+    {
+        std::lock_guard<std::mutex> lock(g_lockCache);
+        if (asyncContext->tokenId == GetSelfTokenID() &&
+            (g_cache.find(asyncContext->permissionName) != g_cache.end())) {
+            asyncContext->result = g_cache[asyncContext->permissionName];
+        } else {
+            asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
+                asyncContext->permissionName);
+            g_cache[asyncContext->permissionName] = asyncContext->result;
+        }
+    }
+
 
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));

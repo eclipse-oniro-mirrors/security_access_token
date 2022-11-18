@@ -17,6 +17,7 @@ ohos_shared_library("libabilityaccessctrl") {
   include_dirs = [
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/token_setproc/include",
     "//base/security/access_token/interfaces/kits/accesstoken/napi/include",
     "//base/security/access_token/interfaces/kits/common/include",
     "//foundation/arkui/napi/interfaces/inner_api",
@@ -30,6 +31,7 @@ ohos_shared_library("libabilityaccessctrl") {
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     "//base/security/access_token/interfaces/kits/common:libnapi_common",
     "//foundation/arkui/napi:ace_napi",
   ]
