@@ -17,9 +17,19 @@
 
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
+#include "on_permission_used_record_callback_stub.h"
 #include "parameter.h"
-#include "privacy_kit.h"
+#define private public
+#include "perm_active_status_change_callback.h"
+#include "privacy_manager_client.h"
+#include "state_change_callback.h"
+#undef private
+#include "perm_active_response_parcel.h"
+#include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
+#include "privacy_kit.h"
+#include "state_change_callback_stub.h"
+#include "string_ex.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -53,18 +63,18 @@ static HapInfoParams g_infoParmsB = {
 
 static PermissionStateFull g_infoManagerTestStateA = {
     .permissionName = "ohos.permission.CAMERA",
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 
 static PermissionStateFull g_infoManagerTestStateB = {
     .permissionName = "ohos.permission.MICROPHONE",
-    .grantFlags = {1},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .isGeneral = true,
-    .resDeviceID = {"local"}
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
 };
 static HapPolicyParams g_policyPramsE = {
     .apl = APL_NORMAL,
@@ -77,6 +87,25 @@ static HapInfoParams g_infoParmsE = {
     .bundleName = "ohos.privacy_test.bundleE",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleE"
+};
+UsedRecordDetail g_usedRecordDetail = {
+    .status = 2,
+    .timestamp = 2L,
+    .accessDuration = 2L,
+};
+PermissionUsedRecord g_permissionUsedRecord = {
+    .permissionName = "ohos.permission.CAMERA",
+    .accessCount = 2,
+    .rejectCount = 2,
+    .lastAccessTime = 0L,
+    .lastRejectTime = 0L,
+    .lastAccessDuration = 0L,
+};
+BundleUsedRecord g_bundleUsedRecord = {
+    .tokenId = 100,
+    .isRemote = false,
+    .deviceId = "you guess",
+    .bundleName = "com.ohos.camera",
 };
 
 static AccessTokenID g_selfTokenId = 0;
@@ -163,7 +192,7 @@ void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& requ
     ASSERT_EQ(request.isRemote, result.bundleRecords[0].isRemote);
     ASSERT_EQ(request.deviceId, result.bundleRecords[0].deviceId);
     ASSERT_EQ(request.bundleName, result.bundleRecords[0].bundleName);
-    ASSERT_EQ(permRecordSize, result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
     for (int32_t i = 0; i < permRecordSize; i++) {
         successCount += result.bundleRecords[0].permissionRecords[i].accessCount;
         failCount += result.bundleRecords[0].permissionRecords[i].rejectCount;
@@ -230,7 +259,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord001, TestSize.Level1)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
 
 /**
@@ -253,11 +282,11 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord002, TestSize.Level1)
     std::vector<std::string> permissionList;
     BuildQueryRequest(123, "", "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
 
 /**
@@ -289,7 +318,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
         .aplStr = "system_core",
     };
     tokenId = GetAccessTokenId(&infoInstance);
-    ASSERT_NE(tokenId, 0);
+    ASSERT_NE(tokenId, static_cast<uint32_t>(0));
 
     delete[] perms;
     delete[] dcaps;
@@ -304,7 +333,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord003, TestSize.Level1)
     BuildQueryRequest(tokenId, "", "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
 
 /**
@@ -325,7 +354,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord004, TestSize.Level1)
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 3, 2, 2);
 }
 
@@ -350,13 +379,13 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
 
     BuildQueryRequest(g_tokenIdB, GetLocalDeviceUdid(), g_infoParmsB.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
 }
 
@@ -380,9 +409,9 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     request.flag = FLAG_PERMISSION_USAGE_DETAIL;
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
-    ASSERT_EQ(1, result.bundleRecords.size());
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result, 1, 4, 0);
 
     sleep(61);
@@ -391,9 +420,9 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(2, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result, 1, 5, 0);
 }
 
@@ -434,9 +463,9 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
         request.flag = FLAG_PERMISSION_USAGE_DETAIL;
 
         ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-        ASSERT_EQ(1, result.bundleRecords.size());
-        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
-        ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessRecords.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
         CheckPermissionUsedResult(request, result, 1, 2, 0);
     }
     DeleteTokenID(g_InfoParms_List);
@@ -469,11 +498,11 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords002, TestSize.Level1)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, "invalid_device"));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(123, GetLocalDeviceUdid()));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
 }
 
 /**
@@ -492,7 +521,7 @@ HWTEST_F(PrivacyKitTest, RemovePermissionUsedRecords003, TestSize.Level1)
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RemovePermissionUsedRecords(g_tokenIdA, ""));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
 
 /**
@@ -538,7 +567,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     // query by tokenId
     BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     request.deviceId = GetLocalDeviceUdid();
     request.bundleName = g_infoParmsA.bundleName;
     CheckPermissionUsedResult(request, result, 3, 3, 0);
@@ -546,14 +575,14 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords002, TestSize.Level1)
     // query by unmatched tokenId, deviceId and bundle Name
     BuildQueryRequest(123, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 
     // query by invalid permission Name
     permissionList.clear();
     permissionList.emplace_back("invalid permission");
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(0, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords.size());
 }
 
 /**
@@ -574,7 +603,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 1, 4, 0);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
@@ -583,7 +612,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords003, TestSize.Level1)
 
     BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 4, 7, 0);
 }
 
@@ -606,7 +635,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
     BuildQueryRequest(0, GetLocalDeviceUdid(), "", permissionList, request);
 
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    if (result.bundleRecords.size() < 2) {
+    if (result.bundleRecords.size() < static_cast<uint32_t>(2)) {
         ASSERT_TRUE(false);
     }
 }
@@ -1011,10 +1040,10 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
     ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
@@ -1100,10 +1129,10 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level1)
     std::vector<std::string> permissionList;
     BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(1, result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
     ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
@@ -1187,4 +1216,235 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
     ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+}
+
+class TestCallBack1 : public StateChangeCallbackStub {
+public:
+    TestCallBack1() = default;
+    virtual ~TestCallBack1() = default;
+
+    void StateChangeNotify(AccessTokenID tokenId, bool isShowing)
+    {
+        GTEST_LOG_(INFO) << "StateChangeNotify,  tokenId is " << tokenId << ", isShowing is " << isShowing;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: StateChangeCallbackStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, OnRemoteRequest001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+    bool isShowing = false;
+
+    TestCallBack1 callback;
+    OHOS::MessageParcel data;
+    ASSERT_EQ(true, data.WriteInterfaceToken(IStateChangeCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenId));
+    ASSERT_EQ(true, data.WriteBool(isShowing));
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(IStateChangeCallback::STATE_CHANGE_CALLBACK),
+        data, reply, option)); // descriptor true + msgCode true
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IStateChangeCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenId));
+    ASSERT_EQ(true, data.WriteBool(isShowing));
+    uint32_t code = 10;
+    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgCode false
+
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+    ASSERT_EQ(true, data.WriteUint32(tokenId));
+    ASSERT_EQ(true, data.WriteBool(isShowing));
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(IStateChangeCallback::STATE_CHANGE_CALLBACK),
+        data, reply, option)); // descriptor flase + msgCode true
+}
+
+class TestCallBack2 : public OnPermissionUsedRecordCallbackStub {
+public:
+    TestCallBack2() = default;
+    virtual ~TestCallBack2() = default;
+
+    void OnQueried(OHOS::ErrCode code, PermissionUsedResult& result)
+    {
+        GTEST_LOG_(INFO) << "OnQueried,  code is " << code;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest002
+ * @tc.desc: OnPermissionUsedRecordCallbackStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, OnRemoteRequest002, TestSize.Level1)
+{
+    g_permissionUsedRecord.accessRecords.emplace_back(g_usedRecordDetail);
+    g_bundleUsedRecord.permissionRecords.emplace_back(g_permissionUsedRecord);
+
+    int32_t errCode = 123; // 123 is random input
+    PermissionUsedResultParcel resultParcel;
+    resultParcel.result = {
+        .beginTimeMillis = 0L,
+        .endTimeMillis = 0L,
+    };
+    resultParcel.result.bundleRecords.emplace_back(g_bundleUsedRecord);
+
+    TestCallBack2 callback;
+    OHOS::MessageParcel data;
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+    ASSERT_EQ(true, data.ReadInt32(errCode));
+    ASSERT_EQ(true, data.WriteParcelable(&resultParcel));
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(OnPermissionUsedRecordCallback::ON_QUERIED),
+        data, reply, option)); // descriptor false
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(OnPermissionUsedRecordCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.ReadInt32(errCode));
+    ASSERT_EQ(true, data.WriteParcelable(&resultParcel));
+    uint32_t code = 10;
+    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgCode false
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(OnPermissionUsedRecordCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.ReadInt32(errCode));
+    ASSERT_EQ(true, data.WriteParcelable(&resultParcel));
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(OnPermissionUsedRecordCallback::ON_QUERIED),
+        data, reply, option)); // descriptor flase + msgCode true + error != 0
+}
+
+class TestCallBack3 : public PermActiveStatusChangeCallbackStub {
+public:
+    TestCallBack3() = default;
+    virtual ~TestCallBack3() = default;
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    {
+        GTEST_LOG_(INFO) << "ActiveStatusChangeCallback,  result is " << result.type;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest003
+ * @tc.desc: PermActiveStatusChangeCallbackStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level1)
+{
+    ActiveChangeResponse response = {
+        .tokenID = 123,
+        .permissionName = "ohos.permission.CAMERA",
+        .deviceId = "I don't know",
+        .type = ActiveChangeType::PERM_INACTIVE
+    };
+
+    ActiveChangeResponseParcel responseParcel;
+    responseParcel.changeResponse = response;
+
+    TestCallBack3 callback;
+    OHOS::MessageParcel data;
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+    ASSERT_EQ(true, data.WriteParcelable(&responseParcel));
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(
+        IPermActiveStatusCallback::PERM_ACTIVE_STATUS_CHANGE), data, reply, option));// descriptor false
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPermActiveStatusCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&responseParcel));
+    uint32_t code = 10;
+    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgCode false
+}
+
+/**
+ * @tc.name: ActiveStatusChangeCallback001
+ * @tc.desc: PermActiveStatusChangeCallback::ActiveStatusChangeCallback function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, ActiveStatusChangeCallback001, TestSize.Level1)
+{
+    ActiveChangeResponse response = {
+        .tokenID = 123,
+        .permissionName = "ohos.permission.CAMERA",
+        .deviceId = "I don't know",
+        .type = ActiveChangeType::PERM_INACTIVE
+    };
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::shared_ptr<PermActiveStatusCustomizedCbk> callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    OHOS::sptr<PermActiveStatusChangeCallback> callback = new (
+        std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    callback->ActiveStatusChangeCallback(response); // customizedCallback_ is null
+}
+
+/**
+ * @tc.name: StateChangeNotify001
+ * @tc.desc: StateChangeCallback::StateChangeNotify function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, StateChangeNotify001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+    bool isShowing = false;
+    std::shared_ptr<StateCustomizedCbk> callbackPtr = std::make_shared<CbCustomizeTest4>();
+    OHOS::sptr<StateChangeCallback> callback = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callback);
+    callback->StateChangeNotify(tokenId, isShowing); // customizedCallback_ is null
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback009
+ * @tc.desc: PrivacyManagerClient::RegisterPermActiveStatusCallback function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level1)
+{
+    std::shared_ptr<PermActiveStatusCustomizedCbk> callback = nullptr;
+    ASSERT_EQ(nullptr, callback);
+    PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback); // callback is null
+}
+
+/**
+ * @tc.name: InitProxy001
+ * @tc.desc: PrivacyManagerClient::InitProxy function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level1)
+{
+    ASSERT_NE(nullptr, PrivacyManagerClient::GetInstance().proxy_);
+    OHOS::sptr<IPrivacyManager> proxy = PrivacyManagerClient::GetInstance().proxy_; // backup
+    PrivacyManagerClient::GetInstance().proxy_ = nullptr;
+    ASSERT_EQ(nullptr, PrivacyManagerClient::GetInstance().proxy_);
+    PrivacyManagerClient::GetInstance().InitProxy(); // proxy_ is null
+    PrivacyManagerClient::GetInstance().proxy_ = proxy; // recovery
+}
+
+/**
+ * @tc.name: StartUsingPermission008
+ * @tc.desc: PrivacyKit:: function test input invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
+{
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId, permissionName));
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
 }
