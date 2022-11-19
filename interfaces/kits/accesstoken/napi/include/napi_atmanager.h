@@ -55,6 +55,14 @@ private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
 };
+
+class RegisterSelfPermStateChange : public PermStateChangeCallbackCustomize {
+public:
+    explicit RegisterSelfPermStateChange(const PermStateChangeScope& subscribeInfo);
+    ~RegisterSelfPermStateChange();
+    void PermStateChangeCallback(PermStateChangeInfo& result) override;
+};
+
 struct RegisterPermStateChangeWorker {
     napi_env env = nullptr;
     napi_ref ref = nullptr;
@@ -130,6 +138,7 @@ private:
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
+    static void ListenerSet(const std::string permission, int32_t status, uint32_t tokenId);
 };
 }  // namespace AccessToken
 }  // namespace Security
