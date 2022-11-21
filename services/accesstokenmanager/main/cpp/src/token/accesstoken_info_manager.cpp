@@ -259,7 +259,7 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
     return ((hapTokenInfoMap_.count(id) != 0) || (nativeTokenInfoMap_.count(id) != 0));
 }
 
-int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& InfoParcel)
+int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -267,7 +267,7 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
             LABEL, "token %{public}u is invalid.", tokenID);
         return RET_FAILED;
     }
-    infoPtr->TranslateToHapTokenInfo(InfoParcel);
+    infoPtr->TranslateToHapTokenInfo(infoParcel);
     return RET_SUCCESS;
 }
 
@@ -293,7 +293,7 @@ std::shared_ptr<NativeTokenInfoInner> AccessTokenInfoManager::GetNativeTokenInfo
     return nativeTokenInfoMap_[id];
 }
 
-int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& InfoParcel)
+int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& infoParcel)
 {
     std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -302,7 +302,7 @@ int AccessTokenInfoManager::GetNativeTokenInfo(AccessTokenID tokenID, NativeToke
         return RET_FAILED;
     }
 
-    infoPtr->TranslateToNativeTokenInfo(InfoParcel);
+    infoPtr->TranslateToNativeTokenInfo(infoParcel);
     return RET_SUCCESS;
 }
 

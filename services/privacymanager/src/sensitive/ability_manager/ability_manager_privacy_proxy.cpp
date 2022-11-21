@@ -25,7 +25,7 @@ namespace {
 }
 
 int AbilityManagerPrivacyProxy::StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
-    int32_t userId, int requestCode)
+    int requestCode, int32_t userId)
 {
     MessageParcel data;
     MessageParcel reply;

@@ -227,7 +227,7 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
         }
     }
     GenericValues record;
-    record.Put(FIELD_TOKEN_ID, (int32_t)tokenId);
+    record.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
 }
 

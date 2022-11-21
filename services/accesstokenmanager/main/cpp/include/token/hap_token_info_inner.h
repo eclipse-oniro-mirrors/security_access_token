@@ -39,7 +39,7 @@ public:
     virtual ~HapTokenInfoInner();
 
     void Update(const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
-    void TranslateToHapTokenInfo(HapTokenInfo& InfoParcel) const;
+    void TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const;
     void StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
         std::vector<GenericValues>& permStateValues) const;
     int RestoreHapTokenInfo(AccessTokenID tokenId, const GenericValues& tokenValue,

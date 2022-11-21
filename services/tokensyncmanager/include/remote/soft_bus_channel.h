@@ -228,7 +228,7 @@ private:
         int n;
 
         for (n = 0; n < uuidlen; ++n) {
-            int b = (int)(GetRandomUint32() % bbase);
+            int b = static_cast<int32_t>(GetRandomUint32() % bbase);
             switch (n) {
                 case index6:
                     if (sprintf_s(p, bufSize, "4%x", b % xbase) < 0) {
