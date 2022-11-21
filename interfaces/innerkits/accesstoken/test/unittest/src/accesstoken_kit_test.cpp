@@ -17,11 +17,18 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "nativetoken_kit.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
-#include "token_setproc.h"
+#include "i_accesstoken_manager.h"
+#include "native_token_info_for_sync_parcel.h"
+#include "nativetoken_kit.h"
+#include "permission_state_change_info_parcel.h"
 #include "softbus_bus_center.h"
+#include "string_ex.h"
+#include "token_setproc.h"
+#define private public
+#include "accesstoken_manager_client.h"
+#undef private
 
 using namespace testing::ext;
 
@@ -3835,6 +3842,211 @@ HWTEST_F(AccessTokenKitTest, GetVersion001, TestSize.Level1)
 {
     int32_t res = AccessTokenKit::GetVersion();
     ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
+}
+
+#ifdef TOKEN_SYNC_ENABLE
+/**
+ * @tc.name: GetAllNativeTokenInfo001
+ * @tc.desc: AccessTokenManagerProxy::GetAllNativeTokenInfo function test.
+ * @tc.type: FUNC
+ * @tc.require: issueI61NS6
+ */
+HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    SetSelfTokenID(tokenId);
+    std::vector<NativeTokenInfoForSync> nativeTokenInfoRes;
+    int res = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfoRes);
+    ASSERT_EQ(0, res);
+}
+#endif // TOKEN_SYNC_ENABLE
+
+/**
+ * @tc.name: PermStateChangeCallback001
+ * @tc.desc: PermissionStateChangeCallback::PermStateChangeCallback function test.
+ * @tc.type: FUNC
+ * @tc.require: issueI61NS6
+ */
+HWTEST_F(AccessTokenKitTest, PermStateChangeCallback001, TestSize.Level1)
+{
+    PermStateChangeInfo result = {
+        .PermStateChangeType = 0,
+        .tokenID = 123,
+        .permissionName = "ohos.permission.CAMERA"
+    };
+
+    std::shared_ptr<CbCustomizeTest> callbackPtr = nullptr;
+    std::shared_ptr<PermissionStateChangeCallback> callback = std::make_shared<PermissionStateChangeCallback>(
+        callbackPtr);
+    callback->PermStateChangeCallback(result);
+}
+
+class TestCallBack : public PermissionStateChangeCallbackStub {
+public:
+    TestCallBack() = default;
+    virtual ~TestCallBack() = default;
+
+    void PermStateChangeCallback(PermStateChangeInfo& result)
+    {
+        GTEST_LOG_(INFO) << "PermStateChangeCallback,  tokenID is " << result.tokenID;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: StateChangeCallbackStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, OnRemoteRequest001, TestSize.Level1)
+{
+    PermStateChangeInfo info = {
+        .PermStateChangeType = 0,
+        .tokenID = 123,
+        .permissionName = "ohos.permission.CAMERA"
+    };
+
+    TestCallBack callback;
+    PermissionStateChangeInfoParcel infoParcel;
+    infoParcel.changeInfo = info;
+
+    OHOS::MessageParcel data;
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+    ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(IPermissionStateCallback::PERMISSION_STATE_CHANGE),
+        data, reply, option)); // descriptor false
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
+    uint32_t code = 10;
+    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgCode false
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState013
+ * @tc.desc: AccessTokenManagerClient::GetSelfPermissionsState function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState013, TestSize.Level1)
+{
+    std::vector<PermissionListState> permList;
+
+    // size is 0
+    ASSERT_EQ(PermissionOper::PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permList));
+}
+
+/**
+ * @tc.name: CreatePermStateChangeCallback001
+ * @tc.desc: AccessTokenManagerClient::CreatePermStateChangeCallback function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, CreatePermStateChangeCallback001, TestSize.Level1)
+{
+    std::vector<std::shared_ptr<CbCustomizeTest>> callbackList;
+
+    uint32_t times = 201;
+    for (uint32_t i = 0; i < times; i++) {
+        PermStateChangeScope scopeInfo;
+        scopeInfo.permList = {};
+        scopeInfo.tokenIDs = {};
+        auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+        callbackList.emplace_back(callbackPtr);
+        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+
+        if (i == 200) {
+            ASSERT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
+            break;
+        }
+    }
+
+    for (uint32_t i = 0; i < 200; i++) {
+        ASSERT_EQ(0, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackList[i]));
+    }
+
+    std::shared_ptr<PermStateChangeCallbackCustomize> customizedCb = nullptr;
+    AccessTokenKit::RegisterPermStateChangeCallback(customizedCb); // customizedCb is null
+}
+
+/**
+ * @tc.name: InitProxy001
+ * @tc.desc: AccessTokenManagerClient::InitProxy function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, InitProxy001, TestSize.Level1)
+{
+    ASSERT_NE(nullptr, AccessTokenManagerClient::GetInstance().proxy_);
+    OHOS::sptr<IAccessTokenManager> proxy = AccessTokenManagerClient::GetInstance().proxy_; // backup
+    AccessTokenManagerClient::GetInstance().proxy_ = nullptr;
+    ASSERT_EQ(nullptr, AccessTokenManagerClient::GetInstance().proxy_);
+    AccessTokenManagerClient::GetInstance().InitProxy(); // proxy_ is null
+    AccessTokenManagerClient::GetInstance().proxy_ = proxy; // recovery
+}
+
+/**
+ * @tc.name: AllocHapToken020
+ * @tc.desc: AccessTokenKit::AllocHapToken function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, AllocHapToken020, TestSize.Level1)
+{
+    HapInfoParams info;
+    HapPolicyParams policy;
+    info.userID = -1;
+    AccessTokenKit::AllocHapToken(info, policy);
+    ASSERT_EQ(-1, info.userID);
+}
+
+/**
+ * @tc.name: UpdateHapToken011
+ * @tc.desc: AccessTokenKit::UpdateHapToken function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, UpdateHapToken011, TestSize.Level1)
+{
+    AccessTokenID tokenID = 0;
+    std::string appIDDesc;
+    int32_t apiVersion = 0;
+    HapPolicyParams policy;
+    ASSERT_EQ(RET_FAILED, AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, policy));
+}
+
+/**
+ * @tc.name: VerifyAccessToken005
+ * @tc.desc: AccessTokenKit::VerifyAccessToken function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
+{
+    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.photos", 0); // tokenId for photo app
+    ASSERT_NE(static_cast<AccessTokenID>(0), callerTokenID);
+    AccessTokenID firstTokenID;
+    std::string permissionName;
+
+    // ret = PERMISSION_GRANTED + firstTokenID = 0
+    permissionName = "ohos.permission.READ_MEDIA";
+    firstTokenID = 0;
+    ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
+        callerTokenID, firstTokenID, permissionName));
+
+    firstTokenID = 1;
+    // ret = PERMISSION_GRANTED + firstTokenID != 0
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+        callerTokenID, firstTokenID, permissionName));
+
+    callerTokenID = 0;
+    // ret = PERMISSION_GRANTED
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
+        callerTokenID, firstTokenID, permissionName));
 }
 } // namespace AccessToken
 } // namespace Security
