@@ -24,7 +24,10 @@ ohos_unittest("libnativetoken_test") {
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
   ]
 
-  sources = [ "unittest/src/nativetoken_kit_test.cpp" ]
+  sources = [
+    "unittest/src/nativetoken_kit_test.cpp",
+    "unittest/src/nativetoken_oper_test.cpp",
+  ]
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
