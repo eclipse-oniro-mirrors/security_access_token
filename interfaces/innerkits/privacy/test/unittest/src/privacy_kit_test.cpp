@@ -88,12 +88,12 @@ static HapInfoParams g_infoParmsE = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleE"
 };
-UsedRecordDetail g_usedRecordDetail = {
+static UsedRecordDetail g_usedRecordDetail = {
     .status = 2,
     .timestamp = 2L,
     .accessDuration = 2L,
 };
-PermissionUsedRecord g_permissionUsedRecord = {
+static PermissionUsedRecord g_permissionUsedRecord = {
     .permissionName = "ohos.permission.CAMERA",
     .accessCount = 2,
     .rejectCount = 2,
@@ -101,7 +101,7 @@ PermissionUsedRecord g_permissionUsedRecord = {
     .lastRejectTime = 0L,
     .lastAccessDuration = 0L,
 };
-BundleUsedRecord g_bundleUsedRecord = {
+static BundleUsedRecord g_bundleUsedRecord = {
     .tokenId = 100,
     .isRemote = false,
     .deviceId = "you guess",
