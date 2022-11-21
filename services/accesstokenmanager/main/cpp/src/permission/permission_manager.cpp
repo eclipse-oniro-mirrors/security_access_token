@@ -29,6 +29,7 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
+#include "parameter.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -40,6 +41,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
+static const char *PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 }
 
 PermissionManager& PermissionManager::GetInstance()
@@ -340,6 +342,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
+        SetParameter(PERMISSION_STATUS_CHANGE_KEY, );
     }
 
 #ifdef TOKEN_SYNC_ENABLE
