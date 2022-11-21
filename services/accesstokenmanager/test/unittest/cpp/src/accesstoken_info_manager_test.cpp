@@ -30,12 +30,15 @@
 #define private public
 #include "accesstoken_info_manager.h"
 #include "dm_device_info.h"
+#include "field_const.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
+#include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "permission_policy_set.h"
 #undef private
 #include "permission_state_change_callback_stub.h"
+#include "permission_validator.h"
 #include "string_ex.h"
 #include "token_sync_manager_client.h"
 
@@ -1773,6 +1776,437 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
     ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, ""));
     // delete test token
     ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: Insert001
+ * @tc.desc: PermissionDefinitionCache::Insert function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Insert001, TestSize.Level1)
+{
+    PermissionDef info = {
+        .permissionName = "ohos.permission.CAMERA",
+        .bundleName = "com.ohos.camera",
+        .grantMode = 0,
+        .availableLevel = ATokenAplEnum::APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "buzhidao",
+        .labelId = 100, // 100 is random input
+        .description = "buzhidao",
+        .descriptionId = 100 // 100 is random input
+    };
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    ASSERT_EQ(false, PermissionDefinitionCache::GetInstance().Insert(info, tokenId)); // permission has insert
+}
+
+/**
+ * @tc.name: IsGrantedModeEqualInner001
+ * @tc.desc: PermissionDefinitionCache::IsGrantedModeEqualInner function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, IsGrantedModeEqualInner001, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int grantMode = 0;
+
+    // find permission not reach end
+    ASSERT_EQ(true, PermissionDefinitionCache::GetInstance().IsGrantedModeEqualInner(permissionName, grantMode));
+
+    permissionName = "ohos.permission.INVALID";
+    // can't find permission
+    ASSERT_EQ(false, PermissionDefinitionCache::GetInstance().IsGrantedModeEqualInner(permissionName, grantMode));
+}
+
+/**
+ * @tc.name: RestorePermDefInfo001
+ * @tc.desc: PermissionDefinitionCache::RestorePermDefInfo function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
+{
+    GenericValues value;
+    value.Put(FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+
+    // ret not RET_SUCCESS
+    ASSERT_EQ(RET_FAILED, PermissionDefinitionCache::GetInstance().RestorePermDefInfo(values));
+}
+
+/**
+ * @tc.name: IsPermissionDefValid001
+ * @tc.desc: PermissionValidator::IsPermissionDefValid function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
+{
+    PermissionDef permDef = {
+        .permissionName = "ohos.permission.TEST",
+        .bundleName = "com.ohos.test",
+        .grantMode = static_cast<GrantMode>(2),
+        .availableLevel = ATokenAplEnum::APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "buzhidao",
+        .labelId = 100, // 100 is random input
+        .description = "buzhidao",
+        .descriptionId = 100 // 100 is random input
+    };
+
+    // ret not RET_SUCCESS
+    ASSERT_EQ(false, PermissionValidator::IsPermissionDefValid(permDef)); // grant mode invalid
+}
+
+/**
+ * @tc.name: IsPermissionStateValid001
+ * @tc.desc: PermissionValidator::IsPermissionStateValid function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
+{
+    std::string permissionName;
+    std::string deviceID = "dev-001";
+    int grantState = PermissionState::PERMISSION_DENIED;
+    int grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+
+    std::vector<std::string> resDeviceID;
+    std::vector<int> grantStates;
+    std::vector<int> grantFlags;
+
+    resDeviceID.emplace_back(deviceID);
+    grantStates.emplace_back(grantState);
+    grantFlags.emplace_back(grantFlag);
+
+    PermissionStateFull permState = {
+        .permissionName = permissionName,
+        .isGeneral = false,
+        .resDeviceID = resDeviceID,
+        .grantStatus = grantStates,
+        .grantFlags = grantFlags
+    };
+
+    ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState)); // permissionName empty
+
+    permState.resDeviceID.emplace_back("dev-002");
+    // deviceID nums not eauql status nums or flag nums
+    ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState));
+}
+
+/**
+ * @tc.name: FilterInvalidPermissionDef001
+ * @tc.desc: PermissionValidator::FilterInvalidPermissionDef function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Level1)
+{
+    PermissionDef permDef = {
+        .permissionName = "ohos.permission.TEST",
+        .bundleName = "com.ohos.test",
+        .grantMode = GrantMode::SYSTEM_GRANT,
+        .availableLevel = ATokenAplEnum::APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "buzhidao",
+        .labelId = 100, // 100 is random input
+        .description = "buzhidao",
+        .descriptionId = 100 // 100 is random input
+    };
+
+    std::vector<PermissionDef> permList;
+    permList.emplace_back(permDef);
+    permList.emplace_back(permDef);
+
+    ASSERT_EQ(static_cast<uint32_t>(2), permList.size());
+
+    std::vector<PermissionDef> result;
+    PermissionValidator::FilterInvalidPermissionDef(permList, result); // permDefSet.count != 0
+    ASSERT_EQ(static_cast<uint32_t>(1), result.size());
+}
+
+/**
+ * @tc.name: DeduplicateResDevID001
+ * @tc.desc: PermissionValidator::DeduplicateResDevID function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
+{
+    PermissionStateFull permState = {
+        .permissionName = "ohos.permission.TEST",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    ASSERT_EQ(static_cast<uint32_t>(2), permState.resDeviceID.size());
+
+    std::vector<PermissionStateFull> permList;
+    permList.emplace_back(permState);
+    std::vector<PermissionStateFull> result;
+
+    PermissionValidator::FilterInvalidPermissionState(permList, result); // resDevId.count != 0
+    ASSERT_EQ(static_cast<uint32_t>(1), result[0].resDeviceID.size());
+}
+
+/**
+ * @tc.name: Update001
+ * @tc.desc: PermissionPolicySet::Update function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Update001, TestSize.Level1)
+{
+    PermissionStateFull perm1 = {
+        .permissionName = "ohos.permission.TEST1",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    PermissionStateFull perm2 = {
+        .permissionName = "ohos.permission.TEST2",
+        .isGeneral = true,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    PermissionStateFull perm3 = {
+        .permissionName = "ohos.permission.TEST1",
+        .isGeneral = true,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    ASSERT_EQ(false, perm1.permissionName == perm2.permissionName);
+    ASSERT_EQ(true, perm1.permissionName == perm3.permissionName);
+    ASSERT_EQ(false, perm1.isGeneral == perm3.isGeneral);
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList1;
+    permStateList1.emplace_back(perm1);
+    std::vector<PermissionStateFull> permStateList2;
+    permStateList1.emplace_back(perm2);
+    std::vector<PermissionStateFull> permStateList3;
+    permStateList1.emplace_back(perm3);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList1);
+
+    policySet->Update(permStateList2); // iter reach end
+    policySet->Update(permStateList3); // permNew.isGeneral != permOld.isGeneral
+}
+
+/**
+ * @tc.name: RestorePermissionPolicy001
+ * @tc.desc: PermissionPolicySet::RestorePermissionPolicy function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(FIELD_TOKEN_ID, 123); // 123 is random input
+    value1.Put(FIELD_GRANT_IS_GENERAL, true);
+    value1.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value1.Put(FIELD_DEVICE_ID, "dev-001");
+    value1.Put(FIELD_GRANT_STATE, static_cast<PermissionState>(3));
+    value1.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<GenericValues> permStateRes1;
+    permStateRes1.emplace_back(value1);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::RestorePermissionPolicy(tokenId,
+        permStateRes1); // ret != RET_SUCCESS
+
+    ASSERT_EQ(tokenId, policySet->tokenId_);
+
+    GenericValues value2;
+    value2.Put(FIELD_TOKEN_ID, 123); // 123 is random input
+    value2.Put(FIELD_GRANT_IS_GENERAL, true);
+    value2.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value2.Put(FIELD_DEVICE_ID, "dev-002");
+    value2.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value2.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    GenericValues value3;
+    value3.Put(FIELD_TOKEN_ID, 123); // 123 is random input
+    value3.Put(FIELD_GRANT_IS_GENERAL, true);
+    value3.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value3.Put(FIELD_DEVICE_ID, "dev-003");
+    value3.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value3.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+
+    std::vector<GenericValues> permStateRes2;
+    permStateRes2.emplace_back(value2);
+    permStateRes2.emplace_back(value3);
+
+    std::shared_ptr<PermissionPolicySet> policySet2 = PermissionPolicySet::RestorePermissionPolicy(tokenId,
+        permStateRes2); // state.permissionName == iter->permissionName
+    ASSERT_EQ(static_cast<uint32_t>(2), policySet2->permStateList_[0].resDeviceID.size());
+}
+
+/**
+ * @tc.name: VerifyPermissStatus001
+ * @tc.desc: PermissionPolicySet::VerifyPermissStatus function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissStatus001, TestSize.Level1)
+{
+    PermissionStateFull perm = {
+        .permissionName = "ohos.permission.TEST",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(perm);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+
+    // isGeneral is false
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, policySet->VerifyPermissStatus("ohos.permission.TEST"));
+}
+
+/**
+ * @tc.name: QueryPermissionFlag001
+ * @tc.desc: PermissionPolicySet::QueryPermissionFlag function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
+{
+    PermissionStateFull perm = {
+        .permissionName = "ohos.permission.TEST",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(perm);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+
+    // perm.permissionName != permissionName
+    int flag = 0;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
+    // isGeneral is false
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST", flag));
+}
+
+/**
+ * @tc.name: UpdatePermissionStatus001
+ * @tc.desc: PermissionPolicySet::UpdatePermissionStatus function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
+{
+    PermissionStateFull perm = {
+        .permissionName = "ohos.permission.TEST",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(perm);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+
+    // iter reach the end
+    bool isGranted = false;
+    uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    bool isUpdated = false;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
+        isGranted, flag, isUpdated));
+
+    // isGeneral is false
+    ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.TEST",
+        isGranted, flag, isUpdated));
+}
+
+/**
+ * @tc.name: ResetUserGrantPermissionStatus001
+ * @tc.desc: PermissionPolicySet::ResetUserGrantPermissionStatus function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize.Level1)
+{
+    PermissionStateFull perm = {
+        .permissionName = "ohos.permission.TEST",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(perm);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+
+    ASSERT_EQ(tokenId, policySet->tokenId_);
+
+    // isGeneral is false
+    policySet->ResetUserGrantPermissionStatus();
+}
+
+/**
+ * @tc.name: PermStateFullToString001
+ * @tc.desc: PermissionPolicySet::PermStateFullToString function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI61OOX
+ */
+HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
+{
+    PermissionStateFull perm = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = false,
+        .resDeviceID = {"dev-001", "dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(perm);
+
+    std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+
+    ASSERT_EQ(tokenId, policySet->tokenId_);
+
+    int32_t tokenApl = static_cast<int32_t>(ATokenAplEnum::APL_SYSTEM_CORE);
+    std::vector<std::string> nativeAcls;
+    std::string info;
+    // isGeneral is false
+    policySet->PermStateToString(tokenApl, nativeAcls, info);
 }
 } // namespace AccessToken
 } // namespace Security
