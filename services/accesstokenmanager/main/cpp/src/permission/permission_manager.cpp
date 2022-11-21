@@ -63,12 +63,6 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
 
     for (const auto& perm : permFilterList) {
-        if (!PermissionValidator::IsPermissionDefValid(perm)) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "invalid permission definition info: %{public}s",
-                TransferPermissionDefToString(perm).c_str());
-            continue;
-        }
-
         if (updateFlag) {
             PermissionDefinitionCache::GetInstance().Update(perm);
             continue;

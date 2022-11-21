@@ -185,7 +185,9 @@ static PermissionDef g_infoManagerPermDef4 = {
 }
 
 void AccessTokenInfoManagerTest::SetUpTestCase()
-{}
+{
+    AccessTokenInfoManager::GetInstance().Init();
+}
 
 void AccessTokenInfoManagerTest::TearDownTestCase()
 {
@@ -201,23 +203,6 @@ void AccessTokenInfoManagerTest::SetUp()
 void AccessTokenInfoManagerTest::TearDown()
 {
     atManagerService_ = nullptr;
-}
-
-HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
-{
-    AccessTokenInfoManager::GetInstance().Init();
-    AccessTokenID getTokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
-        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
-
-    std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(getTokenId, dumpInfo);
-
-    // delete test token
-    if (getTokenId != 0) {
-        ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(getTokenId));
-    }
-
-    ASSERT_EQ(RET_SUCCESS, RET_SUCCESS);
 }
 
 /**
@@ -299,7 +284,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
     HapPolicyParams policy;
     AccessTokenIDEx tokenIdEx;
 
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -317,7 +302,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
     HapPolicyParams policy;
     AccessTokenIDEx tokenIdEx;
 
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -336,7 +321,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
     HapPolicyParams policy;
     AccessTokenIDEx tokenIdEx;
 
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -357,7 +342,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
     };
     AccessTokenIDEx tokenIdEx;
 
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -379,7 +364,41 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
     };
     AccessTokenIDEx tokenIdEx;
 
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+}
+
+/**
+ * @tc.name: CreateHapTokenInfo008
+ * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test grant mode invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI5YR8M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
+{
+    static PermissionDef permDef = {
+        .permissionName = "ohos.permission.test",
+        .bundleName = "accesstoken_test",
+        .grantMode = -1,    // -1:invalid grant mode
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "open the door",
+        .descriptionId = 1
+    };
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "ohos.com.testtesttest",
+        .appIDDesc = ""
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {permDef}
+    };
+    AccessTokenIDEx tokenIdEx;
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
 }
 
 /**
@@ -1735,6 +1754,25 @@ HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
     DistributedHardware::DmDeviceInfo deviceInfo;
     std::shared_ptr<AtmDeviceStateCallback> callback = std::make_shared<AtmDeviceStateCallback>();
     callback->OnDeviceOnline(deviceInfo); // remote object is not nullptr
+}
+
+/**
+ * @tc.name: VerifyAccessToken001
+ * @tc.desc: VerifyAccessToken with permission is invalid
+ * @tc.type: FUNC
+ * @tc.require: IssueI60IB3
+ */
+HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
+{
+    HapInfoParcel hapInfoParcel;
+    HapPolicyParcel haoPolicyParcel;
+    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
+
+    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, ""));
+    // delete test token
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 } // namespace AccessToken
 } // namespace Security
