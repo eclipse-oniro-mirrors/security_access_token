@@ -60,7 +60,9 @@
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
           "//base/security/access_token/services/tokensyncmanager:tokensyncmanager",
-          "//base/security/access_token/services/privacymanager:privacymanager"
+          "//base/security/access_token/services/privacymanager:privacymanager",
+          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
+          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac"
         ]
       },
       "inner_kits": [

@@ -26,6 +26,7 @@
 #include "napi/native_api.h"
 #include "napi_error.h"
 #include "napi/native_node_api.h"
+#include "parameter.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -34,9 +35,7 @@ namespace AccessToken {
 std::mutex g_lockForPermStateChangeRegisters;
 std::map<AccessTokenKit*, std::vector<RegisterPermStateChangeInfo*>> g_permStateChangeRegisters;
 std::mutex g_lockCache;
-std::map<std::string, uint32_t> g_cache;
-std::shared_ptr<RegisterSelfPermStateChange> g_cacheListener = nullptr;
-
+std::map<std::string, PermissionStatusCache> g_cache;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
@@ -45,7 +44,8 @@ static constexpr int32_t VERIFY_OR_FLAG_INPUT_MAX_PARAMS = 2;
 static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
 static constexpr int32_t MAX_LENGTH = 256;
-
+static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static constexpr int32_t VALUE_MAX_LEN = 32;
 
 static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
 {
@@ -122,20 +122,6 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkPermStateChanged end");
 };
 } // namespace
-
-RegisterSelfPermStateChange::RegisterSelfPermStateChange(const PermStateChangeScope& subscribeInfo)
-    : PermStateChangeCallbackCustomize(subscribeInfo)
-{}
-
-RegisterSelfPermStateChange::~RegisterSelfPermStateChange()
-{}
-
-void RegisterSelfPermStateChange::PermStateChangeCallback(PermStateChangeInfo& result)
-{
-    std::lock_guard<std::mutex> lock(g_lockCache);
-    int32_t status = (result.PermStateChangeType == PERMISSION_GRANTED_OPER) ? PERMISSION_GRANTED : PERMISSION_DENIED;
-    g_cache[result.permissionName] = status;
-}
 
 RegisterPermStateChangeScopePtr::RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo)
     : PermStateChangeCallbackCustomize(subscribeInfo)
@@ -293,6 +279,7 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "New the js instance complete");
+
     return instance;
 }
 
@@ -464,34 +451,46 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
     return result;
 }
 
-void NapiAtManager::ListenerSet(const std::string permission, int32_t status, uint32_t tokenId)
+std::string NapiAtManager::GetPermParamValue()
 {
-    PermStateChangeScope subscribeInfo;
-    if (g_cacheListener == nullptr) {
-        subscribeInfo.tokenIDs = {tokenId};
-        subscribeInfo.permList = {permission};
-        g_cacheListener = std::make_shared<RegisterSelfPermStateChange>(subscribeInfo);
-    } else {
-        int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(g_cacheListener);
-        if (res != AT_PERM_OPERA_SUCC) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "UnRegisterPermStateChangeCallback failed.");
-            return;
-        }
-        g_cacheListener->GetScope(subscribeInfo);
-        subscribeInfo.permList.emplace_back(permission);
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(PERMISSION_STATUS_CHANGE_KEY, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+        return "";
     }
-    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(g_cacheListener);
-    if (res == AT_PERM_OPERA_SUCC) {
-        g_cache[permission] = status;
+    std::string resStr(value);
+    return resStr;
+}
+
+void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter");
+    std::lock_guard<std::mutex> lock(g_lockCache);
+    auto iter = g_cache.find(asyncContext->permissionName);
+    if (iter != g_cache.end()) {
+        std::string currPara = GetPermParamValue();
+        if (currPara != iter->second.paramValue) {
+            asyncContext->result = AccessTokenKit::VerifyAccessToken(
+                asyncContext->tokenId, asyncContext->permissionName);
+            iter->second.status = asyncContext->result;
+            iter->second.paramValue = currPara;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param changed currPara %{public}s", currPara.c_str());
+        } else {
+            asyncContext->result = iter->second.status;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param cache unchaged");
+        }
     } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "RegisterPermStateChangeCallback failed.");
+        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
+        g_cache[asyncContext->permissionName].status = asyncContext->result;
+        g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "g_cacheParam set %{public}s",
+            g_cache[asyncContext->permissionName].paramValue.c_str());
     }
 }
 
 napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync begin.");
-
     auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -520,14 +519,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         return result;
     }
 
-    std::lock_guard<std::mutex> lock(g_lockCache);
-    if (g_cache.find(asyncContext->permissionName) != g_cache.end()) {
-        asyncContext->result = g_cache[asyncContext->permissionName];
-    } else {
-        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,asyncContext->permissionName);
-        ListenerSet(asyncContext->permissionName, asyncContext->result, asyncContext->tokenId);
-    }
-
+    UpdatePermissionCache(asyncContext);
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 

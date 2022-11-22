@@ -56,13 +56,6 @@ private:
     napi_ref ref_ = nullptr;
 };
 
-class RegisterSelfPermStateChange : public PermStateChangeCallbackCustomize {
-public:
-    explicit RegisterSelfPermStateChange(const PermStateChangeScope& subscribeInfo);
-    ~RegisterSelfPermStateChange();
-    void PermStateChangeCallback(PermStateChangeInfo& result) override;
-};
-
 struct RegisterPermStateChangeWorker {
     napi_env env = nullptr;
     napi_ref ref = nullptr;
@@ -95,6 +88,11 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     int32_t result = AT_PERM_OPERA_FAIL;
     int32_t errorCode = 0;
     std::string errorMessage;
+};
+
+struct PermissionStatusCache {
+    int32_t status;
+    std::string paramValue;
 };
 
 class NapiAtManager {
@@ -138,7 +136,8 @@ private:
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
-    static void ListenerSet(const std::string permission, int32_t status, uint32_t tokenId);
+    static std::string GetPermParamValue();
+    static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
 };
 }  // namespace AccessToken
 }  // namespace Security
