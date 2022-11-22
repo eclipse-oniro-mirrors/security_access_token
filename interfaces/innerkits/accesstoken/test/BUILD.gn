@@ -83,6 +83,7 @@ ohos_unittest("accesstoken_mock_test") {
     "//base/security/access_token/interfaces/innerkits/accesstoken/test/unittest/accesstoken_mock_test/accesstoken_kit_test.cpp",
   ]
 
+  cflags_cc = [ "-DHILOG_ENABLE" ]
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [
@@ -103,6 +104,9 @@ ohos_unittest("accesstoken_mock_test") {
     "ipc:libdbinder",
     "safwk:system_ability_fwk",
   ]
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
 }
 
 group("unittest") {
