@@ -233,17 +233,17 @@ int32_t PrivacyManagerClient::UnRegisterPermActiveStatusCallback(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
     std::lock_guard<std::mutex> lock(activeCbkMutex_);
     auto goalCallback = activeCbkMap_.find(callback);
     if (goalCallback == activeCbkMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "goalCallback already is not exist");
         return PrivacyError::ERR_CALLBACK_NOT_EXIST;
-    }
-
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = proxy->UnRegisterPermActiveStatusCallback(goalCallback->second->AsObject());
