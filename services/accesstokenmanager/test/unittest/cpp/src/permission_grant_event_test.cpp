@@ -60,7 +60,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult001, TestSize.Level
     // larger than grant timestamp
     eventHandler.NotifyPermGrantStoreResult(true, time + 1);
 
-    ASSERT_EQ(eventHandler.permGrantEventList_.size(), 0);
+    ASSERT_EQ(eventHandler.permGrantEventList_.size(), static_cast<uint32_t>(0));
 }
 
 /**
@@ -82,7 +82,7 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult002, TestSize.Level
     // larger than grant timestamp
     eventHandler.NotifyPermGrantStoreResult(false, time + 1);
 
-    ASSERT_EQ(eventHandler.permGrantEventList_.size(), 0);
+    ASSERT_EQ(eventHandler.permGrantEventList_.size(), static_cast<uint32_t>(0));
 }
 
 /**
@@ -104,5 +104,5 @@ HWTEST_F(PermissionGrantEventTest, NotifyPermGrantStoreResult003, TestSize.Level
     // less than grant timestamp
     eventHandler.NotifyPermGrantStoreResult(true, time - 1);
 
-    ASSERT_EQ(eventHandler.permGrantEventList_.size(), 1);
+    ASSERT_EQ(eventHandler.permGrantEventList_.size(), static_cast<uint32_t>(1));
 }

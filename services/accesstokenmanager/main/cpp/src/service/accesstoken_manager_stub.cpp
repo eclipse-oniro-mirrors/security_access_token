@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "ipc_skeleton.h"
 #include "string_ex.h"
 
@@ -61,7 +62,7 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
 {
     if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -127,7 +128,11 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
 void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply)
 {
     std::vector<PermissionListStateParcel> permList;
-    uint32_t size = data.ReadUint32();
+    uint32_t size = 0;
+    if (!data.ReadUint32(size)) {
+        reply.WriteInt32(INVALID_OPER);
+        return;
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "permList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permList size %{public}d is invalid", size);
@@ -187,7 +192,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     int result = this->GrantPermission(tokenID, permissionName, flag);
@@ -207,7 +212,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     int result = this->RevokePermission(tokenID, permissionName, flag);
@@ -223,7 +228,7 @@ void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel&
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -236,7 +241,7 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
     AccessTokenIDEx res = {0};
     if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
 
@@ -244,7 +249,7 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
     sptr<HapPolicyParcel> hapPolicyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (hapInfoParcel == nullptr || hapPolicyParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read hapPolicyParcel or hapInfoParcel fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     res = this->AllocHapToken(*hapInfoParcel, *hapPolicyParcel);
@@ -262,7 +267,7 @@ void AccessTokenManagerStub::CheckNativeDCapInner(MessageParcel& data, MessagePa
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -302,7 +307,7 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
 {
     if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -311,7 +316,7 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (policyParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "policyParcel read faild");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->UpdateHapToken(tokenID, appIDDesc, apiVersion, *policyParcel);
@@ -322,7 +327,7 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
@@ -339,7 +344,7 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -357,36 +362,37 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     sptr<PermStateChangeScopeParcel> scopeParcel = data.ReadParcelable<PermStateChangeScopeParcel>();
     if (scopeParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->RegisterPermStateChangeCallback(*scopeParcel, callback);
     reply.WriteInt32(result);
 }
+
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read callback fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->UnRegisterPermStateChangeCallback(callback);
@@ -397,7 +403,7 @@ void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, Mes
 {
     if (!IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteUint32(RET_FAILED);
+        reply.WriteUint32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     int32_t result = this->ReloadNativeTokenInfo();
@@ -425,7 +431,7 @@ void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data,
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -443,7 +449,7 @@ void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, Mes
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
@@ -462,14 +468,14 @@ void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, Mes
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     std::string deviceID = data.ReadString();
     sptr<HapTokenInfoForSyncParcel> hapTokenParcel = data.ReadParcelable<HapTokenInfoForSyncParcel>();
     if (hapTokenParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "hapTokenParcel read faild");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
@@ -480,7 +486,7 @@ void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, 
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     std::string deviceID = data.ReadString();
@@ -489,14 +495,14 @@ void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, 
     uint32_t size = data.ReadUint32();
     if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size %{public}u is invalid", size);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
         return;
     }
     for (uint32_t i = 0; i < size; i++) {
         sptr<NativeTokenInfoForSyncParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoForSyncParcel>();
         if (nativeParcel == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "nativeParcel read faild");
-            reply.WriteInt32(RET_FAILED);
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
             return;
         }
         nativeParcelList.emplace_back(*nativeParcel);
@@ -510,7 +516,7 @@ void AccessTokenManagerStub::DeleteRemoteTokenInner(MessageParcel& data, Message
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     std::string deviceID = data.ReadString();
@@ -538,7 +544,7 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
 {
     if (!IsAccessTokenCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     std::string deviceID = data.ReadString();
@@ -552,7 +558,7 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();

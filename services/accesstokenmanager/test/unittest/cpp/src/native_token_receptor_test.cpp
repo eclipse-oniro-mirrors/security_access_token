@@ -83,20 +83,19 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData001, TestSize.Level1)
     NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    int size = tokenInfos.size();
-    ASSERT_EQ(2, size);
+    ASSERT_EQ(static_cast<uint32_t>(2), tokenInfos.size());
     ASSERT_NE(nullptr, tokenInfos[0]);
     ASSERT_NE(nullptr, tokenInfos[1]);
 
     ASSERT_EQ("process6", tokenInfos[0]->GetProcessName());
     ASSERT_EQ(static_cast<AccessTokenID>(685266937), tokenInfos[0]->GetTokenID());
-    ASSERT_EQ(2, tokenInfos[0]->GetDcap().size());
+    ASSERT_EQ(static_cast<uint32_t>(2), tokenInfos[0]->GetDcap().size());
     ASSERT_EQ("AT_CAP", (tokenInfos[0]->GetDcap())[0]);
     ASSERT_EQ("ST_CAP", (tokenInfos[0]->GetDcap())[1]);
 
     ASSERT_EQ("process5", tokenInfos[1]->GetProcessName());
     ASSERT_EQ(static_cast<AccessTokenID>(678065606), tokenInfos[1]->GetTokenID());
-    ASSERT_EQ(2, tokenInfos[1]->GetDcap().size());
+    ASSERT_EQ(static_cast<uint32_t>(2), tokenInfos[1]->GetDcap().size());
     ASSERT_EQ("AT_CAP", (tokenInfos[1]->GetDcap())[0]);
     ASSERT_EQ("ST_CAP", (tokenInfos[1]->GetDcap())[1]);
 }

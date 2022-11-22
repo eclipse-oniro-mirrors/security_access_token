@@ -132,7 +132,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     SetSelfTokenID(tokenId);
 
@@ -170,7 +170,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
 
     PermissionRecord record1 = {
@@ -203,7 +203,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
 
     PermissionRecord record1 = {
@@ -235,7 +235,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
 
     PermissionRecord record1 = {
@@ -272,7 +272,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     ASSERT_NE(nullptr, callbackWrap);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(ERR_PARAM_INVALID,
         PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, nullptr));
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
@@ -294,7 +294,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
     ASSERT_NE(nullptr, callbackWrap);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.LOCATION", callbackWrap->AsObject()));
 }
@@ -309,7 +309,7 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
 
     auto callbackPtr = std::make_shared<CbCustomizeTest1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);

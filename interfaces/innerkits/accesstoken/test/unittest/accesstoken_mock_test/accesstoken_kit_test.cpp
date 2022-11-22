@@ -274,7 +274,8 @@ HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GrantPermission(tokenId, permission, PERMISSION_USER_FIXED));
+    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
+        AccessTokenKit::GrantPermission(tokenId, permission, PERMISSION_USER_FIXED));
 }
 
 /**
@@ -287,7 +288,8 @@ HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::RevokePermission(tokenId, permission, PERMISSION_USER_FIXED));
+    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
+        AccessTokenKit::RevokePermission(tokenId, permission, PERMISSION_USER_FIXED));
 }
 
 /**

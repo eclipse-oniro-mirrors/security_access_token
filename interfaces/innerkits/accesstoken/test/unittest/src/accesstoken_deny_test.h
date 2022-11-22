@@ -12,28 +12,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ACCESS_TOKEN_ERROR_H
-#define ACCESS_TOKEN_ERROR_H
+
+#ifndef ACCESSTOKEN_KIT_PERM_TEST_H
+#define ACCESSTOKEN_KIT_PERM_TEST_H
+
+#include <gtest/gtest.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum AccessTokenError {
-    ERR_PERMISSION_DENIED = 201,
-    ERR_PARAM_INVALID = 12100001,
-    ERR_TOKENID_NOT_EXIST,
-    ERR_PERMISSION_NOT_EXIT,
-    ERR_INTERFACE_NOT_USED_TOGETHER,
-    ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT,
-    ERR_PERMISSION_OPERATE_FAILED,
-    ERR_SA_WORK_ABNORMAL,
-    ERR_MALLOC_FAILED,
-    ERR_OVERSIZE,
-    ERR_READ_PARCEL_FAILED,
-    ERR_WRITE_PARCEL_FAILED
+class AccessTokenDenyTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif  // ACCESS_TOKEN_ERROR_H
+#endif // ACCESSTOKEN_KIT_PERM_TEST_H
