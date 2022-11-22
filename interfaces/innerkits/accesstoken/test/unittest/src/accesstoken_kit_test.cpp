@@ -3791,6 +3791,18 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback009, TestSize.Level1
 }
 
 /**
+ * @tc.name: RegisterPermStateChangeCallback010
+ * @tc.desc: RegisterPermStateChangeCallback with nullptr
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback010, TestSize.Level1)
+{
+    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(nullptr);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+}
+
+/**
  * @tc.name: UnRegisterPermStateChangeCallback001
  * @tc.desc: UnRegisterPermStateChangeCallback with invalid input.
  * @tc.type: FUNC

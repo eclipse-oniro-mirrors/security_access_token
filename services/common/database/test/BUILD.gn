@@ -24,11 +24,16 @@ ohos_unittest("libdatabase_test") {
     "//base/security/access_token/services/common/database/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
+    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/token",
+    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
   ]
 
   sources = [ "unittest/database_test.cpp" ]
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
     "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",

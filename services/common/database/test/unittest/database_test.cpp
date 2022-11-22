@@ -16,7 +16,13 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
+#include "accesstoken_log.h"
+#include "access_token.h"
+#include "data_translator.h"
+#include "permission_def.h"
+#define private public
 #include "sqlite_storage.h"
+#undef private
 #include "generic_values.h"
 #include "variant_value.h"
 
@@ -26,10 +32,12 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DatabaseTest"};
 static constexpr int32_t GET_INT64_TRUE_VALUE = -1;
 static constexpr int32_t ROLLBACK_TRANSACTION_RESULT_ABNORMAL = -1;
 static constexpr int32_t EXECUTESQL_RESULT_ABNORMAL = -1;
 static const int32_t DEFAULT_VALUE = -1;
+static const int32_t TEST_TOKEN_ID = 100;
 } // namespace
 class DatabaseTest : public testing::Test {
 public:
@@ -52,14 +60,14 @@ void DatabaseTest::TearDown() {}
  */
 HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
 {
-    GenericValues outGenericValues;
+    GenericValues genericValues;
     std::string key = "databasetest";
     int64_t data = 1;
-    outGenericValues.Put(key, data);
-    int64_t outdata = outGenericValues.GetInt64(key);
+    genericValues.Put(key, data);
+    int64_t outdata = genericValues.GetInt64(key);
     EXPECT_EQ(outdata, data);
-    outGenericValues.Remove(key);
-    outdata = outGenericValues.GetInt64(key);
+    genericValues.Remove(key);
+    outdata = genericValues.GetInt64(key);
     EXPECT_EQ(GET_INT64_TRUE_VALUE, outdata);
 }
 
@@ -165,6 +173,448 @@ HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level1)
     int64_t testValue = 1;
     VariantValue Test(testValue);
     EXPECT_EQ(DEFAULT_VALUE, Test.GetInt());
+}
+
+static void RemoveTestTokenHapInfo()
+{
+    std::vector<GenericValues> hapInfoResults;
+    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    for (GenericValues hapInfoValue : hapInfoResults) {
+        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(FIELD_TOKEN_ID);
+        if (tokenId == TEST_TOKEN_ID) {
+            ASSERT_EQ(SqliteStorage::SUCCESS,
+                SqliteStorage::GetInstance().Remove(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValue));
+            break;
+        }
+    }
+}
+
+/*
+ * @tc.name: SqliteStorageAddTest001
+ * @tc.desc: Add function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 begin");
+
+    RemoveTestTokenHapInfo();
+
+    GenericValues genericValues;
+    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(FIELD_USER_ID, 100);
+    genericValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name");
+    genericValues.Put(FIELD_API_VERSION, 9);
+    genericValues.Put(FIELD_INST_INDEX, 0);
+    genericValues.Put(FIELD_DLP_TYPE, 0);
+    genericValues.Put(FIELD_APP_ID, "test_app_id");
+    genericValues.Put(FIELD_DEVICE_ID, "test_device_id");
+    genericValues.Put(FIELD_APL, ATokenAplEnum::APL_NORMAL);
+    genericValues.Put(FIELD_TOKEN_VERSION, 0);
+    genericValues.Put(FIELD_TOKEN_ATTR, 0);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(genericValues);
+    EXPECT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageAddTest002
+ * @tc.desc: Add function test failed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 begin");
+
+    RemoveTestTokenHapInfo();
+
+    GenericValues genericValues;
+    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(genericValues);
+    EXPECT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 end");
+}
+
+/*
+ * @tc.name: SqliteStorageModifyTest001
+ * @tc.desc: Modify function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageModifyTest001 begin");
+
+    RemoveTestTokenHapInfo();
+
+    GenericValues genericValues;
+    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(FIELD_USER_ID, 100);
+    genericValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name");
+    genericValues.Put(FIELD_API_VERSION, 9);
+    genericValues.Put(FIELD_INST_INDEX, 0);
+    genericValues.Put(FIELD_DLP_TYPE, 0);
+    genericValues.Put(FIELD_APP_ID, "test_app_id");
+    genericValues.Put(FIELD_DEVICE_ID, "test_device_id");
+    genericValues.Put(FIELD_APL, ATokenAplEnum::APL_NORMAL);
+    genericValues.Put(FIELD_TOKEN_VERSION, 0);
+    genericValues.Put(FIELD_TOKEN_ATTR, 0);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(genericValues);
+    EXPECT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+
+    GenericValues modifyValues;
+    modifyValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name_modified");
+
+    GenericValues conditions;
+    conditions.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    conditions.Put(FIELD_USER_ID, 100);
+
+    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Modify(DataStorage::ACCESSTOKEN_HAP_INFO,
+        modifyValues, conditions));
+
+    bool modifySuccess = false;
+    std::vector<GenericValues> hapInfoResults;
+    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    for (GenericValues hapInfoValue : hapInfoResults) {
+        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(FIELD_TOKEN_ID);
+        if (tokenId == TEST_TOKEN_ID) {
+            ASSERT_EQ("test_bundle_name_modified", hapInfoValue.GetString(FIELD_BUNDLE_NAME));
+            modifySuccess = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(modifySuccess);
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageModifyTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageRefreshAllTest001
+ * @tc.desc: RefreshAll function test failed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageRefreshAllTest001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageRefreshAllTest001 begin");
+
+    RemoveTestTokenHapInfo();
+
+    GenericValues genericValues;
+    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(genericValues);
+    EXPECT_EQ(SqliteStorage::FAILURE,
+        SqliteStorage::GetInstance().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageRefreshAllTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateInsertPrepareSqlCmd001
+ * @tc.desc: CreateInsertPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateInsertPrepareSqlCmd001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 begin");
+    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
+    ASSERT_EQ("", SqliteStorage::GetInstance().CreateInsertPrepareSqlCmd(type));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateDeletePrepareSqlCmd001
+ * @tc.desc: CreateDeletePrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateDeletePrepareSqlCmd001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 begin");
+    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
+    ASSERT_EQ("", SqliteStorage::GetInstance().CreateDeletePrepareSqlCmd(type));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateUpdatePrepareSqlCmd001
+ * @tc.desc: CreateUpdatePrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 begin");
+
+    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
+
+    GenericValues conditions;
+    conditions.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    conditions.Put(FIELD_USER_ID, 100);
+
+    GenericValues modifyValues;
+    modifyValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name_modified");
+
+    std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
+    std::vector<std::string> conditionColumns = conditions.GetAllKeys();
+
+    ASSERT_EQ("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateSelectPrepareSqlCmd001
+ * @tc.desc: CreateSelectPrepareSqlCmd function test type not found
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateSelectPrepareSqlCmd001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 begin");
+    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
+    ASSERT_EQ("", SqliteStorage::GetInstance().CreateSelectPrepareSqlCmd(type));
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateHapTokenInfoTable001
+ * @tc.desc: CreateHapTokenInfoTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 begin");
+    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreateHapTokenInfoTable());
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreateNativeTokenInfoTable001
+ * @tc.desc: CreateNativeTokenInfoTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateNativeTokenInfoTable001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 begin");
+    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreateNativeTokenInfoTable());
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreatePermissionDefinitionTable001
+ * @tc.desc: CreatePermissionDefinitionTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionDefinitionTable001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 begin");
+    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreatePermissionDefinitionTable());
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreatePermissionStateTable001
+ * @tc.desc: CreatePermissionStateTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionStateTable001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 begin");
+    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreatePermissionStateTable());
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoPermissionDef001
+ * @tc.desc: TranslationIntoPermissionDef function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionDefTest001 begin");
+
+    RemoveTestTokenHapInfo();
+
+    GenericValues genericValues;
+    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
+
+    PermissionDef outPermissionDef;
+    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionDef(genericValues, outPermissionDef));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionDefTest001 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoGenericValues001
+ * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 begin");
+    PermissionStateFull grantPermissionReq = {
+        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+        .isGeneral = true,
+        .resDeviceID = {"device1"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    int grantIndex = 1;
+    GenericValues genericValues;
+    ASSERT_EQ(RET_FAILED,
+        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoGenericValues002
+ * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 begin");
+    PermissionStateFull grantPermissionReq = {
+        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+        .isGeneral = true,
+        .resDeviceID = {"device1", "device2"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    int grantIndex = 1;
+    GenericValues genericValues;
+    ASSERT_EQ(RET_FAILED,
+        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoGenericValues003
+ * @tc.desc: DataTranslatorTranslationIntoGenericValues function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 begin");
+    PermissionStateFull grantPermissionReq = {
+        .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+        .isGeneral = true,
+        .resDeviceID = {"device1", "device2"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED, PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    int grantIndex = 1;
+    GenericValues genericValues;
+    ASSERT_EQ(RET_FAILED,
+        DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoPermissionStateFull001
+ * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 begin");
+
+    PermissionStateFull outPermissionState;
+
+    GenericValues inGenericValues;
+    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(FIELD_PERMISSION_NAME, "");
+
+    PermissionDef outPermissionDef;
+    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoPermissionStateFull002
+ * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 begin");
+
+    PermissionStateFull outPermissionState;
+
+    GenericValues inGenericValues;
+    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(FIELD_DEVICE_ID, "");
+
+    PermissionDef outPermissionDef;
+    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoPermissionStateFull003
+ * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 begin");
+
+    PermissionStateFull outPermissionState;
+
+    GenericValues inGenericValues;
+    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(FIELD_DEVICE_ID, "test_device_id");
+    inGenericValues.Put(FIELD_GRANT_STATE, 100);
+
+    PermissionDef outPermissionDef;
+    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 end");
+}
+
+/*
+ * @tc.name: DataTranslatorTranslationIntoPermissionStateFull004
+ * @tc.desc: TranslationIntoPermissionStateFull function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 begin");
+
+    PermissionStateFull outPermissionState;
+
+    GenericValues inGenericValues;
+    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(FIELD_DEVICE_ID, "test_device_id");
+    inGenericValues.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_GRANTED);
+    inGenericValues.Put(FIELD_GRANT_FLAG, 100);
+
+    PermissionDef outPermissionDef;
+    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
 }
 } // namespace AccessToken
 } // namespace Security
