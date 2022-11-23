@@ -85,8 +85,12 @@ private:
         const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
     void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
+    void ParamUpdate(const std::string& permissionName);
 
     PermissionGrantEvent grantEvent_;
+
+    OHOS::Utils::RWLock permParamSetLock_;
+    uint64_t paramValue_ = 0;
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };

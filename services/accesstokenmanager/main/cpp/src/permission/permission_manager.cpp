@@ -29,6 +29,7 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
+#include "parameter.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -40,6 +41,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
+static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static constexpr int32_t VALUE_MAX_LEN = 32;
 }
 
 PermissionManager& PermissionManager::GetInstance()
@@ -50,6 +53,14 @@ PermissionManager& PermissionManager::GetInstance()
 
 PermissionManager::PermissionManager()
 {
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(PERMISSION_STATUS_CHANGE_KEY, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+        paramValue_ = 0;
+        return;
+    }
+    paramValue_ = std::atoll(value);
 }
 
 PermissionManager::~PermissionManager()
@@ -291,6 +302,18 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return permPolicySet->QueryPermissionFlag(permissionName, flag);
 }
 
+void PermissionManager::ParamUpdate(const std::string& permissionName)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
+    if (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName)) {
+        paramValue_++;
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "paramValue_ change %{public}llu", paramValue_);
+        int32_t res = SetParameter(PERMISSION_STATUS_CHANGE_KEY, std::to_string(paramValue_).c_str());
+        if (res != 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter failed %{public}d", res);
+        }
+    }
+}
 int32_t PermissionManager::UpdateTokenPermissionState(
     AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag)
 {
@@ -334,6 +357,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
+        ParamUpdate(permissionName);
     }
 
 #ifdef TOKEN_SYNC_ENABLE
