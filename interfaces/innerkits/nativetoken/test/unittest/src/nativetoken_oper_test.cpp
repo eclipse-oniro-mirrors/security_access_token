@@ -46,10 +46,10 @@ void TokenOperTest::TearDown()
 HWTEST_F(TokenOperTest, FreeStrArray001, TestSize.Level1)
 {
     const int32_t testSize = 2; // 2 means test size
-    char **test = (char **)malloc(sizeof(char *) * testSize);
+    char **test = reinterpret_cast<char **>(malloc(sizeof(char *) * testSize));
     ASSERT_NE(test, nullptr);
     for (int32_t i = 0; i < testSize; i++) {
-        test[i] = (char *)malloc(sizeof(char));
+        test[i] = reinterpret_cast<char *>(malloc(sizeof(char)));
         ASSERT_NE(test[i], nullptr);
     }
     FreeStrArray(test, testSize - 1);
