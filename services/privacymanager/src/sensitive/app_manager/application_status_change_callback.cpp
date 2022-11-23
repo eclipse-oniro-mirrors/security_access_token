@@ -28,8 +28,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 void ApplicationStatusChangeCallback::OnForegroundApplicationChanged(const AppExecFwk::AppStateData& appStateData)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(bundleName=%{public}s, uid=%{public}d, state=%{public}d)",
-        appStateData.bundleName.c_str(), appStateData.uid, appStateData.state);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
+        appStateData.accessTokenId, appStateData.state);
 
     uint32_t tokenId = appStateData.accessTokenId;
 
