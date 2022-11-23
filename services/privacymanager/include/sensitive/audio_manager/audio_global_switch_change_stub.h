@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-#include "mic_global_switch_change_callback.h"
-#include "accesstoken_log.h"
-#include "permission_record_manager.h"
+#ifndef MIC_GLOBAL_SWITCH_CHANGE_STUB_H
+#define MIC_GLOBAL_SWITCH_CHANGE_STUB_H
+
+#include "iremote_stub.h"
+#include "nocopyable.h"
+#include "audio_manager_privacy_proxy.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "GlobalSwitchChangeCallback"
+class AudioRoutingManagerListenerStub : public IRemoteStub<IStandardAudioRoutingManagerListener> {
+public:
+    AudioRoutingManagerListenerStub();
+    virtual ~AudioRoutingManagerListenerStub();
+
+    int OnRemoteRequest(uint32_t code, MessageParcel &data,
+        MessageParcel &reply, MessageOption &option) override;
+    void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) override;
 };
-}
-
-void MicGlobalSwitchChangeCallback::OnMicStateUpdated(const AudioStandard::MicStateChangeEvent &micStateChangeEvent)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(MicGlobalStatus=%{public}d)", micStateChangeEvent.mute);
-
-    PermissionRecordManager::GetInstance().NotifyMicChange(!micStateChangeEvent.mute);
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+#endif // MIC_GLOBAL_SWITCH_CHANGE_STUB_H
