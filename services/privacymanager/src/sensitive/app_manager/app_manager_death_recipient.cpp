@@ -12,22 +12,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "app_manager_death_recipient.h"
 
-#ifndef APPLICATION_STATUS_CHANGE_CALLBACK_H
-#define APPLICATION_STATUS_CHANGE_CALLBACK_H
-
-#include <vector>
-#include "application_state_observer_stub.h"
+#include "accesstoken_log.h"
+#include "app_manager_privacy_client.h"
+#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef void (*OnAppStatusChangeCallback)(uint32_t tokenId, int32_t status);
-class ApplicationStatusChangeCallback : public AppExecFwk::ApplicationStateObserverStub {
-public:
-    void OnForegroundApplicationChanged(const AppExecFwk::AppStateData& appStateData) override;
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppMgrDeathRecipient"
 };
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-#endif // APPLICATION_STATUS_CHANGE_CALLBACK_H
+} // namespace
+
+void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    AppManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
+    PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
+}
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS

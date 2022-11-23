@@ -24,7 +24,7 @@ namespace AccessToken {
 enum AudioPolicyCommand {
     SET_MICROPHONE_MUTE = 13,
     IS_MICROPHONE_MUTE = 15,
-    SET_MIC_STATE_CHANGE_CALLBACK = 55,
+    SET_MIC_STATE_CHANGE_CALLBACK = 56,
 };
 
 struct MicStateChangeEvent {
@@ -68,4 +68,4 @@ private:
 }
 }
 }
-#endif // OHOS_CAMERA_MANAGER_PRIVACY_PROXY_H
+#endif // OHOS_AUDIO_MANAGER_PRIVACY_PROXY_H
