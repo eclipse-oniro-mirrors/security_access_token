@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #ifndef APP_MGR_DEATH_RECIPIENT_H
 #define APP_MGR_DEATH_RECIPIENT_H
 

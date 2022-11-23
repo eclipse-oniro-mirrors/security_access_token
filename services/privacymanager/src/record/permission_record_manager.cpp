@@ -24,6 +24,7 @@
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #include "audio_manager_privacy_client.h"
+#include "app_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "constant_common.h"
@@ -741,20 +742,14 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
 int32_t PermissionRecordManager::IsForegroundApp(AccessTokenID tokenId)
 {
     int32_t status = PERM_INACTIVE;
-    auto appMgrProxy = GetAppManagerProxy();
-    if (appMgrProxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
-        return status;
-    }
-
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
         return status;
     }
     status = PERM_ACTIVE_IN_BACKGROUND;
-    std::vector<AppExecFwk::AppStateData> foreGroundAppList;
-    appMgrProxy->GetForegroundApplications(foreGroundAppList);
+    std::vector<AppStateData> foreGroundAppList;
+    AppManagerPrivacyClient::GetInstance().GetForegroundApplications(foreGroundAppList);
 
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
@@ -770,9 +765,6 @@ bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
 
 bool PermissionRecordManager::Register()
 {
-    if (hasRegistered_) {
-        return true;
-    }
     if (micMuteCallback_ == nullptr) {
         micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
         if (micMuteCallback_ == nullptr) {
@@ -788,16 +780,11 @@ bool PermissionRecordManager::Register()
         CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
     }
     if (appStateCallback_ == nullptr) {
-        appStateCallback_ = new(std::nothrow) ApplicationStatusChangeCallback();
+        appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
         if (appStateCallback_ == nullptr) {
             return false;
         }
-        auto appMgrProxy = GetAppManagerProxy();
-        if (appMgrProxy == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
-            return false;
-        }
-        appMgrProxy->RegisterApplicationStateObserver(appStateCallback_);
+        AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
     }
     if (floatWindowCallback_ == nullptr) {
         floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
@@ -807,19 +794,13 @@ bool PermissionRecordManager::Register()
         WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
             WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
     }
-    hasRegistered_ = true;
     return true;
 }
 
 void PermissionRecordManager::Unregister()
 {
     if (appStateCallback_ != nullptr) {
-        auto appMgrProxy = GetAppManagerProxy();
-        if (appMgrProxy == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetAppManagerProxy failed");
-            return;
-        }
-        appMgrProxy->UnregisterApplicationStateObserver(appStateCallback_);
+        AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
         appStateCallback_= nullptr;
     }
     if (floatWindowCallback_ == nullptr) {
@@ -827,77 +808,26 @@ void PermissionRecordManager::Unregister()
             WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
         floatWindowCallback_ = nullptr;
     }
-    hasRegistered_ = false;
-}
-
-bool PermissionRecordManager::InitProxy()
-{
-    std::lock_guard<std::mutex> lock(appProxyMutex_);
-    if (appMgrProxy_ == nullptr) {
-        sptr<ISystemAbilityManager> systemAbilityManager =
-            SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-        if (systemAbilityManager == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
-            return false;
-        }
-
-        sptr<IRemoteObject> object = systemAbilityManager->GetSystemAbility(APP_MGR_SERVICE_ID);
-        if (object == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null", APP_MGR_SERVICE_ID);
-            return false;
-        }
-
-        appMgrDeathObserver_ = new (std::nothrow) AppMgrDeathRecipient();
-        if (appMgrDeathObserver_ != nullptr) {
-            object->AddDeathRecipient(appMgrDeathObserver_);
-        }
-
-        appMgrProxy_ = iface_cast<AppExecFwk::IAppMgr>(object);
-        if (appMgrProxy_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
-            return false;
-        }
-    }
-    return true;
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 {
-    {
-        std::lock_guard<std::mutex> lock(appProxyMutex_);
-        appMgrProxy_ = nullptr;
-    }
-    hasRegistered_ = false;
-    InitProxy();
+    appStateCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
-    hasRegistered_ = false;
     micMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
-    hasRegistered_ = false;
     camMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
 {
-    hasRegistered_ = false;
     floatWindowCallback_ = nullptr;
-}
-
-OHOS::sptr<OHOS::AppExecFwk::IAppMgr> PermissionRecordManager::GetAppManagerProxy()
-{
-    if (appMgrProxy_ == nullptr) {
-        if (!InitProxy()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "InitProxy failed");
-            return nullptr;
-        }
-    }
-    return appMgrProxy_;
 }
 
 void PermissionRecordManager::Init()

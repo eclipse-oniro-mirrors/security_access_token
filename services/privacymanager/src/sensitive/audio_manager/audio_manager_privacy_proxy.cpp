@@ -30,7 +30,7 @@ bool AudioManagerPrivacyProxy::IsMicrophoneMute()
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyProxy: WriteInterfaceToken failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return false;
     }
     int32_t error = Remote()->SendRequest(AudioPolicyCommand::IS_MICROPHONE_MUTE, data, reply, option);
@@ -47,7 +47,7 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
     MessageParcel reply;
     MessageOption option;
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyProxy: WriteInterfaceToken failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;
     }
     data.WriteBool(isMute);
@@ -65,18 +65,18 @@ int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t client
     MessageParcel reply;
     MessageOption option;
     if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyProxy: SetMicStateChangeCallback object is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback object is null");
         return ERR_NULL_OBJECT;
     }
     if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyProxy: WriteInterfaceToken failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;
     }
     data.WriteInt32(clientId);
     (void)data.WriteRemoteObject(object);
     int error = Remote()->SendRequest(AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyProxy: SetMicStateChangeCallback failed, error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback failed, error: %{public}d", error);
         return error;
     }
     return reply.ReadInt32();

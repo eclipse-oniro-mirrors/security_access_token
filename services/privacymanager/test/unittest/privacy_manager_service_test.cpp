@@ -1017,27 +1017,6 @@ HWTEST_F(PrivacyManagerServiceTest, TranslationGenericValuesIntoPermissionUsedRe
     ASSERT_EQ(Constant::SUCCESS,
         DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
 }
-
-/*
- * @tc.name: OnForegroundApplicationChanged001
- * @tc.desc: ApplicationStatusChangeCallback::OnForegroundApplicationChanged function test
- * @tc.type: FUNC
- * @tc.require: issueI60IB3
- */
-HWTEST_F(PrivacyManagerServiceTest, OnForegroundApplicationChanged001, TestSize.Level1)
-{
-    OHOS::AppExecFwk::AppStateData appStateData;
-    appStateData.bundleName = "com.ohos.photo";
-    appStateData.uid = 0;
-    appStateData.state = static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_FOREGROUND);
-    ASSERT_EQ(0, appStateData.uid);
-
-    sptr<ApplicationStatusChangeCallback> callback = new (std::nothrow) ApplicationStatusChangeCallback();
-    callback->OnForegroundApplicationChanged(appStateData); // state == APP_STATE_FOREGROUND
-
-    appStateData.state = static_cast<int32_t>(AppExecFwk::ApplicationState::APP_STATE_BACKGROUND);
-    callback->OnForegroundApplicationChanged(appStateData); // state == APP_STATE_BACKGROUND
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

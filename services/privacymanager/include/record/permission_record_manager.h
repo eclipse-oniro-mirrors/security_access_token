@@ -22,9 +22,9 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "app_manager_death_recipient.h"
+#include "app_status_change_callback.h"
 #include "audio_global_switch_change_stub.h"
-#include "app_mgr_proxy.h"
-#include "application_status_change_callback.h"
 #include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
 #include "nocopyable.h"
@@ -32,7 +32,6 @@
 #include "permission_record.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
-#include "app_mgr_death_recipient.h"
 #include "window_manager_privacy_agent.h"
 
 #include "rwlock.h"
@@ -107,8 +106,6 @@ private:
 
     bool IsFlowWindowShow(AccessTokenID tokenId);
     int32_t IsForegroundApp(AccessTokenID tokenId);
-    bool InitProxy();
-    OHOS::sptr<OHOS::AppExecFwk::IAppMgr> GetAppManagerProxy();
 
     bool Register();
     void Unregister();
@@ -122,7 +119,6 @@ private:
     std::mutex cameraMutex_;
     sptr<IRemoteObject> cameraCallback_;
 
-    bool hasRegistered_ = false;
     // microphone
     sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
@@ -134,10 +130,7 @@ private:
     bool camFloatWindowShowing_ = false;
     sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
 
-    sptr<ApplicationStatusChangeCallback> appStateCallback_ = nullptr;
-    std::mutex appProxyMutex_;
-    sptr<AppExecFwk::IAppMgr> appMgrProxy_;
-    sptr<AppMgrDeathRecipient> appMgrDeathObserver_ = nullptr;
+    sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
