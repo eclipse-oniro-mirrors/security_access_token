@@ -29,6 +29,7 @@
 #endif
 #define private public
 #include "accesstoken_info_manager.h"
+#include "accesstoken_remote_token_manager.h"
 #include "dm_device_info.h"
 #include "field_const.h"
 #include "hap_token_info_inner.h"
@@ -36,6 +37,7 @@
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "permission_policy_set.h"
+#include "token_modify_notifier.h"
 #undef private
 #include "permission_state_change_callback_stub.h"
 #include "permission_validator.h"
@@ -135,6 +137,48 @@ static PermissionStateFull g_infoManagerTestStateD = {
     .resDeviceID = {"local"},
     .grantStatus = {PERMISSION_GRANTED},
     .grantFlags = {1}
+};
+static PermissionStateFull g_permState1 = {
+    .permissionName = "ohos.permission.TEST",
+    .isGeneral = false,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+static PermissionStateFull g_permState2 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = false,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+static PermissionStateFull g_permState3 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = false,
+    .resDeviceID = {"dev-001", "dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+};
+static PermissionStateFull g_permState4 = {
+    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+};
+static PermissionStateFull g_permState5 = {
+    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_USER_FIXED}
+};
+static PermissionStateFull g_permState6 = {
+    .permissionName = "ohos.permission.LOCATION",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 
 static PermissionDef g_infoManagerPermDef1 = {
@@ -880,6 +924,26 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.tokenID = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+}
+
+/**
+ * @tc.name: NotifyTokenSyncTask001
+ * @tc.desc: TokenModifyNotifier::NotifyTokenSyncTask function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
+{
+    std::vector<AccessTokenID> modifiedTokenList = TokenModifyNotifier::GetInstance().modifiedTokenList_; // backup
+    TokenModifyNotifier::GetInstance().modifiedTokenList_.clear();
+
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    TokenModifyNotifier::GetInstance().modifiedTokenList_.emplace_back(tokenId);
+    ASSERT_EQ(true, TokenModifyNotifier::GetInstance().modifiedTokenList_.size() > 0);
+    TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
+
+    TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
 }
 #endif
 #ifdef SUPPORT_SANDBOX_APP
@@ -2185,17 +2249,9 @@ HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize
  */
 HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
 {
-    PermissionStateFull perm = {
-        .permissionName = "ohos.permission.CAMERA",
-        .isGeneral = false,
-        .resDeviceID = {"dev-001", "dev-001"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
-        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
-    };
-
     AccessTokenID tokenId = 123; // 123 is random input
     std::vector<PermissionStateFull> permStateList;
-    permStateList.emplace_back(perm);
+    permStateList.emplace_back(g_permState3);
 
     std::shared_ptr<PermissionPolicySet> policySet = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
         permStateList);
@@ -2207,6 +2263,350 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
     std::string info;
     // isGeneral is false
     policySet->PermStateToString(tokenApl, nativeAcls, info);
+}
+
+/**
+ * @tc.name: VerifyNativeAccessToken001
+ * @tc.desc: PermissionManager::VerifyNativeAccessToken function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.INVALID";
+
+    PermissionManager::GetInstance().RemoveDefPermissions(tokenId); // tokenInfo is null
+
+    // tokenInfoPtr is null
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+
+    AccessTokenID nativeTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), nativeTokenId);
+    // not remote + no definition
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyNativeAccessToken(nativeTokenId, permissionName));
+}
+
+/**
+ * @tc.name: VerifyAccessToken002
+ * @tc.desc: PermissionManager::VerifyAccessToken function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName;
+
+    // permissionName invalid
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+
+    tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
+    permissionName = "ohos.permission.DISTRIBUTED_DATASYNC";
+    // token type is TOKEN_TYPE_BUTT
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+}
+
+/**
+ * @tc.name: GetDefPermission001
+ * @tc.desc: PermissionManager::GetDefPermission function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
+{
+    std::string permissionName;
+    PermissionDef permissionDefResult;
+
+    // permissionName invalid
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+}
+
+/**
+ * @tc.name: GetSelfPermissionState001
+ * @tc.desc: PermissionManager::GetSelfPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetSelfPermissionState001, TestSize.Level1)
+{
+    std::vector<PermissionStateFull> permsList1;
+    permsList1.emplace_back(g_permState1);
+    PermissionListState permState1;
+    permState1.permissionName = "ohos.permission.TEST";
+    int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
+
+    // permissionName no definition
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
+    ASSERT_EQ(PermissionOper::INVALID_OPER, permState1.state);
+
+    std::vector<PermissionStateFull> permsList2;
+    permsList2.emplace_back(g_permState2);
+    PermissionListState permState2;
+    permState2.permissionName = "ohos.permission.CAMERA";
+
+    // flag not PERMISSION_DEFAULT_FLAG、PERMISSION_USER_SET or PERMISSION_USER_FIXED
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
+    ASSERT_EQ(PermissionOper::PASS_OPER, permState2.state);
+}
+
+/**
+ * @tc.name: GetPermissionFlag001
+ * @tc.desc: PermissionManager::GetPermissionFlag function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName;
+    int flag = 0;
+
+    // permissionName invalid
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+        permissionName, flag));
+
+    permissionName = "ohos.permission.CAMERA";
+    // permPolicySet is null
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+        permissionName, flag));
+}
+
+/**
+ * @tc.name: UpdateTokenPermissionState002
+ * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
+        "com.ohos.camera", INST_INDEX);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName = "ohos.permission.DUMP";
+    bool isGranted = false;
+    int flag = 0;
+
+    // permission not in list
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
+        permissionName, isGranted, flag));
+}
+
+/**
+ * @tc.name: GetApiVersionByTokenId001
+ * @tc.desc: PermissionManager::GetApiVersionByTokenId function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    int32_t apiVersion = 0;
+
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion)); // native token
+
+    tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion)); // native token
+}
+
+/**
+ * @tc.name: IsPermissionVaild001
+ * @tc.desc: PermissionManager::IsPermissionVaild function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, IsPermissionVaild001, TestSize.Level1)
+{
+    std::string permissionName;
+
+    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName)); // permissionName empty
+
+    permissionName = "ohos.permission.TEST";
+    // permissionName no definition
+    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
+}
+
+/**
+ * @tc.name: GetPermissionStatusAndFlag001
+ * @tc.desc: PermissionManager::GetPermissionStatusAndFlag function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionStatusAndFlag001, TestSize.Level1)
+{
+    std::string permissionName;
+    std::vector<PermissionStateFull> permsList;
+    permsList.emplace_back(g_permState2);
+    int32_t status = 0;
+    uint32_t flag = 0;
+
+    // permissionName empty
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
+        permsList, status, flag));
+
+    permissionName = "ohos.permission.LOCATION";
+    // permissionName not in permsList
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
+        permsList, status, flag));
+}
+
+/**
+ * @tc.name: AllLocationPermissionHandle001
+ * @tc.desc: PermissionManager::AllLocationPermissionHandle function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AllLocationPermissionHandle001, TestSize.Level1)
+{
+    PermissionListState permsState1 = {
+        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION"
+    };
+    PermissionListState permsState2 = {
+        .permissionName = "ohos.permission.LOCATION"
+    };
+
+    PermissionListStateParcel parcel1;
+    parcel1.permsState = permsState1;
+    PermissionListStateParcel parcel2;
+    parcel2.permsState = permsState2;
+
+    std::vector<PermissionListStateParcel> reqPermList;
+    reqPermList.emplace_back(parcel1);
+    reqPermList.emplace_back(parcel2);
+    std::vector<PermissionStateFull> permsList1;
+    permsList1.emplace_back(g_permState4);
+    permsList1.emplace_back(g_permState6);
+    uint32_t vagueIndex = 0;
+    uint32_t accurateIndex = 1;
+
+    // vagueFlag == PERMISSION_DEFAULT_FLAG
+    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList1, vagueIndex, accurateIndex);
+    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[0].permsState.state);
+    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[1].permsState.state);
+
+    std::vector<PermissionStateFull> permsList2;
+    permsList2.emplace_back(g_permState5);
+    permsList2.emplace_back(g_permState6);
+    // vagueFlag == PERMISSION_DEFAULT_FLAG + accurateFlag == PERMISSION_SYSTEM_FIXED
+    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList2, vagueIndex, accurateIndex);
+    ASSERT_EQ(static_cast<int>(PermissionOper::PASS_OPER), reqPermList[0].permsState.state);
+    ASSERT_EQ(static_cast<int>(PermissionOper::INVALID_OPER), reqPermList[1].permsState.state);
+}
+
+/**
+ * @tc.name: MapRemoteDeviceTokenToLocal001
+ * @tc.desc: AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Level1)
+{
+    std::map<std::string, AccessTokenRemoteDevice> remoteDeviceMap;
+    remoteDeviceMap = AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_; // backup
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.clear();
+
+    std::string deviceID;
+    AccessTokenID remoteID = 0;
+
+    // input invalid
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID));
+
+    remoteID = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
+    deviceID = "dev-001";
+    // tokeType invalid
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID));
+
+    remoteID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    std::map<AccessTokenID, AccessTokenID> MappingTokenIDPairMap;
+    MappingTokenIDPairMap[537919487] = 456; // 456 is random input
+    AccessTokenRemoteDevice device = {
+        .DeviceID_ = "dev-001",
+        .MappingTokenIDPairMap_ = MappingTokenIDPairMap
+    };
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_["dev-001"] = device;
+
+    // count(remoteID) > 0
+    ASSERT_EQ(static_cast<AccessTokenID>(456),
+        AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID));
+
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_ = remoteDeviceMap; // recovery
+}
+
+/**
+ * @tc.name: GetDeviceAllRemoteTokenID001
+ * @tc.desc: AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Level1)
+{
+    std::string deviceID;
+    std::vector<AccessTokenID> remoteIDs;
+
+    // deviceID invalid
+    ASSERT_EQ(RET_FAILED,
+        AccessTokenRemoteTokenManager::GetInstance().GetDeviceAllRemoteTokenID(deviceID, remoteIDs));
+}
+
+/**
+ * @tc.name: RemoveDeviceMappingTokenID001
+ * @tc.desc: AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Level1)
+{
+    std::map<std::string, AccessTokenRemoteDevice> remoteDeviceMap;
+    remoteDeviceMap = AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_; // backup
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.clear();
+
+    std::string deviceID;
+    AccessTokenID remoteID = 0;
+
+    // input invalid
+    ASSERT_EQ(RET_FAILED,
+        AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, remoteID));
+
+    deviceID = "dev-001";
+    remoteID = 123; // 123 is random input
+
+    // count < 1
+    ASSERT_EQ(RET_FAILED,
+        AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, remoteID));
+
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_ = remoteDeviceMap; // recovery
+}
+
+/**
+ * @tc.name: AddHapTokenObservation001
+ * @tc.desc: TokenModifyNotifier::AddHapTokenObservation function test
+ * @tc.type: FUNC
+ * @tc.require: IssueI62B7P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
+{
+    std::set<AccessTokenID> observationSet = TokenModifyNotifier::GetInstance().observationSet_; // backup
+    TokenModifyNotifier::GetInstance().observationSet_.clear();
+
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    TokenModifyNotifier::GetInstance().observationSet_.insert(tokenId);
+    ASSERT_EQ(true, TokenModifyNotifier::GetInstance().observationSet_.count(tokenId) > 0);
+
+    // count > 0
+    TokenModifyNotifier::GetInstance().AddHapTokenObservation(tokenId);
+    TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenId);
+
+    TokenModifyNotifier::GetInstance().observationSet_ = observationSet; // recovery
 }
 } // namespace AccessToken
 } // namespace Security
