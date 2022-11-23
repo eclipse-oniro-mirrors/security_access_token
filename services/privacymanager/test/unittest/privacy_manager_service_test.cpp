@@ -16,7 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "accesstoken_kit.h"
-#include "audio_policy_manager.h"
+#include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "data_translator.h"
@@ -377,11 +377,11 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
  */
 HWTEST_F(PrivacyManagerServiceTest, GetGlobalSwitchStatus001, TestSize.Level1)
 {
-    bool isMuteMic = AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute();
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
-    ASSERT_EQ(false, AudioStandard::AudioSystemManager::GetInstance()->IsMicrophoneMute());
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    ASSERT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(MICROPHONE_PERMISSION_NAME));
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(isMuteMic);
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 
     bool isMuteCam = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
@@ -416,7 +416,7 @@ HWTEST_F(PrivacyManagerServiceTest, ShowGlobalDialog001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener001, TestSize.Level1)
 {
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
@@ -433,7 +433,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener002, TestSize.Level1)
 {
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is background
@@ -450,7 +450,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener002, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener003, TestSize.Level1)
 {
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(true); // true means close
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
@@ -481,7 +481,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener004, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
 {
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(true); // true means close
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
@@ -489,7 +489,7 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
     sleep(3); // wait for dialog disappear
     PermissionRecordManager::GetInstance().NotifyMicChange(false); // fill false status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    OHOS::AudioStandard::AudioSystemManager::GetInstance()->SetMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
 }
 
 /*
@@ -962,12 +962,12 @@ HWTEST_F(PrivacyManagerServiceTest, OnCameraMute001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, OnMicStateUpdated001, TestSize.Level1)
 {
-    AudioStandard::MicStateChangeEvent micStateChangeEvent;
+    MicStateChangeEvent micStateChangeEvent;
     micStateChangeEvent.mute = false;
     ASSERT_EQ(false, micStateChangeEvent.mute);
 
-    std::shared_ptr<MicGlobalSwitchChangeCallback> callback = std::make_shared<MicGlobalSwitchChangeCallback>(
-        MicGlobalSwitchChangeCallback());
+    std::shared_ptr<AudioRoutingManagerListenerStub> callback = std::make_shared<AudioRoutingManagerListenerStub>(
+        AudioRoutingManagerListenerStub());
     callback->OnMicStateUpdated(micStateChangeEvent);
 }
 

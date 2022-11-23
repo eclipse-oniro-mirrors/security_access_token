@@ -23,7 +23,7 @@
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
-#include "audio_system_manager.h"
+#include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "constant_common.h"
@@ -38,8 +38,6 @@
 #include "system_ability_definition.h"
 #include "time_util.h"
 #include "window_manager_privacy_client.h"
-
-using namespace OHOS::AudioStandard;
 
 namespace OHOS {
 namespace Security {
@@ -438,7 +436,7 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     bool isOpen = true;
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        isOpen = !AudioSystemManager::GetInstance()->IsMicrophoneMute();
+        isOpen = !AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         isOpen = !CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     }
@@ -776,11 +774,11 @@ bool PermissionRecordManager::Register()
         return true;
     }
     if (micMuteCallback_ == nullptr) {
-        micMuteCallback_ = std::make_shared<MicGlobalSwitchChangeCallback>();
+        micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
         if (micMuteCallback_ == nullptr) {
             return false;
         }
-        AudioRoutingManager::GetInstance()->SetMicStateChangeCallback(micMuteCallback_);
+        AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
     }
     if (camMuteCallback_ == nullptr) {
         camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();

@@ -22,11 +22,11 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "audio_global_switch_change_stub.h"
 #include "app_mgr_proxy.h"
 #include "application_status_change_callback.h"
 #include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
-#include "mic_global_switch_change_callback.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
@@ -124,7 +124,7 @@ private:
 
     bool hasRegistered_ = false;
     // microphone
-    std::shared_ptr<MicGlobalSwitchChangeCallback> micMuteCallback_ = nullptr;
+    sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
     // camera
     sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
