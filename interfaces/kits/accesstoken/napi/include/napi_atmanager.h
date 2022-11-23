@@ -90,6 +90,11 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     std::string errorMessage;
 };
 
+struct PermissionStatusCache {
+    int32_t status;
+    std::string paramValue;
+};
+
 class NapiAtManager {
 public:
     static napi_value Init(napi_env env, napi_value exports);
@@ -131,6 +136,8 @@ private:
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
+    static std::string GetPermParamValue();
+    static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
 };
 }  // namespace AccessToken
 }  // namespace Security
