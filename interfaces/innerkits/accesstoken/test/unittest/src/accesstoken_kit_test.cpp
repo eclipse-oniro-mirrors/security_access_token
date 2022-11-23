@@ -469,7 +469,7 @@ void AccessTokenKitTest::AllocTestToken() const
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 /**
@@ -537,11 +537,11 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(6, permDefList.size());
+    ASSERT_EQ(static_cast<uint32_t>(6), permDefList.size());
 }
 
 /**
@@ -559,12 +559,12 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
     AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, permDefList.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), permDefList.size());
 
     AccessTokenKit::DeleteToken(tokenID);
 }
@@ -578,7 +578,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     AccessTokenKit::DeleteToken(tokenID);
 
     std::vector<PermissionDef> permDefList;
@@ -588,7 +588,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
     std::vector<PermissionDef> permDefListRes;
     ret = AccessTokenKit::GetDefPermissions(tokenID, permDefListRes);
     ASSERT_EQ(RET_FAILED, ret);
-    ASSERT_EQ(0, permDefListRes.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), permDefListRes.size());
 }
 
 /**
@@ -600,13 +600,13 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionDef> permDefList;
         ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(6, permDefList.size());
+        ASSERT_EQ(static_cast<uint32_t>(6), permDefList.size());
     }
 }
 
@@ -619,11 +619,11 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(5, permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(5), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
@@ -639,11 +639,11 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(3, permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(3), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_BETA, permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_BETA);
@@ -659,7 +659,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     HapTokenInfo hapInfo;
     int ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapInfo);
@@ -677,12 +677,12 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
     std::vector<PermissionStateFull> permStatUserList;
     ret = AccessTokenKit::GetReqPermissions(tokenID, permStatUserList, false);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, permStatUserList.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), permStatUserList.size());
 
     std::vector<PermissionStateFull> permStatSystemList;
     ret = AccessTokenKit::GetReqPermissions(tokenID, permStatSystemList, true);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(0, permStatSystemList.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), permStatSystemList.size());
 }
 
 /**
@@ -694,7 +694,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions003, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetReqPermissions004, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(TEST_TOKENID_INVALID, permStatList, false);
@@ -704,7 +704,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions004, TestSize.Level1)
 
     ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_FAILED, ret);
-    ASSERT_EQ(0, permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), permStatList.size());
 }
 
 /**
@@ -716,13 +716,13 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions004, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         std::vector<PermissionStateFull> permStatList;
         ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(5, permStatList.size());
+        ASSERT_EQ(static_cast<uint32_t>(5), permStatList.size());
         ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
     }
 }
@@ -736,7 +736,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -755,7 +755,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_GAMMA, flag);
@@ -786,7 +786,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     int32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
@@ -808,7 +808,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken001, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -831,7 +831,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken001, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -854,7 +854,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_GAMMA);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
@@ -883,7 +883,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -923,7 +923,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken004, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -946,7 +946,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -976,7 +976,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     int32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
@@ -1001,7 +1001,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, GrantPermission004, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int32_t invalidFlag = -1;
     int32_t ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1016,7 +1016,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission004, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -1039,7 +1039,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1069,7 +1069,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     int32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
@@ -1094,7 +1094,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, RevokePermission004, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int invalidFlag = -1;
     int32_t ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, invalidFlag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1109,7 +1109,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission004, TestSize.Level0)
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -1129,7 +1129,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level0
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState002, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(TEST_TOKENID_INVALID);
     ASSERT_EQ(RET_FAILED, ret);
@@ -1149,7 +1149,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState002, TestSize.Level0
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = RET_FAILED;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
@@ -1198,7 +1198,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
     };
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 
@@ -1274,7 +1274,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level0)
     ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
     ASSERT_EQ(hapTokenInfoRes.userID, TEST_USER_ID);
     ASSERT_EQ(hapTokenInfoRes.tokenID, tokenID);
-    ASSERT_EQ(hapTokenInfoRes.tokenAttr, 0);
+    ASSERT_EQ(hapTokenInfoRes.tokenAttr, static_cast<AccessTokenAttr>(0));
     ASSERT_EQ(hapTokenInfoRes.instIndex, 0);
 
     ASSERT_EQ(hapTokenInfoRes.appID, "appIDDesc");
@@ -1402,7 +1402,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID002, TestSize.Level1)
 {
     AccessTokenID tokenID;
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
-    ASSERT_EQ(0, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
@@ -1468,7 +1468,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId002, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo));
@@ -1485,12 +1485,12 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId003, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
 
     tokenID = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetNativeTokenInfo(tokenID, tokenInfo));
@@ -1509,7 +1509,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId004, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(tokenID));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::ReloadNativeTokenInfo());
 
@@ -1572,7 +1572,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
@@ -2243,7 +2243,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
     DeleteTestToken();
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     std::string backup = g_infoManagerTestPolicyPrams.permList[0].permissionName;
     g_infoManagerTestPolicyPrams.permList[0].permissionName = "";
@@ -2491,7 +2491,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken010, TestSize.Level1)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
 
-    uint32_t apiVersion = DEFAULT_API_VERSION - 1;
+    int32_t apiVersion = DEFAULT_API_VERSION - 1;
     int ret = AccessTokenKit::UpdateHapToken(tokenID, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams);
 
     HapTokenInfo hapTokenInfoRes;
@@ -2590,7 +2590,7 @@ void ConcurrencyTask(unsigned int tokenID)
 HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<std::thread> threadVec;
     for (int i = 0; i < THREAD_NUM; i++) {
         threadVec.emplace_back(std::thread(ConcurrencyTask, tokenID));
@@ -2697,7 +2697,7 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState perm1 = {
@@ -2725,7 +2725,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList1);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(4, permsList1.size());
+    ASSERT_EQ(static_cast<uint32_t>(4), permsList1.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList1[1].state);
     ASSERT_EQ(SETTING_OPER, permsList1[2].state);
@@ -2783,7 +2783,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -2796,7 +2796,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(1, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
@@ -2820,7 +2820,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -2833,7 +2833,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(1, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
     ASSERT_EQ(SETTING_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
@@ -2857,7 +2857,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -2870,7 +2870,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(1, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
     ASSERT_EQ(PASS_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
@@ -2894,7 +2894,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState005, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permAccurate = {
@@ -2907,7 +2907,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState005, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(INVALID_OPER, ret);
-    ASSERT_EQ(1, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
     ASSERT_EQ(INVALID_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
@@ -2933,7 +2933,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState006, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -2951,7 +2951,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState006, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(2, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
@@ -2978,7 +2978,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState007, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -2996,7 +2996,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState007, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(2, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
     ASSERT_EQ(PASS_OPER, permsList[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
@@ -3023,7 +3023,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState008, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -3041,7 +3041,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState008, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(2, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
     ASSERT_EQ(SETTING_OPER, permsList[0].state);
     ASSERT_EQ(SETTING_OPER, permsList[1].state);
 
@@ -3068,7 +3068,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState009, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -3086,7 +3086,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState009, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(2, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
     ASSERT_EQ(PASS_OPER, permsList[0].state);
     ASSERT_EQ(PASS_OPER, permsList[1].state);
 
@@ -3117,7 +3117,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState010, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -3145,7 +3145,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState010, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(4, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(4), permsList.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
     ASSERT_EQ(PASS_OPER, permsList[2].state);
@@ -3172,7 +3172,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState011, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, DEFAULT_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permAccurate = {
@@ -3185,7 +3185,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState011, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(1, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
@@ -3211,7 +3211,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
     AllocHapToken(permmissionDefs, permissionStateFulls, DEFAULT_API_VERSION);
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
     PermissionListState permVague = {
@@ -3229,12 +3229,33 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
 
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(2, permsList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
     ASSERT_EQ(INVALID_OPER, permsList[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     SetSelfTokenID(selfTokenId_);
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState013
+ * @tc.desc: permission list is empty or oversize
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState013, TestSize.Level1)
+{
+    std::vector<PermissionListState> permsList;
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+
+    for (uint32_t i = 0; i < MAX_PERMISSION_SIZE + 1; i++) {
+        PermissionListState tmp = {
+            .permissionName = "ohos.permission.CAMERA",
+            .state = 0
+        };
+        permsList.emplace_back(tmp);
+    }
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
 }
 
 /**
@@ -3269,27 +3290,6 @@ HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
     ASSERT_EQ("invalid tokenId", info);
 }
 
-#ifdef TOKEN_SYNC_ENABLE
-/**
- * @tc.name: DeleteRemoteToken001
- * @tc.desc: DeleteRemoteToken with invalid parameters.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(AccessTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
-{
-    std::string deviceId = "device";
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    int res = AccessTokenKit::DeleteRemoteToken("", tokenID);
-    ASSERT_EQ(RET_FAILED, res);
-
-    res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
-    ASSERT_EQ(RET_FAILED, res);
-}
-#endif // TOKEN_SYNC_ENABLE
-
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
 public:
     explicit CbCustomizeTest(const PermStateChangeScope &scopeInfo)
@@ -3323,6 +3323,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
 
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
@@ -3343,7 +3344,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
 
     tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(0, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     ASSERT_EQ(ret, TOKEN_HAP);
@@ -3357,14 +3358,14 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
 
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3435,7 +3436,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback002, TestSize.Level1
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3493,7 +3494,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
@@ -3501,7 +3502,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback003, TestSize.Level1
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3560,7 +3561,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_DENIED, res);
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
@@ -3568,7 +3569,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback004, TestSize.Level1
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3621,7 +3622,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback005, TestSize.Level1
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
@@ -3629,7 +3630,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback005, TestSize.Level1
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    ASSERT_EQ(false, callbackPtr->ready_);
+    EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3678,7 +3679,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback006, TestSize.Level1
 
     res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(true, callbackPtr->ready_);
+    EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -3856,23 +3857,6 @@ HWTEST_F(AccessTokenKitTest, GetVersion001, TestSize.Level1)
     ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
 }
 
-#ifdef TOKEN_SYNC_ENABLE
-/**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: AccessTokenManagerProxy::GetAllNativeTokenInfo function test.
- * @tc.type: FUNC
- * @tc.require: issueI61NS6
- */
-HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    SetSelfTokenID(tokenId);
-    std::vector<NativeTokenInfoForSync> nativeTokenInfoRes;
-    int res = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfoRes);
-    ASSERT_EQ(0, res);
-}
-#endif // TOKEN_SYNC_ENABLE
-
 /**
  * @tc.name: PermStateChangeCallback001
  * @tc.desc: PermissionStateChangeCallback::PermStateChangeCallback function test.
@@ -3936,20 +3920,6 @@ HWTEST_F(AccessTokenKitTest, OnRemoteRequest001, TestSize.Level1)
     ASSERT_EQ(true, data.WriteParcelable(&infoParcel));
     uint32_t code = 10;
     ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgCode false
-}
-
-/**
- * @tc.name: GetSelfPermissionsState013
- * @tc.desc: AccessTokenManagerClient::GetSelfPermissionsState function test
- * @tc.type: FUNC
- * @tc.require: issueI61A6M
- */
-HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState013, TestSize.Level1)
-{
-    std::vector<PermissionListState> permList;
-
-    // size is 0
-    ASSERT_EQ(PermissionOper::PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permList));
 }
 
 /**
@@ -4040,7 +4010,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken011, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
 {
     AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.photos", 0); // tokenId for photo app
-    ASSERT_NE(static_cast<AccessTokenID>(0), callerTokenID);
+    ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
     std::string permissionName;
 

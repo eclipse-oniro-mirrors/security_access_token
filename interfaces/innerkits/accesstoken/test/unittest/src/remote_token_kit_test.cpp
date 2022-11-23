@@ -119,7 +119,7 @@ HapPolicyParams g_infoManagerTestPolicyPramsBak = {
 void NativeTokenGet()
 {
     uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    ASSERT_NE(tokenId, 0);
+    ASSERT_NE(tokenId, INVALID_TOKENID);
     SetSelfTokenID(tokenId);
 }
 }
@@ -194,7 +194,7 @@ void RemoteTokenKitTest::AllocTestToken() const
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -1024,7 +1024,7 @@ HWTEST_F(RemoteTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
     int ret = AccessTokenKit::GetHapTokenInfoFromRemote(localTokenID, infoSync);
     ASSERT_EQ(ret, RET_SUCCESS);
     ASSERT_EQ(infoSync.baseInfo.apl, g_infoManagerTestPolicyPrams.apl);
-    ASSERT_EQ(infoSync.permStateList.size(), 2);
+    ASSERT_EQ(infoSync.permStateList.size(), static_cast<uint32_t>(2));
     ASSERT_EQ(infoSync.permStateList[1].grantFlags.size(), 2);
 
     ASSERT_EQ(infoSync.permStateList[0].permissionName, g_infoManagerTestPolicyPrams.permStateList[0].permissionName);
@@ -1178,6 +1178,21 @@ HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetAllNativeTokenInfo002
+ * @tc.desc: GetAllNativeTokenInfo function test.
+ * @tc.type: FUNC
+ * @tc.require: issueI61NS6
+ */
+HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    SetSelfTokenID(tokenId);
+    std::vector<NativeTokenInfoForSync> nativeTokenInfoRes;
+    int res = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfoRes);
+    ASSERT_EQ(0, res);
+}
+
+/**
  * @tc.name: SetRemoteNativeTokenInfo001
  * @tc.desc: set already mapping tokenInfo
  * @tc.type: FUNC
@@ -1221,5 +1236,24 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(resultInfo.nativeAcls[0], "ohos.permission.DISTRIBUTED_DATASYNC");
     ASSERT_EQ(resultInfo.tokenID, mapID);
     ASSERT_EQ(resultInfo.tokenAttr, native1.baseInfo.tokenAttr);
+}
+
+/**
+ * @tc.name: DeleteRemoteToken001
+ * @tc.desc: DeleteRemoteToken with invalid parameters.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(RemoteTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
+{
+    std::string deviceId = "device";
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+                                                          g_infoManagerTestInfoParms.bundleName,
+                                                          g_infoManagerTestInfoParms.instIndex);
+    int res = AccessTokenKit::DeleteRemoteToken("", tokenID);
+    ASSERT_EQ(RET_FAILED, res);
+
+    res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
+    ASSERT_EQ(RET_FAILED, res);
 }
 #endif
