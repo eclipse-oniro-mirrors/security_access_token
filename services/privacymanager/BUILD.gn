@@ -76,8 +76,10 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/ability_manager/ability_manager_privacy_proxy.cpp",
       "src/sensitive/app_manager/app_mgr_death_recipient.cpp",
       "src/sensitive/app_manager/application_status_change_callback.cpp",
-      "src/sensitive/audio_manager/audio_mgr_death_recipient.cpp",
-      "src/sensitive/audio_manager/mic_global_switch_change_callback.cpp",
+      "src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
+      "src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
+      "src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
+      "src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
@@ -99,7 +101,6 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
-      "//foundation/graphic/graphic_2d:libsurface",
     ]
 
     external_deps = [
@@ -109,7 +110,6 @@ if (is_standard_system && ability_base_enable == true) {
       "hisysevent_native:libhisysevent",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
-      "multimedia_audio_framework:audio_client",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]

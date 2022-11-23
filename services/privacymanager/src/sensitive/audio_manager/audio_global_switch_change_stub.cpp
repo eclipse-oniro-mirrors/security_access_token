@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "camera_service_callback_stub.h"
+#include "audio_global_switch_change_stub.h"
 #include "accesstoken_log.h"
 #include "permission_record_manager.h"
 
@@ -22,30 +22,32 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "CameraServiceCallbackStub"};
+    SECURITY_DOMAIN_ACCESSTOKEN, "AudioRoutingManagerListenerStub"};
 }
-CameraServiceCallbackStub::CameraServiceCallbackStub()
+AudioRoutingManagerListenerStub::AudioRoutingManagerListenerStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CameraServiceCallbackStub Instance create");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub Instance create");
 }
 
-CameraServiceCallbackStub::~CameraServiceCallbackStub()
+AudioRoutingManagerListenerStub::~AudioRoutingManagerListenerStub()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CameraServiceCallbackStub Instance destroy");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub Instance destroy");
 }
 
-int CameraServiceCallbackStub::OnRemoteRequest(
+int AudioRoutingManagerListenerStub::OnRemoteRequest(
     uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "CameraServiceCallbackStub: ReadInterfaceToken failed");
+        ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub: ReadInterfaceToken failed");
         return -1;
     }
-    CameraMuteServiceCallbackRequestCode msgId = static_cast<CameraMuteServiceCallbackRequestCode>(code);
+    AudioRingerModeUpdateListenerMsg msgId = static_cast<AudioRingerModeUpdateListenerMsg>(code);
     switch (msgId) {
-        case CAMERA_CALLBACK_MUTE_MODE: {
-            bool mute = data.ReadBool();
-            OnCameraMute(mute);
+        case ON_MIC_STATE_UPDATED: {
+            MicStateChangeEvent micStateChangeEvent = {};
+
+            micStateChangeEvent.mute = data.ReadBool();
+            OnMicStateUpdated(micStateChangeEvent);
             return 0;
         }
         default: {
@@ -55,11 +57,11 @@ int CameraServiceCallbackStub::OnRemoteRequest(
     }
 }
 
-int32_t CameraServiceCallbackStub::OnCameraMute(bool muteMode)
+void AudioRoutingManagerListenerStub::OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraMute(%{public}d)", muteMode);
-    PermissionRecordManager::GetInstance().NotifyCameraChange(!muteMode);
-    return 0;
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraMute(%{public}d)",
+        micStateChangeEvent.mute);
+    PermissionRecordManager::GetInstance().NotifyMicChange(!micStateChangeEvent.mute);
 }
 }
 } // namespace AccessToken

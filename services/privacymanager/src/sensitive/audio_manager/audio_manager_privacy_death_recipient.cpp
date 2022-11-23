@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "audio_mgr_death_recipient.h"
+#include "audio_manager_privacy_death_recipient.h"
 
 #include "accesstoken_log.h"
 #include "permission_record_manager.h"
