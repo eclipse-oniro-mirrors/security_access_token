@@ -3972,7 +3972,7 @@ HWTEST_F(AccessTokenKitTest, CreatePermStateChangeCallback001, TestSize.Level1)
         int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
 
         if (i == 200) {
-            ASSERT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
+            EXPECT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
             break;
         }
     }
