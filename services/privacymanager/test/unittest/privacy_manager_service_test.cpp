@@ -344,11 +344,11 @@ HWTEST_F(PrivacyManagerServiceTest, AppStatusListener001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     SetSelfTokenID(tokenId);
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
