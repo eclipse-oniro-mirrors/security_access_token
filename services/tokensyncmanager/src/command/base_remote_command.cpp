@@ -109,7 +109,7 @@ void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const Per
         return;
     }
     nlohmann::json permConfigsJson;
-    int size = state.resDeviceID.size();
+    uint32_t size = state.resDeviceID.size();
     for (uint32_t i = 0; i < size; i++) {
         nlohmann::json permConfigJson = nlohmann::json {
             {"resDeviceID", state.resDeviceID[i]},
