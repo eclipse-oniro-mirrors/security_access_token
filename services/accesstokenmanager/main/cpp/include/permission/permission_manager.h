@@ -41,7 +41,7 @@ constexpr const char* ACCURATE_LOCATION_PERMISSION_NAME = "ohos.permission.LOCAT
 const uint32_t ELEMENT_NOT_FOUND = -1;
 const int32_t ACCURATE_LOCATION_API_VERSION = 9;
 
-class PermissionManager final {
+class PermissionManager {
 public:
     static PermissionManager& GetInstance();
     virtual ~PermissionManager();
@@ -51,7 +51,7 @@ public:
     void RemoveDefPermissions(AccessTokenID tokenID);
     int VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName);
-    int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
@@ -71,9 +71,10 @@ public:
     bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
-
-private:
     PermissionManager();
+protected:
+    static void registerImpl(PermissionManager* implInstance);
+private:
     void ScopeToString(
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
@@ -87,6 +88,8 @@ private:
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
 
     PermissionGrantEvent grantEvent_;
+    static PermissionManager* implInstance_;
+    static std::recursive_mutex mutex_;
 
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };
