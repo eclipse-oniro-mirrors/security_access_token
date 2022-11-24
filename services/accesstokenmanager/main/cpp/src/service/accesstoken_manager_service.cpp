@@ -529,7 +529,7 @@ bool AccessTokenManagerService::Initialize()
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif
-    HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
         "PID_INFO", getpid());
     return true;

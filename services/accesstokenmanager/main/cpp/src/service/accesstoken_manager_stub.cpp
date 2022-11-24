@@ -204,7 +204,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     int flag = data.ReadInt32();
     if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
@@ -224,7 +224,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     int flag = data.ReadInt32();
     if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
@@ -240,7 +240,7 @@ void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel&
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
             "CALLER_TOKENID", callingTokenID);
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);

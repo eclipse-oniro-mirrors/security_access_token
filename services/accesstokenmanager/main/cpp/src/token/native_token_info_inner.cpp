@@ -124,7 +124,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     if (!DataValidator::IsProcessNameValid(tokenInfoBasic_.processName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token processName error");
         return RET_FAILED;
@@ -134,7 +134,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u apl is error, value %{public}d",
             tokenInfoBasic_.tokenID, aplNum);
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token apl error");
         return RET_FAILED;
@@ -145,7 +145,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token version error");
         return RET_FAILED;

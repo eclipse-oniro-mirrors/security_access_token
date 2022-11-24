@@ -114,7 +114,7 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "entry");
     if (changeType == PERM_ACTIVE_IN_BACKGROUND) {
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,
             "CALLER_TOKENID", tokenId, "PERMISSION_NAME", permName, "REASON", "background call");
     }
