@@ -26,12 +26,16 @@
 #include "napi/native_api.h"
 #include "napi_error.h"
 #include "napi/native_node_api.h"
+#include "parameter.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermStateChangeRegisters;
 std::map<AccessTokenKit*, std::vector<RegisterPermStateChangeInfo*>> g_permStateChangeRegisters;
+std::mutex g_lockCache;
+std::map<std::string, PermissionStatusCache> g_cache;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
@@ -40,7 +44,8 @@ static constexpr int32_t VERIFY_OR_FLAG_INPUT_MAX_PARAMS = 2;
 static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
 static constexpr int32_t MAX_LENGTH = 256;
-
+static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
+static constexpr int32_t VALUE_MAX_LEN = 32;
 
 static void ReturnPromiseResult(napi_env env, const AtManagerAsyncContext& context, napi_value result)
 {
@@ -274,6 +279,7 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "New the js instance complete");
+
     return instance;
 }
 
@@ -445,10 +451,46 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
     return result;
 }
 
+std::string NapiAtManager::GetPermParamValue()
+{
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(PERMISSION_STATUS_CHANGE_KEY, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+        return "";
+    }
+    std::string resStr(value);
+    return resStr;
+}
+
+void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter");
+    std::lock_guard<std::mutex> lock(g_lockCache);
+    auto iter = g_cache.find(asyncContext->permissionName);
+    if (iter != g_cache.end()) {
+        std::string currPara = GetPermParamValue();
+        if (currPara != iter->second.paramValue) {
+            asyncContext->result = AccessTokenKit::VerifyAccessToken(
+                asyncContext->tokenId, asyncContext->permissionName);
+            iter->second.status = asyncContext->result;
+            iter->second.paramValue = currPara;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param changed currPara %{public}s", currPara.c_str());
+        } else {
+            asyncContext->result = iter->second.status;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param cache unchaged");
+        }
+    } else {
+        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
+        g_cache[asyncContext->permissionName].status = asyncContext->result;
+        g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "g_cacheParam set %{public}s",
+            g_cache[asyncContext->permissionName].paramValue.c_str());
+    }
+}
+
 napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync begin.");
-
     auto *asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -469,9 +511,15 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId,
-        asyncContext->permissionName);
+    if (asyncContext->tokenId != GetSelfTokenID()) {
+        asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
+        napi_value result = nullptr;
+        NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync end.");
+        return result;
+    }
 
+    UpdatePermissionCache(asyncContext);
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
 
