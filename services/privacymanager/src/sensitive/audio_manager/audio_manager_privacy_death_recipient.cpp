@@ -15,6 +15,7 @@
 #include "audio_manager_privacy_death_recipient.h"
 
 #include "accesstoken_log.h"
+#include "audio_manager_privacy_client.h"
 #include "permission_record_manager.h"
 
 namespace OHOS {
@@ -29,6 +30,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 void AudioMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
+    AudioManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
     PermissionRecordManager::GetInstance().OnAudioMgrRemoteDiedHandle();
 }
 }  // namespace AccessToken

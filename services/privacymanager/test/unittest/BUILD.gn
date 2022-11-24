@@ -66,7 +66,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
-      "ability_runtime:app_manager",
       "access_token:libaccesstoken_sdk",
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",

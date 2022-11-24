@@ -48,13 +48,14 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
 
             micStateChangeEvent.mute = data.ReadBool();
             OnMicStateUpdated(micStateChangeEvent);
-            return 0;
+            return NO_ERROR;
         }
         default: {
             ACCESSTOKEN_LOG_INFO(LABEL, "default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
+    return NO_ERROR;
 }
 
 void AudioRoutingManagerListenerStub::OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent)
