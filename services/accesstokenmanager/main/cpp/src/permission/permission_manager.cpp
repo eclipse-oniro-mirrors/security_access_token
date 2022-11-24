@@ -307,7 +307,6 @@ void PermissionManager::ParamUpdate(const std::string& permissionName)
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
     if (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName)) {
         paramValue_++;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "paramValue_ change %{public}llu", paramValue_);
         int32_t res = SetParameter(PERMISSION_STATUS_CHANGE_KEY, std::to_string(paramValue_).c_str());
         if (res != 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter failed %{public}d", res);
