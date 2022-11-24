@@ -12,25 +12,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "app_mgr_death_recipient.h"
 
-#include "accesstoken_log.h"
-#include "permission_record_manager.h"
+#ifndef OHOS_PRIVACY_APP_STATE_DATA_H
+#define OHOS_PRIVACY_APP_STATE_DATA_H
+
+#include <sys/types.h>
+
+#include "parcel.h"
+#include "iremote_object.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppMgrDeathRecipient"
+enum class ApplicationState {
+    APP_STATE_BEGIN = 0,
+    APP_STATE_CREATE = APP_STATE_BEGIN,
+    APP_STATE_READY,
+    APP_STATE_FOREGROUND,
+    APP_STATE_FOCUS,
+    APP_STATE_BACKGROUND,
+    APP_STATE_TERMINATED,
+    APP_STATE_END,
 };
-} // namespace
+struct AppStateData : public Parcelable {
+    virtual bool Marshalling(Parcel &parcel) const override;
+    static AppStateData *Unmarshalling(Parcel &parcel);
 
-void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
-}
+    std::string bundleName;
+    int32_t pid = -1;
+    int32_t uid = 0;
+    int32_t state = 0;
+    int32_t accessTokenId = 0;
+    bool isFocused = false;
+};
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
+
+#endif  // OHOS_PRIVACY_APP_STATE_DATA_H

@@ -13,26 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef MIC_GLOBAL_SWITCH_CHANGE_STUB_H
-#define MIC_GLOBAL_SWITCH_CHANGE_STUB_H
+#ifndef PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
+#define PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
 
-#include "audio_manager_privacy_proxy.h"
+#include <vector>
+#include "app_manager_privacy_proxy.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AudioRoutingManagerListenerStub : public IRemoteStub<IStandardAudioRoutingManagerListener> {
+class ApplicationStateObserverStub : public IRemoteStub<IApplicationStateObserver> {
 public:
-    AudioRoutingManagerListenerStub();
-    virtual ~AudioRoutingManagerListenerStub();
+    ApplicationStateObserverStub();
+    virtual ~ApplicationStateObserverStub();
 
-    int OnRemoteRequest(uint32_t code, MessageParcel &data,
-        MessageParcel &reply, MessageOption &option) override;
-    void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) override;
+    virtual int OnRemoteRequest(
+        uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
+
+    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
+private:
+    int32_t HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // MIC_GLOBAL_SWITCH_CHANGE_STUB_H
+#endif // PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
