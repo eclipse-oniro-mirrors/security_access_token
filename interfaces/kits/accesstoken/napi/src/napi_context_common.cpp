@@ -24,12 +24,12 @@ AtManagerAsyncWorkData::AtManagerAsyncWorkData(napi_env envValue)
 
 AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
 {
-    if (callbackRef != nullptr) {
+    if ((callbackRef != nullptr) && (env != nullptr)) {
         napi_delete_reference(env, callbackRef);
         callbackRef = nullptr;
     }
 
-    if (work != nullptr) {
+    if ((work != nullptr) && (env != nullptr)) {
         napi_delete_async_work(env, work);
         work = nullptr;
     }
