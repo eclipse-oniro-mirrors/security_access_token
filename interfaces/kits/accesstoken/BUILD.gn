@@ -20,6 +20,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "//base/security/access_token/interfaces/innerkits/token_setproc/include",
     "//base/security/access_token/interfaces/kits/accesstoken/napi/include",
     "//base/security/access_token/interfaces/kits/common/include",
+    "//base/security/access_token/interfaces/innerkits/token_callback/include",
     "//foundation/arkui/napi/interfaces/inner_api",
     "//foundation/arkui/napi/interfaces/kits",
   ]
@@ -31,6 +32,7 @@ ohos_shared_library("libabilityaccessctrl") {
 
   deps = [
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "//base/security/access_token/interfaces/innerkits/token_callback:libtoken_callback_sdk",
     "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     "//base/security/access_token/interfaces/kits/common:libnapi_common",
     "//foundation/arkui/napi:ace_napi",
@@ -38,8 +40,16 @@ ohos_shared_library("libabilityaccessctrl") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
+    "ability_base:want",
+    "ability_runtime:ability_context_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:napi_base_context",
+    "c_utils:utils",
+    "hiviewdfx_hilog_native:libhilog",
     "hiviewdfx_hilog_native:libhilog",
     "init:libbegetutil",
+    "ipc:ipc_core",
   ]
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
