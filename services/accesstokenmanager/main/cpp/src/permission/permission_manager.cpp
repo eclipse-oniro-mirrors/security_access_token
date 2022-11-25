@@ -44,11 +44,23 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 }
+PermissionManager* PermissionManager::implInstance_ = nullptr;
+std::recursive_mutex PermissionManager::mutex_;
 
 PermissionManager& PermissionManager::GetInstance()
 {
-    static PermissionManager instance;
-    return instance;
+    if (implInstance_ == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock_l(mutex_);
+        if (implInstance_ == nullptr) {
+            implInstance_ = new PermissionManager();
+        }
+    }
+    return *implInstance_;
+}
+
+void PermissionManager::registerImpl(PermissionManager* implInstance)
+{
+    implInstance_ = implInstance;
 }
 
 PermissionManager::PermissionManager()
