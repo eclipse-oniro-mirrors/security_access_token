@@ -256,7 +256,7 @@ void AccessTokenInfoManagerTest::TearDown()
  * @tc.name: CreateHapTokenInfo001
  * @tc.desc: Verify the CreateHapTokenInfo add one hap token function.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
 {
@@ -285,7 +285,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo002
  * @tc.desc: Verify the CreateHapTokenInfo add one hap token twice function.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
 {
@@ -321,7 +321,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo003
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test userID invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
 {
@@ -338,7 +338,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo003, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo004
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test bundleName invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
 {
@@ -356,7 +356,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo004, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo005
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test appIDDesc invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
 {
@@ -375,7 +375,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo005, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo006
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test domain invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
 {
@@ -396,7 +396,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo006, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo007
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test dlpType invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
 {
@@ -418,7 +418,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo007, TestSize.Level1)
  * @tc.name: CreateHapTokenInfo008
  * @tc.desc: AccessTokenInfoManager::CreateHapTokenInfo function test grant mode invalid
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
 {
@@ -452,7 +452,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
  * @tc.name: IsTokenIdExist001
  * @tc.desc: Verify the IsTokenIdExist exist accesstokenid.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, IsTokenIdExist001, TestSize.Level1)
 {
@@ -464,7 +464,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsTokenIdExist001, TestSize.Level1)
  * @tc.name: GetHapTokenInfo001
  * @tc.desc: Verify the GetHapTokenInfo abnormal and normal branch.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
 {
@@ -489,7 +489,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
  * @tc.name: GetHapPermissionPolicySet001
  * @tc.desc: Verify the GetHapPermissionPolicySet abnormal and normal branch.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapPermissionPolicySet001, TestSize.Level1)
 {
@@ -513,7 +513,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapPermissionPolicySet001, TestSize.Leve
  * @tc.name: GetNativePermissionPolicySet001
  * @tc.desc: Verify the GetNativePermissionPolicySet abnormal branch tokenID is invalid.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetNativePermissionPolicySet001, TestSize.Level1)
 {
@@ -527,79 +527,38 @@ HWTEST_F(AccessTokenInfoManagerTest, GetNativePermissionPolicySet001, TestSize.L
  * @tc.name: RemoveHapTokenInfo001
  * @tc.desc: Verify the RemoveHapTokenInfo abnormal branch tokenID type is not true.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID), RET_FAILED);
-}
 
-/**
- * @tc.name: RemoveHapTokenInfo002
- * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test count(id)
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo002, TestSize.Level1)
-{
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
-}
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // count(id) == 0
 
-/**
- * @tc.name: RemoveHapTokenInfo003
- * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test info is null
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo003, TestSize.Level1)
-{
-    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info is null
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
-}
 
-/**
- * @tc.name: RemoveHapTokenInfo004
- * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test count(HapUniqueKey) == 0
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo004, TestSize.Level1)
-{
-    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->tokenInfoBasic_.userID = USER_ID;
-    info->tokenInfoBasic_.bundleName = "com.ohos.testtesttest";
+    info->tokenInfoBasic_.bundleName = "com.ohos.TEST";
     info->tokenInfoBasic_.instIndex = INST_INDEX;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
-    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-}
+    // count(HapUniqueKey) == 0
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 
-/**
- * @tc.name: RemoveHapTokenInfo005
- * @tc.desc: AccessTokenInfoManager::RemoveHapTokenInfo function test hapTokenIdMap_[HapUniqueKey] != id
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo005, TestSize.Level1)
-{
-    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP)); // removed above
     AccessTokenID tokenId2 = 537919486; // 537919486: 001 00 0 000000 11111111111111111110
-    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
-    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
-    info->tokenInfoBasic_.userID = USER_ID;
-    info->tokenInfoBasic_.bundleName = "com.ohos.testtesttest";
-    info->tokenInfoBasic_.instIndex = INST_INDEX;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
-    std::string hapUniqueKey = "com.ohos.testtesttest&" + std::to_string(USER_ID) + "&" + std::to_string(INST_INDEX);
+    std::string hapUniqueKey = "com.ohos.TEST&" + std::to_string(USER_ID) + "&" + std::to_string(INST_INDEX);
     AccessTokenInfoManager::GetInstance().hapTokenIdMap_[hapUniqueKey] = tokenId2;
-    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+    // hapTokenIdMap_[HapUniqueKey] != id
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
     AccessTokenInfoManager::GetInstance().hapTokenIdMap_.erase(hapUniqueKey);
+
     AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 }
 
@@ -607,7 +566,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo005, TestSize.Level1)
  * @tc.name: GetHapTokenID001
  * @tc.desc: Verify the GetHapTokenID by userID/bundleName/instIndex, function.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
 {
@@ -636,7 +595,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
  * @tc.name: UpdateHapToken001
  * @tc.desc: Verify the UpdateHapToken token function.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 {
@@ -669,7 +628,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
  * @tc.name: UpdateHapToken002
  * @tc.desc: Verify the UpdateHapToken token function abnormal branch.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
 {
@@ -689,7 +648,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
  * @tc.name: UpdateHapToken003
  * @tc.desc: AccessTokenInfoManager::UpdateHapToken function test IsRemote_ true
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
 {
@@ -709,7 +668,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
  * @tc.name: GetHapTokenSync001
  * @tc.desc: Verify the GetHapTokenSync token function and abnormal branch.
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
 {
@@ -736,7 +695,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
  * @tc.name: GetHapTokenSync002
  * @tc.desc: AccessTokenInfoManager::GetHapTokenSync function test permSetPtr is null
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
 {
@@ -753,7 +712,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync002, TestSize.Level1)
  * @tc.name: GetHapTokenInfoFromRemote001
  * @tc.desc: Verify the GetHapTokenInfoFromRemote token function .
  * @tc.type: FUNC
- * @tc.require: Issue Number
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 {
@@ -930,7 +889,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
  * @tc.name: NotifyTokenSyncTask001
  * @tc.desc: TokenModifyNotifier::NotifyTokenSyncTask function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
 {
@@ -1325,6 +1284,165 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig006, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
+
+/**
+ * @tc.name: UpdateRemoteHapTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::UpdateRemoteHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID mapID = 0;
+    HapTokenInfoForSync hapSync;
+
+    // infoPtr is null
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+
+    mapID = 123; // 123 is random input
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    info.SetRemote(true);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
+
+    // remote is true
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(mapID);
+}
+
+/**
+ * @tc.name: CreateRemoteHapTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::CreateRemoteHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID mapID = 123; // 123 is random input
+    HapTokenInfoForSync hapSync;
+
+    hapSync.baseInfo.tokenID = 123; // 123 is random input
+    std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[123] = info;
+
+    // count(id) exsit
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().CreateRemoteHapTokenInfo(mapID, hapSync));
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(123);
+}
+
+/**
+ * @tc.name: SetRemoteNativeTokenInfo001
+ * @tc.desc: AccessTokenInfoManager::SetRemoteNativeTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
+{
+    std::string deviceID;
+    std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
+
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
+        nativeTokenInfoList)); // deviceID invalid
+
+    deviceID = "dev-001";
+    NativeTokenInfo info;
+    info.apl = ATokenAplEnum::APL_NORMAL;
+    info.ver = DEFAULT_TOKEN_VERSION;
+    info.processName = "what's this";
+    info.dcap = "what's this";
+    info.tokenID = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    NativeTokenInfoForSync sync;
+    sync.baseInfo = info;
+    nativeTokenInfoList.emplace_back(sync);
+
+    AccessTokenRemoteDevice device;
+    device.DeviceID_ = deviceID;
+    // 672137215 is remoteID 123 is mapID
+    device.MappingTokenIDPairMap_.insert(std::pair<AccessTokenID, AccessTokenID>(672137215, 123));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
+        nativeTokenInfoList)); // has maped
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
+
+    // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    device.MappingTokenIDPairMap_[tokenID] = 672137215;
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
+
+    // native mapID 672137215 is not exist
+    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
+}
+
+/**
+ * @tc.name: DeleteRemoteToken002
+ * @tc.desc: AccessTokenInfoManager::DeleteRemoteToken function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
+{
+    std::string deviceID = "dev-001";
+    AccessTokenID tokenID = 123; // 123 is random input
+
+    AccessTokenRemoteDevice device;
+    device.DeviceID_ = deviceID;
+    // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    device.MappingTokenIDPairMap_.insert(std::pair<AccessTokenID, AccessTokenID>(tokenID, 537919487));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(537919487, TOKEN_HAP));
+    // hap mapID 537919487 is not exist
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(537919487);
+
+    // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    device.MappingTokenIDPairMap_[tokenID] = 672137215;
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(672137215, TOKEN_NATIVE));
+    // native mapID 672137215 is not exist
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
+    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(672137215);
+}
+
+/**
+ * @tc.name: AllocLocalTokenID001
+ * @tc.desc: AccessTokenInfoManager::AllocLocalTokenID function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
+{
+    std::string remoteDeviceID;
+    AccessTokenID remoteTokenID = 0;
+
+    ASSERT_EQ(static_cast<AccessTokenID>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteDeviceID invalid
+
+    // deviceID invalid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    // deviceID invalid
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
+
+    remoteDeviceID = "dev-001";
+    ASSERT_EQ(static_cast<AccessTokenID>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,
+        remoteTokenID)); // remoteTokenID invalid
+
+    // deviceID valid + tokenID == 0
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+
+    remoteTokenID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    // deviceID valid + tokenID != 0 + type != native + type != shell
+    ASSERT_EQ(static_cast<AccessTokenID>(0),
+        AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
+}
 #endif
 
 /**
@@ -1653,7 +1771,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
  * @tc.name: AccessTokenInfoManager001
  * @tc.desc: AccessTokenInfoManager::~AccessTokenInfoManager+Init function test hasInited_ is false
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
 {
@@ -1667,7 +1785,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AccessTokenInfoManager001, TestSize.Level1)
  * @tc.name: GetHapUniqueStr001
  * @tc.desc: AccessTokenInfoManager::GetHapUniqueStr function test info is null
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
 {
@@ -1679,7 +1797,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapUniqueStr001, TestSize.Level1)
  * @tc.name: AddHapTokenInfo001
  * @tc.desc: AccessTokenInfoManager::AddHapTokenInfo function test info is null
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
 {
@@ -1691,7 +1809,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
  * @tc.name: AddHapTokenInfo002
  * @tc.desc: AccessTokenInfoManager::AddHapTokenInfo function test count(id) > 0
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
 {
@@ -1702,94 +1820,73 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
 
 /**
  * @tc.name: AddNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test info is null
+ * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require: issueI62M6G
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo001, TestSize.Level1)
 {
     std::shared_ptr<NativeTokenInfoInner> info = nullptr;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info));
-}
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // info is null
 
-/**
- * @tc.name: AddNativeTokenInfo002
- * @tc.desc: AccessTokenInfoManager::AddNativeTokenInfo function test count(id) > 0
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo002, TestSize.Level1)
-{
     AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    info = std::make_shared<NativeTokenInfoInner>();
     info->tokenInfoBasic_.tokenID = tokenId;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info));
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(id) > 0
+
+    // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    info->tokenInfoBasic_.tokenID = 672137215;
+    info->tokenInfoBasic_.processName = "accesstoken_service";
+    // 672137214 is max-1 native tokenId: 001 01 0 000000 11111111111111111110
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[672137214] = info;
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(processName) > 0
+
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(672137214);
 }
 
 /**
  * @tc.name: RemoveNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test count(id) == 0
+ * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require: issueI62M6G
  */
 HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
-}
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // count(id) == 0
 
-/**
- * @tc.name: RemoveNativeTokenInfo002
- * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test isRemote_ true
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo002, TestSize.Level1)
-{
-    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
     std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
+    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // remote is true
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
-}
 
-/**
- * @tc.name: RemoveNativeTokenInfo003
- * @tc.desc: AccessTokenInfoManager::RemoveNativeTokenInfo function test count(processName) == 0
- * @tc.type: FUNC
- * @tc.require: issueI5YR8M
- */
-HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo003, TestSize.Level1)
-{
-    AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE);
-    std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
     info->isRemote_ = false;
     info->tokenInfoBasic_.processName = "testtesttest";
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
-    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId));
-    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
+    // count(processName) == 0
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // erase in function
     AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 }
 
 /**
  * @tc.name: TryUpdateExistNativeToken001
- * @tc.desc: AccessTokenInfoManager::TryUpdateExistNativeToken function test infoPtr is null
+ * @tc.desc: AccessTokenInfoManager::TryUpdateExistNativeToken function test
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, TryUpdateExistNativeToken001, TestSize.Level1)
 {
     std::shared_ptr<NativeTokenInfoInner> infoPtr = nullptr;
-    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr));
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().TryUpdateExistNativeToken(infoPtr)); // infoPtr is null
 }
 
 /**
  * @tc.name: ProcessNativeTokenInfos001
  * @tc.desc: AccessTokenInfoManager::ProcessNativeTokenInfos function test AddNativeTokenInfo fail
  * @tc.type: FUNC
- * @tc.require: issueI5YR8M
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1)
 {
@@ -1812,7 +1909,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1
  * @tc.name: OnDeviceOnline001
  * @tc.desc: AtmDeviceStateCallbackTest::OnDeviceOnline function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
 {
@@ -1827,7 +1924,7 @@ HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
  * @tc.name: VerifyAccessToken001
  * @tc.desc: VerifyAccessToken with permission is invalid
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
 {
@@ -1846,7 +1943,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
  * @tc.name: Insert001
  * @tc.desc: PermissionDefinitionCache::Insert function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, Insert001, TestSize.Level1)
 {
@@ -1871,7 +1968,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Insert001, TestSize.Level1)
  * @tc.name: IsGrantedModeEqualInner001
  * @tc.desc: PermissionDefinitionCache::IsGrantedModeEqualInner function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, IsGrantedModeEqualInner001, TestSize.Level1)
 {
@@ -1890,7 +1987,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsGrantedModeEqualInner001, TestSize.Level1
  * @tc.name: RestorePermDefInfo001
  * @tc.desc: PermissionDefinitionCache::RestorePermDefInfo function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
 {
@@ -1908,7 +2005,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
  * @tc.name: IsPermissionDefValid001
  * @tc.desc: PermissionValidator::IsPermissionDefValid function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
 {
@@ -1933,7 +2030,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
  * @tc.name: IsPermissionStateValid001
  * @tc.desc: PermissionValidator::IsPermissionStateValid function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
 {
@@ -1969,7 +2066,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
  * @tc.name: FilterInvalidPermissionDef001
  * @tc.desc: PermissionValidator::FilterInvalidPermissionDef function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Level1)
 {
@@ -2001,7 +2098,7 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
  * @tc.name: DeduplicateResDevID001
  * @tc.desc: PermissionValidator::DeduplicateResDevID function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
 {
@@ -2027,7 +2124,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
  * @tc.name: Update001
  * @tc.desc: PermissionPolicySet::Update function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, Update001, TestSize.Level1)
 {
@@ -2075,7 +2172,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Update001, TestSize.Level1)
  * @tc.name: RestorePermissionPolicy001
  * @tc.desc: PermissionPolicySet::RestorePermissionPolicy function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1)
 {
@@ -2124,7 +2221,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1
  * @tc.name: VerifyPermissStatus001
  * @tc.desc: PermissionPolicySet::VerifyPermissStatus function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissStatus001, TestSize.Level1)
 {
@@ -2151,7 +2248,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissStatus001, TestSize.Level1)
  * @tc.name: QueryPermissionFlag001
  * @tc.desc: PermissionPolicySet::QueryPermissionFlag function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 {
@@ -2181,7 +2278,7 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
  * @tc.name: UpdatePermissionStatus001
  * @tc.desc: PermissionPolicySet::UpdatePermissionStatus function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
 {
@@ -2216,7 +2313,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
  * @tc.name: ResetUserGrantPermissionStatus001
  * @tc.desc: PermissionPolicySet::ResetUserGrantPermissionStatus function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize.Level1)
 {
@@ -2245,7 +2342,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ResetUserGrantPermissionStatus001, TestSize
  * @tc.name: PermStateFullToString001
  * @tc.desc: PermissionPolicySet::PermStateFullToString function test
  * @tc.type: FUNC
- * @tc.require: IssueI61OOX
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
 {
@@ -2269,7 +2366,7 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
  * @tc.name: VerifyNativeAccessToken001
  * @tc.desc: PermissionManager::VerifyNativeAccessToken function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
 {
@@ -2293,21 +2390,20 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1
  * @tc.name: VerifyAccessToken002
  * @tc.desc: PermissionManager::VerifyAccessToken function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenID tokenId = 0;
     std::string permissionName;
 
     // permissionName invalid
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 
-    tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     permissionName = "ohos.permission.DISTRIBUTED_DATASYNC";
-    // token type is TOKEN_TYPE_BUTT
+    
+    // token type is TOKEN_INVALID
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
@@ -2316,7 +2412,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken002, TestSize.Level1)
  * @tc.name: GetDefPermission001
  * @tc.desc: PermissionManager::GetDefPermission function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
 {
@@ -2332,7 +2428,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
  * @tc.name: GetSelfPermissionState001
  * @tc.desc: PermissionManager::GetSelfPermissionState function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetSelfPermissionState001, TestSize.Level1)
 {
@@ -2360,7 +2456,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetSelfPermissionState001, TestSize.Level1)
  * @tc.name: GetPermissionFlag001
  * @tc.desc: PermissionManager::GetPermissionFlag function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
 {
@@ -2382,7 +2478,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
  * @tc.name: UpdateTokenPermissionState002
  * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
@@ -2402,25 +2498,28 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Lev
  * @tc.name: GetApiVersionByTokenId001
  * @tc.desc: PermissionManager::GetApiVersionByTokenId function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenID tokenId = 0;
     int32_t apiVersion = 0;
 
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion)); // native token
+    // type TOKEN_INVALID
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
 
     tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
+    // get token info err
     ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion)); // native token
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 }
 
 /**
  * @tc.name: IsPermissionVaild001
  * @tc.desc: PermissionManager::IsPermissionVaild function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, IsPermissionVaild001, TestSize.Level1)
 {
@@ -2437,7 +2536,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionVaild001, TestSize.Level1)
  * @tc.name: GetPermissionStatusAndFlag001
  * @tc.desc: PermissionManager::GetPermissionStatusAndFlag function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetPermissionStatusAndFlag001, TestSize.Level1)
 {
@@ -2461,7 +2560,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionStatusAndFlag001, TestSize.Lev
  * @tc.name: AllLocationPermissionHandle001
  * @tc.desc: PermissionManager::AllLocationPermissionHandle function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, AllLocationPermissionHandle001, TestSize.Level1)
 {
@@ -2504,7 +2603,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllLocationPermissionHandle001, TestSize.Le
  * @tc.name: MapRemoteDeviceTokenToLocal001
  * @tc.desc: AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Level1)
 {
@@ -2521,11 +2620,12 @@ HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Le
 
     remoteID = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     deviceID = "dev-001";
+
     // tokeType invalid
     ASSERT_EQ(static_cast<AccessTokenID>(0),
         AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID));
 
-    remoteID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    remoteID = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111, no need to register
     std::map<AccessTokenID, AccessTokenID> MappingTokenIDPairMap;
     MappingTokenIDPairMap[537919487] = 456; // 456 is random input
     AccessTokenRemoteDevice device = {
@@ -2545,7 +2645,7 @@ HWTEST_F(AccessTokenInfoManagerTest, MapRemoteDeviceTokenToLocal001, TestSize.Le
  * @tc.name: GetDeviceAllRemoteTokenID001
  * @tc.desc: AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Level1)
 {
@@ -2561,7 +2661,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Leve
  * @tc.name: RemoveDeviceMappingTokenID001
  * @tc.desc: AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Level1)
 {
@@ -2590,7 +2690,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Lev
  * @tc.name: AddHapTokenObservation001
  * @tc.desc: TokenModifyNotifier::AddHapTokenObservation function test
  * @tc.type: FUNC
- * @tc.require: IssueI62B7P
+ * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
 {
@@ -2607,6 +2707,173 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenId);
 
     TokenModifyNotifier::GetInstance().observationSet_ = observationSet; // recovery
+}
+
+/**
+ * @tc.name: RestoreNativeTokenInfo001
+ * @tc.desc: NativeTokenInfoInner::RestoreNativeTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
+{
+    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
+    ASSERT_NE(nullptr, native);
+
+    std::string info;
+    native->ToString(info); // permPolicySet_ is null
+
+    AccessTokenID tokenId = 0;
+    std::string processName;
+    int apl = static_cast<int>(ATokenAplEnum::APL_INVALID);
+    int version = 10; // 10 is random input which only need not equal 1
+    std::vector<std::string> dcap;
+    std::vector<std::string> nativeAcls;
+    std::vector<PermissionStateFull> permStateList;
+    GenericValues inGenericValues;
+    std::vector<GenericValues> permStateRes;
+
+    // processName invalid
+    ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
+
+    inGenericValues.Put(FIELD_PROCESS_NAME, processName);
+    // processName invalid
+    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+    inGenericValues.Remove(FIELD_PROCESS_NAME);
+
+    processName = "token_sync";
+    // apl invalid
+    ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
+
+    inGenericValues.Put(FIELD_PROCESS_NAME, processName);
+    inGenericValues.Put(FIELD_APL, apl);
+    // apl invalid
+    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+    inGenericValues.Remove(FIELD_APL);
+
+    apl = static_cast<int>(ATokenAplEnum::APL_NORMAL);
+    inGenericValues.Put(FIELD_APL, apl);
+    inGenericValues.Put(FIELD_TOKEN_VERSION, version);
+    // version invalid
+    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+}
+
+/**
+ * @tc.name: RestoreHapTokenInfo001
+ * @tc.desc: HapTokenInfoInner::RestoreHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
+{
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+
+    AccessTokenID tokenId = 0;
+    GenericValues tokenValue;
+    std::vector<GenericValues> permStateRes;
+    std::string bundleName;
+    std::string appIDDesc;
+    std::string deviceID;
+    int32_t apiVersion = DEFAULT_API_VERSION;
+    int aplNum = static_cast<int>(ATokenAplEnum::APL_INVALID);
+    int version = 10; // 10 is random input which only need not equal 1
+    HapPolicyParams policy;
+    hap->Update(appIDDesc, apiVersion, policy); // permPolicySet_ is null
+
+    std::string info;
+    hap->ToString(info); // permPolicySet_ is null
+
+    std::vector<GenericValues> hapInfoValues;
+    std::vector<GenericValues> permStateValues;
+    hap->StoreHapInfo(hapInfoValues, permStateValues); // permPolicySet_ is null
+
+
+    tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
+    // bundleName invalid
+    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    tokenValue.Remove(FIELD_BUNDLE_NAME);
+
+    bundleName = "com.ohos.permissionmanger";
+    tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
+    tokenValue.Put(FIELD_APP_ID, appIDDesc);
+    // appID invalid
+    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    tokenValue.Remove(FIELD_APP_ID);
+
+    appIDDesc = "what's this";
+    tokenValue.Put(FIELD_APP_ID, appIDDesc);
+    tokenValue.Put(FIELD_DEVICE_ID, deviceID);
+    // deviceID invalid
+    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    tokenValue.Remove(FIELD_DEVICE_ID);
+
+    deviceID = "dev-001";
+    tokenValue.Put(FIELD_DEVICE_ID, deviceID);
+    tokenValue.Put(FIELD_APL, aplNum);
+    // apl invalid
+    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+
+    aplNum = static_cast<int>(ATokenAplEnum::APL_NORMAL);
+    tokenValue.Put(FIELD_APL, aplNum);
+    tokenValue.Put(FIELD_TOKEN_VERSION, version);
+    // version invalid
+    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+}
+
+/**
+ * @tc.name: RegisterTokenId001
+ * @tc.desc: AccessTokenIDManager::RegisterTokenId function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
+{
+    // 1477443583 is max abnormal butt tokenId which version is 2: 010 11 0 000000 11111111111111111111
+    AccessTokenID tokenId = 1477443583;
+    ATokenTypeEnum type = ATokenTypeEnum::TOKEN_HAP;
+
+    // version != 1 + type dismatch
+    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+
+    tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.permissionmanager", INST_INDEX);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    // register repeat
+    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+}
+
+/**
+ * @tc.name: DumpTokenInfo005
+ * @tc.desc: AccessTokenInfoManager::DumpTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo005, TestSize.Level1)
+{
+    AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
+    std::string dumpInfo;
+
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo); // hap infoPtr is null
+    ASSERT_EQ("", dumpInfo);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+
+    tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
+    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo); // native infoPtr is null
+    ASSERT_EQ("", dumpInfo);
+    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+
+    std::shared_ptr<HapTokenInfoInner> hap = nullptr;
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[537919487] = hap;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo); // iter->second is null
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(537919487);
+
+    std::shared_ptr<NativeTokenInfoInner> native = nullptr;
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[672137215] = native;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo); // iter->second is null
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(672137215);
 }
 } // namespace AccessToken
 } // namespace Security
