@@ -18,6 +18,7 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "softbus_bus_center.h"
 #include "token_setproc.h"
@@ -652,11 +653,14 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
     // Get local map token ID
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
-
+    AccessTokenIDEx tokenIdEx {
+        .tokenIdExStruct.tokenID = mapID,
+        .tokenIdExStruct.tokenAttr = 0,
+    };
     HapPolicyParams policy;
 
-    ret = AccessTokenKit::UpdateHapToken(mapID, "updateFailed", DEFAULT_API_VERSION, policy);
-    ASSERT_EQ(ret, RET_FAILED);
+    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false, "updateFailed", DEFAULT_API_VERSION, policy);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -1251,7 +1255,7 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
                                                           g_infoManagerTestInfoParms.bundleName,
                                                           g_infoManagerTestInfoParms.instIndex);
     int res = AccessTokenKit::DeleteRemoteToken("", tokenID);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
     ASSERT_EQ(RET_FAILED, res);

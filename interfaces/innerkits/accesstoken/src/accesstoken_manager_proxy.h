@@ -52,11 +52,11 @@ public:
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;
-    AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex) override;
+    AccessTokenIDEx GetHapTokenID(int userID, const std::string& bundleName, int instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) override;
     int DeleteToken(AccessTokenID tokenID) override;
-    int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion,
+    int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion,
         const HapPolicyParcel& policyParcel) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;

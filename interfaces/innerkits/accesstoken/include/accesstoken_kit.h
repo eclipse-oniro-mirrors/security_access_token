@@ -35,8 +35,8 @@ class AccessTokenKit {
 public:
     static AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     static AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    static int UpdateHapToken(
-        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
+    static int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+        bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     static int DeleteToken(AccessTokenID tokenID);
     /* Get token type by ATM service */
     static ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
@@ -44,6 +44,7 @@ public:
     static ATokenTypeEnum GetTokenTypeFlag(AccessTokenID tokenID);
     static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     static AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    static AccessTokenIDEx GetHapTokenIDEx(int userID, const std::string& bundleName, int instIndex);
     static int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     static int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
     static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);

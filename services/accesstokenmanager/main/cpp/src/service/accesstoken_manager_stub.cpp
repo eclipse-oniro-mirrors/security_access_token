@@ -21,6 +21,7 @@
 #include "access_token_error.h"
 #include "ipc_skeleton.h"
 #include "string_ex.h"
+#include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
 #include "xcollie/xcollie.h"
 #endif // HICOLLIE_ENABLE
@@ -302,8 +303,8 @@ void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParc
     int userID = data.ReadInt32();
     std::string bundleName = data.ReadString();
     int instIndex = data.ReadInt32();
-    AccessTokenID result = this->GetHapTokenID(userID, bundleName, instIndex);
-    reply.WriteUint32(result);
+    AccessTokenIDEx tokenIdEx = this->GetHapTokenID(userID, bundleName, instIndex);
+    reply.WriteUint64(tokenIdEx.tokenIDEx);
 }
 
 void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, MessageParcel& reply)
@@ -327,16 +328,20 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
+    bool isSystemApp = data.ReadBool();
     std::string appIDDesc = data.ReadString();
     int32_t apiVersion = data.ReadInt32();
+    AccessTokenIDEx tokenIdEx;
+    tokenIdEx.tokenIdExStruct.tokenID = tokenID;
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
     if (policyParcel == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "policyParcel read faild");
         reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->UpdateHapToken(tokenID, appIDDesc, apiVersion, *policyParcel);
+    int32_t result = this->UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion, *policyParcel);
     reply.WriteInt32(result);
+    reply.WriteUint32(tokenIdEx.tokenIdExStruct.tokenAttr);
 }
 
 void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)

@@ -89,9 +89,10 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
 {
     std::string appIDDesc = "appdi desc";
     int32_t apiVersion = 9;
-    AccessTokenID tokenId = 123;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = 123;
     ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
-        AccessTokenKit::UpdateHapToken(tokenId, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams));
+        AccessTokenKit::UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams));
 }
 
 /**

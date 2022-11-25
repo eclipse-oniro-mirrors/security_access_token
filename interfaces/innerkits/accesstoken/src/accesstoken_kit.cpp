@@ -64,16 +64,17 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 #endif
 }
 
-int AccessTokenKit::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
-    if ((tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
+    if ((tokenIdEx.tokenIdExStruct.tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenID, appIDDesc, apiVersion, policy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(
+        tokenIdEx, isSystemApp, appIDDesc, apiVersion, policy);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
@@ -81,7 +82,7 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
 }
@@ -112,11 +113,11 @@ int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dc
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, dcap=%{public}s", tokenID, dcap.c_str());
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsDcapValid(dcap)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "dcap is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
@@ -126,8 +127,22 @@ AccessTokenID AccessTokenKit::GetHapTokenID(int userID, const std::string& bundl
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, userID=%{public}d, bundleName=%{public}s, instIndex=%{public}d",
         userID, bundleName.c_str(), instIndex);
     if (!DataValidator::IsUserIdValid(userID) || !DataValidator::IsBundleNameValid(bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param failed");
-        return 0;
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
+        return INVALID_TOKENID;
+    }
+    AccessTokenIDEx tokenIdEx =
+        AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
+    return tokenIdEx.tokenIdExStruct.tokenID;
+}
+
+AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int userID, const std::string& bundleName, int instIndex)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, userID=%{public}d, bundleName=%{public}s, instIndex=%{public}d",
+        userID, bundleName.c_str(), instIndex);
+    if (!DataValidator::IsUserIdValid(userID) || !DataValidator::IsBundleNameValid(bundleName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
+        return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -137,7 +152,7 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes);
@@ -146,7 +161,10 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
 int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-
+    if (tokenID == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
 }
 
@@ -208,7 +226,7 @@ int AccessTokenKit::GetDefPermissions(AccessTokenID tokenID, std::vector<Permiss
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return AccessTokenManagerClient::GetInstance().GetDefPermissions(tokenID, permDefList);
@@ -220,7 +238,7 @@ int AccessTokenKit::GetReqPermissions(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, isSystemGrant=%{public}d", tokenID, isSystemGrant);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return AccessTokenManagerClient::GetInstance().GetReqPermissions(tokenID, reqPermList, isSystemGrant);
@@ -284,7 +302,7 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
 }
@@ -334,7 +352,7 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfoFromRemote(tokenID, hapSync);

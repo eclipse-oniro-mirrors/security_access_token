@@ -73,3 +73,22 @@ if (is_standard_system) {
     }
   }
 }
+
+if (is_standard_system) {
+  ohos_shared_library("libtokenid_sdk") {
+    subsystem_name = "security"
+    part_name = "access_token"
+
+    output_name = "libtokenid_sdk"
+    public_configs = [ ":accesstoken" ]
+
+    include_dirs = [ "include" ]
+    sources = [ "src/tokenid_kit.cpp" ]
+
+    deps = []
+    external_deps = [ "c_utils:utils" ]
+
+    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+  }
+}

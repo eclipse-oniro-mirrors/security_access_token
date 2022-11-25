@@ -107,6 +107,7 @@ HWTEST_F(AccessTokenParcelTest, HapInfoParcel001, TestSize.Level1)
         .instIndex = 0,
         .appIDDesc = "testtesttesttest",
         .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
     };
 
     Parcel parcel;
@@ -120,6 +121,7 @@ HWTEST_F(AccessTokenParcelTest, HapInfoParcel001, TestSize.Level1)
     EXPECT_EQ(hapinfoParcel.hapInfoParameter.instIndex, readedData->hapInfoParameter.instIndex);
     EXPECT_EQ(true, hapinfoParcel.hapInfoParameter.appIDDesc == readedData->hapInfoParameter.appIDDesc);
     EXPECT_EQ(hapinfoParcel.hapInfoParameter.apiVersion, readedData->hapInfoParameter.apiVersion);
+    EXPECT_EQ(hapinfoParcel.hapInfoParameter.isSystemApp, readedData->hapInfoParameter.isSystemApp);
 }
 
 /**

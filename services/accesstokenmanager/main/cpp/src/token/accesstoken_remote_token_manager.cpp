@@ -17,6 +17,7 @@
 
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_validator.h"
 #include "constant_common.h"
 namespace OHOS {
@@ -91,13 +92,13 @@ int AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID(const std::string& 
 {
     if (!DataValidator::IsDeviceIdValid(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s is valid.", ConstantCommon::EncryptDevId(deviceID).c_str());
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
     if (remoteDeviceMap_.count(deviceID) < 1) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
-        return RET_FAILED;
+        return AccessTokenError::ERR_DEVICE_NOT_EXIST;
     }
 
     std::transform(remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.begin(),
