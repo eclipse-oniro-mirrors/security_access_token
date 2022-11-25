@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <uv.h>
 
+#include "ability.h"
+#include "ability_context.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "napi_common.h"
@@ -29,6 +31,7 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "perm_state_change_callback_customize.h"
+#include "token_callback_stub.h"
 
 namespace OHOS {
 namespace Security {
@@ -43,7 +46,7 @@ enum PermissionStateChangeType {
 
 static thread_local napi_ref g_atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
-
+static int32_t curRequestCode_ = 0;
 class RegisterPermStateChangeScopePtr : public PermStateChangeCallbackCustomize {
 public:
     explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
@@ -82,7 +85,7 @@ struct UnregisterPermStateChangeInfo : public PermStateChangeContext {
 struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     explicit AtManagerAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
 
-    uint32_t tokenId = 0;
+    AccessTokenID tokenId = 0;
     std::string permissionName;
     int32_t flag = 0;
     int32_t result = AT_PERM_OPERA_FAIL;
@@ -93,6 +96,37 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
 struct PermissionStatusCache {
     int32_t status;
     std::string paramValue;
+};
+
+struct RequestAsyncContext : public AtManagerAsyncWorkData {
+    explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
+    AccessTokenID tokenId = 0;
+    bool isResultCalled = true;
+    int32_t result = AT_PERM_OPERA_SUCC;
+    std::vector<std::string> permissionList;
+    std::vector<int32_t> permissionsState;
+    napi_value requestResult;
+    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+};
+
+struct ResultCallback {
+    std::vector<std::string> permissions;
+    std::vector<int32_t> grantResults;
+    int32_t requestCode;
+    void* data = nullptr;
+};
+
+class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
+public:
+    explicit AuthorizationResult(int32_t requestCode, void* data) : requestCode_(requestCode), data_(data) {}
+    virtual ~AuthorizationResult() = default;
+
+    virtual void GrantResultsCallback(const std::vector<std::string>& permissions,
+        const std::vector<int>& grantResults) override;
+
+private:
+    int32_t requestCode_ = 0;
+    void* data_ = nullptr;
 };
 
 class NapiAtManager {
@@ -138,6 +172,12 @@ private:
     static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
     static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
+    static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
+    static bool ParseRequestPermissionFromUser(
+        const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext);
+    static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);
+    static void RequestPermissionsFromUserExecute(napi_env env, void* data);
+    static bool IsDynamicRequest(const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState);
 };
 }  // namespace AccessToken
 }  // namespace Security
