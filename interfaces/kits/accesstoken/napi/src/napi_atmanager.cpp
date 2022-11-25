@@ -482,7 +482,6 @@ std::string NapiAtManager::GetPermParamValue()
 
 void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter");
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_cache.find(asyncContext->permissionName);
     if (iter != g_cache.end()) {
@@ -495,7 +494,6 @@ void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Param changed currPara %{public}s", currPara.c_str());
         } else {
             asyncContext->result = iter->second.status;
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Param cache unchaged");
         }
     } else {
         asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
@@ -539,8 +537,6 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
     UpdatePermissionCache(asyncContext);
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessTokenSync end.");
     return result;
 }
 
