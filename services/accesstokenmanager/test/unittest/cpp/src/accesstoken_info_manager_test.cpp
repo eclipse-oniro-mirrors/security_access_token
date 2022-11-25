@@ -1301,7 +1301,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
 
     mapID = 123; // 123 is random input
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
-    info.SetRemote(true);
+    info->SetRemote(true);
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
 
     // remote is true
@@ -1350,7 +1350,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level
     info.apl = ATokenAplEnum::APL_NORMAL;
     info.ver = DEFAULT_TOKEN_VERSION;
     info.processName = "what's this";
-    info.dcap = "what's this";
+    info.dcap = {"what's this"};
     info.tokenID = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
     NativeTokenInfoForSync sync;
     sync.baseInfo = info;
@@ -1364,14 +1364,6 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
         nativeTokenInfoList)); // has maped
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
-
-    // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    device.MappingTokenIDPairMap_[tokenID] = 672137215;
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
-
-    // native mapID 672137215 is not exist
-    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
     AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
 }
 
