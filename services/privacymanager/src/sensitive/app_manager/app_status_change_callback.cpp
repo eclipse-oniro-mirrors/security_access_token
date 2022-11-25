@@ -59,7 +59,7 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
 int32_t ApplicationStateObserverStub::HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply)
 {
     std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
-    if (processData != nullptr) {
+    if (processData == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
         return -1;
     }

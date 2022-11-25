@@ -521,7 +521,6 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "==========chennian StartUsingPermission %{public}s", permissionName.c_str());
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
