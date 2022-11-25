@@ -29,6 +29,7 @@ static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED, "The operation of specified permission is not allowed."},
     {JS_ERROR_SERVICE_NOT_RUNNING, "The service not running."},
     {JS_ERROR_OUT_OF_MEMORY, "Out of memory."},
+    {JS_ERROR_INNER, "Common inner error."},
 };
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type)

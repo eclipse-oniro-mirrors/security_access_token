@@ -36,6 +36,7 @@ typedef enum {
     JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED,
     JS_ERROR_SERVICE_NOT_RUNNING,
     JS_ERROR_OUT_OF_MEMORY,
+    JS_ERROR_INNER,
 } JsErrorCode;
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type);
