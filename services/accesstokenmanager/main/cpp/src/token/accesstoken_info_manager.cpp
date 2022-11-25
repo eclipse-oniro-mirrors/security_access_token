@@ -87,7 +87,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add id failed.", tokenId);
-            HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
                 "ERROR_REASON", "hap tokenID error");
             continue;
@@ -109,7 +109,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
-            HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
                 "ERROR_REASON", "hap token has exist");
             continue;
@@ -133,7 +133,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (ret != RET_SUCCESS) {
-            HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
                 "ERROR_REASON", "native tokenID error");
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
@@ -157,7 +157,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add failed.", tokenId);
-            HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
                 HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
                 "ERROR_REASON", "native tokenID error");
             continue;
@@ -717,7 +717,7 @@ bool AccessTokenInfoManager::IsRemoteHapTokenValid(const std::string& deviceID, 
         return true;
     }
 
-    HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
         HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_RESPONSE_ERROR,
         "REMOTE_ID", ConstantCommon::EncryptDevId(deviceID), "ERROR_REASON", errReason);
     return false;
@@ -914,7 +914,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (!DataValidator::IsDeviceIdValid(remoteDeviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid",
             ConstantCommon::EncryptDevId(remoteDeviceID).c_str());
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
             "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "deviceID error");
         return 0;
@@ -931,7 +931,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);
         std::string errorReason = "token sync call error, error number is " + std::to_string(ret);
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_SYNC",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", TOKEN_SYNC_CALL_ERROR,
             "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", errorReason);
         return 0;

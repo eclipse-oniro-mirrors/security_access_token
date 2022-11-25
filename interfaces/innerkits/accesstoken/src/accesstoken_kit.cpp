@@ -161,7 +161,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (tokenID == 0) {
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
             "CALLER_TOKENID", static_cast<AccessTokenID>(GetSelfTokenID()), "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");

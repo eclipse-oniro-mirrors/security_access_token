@@ -354,7 +354,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
         CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
-        HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
