@@ -43,7 +43,9 @@ std::mutex g_lockForPermStateChangeRegisters;
 std::map<AccessTokenKit*, std::vector<RegisterPermStateChangeInfo*>> g_permStateChangeRegisters;
 std::mutex g_lockCache;
 std::map<std::string, PermissionStatusCache> g_cache;
+static PermissionParamCache g_paramCache;
 std::mutex g_lockForPermRequestCallbacks;
+
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
@@ -470,14 +472,34 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
 
 std::string NapiAtManager::GetPermParamValue()
 {
-    char value[VALUE_MAX_LEN] = {0};
-    int32_t ret = GetParameter(PERMISSION_STATUS_CHANGE_KEY, "", value, VALUE_MAX_LEN - 1);
-    if (ret < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
-        return "";
+    long long sysCommitId = GetSystemCommitId();
+    if (sysCommitId == g_paramCache.sysCommitIdCache) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "sysCommitId = %{public}lld", sysCommitId);
+        return g_paramCache.sysParamCache;
     }
-    std::string resStr(value);
-    return resStr;
+    g_paramCache.sysCommitIdCache = sysCommitId;
+    if (g_paramCache.handle == PARAM_DEFAULT_VALUE) {
+        int32_t handle = static_cast<int32_t>(FindParameter(PERMISSION_STATUS_CHANGE_KEY));
+        if (handle == PARAM_DEFAULT_VALUE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "FindParameter failed");
+            return "-1";
+        }
+        g_paramCache.handle = handle;
+    }
+
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(g_paramCache.handle));
+    if (currCommitId != g_paramCache.commitIdCache) {
+        auto ret = GetParameterValue(g_paramCache.handle, value, VALUE_MAX_LEN - 1);
+        if (ret < 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+            return "-1";
+        }
+        std::string resStr(value);
+        g_paramCache.sysParamCache = resStr;
+        g_paramCache.commitIdCache = currCommitId;
+    }
+    return g_paramCache.sysParamCache;
 }
 
 void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)

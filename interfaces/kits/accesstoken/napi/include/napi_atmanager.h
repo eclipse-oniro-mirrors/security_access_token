@@ -38,6 +38,7 @@ namespace Security {
 namespace AccessToken {
 const int AT_PERM_OPERA_FAIL = -1;
 const int AT_PERM_OPERA_SUCC = 0;
+const int32_t PARAM_DEFAULT_VALUE = -1;
 
 enum PermissionStateChangeType {
     PERMISSION_REVOKED_OPER = 0,
@@ -96,6 +97,13 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
 struct PermissionStatusCache {
     int32_t status;
     std::string paramValue;
+};
+
+struct PermissionParamCache {
+    long long sysCommitIdCache = PARAM_DEFAULT_VALUE;
+    int32_t commitIdCache = PARAM_DEFAULT_VALUE;
+    int32_t handle = PARAM_DEFAULT_VALUE;
+    std::string sysParamCache;
 };
 
 struct RequestAsyncContext : public AtManagerAsyncWorkData {
