@@ -17,7 +17,7 @@
 
 #include "accesstoken_log.h"
 #include "constant.h"
-#include "field_const.h"
+#include "privacy_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -56,13 +56,13 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
     SqliteTable permissionRecordTable;
     permissionRecordTable.tableName_ = PERMISSION_RECORD_TABLE;
     permissionRecordTable.tableColumnNames_ = {
-        FIELD_TOKEN_ID,
-        FIELD_OP_CODE,
-        FIELD_STATUS,
-        FIELD_TIMESTAMP,
-        FIELD_ACCESS_DURATION,
-        FIELD_ACCESS_COUNT,
-        FIELD_REJECT_COUNT
+        PrivacyFiledConst::FIELD_TOKEN_ID,
+        PrivacyFiledConst::FIELD_OP_CODE,
+        PrivacyFiledConst::FIELD_STATUS,
+        PrivacyFiledConst::FIELD_TIMESTAMP,
+        PrivacyFiledConst::FIELD_ACCESS_DURATION,
+        PrivacyFiledConst::FIELD_ACCESS_COUNT,
+        PrivacyFiledConst::FIELD_REJECT_COUNT
     };
 
     dataTypeToSqlTable_ = {
@@ -151,7 +151,7 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const GenericVal
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int32_t i = 0; i < columnCount; i++) {
-            if (statement.GetColumnName(i) == FIELD_TIMESTAMP || statement.GetColumnName(i) == FIELD_ACCESS_DURATION) {
+            if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_TIMESTAMP || statement.GetColumnName(i) == PrivacyFiledConst::FIELD_ACCESS_DURATION) {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, true));
             } else {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
@@ -172,9 +172,9 @@ int32_t PermissionUsedRecordDb::GetDistinctValue(DataType type,
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int32_t i = 0; i < columnCount; i++) {
-            if (statement.GetColumnName(i) == FIELD_TOKEN_ID) {
+            if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_TOKEN_ID) {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-            } else if (statement.GetColumnName(i) == FIELD_DEVICE_ID) {
+            } else if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_DEVICE_ID) {
                 value.Put(statement.GetColumnName(i), statement.GetColumnString(i));
             }
         }
@@ -299,12 +299,14 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
 
     std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
     for (const auto& andColName : andColumns) {
-        if (andColName == FIELD_TIMESTAMP_BEGIN) {
+        if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
             sql.append(" and ");
-            sql.append(FIELD_TIMESTAMP + " >=:" + andColName);
-        } else if (andColName == FIELD_TIMESTAMP_END) {
+            sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+            sql.append(" >=:" + andColName);
+        } else if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_END) {
             sql.append(" and ");
-            sql.append(FIELD_TIMESTAMP + " <=:" + andColName);
+            sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+            sql.append(" <=:" + andColName);
         } else {
             sql.append(" and ");
             sql.append(andColName + "=:" + andColName);
@@ -313,8 +315,9 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
     if (!orColumns.empty()) {
         sql.append(" and (");
         for (const auto& orColName : orColumns) {
-            if (orColName.find(FIELD_OP_CODE) != std::string::npos) {
-                sql.append(FIELD_OP_CODE  + " =:" + orColName);
+            if (orColName.find(PrivacyFiledConst::FIELD_OP_CODE) != std::string::npos) {
+                sql.append(PrivacyFiledConst::FIELD_OP_CODE);
+                sql.append(+ " =:" + orColName);
                 sql.append(" or ");
             }
         }
@@ -341,15 +344,19 @@ std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataT
         return std::string();
     }
     std::string sql = "delete from " + it->second.tableName_ + " where ";
-    sql.append(FIELD_TIMESTAMP + " in (select ");
-    sql.append(FIELD_TIMESTAMP + " from " + it->second.tableName_ + " where 1 = 1");
+    sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+    sql.append(" in (select ");
+    sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+    sql.append(" from " + it->second.tableName_ + " where 1 = 1");
     for (const auto& andColName : andColumns) {
-        if (andColName == FIELD_TIMESTAMP_BEGIN) {
+        if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
             sql.append(" and ");
-            sql.append(FIELD_TIMESTAMP + " >=:" + andColName);
-        } else if (andColName == FIELD_TIMESTAMP_END) {
+            sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+            sql.append(" >=:" + andColName);
+        } else if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_END) {
             sql.append(" and ");
-            sql.append(FIELD_TIMESTAMP + " <=:" + andColName);
+            sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+            sql.append(" <=:" + andColName);
         } else {
             sql.append(" and ");
             sql.append(andColName + "=:" + andColName);
@@ -367,9 +374,12 @@ std::string PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(Da
         return std::string();
     }
     std::string sql = "delete from " + it->second.tableName_ + " where ";
-    sql.append(FIELD_TIMESTAMP + " in (select ");
-    sql.append(FIELD_TIMESTAMP + " from " + it->second.tableName_ + " order by ");
-    sql.append(FIELD_TIMESTAMP + " limit ");
+    sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+    sql.append(" in (select ");
+    sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+    sql.append(" from " + it->second.tableName_ + " order by ");
+    sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
+    sql.append(" limit ");
     sql.append(std::to_string(excessiveSize) + " )");
     return sql;
 }
@@ -394,17 +404,28 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_OP_CODE + " integer not null,")
-        .append(FIELD_STATUS + " integer not null,")
-        .append(FIELD_TIMESTAMP + " integer not null,")
-        .append(FIELD_ACCESS_DURATION + " integer not null,")
-        .append(FIELD_ACCESS_COUNT + " integer not null,")
-        .append(FIELD_REJECT_COUNT + " integer not null,")
-        .append("primary key(" + FIELD_TOKEN_ID)
-        .append("," + FIELD_OP_CODE)
-        .append("," + FIELD_STATUS)
-        .append("," + FIELD_TIMESTAMP)
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_OP_CODE)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_STATUS)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_TIMESTAMP)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_ACCESS_DURATION)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_ACCESS_COUNT)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_REJECT_COUNT)
+        .append(" integer not null,")
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_OP_CODE)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_STATUS)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_TIMESTAMP)
         .append("))");
     return ExecuteSql(sql);
 }

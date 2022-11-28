@@ -31,6 +31,14 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
 static const std::string DEFAULT_DEVICEID = "0";
+static const std::string JSON_PROCESS_NAME = "processName";
+static const std::string JSON_APL = "APL";
+static const std::string JSON_VERSION = "version";
+static const std::string JSON_TOKEN_ID = "tokenId";
+static const std::string JSON_TOKEN_ATTR = "tokenAttr";
+static const std::string JSON_DCAPS = "dcaps";
+static const std::string JSON_PERMS = "permissions";
+static const std::string JSON_ACLS = "nativeAcls";
 }
 
 int32_t NativeReqPermsGet(

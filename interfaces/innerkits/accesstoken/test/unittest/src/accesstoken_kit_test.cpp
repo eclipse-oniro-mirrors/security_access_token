@@ -37,6 +37,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const int MAX_PERMISSION_SIZE = 1000;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t VAGUE_LOCATION_API_VERSION = 9;

@@ -29,6 +29,27 @@ namespace Security {
 namespace AccessToken {
 const int PERMISSION_FLAG = 2;
 const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:";
+const std::string TOOLS_NAME = "atm";
+const std::string HELP_MSG = "usage: atm <command> <option>\n"
+                             "These are common atm commands list:\n"
+                             "  help    list available commands\n"
+                             "  dump    dumpsys command\n"
+                             "  perm    grant/cancel permission\n";
+
+const std::string HELP_MSG_DUMP =
+    "usage: atm dump <option>.\n"
+    "options list:\n"
+    "  -h, --help                                                       list available options\n"
+    "  -t, --token-info [-i <token-id>]                                 list token info in system\n"
+    "  -r, --record-info [-i <token-id>] [-p <permission-name>]         list used records in system\n";
+
+const std::string HELP_MSG_PERM =
+    "usage: atm perm <option>.\n"
+    "options list:\n"
+    "  -h, --help                                       list available options\n"
+    "  -g, --grant -i <token-id> -p <permission-name>   grant a permission by a specified token-id\n"
+    "  -c, --cancel -i <token-id> -p <permission-name>  cancel a permission by a specified token-id\n";
+
 const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
     {"token-info", no_argument, nullptr, 't'},
