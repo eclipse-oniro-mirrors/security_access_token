@@ -201,11 +201,11 @@ void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes,
     }
     std::shared_ptr<SoftBusMessage> message = SoftBusMessage::FromJson(receiveData);
     if (message == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid json string: %{public}s", receiveData.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid json string");
         return;
     }
     if (!message->IsValid()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid data, has empty field: %{public}s", receiveData.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid data, has empty field");
         return;
     }
 
@@ -234,7 +234,6 @@ int SoftBusChannel::PrepareBytes(const std::string &type, const std::string &id,
 {
     SoftBusMessage messageEntity(type, id, commandName, jsonPayload);
     std::string json = messageEntity.ToJson();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "softbus message json: %{public}s", json.c_str());
     return Compress(json, bytes, bytesLength);
 }
 
@@ -282,7 +281,6 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
     buf[len] = '\0';
     std::string str(reinterpret_cast<char *>(buf));
     delete[] buf;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "done, output: %{public}s", str.c_str());
     return str;
 }
 
