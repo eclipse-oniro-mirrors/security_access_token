@@ -285,7 +285,7 @@ int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std:
     return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, userID: %{public}d, bundleName: %{public}s, instIndex: %{public}d",
         userID, bundleName.c_str(), instIndex);
@@ -300,12 +300,12 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int AccessTokenManagerService::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
+int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenIdEx.tokenIdExStruct.tokenID);
 
-    return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenID, appIDDesc, apiVersion,
+    return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
 }
 

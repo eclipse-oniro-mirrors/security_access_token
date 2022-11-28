@@ -26,6 +26,7 @@ static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 static const AccessTokenID INVALID_TOKENID = 0;
+static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 
 enum AccessTokenKitRet {
     RET_FAILED = -1,

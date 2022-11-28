@@ -44,17 +44,18 @@ public:
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel);
     std::shared_ptr<NativeTokenInfoInner> GetNativeTokenInfoInner(AccessTokenID id);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& infoParcel);
+    int AllocAccessTokenIDEx(const HapInfoParams& info, AccessTokenID tokenId, AccessTokenIDEx& tokenIdEx);
     std::shared_ptr<PermissionPolicySet> GetNativePermissionPolicySet(AccessTokenID id);
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
-    AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    AccessTokenIDEx GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    int UpdateHapToken(
-        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
+    int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+        bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);

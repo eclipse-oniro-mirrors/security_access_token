@@ -576,8 +576,9 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
-    AccessTokenID getTokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID getTokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_EQ(tokenIdEx.tokenIdExStruct.tokenID, getTokenId);
     GTEST_LOG_(INFO) << "find hap info";
 
@@ -607,8 +608,8 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 
     HapPolicyParams policy = g_infoManagerTestPolicyPrams;
     policy.apl = APL_SYSTEM_BASIC;
-    ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx.tokenIdExStruct.tokenID,
-        std::string("updateAppId"), DEFAULT_API_VERSION, policy);
+    ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx,
+        false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "update the hap token";
 
@@ -636,11 +637,11 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
     HapPolicyParams policy = g_infoManagerTestPolicyPrams;
     policy.apl = APL_SYSTEM_BASIC;
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx.tokenIdExStruct.tokenID, std::string(""), DEFAULT_API_VERSION, policy);
+        tokenIdEx, false, std::string(""), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_FAILED, ret);
 
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx.tokenIdExStruct.tokenID, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
+        tokenIdEx, false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
     ASSERT_EQ(RET_FAILED, ret);
 }
 
@@ -653,13 +654,17 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
 {
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
+    AccessTokenIDEx tokenIdEx {
+        .tokenIdExStruct.tokenID = tokenId,
+        .tokenIdExStruct.tokenAttr = 0,
+    };
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
     std::string appIDDesc = "who cares";
     int32_t apiVersion = DEFAULT_API_VERSION;
     HapPolicyParams policy;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenId, appIDDesc, apiVersion, policy));
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, policy));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
@@ -1495,8 +1500,9 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams, tokenIdEx);
 
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_NE(0, static_cast<int>(tokenId));
     PermStateChangeScope inScopeInfo;
     PermStateChangeScope outScopeInfo;
@@ -1637,8 +1643,9 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
         g_infoManagerTestPolicyPrams, tokenIdEx);
 
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_NE(0, static_cast<int>(tokenId));
     std::string dumpInfo;
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
@@ -1805,9 +1812,24 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.photos", INST_INDEX);
+    AccessTokenIDEx tokenIdEx =
+        AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.photos", INST_INDEX);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     std::shared_ptr<HapTokenInfoInner> info = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+}
+
+/**
+ * @tc.name: GetHapTokenID002
+ * @tc.desc: test GetHapTokenID function abnomal branch
+ * @tc.type: FUNC
+ * @tc.require: issueI60F1M
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
+        USER_ID, "com.ohos.test", INST_INDEX);
+    ASSERT_EQ(0, tokenIdEx.tokenIDEx);
 }
 
 /**
@@ -2474,8 +2496,9 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
-    AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
+    AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
         "com.ohos.camera", INST_INDEX);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.DUMP";
     bool isGranted = false;
@@ -2771,7 +2794,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     int aplNum = static_cast<int>(ATokenAplEnum::APL_INVALID);
     int version = 10; // 10 is random input which only need not equal 1
     HapPolicyParams policy;
-    hap->Update(appIDDesc, apiVersion, policy); // permPolicySet_ is null
+    hap->Update(appIDDesc, apiVersion, policy, false); // permPolicySet_ is null
 
     std::string info;
     hap->ToString(info); // permPolicySet_ is null
@@ -2828,7 +2851,9 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
     // version != 1 + type dismatch
     ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
 
-    tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.permissionmanager", INST_INDEX);
+    AccessTokenIDEx tokenIdEx =AccessTokenInfoManager::GetInstance().GetHapTokenID(
+        USER_ID, "com.ohos.permissionmanager", INST_INDEX);
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     // register repeat

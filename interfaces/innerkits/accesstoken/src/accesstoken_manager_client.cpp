@@ -257,11 +257,11 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
 
 AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
-    AccessTokenIDEx res = { 0 };
+    AccessTokenIDEx tokenIdEx = { 0 };
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return res;
+        return tokenIdEx;
     }
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel hapPolicyParcel;
@@ -301,12 +301,13 @@ int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::
     return proxy->CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenID AccessTokenManagerClient::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
+    AccessTokenIDEx result = {0};
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return INVALID_TOKENID;
+        return result;
     }
     return proxy->GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -322,8 +323,8 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int AccessTokenManagerClient::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+int AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -332,7 +333,7 @@ int AccessTokenManagerClient::UpdateHapToken(
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicyParameter = policy;
-    return proxy->UpdateHapToken(tokenID, appIDDesc, apiVersion, hapPolicyParcel);
+    return proxy->UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion, hapPolicyParcel);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)

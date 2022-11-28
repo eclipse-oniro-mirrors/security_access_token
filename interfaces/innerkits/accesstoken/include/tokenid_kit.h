@@ -12,30 +12,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ACCESS_TOKEN_ERROR_H
-#define ACCESS_TOKEN_ERROR_H
+
+#ifndef TOKENID_KIT_H
+#define TOKENID_KIT_H
+
+#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum AccessTokenError {
-    ERR_PERMISSION_DENIED = 201,
-    ERR_PARAM_INVALID = 12100001,
-    ERR_TOKENID_NOT_EXIST,
-    ERR_PERMISSION_NOT_EXIT,
-    ERR_INTERFACE_NOT_USED_TOGETHER,
-    ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT,
-    ERR_PERMISSION_OPERATE_FAILED,
-    ERR_SA_WORK_ABNORMAL,
-    ERR_MALLOC_FAILED,
-    ERR_OVERSIZE,
-    ERR_READ_PARCEL_FAILED,
-    ERR_WRITE_PARCEL_FAILED,
-    ERR_DEVICE_NOT_EXIST,
-    ERR_PROCESS_NOT_EXIST
+class TokenIdKit {
+public:
+    static bool IsSystemAppByFullTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif  // ACCESS_TOKEN_ERROR_H
+#endif // TOKENID_KIT_H

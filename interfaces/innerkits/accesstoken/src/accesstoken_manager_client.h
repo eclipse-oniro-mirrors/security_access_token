@@ -57,10 +57,10 @@ public:
     int DeleteToken(AccessTokenID tokenID);
     ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
-    AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    AccessTokenIDEx GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
-    int UpdateHapToken(
-        AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
+    int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+        bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
     int32_t ReloadNativeTokenInfo();

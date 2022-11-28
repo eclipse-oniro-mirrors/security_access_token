@@ -482,40 +482,41 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
     return result;
 }
 
-AccessTokenID AccessTokenManagerProxy::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
+    AccessTokenIDEx tokenIdEx = {0};
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteInt32(userID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return 0;
+        return tokenIdEx;
     }
     if (!data.WriteString(bundleName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
-        return 0;
+        return tokenIdEx;
     }
     if (!data.WriteInt32(instIndex)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
-        return 0;
+        return tokenIdEx;
     }
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return 0;
+        return tokenIdEx;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return 0;
+        return tokenIdEx;
     }
 
-    int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
-    return result;
+    tokenIdEx.tokenIDEx = reply.ReadUint64();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}llu", tokenIdEx.tokenIDEx);
+    return tokenIdEx;
 }
 
 AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
@@ -607,12 +608,16 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int AccessTokenManagerProxy::UpdateHapToken(
-    AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
+int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
+        return RET_FAILED;
+    }
+    if (!data.WriteBool(isSystemApp)) {
         return RET_FAILED;
     }
     if (!data.WriteString(appIDDesc)) {
@@ -629,8 +634,8 @@ int AccessTokenManagerProxy::UpdateHapToken(
     if (!SendRequest(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN, data, reply)) {
         return RET_FAILED;
     }
-
     int32_t result = reply.ReadInt32();
+    tokenIdEx.tokenIdExStruct.tokenAttr = reply.ReadUint32();
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;
 }

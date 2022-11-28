@@ -57,11 +57,12 @@ ATM部件的架构图如下所示：
 | --- | --- |
 | AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy); | 为应用进程分配一个tokenID |
 | AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID); | 为远端设备的应用进程分配一个本地tokenID |
-| int UpdateHapToken(AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | 更新tokenId对应的tokenInfo信息 |
+| int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | 更新tokenId对应的tokenInfo信息 |
 | int DeleteToken(AccessTokenID tokenID); | 删除应用tokenID及其对应的tokenInfo信息 |
 | int GetTokenType(AccessTokenID tokenID); | 查询指定tokenID的类型 |
 | int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | 检测指定tokenID对应的native进程是否具有指定的分布式能力 |
 | AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex); | 查询指定应用的tokenId |
+| AccessTokenIDEx GetHapTokenIDEx(int userID, const std::string& bundleName, int instIndex); | 查询指定应用的tokenIDEx |
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | 查询指定tokenID对应的hap包的tokenInfo信息 |
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | 查询指定tokenID对应的native的tokenInfo信息 |
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |

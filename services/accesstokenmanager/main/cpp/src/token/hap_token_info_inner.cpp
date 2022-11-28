@@ -18,6 +18,7 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_translator.h"
 #include "data_validator.h"
 #include "field_const.h"
@@ -49,6 +50,9 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     tokenInfoBasic_.userID = info.userID;
     tokenInfoBasic_.ver = DEFAULT_TOKEN_VERSION;
     tokenInfoBasic_.tokenAttr = 0;
+    if (info.isSystemApp) {
+        tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
+    }
     tokenInfoBasic_.bundleName = info.bundleName;
     tokenInfoBasic_.apiVersion = info.apiVersion;
     tokenInfoBasic_.instIndex = info.instIndex;
@@ -73,11 +77,17 @@ HapTokenInfoInner::~HapTokenInfoInner()
         "tokenID: 0x%{public}x destruction", tokenInfoBasic_.tokenID);
 }
 
-void HapTokenInfoInner::Update(const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+void HapTokenInfoInner::Update(
+    const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy, bool isSystemApp)
 {
     tokenInfoBasic_.appID = appIDDesc;
     tokenInfoBasic_.apiVersion = apiVersion;
     tokenInfoBasic_.apl = policy.apl;
+    if (isSystemApp) {
+        tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
+    } else {
+        tokenInfoBasic_.tokenAttr &= ~SYSTEM_APP_FLAG;
+    }
     if (permPolicySet_ == nullptr) {
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
             policy.permStateList);
@@ -116,7 +126,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "bundleName error");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     tokenInfoBasic_.apiVersion = inGenericValues.GetInt(FIELD_API_VERSION);
@@ -127,7 +137,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "appID error");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     tokenInfoBasic_.deviceID = inGenericValues.GetString(FIELD_DEVICE_ID);
@@ -136,7 +146,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     int aplNum = inGenericValues.GetInt(FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
@@ -146,7 +156,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             tokenInfoBasic_.tokenID, aplNum);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
@@ -154,7 +164,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
-        return RET_FAILED;
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
     return RET_SUCCESS;
@@ -167,7 +177,7 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     tokenInfoBasic_.tokenID = tokenId;
     int ret = RestoreHapTokenBasicInfo(tokenValue);
     if (ret != RET_SUCCESS) {
-        return RET_FAILED;
+        return ret;
     }
     permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId, permStateRes);
     return RET_SUCCESS;

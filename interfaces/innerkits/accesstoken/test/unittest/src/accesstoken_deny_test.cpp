@@ -110,9 +110,10 @@ HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level1)
 {
     std::string appIDDesc = "appdi desc";
     int32_t apiVersion = 9;
-    AccessTokenID tokenId = 123;
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = 123;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::UpdateHapToken(tokenId, appIDDesc, apiVersion, g_PolicyPrams));
+        AccessTokenKit::UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, g_PolicyPrams));
 }
 
 /**
