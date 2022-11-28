@@ -285,7 +285,8 @@ int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std:
     return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(
+    int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called, userID: %{public}d, bundleName: %{public}s, instIndex: %{public}d",
         userID, bundleName.c_str(), instIndex);

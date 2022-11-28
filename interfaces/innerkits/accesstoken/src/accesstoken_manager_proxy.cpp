@@ -482,7 +482,7 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
     return result;
 }
 
-AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     AccessTokenIDEx tokenIdEx = {0};
     MessageParcel data;

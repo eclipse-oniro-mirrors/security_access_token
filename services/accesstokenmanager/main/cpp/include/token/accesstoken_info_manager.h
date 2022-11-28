@@ -51,7 +51,7 @@ public:
     int RemoveNativeTokenInfo(AccessTokenID id);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
-    AccessTokenIDEx GetHapTokenID(int userID, const std::string& bundleName, int instIndex);
+    AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
