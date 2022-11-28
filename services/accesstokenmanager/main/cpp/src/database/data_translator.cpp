@@ -37,7 +37,8 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissi
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_MODE, inPermissionDef.grantMode);
     outGenericValues.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, inPermissionDef.availableLevel);
     outGenericValues.Put(TokenFiledConst::FIELD_PROVISION_ENABLE, inPermissionDef.provisionEnable ? 1 : 0);
-    outGenericValues.Put(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE, inPermissionDef.distributedSceneEnable ? 1 : 0);
+    outGenericValues.Put(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE,
+        inPermissionDef.distributedSceneEnable ? 1 : 0);
     outGenericValues.Put(TokenFiledConst::FIELD_LABEL, inPermissionDef.label);
     outGenericValues.Put(TokenFiledConst::FIELD_LABEL_ID, inPermissionDef.labelId);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION, inPermissionDef.description);
@@ -57,7 +58,8 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     }
     outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
     outPermissionDef.provisionEnable = (inGenericValues.GetInt(TokenFiledConst::FIELD_PROVISION_ENABLE) == 1);
-    outPermissionDef.distributedSceneEnable = (inGenericValues.GetInt(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE) == 1);
+    outPermissionDef.distributedSceneEnable =
+        (inGenericValues.GetInt(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE) == 1);
     outPermissionDef.label = inGenericValues.GetString(TokenFiledConst::FIELD_LABEL);
     outPermissionDef.labelId = inGenericValues.GetInt(TokenFiledConst::FIELD_LABEL_ID);
     outPermissionDef.description = inGenericValues.GetString(TokenFiledConst::FIELD_DESCRIPTION);
@@ -84,7 +86,8 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
 int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
     PermissionStateFull& outPermissionState)
 {
-    outPermissionState.isGeneral = ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
+    outPermissionState.isGeneral =
+        ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission name is wrong");

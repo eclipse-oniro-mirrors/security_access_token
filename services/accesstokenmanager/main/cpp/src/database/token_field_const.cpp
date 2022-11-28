@@ -17,32 +17,32 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const char* TokenFiledConst::FIELD_TOKEN_ID = "token_id";
-const char* TokenFiledConst::FIELD_USER_ID = "user_id";
-const char* TokenFiledConst::FIELD_BUNDLE_NAME = "bundle_name";
-const char* TokenFiledConst::FIELD_INST_INDEX = "inst_index";
-const char* TokenFiledConst::FIELD_DLP_TYPE = "dlp_type";
-const char* TokenFiledConst::FIELD_APP_ID = "app_id";
-const char* TokenFiledConst::FIELD_DEVICE_ID = "device_id";
-const char* TokenFiledConst::FIELD_APL = "apl";
-const char* TokenFiledConst::FIELD_TOKEN_VERSION = "token_version";
-const char* TokenFiledConst::FIELD_TOKEN_ATTR = "token_attr";
-const char* TokenFiledConst::FIELD_PROCESS_NAME = "process_name";
-const char* TokenFiledConst::FIELD_DCAP = "dcap";
-const char* TokenFiledConst::FIELD_NATIVE_ACLS = "native_acls";
-const char* TokenFiledConst::FIELD_PERMISSION_NAME = "permission_name";
-const char* TokenFiledConst::FIELD_GRANT_MODE = "grant_mode";
-const char* TokenFiledConst::FIELD_AVAILABLE_LEVEL = "available_level";
-const char* TokenFiledConst::FIELD_PROVISION_ENABLE = "provision_enable";
-const char* TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE = "distributed_scene_enable";
-const char* TokenFiledConst::FIELD_LABEL = "label";
-const char* TokenFiledConst::FIELD_LABEL_ID = "label_id";
-const char* TokenFiledConst::FIELD_DESCRIPTION = "description";
-const char* TokenFiledConst::FIELD_DESCRIPTION_ID = "description_id";
-const char* TokenFiledConst::FIELD_GRANT_STATE = "grant_state";
-const char* TokenFiledConst::FIELD_GRANT_FLAG = "grant_flag";
-const char* TokenFiledConst::FIELD_GRANT_IS_GENERAL = "is_general";
-const char* TokenFiledConst::FIELD_API_VERSION = "api_version";
+const std::string TokenFiledConst::FIELD_TOKEN_ID = "token_id";
+const std::string TokenFiledConst::FIELD_USER_ID = "user_id";
+const std::string TokenFiledConst::FIELD_BUNDLE_NAME = "bundle_name";
+const std::string TokenFiledConst::FIELD_INST_INDEX = "inst_index";
+const std::string TokenFiledConst::FIELD_DLP_TYPE = "dlp_type";
+const std::string TokenFiledConst::FIELD_APP_ID = "app_id";
+const std::string TokenFiledConst::FIELD_DEVICE_ID = "device_id";
+const std::string TokenFiledConst::FIELD_APL = "apl";
+const std::string TokenFiledConst::FIELD_TOKEN_VERSION = "token_version";
+const std::string TokenFiledConst::FIELD_TOKEN_ATTR = "token_attr";
+const std::string TokenFiledConst::FIELD_PROCESS_NAME = "process_name";
+const std::string TokenFiledConst::FIELD_DCAP = "dcap";
+const std::string TokenFiledConst::FIELD_NATIVE_ACLS = "native_acls";
+const std::string TokenFiledConst::FIELD_PERMISSION_NAME = "permission_name";
+const std::string TokenFiledConst::FIELD_GRANT_MODE = "grant_mode";
+const std::string TokenFiledConst::FIELD_AVAILABLE_LEVEL = "available_level";
+const std::string TokenFiledConst::FIELD_PROVISION_ENABLE = "provision_enable";
+const std::string TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE = "distributed_scene_enable";
+const std::string TokenFiledConst::FIELD_LABEL = "label";
+const std::string TokenFiledConst::FIELD_LABEL_ID = "label_id";
+const std::string TokenFiledConst::FIELD_DESCRIPTION = "description";
+const std::string TokenFiledConst::FIELD_DESCRIPTION_ID = "description_id";
+const std::string TokenFiledConst::FIELD_GRANT_STATE = "grant_state";
+const std::string TokenFiledConst::FIELD_GRANT_FLAG = "grant_flag";
+const std::string TokenFiledConst::FIELD_GRANT_IS_GENERAL = "is_general";
+const std::string TokenFiledConst::FIELD_API_VERSION = "api_version";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -27,6 +27,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordDb"
 };
 static const std::string FIELD_COUNT_NUMBER = "count";
+static const std::string INTEGER_STR = " integer not null,";
+
 }
 
 PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
@@ -151,7 +153,8 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const GenericVal
         int32_t columnCount = statement.GetColumnCount();
         GenericValues value;
         for (int32_t i = 0; i < columnCount; i++) {
-            if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_TIMESTAMP || statement.GetColumnName(i) == PrivacyFiledConst::FIELD_ACCESS_DURATION) {
+            if ((statement.GetColumnName(i) == PrivacyFiledConst::FIELD_TIMESTAMP) ||
+                (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_ACCESS_DURATION)) {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, true));
             } else {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, false));

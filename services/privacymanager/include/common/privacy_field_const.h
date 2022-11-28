@@ -23,18 +23,18 @@ namespace Security {
 namespace AccessToken {
 class PrivacyFiledConst {
 public:
-    const static char* FIELD_TOKEN_ID;
-    const static char* FIELD_DEVICE_ID;
-    const static char* FIELD_OP_CODE;
-    const static char* FIELD_STATUS;
-    const static char* FIELD_TIMESTAMP;
-    const static char* FIELD_ACCESS_DURATION;
-    const static char* FIELD_ACCESS_COUNT;
-    const static char* FIELD_REJECT_COUNT;
+    const static std::string FIELD_TOKEN_ID;
+    const static std::string FIELD_DEVICE_ID;
+    const static std::string FIELD_OP_CODE;
+    const static std::string FIELD_STATUS;
+    const static std::string FIELD_TIMESTAMP;
+    const static std::string FIELD_ACCESS_DURATION;
+    const static std::string FIELD_ACCESS_COUNT;
+    const static std::string FIELD_REJECT_COUNT;
 
-    const static char* FIELD_TIMESTAMP_BEGIN;
-    const static char* FIELD_TIMESTAMP_END;
-    const static char* FIELD_FLAG;
+    const static std::string FIELD_TIMESTAMP_BEGIN;
+    const static std::string FIELD_TIMESTAMP_END;
+    const static std::string FIELD_FLAG;
 };
 } // namespace AccessToken
 } // namespace Security

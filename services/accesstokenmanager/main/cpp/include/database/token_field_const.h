@@ -23,32 +23,32 @@ namespace Security {
 namespace AccessToken {
 class TokenFiledConst {
 public:
-    const static char* FIELD_TOKEN_ID;
-    const static char* FIELD_USER_ID;
-    const static char* FIELD_BUNDLE_NAME;
-    const static char* FIELD_INST_INDEX;
-    const static char* FIELD_DLP_TYPE;
-    const static char* FIELD_APP_ID;
-    const static char* FIELD_DEVICE_ID;
-    const static char* FIELD_APL;
-    const static char* FIELD_TOKEN_VERSION;
-    const static char* FIELD_TOKEN_ATTR;
-    const static char* FIELD_PROCESS_NAME;
-    const static char* FIELD_DCAP;
-    const static char* FIELD_NATIVE_ACLS;
-    const static char* FIELD_PERMISSION_NAME;
-    const static char* FIELD_GRANT_MODE;
-    const static char* FIELD_AVAILABLE_LEVEL;
-    const static char* FIELD_PROVISION_ENABLE;
-    const static char* FIELD_DISTRIBUTED_SCENE_ENABLE;
-    const static char* FIELD_LABEL;
-    const static char* FIELD_LABEL_ID;
-    const static char* FIELD_DESCRIPTION;
-    const static char* FIELD_DESCRIPTION_ID;
-    const static char* FIELD_GRANT_STATE;
-    const static char* FIELD_GRANT_FLAG;
-    const static char* FIELD_GRANT_IS_GENERAL;
-    const static char* FIELD_API_VERSION;
+    const static std::string FIELD_TOKEN_ID;
+    const static std::string FIELD_USER_ID;
+    const static std::string FIELD_BUNDLE_NAME;
+    const static std::string FIELD_INST_INDEX;
+    const static std::string FIELD_DLP_TYPE;
+    const static std::string FIELD_APP_ID;
+    const static std::string FIELD_DEVICE_ID;
+    const static std::string FIELD_APL;
+    const static std::string FIELD_TOKEN_VERSION;
+    const static std::string FIELD_TOKEN_ATTR;
+    const static std::string FIELD_PROCESS_NAME;
+    const static std::string FIELD_DCAP;
+    const static std::string FIELD_NATIVE_ACLS;
+    const static std::string FIELD_PERMISSION_NAME;
+    const static std::string FIELD_GRANT_MODE;
+    const static std::string FIELD_AVAILABLE_LEVEL;
+    const static std::string FIELD_PROVISION_ENABLE;
+    const static std::string FIELD_DISTRIBUTED_SCENE_ENABLE;
+    const static std::string FIELD_LABEL;
+    const static std::string FIELD_LABEL_ID;
+    const static std::string FIELD_DESCRIPTION;
+    const static std::string FIELD_DESCRIPTION_ID;
+    const static std::string FIELD_GRANT_STATE;
+    const static std::string FIELD_GRANT_FLAG;
+    const static std::string FIELD_GRANT_IS_GENERAL;
+    const static std::string FIELD_API_VERSION;
 };
 } // namespace AccessToken
 } // namespace Security
