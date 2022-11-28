@@ -22,6 +22,8 @@
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "privacy_error.h"
+#include "token_setproc.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -427,6 +429,20 @@ static bool ParseGetPermissionUsedRecords(
     return true;
 }
 
+static bool IsSystemApp(napi_env env)
+{
+    uint64_t fullTokenId = GetSelfTokenID();
+    bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "fullTokenId = %{public}llu", fullTokenId);
+    if (!isSystemApp) {
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_ERR_NOT_SYSTEM_APP);
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_ERR_NOT_SYSTEM_APP, errMsg)), false);
+        return false;
+    }
+    return true;
+}
+
 static void AddPermissionUsedRecordExecute(napi_env env, void* data)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord execute.");
@@ -460,6 +476,9 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -525,6 +544,9 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission begin.");
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -592,6 +614,9 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -658,6 +683,9 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords begin.");
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -826,6 +854,9 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
 
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     RegisterPermActiveChangeContext* registerPermActiveChangeContext =
         new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
@@ -864,6 +895,9 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
 
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
         new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
