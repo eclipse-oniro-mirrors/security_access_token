@@ -27,6 +27,7 @@
 
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
+#include "access_token_error.h"
 #include "permission_manager.h"
 #include "data_storage.h"
 #include "field_const.h"
@@ -616,7 +617,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos005, TestSize.Level1)
 
     NativeTokenInfo findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info5.tokenID, findInfo);
-    ASSERT_EQ(ret, RET_FAILED);
+    ASSERT_EQ(ret, ERR_TOKENID_NOT_EXIST);
 
     ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info6.tokenID, findInfo);
     ASSERT_EQ(ret, RET_SUCCESS);

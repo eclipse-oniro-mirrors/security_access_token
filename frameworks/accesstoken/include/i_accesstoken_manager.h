@@ -58,7 +58,7 @@ public:
     virtual int DeleteToken(AccessTokenID tokenID) = 0;
     virtual int GetTokenType(AccessTokenID tokenID) = 0;
     virtual int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) = 0;
-    virtual AccessTokenIDEx GetHapTokenID(int userID, const std::string& bundleName, int instIndex) = 0;
+    virtual AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) = 0;
     virtual AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) = 0;
     virtual int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) = 0;
     virtual int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) = 0;

@@ -61,8 +61,8 @@ ATM部件的架构图如下所示：
 | int DeleteToken(AccessTokenID tokenID); | 删除应用tokenID及其对应的tokenInfo信息 |
 | int GetTokenType(AccessTokenID tokenID); | 查询指定tokenID的类型 |
 | int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | 检测指定tokenID对应的native进程是否具有指定的分布式能力 |
-| AccessTokenID GetHapTokenID(int userID, const std::string& bundleName, int instIndex); | 查询指定应用的tokenId |
-| AccessTokenIDEx GetHapTokenIDEx(int userID, const std::string& bundleName, int instIndex); | 查询指定应用的tokenIDEx |
+| AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenId |
+| AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | 查询指定应用的tokenIDEx |
 | int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes); | 查询指定tokenID对应的hap包的tokenInfo信息 |
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | 查询指定tokenID对应的native的tokenInfo信息 |
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | 检查指定tokenID是否具有指定权限 |

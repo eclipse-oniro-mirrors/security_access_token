@@ -122,11 +122,11 @@ int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dc
     return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenID AccessTokenKit::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenID AccessTokenKit::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, userID=%{public}d, bundleName=%{public}s, instIndex=%{public}d",
         userID, bundleName.c_str(), instIndex);
-    if (!DataValidator::IsUserIdValid(userID) || !DataValidator::IsBundleNameValid(bundleName)) {
+    if ((!DataValidator::IsUserIdValid(userID)) || (!DataValidator::IsBundleNameValid(bundleName))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
         return INVALID_TOKENID;
     }
@@ -135,12 +135,12 @@ AccessTokenID AccessTokenKit::GetHapTokenID(int userID, const std::string& bundl
     return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
-AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     AccessTokenIDEx tokenIdEx = {0};
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, userID=%{public}d, bundleName=%{public}s, instIndex=%{public}d",
         userID, bundleName.c_str(), instIndex);
-    if (!DataValidator::IsUserIdValid(userID) || !DataValidator::IsBundleNameValid(bundleName)) {
+    if ((!DataValidator::IsUserIdValid(userID)) || (!DataValidator::IsBundleNameValid(bundleName))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
         return tokenIdEx;
     }

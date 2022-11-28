@@ -301,7 +301,8 @@ int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::
     return proxy->CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenManagerClient::GetHapTokenID(
+    int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     AccessTokenIDEx result = {0};
     auto proxy = GetProxy();

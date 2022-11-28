@@ -472,7 +472,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
     int result;
     HapTokenInfo hapInfo;
     result = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
-    ASSERT_EQ(result, RET_FAILED);
+    ASSERT_EQ(result, ERR_TOKENID_NOT_EXIST);
 
     result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
@@ -638,11 +638,11 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
     policy.apl = APL_SYSTEM_BASIC;
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
         tokenIdEx, false, std::string(""), DEFAULT_API_VERSION, policy);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
         tokenIdEx, false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
 }
 
 /**
@@ -763,7 +763,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceId);
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceId2);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_EQ(ERR_DEVICE_NOT_EXIST, ret);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1841,19 +1841,20 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo001, TestSize.Level1)
 {
     std::shared_ptr<NativeTokenInfoInner> info = nullptr;
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // info is null
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // info is null
 
     AccessTokenID tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
     info = std::make_shared<NativeTokenInfoInner>();
     info->tokenInfoBasic_.tokenID = tokenId;
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(id) > 0
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(id) > 0
 
     // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
     info->tokenInfoBasic_.tokenID = 672137215;
     info->tokenInfoBasic_.processName = "accesstoken_service";
     // 672137214 is max-1 native tokenId: 001 01 0 000000 11111111111111111110
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[672137214] = info;
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info)); // count(processName) > 0
+    // count(processName) > 0
+    ASSERT_EQ(ERR_PROCESS_NOT_EXIST, AccessTokenInfoManager::GetInstance().AddNativeTokenInfo(info));
 
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(672137214);
 }
@@ -2668,7 +2669,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDeviceAllRemoteTokenID001, TestSize.Leve
     std::vector<AccessTokenID> remoteIDs;
 
     // deviceID invalid
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_EQ(ERR_PARAM_INVALID,
         AccessTokenRemoteTokenManager::GetInstance().GetDeviceAllRemoteTokenID(deviceID, remoteIDs));
 }
 
@@ -2806,34 +2807,34 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
     // bundleName invalid
-    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
     tokenValue.Remove(FIELD_BUNDLE_NAME);
 
     bundleName = "com.ohos.permissionmanger";
     tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
     tokenValue.Put(FIELD_APP_ID, appIDDesc);
     // appID invalid
-    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
     tokenValue.Remove(FIELD_APP_ID);
 
     appIDDesc = "what's this";
     tokenValue.Put(FIELD_APP_ID, appIDDesc);
     tokenValue.Put(FIELD_DEVICE_ID, deviceID);
     // deviceID invalid
-    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
     tokenValue.Remove(FIELD_DEVICE_ID);
 
     deviceID = "dev-001";
     tokenValue.Put(FIELD_DEVICE_ID, deviceID);
     tokenValue.Put(FIELD_APL, aplNum);
     // apl invalid
-    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
 
     aplNum = static_cast<int>(ATokenAplEnum::APL_NORMAL);
     tokenValue.Put(FIELD_APL, aplNum);
     tokenValue.Put(FIELD_TOKEN_VERSION, version);
     // version invalid
-    ASSERT_EQ(RET_FAILED, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
+    ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
 }
 
 /**

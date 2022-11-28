@@ -417,8 +417,8 @@ static void GetPolicyCopied(const HapPolicyParams& policy, HapPolicyParams& poli
 int AccessTokenInfoManager::CreateHapTokenInfo(
     const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx)
 {
-    if (!DataValidator::IsUserIdValid(info.userID) || !DataValidator::IsBundleNameValid(info.bundleName) ||
-        !DataValidator::IsAppIDDescValid(info.appIDDesc) || !DataValidator::IsDomainValid(policy.domain) ||
+    if ((!DataValidator::IsUserIdValid(info.userID)) || (!DataValidator::IsBundleNameValid(info.bundleName)) ||
+        (!DataValidator::IsAppIDDescValid(info.appIDDesc)) || (!DataValidator::IsDomainValid(policy.domain)) ||
         (!DataValidator::IsDlpTypeValid(info.dlpType))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -494,7 +494,7 @@ int AccessTokenInfoManager::CheckNativeDCap(AccessTokenID tokenID, const std::st
     return RET_FAILED;
 }
 
-AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
+AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     std::string HapUniqueKey = GetHapUniqueStr(userID, bundleName, instIndex);
