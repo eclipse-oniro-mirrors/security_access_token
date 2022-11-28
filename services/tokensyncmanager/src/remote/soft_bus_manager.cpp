@@ -283,7 +283,7 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
 
     std::string uuid = GetUuidByNodeId(nodeId);
     if (uuid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string [%{public}s]", uuid.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string");
         return "";
     }
 
