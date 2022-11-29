@@ -595,7 +595,7 @@ void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenI
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
-    if (callback == nullptr || permissionName != CAMERA_PERMISSION_NAME) {
+    if (permissionName != CAMERA_PERMISSION_NAME) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ERR_PARAM_INVALID is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
