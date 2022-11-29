@@ -64,10 +64,6 @@ int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t client
     MessageParcel data;
     MessageParcel reply;
     MessageOption option;
-    if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback object is null");
-        return ERR_NULL_OBJECT;
-    }
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;

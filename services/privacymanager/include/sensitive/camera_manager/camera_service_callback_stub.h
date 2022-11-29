@@ -23,7 +23,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef void (*OnCameraGlobalSwitchChangeCallback)(bool switchStatus);
 class CameraServiceCallbackStub : public IRemoteStub<ICameraMuteServiceCallback> {
 public:
     CameraServiceCallbackStub();
