@@ -33,6 +33,7 @@ enum PrivacyError {
     ERR_PERMISSION_ALREADY_START_USING,
     ERR_PERMISSION_NOT_START_USING,
     ERR_PERMISSION_DENIED,
+    ERR_OVERSIZE,
 };
 } // namespace AccessToken
 } // namespace Security
