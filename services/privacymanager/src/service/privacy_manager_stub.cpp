@@ -108,7 +108,7 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
@@ -116,7 +116,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     int32_t result = this->StartUsingPermission(tokenId, permissionName, callback);
@@ -195,7 +195,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     uint32_t permListSize = data.ReadUint32();
     if (permListSize > PERM_LIST_SIZE_MAX) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
         return;
     }
     std::vector<std::string> permList;

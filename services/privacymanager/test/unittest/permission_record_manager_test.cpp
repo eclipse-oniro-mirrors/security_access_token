@@ -259,7 +259,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
 
 /*
  * @tc.name: StartUsingPermissionTest001
- * @tc.desc: StartUsingPermission function test with invaild tokenId or permissionName or callback.
+ * @tc.desc: StartUsingPermission function test with invaild tokenId.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
  */
@@ -273,21 +273,18 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, nullptr));
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
         PermissionRecordManager::GetInstance().StartUsingPermission(0, permissionName, callbackWrap->AsObject()));
 }
 
 /*
  * @tc.name: StartUsingPermissionTest002
- * @tc.desc: StartUsingPermission function test with invaild tokenId or permissionName or callback.
+ * @tc.desc: StartUsingPermission function test with invaild permissionName.
  * @tc.type: FUNC
  * @tc.require: issueI5RWXF
  */
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Level1)
 {
-    std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<CbCustomizeTest1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
