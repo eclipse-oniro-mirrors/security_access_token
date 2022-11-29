@@ -38,6 +38,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.LOCATION_IN_BACKGROUND", Constant::OP_LOCATION_IN_BACKGROUND),
     std::map<std::string, int32_t>::value_type("ohos.permission.LOCATION", Constant::OP_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.APPROXIMATELY_LOCATION", Constant::OP_APPROXIMATELY_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.CAMERA", Constant::OP_CAMERA),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MEDIA", Constant::OP_READ_MEDIA),
     std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_MEDIA", Constant::OP_WRITE_MEDIA),
@@ -46,6 +48,15 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.MANAGE_VOICEMAIL", Constant::OP_MANAGE_VOICEMAIL),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.DISTRIBUTED_DATASYNC", Constant::OP_DISTRIBUTED_DATASYNC),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_IMAGEVIDEO", Constant::OP_READ_IMAGEVIDEO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_AUDIO", Constant::OP_READ_AUDIO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_DOCUMENT", Constant::OP_READ_DOCUMENT),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_IMAGEVIDEO", Constant::OP_WRITE_IMAGEVIDEO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_AUDIO", Constant::OP_WRITE_AUDIO),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_DOCUMENT", Constant::OP_WRITE_DOCUMENT),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_WHOLE_CALENDAR", Constant::OP_READ_WHOLE_CALENDAR),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.WRITE_WHOLE_CALENDAR", Constant::OP_WRITE_WHOLE_CALENDAR),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
