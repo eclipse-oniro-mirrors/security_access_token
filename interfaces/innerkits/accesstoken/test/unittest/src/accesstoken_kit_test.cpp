@@ -3259,6 +3259,45 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState013, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSelfPermissionsState014
+ * @tc.desc: test token id is native
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState014, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("hdcd");
+    SetSelfTokenID(tokenId);
+    std::vector<PermissionListState> permsList;
+    PermissionListState tmp = {
+        .permissionName = "ohos.permission.CAMERA",
+        .state = 0
+    };
+    permsList.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+}
+
+/**
+ * @tc.name: GetSelfPermissionsState015
+ * @tc.desc: test noexist token id
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState015, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    SetSelfTokenID(tokenId);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+    std::vector<PermissionListState> permsList;
+    PermissionListState tmp = {
+        .permissionName = "ohos.permission.CAMERA",
+        .state = 0
+    };
+    permsList.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+}
+
+/**
  * @tc.name: GetTokenTypeFlag003
  * @tc.desc: Get token type with hap tokenID.
  * @tc.type: FUNC
