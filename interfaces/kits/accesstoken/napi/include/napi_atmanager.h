@@ -113,7 +113,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     int32_t result = AT_PERM_OPERA_SUCC;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
-    napi_value requestResult;
+    napi_value requestResult = nullptr;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
 };
 

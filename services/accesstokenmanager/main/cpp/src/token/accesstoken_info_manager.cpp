@@ -27,12 +27,12 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
-#include "field_const.h"
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
+#include "token_field_const.h"
 
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
@@ -44,6 +44,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManager"};
+static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 }
 
 AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
@@ -83,7 +84,7 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
 
     for (const GenericValues& tokenValue : hapTokenRes) {
-        AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u add id failed.", tokenId);
@@ -129,7 +130,7 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
-        AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
         int ret = AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type);
         if (ret != RET_SUCCESS) {

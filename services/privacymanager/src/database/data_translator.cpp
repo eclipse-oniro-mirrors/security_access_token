@@ -16,7 +16,7 @@
 #include "data_translator.h"
 
 #include "constant.h"
-#include "field_const.h"
+#include "privacy_field_const.h"
 #include "time_util.h"
 
 namespace OHOS {
@@ -42,18 +42,18 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     }
 
     if (begin != 0) {
-        andGenericValues.Put(FIELD_TIMESTAMP_BEGIN, begin);
+        andGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN, begin);
     }
     if (end != 0) {
-        andGenericValues.Put(FIELD_TIMESTAMP_END, end);
+        andGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, end);
     }
 
     for (const auto& perm : request.permissionList) {
         int32_t opCode;
         if (Constant::TransferPermissionToOpcode(perm, opCode)) {
-            orGenericValues.Put(FIELD_OP_CODE, opCode);
+            orGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
         } else {
-            orGenericValues.Put(FIELD_OP_CODE, Constant::OP_INVALID);
+            orGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_INVALID);
         }
     }
     return Constant::SUCCESS;
@@ -63,34 +63,34 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
     PermissionUsedRecord& permissionRecord)
 {
     std::string permission;
-    int32_t opCode = inGenericValues.GetInt(FIELD_OP_CODE);
+    int32_t opCode = inGenericValues.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     if (!Constant::TransferOpcodeToPermission(opCode, permission)) {
         return Constant::FAILURE;
     }
 
-    int64_t timestamp = inGenericValues.GetInt64(FIELD_TIMESTAMP);
+    int64_t timestamp = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     permissionRecord.permissionName = permission;
 
-    if (inGenericValues.GetInt(FIELD_ACCESS_COUNT) != 0) {
-        permissionRecord.accessCount = inGenericValues.GetInt(FIELD_ACCESS_COUNT);
+    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT) != 0) {
+        permissionRecord.accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
         permissionRecord.lastAccessTime = timestamp;
-        permissionRecord.lastAccessDuration = inGenericValues.GetInt64(FIELD_ACCESS_DURATION);
+        permissionRecord.lastAccessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
     }
 
-    if (inGenericValues.GetInt(FIELD_REJECT_COUNT) != 0) {
-        permissionRecord.rejectCount = inGenericValues.GetInt(FIELD_REJECT_COUNT);
+    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT) != 0) {
+        permissionRecord.rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
         permissionRecord.lastRejectTime = timestamp;
     }
 
-    if (inGenericValues.GetInt(FIELD_FLAG) == 0) {
+    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_FLAG) == 0) {
         return Constant::SUCCESS;
     }
 
     UsedRecordDetail detail;
-    detail.status = inGenericValues.GetInt(FIELD_STATUS);
+    detail.status = inGenericValues.GetInt(PrivacyFiledConst::FIELD_STATUS);
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;
-        detail.accessDuration = inGenericValues.GetInt64(FIELD_ACCESS_DURATION);
+        detail.accessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
         permissionRecord.accessRecords.emplace_back(detail);
     }
     if (permissionRecord.lastRejectTime > 0) {

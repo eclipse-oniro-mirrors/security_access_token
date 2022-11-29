@@ -22,6 +22,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SqliteStorage"};
+static const std::string INTEGER_STR = " integer not null,";
+static const std::string TEXT_STR = " text not null,";
 }
 
 SqliteStorage& SqliteStorage::GetInstance()
@@ -54,38 +56,38 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     SqliteTable hapTokenInfoTable;
     hapTokenInfoTable.tableName_ = HAP_TOKEN_INFO_TABLE;
     hapTokenInfoTable.tableColumnNames_ = {
-        FIELD_TOKEN_ID, FIELD_USER_ID,
-        FIELD_BUNDLE_NAME, FIELD_INST_INDEX, FIELD_DLP_TYPE,
-        FIELD_APP_ID, FIELD_DEVICE_ID,
-        FIELD_APL, FIELD_TOKEN_VERSION,
-        FIELD_TOKEN_ATTR, FIELD_API_VERSION
+        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_USER_ID,
+        TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_INST_INDEX, TokenFiledConst::FIELD_DLP_TYPE,
+        TokenFiledConst::FIELD_APP_ID, TokenFiledConst::FIELD_DEVICE_ID,
+        TokenFiledConst::FIELD_APL, TokenFiledConst::FIELD_TOKEN_VERSION,
+        TokenFiledConst::FIELD_TOKEN_ATTR, TokenFiledConst::FIELD_API_VERSION
     };
 
     SqliteTable NativeTokenInfoTable;
     NativeTokenInfoTable.tableName_ = NATIVE_TOKEN_INFO_TABLE;
     NativeTokenInfoTable.tableColumnNames_ = {
-        FIELD_TOKEN_ID, FIELD_PROCESS_NAME,
-        FIELD_TOKEN_VERSION, FIELD_TOKEN_ATTR,
-        FIELD_DCAP, FIELD_NATIVE_ACLS, FIELD_APL
+        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PROCESS_NAME,
+        TokenFiledConst::FIELD_TOKEN_VERSION, TokenFiledConst::FIELD_TOKEN_ATTR,
+        TokenFiledConst::FIELD_DCAP, TokenFiledConst::FIELD_NATIVE_ACLS, TokenFiledConst::FIELD_APL
     };
 
     SqliteTable permissionDefTable;
     permissionDefTable.tableName_ = PERMISSION_DEF_TABLE;
     permissionDefTable.tableColumnNames_ = {
-        FIELD_TOKEN_ID, FIELD_PERMISSION_NAME,
-        FIELD_BUNDLE_NAME, FIELD_GRANT_MODE,
-        FIELD_AVAILABLE_LEVEL, FIELD_PROVISION_ENABLE,
-        FIELD_DISTRIBUTED_SCENE_ENABLE, FIELD_LABEL,
-        FIELD_LABEL_ID, FIELD_DESCRIPTION,
-        FIELD_DESCRIPTION_ID
+        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
+        TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_GRANT_MODE,
+        TokenFiledConst::FIELD_AVAILABLE_LEVEL, TokenFiledConst::FIELD_PROVISION_ENABLE,
+        TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE, TokenFiledConst::FIELD_LABEL,
+        TokenFiledConst::FIELD_LABEL_ID, TokenFiledConst::FIELD_DESCRIPTION,
+        TokenFiledConst::FIELD_DESCRIPTION_ID
     };
 
     SqliteTable permissionStateTable;
     permissionStateTable.tableName_ = PERMISSION_STATE_TABLE;
     permissionStateTable.tableColumnNames_ = {
-        FIELD_TOKEN_ID, FIELD_PERMISSION_NAME,
-        FIELD_DEVICE_ID, FIELD_GRANT_IS_GENERAL,
-        FIELD_GRANT_STATE, FIELD_GRANT_FLAG
+        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
+        TokenFiledConst::FIELD_DEVICE_ID, TokenFiledConst::FIELD_GRANT_IS_GENERAL,
+        TokenFiledConst::FIELD_GRANT_STATE, TokenFiledConst::FIELD_GRANT_FLAG
     };
 
     dataTypeToSqlTable_ = {
@@ -289,18 +291,30 @@ int SqliteStorage::CreateHapTokenInfoTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_USER_ID + " integer not null,")
-        .append(FIELD_BUNDLE_NAME + " text not null,")
-        .append(FIELD_INST_INDEX + " integer not null,")
-        .append(FIELD_DLP_TYPE + " integer not null,")
-        .append(FIELD_APP_ID + " text not null,")
-        .append(FIELD_DEVICE_ID + " text not null,")
-        .append(FIELD_APL + " integer not null,")
-        .append(FIELD_TOKEN_VERSION + " integer not null,")
-        .append(FIELD_TOKEN_ATTR + " integer not null,")
-        .append(FIELD_API_VERSION + " integer not null,")
-        .append("primary key(" + FIELD_TOKEN_ID)
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_USER_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_BUNDLE_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_INST_INDEX)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_DLP_TYPE)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_APP_ID)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_DEVICE_ID)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_APL)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_VERSION)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_ATTR)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_API_VERSION)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
         .append("))");
     return ExecuteSql(sql);
 }
@@ -313,14 +327,22 @@ int SqliteStorage::CreateNativeTokenInfoTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_PROCESS_NAME + " text not null,")
-        .append(FIELD_TOKEN_VERSION + " integer not null,")
-        .append(FIELD_TOKEN_ATTR + " integer not null,")
-        .append(FIELD_DCAP + " text not null,")
-        .append(FIELD_NATIVE_ACLS + " text not null,")
-        .append(FIELD_APL + " integer not null,")
-        .append("primary key(" + FIELD_TOKEN_ID)
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PROCESS_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_VERSION)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_TOKEN_ATTR)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_DCAP)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_NATIVE_ACLS)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_APL)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
         .append("))");
     return ExecuteSql(sql);
 }
@@ -333,19 +355,32 @@ int SqliteStorage::CreatePermissionDefinitionTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_PERMISSION_NAME + " text not null,")
-        .append(FIELD_BUNDLE_NAME + " text not null,")
-        .append(FIELD_GRANT_MODE + " integer not null,")
-        .append(FIELD_AVAILABLE_LEVEL + " integer not null,")
-        .append(FIELD_PROVISION_ENABLE + " integer not null,")
-        .append(FIELD_DISTRIBUTED_SCENE_ENABLE + " integer not null,")
-        .append(FIELD_LABEL + " text not null,")
-        .append(FIELD_LABEL_ID + " integer not null,")
-        .append(FIELD_DESCRIPTION + " text not null,")
-        .append(FIELD_DESCRIPTION_ID + " integer not null,")
-        .append("primary key(" + FIELD_TOKEN_ID)
-        .append("," + FIELD_PERMISSION_NAME)
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_BUNDLE_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_GRANT_MODE)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AVAILABLE_LEVEL)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PROVISION_ENABLE)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_LABEL)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_LABEL_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_DESCRIPTION)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_DESCRIPTION_ID)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append("))");
     return ExecuteSql(sql);
 }
@@ -358,15 +393,24 @@ int SqliteStorage::CreatePermissionStateTable() const
     }
     std::string sql = "create table if not exists ";
     sql.append(it->second.tableName_ + " (")
-        .append(FIELD_TOKEN_ID + " integer not null,")
-        .append(FIELD_PERMISSION_NAME + " text not null,")
-        .append(FIELD_DEVICE_ID + " text not null,")
-        .append(FIELD_GRANT_IS_GENERAL + " integer not null,")
-        .append(FIELD_GRANT_STATE + " integer not null,")
-        .append(FIELD_GRANT_FLAG + " integer not null,")
-        .append("primary key(" + FIELD_TOKEN_ID)
-        .append("," + FIELD_PERMISSION_NAME)
-        .append("," + FIELD_DEVICE_ID)
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_DEVICE_ID)
+        .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_GRANT_IS_GENERAL)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_GRANT_STATE)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_GRANT_FLAG)
+        .append(INTEGER_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(",")
+        .append(TokenFiledConst::FIELD_DEVICE_ID)
         .append("))");
     return ExecuteSql(sql);
 }

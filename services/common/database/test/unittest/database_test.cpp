@@ -180,7 +180,7 @@ static void RemoveTestTokenHapInfo()
     std::vector<GenericValues> hapInfoResults;
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
-        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
             ASSERT_EQ(SqliteStorage::SUCCESS,
                 SqliteStorage::GetInstance().Remove(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValue));
@@ -202,17 +202,17 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
     RemoveTestTokenHapInfo();
 
     GenericValues genericValues;
-    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    genericValues.Put(FIELD_USER_ID, 100);
-    genericValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name");
-    genericValues.Put(FIELD_API_VERSION, 9);
-    genericValues.Put(FIELD_INST_INDEX, 0);
-    genericValues.Put(FIELD_DLP_TYPE, 0);
-    genericValues.Put(FIELD_APP_ID, "test_app_id");
-    genericValues.Put(FIELD_DEVICE_ID, "test_device_id");
-    genericValues.Put(FIELD_APL, ATokenAplEnum::APL_NORMAL);
-    genericValues.Put(FIELD_TOKEN_VERSION, 0);
-    genericValues.Put(FIELD_TOKEN_ATTR, 0);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(TokenFiledConst::FIELD_USER_ID, 100);
+    genericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name");
+    genericValues.Put(TokenFiledConst::FIELD_API_VERSION, 9);
+    genericValues.Put(TokenFiledConst::FIELD_INST_INDEX, 0);
+    genericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, 0);
+    genericValues.Put(TokenFiledConst::FIELD_APP_ID, "test_app_id");
+    genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
+    genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
@@ -233,7 +233,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
     RemoveTestTokenHapInfo();
 
     GenericValues genericValues;
-    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
@@ -254,28 +254,28 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     RemoveTestTokenHapInfo();
 
     GenericValues genericValues;
-    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    genericValues.Put(FIELD_USER_ID, 100);
-    genericValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name");
-    genericValues.Put(FIELD_API_VERSION, 9);
-    genericValues.Put(FIELD_INST_INDEX, 0);
-    genericValues.Put(FIELD_DLP_TYPE, 0);
-    genericValues.Put(FIELD_APP_ID, "test_app_id");
-    genericValues.Put(FIELD_DEVICE_ID, "test_device_id");
-    genericValues.Put(FIELD_APL, ATokenAplEnum::APL_NORMAL);
-    genericValues.Put(FIELD_TOKEN_VERSION, 0);
-    genericValues.Put(FIELD_TOKEN_ATTR, 0);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(TokenFiledConst::FIELD_USER_ID, 100);
+    genericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name");
+    genericValues.Put(TokenFiledConst::FIELD_API_VERSION, 9);
+    genericValues.Put(TokenFiledConst::FIELD_INST_INDEX, 0);
+    genericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, 0);
+    genericValues.Put(TokenFiledConst::FIELD_APP_ID, "test_app_id");
+    genericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
+    genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
     EXPECT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
 
     GenericValues modifyValues;
-    modifyValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name_modified");
+    modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
 
     GenericValues conditions;
-    conditions.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    conditions.Put(FIELD_USER_ID, 100);
+    conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
     ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Modify(DataStorage::ACCESSTOKEN_HAP_INFO,
         modifyValues, conditions));
@@ -284,9 +284,9 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     std::vector<GenericValues> hapInfoResults;
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
-        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
-            ASSERT_EQ("test_bundle_name_modified", hapInfoValue.GetString(FIELD_BUNDLE_NAME));
+            ASSERT_EQ("test_bundle_name_modified", hapInfoValue.GetString(TokenFiledConst::FIELD_BUNDLE_NAME));
             modifySuccess = true;
             break;
         }
@@ -308,7 +308,7 @@ HWTEST_F(DatabaseTest, SqliteStorageRefreshAllTest001, TestSize.Level1)
     RemoveTestTokenHapInfo();
 
     GenericValues genericValues;
-    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
@@ -358,11 +358,11 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level
     SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
 
     GenericValues conditions;
-    conditions.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    conditions.Put(FIELD_USER_ID, 100);
+    conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
     GenericValues modifyValues;
-    modifyValues.Put(FIELD_BUNDLE_NAME, "test_bundle_name_modified");
+    modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
 
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
     std::vector<std::string> conditionColumns = conditions.GetAllKeys();
@@ -450,8 +450,8 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
     RemoveTestTokenHapInfo();
 
     GenericValues genericValues;
-    genericValues.Put(FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    genericValues.Put(FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
+    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
+    genericValues.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
 
     PermissionDef outPermissionDef;
     ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionDef(genericValues, outPermissionDef));
@@ -540,8 +540,8 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, Test
     PermissionStateFull outPermissionState;
 
     GenericValues inGenericValues;
-    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
-    inGenericValues.Put(FIELD_PERMISSION_NAME, "");
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "");
 
     PermissionDef outPermissionDef;
     ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
@@ -561,9 +561,9 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, Test
     PermissionStateFull outPermissionState;
 
     GenericValues inGenericValues;
-    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
-    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
-    inGenericValues.Put(FIELD_DEVICE_ID, "");
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
 
     PermissionDef outPermissionDef;
     ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
@@ -583,10 +583,10 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, Test
     PermissionStateFull outPermissionState;
 
     GenericValues inGenericValues;
-    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
-    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
-    inGenericValues.Put(FIELD_DEVICE_ID, "test_device_id");
-    inGenericValues.Put(FIELD_GRANT_STATE, 100);
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, 100);
 
     PermissionDef outPermissionDef;
     ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
@@ -606,11 +606,11 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
     PermissionStateFull outPermissionState;
 
     GenericValues inGenericValues;
-    inGenericValues.Put(FIELD_GRANT_IS_GENERAL, 1);
-    inGenericValues.Put(FIELD_PERMISSION_NAME, "test_permission_name");
-    inGenericValues.Put(FIELD_DEVICE_ID, "test_device_id");
-    inGenericValues.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_GRANTED);
-    inGenericValues.Put(FIELD_GRANT_FLAG, 100);
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, 1);
+    inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "test_permission_name");
+    inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "test_device_id");
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_GRANTED);
+    inGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, 100);
 
     PermissionDef outPermissionDef;
     ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));

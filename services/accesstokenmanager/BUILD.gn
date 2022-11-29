@@ -53,6 +53,7 @@ if (is_standard_system) {
       "main/cpp/src/database/data_storage.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/sqlite_storage.cpp",
+      "main/cpp/src/database/token_field_const.cpp",
       "main/cpp/src/permission/permission_definition_cache.cpp",
       "main/cpp/src/permission/permission_grant_event.cpp",
       "main/cpp/src/permission/permission_manager.cpp",

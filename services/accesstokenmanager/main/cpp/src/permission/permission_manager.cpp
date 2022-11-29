@@ -60,7 +60,7 @@ PermissionManager::PermissionManager()
         paramValue_ = 0;
         return;
     }
-    paramValue_ = std::atoll(value);
+    paramValue_ = static_cast<uint64_t>(std::atoll(value));
 }
 
 PermissionManager::~PermissionManager()

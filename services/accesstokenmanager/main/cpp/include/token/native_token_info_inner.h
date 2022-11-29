@@ -27,14 +27,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const std::string JSON_PROCESS_NAME = "processName";
-static const std::string JSON_APL = "APL";
-static const std::string JSON_VERSION = "version";
-static const std::string JSON_TOKEN_ID = "tokenId";
-static const std::string JSON_TOKEN_ATTR = "tokenAttr";
-static const std::string JSON_DCAPS = "dcaps";
-static const std::string JSON_PERMS = "permissions";
-static const std::string JSON_ACLS = "nativeAcls";
 static const int MAX_DCAPS_NUM = 32;
 static const int MAX_REQ_PERM_NUM = 32;
 

@@ -29,12 +29,12 @@
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
-#include "field_const.h"
 #include "i_state_change_callback.h"
 #include "iservice_registry.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
+#include "privacy_field_const.h"
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
@@ -186,10 +186,10 @@ void PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>&
         // find tokenId from cache
         PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
         // find tokenId from database
-        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(FIELD_TOKEN_ID, results);
+        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(PrivacyFiledConst::FIELD_TOKEN_ID, results);
     }
     for (const auto& res : results) {
-        tokenIdList.emplace(res.GetInt(FIELD_TOKEN_ID));
+        tokenIdList.emplace(res.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     }
 }
 
@@ -212,11 +212,11 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetLocalRecordTokenIdList.size = %{public}zu", tokenIdList.size());
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
-        andConditionValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+        andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         std::vector<GenericValues> findRecordsValues;
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
             andConditionValues, orConditionValues, findRecordsValues); // find records from cache and database
-        andConditionValues.Remove(FIELD_TOKEN_ID);
+        andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
             continue;
@@ -252,16 +252,16 @@ void PermissionRecordManager::GetRecords(
     for (auto it = recordValues.rbegin(); it != recordValues.rend(); ++it) {
         GenericValues record = *it;
         PermissionUsedRecord tmpPermissionRecord;
-        int64_t timestamp = record.GetInt64(FIELD_TIMESTAMP);
+        int64_t timestamp = record.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
         result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
             timestamp : result.beginTimeMillis;
         result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
 
-        record.Put(FIELD_FLAG, flag);
+        record.Put(PrivacyFiledConst::FIELD_FLAG, flag);
         if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
             != Constant::SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform opcode(%{public}d) into permission",
-                record.GetInt(FIELD_OP_CODE));
+                record.GetInt(PrivacyFiledConst::FIELD_OP_CODE));
             continue;
         }
 
@@ -329,7 +329,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     }
     GenericValues andConditionValues;
     int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
-    andConditionValues.Put(FIELD_TIMESTAMP_END, deleteTimestamp);
+    andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
     if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
         return Constant::FAILURE;
     }
