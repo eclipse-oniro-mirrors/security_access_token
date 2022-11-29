@@ -42,7 +42,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//foundation/graphic/graphic_2d/frameworks/surface/include",
       "//foundation/window/window_manager/wm/include",
       "//third_party/googletest/include",
-      "//third_party/sqlite/include/",
+      "//third_party/sqlite/include",
     ]
 
     sources = [
