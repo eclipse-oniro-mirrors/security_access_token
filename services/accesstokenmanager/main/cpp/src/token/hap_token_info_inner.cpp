@@ -20,7 +20,7 @@
 #include "accesstoken_log.h"
 #include "data_translator.h"
 #include "data_validator.h"
-#include "field_const.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -95,23 +95,23 @@ void HapTokenInfoInner::TranslateToHapTokenInfo(HapTokenInfo& infoParcel) const
 
 void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
-    outGenericValues.Put(FIELD_USER_ID, tokenInfoBasic_.userID);
-    outGenericValues.Put(FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
-    outGenericValues.Put(FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
-    outGenericValues.Put(FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
-    outGenericValues.Put(FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
-    outGenericValues.Put(FIELD_APP_ID, tokenInfoBasic_.appID);
-    outGenericValues.Put(FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
-    outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
-    outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
-    outGenericValues.Put(FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
+    outGenericValues.Put(TokenFiledConst::FIELD_USER_ID, tokenInfoBasic_.userID);
+    outGenericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, tokenInfoBasic_.bundleName);
+    outGenericValues.Put(TokenFiledConst::FIELD_API_VERSION, tokenInfoBasic_.apiVersion);
+    outGenericValues.Put(TokenFiledConst::FIELD_INST_INDEX, tokenInfoBasic_.instIndex);
+    outGenericValues.Put(TokenFiledConst::FIELD_DLP_TYPE, tokenInfoBasic_.dlpType);
+    outGenericValues.Put(TokenFiledConst::FIELD_APP_ID, tokenInfoBasic_.appID);
+    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, tokenInfoBasic_.deviceID);
+    outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)
 {
-    tokenInfoBasic_.userID = inGenericValues.GetInt(FIELD_USER_ID);
-    tokenInfoBasic_.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
+    tokenInfoBasic_.userID = inGenericValues.GetInt(TokenFiledConst::FIELD_USER_ID);
+    tokenInfoBasic_.bundleName = inGenericValues.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
     if (!DataValidator::IsBundleNameValid(tokenInfoBasic_.bundleName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x bundle name is error", tokenInfoBasic_.tokenID);
         HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -119,10 +119,10 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         return RET_FAILED;
     }
 
-    tokenInfoBasic_.apiVersion = inGenericValues.GetInt(FIELD_API_VERSION);
-    tokenInfoBasic_.instIndex = inGenericValues.GetInt(FIELD_INST_INDEX);
-    tokenInfoBasic_.dlpType = inGenericValues.GetInt(FIELD_DLP_TYPE);
-    tokenInfoBasic_.appID = inGenericValues.GetString(FIELD_APP_ID);
+    tokenInfoBasic_.apiVersion = inGenericValues.GetInt(TokenFiledConst::FIELD_API_VERSION);
+    tokenInfoBasic_.instIndex = inGenericValues.GetInt(TokenFiledConst::FIELD_INST_INDEX);
+    tokenInfoBasic_.dlpType = inGenericValues.GetInt(TokenFiledConst::FIELD_DLP_TYPE);
+    tokenInfoBasic_.appID = inGenericValues.GetString(TokenFiledConst::FIELD_APP_ID);
     if (!DataValidator::IsAppIDDescValid(tokenInfoBasic_.appID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x appID is error", tokenInfoBasic_.tokenID);
         HiviewDFX::HiSysEvent::Write(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -130,7 +130,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         return RET_FAILED;
     }
 
-    tokenInfoBasic_.deviceID = inGenericValues.GetString(FIELD_DEVICE_ID);
+    tokenInfoBasic_.deviceID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(tokenInfoBasic_.deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: 0x%{public}x devId is error", tokenInfoBasic_.tokenID);
@@ -138,7 +138,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "deviceID error");
         return RET_FAILED;
     }
-    int aplNum = inGenericValues.GetInt(FIELD_APL);
+    int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
     if (DataValidator::IsAplNumValid(aplNum)) {
         tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     } else {
@@ -148,7 +148,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "apl error");
         return RET_FAILED;
     }
-    tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
+    tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: 0x%{public}x version is error, version %{public}d",
             tokenInfoBasic_.tokenID, tokenInfoBasic_.ver);
@@ -156,7 +156,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR, "ERROR_REASON", "version error");
         return RET_FAILED;
     }
-    tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
+    tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
     return RET_SUCCESS;
 }
 

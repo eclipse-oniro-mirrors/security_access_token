@@ -29,7 +29,7 @@
 #include "accesstoken_kit.h"
 #include "permission_manager.h"
 #include "data_storage.h"
-#include "field_const.h"
+#include "token_field_const.h"
 #include "permission_state_full.h"
 #define private public
 #include "nativetoken_kit.h"
@@ -294,11 +294,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     std::vector<GenericValues> permStateRes;
     DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (GenericValues nativeTokenValue : nativeTokenResults) {
-        AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId != info.tokenID) {
             continue;
         }
-        GTEST_LOG_(INFO) <<"apl " << nativeTokenValue.GetInt(FIELD_APL);
+        GTEST_LOG_(INFO) <<"apl " << nativeTokenValue.GetInt(TokenFiledConst::FIELD_APL);
         std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
         ASSERT_NE(native, nullptr);
         ret = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);

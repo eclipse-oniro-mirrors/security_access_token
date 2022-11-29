@@ -16,12 +16,11 @@
 #include "native_token_info_inner.h"
 
 #include "accesstoken_dfx_define.h"
+#include "accesstoken_log.h"
 #include "data_translator.h"
 #include "data_validator.h"
-#include "field_const.h"
 #include "nlohmann/json.hpp"
-
-#include "accesstoken_log.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -105,13 +104,13 @@ std::string NativeTokenInfoInner::NativeAclsToString(const std::vector<std::stri
 
 int NativeTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericValues) const
 {
-    outGenericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
-    outGenericValues.Put(FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
-    outGenericValues.Put(FIELD_APL, tokenInfoBasic_.apl);
-    outGenericValues.Put(FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
-    outGenericValues.Put(FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
-    outGenericValues.Put(FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
-    outGenericValues.Put(FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenInfoBasic_.tokenID));
+    outGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, tokenInfoBasic_.processName);
+    outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
+    outGenericValues.Put(TokenFiledConst::FIELD_DCAP, DcapToString(tokenInfoBasic_.dcap));
+    outGenericValues.Put(TokenFiledConst::FIELD_NATIVE_ACLS, NativeAclsToString(tokenInfoBasic_.nativeAcls));
+    outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
 
     return RET_SUCCESS;
 }
@@ -120,7 +119,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
     const std::vector<GenericValues>& permStateRes)
 {
     tokenInfoBasic_.tokenID = tokenId;
-    tokenInfoBasic_.processName = inGenericValues.GetString(FIELD_PROCESS_NAME);
+    tokenInfoBasic_.processName = inGenericValues.GetString(TokenFiledConst::FIELD_PROCESS_NAME);
     if (!DataValidator::IsProcessNameValid(tokenInfoBasic_.processName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
@@ -129,7 +128,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
             "ERROR_REASON", "native token processName error");
         return RET_FAILED;
     }
-    int aplNum = inGenericValues.GetInt(FIELD_APL);
+    int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u apl is error, value %{public}d",
@@ -140,7 +139,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         return RET_FAILED;
     }
     tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
-    tokenInfoBasic_.ver = (char)inGenericValues.GetInt(FIELD_TOKEN_VERSION);
+    tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
     if (tokenInfoBasic_.ver != DEFAULT_TOKEN_VERSION) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u version is error, version %{public}d",
@@ -151,9 +150,9 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         return RET_FAILED;
     }
 
-    SetDcaps(inGenericValues.GetString(FIELD_DCAP));
-    SetNativeAcls(inGenericValues.GetString(FIELD_NATIVE_ACLS));
-    tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(FIELD_TOKEN_ATTR);
+    SetDcaps(inGenericValues.GetString(TokenFiledConst::FIELD_DCAP));
+    SetNativeAcls(inGenericValues.GetString(TokenFiledConst::FIELD_NATIVE_ACLS));
+    tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
 
     permPolicySet_ = PermissionPolicySet::RestorePermissionPolicy(tokenId, permStateRes);
     return RET_SUCCESS;

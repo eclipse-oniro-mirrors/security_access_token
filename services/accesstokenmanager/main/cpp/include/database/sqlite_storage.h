@@ -17,11 +17,10 @@
 #define SQLITE_STORAGE_H
 
 #include "data_storage.h"
-#include "sqlite_helper.h"
-#include "field_const.h"
-
 #include "nocopyable.h"
 #include "rwlock.h"
+#include "sqlite_helper.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {

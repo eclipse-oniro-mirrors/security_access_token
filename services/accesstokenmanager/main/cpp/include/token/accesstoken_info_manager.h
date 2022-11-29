@@ -32,7 +32,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
 
 class AccessTokenInfoManager final {

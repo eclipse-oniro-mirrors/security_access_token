@@ -20,7 +20,7 @@
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "data_translator.h"
-#include "field_const.h"
+#include "privacy_field_const.h"
 #define private public
 #include "permission_record_manager.h"
 #include "permission_used_record_db.h"
@@ -501,18 +501,18 @@ HWTEST_F(PrivacyManagerServiceTest, MicSwitchChangeListener005, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, Add001, TestSize.Level1)
 {
     GenericValues value1;
-    value1.Put(FIELD_TOKEN_ID, 0);
-    value1.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value1.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
 
     GenericValues value2;
-    value2.Put(FIELD_TOKEN_ID, 0);
-    value2.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value2.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -530,22 +530,22 @@ HWTEST_F(PrivacyManagerServiceTest, Add001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, Add002, TestSize.Level1)
 {
     GenericValues value1;
-    value1.Put(FIELD_TOKEN_ID, 0);
-    value1.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value1.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value1.Put(FIELD_ACCESS_COUNT, 1);
-    value1.Put(FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
 
     GenericValues value2;
-    value2.Put(FIELD_TOKEN_ID, 1);
-    value2.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value2.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value1.Put(FIELD_ACCESS_COUNT, 1);
-    value1.Put(FIELD_REJECT_COUNT, 0);
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -565,13 +565,13 @@ HWTEST_F(PrivacyManagerServiceTest, Add002, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, Modify001, TestSize.Level1)
 {
     GenericValues modifyValues;
-    modifyValues.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    modifyValues.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
 
     GenericValues conditions;
-    conditions.Put(FIELD_TOKEN_ID, 0);
-    conditions.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    conditions.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    conditions.Put(FIELD_ACCESS_COUNT, 1);
+    conditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    conditions.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    conditions.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    conditions.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Modify(type, modifyValues, conditions));
@@ -586,13 +586,13 @@ HWTEST_F(PrivacyManagerServiceTest, Modify001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, FindByConditions001, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(FIELD_TOKEN_ID, 0);
-    value.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value.Put(FIELD_ACCESS_COUNT, 1);
-    value.Put(FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -606,16 +606,16 @@ HWTEST_F(PrivacyManagerServiceTest, FindByConditions001, TestSize.Level1)
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
 
     GenericValues andConditions1; // field timestamp
-    andConditions1.Put(FIELD_TIMESTAMP, 0);
+    andConditions1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 0);
 
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions1, orConditions, results));
 
     GenericValues andConditions2; // field access_duration
-    andConditions2.Put(FIELD_ACCESS_DURATION, 0);
+    andConditions2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 0);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions2, orConditions, results));
 
     GenericValues andConditions3; // field not timestamp or access_duration
-    andConditions3.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    andConditions3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions3, orConditions, results));
 
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
@@ -644,25 +644,25 @@ HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, GetDistinctValue002, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(FIELD_TOKEN_ID, 0);
-    value.Put(FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value.Put(FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value.Put(FIELD_TIMESTAMP, 123); // 123 is random input
-    value.Put(FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value.Put(FIELD_ACCESS_COUNT, 1);
-    value.Put(FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
     values.emplace_back(value);
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
 
-    std::string condition = FIELD_TOKEN_ID;
+    std::string condition = PrivacyFiledConst::FIELD_TOKEN_ID;
     std::vector<GenericValues> results;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
     results.clear();
 
-    condition = FIELD_TIMESTAMP;
+    condition = PrivacyFiledConst::FIELD_TIMESTAMP;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
 }
@@ -755,7 +755,7 @@ HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd002, TestSize.Level
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     std::vector<std::string> modifyColumns;
-    modifyColumns.emplace_back(FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::vector<std::string> conditionColumns;
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
         conditionColumns));
@@ -771,8 +771,8 @@ HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd003, TestSize.Level
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
-    modifyColumns.emplace_back(FIELD_TOKEN_ID);
-    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     std::vector<std::string> conditionColumns;
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
         conditionColumns));
@@ -788,8 +788,8 @@ HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd004, TestSize.Level
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
-    modifyColumns.emplace_back(FIELD_TOKEN_ID);
-    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     std::vector<std::string> conditionColumns;
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
         conditionColumns));
@@ -805,10 +805,10 @@ HWTEST_F(PrivacyManagerServiceTest, CreateUpdatePrepareSqlCmd005, TestSize.Level
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> modifyColumns;
-    modifyColumns.emplace_back(FIELD_TOKEN_ID);
-    modifyColumns.emplace_back(FIELD_TIMESTAMP);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     std::vector<std::string> conditionColumns;
-    modifyColumns.emplace_back(FIELD_STATUS);
+    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_STATUS);
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
         conditionColumns));
 }
@@ -838,9 +838,9 @@ HWTEST_F(PrivacyManagerServiceTest, CreateSelectByConditionPrepareSqlCmd002, Tes
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<std::string> andColumns;
-    andColumns.emplace_back(FIELD_TIMESTAMP_BEGIN);
+    andColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN);
     std::vector<std::string> orColumns;
-    orColumns.emplace_back(FIELD_TIMESTAMP);
+    orColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, andColumns,
         orColumns));
 }
@@ -870,8 +870,8 @@ HWTEST_F(PrivacyManagerServiceTest, CreateDeleteExpireRecordsPrepareSqlCmd001, T
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
 
     type = PermissionUsedRecordDb::PERMISSION_RECORD; // field timestamp_begin and timestamp_end
-    andColumns.emplace_back(FIELD_TIMESTAMP_BEGIN);
-    andColumns.emplace_back(FIELD_TIMESTAMP_END);
+    andColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN);
+    andColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP_END);
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateDeleteExpireRecordsPrepareSqlCmd(type, andColumns));
 }
 
@@ -1010,7 +1010,7 @@ HWTEST_F(PrivacyManagerServiceTest, TranslationGenericValuesIntoPermissionUsedRe
 {
     GenericValues inGenericValues;
     // !Constant::TransferOpcodeToPermission(opCode, permission) false
-    inGenericValues.Put(FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_CAMERA));
+    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_CAMERA));
     PermissionUsedRecord permissionRecord;
     permissionRecord.lastAccessTime = 0; // permissionRecord.lastAccessTime > 0 false
     permissionRecord.lastRejectTime = 10; // permissionRecord.lastRejectTime > 0

@@ -487,9 +487,9 @@ std::string NapiAtManager::GetPermParamValue()
         g_paramCache.handle = handle;
     }
 
-    char value[VALUE_MAX_LEN] = {0};
     int32_t currCommitId = static_cast<int32_t>(GetParameterCommitId(g_paramCache.handle));
     if (currCommitId != g_paramCache.commitIdCache) {
+        char value[VALUE_MAX_LEN] = {0};
         auto ret = GetParameterValue(g_paramCache.handle, value, VALUE_MAX_LEN - 1);
         if (ret < 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);

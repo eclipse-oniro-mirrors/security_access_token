@@ -34,6 +34,7 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
 static const int INVALID_DLP_TOKEN_FLAG = -1;
+static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 } // namespace
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
