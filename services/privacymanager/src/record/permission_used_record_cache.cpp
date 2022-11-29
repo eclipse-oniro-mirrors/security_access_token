@@ -16,13 +16,13 @@
 #include "permission_used_record_cache.h"
 #include "accesstoken_log.h"
 #include "constant.h"
-#include "field_const.h"
 #include "generic_values.h"
 #include "permission_record.h"
 #include "permission_record_manager.h"
 #include "permission_record_node.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_db.h"
+#include "privacy_field_const.h"
 #include "time_util.h"
 
 namespace OHOS {
@@ -227,7 +227,7 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
         }
     }
     GenericValues record;
-    record.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    record.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
 }
 
@@ -240,7 +240,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
     int32_t countPersistPendingNode = 0;
-    AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     TransferToOpcode(opCodeList, permissionList);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
@@ -275,7 +275,7 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
     const GenericValues& andConditionValues, const GenericValues& orConditionValues,
     std::vector<GenericValues>& findRecordsValues)
 {
-    AccessTokenID tokenId = andConditionValues.GetInt(FIELD_TOKEN_ID);
+    AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -345,13 +345,13 @@ bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const
     std::vector<std::string> andColumns = andConditionValues.GetAllKeys();
     if (!andColumns.empty()) {
         for (auto andColumn : andColumns) {
-            if (andColumn == FIELD_TIMESTAMP_BEGIN &&
+            if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN &&
                 record.timestamp < andConditionValues.GetInt64(andColumn)) {
                 return false;
-            } else if (andColumn == FIELD_TIMESTAMP_END &&
+            } else if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_END &&
                 record.timestamp > andConditionValues.GetInt64(andColumn)) {
                 return false;
-            } else if (andColumn == FIELD_TIMESTAMP &&
+            } else if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP &&
                 record.timestamp != andConditionValues.GetInt64(andColumn)) {
                 return false;
             }

@@ -14,31 +14,31 @@
  */
 
 #include "permission_record.h"
-#include "field_const.h"
+#include "privacy_field_const.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values)
 {
-    values.Put(FIELD_TOKEN_ID, static_cast<int32_t>(record.tokenId));
-    values.Put(FIELD_OP_CODE, record.opCode);
-    values.Put(FIELD_STATUS, record.status);
-    values.Put(FIELD_TIMESTAMP, record.timestamp);
-    values.Put(FIELD_ACCESS_DURATION, record.accessDuration);
-    values.Put(FIELD_ACCESS_COUNT, record.accessCount);
-    values.Put(FIELD_REJECT_COUNT, record.rejectCount);
+    values.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(record.tokenId));
+    values.Put(PrivacyFiledConst::FIELD_OP_CODE, record.opCode);
+    values.Put(PrivacyFiledConst::FIELD_STATUS, record.status);
+    values.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
+    values.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, record.accessDuration);
+    values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
+    values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
 }
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
 {
-    record.tokenId = values.GetInt(FIELD_TOKEN_ID);
-    record.opCode = values.GetInt(FIELD_OP_CODE);
-    record.status = values.GetInt(FIELD_STATUS);
-    record.timestamp = values.GetInt64(FIELD_TIMESTAMP);
-    record.accessDuration = values.GetInt64(FIELD_ACCESS_DURATION);
-    record.accessCount = values.GetInt(FIELD_ACCESS_COUNT);
-    record.rejectCount = values.GetInt(FIELD_REJECT_COUNT);
+    record.tokenId = values.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    record.opCode = values.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
+    record.status = values.GetInt(PrivacyFiledConst::FIELD_STATUS);
+    record.timestamp = values.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+    record.accessDuration = values.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
+    record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
+    record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
 }
 } // namespace AccessToken
 } // namespace Security

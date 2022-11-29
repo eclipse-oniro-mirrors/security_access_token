@@ -26,6 +26,8 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerProxy"};
+static const int MAX_PERMISSION_SIZE = 1000;
+static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 }
 
 AccessTokenManagerProxy::AccessTokenManagerProxy(const sptr<IRemoteObject>& impl)

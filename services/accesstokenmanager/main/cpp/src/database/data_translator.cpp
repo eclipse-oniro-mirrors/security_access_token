@@ -20,8 +20,8 @@
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "data_validator.h"
-#include "field_const.h"
 #include "permission_validator.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -32,36 +32,38 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 
 int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissionDef, GenericValues& outGenericValues)
 {
-    outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionDef.permissionName);
-    outGenericValues.Put(FIELD_BUNDLE_NAME, inPermissionDef.bundleName);
-    outGenericValues.Put(FIELD_GRANT_MODE, inPermissionDef.grantMode);
-    outGenericValues.Put(FIELD_AVAILABLE_LEVEL, inPermissionDef.availableLevel);
-    outGenericValues.Put(FIELD_PROVISION_ENABLE, inPermissionDef.provisionEnable ? 1 : 0);
-    outGenericValues.Put(FIELD_DISTRIBUTED_SCENE_ENABLE, inPermissionDef.distributedSceneEnable ? 1 : 0);
-    outGenericValues.Put(FIELD_LABEL, inPermissionDef.label);
-    outGenericValues.Put(FIELD_LABEL_ID, inPermissionDef.labelId);
-    outGenericValues.Put(FIELD_DESCRIPTION, inPermissionDef.description);
-    outGenericValues.Put(FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
+    outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionDef.permissionName);
+    outGenericValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, inPermissionDef.bundleName);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_MODE, inPermissionDef.grantMode);
+    outGenericValues.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, inPermissionDef.availableLevel);
+    outGenericValues.Put(TokenFiledConst::FIELD_PROVISION_ENABLE, inPermissionDef.provisionEnable ? 1 : 0);
+    outGenericValues.Put(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE,
+        inPermissionDef.distributedSceneEnable ? 1 : 0);
+    outGenericValues.Put(TokenFiledConst::FIELD_LABEL, inPermissionDef.label);
+    outGenericValues.Put(TokenFiledConst::FIELD_LABEL_ID, inPermissionDef.labelId);
+    outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION, inPermissionDef.description);
+    outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
     return RET_SUCCESS;
 }
 
 int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericValues, PermissionDef& outPermissionDef)
 {
-    outPermissionDef.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
-    outPermissionDef.bundleName = inGenericValues.GetString(FIELD_BUNDLE_NAME);
-    outPermissionDef.grantMode = inGenericValues.GetInt(FIELD_GRANT_MODE);
-    int aplNum = inGenericValues.GetInt(FIELD_AVAILABLE_LEVEL);
+    outPermissionDef.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+    outPermissionDef.bundleName = inGenericValues.GetString(TokenFiledConst::FIELD_BUNDLE_NAME);
+    outPermissionDef.grantMode = inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_MODE);
+    int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
         return RET_FAILED;
     }
     outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
-    outPermissionDef.provisionEnable = (inGenericValues.GetInt(FIELD_PROVISION_ENABLE) == 1);
-    outPermissionDef.distributedSceneEnable = (inGenericValues.GetInt(FIELD_DISTRIBUTED_SCENE_ENABLE) == 1);
-    outPermissionDef.label = inGenericValues.GetString(FIELD_LABEL);
-    outPermissionDef.labelId = inGenericValues.GetInt(FIELD_LABEL_ID);
-    outPermissionDef.description = inGenericValues.GetString(FIELD_DESCRIPTION);
-    outPermissionDef.descriptionId = inGenericValues.GetInt(FIELD_DESCRIPTION_ID);
+    outPermissionDef.provisionEnable = (inGenericValues.GetInt(TokenFiledConst::FIELD_PROVISION_ENABLE) == 1);
+    outPermissionDef.distributedSceneEnable =
+        (inGenericValues.GetInt(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE) == 1);
+    outPermissionDef.label = inGenericValues.GetString(TokenFiledConst::FIELD_LABEL);
+    outPermissionDef.labelId = inGenericValues.GetInt(TokenFiledConst::FIELD_LABEL_ID);
+    outPermissionDef.description = inGenericValues.GetString(TokenFiledConst::FIELD_DESCRIPTION);
+    outPermissionDef.descriptionId = inGenericValues.GetInt(TokenFiledConst::FIELD_DESCRIPTION_ID);
     return RET_SUCCESS;
 }
 
@@ -73,19 +75,20 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
         ACCESSTOKEN_LOG_ERROR(LABEL, "perm status grant size is wrong");
         return RET_FAILED;
     }
-    outGenericValues.Put(FIELD_PERMISSION_NAME, inPermissionState.permissionName);
-    outGenericValues.Put(FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
-    outGenericValues.Put(FIELD_GRANT_IS_GENERAL, inPermissionState.isGeneral ? 1 : 0);
-    outGenericValues.Put(FIELD_GRANT_STATE, inPermissionState.grantStatus[grantIndex]);
-    outGenericValues.Put(FIELD_GRANT_FLAG, inPermissionState.grantFlags[grantIndex]);
+    outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
+    outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, inPermissionState.isGeneral ? 1 : 0);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus[grantIndex]);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, inPermissionState.grantFlags[grantIndex]);
     return RET_SUCCESS;
 }
 
 int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGenericValues,
     PermissionStateFull& outPermissionState)
 {
-    outPermissionState.isGeneral = ((inGenericValues.GetInt(FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
-    outPermissionState.permissionName = inGenericValues.GetString(FIELD_PERMISSION_NAME);
+    outPermissionState.isGeneral =
+        ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
+    outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission name is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -94,7 +97,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         return RET_FAILED;
     }
 
-    std::string devID = inGenericValues.GetString(FIELD_DEVICE_ID);
+    std::string devID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(devID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "devID is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -104,7 +107,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
     }
     outPermissionState.resDeviceID.push_back(devID);
 
-    int grantStatus = (PermissionState)inGenericValues.GetInt(FIELD_GRANT_STATE);
+    int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
@@ -114,7 +117,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
     }
     outPermissionState.grantStatus.push_back(grantStatus);
 
-    int grantFlag = (PermissionState)inGenericValues.GetInt(FIELD_GRANT_FLAG);
+    int grantFlag = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantFlag is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",

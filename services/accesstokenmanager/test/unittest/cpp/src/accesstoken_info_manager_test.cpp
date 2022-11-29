@@ -31,7 +31,7 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
 #include "dm_device_info.h"
-#include "field_const.h"
+#include "token_field_const.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
 #include "permission_definition_cache.h"
@@ -2007,7 +2007,7 @@ HWTEST_F(AccessTokenInfoManagerTest, IsGrantedModeEqualInner001, TestSize.Level1
 HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
 {
     GenericValues value;
-    value.Put(FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
+    value.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
 
     std::vector<GenericValues> values;
     values.emplace_back(value);
@@ -2192,12 +2192,12 @@ HWTEST_F(AccessTokenInfoManagerTest, Update001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1)
 {
     GenericValues value1;
-    value1.Put(FIELD_TOKEN_ID, 123); // 123 is random input
-    value1.Put(FIELD_GRANT_IS_GENERAL, true);
-    value1.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value1.Put(FIELD_DEVICE_ID, "dev-001");
-    value1.Put(FIELD_GRANT_STATE, static_cast<PermissionState>(3));
-    value1.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    value1.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value1.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
+    value1.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value1.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-001");
+    value1.Put(TokenFiledConst::FIELD_GRANT_STATE, static_cast<PermissionState>(3));
+    value1.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
 
     AccessTokenID tokenId = 123; // 123 is random input
     std::vector<GenericValues> permStateRes1;
@@ -2209,19 +2209,19 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1
     ASSERT_EQ(tokenId, policySet->tokenId_);
 
     GenericValues value2;
-    value2.Put(FIELD_TOKEN_ID, 123); // 123 is random input
-    value2.Put(FIELD_GRANT_IS_GENERAL, true);
-    value2.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value2.Put(FIELD_DEVICE_ID, "dev-002");
-    value2.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
-    value2.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    value2.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value2.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
+    value2.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value2.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-002");
+    value2.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value2.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
     GenericValues value3;
-    value3.Put(FIELD_TOKEN_ID, 123); // 123 is random input
-    value3.Put(FIELD_GRANT_IS_GENERAL, true);
-    value3.Put(FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
-    value3.Put(FIELD_DEVICE_ID, "dev-003");
-    value3.Put(FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
-    value3.Put(FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    value3.Put(TokenFiledConst::FIELD_TOKEN_ID, 123); // 123 is random input
+    value3.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, true);
+    value3.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "ohos.permission.CAMERA");
+    value3.Put(TokenFiledConst::FIELD_DEVICE_ID, "dev-003");
+    value3.Put(TokenFiledConst::FIELD_GRANT_STATE, PermissionState::PERMISSION_DENIED);
+    value3.Put(TokenFiledConst::FIELD_GRANT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG);
 
     std::vector<GenericValues> permStateRes2;
     permStateRes2.emplace_back(value2);
@@ -2752,24 +2752,24 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
     // processName invalid
     ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
 
-    inGenericValues.Put(FIELD_PROCESS_NAME, processName);
+    inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
     // processName invalid
     ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
-    inGenericValues.Remove(FIELD_PROCESS_NAME);
+    inGenericValues.Remove(TokenFiledConst::FIELD_PROCESS_NAME);
 
     processName = "token_sync";
     // apl invalid
     ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
 
-    inGenericValues.Put(FIELD_PROCESS_NAME, processName);
-    inGenericValues.Put(FIELD_APL, apl);
+    inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
+    inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
     // apl invalid
     ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
-    inGenericValues.Remove(FIELD_APL);
+    inGenericValues.Remove(TokenFiledConst::FIELD_APL);
 
     apl = static_cast<int>(ATokenAplEnum::APL_NORMAL);
-    inGenericValues.Put(FIELD_APL, apl);
-    inGenericValues.Put(FIELD_TOKEN_VERSION, version);
+    inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
+    inGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
     ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
 }
@@ -2805,34 +2805,34 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     hap->StoreHapInfo(hapInfoValues, permStateValues); // permPolicySet_ is null
 
 
-    tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
+    tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
     // bundleName invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(FIELD_BUNDLE_NAME);
+    tokenValue.Remove(TokenFiledConst::FIELD_BUNDLE_NAME);
 
     bundleName = "com.ohos.permissionmanger";
-    tokenValue.Put(FIELD_BUNDLE_NAME, bundleName);
-    tokenValue.Put(FIELD_APP_ID, appIDDesc);
+    tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);
+    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
     // appID invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(FIELD_APP_ID);
+    tokenValue.Remove(TokenFiledConst::FIELD_APP_ID);
 
     appIDDesc = "what's this";
-    tokenValue.Put(FIELD_APP_ID, appIDDesc);
-    tokenValue.Put(FIELD_DEVICE_ID, deviceID);
+    tokenValue.Put(TokenFiledConst::FIELD_APP_ID, appIDDesc);
+    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
     // deviceID invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
-    tokenValue.Remove(FIELD_DEVICE_ID);
+    tokenValue.Remove(TokenFiledConst::FIELD_DEVICE_ID);
 
     deviceID = "dev-001";
-    tokenValue.Put(FIELD_DEVICE_ID, deviceID);
-    tokenValue.Put(FIELD_APL, aplNum);
+    tokenValue.Put(TokenFiledConst::FIELD_DEVICE_ID, deviceID);
+    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
     // apl invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
 
     aplNum = static_cast<int>(ATokenAplEnum::APL_NORMAL);
-    tokenValue.Put(FIELD_APL, aplNum);
-    tokenValue.Put(FIELD_TOKEN_VERSION, version);
+    tokenValue.Put(TokenFiledConst::FIELD_APL, aplNum);
+    tokenValue.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
     ASSERT_EQ(ERR_PARAM_INVALID, hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes));
 }

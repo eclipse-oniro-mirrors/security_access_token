@@ -19,7 +19,7 @@
 #include "access_token_error.h"
 #include "data_storage.h"
 #include "data_translator.h"
-#include "field_const.h"
+#include "token_field_const.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
 
@@ -87,7 +87,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     policySet->tokenId_ = tokenId;
 
     for (const GenericValues& stateValue : permStateRes) {
-        if ((AccessTokenID)stateValue.GetInt(FIELD_TOKEN_ID) == tokenId) {
+        if ((AccessTokenID)stateValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID) == tokenId) {
             PermissionStateFull state;
             int ret = DataTranslator::TranslationIntoPermissionStateFull(stateValue, state);
             if (ret == RET_SUCCESS) {
@@ -119,7 +119,7 @@ void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& value
     for (const auto& permissionState : permStateList_) {
         if (permissionState.isGeneral) {
             GenericValues genericValues;
-            genericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
+            genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
             DataTranslator::TranslationIntoGenericValues(permissionState, 0, genericValues);
             valueList.emplace_back(genericValues);
             continue;
@@ -128,7 +128,7 @@ void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& value
         unsigned int stateSize = permissionState.resDeviceID.size();
         for (unsigned int i = 0; i < stateSize; i++) {
             GenericValues genericValues;
-            genericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
+            genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
             DataTranslator::TranslationIntoGenericValues(permissionState, i, genericValues);
             valueList.emplace_back(genericValues);
         }

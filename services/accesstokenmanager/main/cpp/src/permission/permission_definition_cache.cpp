@@ -18,8 +18,8 @@
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_log.h"
-#include "field_const.h"
 #include "generic_values.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -128,7 +128,7 @@ void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& v
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         GenericValues genericValues;
-        genericValues.Put(FIELD_TOKEN_ID, static_cast<int32_t>(it->second.tokenId));
+        genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(it->second.tokenId));
         DataTranslator::TranslationIntoGenericValues(it->second.permDef, genericValues);
         valueList.emplace_back(genericValues);
         ++it;
@@ -152,7 +152,7 @@ int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>
 {
     for (const GenericValues& defValue : permDefRes) {
         PermissionDef def;
-        AccessTokenID tokenId = (AccessTokenID)defValue.GetInt(FIELD_TOKEN_ID);
+        AccessTokenID tokenId = (AccessTokenID)defValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         int32_t ret = DataTranslator::TranslationIntoPermissionDef(defValue, def);
         if (ret != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x permDef is wrong.", tokenId);
