@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "token_sync_service_test.h"
 
 #include <algorithm>
 #include <fstream>
@@ -21,6 +20,11 @@
 #include <map>
 #include <memory>
 #include <thread>
+
+#define private public
+#include "remote_command_executor.h"
+#include "token_sync_manager_service.h"
+#undef private
 
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
@@ -31,17 +35,19 @@
 #include "device_info_manager.h"
 #include "device_info_repository.h"
 #include "device_info.h"
+#include "device_manager_callback.h"
+#include "dm_device_info.h"
+#include "remote_command_manager.h"
 #include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
 #include "token_setproc.h"
 
-#define private public
-#include "token_sync_manager_service.h"
-#undef private
-
 using namespace std;
 using namespace testing::ext;
+using OHOS::DistributedHardware::DeviceStateCallback;
+using OHOS::DistributedHardware::DmDeviceInfo;
+using OHOS::DistributedHardware::DmInitCallback;
 
 namespace OHOS {
 namespace Security {
@@ -51,6 +57,18 @@ static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback
     std::make_shared<SoftBusDeviceConnectionListener>();
 static std::string g_networkID = "deviceid-1";
 static std::string g_udid = "deviceid-1:udid-001";
+
+class TokenSyncServiceTest : public testing::Test {
+public:
+    TokenSyncServiceTest();
+    ~TokenSyncServiceTest();
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void OnDeviceOffline(const DmDeviceInfo &info);
+    void SetUp();
+    void TearDown();
+};
+
 static DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
@@ -199,6 +217,186 @@ static HapPolicyParams g_infoManagerTestPolicyPrams = {
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
+
+class TestBaseRemoteCommand : public BaseRemoteCommand {
+public:
+    void Prepare() override {}
+
+    void Execute() override {}
+
+    void Finish() override {}
+
+    std::string ToJsonPayload() override
+    {
+        return std::string();
+    }
+
+    TestBaseRemoteCommand() {}
+    virtual ~TestBaseRemoteCommand() = default;
+};
+
+/**
+ * @tc.name: ProcessOneCommand001
+ * @tc.desc: RemoteCommandExecutor::ProcessOneCommand function test with nullptr
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    EXPECT_EQ(Constant::SUCCESS, executor->ProcessOneCommand(nullptr));
+}
+
+/**
+ * @tc.name: ProcessOneCommand002
+ * @tc.desc: RemoteCommandExecutor::ProcessOneCommand function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand002, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::FAILURE;
+    EXPECT_EQ(Constant::FAILURE, executor->ProcessOneCommand(cmd));
+}
+
+/**
+ * @tc.name: ProcessOneCommand003
+ * @tc.desc: RemoteCommandExecutor::ProcessOneCommand function test with status code 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessOneCommand003, TestSize.Level1)
+{
+    std::string nodeId = ConstantCommon::GetLocalDeviceId();
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::SUCCESS;
+    EXPECT_EQ(Constant::FAILURE, executor->ProcessOneCommand(cmd));
+}
+
+/**
+ * @tc.name: AddCommand001
+ * @tc.desc: RemoteCommandExecutor::AddCommand function test with nullptr
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, AddCommand001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    EXPECT_EQ(Constant::INVALID_COMMAND, executor->AddCommand(nullptr));
+}
+
+/**
+ * @tc.name: AddCommand002
+ * @tc.desc: RemoteCommandExecutor::AddCommand function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, AddCommand002, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    EXPECT_EQ(Constant::SUCCESS, executor->AddCommand(cmd));
+}
+
+/**
+ * @tc.name: ProcessBufferedCommands001
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommands function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    executor->commands_.clear();
+    EXPECT_EQ(Constant::SUCCESS, executor->ProcessBufferedCommands());
+}
+
+/**
+ * @tc.name: ProcessBufferedCommands002
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommands function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands002, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    executor->commands_.emplace_back(cmd);
+    EXPECT_EQ(Constant::SUCCESS, executor->ProcessBufferedCommands());
+}
+
+/**
+ * @tc.name: ProcessBufferedCommands003
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommands function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands003, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+    executor->commands_.emplace_back(cmd);
+    EXPECT_EQ(Constant::FAILURE, executor->ProcessBufferedCommands());
+}
+
+/**
+ * @tc.name: ProcessBufferedCommands004
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommands function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommands004, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = -3; // other error code
+    executor->commands_.emplace_back(cmd);
+    EXPECT_EQ(Constant::SUCCESS, executor->ProcessBufferedCommands());
+}
+
+/**
+ * @tc.name: ClientProcessResult001
+ * @tc.desc: RemoteCommandExecutor::ClientProcessResult function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ClientProcessResult001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::STATUS_CODE_BEFORE_RPC;
+    EXPECT_EQ(Constant::FAILURE, executor->ClientProcessResult(cmd));
+}
+
+/**
+ * @tc.name: ClientProcessResult002
+ * @tc.desc: RemoteCommandExecutor::ClientProcessResult function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
+{
+    std::string nodeId = ConstantCommon::GetLocalDeviceId();
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::SUCCESS;
+    EXPECT_EQ(Constant::SUCCESS, executor->ClientProcessResult(cmd));
+    cmd->remoteProtocol_.statusCode = Constant::FAILURE;
+    EXPECT_EQ(Constant::FAILURE, executor->ClientProcessResult(cmd));
+}
 
 /**
  * @tc.name: GetRemoteHapTokenInfo002
