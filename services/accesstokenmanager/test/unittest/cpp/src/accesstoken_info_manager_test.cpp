@@ -654,10 +654,8 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
 {
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    AccessTokenIDEx tokenIdEx {
-        .tokenIdExStruct.tokenID = tokenId,
-        .tokenIdExStruct.tokenAttr = 0,
-    };
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx.tokenIdExStruct.tokenID = tokenId;
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
@@ -2370,11 +2368,9 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
 
     ASSERT_EQ(tokenId, policySet->tokenId_);
 
-    int32_t tokenApl = static_cast<int32_t>(ATokenAplEnum::APL_SYSTEM_CORE);
-    std::vector<std::string> nativeAcls;
     std::string info;
-    // isGeneral is false
-    policySet->PermStateToString(tokenApl, nativeAcls, info);
+    // iter != end - 1
+    policySet->PermStateFullToString(g_permState3, info);
 }
 
 /**
@@ -2394,11 +2390,39 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyNativeAccessToken001, TestSize.Level1
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
 
-    AccessTokenID nativeTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), nativeTokenId);
+    // backup
+    std::map<std::string,
+        PermissionDefData> permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
+    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_.clear();
+
+    // apl default normal, remote default false
+    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
+    ASSERT_NE(nullptr, native);
+    ASSERT_EQ(ATokenAplEnum::APL_NORMAL, native->tokenInfoBasic_.apl);
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // normal apl
+
+    // permission definition set has not been installed + apl < APL_SYSTEM_BASIC
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
+
+    native->tokenInfoBasic_.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // basic apl
+    // permission definition set has not been installed + apl >= APL_SYSTEM_BASIC
+    ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = permissionDefinitionMap; // recovery
+
     // not remote + no definition
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyNativeAccessToken(nativeTokenId, permissionName));
+        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+
+    permissionName = "ohos.permission.CAMERA";
+    // permPolicySet is null
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
+
+    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
 }
 
 /**
@@ -2416,9 +2440,10 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken002, TestSize.Level1)
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 
+    tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     permissionName = "ohos.permission.DISTRIBUTED_DATASYNC";
     
-    // token type is TOKEN_INVALID
+    // token type is TOKEN_TYPE_BUTT
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
@@ -2518,17 +2543,15 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Lev
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 0;
+    AccessTokenID tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     int32_t apiVersion = 0;
 
-    // type TOKEN_INVALID
+    // type TOKEN_TYPE_BUTT
     ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
 
     tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
-    ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     // get token info err
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion)); // native token
-    AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
 }
 
 /**
@@ -2892,6 +2915,46 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo005, TestSize.Level1)
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[672137215] = native;
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo); // iter->second is null
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(672137215);
+}
+
+/**
+ * @tc.name: VerifyHapAccessToken001
+ * @tc.desc: PermissionManager::VerifyHapAccessToken function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, VerifyHapAccessToken001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::string permissionName;
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
+
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyHapAccessToken(tokenId, permissionName)); // permPolicySet is null
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
+
+/**
+ * @tc.name: ClearUserGrantedPermissionState001
+ * @tc.desc: PermissionManager::ClearUserGrantedPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
+
+    PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 } // namespace AccessToken
 } // namespace Security
