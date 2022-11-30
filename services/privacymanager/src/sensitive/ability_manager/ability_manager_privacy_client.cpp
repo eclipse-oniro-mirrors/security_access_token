@@ -71,8 +71,12 @@ void AbilityManagerPrivacyClient::InitProxy()
         return;
     }
 
-    if ((abilityManagerSa->IsProxyObject()) && (!abilityManagerSa->AddDeathRecipient(deathRecipient_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient to AbilityManagerPrivacy failed");
+    if (!abilityManagerSa->IsProxyObject()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not proxy object");
+        return;
+    }
+    if (!abilityManagerSa->AddDeathRecipient(deathRecipient_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient failed");
         return;
     }
 

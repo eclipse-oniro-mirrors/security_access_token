@@ -32,6 +32,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/services/privacymanager/include/database",
       "//base/security/access_token/services/privacymanager/include/record",
       "//base/security/access_token/services/privacymanager/include/sensitive",
+      "//base/security/access_token/services/privacymanager/include/sensitive/ability_manager",
       "//base/security/access_token/services/privacymanager/include/sensitive/app_manager",
       "//base/security/access_token/services/privacymanager/include/sensitive/audio_manager",
       "//base/security/access_token/services/privacymanager/include/sensitive/window_manager",
@@ -48,6 +49,7 @@ if (is_standard_system && ability_base_enable == true) {
     sources = [
       "permission_record_manager_test.cpp",
       "privacy_manager_service_test.cpp",
+      "sensitive_manager_test.cpp",
     ]
 
     configs = [ "//base/security/access_token/config:coverage_flags" ]
