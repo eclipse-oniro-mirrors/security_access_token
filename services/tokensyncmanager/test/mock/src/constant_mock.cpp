@@ -23,6 +23,13 @@ static const std::string REPLACE_TARGET = "****";
 } // namespace
 const std::string Constant::COMMAND_RESULT_SUCCESS = "success";
 const std::string Constant::COMMAND_RESULT_FAILED = "execute command failed";
+
+const int32_t Constant::SUCCESS;
+const int32_t Constant::FAILURE;
+const int32_t Constant::FAILURE_BUT_CAN_RETRY;
+const int32_t Constant::INVALID_COMMAND;
+const int32_t Constant::STATUS_CODE_BEFORE_RPC;
+
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {
     std::string result = deviceId;
