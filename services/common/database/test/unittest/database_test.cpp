@@ -371,6 +371,28 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 end");
 }
 
+/**
+ * @tc.name: SqliteStorageCreateUpdatePrepareSqlCmd002
+ * @tc.desc: SqliteStorage::CreateUpdatePrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd002, TestSize.Level1)
+{
+    DataStorage::DataType type = DataStorage::DataType::ACCESSTOKEN_HAP_INFO;
+    std::vector<std::string> modifyColumns;
+    std::vector<std::string> conditionColumns;
+
+    // modifyColumns is empty
+    ASSERT_EQ("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+
+    type = DataStorage::DataType::ACCESSTOKEN_HAP_INFO;
+    modifyColumns.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
+    modifyColumns.emplace_back(TokenFiledConst::FIELD_USER_ID);
+    // modifyColumns is not empty + modifyColumns.size > 1 + conditionColumns is empty
+    ASSERT_NE("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+}
+
 /*
  * @tc.name: SqliteStorageCreateSelectPrepareSqlCmd001
  * @tc.desc: CreateSelectPrepareSqlCmd function test type not found
@@ -396,6 +418,26 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable001, TestSize.Level1)
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 begin");
     ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreateHapTokenInfoTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 end");
+}
+
+/**
+ * @tc.name: SqliteStorageCreateHapTokenInfoTable002
+ * @tc.desc: SqliteStorage::CreateHapTokenInfoTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable002, TestSize.Level1)
+{
+    std::map<DataStorage::DataType, SqliteStorage::SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = SqliteStorage::GetInstance().dataTypeToSqlTable_; // backup
+    SqliteStorage::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreateHapTokenInfoTable());
+    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreateNativeTokenInfoTable());
+    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreatePermissionDefinitionTable());
+    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreatePermissionStateTable());
+
+    SqliteStorage::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
 /*
