@@ -1310,7 +1310,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
 
     // remote is true
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(mapID);
 }
@@ -1347,7 +1347,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level
     std::string deviceID;
     std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
 
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
         nativeTokenInfoList)); // deviceID invalid
 
     deviceID = "dev-001";
@@ -1425,7 +1425,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
         AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
 
     // deviceID invalid
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
+    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(remoteDeviceID));
 
     remoteDeviceID = "dev-001";
     ASSERT_EQ(static_cast<AccessTokenID>(0), AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID,

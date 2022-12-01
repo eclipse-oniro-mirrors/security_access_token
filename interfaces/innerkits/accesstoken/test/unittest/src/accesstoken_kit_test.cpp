@@ -1418,7 +1418,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID003, TestSize.Level1)
 {
     AccessTokenID tokenID;
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "invalid bundlename", 0);
-    ASSERT_EQ(TOKEN_INVALID, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
 /**
@@ -1477,7 +1477,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenIDEx002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx;
     tokenIdEx = AccessTokenKit::GetHapTokenIDEx(TEST_USER_ID_INVALID, TEST_BUNDLE_NAME, 0);
-    ASSERT_EQ(TOKEN_INVALID, tokenIdEx.tokenIDEx);
+    ASSERT_EQ(0, tokenIdEx.tokenIDEx);
 }
 
 /**
