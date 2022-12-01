@@ -59,6 +59,7 @@ static void SetTimes(void)
     g_getArraySize = VALID_TIME;
     g_printUnformatted = VALID_TIME;
 }
+
 /**
  * @tc.name: UpdateGoalItemFromRecord001
  * @tc.desc: UpdateGoalItemFromRecord abnormal.
@@ -109,7 +110,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent001, TestSize.Level1)
     // cJSON_CreateNumber failed 248 line
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
 
-    // cJSON_ReplaceItemInObject failed  251 line
+    // cJSON_ReplaceItemInObject failed 251 line
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
 
     cJSON_Delete(jsonRoot);
@@ -141,7 +142,7 @@ HWTEST_F(TokenOperTest, UpdateItemcontent002, TestSize.Level1)
     // cJSON_CreateArray failed 209 line
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
 
-    // cJSON_CreateString failed  215 line
+    // cJSON_CreateString failed 215 line
     g_createStringTime = DEFAULT_TIME;
     EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
     cJSON_Delete(jsonRoot);
@@ -373,14 +374,23 @@ HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
 
 int32_t Start(const char *processName)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    if (dcaps == nullptr) {
+        return 0;
+    }
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     uint64_t tokenId;
-    const char **perms = new const char *[2];
+    const char **perms = new (std::nothrow) const char *[2];
+    if (perms == nullptr) {
+        return 0;
+    }
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    const char **acls = new const char *[1];
+    const char **acls = new (std::nothrow) const char *[1];
+    if (acls == nullptr) {
+        return 0;
+    }
     acls[0] = "ohos.permission.test1";
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,

@@ -147,14 +147,23 @@ static int32_t DeleteAccessTokenId(const char *processName)
 
 int32_t Start(const char *processName)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    if (dcaps == nullptr) {
+        return 0;
+    }
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     uint64_t tokenId;
-    const char **perms = new const char *[2];
+    const char **perms = new (std::nothrow) const char *[2];
+    if (perms == nullptr) {
+        return 0;
+    }
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
-    const char **acls = new const char *[1];
+    const char **acls = new (std::nothrow) const char *[1];
+    if (acls == nullptr) {
+        return 0;
+    }
     acls[0] = "ohos.permission.test1";
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 2,
@@ -181,12 +190,14 @@ int32_t Start(const char *processName)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int32_t dcapNum = 2;
     uint64_t tokenId;
-    const char **perms = new const char *[2];
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     NativeTokenInfoParams infoInstance = {
@@ -236,7 +247,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId001, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
 {
-    const char **dcaps = new const char *[32];
+    const char **dcaps = new (std::nothrow) const char *[32];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int32_t dcapNum = -1;
@@ -290,7 +302,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int32_t dcapNum = 2;
@@ -357,7 +370,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId004, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     int32_t dcapNum = 2;
@@ -428,7 +442,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId006, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
 {
-    const char **perms = new const char *[MAX_PERM_NUM];
+    const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     int32_t permsNum = -1;
@@ -481,14 +496,17 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId007, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     uint64_t tokenId;
-    const char **acls = new const char *[2];
+    const char **acls = new (std::nothrow) const char *[2];
+    ASSERT_NE(acls, nullptr);
     acls[0] = "ohos.permission.test1";
     acls[1] = "ohos.permission.test2";
-    const char **perms = new const char *[2];
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     NativeTokenInfoParams infoInstance = {
@@ -518,7 +536,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId008, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId009, TestSize.Level1)
 {
-    const char **perms = new const char *[2];
+    const char **perms = new (std::nothrow) const char *[2];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "AT_CAP";
     perms[1] = "ST_CAP";
     int32_t permsNum = 2;
@@ -644,11 +663,13 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId011, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
 {
-    const char **dcaps = new const char *[2];
+    const char **dcaps = new (std::nothrow) const char *[2];
+    ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
     uint64_t tokenId;
-    const char **acls = new const char *[2];
+    const char **acls = new (std::nothrow) const char *[2];
+    ASSERT_NE(acls, nullptr);
     acls[0] = "ohos.permission.test1";
     acls[1] = "ohos.permission.test2";
 
@@ -680,7 +701,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId012, TestSize.Level1)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
 {
-    const char **acls = new const char *[2];
+    const char **acls = new (std::nothrow) const char *[2];
+    ASSERT_NE(acls, nullptr);
     acls[0] = "AT_CAP";
     acls[1] = "ST_CAP";
     int32_t aclsNum = 2;
@@ -746,9 +768,11 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
 HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
 {
     uint64_t tokenId;
-    const char **acls = new const char *[1];
+    const char **acls = new (std::nothrow) const char *[1];
+    ASSERT_NE(acls, nullptr);
     acls[0] = "ohos.permission.PERMISSION_USED_STATS";
-    const char **perms = new const char *[3];
+    const char **perms = new (std::nothrow) const char *[3];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "ohos.permission.PERMISSION_USED_STATS"; // system_core
     perms[1] = "ohos.permission.PLACE_CALL"; // system_basic
     perms[2] = "ohos.permission.unknown"; // invalid
@@ -786,7 +810,8 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId014, TestSize.Level0)
  */
 HWTEST_F(TokenLibKitTest, GetAccessTokenId015, TestSize.Level1)
 {
-    const char **perms = new const char *[MAX_PERM_NUM + 1];
+    const char **perms = new (std::nothrow) const char *[MAX_PERM_NUM + 1];
+    ASSERT_NE(perms, nullptr);
     perms[0] = "ohos.permission.test1";
     perms[1] = "ohos.permission.test2";
     int32_t permsNum = 2;
