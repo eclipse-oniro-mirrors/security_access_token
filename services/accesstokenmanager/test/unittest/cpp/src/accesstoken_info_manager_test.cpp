@@ -1305,7 +1305,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[mapID] = info;
 
     // remote is true
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(mapID);
 }
