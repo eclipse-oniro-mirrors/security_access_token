@@ -314,10 +314,11 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return permPolicySet->QueryPermissionFlag(permissionName, flag);
 }
 
-void PermissionManager::ParamUpdate(const std::string& permissionName)
+void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
-    if (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName)) {
+    if (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName) &&
+        ((flag != PERMISSION_GRANTED_BY_POLICY) && (flag != PERMISSION_SYSTEM_FIXED))) {
         paramValue_++;
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "paramValue_ change %{public}llu", static_cast<unsigned long long>(paramValue_));
@@ -370,7 +371,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
-        ParamUpdate(permissionName);
+        ParamUpdate(permissionName, static_cast<uint32_t>(flag));
     }
 
 #ifdef TOKEN_SYNC_ENABLE
