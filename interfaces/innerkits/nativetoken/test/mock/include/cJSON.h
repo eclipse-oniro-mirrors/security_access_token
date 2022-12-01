@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef cJSON__h
-#define cJSON__h
+#ifndef CJSON__H
+#define CJSON__H
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +36,6 @@ typedef struct cJSON
     double valuedouble;
     char* string;
 } cJSON;
-
 
 extern int g_getArrayItemTime;
 extern int g_getObjectItem;
