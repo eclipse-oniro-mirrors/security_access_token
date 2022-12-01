@@ -75,7 +75,7 @@ cJSON_bool cJSON_IsNumber(const cJSON* const item)
 {
     void* handle = GetHandle();
     if (handle == NULL) {
-        return false;
+        return 0;
     }
     cJSON_bool (*func)(const cJSON* const item);
     func = (cJSON_bool (*)(const cJSON* const item))dlsym(handle, "cJSON_IsNumber");
@@ -91,11 +91,11 @@ cJSON_bool cJSON_IsString(const cJSON* const item)
 {
     g_isStringTime++;
     if (g_isStringTime == 0) {
-        return false;
+        return 0;
     }
     void* handle = GetHandle();
     if (handle == NULL) {
-        return false;
+        return 0;
     }
     cJSON_bool (*func)(const cJSON* const item);
     func = (cJSON_bool (*)(const cJSON* const item))dlsym(handle, "cJSON_IsString");
@@ -228,11 +228,11 @@ cJSON_bool cJSON_AddItemToArray(cJSON* array, cJSON* item)
 {
     g_addItemToArray++;
     if (g_addItemToArray == 0) {
-        return false;
+        return 0;
     }
     void* handle = GetHandle();
     if (handle == NULL) {
-        return false;
+        return 0;
     }
     cJSON_bool (*func)(cJSON* array, cJSON* item);
     func = (cJSON_bool (*)(cJSON* array, cJSON* item))dlsym(handle, "cJSON_AddItemToArray");
@@ -269,11 +269,11 @@ cJSON_bool cJSON_AddItemToObject(cJSON*object, const char *string, cJSON* item)
         g_addItemToObject == CONST_THIRTY_TIMES ||
         g_addItemToObject == CONST_FORTY_TIMES ||
         g_addItemToObject == CONST_FIFTY_TIMES) {
-        return false;
+        return 0;
     }
     void* handle = GetHandle();
     if (handle == NULL) {
-        return false;
+        return 0;
     }
     cJSON_bool (*func)(cJSON*object, const char *string, cJSON* item);
     func = (cJSON_bool (*)(cJSON*object, const char *string, cJSON* item))dlsym(handle, "cJSON_AddItemToObject");
@@ -289,11 +289,11 @@ cJSON_bool cJSON_ReplaceItemInObject(cJSON*object, const char *string, cJSON*new
 {
     g_replaceItemInObjectTime++;
     if (g_replaceItemInObjectTime == 0 || g_replaceItemInObjectTime == CONST_TEN_TIMES) {
-        return false;
+        return 0;
     }
     void* handle = GetHandle();
     if (handle == NULL) {
-        return false;
+        return 0;
     }
     cJSON_bool (*func)(cJSON*object, const char *string, cJSON*newitem);
     func = (cJSON_bool (*)(cJSON*object, const char *string, cJSON*newitem))dlsym(handle, "cJSON_ReplaceItemInObject");
