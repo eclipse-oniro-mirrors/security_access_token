@@ -923,13 +923,20 @@ HWTEST_F(PrivacyManagerServiceTest, CreateGetDistinctValue001, TestSize.Level1)
 HWTEST_F(PrivacyManagerServiceTest, CreatePermissionRecordTable001, TestSize.Level1)
 {
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionRecordTable());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
 /*
  * @tc.name: TransferOpcodeToPermission001
  * @tc.desc: Constant::TransferOpcodeToPermission function test return false
  * @tc.type: FUNC
- * @tc.require: issueI6024A
+ * @tc.require:
  */
 HWTEST_F(PrivacyManagerServiceTest, TransferOpcodeToPermission001, TestSize.Level1)
 {
@@ -942,7 +949,7 @@ HWTEST_F(PrivacyManagerServiceTest, TransferOpcodeToPermission001, TestSize.Leve
  * @tc.name: OnCameraMute001
  * @tc.desc: CameraServiceCallbackStub::OnCameraMute function test callback_ is null
  * @tc.type: FUNC
- * @tc.require: issueI6024A
+ * @tc.require:
  */
 HWTEST_F(PrivacyManagerServiceTest, OnCameraMute001, TestSize.Level1)
 {
@@ -958,7 +965,7 @@ HWTEST_F(PrivacyManagerServiceTest, OnCameraMute001, TestSize.Level1)
  * @tc.name: OnMicStateUpdated001
  * @tc.desc: MicGlobalSwitchChangeCallback::OnMicStateUpdated function test callback_ is null
  * @tc.type: FUNC
- * @tc.require: issueI6024A
+ * @tc.require:
  */
 HWTEST_F(PrivacyManagerServiceTest, OnMicStateUpdated001, TestSize.Level1)
 {
@@ -979,23 +986,36 @@ HWTEST_F(PrivacyManagerServiceTest, OnMicStateUpdated001, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, TranslationIntoGenericValues001, TestSize.Level1)
 {
-    PermissionUsedRequest request = {
-        .beginTimeMillis = -1, // begin < 0
-        .endTimeMillis = -2 // end < 0
-    };
+    PermissionUsedRequest request;
     GenericValues andGenericValues;
     GenericValues orGenericValues;
+
+    request.beginTimeMillis = -1;
+    // begin < 0
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+    
+    request.beginTimeMillis = 10;
+    request.endTimeMillis = -1;
+    // begin > 0 + end < 0
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+
+    request.endTimeMillis = 1;
+    // begin > 0 + end > 0 + begin > end
     ASSERT_EQ(Constant::FAILURE,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
 
     request.beginTimeMillis = 10; // begin != 0
     request.endTimeMillis = 20; // end != 0
-    request.flag = static_cast<PermissionUsageFlag>(2); // request.flag != FLAG_PERMISSION_USAGE_DETAIL
+    request.flag = static_cast<PermissionUsageFlag>(2);
+    // begin > 0 + end > 0 + begin < end + flag = 2
     ASSERT_EQ(Constant::FAILURE,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
 
-    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-    request.permissionList.emplace_back("ohos.com.CAMERA"); // Constant::TransferPermissionToOpcode(perm, opCode) true
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_DETAIL;
+    request.permissionList.emplace_back("ohos.com.CAMERA");
+    // begin > 0 + end > 0 + begin < end + flag = 1 + TransferPermissionToOpcode true
     ASSERT_EQ(Constant::SUCCESS,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
 }
@@ -1004,16 +1024,26 @@ HWTEST_F(PrivacyManagerServiceTest, TranslationIntoGenericValues001, TestSize.Le
  * @tc.name: TranslationGenericValuesIntoPermissionUsedRecord001
  * @tc.desc: DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord function test
  * @tc.type: FUNC
- * @tc.require: issueI6024A
+ * @tc.require:
  */
 HWTEST_F(PrivacyManagerServiceTest, TranslationGenericValuesIntoPermissionUsedRecord001, TestSize.Level1)
 {
     GenericValues inGenericValues;
-    // !Constant::TransferOpcodeToPermission(opCode, permission) false
-    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, static_cast<int32_t>(Constant::OpCode::OP_CAMERA));
     PermissionUsedRecord permissionRecord;
-    permissionRecord.lastAccessTime = 0; // permissionRecord.lastAccessTime > 0 false
-    permissionRecord.lastRejectTime = 10; // permissionRecord.lastRejectTime > 0
+
+    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
+    // TransferOpcodeToPermission fail
+    ASSERT_EQ(Constant::FAILURE,
+        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
+    inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
+
+    opCode = static_cast<int32_t>(Constant::OpCode::OP_CAMERA);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 10);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 1);
+    inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
+    // lastRejectTime > 0
     ASSERT_EQ(Constant::SUCCESS,
         DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
 }
