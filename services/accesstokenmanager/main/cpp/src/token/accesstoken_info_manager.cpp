@@ -613,7 +613,6 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     }
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        std::string HapUniqueKey = GetHapUniqueStr(infoPtr);
         infoPtr->Update(appIDDesc, apiVersion, policy, isSystemApp);
         ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}u bundle name %{public}s user %{public}d inst %{public}d tokenAttr %{public}d update ok!",
