@@ -426,5 +426,3 @@ HWTEST_F(TokenOperTest, GetInfoArrFromJson001, TestSize.Level1)
 
     EXPECT_NE(Start("processUnique1"), 0);
 }
-
-
