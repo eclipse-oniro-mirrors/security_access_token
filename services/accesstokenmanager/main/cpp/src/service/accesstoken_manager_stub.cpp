@@ -592,7 +592,10 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
     this->DumpTokenInfo(tokenID, dumpInfo);
 
     uint32_t strLen = dumpInfo.length();
-    if (!reply.WriteUint32((strLen / MAX_DUMP_INFO_SIZE_EACH_TIME) + 1)) {
+    uint32_t sendTime = (strLen / MAX_DUMP_INFO_SIZE_EACH_TIME);
+    sendTime += ((strLen % MAX_DUMP_INFO_SIZE_EACH_TIME) == 0) ? 0 : 1;
+
+    if (!reply.WriteUint32(sendTime)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed");
         return;
     }
@@ -611,7 +614,6 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
         }
         beginPos += currLen;
     }
-    
 }
 
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
