@@ -76,8 +76,8 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
-    void CreateDeviceListenner();
-    void DestroyDeviceListenner();
+    void CreateDeviceListener();
+    void DestroyDeviceListener();
 #endif
 
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;

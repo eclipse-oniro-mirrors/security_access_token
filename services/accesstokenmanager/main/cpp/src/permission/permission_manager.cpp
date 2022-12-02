@@ -166,8 +166,6 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
 
 int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, permissionName: %{public}s", __func__,
-        tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return PERMISSION_DENIED;
@@ -186,7 +184,6 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
 
 int PermissionManager::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permissionName: %{public}s", __func__, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -201,7 +198,6 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
 
 int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u", __func__, tokenID);
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
@@ -256,7 +252,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
         return permState.permissionName == perm.permissionName;
     });
     if (iter != permsList.end()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "find goal permission: %{public}s, status: %{public}d, flag: %{public}d",
             permState.permissionName.c_str(), iter->grantStatus[0], iter->grantFlags[0]);
         foundGoal = true;
         goalGrantStatus = iter->grantStatus[0];
@@ -622,7 +618,7 @@ void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListSt
         }
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL,
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
         "vague location permission state is %{public}d, accurate location permission state is %{public}d",
         vagueState, accurateState);
 
