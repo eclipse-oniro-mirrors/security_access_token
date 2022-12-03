@@ -40,7 +40,8 @@ const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PER
 int32_t AccessTokenManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}u", __func__, code);
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    ACCESSTOKEN_LOG_INFO(LABEL, "code %{public}u token %{public}u", code, callingTokenID);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IAccessTokenManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
@@ -65,7 +66,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
 void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission denied");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied");
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -104,7 +105,7 @@ void AccessTokenManagerStub::GetDefPermissionsInner(MessageParcel& data, Message
     if (result != RET_SUCCESS) {
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, permList size: %{public}zu", __func__, permList.size());
     reply.WriteUint32(permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
@@ -122,7 +123,7 @@ void AccessTokenManagerStub::GetReqPermissionsInner(MessageParcel& data, Message
     if (result != RET_SUCCESS) {
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permList size: %{public}zu", permList.size());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu", permList.size());
     reply.WriteUint32(permList.size());
     for (const auto& permDef : permList) {
         reply.WriteParcelable(&permDef);
@@ -137,7 +138,7 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
         reply.WriteInt32(INVALID_OPER);
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permList size read from client data is %{public}d.", size);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permList size %{public}d is invalid", size);
         reply.WriteInt32(INVALID_OPER);
@@ -163,7 +164,6 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}u", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     if (!IsPrivilegedCalling() &&
@@ -186,7 +186,6 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
@@ -206,7 +205,6 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
 void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d", callingTokenID);
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
@@ -575,14 +573,12 @@ bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Calling uid: %{public}d", callingUid);
     return callingUid == SYSTEM_UID || callingUid == ROOT_UID;
 }
 
 bool AccessTokenManagerStub::IsFoundationCalling() const
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Calling uid: %{public}d", callingUid);
     return callingUid == FOUNDATION_UID;
 }
 

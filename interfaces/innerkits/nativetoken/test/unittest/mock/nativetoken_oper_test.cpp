@@ -371,7 +371,7 @@ HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
     EXPECT_EQ(g_tokenListHead, nullptr);
 }
 
-int32_t Start(const char *processName)
+static int32_t Start(const char *processName)
 {
     const char **dcaps = new const char *[2];
     dcaps[0] = "AT_CAP";

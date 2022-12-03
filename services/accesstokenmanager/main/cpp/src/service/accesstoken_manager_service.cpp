@@ -95,7 +95,7 @@ void AccessTokenManagerService::OnStop()
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
 #ifdef TOKEN_SYNC_ENABLE
-    DestroyDeviceListenner();
+    DestroyDeviceListener();
 #endif
 }
 
@@ -103,7 +103,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 {
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
     int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permissionName: %{public}s, res %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     return res;
@@ -112,13 +112,13 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 int AccessTokenManagerService::GetDefPermission(
     const std::string& permissionName, PermissionDefParcel& permissionDefResult)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, permissionName: %{public}s", permissionName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "permission: %{public}s", permissionName.c_str());
     return PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult.permissionDef);
 }
 
 int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (const auto& perm : permVec) {
@@ -132,7 +132,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
 
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
@@ -206,14 +206,14 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
 
 int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -222,7 +222,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, permissionName: %{public}s, flag: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -231,7 +231,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
     PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
@@ -267,7 +267,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
@@ -275,20 +275,20 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
 int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x, dcap: %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, dcap: %{public}s",
         tokenID, dcap.c_str());
     return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
 AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::string& bundleName, int instIndex)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, userID: %{public}d, bundleName: %{public}s, instIndex: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundle: %{public}s, instIndex: %{public}d",
         userID, bundleName.c_str(), instIndex);
     return AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -296,7 +296,7 @@ AccessTokenID AccessTokenManagerService::GetHapTokenID(int userID, const std::st
 AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
     return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
@@ -304,22 +304,21 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
 int AccessTokenManagerService::UpdateHapToken(
     AccessTokenID tokenID, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
-
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenID, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
 }
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, infoParcel.nativeTokenInfoParams);
 }
@@ -338,7 +337,7 @@ AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& pro
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -362,7 +361,7 @@ int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfo
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
@@ -371,7 +370,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
     std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     std::vector<NativeTokenInfoForSync> nativeList;
     std::transform(nativeTokenInfoForSyncParcel.begin(),
@@ -383,7 +382,7 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
@@ -392,7 +391,7 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
     AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s, token id %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
@@ -400,7 +399,7 @@ AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::strin
 
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called, deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
 
     return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
 }
@@ -413,7 +412,7 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
 #ifdef TOKEN_SYNC_ENABLE
-void AccessTokenManagerService::CreateDeviceListenner()
+void AccessTokenManagerService::CreateDeviceListener()
 {
     static const int32_t RETRY_SLEEP_TIME_MS = 1000;
     std::function<void()> runner = [&]() {
@@ -447,7 +446,7 @@ void AccessTokenManagerService::CreateDeviceListenner()
 
             isListened_ = true;
 
-            ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner register success.");
+            ACCESSTOKEN_LOG_INFO(LABEL, "device state Listener register success.");
 
             return;
         }
@@ -459,7 +458,7 @@ void AccessTokenManagerService::CreateDeviceListenner()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "start a thread to listen device state.");
 }
 
-void AccessTokenManagerService::DestroyDeviceListenner()
+void AccessTokenManagerService::DestroyDeviceListener()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, init: %{public}d", isListened_);
 
@@ -484,7 +483,7 @@ void AccessTokenManagerService::DestroyDeviceListenner()
 
     isListened_ = false;
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "device state listenner unregister success.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "device state listener unregister success.");
 }
 #endif
 
@@ -525,7 +524,7 @@ bool AccessTokenManagerService::Initialize()
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 #ifdef TOKEN_SYNC_ENABLE
-    CreateDeviceListenner(); // for start tokensync when remote devivce online
+    CreateDeviceListener(); // for start tokensync when remote devivce online
 #endif
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
