@@ -891,8 +891,9 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;
     }
-
-    dumpInfo = reply.ReadString();
+    if (!reply.ReadString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
+    }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }
 } // namespace AccessToken
