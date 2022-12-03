@@ -17,8 +17,10 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
+#include "perm_active_status_change_callback_stub.h"
 #define private public
 #include "permission_record_manager.h"
 #undef private
@@ -36,6 +38,10 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static AccessTokenID g_selfTokenId = 0;
+constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
+constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
+static constexpr uint32_t MAX_CALLBACK_SIZE = 200;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -65,6 +71,56 @@ static HapInfoParams g_InfoParms1 = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
 };
+
+static HapPolicyParams g_PolicyPrams2 = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.B",
+    .permList = {},
+    .permStateList = {g_testState1}
+};
+
+static HapInfoParams g_InfoParms2 = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleB",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleB"
+};
+
+static PermissionRecord g_recordA1 = {
+    .opCode = Constant::OP_CAMERA,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordA2 = {
+    .opCode = Constant::OP_MICROPHONE,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordB1 = {
+    .opCode = Constant::OP_CAMERA,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
+
+static PermissionRecord g_recordB2 = {
+    .opCode = Constant::OP_MICROPHONE,
+    .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    .timestamp = 0L,
+    .accessDuration = 0L,
+    .accessCount = 1,
+    .rejectCount = 0
+};
 }
 class PermissionRecordManagerTest : public testing::Test {
 public:
@@ -88,13 +144,18 @@ void PermissionRecordManagerTest::TearDownTestCase()
 
 void PermissionRecordManagerTest::SetUp()
 {
+    PermissionRecordManager::GetInstance().Register();
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
+    AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
 }
 
 void PermissionRecordManagerTest::TearDown()
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
+        g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
     SetSelfTokenID(g_selfTokenId);
 }
@@ -122,6 +183,107 @@ public:
     ~CbCustomizeTest2()
     {}
 };
+
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback001
+ * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+}
+
+
+class PermActiveStatusChangeCallback : public PermActiveStatusChangeCallbackStub {
+public:
+    PermActiveStatusChangeCallback() = default;
+    virtual ~PermActiveStatusChangeCallback() = default;
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) {}
+};
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback002
+ * @tc.desc: RegisterPermActiveStatusCallback with exceed limitation.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    std::vector<sptr<PermActiveStatusChangeCallback>> callbacks;
+
+    for (size_t i = 0; i < MAX_CALLBACK_SIZE; ++i) {
+        sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+        ASSERT_NE(nullptr, callback);
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+        callbacks.emplace_back(callback);
+    }
+
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
+        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+
+    for (size_t i = 0; i < callbacks.size(); ++i) {
+        ASSERT_EQ(RET_SUCCESS,
+            PermissionRecordManager::GetInstance().UnRegisterPermActiveStatusCallback(callbacks[i]->AsObject()));
+    }
+}
+
+/**
+ * @tc.name: UnRegisterPermActiveStatusCallback001
+ * @tc.desc: UnRegisterPermActiveStatusCallback with invalid parameter.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+}
+
+/*
+ * @tc.name: AppStatusListener001
+ * @tc.desc: register and startusing permissions then use NotifyAppStateChange
+ * @tc.type: FUNC
+ * @tc.require: issueI5SZHG
+ */
+HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
+{
+    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId1);
+    AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
+        g_InfoParms2.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId2);
+
+    g_recordA1.tokenId = tokenId1;
+    g_recordA2.tokenId = tokenId1;
+    g_recordB1.tokenId = tokenId2;
+    g_recordB2.tokenId = tokenId2;
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA2);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
+
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
+}
+
 /*
  * @tc.name: FindRecordsToUpdateAndExecutedTest001
  * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
@@ -317,6 +479,162 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
 
     PermissionRecordManager::GetInstance().SetCameraCallback(callbackWrap->AsObject());
     PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+}
+
+/*
+ * @tc.name: GetGlobalSwitchStatus001
+ * @tc.desc: GetGlobalSwitchStatus function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, GetGlobalSwitchStatus001, TestSize.Level1)
+{
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    ASSERT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(MICROPHONE_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
+
+    bool isMuteCam = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
+    ASSERT_EQ(false, CameraManagerPrivacyClient::GetInstance().IsCameraMuted());
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME));
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(isMuteCam);
+
+    // microphone is not sure
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: ShowGlobalDialog001
+ * @tc.desc: ShowGlobalDialog function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
+{
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(LOCATION_PERMISSION_NAME)); // no dialog
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener001
+ * @tc.desc: NotifyMicChange function test mic global switch is open
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level1)
+{
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill opCode not mic branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener002
+ * @tc.desc: NotifyMicChange function test mic global switch is open
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level1)
+{
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is background
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is not inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener003
+ * @tc.desc: NotifyMicChange function test mic global switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level1)
+{
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is inactive
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+}
+
+/*
+ * @tc.name: MicSwitchChangeListener005
+ * @tc.desc: NotifyMicChange function test mic global switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level1)
+{
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is inactive
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::GetInstance().NotifyMicChange(false); // fill false status is inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission001
+ * @tc.desc: Constant::TransferOpcodeToPermission function test return false
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, TransferOpcodeToPermission001, TestSize.Level1)
+{
+    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
+    std::string permissionName;
+    ASSERT_EQ(false, Constant::TransferOpcodeToPermission(opCode, permissionName));
+}
+
+/*
+ * @tc.name: OnCameraMute001
+ * @tc.desc: CameraServiceCallbackStub::OnCameraMute function test callback_ is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, OnCameraMute001, TestSize.Level1)
+{
+    bool muteMode = false;
+    ASSERT_EQ(false, muteMode);
+
+    std::shared_ptr<CameraServiceCallbackStub> callback = std::make_shared<CameraServiceCallbackStub>(
+        CameraServiceCallbackStub());
+    callback->OnCameraMute(muteMode);
+}
+
+/*
+ * @tc.name: OnMicStateUpdated001
+ * @tc.desc: MicGlobalSwitchChangeCallback::OnMicStateUpdated function test callback_ is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, OnMicStateUpdated001, TestSize.Level1)
+{
+    MicStateChangeEvent micStateChangeEvent;
+    micStateChangeEvent.mute = false;
+    ASSERT_EQ(false, micStateChangeEvent.mute);
+
+    std::shared_ptr<AudioRoutingManagerListenerStub> callback = std::make_shared<AudioRoutingManagerListenerStub>(
+        AudioRoutingManagerListenerStub());
+    callback->OnMicStateUpdated(micStateChangeEvent);
 }
 } // namespace AccessToken
 } // namespace Security
