@@ -94,6 +94,18 @@ HWTEST_F(PermDenyTest, RemovePermissionUsedRecords001, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RemovePermissionUsedRecords(g_testTokenId, ""));
 }
 
+class CbPermDenyTest : public StateCustomizedCbk {
+public:
+    CbPermDenyTest()
+    {}
+
+    ~CbPermDenyTest()
+    {}
+
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {}
+};
+
 /**
 * @tc.name: StarAndStoptUsingPermission001
 * @tc.desc: Test StartUsingPermission/StopUsingPermission with no permssion.
@@ -102,6 +114,9 @@ HWTEST_F(PermDenyTest, RemovePermissionUsedRecords001, TestSize.Level1)
 */
 HWTEST_F(PermDenyTest, StarAndStoptUsingPermission001, TestSize.Level1)
 {
+    auto callbackPtr = std::make_shared<CbPermDenyTest>();
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::StartUsingPermission(g_testTokenId, "ohos.permission.CAMERA", callbackPtr));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::StartUsingPermission(g_testTokenId, "ohos.permission.CAMERA"));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
@@ -166,6 +181,11 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     auto callbackPtr = std::make_shared<CbCustomizeTest>(permList);
 
     uint32_t tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.camera", 0);
+
+    // register success with no permission
+    SetSelfTokenID(tokenId);
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+
     // register success with permission
     SetSelfTokenID(g_selfTokenId);
     ASSERT_EQ(NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
