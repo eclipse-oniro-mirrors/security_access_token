@@ -131,11 +131,6 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    if (tokenId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is 0");
-        return;
-    }
-
     // only support remove by tokenId(local)
     std::string device = GetDeviceId(tokenId);
     if (device.empty()) {

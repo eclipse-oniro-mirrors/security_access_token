@@ -337,6 +337,19 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level1)
     ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
+/**
+ * @tc.name: DumpTokenInfo001
+ * @tc.desc: Verify the DumpTokenInfo abnormal branch return nullptr proxy.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
+{
+    std::string info;
+    AccessTokenKit::DumpTokenInfo(123, info);
+    ASSERT_EQ("", info);
+}
+
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenInfoFromRemote001
