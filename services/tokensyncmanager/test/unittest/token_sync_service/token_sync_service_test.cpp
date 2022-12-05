@@ -37,11 +37,13 @@
 #include "device_info.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
+#include "i_token_sync_manager.h"
 #include "remote_command_manager.h"
 #include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
 #include "token_setproc.h"
+#include "token_sync_manager_stub.h"
 
 using namespace std;
 using namespace testing::ext;
@@ -67,6 +69,7 @@ public:
     void OnDeviceOffline(const DmDeviceInfo &info);
     void SetUp();
     void TearDown();
+    std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
 };
 
 static DmDeviceInfo g_devInfo = {
@@ -103,10 +106,13 @@ void TokenSyncServiceTest::TearDownTestCase()
 {}
 void TokenSyncServiceTest::SetUp()
 {
+    tokenSyncManagerService_ = DelayedSingleton<TokenSyncManagerService>::GetInstance();
+    EXPECT_NE(nullptr, tokenSyncManagerService_);
 }
 void TokenSyncServiceTest::TearDown()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TearDown start.");
+    tokenSyncManagerService_ = nullptr;
     for (auto it = threads_.begin(); it != threads_.end(); it++) {
         it->join();
     }
@@ -862,7 +868,7 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
  * @tc.name: AddDeviceInfo001
  * @tc.desc: DeviceInfoManager::AddDeviceInfo function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level1)
 {
@@ -901,7 +907,7 @@ HWTEST_F(TokenSyncServiceTest, AddDeviceInfo001, TestSize.Level1)
  * @tc.name: RemoveAllRemoteDeviceInfo001
  * @tc.desc: DeviceInfoManager::RemoveAllRemoteDeviceInfo function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level1)
 {
@@ -928,7 +934,7 @@ HWTEST_F(TokenSyncServiceTest, RemoveAllRemoteDeviceInfo001, TestSize.Level1)
  * @tc.name: RemoveRemoteDeviceInfo001
  * @tc.desc: DeviceInfoManager::RemoveRemoteDeviceInfo function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level1)
 {
@@ -975,7 +981,7 @@ HWTEST_F(TokenSyncServiceTest, RemoveRemoteDeviceInfo001, TestSize.Level1)
  * @tc.name: ConvertToUniversallyUniqueIdOrFetch001
  * @tc.desc: DeviceInfoManager::ConvertToUniversallyUniqueIdOrFetch function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.Level1)
 {
@@ -1012,7 +1018,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniversallyUniqueIdOrFetch001, TestSize.
  * @tc.name: ConvertToUniqueDeviceIdOrFetch001
  * @tc.desc: DeviceInfoManager::ConvertToUniqueDeviceIdOrFetch function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level1)
 {
@@ -1049,7 +1055,7 @@ HWTEST_F(TokenSyncServiceTest, ConvertToUniqueDeviceIdOrFetch001, TestSize.Level
  * @tc.name: IsDeviceUniversallyUniqueId001
  * @tc.desc: DeviceInfoManager::IsDeviceUniversallyUniqueId function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level1)
 {
@@ -1078,7 +1084,7 @@ HWTEST_F(TokenSyncServiceTest, IsDeviceUniversallyUniqueId001, TestSize.Level1)
  * @tc.name: FindDeviceInfo001
  * @tc.desc: DeviceInfoRepository::FindDeviceInfo function test
  * @tc.type: FUNC
- * @tc.require: IssueI60IB3
+ * @tc.require:
  */
 HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level1)
 {
@@ -1119,6 +1125,113 @@ HWTEST_F(TokenSyncServiceTest, FindDeviceInfo001, TestSize.Level1)
     std::string nodeId = uniqueDeviceId;
     type = DeviceIdType::UNIQUE_DISABILITY_ID;
     DeviceInfoRepository::GetInstance().DeleteDeviceInfo(nodeId, type); // delete 123
+}
+
+/**
+ * @tc.name: GetRemoteHapTokenInfo001
+ * @tc.desc: TokenSyncManagerService::GetRemoteHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo001, TestSize.Level1)
+{
+    std::string deviceID = "dev-001";
+    AccessTokenID tokenID = 123; // 123 is random input
+
+    // FindDeviceInfo failed
+    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_REMOTE_DEVICE_INVALID,
+        tokenSyncManagerService_->GetRemoteHapTokenInfo(deviceID, tokenID));
+}
+
+/**
+ * @tc.name: DeleteRemoteHapTokenInfo001
+ * @tc.desc: TokenSyncManagerService::DeleteRemoteHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
+{
+    AccessTokenID tokenId;
+
+    tokenId = 0;
+    // Params is wrong, token id is invalid
+    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_PARAMS_INVALID,
+        tokenSyncManagerService_->DeleteRemoteHapTokenInfo(tokenId));
+
+    std::string networkId = "123";
+    std::string universallyUniqueId = "123";
+    std::string uniqueDeviceId = "123";
+    std::string deviceName = "123";
+    std::string deviceType = "123";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, uniqueDeviceId, deviceName,
+        deviceType); // add nodeId 123
+    networkId = "456";
+    universallyUniqueId = "456";
+    std::string localUdid = ConstantCommon::GetLocalDeviceId();
+    deviceName = "456";
+    deviceType = "456";
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, universallyUniqueId, localUdid, deviceName,
+        deviceType); // add nodeId 456
+    tokenId = 123; // 123 is random input
+    // no need notify local device
+    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_SUCCESS, tokenSyncManagerService_->DeleteRemoteHapTokenInfo(tokenId));
+
+    HapTokenInfoForSync tokenInfo;
+    ASSERT_EQ(TokenSyncError::TOKEN_SYNC_SUCCESS, tokenSyncManagerService_->UpdateRemoteHapTokenInfo(tokenInfo));
+}
+
+class TestStub : public TokenSyncManagerStub {
+public:
+    TestStub() = default;
+    virtual ~TestStub() = default;
+
+    int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
+    {
+        return 0;
+    }
+
+    int DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
+    {
+        return 0;
+    }
+
+    int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo)
+    {
+        return 0;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: TokenSyncManagerStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level1)
+{
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    TestStub sub;
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    uint32_t code = 10;
+    ASSERT_NE(0, sub.OnRemoteRequest(code, data, reply, option)); // msgCode default
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    // msgCode GET_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        ITokenSyncManager::InterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    // msgCode DELETE_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        ITokenSyncManager::InterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    // msgCode UPDATE_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        ITokenSyncManager::InterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
 }
 
 namespace {

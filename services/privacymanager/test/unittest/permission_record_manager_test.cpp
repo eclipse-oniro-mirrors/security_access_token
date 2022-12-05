@@ -22,8 +22,10 @@
 #include "constant.h"
 #include "perm_active_status_change_callback_stub.h"
 #define private public
+#include "active_status_callback_manager.h"
 #include "permission_record_manager.h"
 #undef private
+#include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
 #include "privacy_kit.h"
 #include "state_change_callback.h"
@@ -635,6 +637,91 @@ HWTEST_F(PermissionRecordManagerTest, OnMicStateUpdated001, TestSize.Level1)
     std::shared_ptr<AudioRoutingManagerListenerStub> callback = std::make_shared<AudioRoutingManagerListenerStub>(
         AudioRoutingManagerListenerStub());
     callback->OnMicStateUpdated(micStateChangeEvent);
+}
+
+class PermActiveStatusChangeCallbackTest : public PermActiveStatusChangeCallbackStub {
+public:
+    PermActiveStatusChangeCallbackTest() = default;
+    virtual ~PermActiveStatusChangeCallbackTest() = default;
+
+    void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
+};
+
+void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChangeResponse& result)
+{
+}
+
+/*
+ * @tc.name: OnRemoteDied001
+ * @tc.desc: PermActiveStatusCallbackDeathRecipient::OnRemoteDied function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
+{
+    auto recipient = std::make_shared<PermActiveStatusCallbackDeathRecipient>();
+    ASSERT_NE(nullptr, recipient);
+
+    recipient->OnRemoteDied(nullptr); // remote is nullptr
+
+    // backup
+    std::vector<CallbackData> callbackDataList = ActiveStatusCallbackManager::GetInstance().callbackDataList_;
+    ActiveStatusCallbackManager::GetInstance().callbackDataList_.clear();
+
+    std::vector<std::string> permList;
+    sptr<IRemoteObject> callback;
+    permList.emplace_back("ohos.permission.CAMERA");
+    wptr<IRemoteObject> remote = new (std::nothrow) PermActiveStatusChangeCallbackTest();
+    callback = remote.promote();
+    ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+    ASSERT_EQ(static_cast<uint32_t>(1), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());
+    recipient->OnRemoteDied(remote); // remote is not nullptr
+    ASSERT_EQ(static_cast<uint32_t>(0), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());
+
+    // recovery
+    ActiveStatusCallbackManager::GetInstance().callbackDataList_ = callbackDataList;
+}
+
+/*
+ * @tc.name: RemoveCallback001
+ * @tc.desc: ActiveStatusCallbackManager::RemoveCallback function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level1)
+{
+    std::vector<std::string> permList;
+    sptr<IRemoteObject> callback;
+
+    // callback is null
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, ActiveStatusCallbackManager::GetInstance().RemoveCallback(nullptr));
+
+    // backup
+    std::vector<CallbackData> callbackDataList = ActiveStatusCallbackManager::GetInstance().callbackDataList_;
+    sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient =
+        ActiveStatusCallbackManager::GetInstance().callbackDeathRecipient_;
+    ActiveStatusCallbackManager::GetInstance().callbackDataList_.clear();
+    ActiveStatusCallbackManager::GetInstance().callbackDeathRecipient_ = nullptr;
+
+    sptr<PermActiveStatusChangeCallbackTest> callback1 = new (std::nothrow) PermActiveStatusChangeCallbackTest();
+    ASSERT_NE(nullptr, callback1);
+    sptr<PermActiveStatusChangeCallbackTest> callback2 = new (std::nothrow) PermActiveStatusChangeCallbackTest();
+    ASSERT_NE(nullptr, callback2);
+    permList.emplace_back("ohos.permission.CAMERA");
+    callback = callback1->AsObject();
+    CallbackData data;
+    data.permList_ = permList;
+    data.callbackObject_ = callback;
+    ActiveStatusCallbackManager::GetInstance().callbackDataList_.emplace_back(data);
+    // callback != callbackObject_
+    ASSERT_EQ(RET_SUCCESS, ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback2->AsObject()));
+
+    // callback == callbackObject_ + callbackDeathRecipient_ is null
+    ASSERT_EQ(RET_SUCCESS, ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback));
+
+    // recovery
+    ActiveStatusCallbackManager::GetInstance().callbackDataList_ = callbackDataList;
+    ActiveStatusCallbackManager::GetInstance().callbackDeathRecipient_ = callbackDeathRecipient;
 }
 } // namespace AccessToken
 } // namespace Security

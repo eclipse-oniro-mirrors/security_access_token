@@ -19,10 +19,15 @@ ohos_unittest("libtokensync_sdk_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
-    "//commonlibrary/c_utils/base/include",
-    "//third_party/googletest/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/include",
+    "//base/security/access_token/frameworks/accesstoken/include",
+    "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/include",
+    "//base/security/access_token/interfaces/innerkits/tokensync/src",
+    "//commonlibrary/c_utils/base/include",
+    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
+    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy/include",
+    "//third_party/googletest/include",
   ]
 
   sources = [ "unittest/src/token_sync_kit_test.cpp" ]
@@ -31,7 +36,7 @@ ohos_unittest("libtokensync_sdk_test") {
 
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
-  deps = []
+  deps = [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
   external_deps = [ "c_utils:utils" ]
 }
 
