@@ -163,9 +163,6 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
     }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteInt32(result);
-    if (result != RET_SUCCESS) {
-        return;
-    }
     reply.WriteParcelable(&responseParcel);
 }
 

@@ -47,6 +47,7 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     sources = [
+      "permission_record_db_test.cpp",
       "permission_record_manager_test.cpp",
       "privacy_manager_service_test.cpp",
       "sensitive_manager_test.cpp",
