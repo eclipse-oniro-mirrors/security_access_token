@@ -896,19 +896,8 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;
     }
-    uint32_t resSize;
-    if (!reply.ReadUint32(resSize)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 fail");
-        return;
-    }
-
-    for (uint32_t i = 0; i < resSize; i++) {
-        std::string resSubStr;
-        if (!reply.ReadString(resSubStr)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString fail");
-            return;
-        }
-        dumpInfo.append(resSubStr);
+    if (!reply.ReadString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }

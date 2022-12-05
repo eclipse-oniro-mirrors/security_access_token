@@ -32,7 +32,7 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerStub"};
 constexpr int32_t FOUNDATION_UID = 5523;
-static const int32_t MAX_DUMP_INFO_SIZE_EACH_TIME = 10240;
+static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
@@ -582,35 +582,17 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        reply.WriteString("");
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string dumpInfo = "";
     this->DumpTokenInfo(tokenID, dumpInfo);
-
-    uint32_t strLen = dumpInfo.length();
-    uint32_t sendTime = (strLen / MAX_DUMP_INFO_SIZE_EACH_TIME);
-    sendTime += ((strLen % MAX_DUMP_INFO_SIZE_EACH_TIME) == 0) ? 0 : 1;
-
-    if (!reply.WriteUint32(sendTime)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed");
-        return;
+    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "SetDataCapacity failed");
     }
-
-    uint32_t beginPos = 0;
-    while (beginPos < strLen) {
-        uint32_t currLen;
-        if ((strLen - beginPos) > MAX_DUMP_INFO_SIZE_EACH_TIME) {
-            currLen = MAX_DUMP_INFO_SIZE_EACH_TIME;
-        } else {
-            currLen = strLen - beginPos;
-        }
-        if (!(reply.WriteString(dumpInfo.substr(beginPos, currLen)))) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed");
-            return;
-        }
-        beginPos += currLen;
+    if (!reply.WriteString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed");
     }
 }
 
