@@ -72,7 +72,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpTy
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "get random failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get random failed");
         return 0;
     }
 
@@ -101,7 +101,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "reigster tokenId failed, maybe repeat, retry");
+            ACCESSTOKEN_LOG_WARN(LABEL, "reigster tokenId failed, maybe repeat, retry");
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "reigster tokenId finally failed");
             tokenId = INVALID_TOKENID;
