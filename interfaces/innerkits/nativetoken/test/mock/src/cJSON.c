@@ -43,11 +43,11 @@ int g_printUnformatted;
 
 static void* GetHandle(void)
 {
-    #if defined(__LP64__)
+#if defined(__LP64__)
     void* handle = dlopen("/system/lib64/libcjson.z.so", RTLD_LAZY);
-    #else
+#else
     void* handle = dlopen("/system/lib/libcjson.z.so", RTLD_LAZY);
-    #endif
+#endif
     return handle;
 }
 
@@ -63,6 +63,9 @@ cJSON* cJSON_GetObjectItem(const cJSON* const object, const char* const string)
     }
     cJSON* (*func)(const cJSON* const object, const char* const string);
     func = (cJSON* (*)(const cJSON* const object, const char* const string))dlsym(handle, "cJSON_GetObjectItem");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func(object, string);
     if (handle != NULL) {
         dlclose(handle);
@@ -79,6 +82,9 @@ cJSON_bool cJSON_IsNumber(const cJSON* const item)
     }
     cJSON_bool (*func)(const cJSON* const item);
     func = (cJSON_bool (*)(const cJSON* const item))dlsym(handle, "cJSON_IsNumber");
+    if (func == NULL) {
+        return 0;
+    }
     cJSON_bool res = func(item);
     if (handle != NULL) {
         dlclose(handle);
@@ -99,6 +105,9 @@ cJSON_bool cJSON_IsString(const cJSON* const item)
     }
     cJSON_bool (*func)(const cJSON* const item);
     func = (cJSON_bool (*)(const cJSON* const item))dlsym(handle, "cJSON_IsString");
+    if (func == NULL) {
+        return 0;
+    }
     cJSON_bool res = func(item);
     if (handle != NULL) {
         dlclose(handle);
@@ -109,9 +118,8 @@ cJSON_bool cJSON_IsString(const cJSON* const item)
 
 double cJSON_GetNumberValue(const cJSON* const item)
 {
-    if (!cJSON_IsNumber(item)) 
-    {
-        return (double) 0;
+    if (cJSON_IsNumber(item) == 0) {
+        return (double)0;
     }
 
     return item->valuedouble;
@@ -137,6 +145,7 @@ int cJSON_GetArraySize(const cJSON* array)
     }
     return (int)size;
 }
+
 cJSON* cJSON_CreateArray(void)
 {
     g_createArrayTime++;
@@ -149,6 +158,9 @@ cJSON* cJSON_CreateArray(void)
     }
     cJSON* (*func)(void);
     func = (cJSON* (*)(void))dlsym(handle, "cJSON_CreateArray");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func();
     if (handle != NULL) {
         dlclose(handle);
@@ -169,6 +181,9 @@ cJSON* cJSON_CreateObject(void)
     }
     cJSON* (*func)(void);
     func = (cJSON* (*)(void))dlsym(handle, "cJSON_CreateObject");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func();
     if (handle != NULL) {
         dlclose(handle);
@@ -176,6 +191,7 @@ cJSON* cJSON_CreateObject(void)
     }
     return res;
 }
+
 cJSON* cJSON_CreateNumber(double num)
 {
     g_createNumberTime++;
@@ -191,6 +207,9 @@ cJSON* cJSON_CreateNumber(double num)
     }
     cJSON* (*func)(double num);
     func = (cJSON* (*)(double num))dlsym(handle, "cJSON_CreateNumber");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func(num);
     if (handle != NULL) {
         dlclose(handle);
@@ -216,6 +235,9 @@ cJSON* cJSON_CreateString(const char *string)
     }
     cJSON* (*func)(const char *string);
     func = (cJSON* (*)(const char *string))dlsym(handle, "cJSON_CreateString");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func(string);
     if (handle != NULL) {
         dlclose(handle);
@@ -236,6 +258,9 @@ cJSON_bool cJSON_AddItemToArray(cJSON* array, cJSON* item)
     }
     cJSON_bool (*func)(cJSON* array, cJSON* item);
     func = (cJSON_bool (*)(cJSON* array, cJSON* item))dlsym(handle, "cJSON_AddItemToArray");
+    if (func == NULL) {
+        return 0;
+    }
     cJSON_bool res = func(array, item);
     if (handle != NULL) {
         dlclose(handle);
@@ -252,6 +277,9 @@ void cJSON_Delete(cJSON* item)
     }
     void (*func)(cJSON* item);
     func = (void (*)(cJSON* item))dlsym(handle, "cJSON_Delete");
+    if (func == NULL) {
+        return;
+    }
     func(item);
     if (handle != NULL) {
         dlclose(handle);
@@ -277,6 +305,9 @@ cJSON_bool cJSON_AddItemToObject(cJSON*object, const char *string, cJSON* item)
     }
     cJSON_bool (*func)(cJSON*object, const char *string, cJSON* item);
     func = (cJSON_bool (*)(cJSON*object, const char *string, cJSON* item))dlsym(handle, "cJSON_AddItemToObject");
+    if (func == NULL) {
+        return 0;
+    }
     cJSON_bool res = func(object, string, item);
     if (handle != NULL) {
         dlclose(handle);
@@ -297,6 +328,9 @@ cJSON_bool cJSON_ReplaceItemInObject(cJSON*object, const char *string, cJSON*new
     }
     cJSON_bool (*func)(cJSON*object, const char *string, cJSON*newitem);
     func = (cJSON_bool (*)(cJSON*object, const char *string, cJSON*newitem))dlsym(handle, "cJSON_ReplaceItemInObject");
+    if (func == NULL) {
+        return 0;
+    }
     cJSON_bool res = func(object, string, newitem);
     if (handle != NULL) {
         dlclose(handle);
@@ -313,8 +347,7 @@ cJSON* cJSON_GetArrayItem(const cJSON* array, int index)
         g_getArrayItemTime == CONST_TWENTY_TIMES) {
         return  NULL;
     }
-    if (index < 0)
-    {
+    if (index < 0) {
         return NULL;
     }
 
@@ -324,6 +357,9 @@ cJSON* cJSON_GetArrayItem(const cJSON* array, int index)
     }
     cJSON* (*func)(const cJSON* array, int index);
     func = (cJSON* (*)(const cJSON* array, int index))dlsym(handle, "cJSON_GetArrayItem");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func(array, index);
     if (handle != NULL) {
         dlclose(handle);
@@ -345,6 +381,9 @@ cJSON* cJSON_Parse(const char *value)
     }
     cJSON* (*func)(const char *value);
     func = (cJSON* (*)(const char *value))dlsym(handle, "cJSON_Parse");
+    if (func == NULL) {
+        return NULL;
+    }
     cJSON* res = func(value);
     if (handle != NULL) {
         dlclose(handle);
@@ -365,6 +404,9 @@ char* cJSON_PrintUnformatted(const cJSON* item)
     }
     char* (*func)(const cJSON* item);
     func = (char* (*)(const cJSON* item))dlsym(handle, "cJSON_PrintUnformatted");
+    if (func == NULL) {
+        return NULL;
+    }
     char* res = func(item);
     if (handle != NULL) {
         dlclose(handle);
@@ -381,6 +423,9 @@ void cJSON_free(void* object)
     }
     void (*func)(void* object);
     func = (void (*)(void* object))dlsym(handle, "cJSON_free");
+    if (func == NULL) {
+        return;
+    }
     func(object);
     if (handle != NULL) {
         dlclose(handle);
