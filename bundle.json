@@ -79,7 +79,7 @@
           "name": "//base/security/access_token/interfaces/innerkits/accesstoken:libtokenid_sdk",
           "header": {
             "header_files": [
-              "accesstoken_kit.h"
+              "tokenid_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/accesstoken/include"
           }
