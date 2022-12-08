@@ -121,6 +121,18 @@ void SoftBusChannel::Release()
     handler->ProxyRemoveTask(TASK_NAME_CLOSE_SESSION);
 }
 
+std::string SoftBusChannel::GetUuid()
+{
+    // to use a lib like libuuid
+    int uuidStrLen = 37; // 32+4+1
+    char uuidbuf[uuidStrLen];
+    RandomUuid(uuidbuf, uuidStrLen);
+    std::string uuid(uuidbuf);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
+
+    return uuid;
+}
+
 std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const std::string &jsonPayload)
 {
     if (commandName.empty() || jsonPayload.empty()) {
@@ -129,12 +141,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
         return "";
     }
 
-    // to use a lib like libuuid
-    int uuidStrLen = 37; // 32+4+1
-    char uuidbuf[uuidStrLen];
-    random_uuid(uuidbuf, uuidStrLen);
-    std::string uuid(uuidbuf);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
+    std::string uuid = GetUuid();
 
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
     unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
@@ -143,7 +150,10 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
         return "";
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
-    int result = PrepareBytes(REQUEST_TYPE, uuid, commandName, jsonPayload, buf, len);
+    BytesInfo info;
+    info.bytes = buf;
+    info.bytesLength = len;
+    int result = PrepareBytes(REQUEST_TYPE, uuid, commandName, jsonPayload, info);
     if (result != Constant::SUCCESS) {
         delete[] buf;
         return "";
@@ -230,11 +240,11 @@ void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes,
 }
 
 int SoftBusChannel::PrepareBytes(const std::string &type, const std::string &id, const std::string &commandName,
-    const std::string &jsonPayload, const unsigned char *bytes, int &bytesLength)
+    const std::string &jsonPayload, BytesInfo &info)
 {
     SoftBusMessage messageEntity(type, id, commandName, jsonPayload);
     std::string json = messageEntity.ToJson();
-    return Compress(json, bytes, bytesLength);
+    return Compress(json, info.bytes, info.bytesLength);
 }
 
 int SoftBusChannel::Compress(const std::string &json, const unsigned char *compressedBytes, int &compressedLength)
@@ -358,7 +368,10 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
             return;
         }
         (void)memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
-        int sendResult = PrepareBytes(RESPONSE_TYPE, id, commandName, jsonPayload, sendbuf, sendlen);
+        BytesInfo info;
+        info.bytes = sendbuf;
+        info.bytesLength = sendlen;
+        int sendResult = PrepareBytes(RESPONSE_TYPE, id, commandName, jsonPayload, info);
         if (sendResult != Constant::SUCCESS) {
             delete[] sendbuf;
             return;
@@ -384,7 +397,10 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
         return;
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
-    int result = PrepareBytes(RESPONSE_TYPE, id, commandName, resultJsonPayload, buf, len);
+    BytesInfo info;
+    info.bytes = buf;
+    info.bytesLength = len;
+    int result = PrepareBytes(RESPONSE_TYPE, id, commandName, resultJsonPayload, info);
     if (result != Constant::SUCCESS) {
         delete[] buf;
         return;

@@ -58,7 +58,7 @@ PermissionManager& PermissionManager::GetInstance()
     return *implInstance_;
 }
 
-void PermissionManager::registerImpl(PermissionManager* implInstance)
+void PermissionManager::RegisterImpl(PermissionManager* implInstance)
 {
     implInstance_ = implInstance;
 }

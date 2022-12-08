@@ -28,7 +28,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 struct PrivacyAsyncWorkData {
-    explicit PrivacyAsyncWorkData(napi_env env);
+    explicit PrivacyAsyncWorkData(napi_env envValue);
     virtual ~PrivacyAsyncWorkData();
 
     napi_env        env = nullptr;
@@ -40,7 +40,7 @@ struct PrivacyAsyncWorkData {
 class PermActiveStatusPtr : public PermActiveStatusCustomizedCbk {
 public:
     explicit PermActiveStatusPtr(const std::vector<std::string>& permList);
-    ~PermActiveStatusPtr();
+    ~PermActiveStatusPtr() override;
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
     void SetEnv(const napi_env& env);
     void SetCallbackRef(const napi_ref& ref);

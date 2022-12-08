@@ -195,7 +195,7 @@ HWTEST_F(AccessTokenParcelTest, HapPolicyParcel001, TestSize.Level1)
 HWTEST_F(AccessTokenParcelTest, PermissionStateChangeInfoParcel001, TestSize.Level1)
 {
     PermissionStateChangeInfoParcel permissionStateParcel;
-    permissionStateParcel.changeInfo.PermStateChangeType = TEST_PERMSTATE_CHANGE_TYPE;
+    permissionStateParcel.changeInfo.permStateChangeType = TEST_PERMSTATE_CHANGE_TYPE;
     permissionStateParcel.changeInfo.tokenID = TEST_TOKEN_ID;
     permissionStateParcel.changeInfo.permissionName = TEST_PERMISSION_NAME_ALPHA;
 
@@ -204,7 +204,7 @@ HWTEST_F(AccessTokenParcelTest, PermissionStateChangeInfoParcel001, TestSize.Lev
 
     std::shared_ptr<PermissionStateChangeInfoParcel> readedData(PermissionStateChangeInfoParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
-    EXPECT_EQ(permissionStateParcel.changeInfo.PermStateChangeType, readedData->changeInfo.PermStateChangeType);
+    EXPECT_EQ(permissionStateParcel.changeInfo.permStateChangeType, readedData->changeInfo.permStateChangeType);
     EXPECT_EQ(permissionStateParcel.changeInfo.tokenID, readedData->changeInfo.tokenID);
     EXPECT_EQ(permissionStateParcel.changeInfo.permissionName, readedData->changeInfo.permissionName);
 }

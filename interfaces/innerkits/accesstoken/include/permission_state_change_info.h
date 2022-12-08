@@ -28,7 +28,7 @@ namespace AccessToken {
 #define PERMS_LIST_SIZE_MAX 1024
 
 struct PermStateChangeInfo {
-    int32_t PermStateChangeType;
+    int32_t permStateChangeType;
     AccessTokenID tokenID;
     std::string permissionName;
 };

@@ -17,7 +17,7 @@
 #define SOFT_BUS_MANAGER_H
 
 #include <functional>
-#include <inttypes.h>
+#include <cinttypes>
 #include <memory>
 #include <string>
 #include <thread>

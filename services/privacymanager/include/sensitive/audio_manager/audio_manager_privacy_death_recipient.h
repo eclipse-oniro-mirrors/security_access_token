@@ -25,7 +25,7 @@ namespace AccessToken {
 class AudioMgrDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     AudioMgrDeathRecipient() {}
-    virtual ~AudioMgrDeathRecipient() = default;
+    virtual ~AudioMgrDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
 }  // namespace AccessToken

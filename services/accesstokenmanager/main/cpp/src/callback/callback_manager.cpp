@@ -144,7 +144,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
             if (callback != nullptr) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "callback excute");
                 PermStateChangeInfo resInfo;
-                resInfo.PermStateChangeType = changeType;
+                resInfo.permStateChangeType = changeType;
                 resInfo.permissionName = permName;
                 resInfo.tokenID = tokenID;
                 callback->PermStateChangeCallback(resInfo);

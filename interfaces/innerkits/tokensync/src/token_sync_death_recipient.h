@@ -26,7 +26,7 @@ public:
     TokenSyncDeathRecipient()
     {}
 
-    virtual ~TokenSyncDeathRecipient() = default;
+    virtual ~TokenSyncDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& onject) override;
 private:
 };

@@ -25,7 +25,7 @@ namespace AccessToken {
 extern "C" unsigned int GetRandomUint32()
 {
     unsigned int rand;
-    int ret = RandomMbedtls::GetInstance().GenerateRandomArray((unsigned char *)&rand, sizeof(rand));
+    int ret = RandomMbedtls::GetInstance().GenerateRandomArray(reinterpret_cast<unsigned char *>(&rand), sizeof(rand));
     if (ret != RET_SUCCESS) {
         return 0;
     }

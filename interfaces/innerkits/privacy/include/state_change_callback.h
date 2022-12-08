@@ -24,7 +24,7 @@ namespace Security {
 namespace AccessToken {
 class StateChangeCallback : public StateChangeCallbackStub {
 public:
-    StateChangeCallback(const std::shared_ptr<StateCustomizedCbk> &customizedCallback);
+    explicit StateChangeCallback(const std::shared_ptr<StateCustomizedCbk> &customizedCallback);
     ~StateChangeCallback() override;
 
     void StateChangeNotify(AccessTokenID tokenId, bool isShowing) override;

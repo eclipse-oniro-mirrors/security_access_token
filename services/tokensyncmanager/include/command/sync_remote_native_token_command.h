@@ -38,9 +38,9 @@ public:
 
     std::string ToJsonPayload() override;
 
-    SyncRemoteNativeTokenCommand(const std::string &json);
+    explicit SyncRemoteNativeTokenCommand(const std::string &json);
     SyncRemoteNativeTokenCommand(const std::string &srcDeviceId, const std::string &dstDeviceId);
-    virtual ~SyncRemoteNativeTokenCommand() = default;
+    virtual ~SyncRemoteNativeTokenCommand() override = default;
 
 private:
     /**

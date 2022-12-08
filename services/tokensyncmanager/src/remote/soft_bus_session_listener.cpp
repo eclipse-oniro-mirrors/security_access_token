@@ -34,7 +34,7 @@ static const int32_t SESSION_REFUSED = -1;
 std::mutex SoftBusSessionListener::g_SessionMutex_;
 std::map<int32_t, int64_t> SoftBusSessionListener::g_SessionOpenedMap_;
 
-int32_t SoftBusSessionListener::OnSessionOpened(int32_t session, int32_t result)
+int32_t SoftBusSessionListener::OnSessionOpened(int32_t sessionId, int32_t result)
 {
     if (result != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "OnSessionOpened, result: %{public}d", result);
@@ -43,24 +43,24 @@ int32_t SoftBusSessionListener::OnSessionOpened(int32_t session, int32_t result)
 
     int32_t len = SESSION_NAME_MAXLENGTH + 1;
     char contents[len];
-    int32_t resultCode = ::GetPeerSessionName(session, contents, len);
+    int32_t resultCode = ::GetPeerSessionName(sessionId, contents, len);
     if (resultCode != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "OnSessionOpened, GetPeerSessionName failed, result: %{public}d", resultCode);
         return SESSION_REFUSED;
     }
     std::string peerSessionName(contents);
     if (SoftBusManager::SESSION_NAME != peerSessionName) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "OnSessionOpened, unknown session name.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "OnSessionOpened, unknown sessionId name.");
         return SESSION_REFUSED;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnSessionOpened, id = %{public}d", session);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnSessionOpened, id = %{public}d", sessionId);
 
-    // store session state: opening
+    // store sessionId state: opening
     std::lock_guard<std::mutex> guard(g_SessionMutex_);
-    auto iter = g_SessionOpenedMap_.find(session);
+    auto iter = g_SessionOpenedMap_.find(sessionId);
     if (iter == g_SessionOpenedMap_.end()) {
-        g_SessionOpenedMap_.insert(std::pair<int32_t, int64_t>(session, (int64_t) 1));
+        g_SessionOpenedMap_.insert(std::pair<int32_t, int64_t>(sessionId, (int64_t) 1));
     } else {
         iter->second = iter->second + 1;
     }
@@ -68,13 +68,13 @@ int32_t SoftBusSessionListener::OnSessionOpened(int32_t session, int32_t result)
     return SESSION_ACCEPTED;
 }
 
-void SoftBusSessionListener::OnSessionClosed(int32_t session)
+void SoftBusSessionListener::OnSessionClosed(int32_t sessionId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnSessionClosed");
 
-    // clear session state
+    // clear sessionId state
     std::lock_guard<std::mutex> guard(g_SessionMutex_);
-    auto iter = g_SessionOpenedMap_.find(session);
+    auto iter = g_SessionOpenedMap_.find(sessionId);
     if (iter != g_SessionOpenedMap_.end()) {
         g_SessionOpenedMap_.erase(iter);
     }
@@ -122,12 +122,12 @@ int64_t SoftBusSessionListener::GetSessionState(int32_t sessionId)
     return iter->second;
 }
 
-void SoftBusSessionListener::DeleteSessionIdFromMap(int32_t sessionID)
+void SoftBusSessionListener::DeleteSessionIdFromMap(int32_t sessionId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteSessionIdFromMap");
     // delete sessionId in map
     std::lock_guard<std::mutex> guard(g_SessionMutex_);
-    auto iter = g_SessionOpenedMap_.find(sessionID);
+    auto iter = g_SessionOpenedMap_.find(sessionId);
     if (iter != g_SessionOpenedMap_.end()) {
         g_SessionOpenedMap_.erase(iter);
     }

@@ -63,9 +63,9 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
         TokenFiledConst::FIELD_TOKEN_ATTR, TokenFiledConst::FIELD_API_VERSION
     };
 
-    SqliteTable NativeTokenInfoTable;
-    NativeTokenInfoTable.tableName_ = NATIVE_TOKEN_INFO_TABLE;
-    NativeTokenInfoTable.tableColumnNames_ = {
+    SqliteTable nativeTokenInfoTable;
+    nativeTokenInfoTable.tableName_ = NATIVE_TOKEN_INFO_TABLE;
+    nativeTokenInfoTable.tableColumnNames_ = {
         TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PROCESS_NAME,
         TokenFiledConst::FIELD_TOKEN_VERSION, TokenFiledConst::FIELD_TOKEN_ATTR,
         TokenFiledConst::FIELD_DCAP, TokenFiledConst::FIELD_NATIVE_ACLS, TokenFiledConst::FIELD_APL
@@ -92,7 +92,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
 
     dataTypeToSqlTable_ = {
         {ACCESSTOKEN_HAP_INFO, hapTokenInfoTable},
-        {ACCESSTOKEN_NATIVE_INFO, NativeTokenInfoTable},
+        {ACCESSTOKEN_NATIVE_INFO, nativeTokenInfoTable},
         {ACCESSTOKEN_PERMISSION_DEF, permissionDefTable},
         {ACCESSTOKEN_PERMISSION_STATE, permissionStateTable},
     };

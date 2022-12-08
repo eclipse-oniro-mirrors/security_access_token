@@ -36,7 +36,7 @@ typedef struct TokenInfoParams {
     const char *aplStr;
 } NativeTokenInfoParams;
 
-extern uint64_t GetAccessTokenId(NativeTokenInfoParams *nativeProcInfo);
+extern uint64_t GetAccessTokenId(NativeTokenInfoParams *tokenInfo);
 
 #ifdef __cplusplus
 }

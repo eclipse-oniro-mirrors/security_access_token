@@ -21,7 +21,7 @@ namespace Security {
 namespace AccessToken {
 bool PermissionStateChangeInfoParcel::Marshalling(Parcel& out) const
 {
-    RETURN_IF_FALSE(out.WriteInt32(this->changeInfo.PermStateChangeType));
+    RETURN_IF_FALSE(out.WriteInt32(this->changeInfo.permStateChangeType));
     RETURN_IF_FALSE(out.WriteUint32(this->changeInfo.tokenID));
     RETURN_IF_FALSE(out.WriteString(this->changeInfo.permissionName));
     return true;
@@ -33,7 +33,7 @@ PermissionStateChangeInfoParcel* PermissionStateChangeInfoParcel::Unmarshalling(
     if (permissionStateParcel == nullptr) {
         return nullptr;
     }
-    RELEASE_IF_FALSE(in.ReadInt32(permissionStateParcel->changeInfo.PermStateChangeType), permissionStateParcel);
+    RELEASE_IF_FALSE(in.ReadInt32(permissionStateParcel->changeInfo.permStateChangeType), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadUint32(permissionStateParcel->changeInfo.tokenID), permissionStateParcel);
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->changeInfo.permissionName), permissionStateParcel);
 

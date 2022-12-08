@@ -25,7 +25,7 @@ namespace AccessToken {
 class AbilityManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     AbilityManagerPrivacyDeathRecipient() {}
-    virtual ~AbilityManagerPrivacyDeathRecipient() = default;
+    virtual ~AbilityManagerPrivacyDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
 }  // namespace AccessToken

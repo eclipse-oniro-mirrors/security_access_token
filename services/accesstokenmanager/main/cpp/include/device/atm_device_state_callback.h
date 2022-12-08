@@ -29,7 +29,7 @@ class AtmDmInitCallback final : public DistributedHardware::DmInitCallback {
 class AtmDeviceStateCallback final : public DistributedHardware::DeviceStateCallback {
 public:
     AtmDeviceStateCallback();
-    ~AtmDeviceStateCallback();
+    ~AtmDeviceStateCallback() override;
 
     void OnDeviceOnline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;
     void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &deviceInfo) override;

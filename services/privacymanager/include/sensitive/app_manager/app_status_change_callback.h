@@ -27,7 +27,7 @@ namespace AccessToken {
 class ApplicationStateObserverStub : public IRemoteStub<IApplicationStateObserver> {
 public:
     ApplicationStateObserverStub();
-    virtual ~ApplicationStateObserverStub();
+    virtual ~ApplicationStateObserverStub() override;
 
     virtual int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;

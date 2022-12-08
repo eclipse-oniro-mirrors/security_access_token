@@ -33,7 +33,7 @@ struct MicStateChangeEvent {
 
 class IStandardAudioRoutingManagerListener : public IRemoteBroker {
 public:
-    virtual ~IStandardAudioRoutingManagerListener() = default;
+    virtual ~IStandardAudioRoutingManagerListener() override = default;
     virtual void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) = 0;
 
     enum AudioRingerModeUpdateListenerMsg {

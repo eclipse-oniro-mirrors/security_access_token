@@ -2773,16 +2773,21 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
     std::vector<GenericValues> permStateRes;
 
     // processName invalid
-    ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
+    TokenInfo tokenInfo = {
+        .id = tokenId,
+        .processName = processName,
+        .apl = apl
+    };
+    ASSERT_EQ(RET_FAILED, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
 
     inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
     // processName invalid
     ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
     inGenericValues.Remove(TokenFiledConst::FIELD_PROCESS_NAME);
 
-    processName = "token_sync";
+    tokenInfo.processName = "token_sync";
     // apl invalid
-    ASSERT_EQ(RET_FAILED, native->Init(tokenId, processName, apl, dcap, nativeAcls, permStateList));
+    ASSERT_EQ(RET_FAILED, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
 
     inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
     inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);

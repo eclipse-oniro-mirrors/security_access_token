@@ -30,6 +30,12 @@ namespace AccessToken {
 static const int MAX_DCAPS_NUM = 32;
 static const int MAX_REQ_PERM_NUM = 32;
 
+struct TokenInfo {
+    AccessTokenID id;
+    std::string processName;
+    int apl;
+};
+
 class NativeTokenInfoInner final {
 public:
     NativeTokenInfoInner();
@@ -37,8 +43,7 @@ public:
         const std::vector<PermissionStateFull>& permStateList);
     virtual ~NativeTokenInfoInner();
 
-    int Init(AccessTokenID id, const std::string& processName, int apl,
-        const std::vector<std::string>& dcap,
+    int Init(const TokenInfo& tokenInfo, const std::vector<std::string>& dcap,
         const std::vector<std::string>& nativeAcls,
         const std::vector<PermissionStateFull>& permStateList);
     void StoreNativeInfo(std::vector<GenericValues>& valueList,

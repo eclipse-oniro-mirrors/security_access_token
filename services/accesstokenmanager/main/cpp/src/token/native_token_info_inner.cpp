@@ -51,29 +51,28 @@ NativeTokenInfoInner::~NativeTokenInfoInner()
         "tokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
 }
 
-int NativeTokenInfoInner::Init(AccessTokenID id, const std::string& processName,
-    int apl, const std::vector<std::string>& dcap,
+int NativeTokenInfoInner::Init(const TokenInfo& tokenInfo, const std::vector<std::string>& dcap,
     const std::vector<std::string>& nativeAcls,
     const std::vector<PermissionStateFull>& permStateList)
 {
-    tokenInfoBasic_.tokenID = id;
-    if (!DataValidator::IsProcessNameValid(processName)) {
+    tokenInfoBasic_.tokenID = tokenInfo.id;
+    if (!DataValidator::IsProcessNameValid(tokenInfo.processName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
         return RET_FAILED;
     }
-    tokenInfoBasic_.processName = processName;
-    if (!DataValidator::IsAplNumValid(apl)) {
+    tokenInfoBasic_.processName = tokenInfo.processName;
+    if (!DataValidator::IsAplNumValid(tokenInfo.apl)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u init failed, apl %{public}d is invalid",
-            tokenInfoBasic_.tokenID, apl);
+            tokenInfoBasic_.tokenID, tokenInfo.apl);
         return RET_FAILED;
     }
-    tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(apl);
+    tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(tokenInfo.apl);
     tokenInfoBasic_.dcap = dcap;
     tokenInfoBasic_.nativeAcls = nativeAcls;
 
-    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id,
+    permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfo.id,
         permStateList);
     return RET_SUCCESS;
 }

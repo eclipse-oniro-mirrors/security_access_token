@@ -42,7 +42,7 @@ public:
     explicit SyncRemoteHapTokenCommand(const std::string &json);
     SyncRemoteHapTokenCommand(const std::string &srcDeviceId,
         const std::string &dstDeviceId, AccessTokenID id);
-    virtual ~SyncRemoteHapTokenCommand() = default;
+    virtual ~SyncRemoteHapTokenCommand() override = default;
 
 private:
     /**

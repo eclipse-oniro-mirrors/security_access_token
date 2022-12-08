@@ -16,7 +16,7 @@
 #ifndef STATE_CUSTOMIZED_CBK_H
 #define STATE_CUSTOMIZED_CBK_H
 
-#include <stdint.h>
+#include <cstdint>
 #include "access_token.h"
 
 namespace OHOS {
