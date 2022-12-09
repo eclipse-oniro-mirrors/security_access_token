@@ -35,7 +35,7 @@ class MyDmInitCallback final : public DistributedHardware::DmInitCallback {
 class SoftBusDeviceConnectionListener final : public DistributedHardware::DeviceStateCallback {
 public:
     SoftBusDeviceConnectionListener();
-    ~SoftBusDeviceConnectionListener();
+    ~SoftBusDeviceConnectionListener() override;
 
     /**
      * @brief node online callback

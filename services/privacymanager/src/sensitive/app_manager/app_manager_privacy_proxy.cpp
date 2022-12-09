@@ -90,12 +90,12 @@ int32_t AppManagerPrivacyProxy::GetForegroundApplications(std::vector<AppStateDa
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetForegroundApplications failed, error: %{public}d", error);
         return error;
     }
-    int32_t infoSize = reply.ReadInt32();
+    uint32_t infoSize = reply.ReadUint32();
     if (infoSize > CYCLE_LIMIT) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "infoSize is too large");
         return ERROR;
     }
-    for (int32_t i = 0; i < infoSize; i++) {
+    for (uint32_t i = 0; i < infoSize; i++) {
         std::unique_ptr<AppStateData> info(reply.ReadParcelable<AppStateData>());
         if (info != nullptr) {
             list.emplace_back(*info);

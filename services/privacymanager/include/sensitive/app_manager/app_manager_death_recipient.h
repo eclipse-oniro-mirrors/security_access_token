@@ -24,7 +24,7 @@ namespace AccessToken {
 class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     AppMgrDeathRecipient() {}
-    virtual ~AppMgrDeathRecipient() = default;
+    virtual ~AppMgrDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
 }  // namespace AccessToken

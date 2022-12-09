@@ -97,7 +97,7 @@ static void ReturnCallbackResult(napi_env env, int32_t contextResult, napi_ref &
 static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const PermStateChangeInfo& result)
 {
     napi_value element;
-    NAPI_CALL_BASE(env, napi_create_int32(env, result.PermStateChangeType, &element), false);
+    NAPI_CALL_BASE(env, napi_create_int32(env, result.permStateChangeType, &element), false);
     NAPI_CALL_BASE(env, napi_set_named_property(env, value, "change", element), false);
     element = nullptr;
     NAPI_CALL_BASE(env, napi_create_int32(env, result.tokenID, &element), false);
@@ -174,8 +174,8 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     registerPermStateChangeWorker->ref = ref_;
     registerPermStateChangeWorker->result = result;
     ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "result PermStateChangeType = %{public}d, tokenID = %{public}d, permissionName = %{public}s",
-        result.PermStateChangeType, result.tokenID, result.permissionName.c_str());
+        "result permStateChangeType = %{public}d, tokenID = %{public}d, permissionName = %{public}s",
+        result.permStateChangeType, result.tokenID, result.permissionName.c_str());
     registerPermStateChangeWorker->subscriber = this;
     work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
     NAPI_CALL_RETURN_VOID(env_,
@@ -1534,7 +1534,7 @@ static napi_module g_module = {
     .nm_filename = nullptr,
     .nm_register_func = Init,
     .nm_modname = "abilityAccessCtrl",
-    .nm_priv = ((void *)nullptr),
+    .nm_priv = static_cast<void *>(nullptr),
     .reserved = {nullptr}
 };
 

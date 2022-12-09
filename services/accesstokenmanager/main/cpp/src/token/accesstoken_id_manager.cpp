@@ -28,7 +28,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdTypeEnum(AccessTokenID id)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
-    return (ATokenTypeEnum)idInner->type;
+    return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
 int AccessTokenIDManager::GetTokenIdDlpFlag(AccessTokenID id)
@@ -82,7 +82,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpTy
     innerId.res = 0;
     innerId.dlpFlag = (dlpType == 0) ? 0 : 1;
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
-    AccessTokenID tokenId = *(AccessTokenID *)&innerId;
+    AccessTokenID tokenId = *reinterpret_cast<AccessTokenID *>(&innerId);
     return tokenId;
 }
 

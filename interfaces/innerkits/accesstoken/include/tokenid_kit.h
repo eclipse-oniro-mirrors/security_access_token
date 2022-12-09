@@ -16,7 +16,7 @@
 #ifndef TOKENID_KIT_H
 #define TOKENID_KIT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace OHOS {
 namespace Security {

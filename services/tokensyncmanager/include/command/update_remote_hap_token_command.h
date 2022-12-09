@@ -41,7 +41,7 @@ public:
     explicit UpdateRemoteHapTokenCommand(const std::string &json);
     UpdateRemoteHapTokenCommand(const std::string &srcDeviceId, const std::string &dstDeviceId,
         const HapTokenInfoForSync& tokenInfo);
-    virtual ~UpdateRemoteHapTokenCommand() = default;
+    virtual ~UpdateRemoteHapTokenCommand() override = default;
 
 private:
     /**

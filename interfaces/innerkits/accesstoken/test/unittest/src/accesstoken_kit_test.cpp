@@ -4014,7 +4014,7 @@ HWTEST_F(AccessTokenKitTest, GetVersion001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, PermStateChangeCallback001, TestSize.Level1)
 {
     PermStateChangeInfo result = {
-        .PermStateChangeType = 0,
+        .permStateChangeType = 0,
         .tokenID = 123,
         .permissionName = "ohos.permission.CAMERA"
     };
@@ -4045,7 +4045,7 @@ public:
 HWTEST_F(AccessTokenKitTest, OnRemoteRequest001, TestSize.Level1)
 {
     PermStateChangeInfo info = {
-        .PermStateChangeType = 0,
+        .permStateChangeType = 0,
         .tokenID = 123,
         .permissionName = "ohos.permission.CAMERA"
     };

@@ -35,13 +35,13 @@ PermissionStateChangeCallbackProxy::PermissionStateChangeCallbackProxy(const spt
 PermissionStateChangeCallbackProxy::~PermissionStateChangeCallbackProxy()
 {}
 
-void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChangeInfo& info)
+void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChangeInfo& result)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor());
 
     PermissionStateChangeInfoParcel resultParcel;
-    resultParcel.changeInfo = info;
+    resultParcel.changeInfo = result;
     if (!data.WriteParcelable(&resultParcel)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(result)");
         return;

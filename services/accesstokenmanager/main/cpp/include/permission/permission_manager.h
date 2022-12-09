@@ -73,7 +73,7 @@ public:
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     PermissionManager();
 protected:
-    static void registerImpl(PermissionManager* implInstance);
+    static void RegisterImpl(PermissionManager* implInstance);
 private:
     void ScopeToString(
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);

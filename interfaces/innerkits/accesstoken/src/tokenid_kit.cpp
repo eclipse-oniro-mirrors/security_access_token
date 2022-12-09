@@ -18,7 +18,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const uint64_t SYSTEM_APP_MASK = ((uint64_t)1 << 32);
+static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
 bool TokenIdKit::IsSystemAppByFullTokenID(uint64_t tokenId)
 {
     return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;

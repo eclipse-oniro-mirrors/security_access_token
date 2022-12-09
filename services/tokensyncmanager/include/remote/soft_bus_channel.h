@@ -34,9 +34,14 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+struct BytesInfo {
+    unsigned char *bytes;
+    int bytesLength;
+};
+
 class SoftBusChannel final : public RpcChannel, public std::enable_shared_from_this<SoftBusChannel> {
 public:
-    SoftBusChannel(const std::string &deviceId);
+    explicit SoftBusChannel(const std::string &deviceId);
     virtual ~SoftBusChannel();
 
     /**
@@ -103,7 +108,7 @@ private:
      * @version 1.0
      */
     int PrepareBytes(const std::string &type, const std::string &id, const std::string &commandName,
-        const std::string &jsonPayload, const unsigned char *bytes, int &bytesLength);
+        const std::string &jsonPayload, BytesInfo &info);
 
     /**
      * @brief compress string to char array.
@@ -204,6 +209,15 @@ private:
     void HandleResponse(const std::string &id, const std::string &jsonPayload);
 
     /**
+     * @brief Get uuid.
+     *
+     * @return uuid.
+     * @since 1.0
+     * @version 1.0
+     */
+    std::string GetUuid();
+
+    /**
      * @brief temp function to generate uuid.
      *
      * @param buf uuid string
@@ -211,7 +225,7 @@ private:
      * @since 1.0
      * @version 1.0
      */
-    void random_uuid(char buf[37], int bufSize)
+    void RandomUuid(char buf[37], int bufSize)
     {
         const int xbase = 15;
         const int bbase = 255;

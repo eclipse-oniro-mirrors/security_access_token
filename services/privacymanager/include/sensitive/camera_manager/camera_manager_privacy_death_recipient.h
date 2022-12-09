@@ -25,7 +25,7 @@ namespace AccessToken {
 class CameraManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
 public:
     CameraManagerPrivacyDeathRecipient() {}
-    virtual ~CameraManagerPrivacyDeathRecipient() = default;
+    virtual ~CameraManagerPrivacyDeathRecipient() override = default;
     void OnRemoteDied(const wptr<IRemoteObject>& object) override;
 };
 }  // namespace AccessToken

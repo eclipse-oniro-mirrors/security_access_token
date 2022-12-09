@@ -51,7 +51,7 @@ static int32_t curRequestCode_ = 0;
 class RegisterPermStateChangeScopePtr : public PermStateChangeCallbackCustomize {
 public:
     explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
-    ~RegisterPermStateChangeScopePtr();
+    ~RegisterPermStateChangeScopePtr() override;
     void PermStateChangeCallback(PermStateChangeInfo& result) override;
     void SetEnv(const napi_env& env);
     void SetCallbackRef(const napi_ref& ref);
@@ -127,7 +127,7 @@ struct ResultCallback {
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
     explicit AuthorizationResult(int32_t requestCode, void* data) : requestCode_(requestCode), data_(data) {}
-    virtual ~AuthorizationResult() = default;
+    virtual ~AuthorizationResult() override = default;
 
     virtual void GrantResultsCallback(const std::vector<std::string>& permissions,
         const std::vector<int>& grantResults) override;
@@ -170,7 +170,7 @@ private:
     static void GetPermissionFlagsExecute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
-    static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,
+    static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);

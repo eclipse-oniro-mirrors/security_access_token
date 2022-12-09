@@ -29,7 +29,7 @@ namespace Security {
 namespace AccessToken {
 class RemoteCommandExecutor final {
 public:
-    RemoteCommandExecutor(const std::string &targetNodeId);
+    explicit RemoteCommandExecutor(const std::string &targetNodeId);
     virtual ~RemoteCommandExecutor();
 
     const std::shared_ptr<RpcChannel>& GetChannel() const
