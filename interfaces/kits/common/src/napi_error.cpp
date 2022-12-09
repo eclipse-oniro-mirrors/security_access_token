@@ -20,6 +20,7 @@ namespace Security {
 namespace AccessToken {
 static const std::map<uint32_t, std::string> g_errorStringMap = {
     {JS_ERROR_PERMISSION_DENIED, "Permission denied."},
+    {JS_ERROR_ERR_NOT_SYSTEM_APP, "Not system app."},
     {JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, "Not support system capability."},
     {JS_ERROR_PARAM_INVALID, "The parameter is invalid."},
     {JS_ERROR_TOKENID_NOT_EXIST, "The specified token id does not exist."},

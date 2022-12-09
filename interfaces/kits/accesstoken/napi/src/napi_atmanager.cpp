@@ -33,6 +33,7 @@
 #include "remote_object_wrapper.h"
 #include "string_wrapper.h"
 #include "token_setproc.h"
+#include "tokenid_kit.h"
 #include "want_params_wrapper.h"
 #include "want.h"
 
@@ -283,6 +284,20 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
         nullptr, nullptr));
     objPtr.release();
     return thisVar;
+}
+
+bool NapiAtManager::IsSystemApp(napi_env env)
+{
+    uint64_t fullTokenId = GetSelfTokenID();
+    bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "fullTokenId = %{public}llu", fullTokenId);
+    if (!isSystemApp) {
+        std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_ERR_NOT_SYSTEM_APP);
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_ERR_NOT_SYSTEM_APP, errMsg)), false);
+        return false;
+    }
+    return true;
 }
 
 napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInfo)
@@ -672,6 +687,9 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -723,6 +741,9 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -812,6 +833,9 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RevokeUserGrantedPermission begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -870,6 +894,9 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags begin.");
 
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -1286,6 +1313,9 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
 
 napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     RegisterPermStateChangeInfo* registerPermStateChangeInfo =
         new (std::nothrow) RegisterPermStateChangeInfo();
     if (registerPermStateChangeInfo == nullptr) {
@@ -1381,6 +1411,9 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
 
 napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo)
 {
+    if (!IsSystemApp(env)) {
+        return nullptr;
+    }
     UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo =
         new (std::nothrow) UnregisterPermStateChangeInfo();
     if (unregisterPermStateChangeInfo == nullptr) {
