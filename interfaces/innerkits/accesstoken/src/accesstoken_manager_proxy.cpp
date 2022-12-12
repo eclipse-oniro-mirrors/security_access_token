@@ -246,7 +246,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
         return INVALID_OPER;
     }
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}zu get from request is invalid", size);
         return INVALID_OPER;
     }
     for (uint32_t i = 0; i < size; i++) {
