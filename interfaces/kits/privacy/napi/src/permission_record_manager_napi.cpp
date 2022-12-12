@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "permission_record_manager_napi.h"
+#include <cinttypes>
 #include <vector>
 #include "privacy_kit.h"
 #include "accesstoken_log.h"
@@ -433,7 +434,7 @@ static bool IsSystemApp(napi_env env)
 {
     uint64_t fullTokenId = GetSelfTokenID();
     bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "fullTokenId = %{public}llu", fullTokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "fullTokenId = %{public}" PRIu64, fullTokenId);
     if (!isSystemApp) {
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_ERR_NOT_SYSTEM_APP);
         NAPI_CALL_BASE(env, napi_throw(env,
