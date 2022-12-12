@@ -1287,6 +1287,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DlpPermissionConfig006, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
+#endif
 
 /**
  * @tc.name: UpdateRemoteHapTokenInfo001
@@ -1438,7 +1439,6 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
     ASSERT_EQ(static_cast<AccessTokenID>(0),
         AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
 }
-#endif
 
 /**
  * @tc.name: Dump001

@@ -14,9 +14,9 @@
  */
 #include "napi_atmanager.h"
 
+#include <cinttypes>
 #include <cstdio>
 #include <cstring>
-#include <cinttypes>
 #include <map>
 #include <pthread.h>
 #include <unistd.h>
