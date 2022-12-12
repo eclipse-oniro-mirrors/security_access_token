@@ -50,7 +50,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerService"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
 };
 static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 constexpr int TWO_ARGS = 2;
@@ -103,7 +103,7 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
 {
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
     int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, res %{public}d",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
     return res;

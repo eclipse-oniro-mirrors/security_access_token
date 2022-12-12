@@ -25,7 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerProxy"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMProxy"};
 static const int MAX_PERMISSION_SIZE = 1000;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
@@ -86,7 +86,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
