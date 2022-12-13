@@ -75,6 +75,7 @@ private:
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
     bool IsFoundationCalling() const;
+    bool IsSystemAppCalling() const;
     static const int32_t SYSTEM_UID = 1000;
     static const int32_t ROOT_UID = 0;
     static const int32_t ACCESSTOKEN_UID = 3020;

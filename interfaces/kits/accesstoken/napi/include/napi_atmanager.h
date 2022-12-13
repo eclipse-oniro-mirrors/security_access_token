@@ -143,7 +143,6 @@ public:
 
 private:
     static napi_value JsConstructor(napi_env env, napi_callback_info cbinfo);
-    static bool IsSystemApp(napi_env env);
     static napi_value CreateAtManager(napi_env env, napi_callback_info cbInfo);
     static napi_value VerifyAccessToken(napi_env env, napi_callback_info info);
     static napi_value VerifyAccessTokenSync(napi_env env, napi_callback_info info);
