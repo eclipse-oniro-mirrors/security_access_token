@@ -47,6 +47,9 @@ The ATM module provides the following functions:
 | int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy); | Updates token information.|
 | int DeleteToken(AccessTokenID tokenID); | Deletes the app's token ID and information.|
 | int GetTokenType(AccessTokenID tokenID); | Obtains the type of an access token.|
+| int GetTokenTypeFlag(AccessTokenID tokenID); | Obtains the type of a credible access token.|
+| int GetTokenType(FullTokenID tokenID); | Obtains the type of an access token.|
+| int GetTokenTypeFlag(FullTokenID tokenID); | Obtains the type of a credible access token.|
 | int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap); | Checks whether the native process corresponding to the given token ID has the specified distributed capability.|
 | AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token ID of an app.|
 | AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex); | Obtains the token IDEx of an app.|

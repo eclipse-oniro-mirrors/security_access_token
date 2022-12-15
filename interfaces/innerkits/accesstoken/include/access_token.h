@@ -20,6 +20,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 typedef unsigned int AccessTokenID;
+typedef unsigned long long FullTokenID;
 typedef unsigned int AccessTokenAttr;
 static const int DEFAULT_TOKEN_VERSION = 1;
 static const AccessTokenID INVALID_TOKENID = 0;
