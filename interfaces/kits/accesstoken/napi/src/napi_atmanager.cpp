@@ -549,7 +549,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if (asyncContext->tokenId != GetSelfTokenID()) {
+    if (asyncContext->tokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
         asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         napi_value result = nullptr;
         NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
@@ -1136,7 +1136,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
 
     auto applicationInfo = asyncContext->abilityContext->GetApplicationInfo();
-    if (applicationInfo->accessTokenId != GetSelfTokenID()) {
+    if (applicationInfo->accessTokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
         asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
         return;
