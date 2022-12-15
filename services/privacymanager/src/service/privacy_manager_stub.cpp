@@ -17,10 +17,10 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
-
 #include "ipc_skeleton.h"
 #include "privacy_error.h"
 #include "string_ex.h"
+#include "tokenid_kit.h"
 
 namespace OHOS {
 namespace Security {
@@ -81,6 +81,11 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -95,6 +100,11 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -125,6 +135,11 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -150,6 +165,11 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     PermissionUsedResultParcel responseParcel;
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
@@ -185,6 +205,11 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -212,6 +237,11 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
 
 void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (!VerifyPermission(PERMISSION_USED_STATS)) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
@@ -247,6 +277,12 @@ bool PrivacyManagerStub::IsAccessTokenCalling() const
 {
     int32_t callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ACCESSTOKEN_UID;
+}
+
+bool PrivacyManagerStub::IsSystemAppCalling() const
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
 
 bool PrivacyManagerStub::VerifyPermission(const std::string& permission) const

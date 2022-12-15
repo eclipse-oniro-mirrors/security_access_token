@@ -20,6 +20,7 @@ namespace Security {
 namespace AccessToken {
 enum AccessTokenError {
     ERR_PERMISSION_DENIED = 201,
+    ERR_NOT_SYSTEM_APP = 202,
     ERR_PARAM_INVALID = 12100001,
     ERR_TOKENID_NOT_EXIST,
     ERR_PERMISSION_NOT_EXIT,

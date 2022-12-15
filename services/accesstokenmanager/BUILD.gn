@@ -86,6 +86,7 @@ if (is_standard_system) {
     deps = [
       "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "//base/security/access_token/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
       "//base/security/access_token/services/accesstokenmanager:access_token.rc",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",

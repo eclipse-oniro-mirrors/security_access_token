@@ -103,6 +103,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
       "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
       "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "//base/security/access_token/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy.rc",
     ]

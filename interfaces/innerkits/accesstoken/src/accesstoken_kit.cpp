@@ -26,6 +26,7 @@
 #include "hisysevent.h"
 #include "permission_def.h"
 #include "perm_state_change_callback_customize.h"
+#include "tokenid_kit.h"
 #include "token_setproc.h"
 
 namespace OHOS {
@@ -33,6 +34,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKit"};
+static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 } // namespace
@@ -410,6 +412,12 @@ void AccessTokenKit::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
 
 int32_t AccessTokenKit::GetVersion(void)
 {
+    uint64_t fullTokenId = GetSelfTokenID();
+    bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
+    AccessTokenID tokenID = fullTokenId & TOKEN_ID_LOWMASK;
+    if ((GetTokenTypeFlag(tokenID) == TOKEN_HAP) && (!isSystemApp)) {
+        return ERR_NOT_SYSTEM_APP;
+    }
     return DEFAULT_TOKEN_VERSION;
 }
 } // namespace AccessToken

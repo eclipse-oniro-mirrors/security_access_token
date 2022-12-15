@@ -43,6 +43,7 @@ private:
     void UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
     void IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
     bool IsAccessTokenCalling() const;
+    bool IsSystemAppCalling() const;
     bool VerifyPermission(const std::string& permission) const;
     static const int32_t ACCESSTOKEN_UID = 3020;
 };

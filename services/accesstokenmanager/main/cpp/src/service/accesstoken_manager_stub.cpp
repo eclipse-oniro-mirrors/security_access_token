@@ -182,6 +182,10 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     if (!IsPrivilegedCalling() &&
@@ -204,6 +208,10 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
@@ -223,6 +231,10 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
 void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadInt32();
@@ -384,6 +396,10 @@ void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, Messag
 void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
@@ -408,6 +424,10 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
     if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
@@ -622,6 +642,12 @@ bool AccessTokenManagerStub::IsNativeProcessCalling()
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     return this->GetTokenType(tokenCaller) == TOKEN_NATIVE;
+}
+
+bool AccessTokenManagerStub::IsSystemAppCalling() const
+{
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()
