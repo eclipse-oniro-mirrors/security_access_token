@@ -26,7 +26,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerStub"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMStub"};
 constexpr int32_t FOUNDATION_UID = 5523;
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
@@ -42,7 +42,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "code %{public}u token %{public}u", code, callingTokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "code %{public}u token %{public}u", code, callingTokenID);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IAccessTokenManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
