@@ -36,7 +36,8 @@ static HapInfoParams g_InfoParms = {
     .userID = 1,
     .bundleName = "ohos.privacy_test.bundle",
     .instIndex = 0,
-    .appIDDesc = "privacy_test.bundle"
+    .appIDDesc = "privacy_test.bundle",
+    .isSystemApp = true
 };
 
 }
@@ -58,8 +59,8 @@ void PermDenyTest::SetUp()
     g_testTokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
                                                   g_InfoParms.bundleName,
                                                   g_InfoParms.instIndex);
-    uint32_t tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.camera", 0);
-    SetSelfTokenID(tokenId);
+    AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
+    SetSelfTokenID(tokenIDEx.tokenIDEx);
 }
 
 void PermDenyTest::TearDown()
@@ -180,10 +181,10 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(permList);
 
-    uint32_t tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.camera", 0);
+    AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
 
     // register success with no permission
-    SetSelfTokenID(tokenId);
+    SetSelfTokenID(tokenIDEx.tokenIDEx);
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // register success with permission
@@ -191,7 +192,7 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     ASSERT_EQ(NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister fail with no permission
-    SetSelfTokenID(tokenId);
+    SetSelfTokenID(tokenIDEx.tokenIDEx);
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister success with permission

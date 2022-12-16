@@ -36,7 +36,15 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
+static constexpr int32_t DEFAULT_API_VERSION = 8;
 
+PermissionStateFull g_grantPermissionReq = {
+    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+    .isGeneral = true,
+    .resDeviceID = {"device"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
 static HapPolicyParams g_policyPramsA = {
     .apl = APL_NORMAL,
     .domain = "test.domain.A",
@@ -76,6 +84,13 @@ static PermissionStateFull g_infoManagerTestStateB = {
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
+static PermissionStateFull g_infoManagerTestStateC = {
+    .permissionName = "ohos.permission.PERMISSION_USED_STATS",
+    .isGeneral = true,
+    .resDeviceID = {"local"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
 static HapPolicyParams g_policyPramsE = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
@@ -108,6 +123,24 @@ static BundleUsedRecord g_bundleUsedRecord = {
     .bundleName = "com.ohos.camera",
 };
 
+static HapInfoParams g_normalInfoParms = {
+    .userID = 1,
+    .bundleName = "accesstoken_test",
+    .instIndex = 0,
+    .appIDDesc = "testtesttesttest",
+    .apiVersion = DEFAULT_API_VERSION,
+    .isSystemApp = false
+};
+
+static HapInfoParams g_systemInfoParms = {
+    .userID = 1,
+    .bundleName = "accesstoken_test",
+    .instIndex = 0,
+    .appIDDesc = "testtesttesttest",
+    .apiVersion = DEFAULT_API_VERSION,
+    .isSystemApp = true
+};
+
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_tokenIdA = 0;
 static AccessTokenID g_tokenIdB = 0;
@@ -136,6 +169,7 @@ void PrivacyKitTest::SetUpTestCase()
 {
     DeleteTestToken();
     g_selfTokenId = GetSelfTokenID();
+    
 }
 
 void PrivacyKitTest::TearDownTestCase()
@@ -152,8 +186,8 @@ void PrivacyKitTest::SetUp()
     g_tokenIdB = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID, g_infoParmsB.bundleName, g_infoParmsB.instIndex);
     g_tokenIdE = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID, g_infoParmsE.bundleName, g_infoParmsE.instIndex);
 
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0); // 100 is userID
-    SetSelfTokenID(tokenId);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0); // 100 is userID
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 void PrivacyKitTest::TearDown()
@@ -223,8 +257,8 @@ static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
                                                                     g_InfoParmsTmp.instIndex);
         g_TokenId_List.push_back(g_TokenId_Tmp);
     }
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-    SetSelfTokenID(tokenId);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
 }
 
 static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
@@ -472,6 +506,22 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AddPermissionUsedRecord008
+ * @tc.desc: AddPermissionUsedRecord caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
+}
+
+/**
  * @tc.name: RemovePermissionUsedRecords001
  * @tc.desc: cannot RemovePermissionUsedRecords with illegal tokenId and deviceID.
  * @tc.type: FUNC
@@ -638,6 +688,27 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords004, TestSize.Level1)
     if (result.bundleRecords.size() < static_cast<uint32_t>(2)) {
         ASSERT_TRUE(false);
     }
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecords005
+ * @tc.desc: GetPermissionUsedRecords005 caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    // query by tokenId
+    BuildQueryRequest(g_tokenIdA, "", "", permissionList, request);
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::GetPermissionUsedRecords(request, result));
 }
 
 /**
@@ -969,6 +1040,59 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback008, TestSize.Level1)
 }
 
 /**
+ * @tc.name: RegisterPermActiveStatusCallback009
+ * @tc.desc: PrivacyManagerClient::RegisterPermActiveStatusCallback function test
+ * @tc.type: FUNC
+ * @tc.require: issueI61A6M
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level1)
+{
+    std::shared_ptr<PermActiveStatusCustomizedCbk> callback = nullptr;
+    ASSERT_EQ(nullptr, callback);
+    PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback); // callback is null
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback010
+ * @tc.desc: RegisterPermActiveStatusCallback caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback010, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+
+    std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList1);
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallback011
+ * @tc.desc: UnRegisterPermActiveStatusCallback caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback011, TestSize.Level1)
+{
+    std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
+    auto callbackPtr1 = std::make_shared<CbCustomizeTest3>(permList1);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr1));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
+
+    SetSelfTokenID(g_selfTokenId);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
+}
+
+/**
  * @tc.name: IsAllowedUsingPermission001
  * @tc.desc: IsAllowedUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
@@ -1151,6 +1275,24 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level1)
 }
 
 /**
+ * @tc.name: StartUsingPermission010
+ * @tc.desc: StartUsingPermission caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level1)
+{
+    g_policyPramsA.permStateList.emplace_back(g_infoManagerTestStateC);
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
+}
+
+/**
  * @tc.name: StopUsingPermission001
  * @tc.desc: StopUsingPermission with invalid tokenId or permission.
  * @tc.type: FUNC
@@ -1216,6 +1358,23 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
     ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+}
+
+/**
+ * @tc.name: StopUsingPermission006
+ * @tc.desc: StopUsingPermission caller is normal app.
+ * @tc.type: FUNC
+ * @tc.require: issueI66BH3
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
 }
 
 class TestCallBack1 : public StateChangeCallbackStub {
@@ -1402,19 +1561,6 @@ HWTEST_F(PrivacyKitTest, StateChangeNotify001, TestSize.Level1)
     OHOS::sptr<StateChangeCallback> callback = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callback);
     callback->StateChangeNotify(tokenId, isShowing); // customizedCallback_ is null
-}
-
-/**
- * @tc.name: RegisterPermActiveStatusCallback009
- * @tc.desc: PrivacyManagerClient::RegisterPermActiveStatusCallback function test
- * @tc.type: FUNC
- * @tc.require: issueI61A6M
- */
-HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback009, TestSize.Level1)
-{
-    std::shared_ptr<PermActiveStatusCustomizedCbk> callback = nullptr;
-    ASSERT_EQ(nullptr, callback);
-    PrivacyManagerClient::GetInstance().RegisterPermActiveStatusCallback(callback); // callback is null
 }
 
 /**
