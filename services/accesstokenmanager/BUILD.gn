@@ -46,6 +46,8 @@ if (is_standard_system) {
       "//third_party/json/include",
     ]
 
+    include_dirs += access_token_impl_include_dirs
+
     sources = [
       "main/cpp/src/callback/callback_manager.cpp",
       "main/cpp/src/callback/perm_state_callback_death_recipient.cpp",
@@ -67,6 +69,8 @@ if (is_standard_system) {
       "main/cpp/src/token/native_token_info_inner.cpp",
       "main/cpp/src/token/native_token_receptor.cpp",
     ]
+
+    sources += access_token_impl_sources
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [ "//base/security/access_token/config:coverage_flags" ]
