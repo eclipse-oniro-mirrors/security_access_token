@@ -42,6 +42,10 @@ public:
     static ATokenTypeEnum GetTokenType(AccessTokenID tokenID);
     /* Get token type from flag in tokenId, which doesn't depend on ATM service */
     static ATokenTypeEnum GetTokenTypeFlag(AccessTokenID tokenID);
+    /* Get token type by ATM service with uint_64 parameters */
+    static ATokenTypeEnum GetTokenType(FullTokenID tokenID);
+    /* Get token type from flag in tokenId, which doesn't depend on ATM service, with uint_64 parameters */
+    static ATokenTypeEnum GetTokenTypeFlag(FullTokenID tokenID);
     static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     static AccessTokenID GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     static AccessTokenIDEx GetHapTokenIDEx(int32_t userID, const std::string& bundleName, int32_t instIndex);

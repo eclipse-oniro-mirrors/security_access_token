@@ -71,7 +71,7 @@ int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
-    if ((tokenIdEx.tokenIdExStruct.tokenID == 0) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
+    if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -83,7 +83,7 @@ int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -93,7 +93,7 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return TOKEN_INVALID;
     }
@@ -103,7 +103,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
 ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return TOKEN_INVALID;
     }
@@ -111,10 +111,33 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
     return static_cast<ATokenTypeEnum>(idInner->type);
 }
 
+ATokenTypeEnum AccessTokenKit::GetTokenType(FullTokenID tokenID)
+{
+    AccessTokenID id = tokenID & TOKEN_ID_LOWMASK;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", id);
+    if (id == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return TOKEN_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetTokenType(id);
+}
+
+ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
+{
+    AccessTokenID id = tokenID & TOKEN_ID_LOWMASK;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", id);
+    if (id == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return TOKEN_INVALID;
+    }
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    return static_cast<ATokenTypeEnum>(idInner->type);
+}
+
 int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, dcap=%{public}s", tokenID, dcap.c_str());
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -153,7 +176,7 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
 int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -164,7 +187,7 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
 int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -181,7 +204,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
             "CALLER_TOKENID", static_cast<AccessTokenID>(GetSelfTokenID()), "PERMISSION_NAME", permissionName);
@@ -227,7 +250,7 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
 int AccessTokenKit::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permDefList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -239,7 +262,7 @@ int AccessTokenKit::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, isSystemGrant=%{public}d", tokenID, isSystemGrant);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -251,7 +274,7 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -266,7 +289,7 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
         tokenID, permissionName.c_str(), flag);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -285,7 +308,7 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
         tokenID, permissionName.c_str(), flag);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -303,7 +326,7 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
 int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -327,7 +350,7 @@ int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
 int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return INVALID_DLP_TOKEN_FLAG;
     }
@@ -353,7 +376,7 @@ AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    if (tokenID == 0) {
+    if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -414,8 +437,7 @@ int32_t AccessTokenKit::GetVersion(void)
 {
     uint64_t fullTokenId = GetSelfTokenID();
     bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
-    AccessTokenID tokenID = fullTokenId & TOKEN_ID_LOWMASK;
-    if ((GetTokenTypeFlag(tokenID) == TOKEN_HAP) && (!isSystemApp)) {
+    if ((GetTokenTypeFlag(fullTokenId) == TOKEN_HAP) && (!isSystemApp)) {
         return ERR_NOT_SYSTEM_APP;
     }
     return DEFAULT_TOKEN_VERSION;
