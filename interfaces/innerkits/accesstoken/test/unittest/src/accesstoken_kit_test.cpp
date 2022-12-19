@@ -294,8 +294,19 @@ void AccessTokenKitTest::SetUpTestCase()
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
 
+    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
+                                            g_infoManagerTestNormalInfoParms.bundleName,
+                                            g_infoManagerTestNormalInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
+
+    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
+                                            g_infoManagerTestSystemInfoParms.bundleName,
+                                            g_infoManagerTestSystemInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
+
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
+    
 
     NativeTokenGet();
 }
@@ -448,6 +459,15 @@ void AccessTokenKitTest::SetUp()
 void AccessTokenKitTest::TearDown()
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenKit::DeleteToken(tokenID);
+    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
+                                            g_infoManagerTestNormalInfoParms.bundleName,
+                                            g_infoManagerTestNormalInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
+
+    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
+                                            g_infoManagerTestSystemInfoParms.bundleName,
+                                            g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
     SetSelfTokenID(selfTokenId_);
 }
@@ -1605,8 +1625,8 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenIDEx001, TestSize.Level1)
 
     AccessTokenIDEx tokenIdEx1;
     tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(g_infoManagerTestSystemInfoParms.userID,
-                                                g_infoManagerTestSystemInfoParms.bundleName,
-                                                g_infoManagerTestSystemInfoParms.instIndex);
+                                                 g_infoManagerTestSystemInfoParms.bundleName,
+                                                 g_infoManagerTestSystemInfoParms.instIndex);
 
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     HapTokenInfo hapTokenInfoRes;

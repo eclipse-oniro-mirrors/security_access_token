@@ -163,6 +163,16 @@ static void DeleteTestToken()
                                             g_infoParmsE.bundleName,
                                             g_infoParmsE.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_normalInfoParms.userID,
+                                            g_normalInfoParms.bundleName,
+                                            g_normalInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_systemInfoParms.userID,
+                                            g_systemInfoParms.bundleName,
+                                            g_systemInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
 }
 
 void PrivacyKitTest::SetUpTestCase()
