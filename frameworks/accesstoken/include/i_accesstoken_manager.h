@@ -32,13 +32,14 @@
 #include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
 #include "permission_state_change_scope_parcel.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 class IAccessTokenManager : public IRemoteBroker {
 public:
-    static const int SA_ID_ACCESSTOKEN_MANAGER_SERVICE = 3503;
+    static const int SA_ID_ACCESSTOKEN_MANAGER_SERVICE = ACCESS_TOKEN_MANAGER_SERVICE_ID;
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
