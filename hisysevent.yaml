@@ -33,7 +33,7 @@ PERMISSION_CHECK_EVENT:
   PERMISSION_NAME: {type: STRING, desc: permission name}
   PERMISSION_GRANT_TYPE: {type: INT32, desc: grant type}
   PID_INFO: {type: INT32, desc: access token service pid}
-  REASON: {type: STRING, desc: reason}
+  REASON: {type: STRING, desc: check report reason}
 
 PERMISSION_SYNC:
   __BASE: {type: FAULT, level: CRITICAL, tag: usability, desc: permission sync error}
