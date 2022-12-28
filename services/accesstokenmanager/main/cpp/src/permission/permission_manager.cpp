@@ -29,6 +29,7 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
+#include "ipc_skeleton.h"
 #include "parameter.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
@@ -166,6 +167,14 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
 
 int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
+    if (tokenID == INVALID_TOKENID) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
+            "CALLER_TOKENID", static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return PERMISSION_DENIED;
+    }
+
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return PERMISSION_DENIED;
