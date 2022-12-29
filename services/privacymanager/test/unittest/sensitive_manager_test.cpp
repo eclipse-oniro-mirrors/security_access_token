@@ -82,6 +82,14 @@ static HapInfoParams g_InfoParms1 = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleA"
 };
+
+static HapInfoParams g_infoManagerTestSystemInfoParms = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleB",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleB",
+    .isSystemApp = true
+};
 void SensitiveManagerServiceTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
@@ -102,6 +110,10 @@ void SensitiveManagerServiceTest::SetUp()
 
 void SensitiveManagerServiceTest::TearDown()
 {
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
+                                                          g_infoManagerTestSystemInfoParms.bundleName,
+                                                          g_infoManagerTestSystemInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
     SetSelfTokenID(g_selfTokenId);
 }
 
@@ -165,6 +177,11 @@ HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyTest001, TestSize.Leve
  */
 HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
 {
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_PolicyPrams1);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    SetSelfTokenID(tokenIdEx.tokenIDEx);
+
     sptr<ApplicationStateObserverStub> listener = new(std::nothrow) ApplicationStateObserverStub();
     ASSERT_NE(listener, nullptr);
     ASSERT_NE(0, AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(nullptr));
