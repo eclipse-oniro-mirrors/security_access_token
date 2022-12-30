@@ -169,8 +169,8 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
 {
     if (tokenID == INVALID_TOKENID) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR,
-            "CALLER_TOKENID", static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
+            static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return PERMISSION_DENIED;
     }
