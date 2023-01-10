@@ -417,9 +417,18 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
 void AccessTokenManagerService::CreateDeviceListener()
 {
     static const int32_t RETRY_SLEEP_TIME_MS = 1000;
+    static const int32_t DM_INIT_RETRY_TIMES = 30;
     std::function<void()> runner = [&]() {
         auto retrySleepTime = std::chrono::milliseconds(RETRY_SLEEP_TIME_MS);
+        int32_t count = 0;
         while (1) {
+            if (count >= DM_INIT_RETRY_TIMES) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "retry times has reach the max, break the loop.");
+                break;
+            }
+
+            count++;
+
             std::unique_lock<std::mutex> lock(mutex_);
 
             std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
