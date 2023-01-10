@@ -212,7 +212,6 @@ std::string GetUuidMock()
     return uuid;
 }
 
-
 bool GetSendMessFlagMock()
 {
     return g_sendMessFlag;
@@ -221,4 +220,9 @@ bool GetSendMessFlagMock()
 void ResetSendMessFlagMock()
 {
     g_sendMessFlag = false;
+}
+
+void ResetUuidMock()
+{
+    uuid = "";
 }

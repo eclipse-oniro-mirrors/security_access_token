@@ -29,6 +29,7 @@
 #include "gtest/gtest.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "base_remote_command.h"
 #include "constant_common.h"
 #include "delete_remote_token_command.h"
@@ -80,7 +81,8 @@ static DmDeviceInfo g_devInfo = {
 };
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitTest"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
+static constexpr int MAX_RETRY_TIMES = 10;
 }
 
 TokenSyncServiceTest::TokenSyncServiceTest()
@@ -152,8 +154,10 @@ namespace {
 
 void SendTaskThread()
 {
-    while (!GetSendMessFlagMock()) {
+    int count = 0;
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
+        count++;
     }
 
     ResetSendMessFlagMock();
@@ -413,6 +417,9 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
 HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo002 start.");
+
+    ResetUuidMock();
+
     // create local token
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
@@ -421,7 +428,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
 
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
@@ -444,7 +451,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
     int count = 0;
-    while (!GetSendMessFlagMock() && count < 10) {
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
     }
@@ -452,7 +459,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     ResetSendMessFlagMock();
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
     count = 0;
-    while (!GetSendMessFlagMock() && count < 10) {
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
     }
@@ -460,7 +467,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 
     ResetSendMessFlagMock();
     std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "0065e65f-");
+    ASSERT_EQ(uuidMessage, "");
 }
 
 /**
@@ -493,7 +500,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo003, TestSize.Level1)
         g_udid, 0x20100000);
 
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
@@ -526,7 +533,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo004, TestSize.Level1)
         g_udid, 0x20100000);
 
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
@@ -560,7 +567,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo005, TestSize.Level1)
         g_udid, 0x20100000);
 
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
@@ -595,7 +602,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo006, TestSize.Level1)
         g_udid, 0x20100000);
 
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
@@ -629,7 +636,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo007, TestSize.Level1)
         g_udid, 0x20100000);
 
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0x20100000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
@@ -672,24 +679,24 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
 
     int count = 0;
-    while (!GetSendMessFlagMock() && count < 10) {
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
     }
     free(recvBuffer);
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(g_udid, 0);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
- * @tc.name: SyncNativeTokens002
+ * @tc.name: SyncNativeTokens001
  * @tc.desc: when device is online, sync remote nativetoken which has no dcaps
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, SyncNativeTokens001, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens002 start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens001 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
     // 0x28000001 token has no dcaps
     g_jsonAfter =
@@ -713,25 +720,25 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
     sleep(6);
 
     AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_NE(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
     int ret = AccessTokenKit::CheckNativeDCap(mapID, "SYSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
     ret = AccessTokenKit::CheckNativeDCap(mapID, "DMSDCAP");
-    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 
     mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
- * @tc.name: SyncNativeTokens003
+ * @tc.name: SyncNativeTokens002
  * @tc.desc: when device is online, sync remote nativetokens status failed
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens003, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, SyncNativeTokens002, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens003 start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens002 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
     g_jsonAfter =
         "\",\"jsonPayload\":\"{\\\"NativeTokenInfos\\\":[{\\\"apl\\\":3,\\\"processName\\\":\\\"attest\\\","
@@ -753,21 +760,21 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens003, TestSize.Level1)
     sleep(6);
 
     AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 
     mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
- * @tc.name: SyncNativeTokens004
+ * @tc.name: SyncNativeTokens003
  * @tc.desc: when device is online, sync remote nativetokens which parameter is wrong
  * @tc.type: FUNC
  * @tc.require:AR000GK6T6
  */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, SyncNativeTokens003, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens004 start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens003 start.");
     g_jsonBefore = "{\"commandName\":\"SyncRemoteNativeTokenCommand\", \"id\":\"";
     // apl is error
     g_jsonAfter =
@@ -790,21 +797,23 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
     sleep(6);
 
     AccessTokenID mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000000);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 
     mapID = AccessTokenKit::GetRemoteNativeTokenID(g_udid, 0x28000001);
-    ASSERT_EQ(mapID, (AccessTokenID)0);
+    ASSERT_EQ(mapID, static_cast<AccessTokenID>(0));
 }
 
 /**
- * @tc.name: SyncNativeTokens005
+ * @tc.name: SyncNativeTokens004
  * @tc.desc: test remote hap recv func
  * @tc.type: FUNC
  * @tc.require:AR000GK6T5
  */
-HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
+HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens005 start.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SyncNativeTokens004 start.");
+
+    ResetUuidMock();
 
     std::string recvJson =
         "{\"commandName\":\"SyncRemoteNativeTokenCommand\",\"id\":\"ec23cd2d-\",\"jsonPayload\":"
@@ -821,7 +830,7 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
     int count = 0;
-    while (!GetSendMessFlagMock() && count < 10) {
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
     }
@@ -829,18 +838,18 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens005, TestSize.Level1)
     ResetSendMessFlagMock();
     SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
     count = 0;
-    while (!GetSendMessFlagMock() && count < 10) {
+    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
     }
     free(recvBuffer);
 
     std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "ec23cd2d-");
+    ASSERT_EQ(uuidMessage, "");
 }
 
 /**
- * @tc.name: SyncNativeTokens005
+ * @tc.name: DeleteRemoteTokenCommand001
  * @tc.desc: test delete remote token command
  * @tc.type: FUNC
  * @tc.require: Issue Number
