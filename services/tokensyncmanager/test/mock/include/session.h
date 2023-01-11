@@ -349,6 +349,7 @@ void CompressMock(const std::string &json, const unsigned char *compressedBytes,
 std::string GetUuidMock();
 bool GetSendMessFlagMock();
 void ResetSendMessFlagMock();
+void ResetUuidMock();
 
 #endif
 #endif // SESSION_H
