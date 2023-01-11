@@ -306,7 +306,6 @@ void AccessTokenKitTest::SetUpTestCase()
 
     tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
-    
 
     NativeTokenGet();
 }

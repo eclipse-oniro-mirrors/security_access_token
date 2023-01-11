@@ -179,7 +179,6 @@ void PrivacyKitTest::SetUpTestCase()
 {
     DeleteTestToken();
     g_selfTokenId = GetSelfTokenID();
-    
 }
 
 void PrivacyKitTest::TearDownTestCase()
@@ -528,7 +527,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     SetSelfTokenID(tokenIdEx.tokenIDEx);
     
-    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA,
+        "ohos.permission.CAMERA", 1, 0));
 }
 
 /**
