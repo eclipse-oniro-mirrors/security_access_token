@@ -264,25 +264,7 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "enter JsConstructor");
 
     napi_value thisVar = nullptr;
-
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
-    AccessTokenKit* objectInfo = new (std::nothrow) AccessTokenKit();
-    if (objectInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo is nullptr");
-        return nullptr;
-    }
-
-    std::unique_ptr<AccessTokenKit> objPtr {objectInfo};
-    NAPI_CALL(env, napi_wrap(env, thisVar, objectInfo,
-        [](napi_env env, void* data, void* hint) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
-            if (data != nullptr) {
-                AccessTokenKit* objectInfo = reinterpret_cast<AccessTokenKit*>(data);
-                delete objectInfo;
-            }
-        },
-        nullptr, nullptr));
-    objPtr.release();
     return thisVar;
 }
 
@@ -297,6 +279,23 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Get a reference to the global variable g_atManagerRef_ complete");
 
     NAPI_CALL(env, napi_new_instance(env, cons, 0, nullptr, &instance));
+    AccessTokenKit* objectInfo = new (std::nothrow) AccessTokenKit();
+    if (objectInfo == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo is nullptr");
+        return nullptr;
+    }
+
+    std::unique_ptr<AccessTokenKit> objPtr {objectInfo};
+    NAPI_CALL(env, napi_wrap(env, instance, objectInfo,
+        [](napi_env env, void* data, void* hint) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
+            if (data != nullptr) {
+                AccessTokenKit* objectInfo = reinterpret_cast<AccessTokenKit*>(data);
+                delete objectInfo;
+            }
+        },
+        nullptr, nullptr));
+    objPtr.release();
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "New the js instance complete");
 
