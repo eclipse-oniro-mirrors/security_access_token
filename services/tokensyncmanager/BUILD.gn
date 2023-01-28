@@ -82,7 +82,7 @@ ohos_shared_library("token_sync_manager_service") {
     "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/services/tokensyncmanager:token_sync.rc",
-    "//third_party/zlib:libz",
+    "//third_party/zlib:shared_libz",
   ]
 
   external_deps = [
