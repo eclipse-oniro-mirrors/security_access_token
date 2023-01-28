@@ -176,8 +176,8 @@ private:
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
-    static bool FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
-    static void DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo);
+    static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
+    static void DeleteRegisterInVector(const PermStateChangeScope& scopeInfo);
     static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
