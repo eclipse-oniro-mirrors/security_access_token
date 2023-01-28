@@ -80,6 +80,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
 
         DeviceInfoManager::GetInstance().AddDeviceInfo(device.networkId, uuid, udid, device.deviceName,
             std::to_string(device.deviceTypeId));
+        RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
     }
 
     return Constant::SUCCESS;

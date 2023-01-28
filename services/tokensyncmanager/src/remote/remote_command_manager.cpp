@@ -174,29 +174,6 @@ int RemoteCommandManager::NotifyDeviceOnline(const std::string &nodeId)
 
     lock.unlock();
 
-    std::function<void()> delayed = ([=]() {
-        const std::shared_ptr<SyncRemoteNativeTokenCommand> syncRemoteNativeTokenCommand =
-            RemoteCommandFactory::GetInstance().NewSyncRemoteNativeTokenCommand(ConstantCommon::GetLocalDeviceId(),
-            nodeId);
-
-        const int32_t resultCode = RemoteCommandManager::GetInstance().ExecuteCommand(
-            nodeId, syncRemoteNativeTokenCommand);
-        if (resultCode != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_INFO(LABEL,
-                "%{public}s: RemoteExecutorManager executeCommand syncRemoteNativeTokenCommand failed, return %d",
-                __func__, resultCode);
-            return;
-        }
-    });
-
-    std::shared_ptr<TokenSyncEventHandler> handler =
-        DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
-    if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
-        return Constant::FAILURE;
-    }
-    handler->ProxyPostTask(delayed, "HandleDeviceOnline", Constant::DELAY_SYNC_TOKEN_MS);
-
     return Constant::SUCCESS;
 }
 
