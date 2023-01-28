@@ -60,6 +60,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
     if (uuid != "" && udid != "") {
         DeviceInfoManager::GetInstance().AddDeviceInfo(
             networkId, uuid, udid, info.deviceName, std::to_string(info.deviceTypeId));
+        RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, online failed.");
     }
