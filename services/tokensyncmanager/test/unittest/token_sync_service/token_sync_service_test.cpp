@@ -467,7 +467,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 
     ResetSendMessFlagMock();
     std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "");
+    ASSERT_EQ(uuidMessage, "0065e65f-");
 }
 
 /**
@@ -845,7 +845,7 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
     free(recvBuffer);
 
     std::string uuidMessage = GetUuidMock();
-    ASSERT_EQ(uuidMessage, "");
+    ASSERT_EQ(uuidMessage, "ec23cd2d-");
 }
 
 /**
