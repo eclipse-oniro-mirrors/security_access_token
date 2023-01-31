@@ -40,7 +40,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 std::mutex g_lockForPermStateChangeRegisters;
-std::map<AccessTokenKit*, std::vector<RegisterPermStateChangeInfo*>> g_permStateChangeRegisters;
+std::vector<RegisterPermStateChangeInfo*> g_permStateChangeRegisters;
 std::mutex g_lockCache;
 std::map<std::string, PermissionStatusCache> g_cache;
 static PermissionParamCache g_paramCache;
@@ -263,25 +263,7 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "enter JsConstructor");
 
     napi_value thisVar = nullptr;
-
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
-    AccessTokenKit* objectInfo = new (std::nothrow) AccessTokenKit();
-    if (objectInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "objectInfo is nullptr");
-        return nullptr;
-    }
-
-    std::unique_ptr<AccessTokenKit> objPtr {objectInfo};
-    NAPI_CALL(env, napi_wrap(env, thisVar, objectInfo,
-        [](napi_env env, void* data, void* hint) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "delete accesstoken kit");
-            if (data != nullptr) {
-                AccessTokenKit* objectInfo = reinterpret_cast<AccessTokenKit*>(data);
-                delete objectInfo;
-            }
-        },
-        nullptr, nullptr));
-    objPtr.release();
     return thisVar;
 }
 
@@ -1267,11 +1249,6 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
-    AccessTokenKit* accessTokenKitInfo = nullptr;
-    if (napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_unwrap failed");
-        return false;
-    }
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
     registerPermStateChangeInfo.env = env;
@@ -1280,7 +1257,6 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
     registerPermStateChangeInfo.subscriber->SetEnv(env);
     registerPermStateChangeInfo.subscriber->SetCallbackRef(callback);
-    registerPermStateChangeInfo.accessTokenKit = accessTokenKitInfo;
     return true;
 }
 
@@ -1312,10 +1288,9 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     }
     {
         std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
-        g_permStateChangeRegisters[registerPermStateChangeInfo->accessTokenKit].emplace_back(
-            registerPermStateChangeInfo);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "add g_PermStateChangeRegisters->second.size = %{public}zu",
-            g_permStateChangeRegisters[registerPermStateChangeInfo->accessTokenKit].size());
+        g_permStateChangeRegisters.emplace_back(registerPermStateChangeInfo);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "add g_PermStateChangeRegisters.size = %{public}zu",
+            g_permStateChangeRegisters.size());
     }
     callbackPtr.release();
     return nullptr;
@@ -1366,8 +1341,6 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
             return false;
         }
     }
-    AccessTokenKit* accessTokenKitInfo = nullptr;
-    NAPI_CALL_BASE(env, napi_unwrap(env, thisVar, reinterpret_cast<void **>(&accessTokenKitInfo)), false);
 
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
@@ -1375,7 +1348,6 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     unregisterPermStateChangeInfo.callbackRef = callback;
     unregisterPermStateChangeInfo.permStateChangeType = type;
     unregisterPermStateChangeInfo.scopeInfo = scopeInfo;
-    unregisterPermStateChangeInfo.accessTokenKit = accessTokenKitInfo;
     return true;
 }
 
@@ -1391,7 +1363,7 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     if (!ParseInputToUnregister(env, cbInfo, *unregisterPermStateChangeInfo)) {
         return nullptr;
     }
-    if (!FindAndGetSubscriberInMap(unregisterPermStateChangeInfo)) {
+    if (!FindAndGetSubscriberInVector(unregisterPermStateChangeInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
         NAPI_CALL(env,
@@ -1400,7 +1372,7 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     }
     int32_t result = AccessTokenKit::UnRegisterPermStateChangeCallback(unregisterPermStateChangeInfo->subscriber);
     if (result == RET_SUCCESS) {
-        DeleteRegisterInMap(unregisterPermStateChangeInfo->accessTokenKit, unregisterPermStateChangeInfo->scopeInfo);
+        DeleteRegisterInVector(unregisterPermStateChangeInfo->scopeInfo);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
         std::string errMsg = GetErrorMessage(result);
@@ -1409,21 +1381,18 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     return nullptr;
 }
 
-bool NapiAtManager::FindAndGetSubscriberInMap(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo)
+bool NapiAtManager::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo)
 {
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
     std::vector<AccessTokenID> targetTokenIDs = unregisterPermStateChangeInfo->scopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = unregisterPermStateChangeInfo->scopeInfo.permList;
-    auto registerInstance = g_permStateChangeRegisters.find(unregisterPermStateChangeInfo->accessTokenKit);
-    if (registerInstance != g_permStateChangeRegisters.end()) {
-        for (const auto& item : registerInstance->second) {
-            PermStateChangeScope scopeInfo;
-            item->subscriber->GetScope(scopeInfo);
-            if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
-                unregisterPermStateChangeInfo->subscriber = item->subscriber;
-                return true;
-            }
+    for (const auto& item : g_permStateChangeRegisters) {
+        PermStateChangeScope scopeInfo;
+        item->subscriber->GetScope(scopeInfo);
+        if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
+            unregisterPermStateChangeInfo->subscriber = item->subscriber;
+            return true;
         }
     }
     return false;
@@ -1436,43 +1405,35 @@ bool NapiAtManager::IsExistRegister(const RegisterPermStateChangeInfo* registerP
     std::vector<AccessTokenID> targetTokenIDs = targetScopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = targetScopeInfo.permList;
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
-    auto registerInstance = g_permStateChangeRegisters.find(registerPermStateChangeInfo->accessTokenKit);
-    if (registerInstance != g_permStateChangeRegisters.end()) {
-        for (const auto& item : registerInstance->second) {
-            PermStateChangeScope scopeInfo;
-            item->subscriber->GetScope(scopeInfo);
-            if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
-                return true;
-            }
+    for (const auto& item : g_permStateChangeRegisters) {
+        PermStateChangeScope scopeInfo;
+        item->subscriber->GetScope(scopeInfo);
+        if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in vector");
+            return true;
         }
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "cannot find subscriber in map");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "cannot find subscriber in vector");
     return false;
 }
 
-void NapiAtManager::DeleteRegisterInMap(AccessTokenKit* accessTokenKit, const PermStateChangeScope& scopeInfo)
+void NapiAtManager::DeleteRegisterInVector(const PermStateChangeScope& scopeInfo)
 {
     std::vector<AccessTokenID> targetTokenIDs = scopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = scopeInfo.permList;
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
-    auto subscribers = g_permStateChangeRegisters.find(accessTokenKit);
-    if (subscribers != g_permStateChangeRegisters.end()) {
-        auto it = subscribers->second.begin();
-        while (it != subscribers->second.end()) {
-            if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscribers in map, delete");
-                delete *it;
-                *it = nullptr;
-                subscribers->second.erase(it);
-                break;
-            } else {
-                ++it;
-            }
-        }
-        if (subscribers->second.empty()) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "No subscriberInfo in the vector, erase the map.");
-            g_permStateChangeRegisters.erase(subscribers);
+    auto item = g_permStateChangeRegisters.begin();
+    while (item != g_permStateChangeRegisters.end()) {
+        PermStateChangeScope stateChangeScope;
+        (*item)->subscriber->GetScope(stateChangeScope);
+        if (stateChangeScope.tokenIDs == targetTokenIDs && stateChangeScope.permList == targetPermList) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscribers in vector, delete");
+            delete *item;
+            *item = nullptr;
+            g_permStateChangeRegisters.erase(item);
+            break;
+        } else {
+            ++item;
         }
     }
 }
