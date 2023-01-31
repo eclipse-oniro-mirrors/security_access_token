@@ -34,6 +34,7 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_shared_library("privacy_manager_service") {
     subsystem_name = "security"
     part_name = "access_token"
+    version_script = "libprivacy_map"
 
     include_dirs = [
       "include/active",
