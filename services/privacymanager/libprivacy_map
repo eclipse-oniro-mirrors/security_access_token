@@ -148,6 +148,7 @@
         "OHOS::Security::AccessToken::PrivacyManagerService::AddPermissionUsedRecord(unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&, int, int)";
         "OHOS::Security::AccessToken::PrivacyManagerService::IsAllowedUsingPermission(unsigned int, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > const&)";
         "OHOS::Security::AccessToken::AppManagerPrivacyClient::GetForegroundApplications(std::__1::vector<OHOS::Security::AccessToken::AppStateData, std::__1::allocator<OHOS::Security::AccessToken::AppStateData> >&)";
+        "OHOS::Security::AccessToken::PermissionUsedRecordDb::FindByConditions(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::GenericValues const&, std::__1::vector<OHOS::Security::AccessToken::GenericValues, std::__1::allocator<OHOS::Security::AccessToken::GenericValues> >&)";
       };
   local:
     *;
