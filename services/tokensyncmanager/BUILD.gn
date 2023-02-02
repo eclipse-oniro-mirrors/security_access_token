@@ -34,6 +34,7 @@ group("tokensyncmanager") {
 ohos_shared_library("token_sync_manager_service") {
   subsystem_name = "security"
   part_name = "access_token"
+  version_script = "tokensync_manager_service.map"
 
   include_dirs = [
     "include/service",
