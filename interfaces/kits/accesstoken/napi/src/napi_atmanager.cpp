@@ -391,13 +391,11 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
     if (asyncContext->tokenId == 0) {
         std::string errMsg = GetParamErrorMsg("tokenID", "number");
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = errMsg;
         return;
     }
     if (asyncContext->permissionName.empty() || (asyncContext->permissionName.length() > MAX_LENGTH)) {
         std::string errMsg = GetParamErrorMsg("permissionName", "string");
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = errMsg;
         return;
     }
 
@@ -418,7 +416,7 @@ void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, v
 
     napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
-    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+    ReturnPromiseResult(env, asyncContext->errorCode, asyncContext->deferred, result);
 }
 
 napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info)
