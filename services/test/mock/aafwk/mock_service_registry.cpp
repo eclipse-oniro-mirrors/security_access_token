@@ -154,6 +154,11 @@ int32_t SystemAbilityManagerProxy::LoadSystemAbility(int32_t systemAbilityId, co
     return -1;
 }
 
+int32_t SystemAbilityManagerProxy::UnloadSystemAbility(int32_t systemAbilityId)
+{
+    return -1;
+}
+
 int32_t SystemAbilityManagerProxy::AddSystemAbility(int32_t systemAbilityId, const sptr<IRemoteObject>& ability,
     const SAExtraProp& extraProp)
 {
