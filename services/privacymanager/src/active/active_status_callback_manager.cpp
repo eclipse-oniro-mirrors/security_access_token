@@ -31,7 +31,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ActiveStatusCallbackManager"
 };
 static const time_t MAX_TIMEOUT_SEC = 30;
-static const uint32_t MAX_CALLBACK_SIZE = 200;
+static const uint32_t MAX_CALLBACK_SIZE = 1024;
 }
 
 ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
