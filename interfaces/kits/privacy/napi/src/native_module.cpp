@@ -29,6 +29,7 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("addPermissionUsedRecord", AddPermissionUsedRecord),
         DECLARE_NAPI_FUNCTION("startUsingPermission", StartUsingPermission),
         DECLARE_NAPI_FUNCTION("stopUsingPermission", StopUsingPermission),
+        DECLARE_NAPI_FUNCTION("getPermissionUsedRecord", GetPermissionUsedRecords),
         DECLARE_NAPI_FUNCTION("getPermissionUsedRecords", GetPermissionUsedRecords),
         DECLARE_NAPI_FUNCTION("on", RegisterPermActiveChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback)
