@@ -94,9 +94,6 @@ void AccessTokenManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
-#ifdef TOKEN_SYNC_ENABLE
-    DestroyDeviceListener();
-#endif
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -413,90 +410,6 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
-#ifdef TOKEN_SYNC_ENABLE
-void AccessTokenManagerService::CreateDeviceListener()
-{
-    static const int32_t RETRY_SLEEP_TIME_MS = 1000;
-    static const int32_t DM_INIT_RETRY_TIMES = 30;
-    std::function<void()> runner = [&]() {
-        auto retrySleepTime = std::chrono::milliseconds(RETRY_SLEEP_TIME_MS);
-        int32_t count = 0;
-        while (1) {
-            if (count >= DM_INIT_RETRY_TIMES) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "retry times has reach the max, break the loop.");
-                break;
-            }
-
-            count++;
-
-            std::unique_lock<std::mutex> lock(mutex_);
-
-            std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
-            std::shared_ptr<AtmDmInitCallback> ptrDmInitCallback = std::make_shared<AtmDmInitCallback>();
-
-            int32_t ret =
-                DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
-                std::this_thread::sleep_for(retrySleepTime);
-                continue;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "device manager init success.");
-
-            std::string extra = "";
-            std::shared_ptr<AtmDeviceStateCallback> ptrAtmDeviceStateCallback =
-                std::make_shared<AtmDeviceStateCallback>();
-            ret = DistributedHardware::DeviceManager::GetInstance().RegisterDevStateCallback(packageName, extra,
-                ptrAtmDeviceStateCallback);
-            if (ret != RET_SUCCESS) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: RegisterDevStateCallback error, result: %{public}d", ret);
-                std::this_thread::sleep_for(retrySleepTime);
-                continue;
-            }
-
-            isListened_ = true;
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "device state Listener register success.");
-
-            return;
-        }
-    };
-
-    std::thread initThread(runner);
-    initThread.detach();
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "start a thread to listen device state.");
-}
-
-void AccessTokenManagerService::DestroyDeviceListener()
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, init: %{public}d", isListened_);
-
-    std::unique_lock<std::mutex> lock(mutex_);
-
-    if (!isListened_) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "not listened, skip");
-        return;
-    }
-
-    std::string packageName = ACCESS_TOKEN_PACKAGE_NAME;
-
-    int32_t ret = DistributedHardware::DeviceManager::GetInstance().UnRegisterDevStateCallback(packageName);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UnRegisterDevStateCallback failed, code: %{public}d", ret);
-    }
-
-    ret = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(packageName);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UnInitDeviceManager failed, code: %{public}d", ret);
-    }
-
-    isListened_ = false;
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "device state listener unregister success.");
-}
-#endif
 
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
@@ -534,9 +447,6 @@ bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
-#ifdef TOKEN_SYNC_ENABLE
-    CreateDeviceListener(); // for start tokensync when remote devivce online
-#endif
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif
