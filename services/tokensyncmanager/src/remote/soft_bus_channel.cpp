@@ -171,7 +171,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     isSessionUsing_ = true;
     lock.unlock();
 
-    int retCode = SendRequestBytes(buf, len);
+    int retCode = SendRequestBytes(buf, info.bytesLength);
     delete[] buf;
 
     std::unique_lock<std::mutex> lock2(sessionMutex_);
@@ -376,7 +376,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
             delete[] sendbuf;
             return;
         }
-        int sendResultCode = SendResponseBytes(session, sendbuf, sendlen);
+        int sendResultCode = SendResponseBytes(session, sendbuf, info.bytesLength);
         delete[] sendbuf;
         ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d ", sendResultCode);
         return;
@@ -405,7 +405,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
         delete[] buf;
         return;
     }
-    int retCode = SendResponseBytes(session, buf, len);
+    int retCode = SendResponseBytes(session, buf, info.bytesLength);
     delete[] buf;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d", retCode);
 }
