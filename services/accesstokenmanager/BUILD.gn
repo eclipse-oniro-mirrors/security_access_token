@@ -34,16 +34,12 @@ if (is_standard_system) {
       "main/cpp/include/token",
       "main/cpp/include/permission",
       "main/cpp/include/database",
-      "main/cpp/include/device",
       "//base/security/access_token/frameworks/common/include",
       "//base/security/access_token/frameworks/accesstoken/include",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/frameworks/tokensync/include",
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/interfaces/innerkits/tokensync/src",
       "//base/security/access_token/services/common/database/include",
-      "//base/security/access_token/services/tokensyncmanager/include/common",
       "//third_party/json/include",
     ]
 
@@ -115,7 +111,6 @@ if (is_standard_system) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
 
       sources += [
-        "main/cpp/src/device/atm_device_state_callback.cpp",
         "main/cpp/src/token/accesstoken_remote_token_manager.cpp",
         "main/cpp/src/token/token_modify_notifier.cpp",
       ]
@@ -126,7 +121,6 @@ if (is_standard_system) {
       ]
 
       deps += [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
-      external_deps += [ "device_manager:devicemanagersdk" ]
     }
   }
 }

@@ -17,8 +17,6 @@
 #define ACCESSTOKEN_MANAGER_CLIENT_H
 
 #include <string>
-#include <mutex>
-#include <condition_variable>
 
 #include "access_token.h"
 #include "hap_token_info.h"
@@ -30,34 +28,20 @@ namespace Security {
 namespace AccessToken {
 class TokenSyncManagerClient final {
 public:
-    static const int TOKEN_SYNC_LOAD_SA_TIMEOUT_MS = 60000;
-
     static TokenSyncManagerClient& GetInstance();
 
     virtual ~TokenSyncManagerClient();
 
-    int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID);
-    int DeleteRemoteHapTokenInfo(AccessTokenID tokenID);
-    int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo);
-    void LoadTokenSync();
-    void FinishStartSASuccess(const sptr<IRemoteObject>& remoteObject);
-    void FinishStartSAFailed();
-    void SetRemoteObject(const sptr<IRemoteObject>& remoteObject);
-    sptr<IRemoteObject> GetRemoteObject();
-    void OnRemoteDiedHandle();
+    int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const;
+    int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const;
+    int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const;
 
 private:
-    std::condition_variable tokenSyncCon_;
-    std::mutex tokenSyncMutex_;
-    std::mutex remoteMutex_;
-    bool ready_ = false;
-    sptr<IRemoteObject> remoteObject_ = nullptr;
-
     TokenSyncManagerClient();
 
     DISALLOW_COPY_AND_MOVE(TokenSyncManagerClient);
 
-    sptr<ITokenSyncManager> GetProxy();
+    sptr<ITokenSyncManager> GetProxy() const;
 };
 } // namespace AccessToken
 } // namespace Security

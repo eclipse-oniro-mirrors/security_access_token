@@ -18,7 +18,6 @@
 
 #include <string>
 #include <vector>
-#include <mutex>
 
 #include "accesstoken_manager_stub.h"
 #include "iremote_object.h"
@@ -76,19 +75,15 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
-    void CreateDeviceListener();
-    void DestroyDeviceListener();
 #endif
 
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
-    bool Initialize();
+    bool Initialize() const;
 
     ServiceRunningState state_;
-    std::mutex mutex_;
-    bool isListened_ = false;
 };
 } // namespace AccessToken
 } // namespace Security

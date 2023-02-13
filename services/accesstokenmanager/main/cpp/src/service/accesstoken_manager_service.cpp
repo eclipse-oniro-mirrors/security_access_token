@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <sys/types.h>
-#include <thread>
 #include <unistd.h>
 
 #include "access_token.h"
@@ -25,10 +24,6 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
-#ifdef TOKEN_SYNC_ENABLE
-#include "atm_device_state_callback.h"
-#include "device_manager.h"
-#endif
 #include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_parser.h"
@@ -52,7 +47,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
 };
-static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 constexpr int TWO_ARGS = 2;
 }
 
@@ -443,7 +437,7 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
     return ERR_OK;
 }
 
-bool AccessTokenManagerService::Initialize()
+bool AccessTokenManagerService::Initialize() const
 {
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
