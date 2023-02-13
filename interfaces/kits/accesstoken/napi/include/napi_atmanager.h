@@ -55,9 +55,12 @@ public:
     void PermStateChangeCallback(PermStateChangeInfo& result) override;
     void SetEnv(const napi_env& env);
     void SetCallbackRef(const napi_ref& ref);
+    void SetValid(bool valid);
 private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
+    bool valid_ = true;
+    std::mutex validMutex_;
 };
 
 struct RegisterPermStateChangeWorker {
@@ -75,6 +78,7 @@ struct PermStateChangeContext {
     std::string permStateChangeType;
     AccessTokenKit* accessTokenKit = nullptr;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
+    void DeleteNapiRef();
 };
 
 typedef PermStateChangeContext RegisterPermStateChangeInfo;
