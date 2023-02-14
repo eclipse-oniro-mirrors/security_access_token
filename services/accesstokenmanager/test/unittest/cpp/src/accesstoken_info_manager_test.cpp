@@ -1919,21 +1919,6 @@ HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1
 }
 
 /**
- * @tc.name: OnDeviceOnline001
- * @tc.desc: AtmDeviceStateCallbackTest::OnDeviceOnline function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, OnDeviceOnline001, TestSize.Level1)
-{
-    ASSERT_NE(nullptr, TokenSyncManagerClient::GetInstance().GetRemoteObject());
-
-    DistributedHardware::DmDeviceInfo deviceInfo;
-    std::shared_ptr<AtmDeviceStateCallback> callback = std::make_shared<AtmDeviceStateCallback>();
-    callback->OnDeviceOnline(deviceInfo); // remote object is not nullptr
-}
-
-/**
  * @tc.name: VerifyAccessToken001
  * @tc.desc: VerifyAccessToken with permission is invalid
  * @tc.type: FUNC

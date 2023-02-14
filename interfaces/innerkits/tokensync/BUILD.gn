@@ -33,17 +33,12 @@ if (is_standard_system) {
       "src",
       "//base/security/access_token/frameworks/tokensync/include",
       "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/interfaces/innerkits/tokensync/include",
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
       "//base/security/access_token/frameworks/accesstoken/include",
-      "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
-      "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy/include",
     ]
 
     sources = [
-      "src/token_sync_death_recipient.cpp",
       "src/token_sync_kit.cpp",
-      "src/token_sync_load_callback.cpp",
       "src/token_sync_manager_client.cpp",
       "src/token_sync_manager_proxy.cpp",
     ]
