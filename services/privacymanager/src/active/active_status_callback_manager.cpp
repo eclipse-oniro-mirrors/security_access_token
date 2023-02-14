@@ -53,7 +53,6 @@ ActiveStatusCallbackManager::~ActiveStatusCallbackManager()
 int32_t ActiveStatusCallbackManager::AddCallback(
     const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "callback %{public}p ", callback.GetRefPtr());
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
         return PrivacyError::ERR_PARAM_INVALID;
