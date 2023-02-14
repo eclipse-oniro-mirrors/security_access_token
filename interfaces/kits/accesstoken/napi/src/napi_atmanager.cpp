@@ -150,6 +150,11 @@ RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
 
 void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInfo& result)
 {
+    std::lock_guard<std::mutex> lock(validMutex_);
+    if (!valid_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "object is invalid.");
+        return;
+    }
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
@@ -193,12 +198,73 @@ void RegisterPermStateChangeScopePtr::SetCallbackRef(const napi_ref& ref)
     ref_ = ref;
 }
 
+void RegisterPermStateChangeScopePtr::SetValid(bool valid)
+{
+    std::lock_guard<std::mutex> lock(validMutex_);
+    valid_ = valid;
+}
+
 PermStateChangeContext::~PermStateChangeContext()
 {
-    if (callbackRef != nullptr) {
-        napi_delete_reference(env, callbackRef);
-        callbackRef = nullptr;
+    if (callbackRef == nullptr) {
+        return;
     }
+    DeleteNapiRef();
+}
+
+void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
+{
+    if ((work == nullptr) || (work->data == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr : %{public}d, work->data == nullptr : %{public}d",
+            work == nullptr, work->data == nullptr);
+        return;
+    }
+    RegisterPermStateChangeWorker* registerPermStateChangeWorker =
+        reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
+    if (registerPermStateChangeWorker == nullptr) {
+        delete work;
+        work = nullptr;
+        return;
+    }
+    napi_delete_reference(registerPermStateChangeWorker->env, registerPermStateChangeWorker->ref);
+    delete registerPermStateChangeWorker;
+    registerPermStateChangeWorker = nullptr;
+    delete work;
+    work = nullptr;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkDeleteRef end");
+}
+
+void PermStateChangeContext::DeleteNapiRef()
+{
+    uv_loop_s* loop = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_get_uv_event_loop(env, &loop));
+    if (loop == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        return;
+    }
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (work == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        return;
+    }
+
+    std::unique_ptr<uv_work_t> uvWorkPtr {work};
+    RegisterPermStateChangeWorker* registerPermStateChangeWorker =
+        new (std::nothrow) RegisterPermStateChangeWorker();
+    if (registerPermStateChangeWorker == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for RegisterPermStateChangeWorker!");
+        return;
+    }
+    std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeWorker};
+    registerPermStateChangeWorker->env = env;
+    registerPermStateChangeWorker->ref = callbackRef;
+
+    work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
+    NAPI_CALL_RETURN_VOID(env,
+        uv_queue_work(loop, work, [](uv_work_t* work) {}, UvQueueWorkDeleteRef));
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteNapiRef");
+    uvWorkPtr.release();
+    workPtr.release();
 }
 
 void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName)
@@ -1218,9 +1284,19 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
-        if (argc < ON_OFF_MAX_PARAMS) {
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-            return false;
+    if (argc < ON_OFF_MAX_PARAMS) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    if (thisVar == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is nullptr");
+        return false;
+    }
+    napi_valuetype valueTypeOfThis = napi_undefined;
+    NAPI_CALL_BASE(env, napi_typeof(env, thisVar, &valueTypeOfThis), false);
+    if (valueTypeOfThis == napi_undefined) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is undefined");
+        return false;
     }
     // 0: the first parameter of argv
     std::string type;
@@ -1257,6 +1333,22 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
     registerPermStateChangeInfo.subscriber->SetEnv(env);
     registerPermStateChangeInfo.subscriber->SetCallbackRef(callback);
+    std::shared_ptr<RegisterPermStateChangeScopePtr> *subscriber =
+        new (std::nothrow) std::shared_ptr<RegisterPermStateChangeScopePtr>(
+            registerPermStateChangeInfo.subscriber);
+    if (subscriber == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create subscriber");
+        return false;
+    }
+    napi_wrap(env, thisVar, (void*)subscriber, [](napi_env nev, void *data, void *hint) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "RegisterPermStateChangeScopePtr delete");
+        std::shared_ptr<RegisterPermStateChangeScopePtr>* subscriber =
+            static_cast<std::shared_ptr<RegisterPermStateChangeScopePtr>*>(data);
+        if (subscriber != nullptr && *subscriber != nullptr) {
+            (*subscriber)->SetValid(false);
+            delete subscriber;
+        }
+    }, nullptr, nullptr);
     return true;
 }
 
