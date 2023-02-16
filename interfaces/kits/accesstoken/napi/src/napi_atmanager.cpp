@@ -214,23 +214,23 @@ PermStateChangeContext::~PermStateChangeContext()
 
 void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
 {
-    if ((work == nullptr) || (work->data == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr : %{public}d, work->data == nullptr : %{public}d",
-            work == nullptr, work->data == nullptr);
+    if (work == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr : %{public}d", work == nullptr);
+        return;
+    } else if (work->data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "work->data == nullptr : %{public}d", work->data == nullptr);
         return;
     }
     RegisterPermStateChangeWorker* registerPermStateChangeWorker =
         reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
     if (registerPermStateChangeWorker == nullptr) {
         delete work;
-        work = nullptr;
         return;
     }
     napi_delete_reference(registerPermStateChangeWorker->env, registerPermStateChangeWorker->ref);
     delete registerPermStateChangeWorker;
     registerPermStateChangeWorker = nullptr;
     delete work;
-    work = nullptr;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkDeleteRef end");
 }
 
