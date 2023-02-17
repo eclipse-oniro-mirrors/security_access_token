@@ -1313,7 +1313,7 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create subscriber");
         return false;
     }
-    napi_wrap(env, thisVar, (void*)subscriber, [](napi_env nev, void *data, void *hint) {
+    napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber), [](napi_env nev, void *data, void *hint) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "RegisterPermStateChangeScopePtr delete");
         std::shared_ptr<RegisterPermStateChangeScopePtr>* subscriber =
             static_cast<std::shared_ptr<RegisterPermStateChangeScopePtr>*>(data);
