@@ -122,5 +122,6 @@ if (is_standard_system) {
 
       deps += [ "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk" ]
     }
+    shlib_type = "sa"
   }
 }

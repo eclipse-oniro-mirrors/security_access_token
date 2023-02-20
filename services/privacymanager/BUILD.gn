@@ -117,5 +117,6 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+    shlib_type = "sa"
   }
 }
