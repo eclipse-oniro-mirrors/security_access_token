@@ -20,7 +20,6 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
-#include "atm_device_state_callback.h"
 #ifdef SUPPORT_SANDBOX_APP
 #define private public
 #include "dlp_permission_set_manager.h"
