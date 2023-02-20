@@ -41,6 +41,7 @@ public:
     ATokenTypeEnum GetTokenIdType(AccessTokenID id);
     int GetTokenIdDlpFlag(AccessTokenID id);
     static ATokenTypeEnum GetTokenIdTypeEnum(AccessTokenID id);
+    void GetHapTokenIdList(std::vector<AccessTokenID>& idList);
 
 private:
     AccessTokenIDManager() = default;

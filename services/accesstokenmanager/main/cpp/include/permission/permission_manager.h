@@ -71,6 +71,7 @@ public:
     bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
+    void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
     PermissionManager();
 protected:
     static void RegisterImpl(PermissionManager* implInstance);

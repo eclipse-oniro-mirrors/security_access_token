@@ -41,7 +41,7 @@ public:
     void StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList);
     void Update(const std::vector<PermissionStateFull>& permStateList);
 
-    int VerifyPermissStatus(const std::string& permissionName);
+    int VerifyPermissionStatus(const std::string& permissionName);
     void GetDefPermissions(std::vector<PermissionDef>& permList);
     void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);
     int QueryPermissionFlag(const std::string& permissionName, int& flag);
@@ -52,6 +52,8 @@ public:
     void PermStateToString(int32_t tokenApl, const std::vector<std::string>& nativeAcls, std::string& info);
     void GetPermissionStateList(std::vector<PermissionStateFull>& stateList);
     void ResetUserGrantPermissionStatus(void);
+    void ClearSecCompGrantedPerm(void);
+    int32_t GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
@@ -61,9 +63,17 @@ private:
     void StorePermissionState(std::vector<GenericValues>& valueList) const;
     void PermDefToString(const PermissionDef& def, std::string& info) const;
     void PermStateFullToString(const PermissionStateFull& state, std::string& info) const;
+    int32_t UpdateSecCompGrantedPermList(
+        const std::string& permissionName, bool isGranted, bool& isUpdated);
+    int32_t UpdatePermStateList(
+        const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated);
+    void SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd);
+    bool SecCompGrantedPermListUpdated(const std::string& permissionName, bool isToGrant);
+    void CheckStateChangedWithSecComp(const std::string& permissionName, bool isGranted, bool& isStateChanged);
 
     OHOS::Utils::RWLock permPolicySetLock_;
     std::vector<PermissionStateFull> permStateList_;
+    std::vector<std::string> secCompGrantedPermList_;
     AccessTokenID tokenId_;
 };
 }  // namespace AccessToken

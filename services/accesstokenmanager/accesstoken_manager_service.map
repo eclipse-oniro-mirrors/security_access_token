@@ -54,6 +54,9 @@
         "OHOS::Security::AccessToken::AccessTokenManagerService::AllocHapToken(OHOS::Security::AccessToken::HapInfoParcel const&, OHOS::Security::AccessToken::HapPolicyParcel const&)";
         "OHOS::Security::AccessToken::AccessTokenManagerService::DeleteToken(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenManagerService::Dump(int, std::__h::vector<std::__h::basic_string<char16_t, std::__h::char_traits<char16_t>, std::__h::allocator<char16_t> >, std::__h::allocator<std::__h::basic_string<char16_t, std::__h::char_traits<char16_t>, std::__h::allocator<char16_t> > > > const&)";
+        "OHOS::Security::AccessToken::AccessTokenManagerService::GetPermissionFlag(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int&)";
+        "OHOS::Security::AccessToken::AccessTokenManagerService::GrantPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int)";
+        "OHOS::Security::AccessToken::AccessTokenManagerService::OnRemoveSystemAbility(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
         "OHOS::Security::AccessToken::AccessTokenManagerService::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
         "OHOS::Security::AccessToken::AccessTokenManagerService::~AccessTokenManagerService()";
         "OHOS::Security::AccessToken::AccessTokenRemoteTokenManager::GetDeviceAllRemoteTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, std::__h::vector<unsigned int, std::__h::allocator<unsigned int> >&)";
@@ -105,6 +108,7 @@
         "OHOS::Security::AccessToken::PermissionGrantEvent::NotifyPermGrantStoreResult(bool, unsigned long)";
         "OHOS::Security::AccessToken::PermissionManager::AddPermStateChangeCallback(OHOS::Security::AccessToken::PermStateChangeScope const&, OHOS::sptr<OHOS::IRemoteObject> const&)";
         "OHOS::Security::AccessToken::PermissionManager::AllLocationPermissionHandle(std::__h::vector<OHOS::Security::AccessToken::PermissionListStateParcel, std::__h::allocator<OHOS::Security::AccessToken::PermissionListStateParcel> >&, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull> >, unsigned int, unsigned int)";
+        "OHOS::Security::AccessToken::PermissionManager::ClearAllSecCompGrantedPerm(std::__h::vector<unsigned int, std::__h::allocator<unsigned int> > const&)";
         "OHOS::Security::AccessToken::PermissionManager::ClearUserGrantedPermissionState(unsigned int)";
         "OHOS::Security::AccessToken::PermissionManager::GetApiVersionByTokenId(unsigned int, int&)";
         "OHOS::Security::AccessToken::PermissionManager::GetDefPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, OHOS::Security::AccessToken::PermissionDef&)";
@@ -129,7 +133,7 @@
         "OHOS::Security::AccessToken::PermissionPolicySet::RestorePermissionPolicy(unsigned int, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues> > const&)";
         "OHOS::Security::AccessToken::PermissionPolicySet::Update(std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull> > const&)";
         "OHOS::Security::AccessToken::PermissionPolicySet::UpdatePermissionStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, bool, unsigned int, bool&)";
-        "OHOS::Security::AccessToken::PermissionPolicySet::VerifyPermissStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::PermissionPolicySet::VerifyPermissionStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
         "OHOS::Security::AccessToken::PermissionValidator::FilterInvalidPermissionDef(std::__h::vector<OHOS::Security::AccessToken::PermissionDef, std::__h::allocator<OHOS::Security::AccessToken::PermissionDef> > const&, std::__h::vector<OHOS::Security::AccessToken::PermissionDef, std::__h::allocator<OHOS::Security::AccessToken::PermissionDef> >&)";
         "OHOS::Security::AccessToken::PermissionValidator::FilterInvalidPermissionState(std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull> > const&, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull> >&)";
         "OHOS::Security::AccessToken::PermissionValidator::IsPermissionDefValid(OHOS::Security::AccessToken::PermissionDef const&)";

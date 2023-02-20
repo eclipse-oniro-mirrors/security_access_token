@@ -38,6 +38,7 @@ class AccessTokenManagerService final : public SystemAbility, public AccessToken
 public:
     void OnStart() override;
     void OnStop() override;
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
