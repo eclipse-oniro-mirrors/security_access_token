@@ -52,9 +52,11 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/accesstoken/include",
       "//base/security/access_token/interfaces/innerkits/privacy/include",
       "//base/security/access_token/services/common/database/include",
+      "${foundation_path}/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
+      "${foundation_path}/multimedia/audio_framework/services/audio_policy/common/include",
+      "${foundation_path}/graphic/graphic_2d/frameworks/surface/include",
       "//third_party/json/include",
       "//third_party/sqlite/include/",
-      "//foundation/graphic/graphic_2d/frameworks/surface/include",
     ]
 
     sources = [
