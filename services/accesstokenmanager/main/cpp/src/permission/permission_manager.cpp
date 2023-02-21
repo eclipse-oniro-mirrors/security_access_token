@@ -384,13 +384,13 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         }
     }
 #endif
-    bool isUpdated = false;
-    int32_t ret =
-        permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag), isUpdated);
+    int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permissionName);
+    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    if (isUpdated) {
+    int32_t statusAfter = permPolicySet->VerifyPermissionStatus(permissionName);
+    if (statusAfter != statusBefore) {
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
         CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);

@@ -2298,13 +2298,12 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    bool isUpdated = false;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
-        isGranted, flag, isUpdated));
+        isGranted, flag));
 
     // isGeneral is false
     ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.TEST",
-        isGranted, flag, isUpdated));
+        isGranted, flag));
 }
 
 /**

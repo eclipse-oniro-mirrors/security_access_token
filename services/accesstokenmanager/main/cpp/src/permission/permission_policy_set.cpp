@@ -100,6 +100,11 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     return policySet;
 }
 
+int32_t PermissionPolicySet::GetFlagWroteToDb(int32_t grantFlag)
+{
+    return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
+}
+
 void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
     const PermissionStateFull& state)
 {
@@ -107,7 +112,8 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
         if (state.permissionName == iter->permissionName) {
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
             iter->grantStatus.emplace_back(state.grantStatus[0]);
-            iter->grantFlags.emplace_back(state.grantFlags[0]);
+            int32_t flag = GetFlagWroteToDb(state.grantFlags[0]);
+            iter->grantFlags.emplace_back(flag);
             return;
         }
     }
@@ -150,7 +156,6 @@ static bool IsPermOperatedByUser(int32_t flag)
 static bool IsPermOperatedBySystem(int32_t flag)
 {
     uint32_t uFlag = static_cast<uint32_t>(flag);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "flag is %{public}d.", (uFlag & PERMISSION_GRANTED_BY_POLICY));
     return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_GRANTED_BY_POLICY);
 }
 
@@ -222,8 +227,7 @@ static int32_t UpdateWithNewFlag(int32_t oldFlag, int32_t currFlag)
     return static_cast<int32_t>(newFlag);
 }
 
-int32_t PermissionPolicySet::UpdatePermStateList(
-    const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated)
+int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
@@ -232,10 +236,8 @@ int32_t PermissionPolicySet::UpdatePermStateList(
         });
     if (iter != permStateList_.end()) {
         if (iter->isGeneral) {
-            int32_t oldStatus = iter->grantStatus[0];
             iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
             iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
-            isUpdated = (oldStatus == iter->grantStatus[0]) ? false : true;
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
         }
@@ -246,7 +248,7 @@ int32_t PermissionPolicySet::UpdatePermStateList(
     return RET_SUCCESS;
 }
 
-bool PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permissionName, bool isAdded)
+void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permissionName, bool isAdded)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     if (isAdded) {
@@ -257,7 +259,7 @@ bool PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
             });
         if (iter == secCompGrantedPermList_.end()) {
             secCompGrantedPermList_.emplace_back(permissionName);
-            return true;
+            return;
         }
     } else {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is deleted.");
@@ -267,10 +269,10 @@ bool PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
             });
         if (iter != secCompGrantedPermList_.end()) {
             secCompGrantedPermList_.erase(iter);
-            return true;
+            return;
         }
     }
-    return false;
+    return;
 }
 
 void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd)
@@ -281,7 +283,7 @@ void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, i
             if (perm.isGeneral) {
                 uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
                 uint32_t newFlag =
-                    needToAdd ? (oldFlag | PERMISSION_COMPONENT_SET) : (oldFlag & (~PERMISSION_COMPONENT_SET));
+                    needToAdd ? (oldFlag | flag) : (oldFlag & (~PERMISSION_COMPONENT_SET));
                 perm.grantFlags[0] = static_cast<int32_t>(newFlag);
                 return;
             }
@@ -290,17 +292,15 @@ void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, i
     return;
 }
 
-int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(
-    const std::string& permissionName, bool isToGrant, bool& isPermStateChanged)
+int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& permissionName, bool isToGrant)
 {
-    int32_t flag;
+    int32_t flag = 0;
     int32_t ret = QueryPermissionFlag(permissionName, flag);
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "ret is %{public}d. flag is %{public}d", ret, flag);
     // if the permission has been operated by user or the permission has been granted by system.
-    if ((ret == RET_SUCCESS) && (IsPermOperatedByUser(flag) || IsPermOperatedBySystem(flag))) {
+    if ((IsPermOperatedByUser(flag) || IsPermOperatedBySystem(flag))) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission has been operated.");
-        isPermStateChanged = false;
         if (isToGrant) {
             int32_t status = VerifyPermissionStatus(permissionName);
             // Permission has been granted, there is no need to add perm state in security component permList.
@@ -310,58 +310,28 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Permission has been revoked by user.");
                 return RET_FAILED;
             }
+        } else {
+            /* revoke is called while the permission has been operated by user or system */
+            /* the permission need to be deleted from secCompGrantedPermList_ */
+            SecCompGrantedPermListUpdated(permissionName, false);
+            return RET_SUCCESS;
         }
-        /* revoke is called while the permission has been operated by user or system */
-        /* the permission need to be deleted from secCompGrantedPermList_ */
-        (void)SecCompGrantedPermListUpdated(permissionName, false);
-        return RET_SUCCESS;
     }
     // the permission has not been operated by user or the app has not applied for this permission in config.json
-    isPermStateChanged = SecCompGrantedPermListUpdated(permissionName, isToGrant);
+    SecCompGrantedPermListUpdated(permissionName, isToGrant);
     // If the app has applied for this permission and security component operation has taken effect.
-    if ((ret == RET_SUCCESS) && isPermStateChanged) {
-        bool removed = false;
-        bool added = true;
-        if (isToGrant) {
-            SetPermissionFlag(permissionName, PERMISSION_COMPONENT_SET, added);
-        } else {
-            SetPermissionFlag(permissionName, PERMISSION_COMPONENT_SET, removed);
-        }
-    }
+    SetPermissionFlag(permissionName, PERMISSION_COMPONENT_SET, isToGrant);
     return RET_SUCCESS;
 }
 
-void PermissionPolicySet::CheckStateChangedWithSecComp(
-    const std::string& permissionName, bool isGranted, bool& isStateChanged)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-        [permissionName](const std::string grantedPerm) {
-            return permissionName == grantedPerm;
-        });
-    if (iter != secCompGrantedPermList_.end()) {
-        if (isGranted) {
-            isStateChanged = false;
-        } else {
-            isStateChanged = true;
-        }
-        return;
-    }
-    return;
-}
-
-int32_t PermissionPolicySet::UpdatePermissionStatus(
-    const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated)
+int32_t PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName %{public}s.", permissionName.c_str());
     if (!IsPermGrantedBySecComp(flag)) {
-        int32_t ret = UpdatePermStateList(permissionName, isGranted, flag, isUpdated);
-        // permission state change callback should also take security component operation into account.
-        CheckStateChangedWithSecComp(permissionName, isGranted, isUpdated);
-        return ret;
+        return UpdatePermStateList(permissionName, isGranted, flag);
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is set by security component.");
-    return UpdateSecCompGrantedPermList(permissionName, isGranted, isUpdated);
+    return UpdateSecCompGrantedPermList(permissionName, isGranted);
 }
 
 void PermissionPolicySet::ClearSecCompGrantedPerm(void)

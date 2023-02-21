@@ -45,7 +45,7 @@ public:
     void GetDefPermissions(std::vector<PermissionDef>& permList);
     void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);
     int QueryPermissionFlag(const std::string& permissionName, int& flag);
-    int32_t UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated);
+    int32_t UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag);
     void ToString(std::string& info);
     bool IsPermissionReqValid(int32_t tokenApl, const std::string& permissionName,
         const std::vector<std::string>& nativeAcls);
@@ -53,7 +53,8 @@ public:
     void GetPermissionStateList(std::vector<PermissionStateFull>& stateList);
     void ResetUserGrantPermissionStatus(void);
     void ClearSecCompGrantedPerm(void);
-    int32_t GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag);
+    static int32_t GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag);
+    static int32_t GetFlagWroteToDb(int32_t grantFlag);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
@@ -63,13 +64,10 @@ private:
     void StorePermissionState(std::vector<GenericValues>& valueList) const;
     void PermDefToString(const PermissionDef& def, std::string& info) const;
     void PermStateFullToString(const PermissionStateFull& state, std::string& info) const;
-    int32_t UpdateSecCompGrantedPermList(
-        const std::string& permissionName, bool isGranted, bool& isUpdated);
-    int32_t UpdatePermStateList(
-        const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated);
+    int32_t UpdateSecCompGrantedPermList(const std::string& permissionName, bool isGranted);
+    int32_t UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag);
     void SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd);
-    bool SecCompGrantedPermListUpdated(const std::string& permissionName, bool isToGrant);
-    void CheckStateChangedWithSecComp(const std::string& permissionName, bool isGranted, bool& isStateChanged);
+    void SecCompGrantedPermListUpdated(const std::string& permissionName, bool isToGrant);
 
     OHOS::Utils::RWLock permPolicySetLock_;
     std::vector<PermissionStateFull> permStateList_;
