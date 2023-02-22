@@ -99,4 +99,5 @@ ohos_shared_library("token_sync_manager_service") {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
     external_deps += [ "device_manager:devicemanagersdk" ]
   }
+  shlib_type = "sa"
 }
