@@ -76,6 +76,11 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
     permStateList_ = permStateFilterList;
 }
 
+int32_t PermissionPolicySet::GetFlagWroteToDb(int32_t grantFlag)
+{
+    return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
+}
+
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolicy(AccessTokenID tokenId,
     const std::vector<GenericValues>& permStateRes)
 {
@@ -100,20 +105,17 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     return policySet;
 }
 
-int32_t PermissionPolicySet::GetFlagWroteToDb(int32_t grantFlag)
-{
-    return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
-}
-
 void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
-    const PermissionStateFull& state)
+    PermissionStateFull& state)
 {
+    int flag = GetFlagWroteToDb(state.grantFlags[0]);
+    state.grantFlags[0] = flag;
+
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
         if (state.permissionName == iter->permissionName) {
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
             iter->grantStatus.emplace_back(state.grantStatus[0]);
-            int32_t flag = GetFlagWroteToDb(state.grantFlags[0]);
-            iter->grantFlags.emplace_back(flag);
+            iter->grantFlags.emplace_back(state.grantFlags[0]);
             return;
         }
     }

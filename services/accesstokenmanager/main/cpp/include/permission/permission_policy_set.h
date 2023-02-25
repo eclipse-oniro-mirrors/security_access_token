@@ -58,7 +58,7 @@ public:
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
-        const PermissionStateFull& state);
+        PermissionStateFull& state);
     void UpdatePermStateFull(const PermissionStateFull& permOld, PermissionStateFull& permNew);
     void StorePermissionDef(std::vector<GenericValues>& valueList) const;
     void StorePermissionState(std::vector<GenericValues>& valueList) const;
