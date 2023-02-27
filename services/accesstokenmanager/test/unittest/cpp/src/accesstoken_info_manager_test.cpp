@@ -2215,12 +2215,12 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermissionPolicy001, TestSize.Level1
 }
 
 /**
- * @tc.name: VerifyPermissStatus001
- * @tc.desc: PermissionPolicySet::VerifyPermissStatus function test
+ * @tc.name: VerifyPermissionStatus001
+ * @tc.desc: PermissionPolicySet::VerifyPermissionStatus function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissStatus001, TestSize.Level1)
+HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissionStatus001, TestSize.Level1)
 {
     PermissionStateFull perm = {
         .permissionName = "ohos.permission.TEST",
@@ -2238,7 +2238,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissStatus001, TestSize.Level1)
         permStateList);
 
     // isGeneral is false
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED, policySet->VerifyPermissStatus("ohos.permission.TEST"));
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, policySet->VerifyPermissionStatus("ohos.permission.TEST"));
 }
 
 /**
@@ -2297,13 +2297,12 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    bool isUpdated = false;
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
-        isGranted, flag, isUpdated));
+        isGranted, flag));
 
     // isGeneral is false
     ASSERT_EQ(RET_SUCCESS, policySet->UpdatePermissionStatus("ohos.permission.TEST",
-        isGranted, flag, isUpdated));
+        isGranted, flag));
 }
 
 /**
@@ -2944,6 +2943,68 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSiz
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
+
+/**
+ * @tc.name: ClearAllSecCompGrantedPerm001
+ * @tc.desc: PermissionManager::ClearAllSecCompGrantedPerm function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Level1)
+{
+    HapInfoParcel hapInfoParcel;
+    HapPolicyParcel haoPolicyParcel;
+    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+    atManagerService_->GrantPermission(tokenId, "ohos.permission.LOCATION", PERMISSION_COMPONENT_SET);
+    ASSERT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+
+    std::string deviceId;
+    atManagerService_->OnRemoveSystemAbility(SECURITY_COMPONENT_SERVICE_ID, deviceId);
+    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+
+    // delete test token
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
+}
+
+/**
+ * @tc.name: ClearAllSecCompGrantedPerm002
+ * @tc.desc: PermissionManager::ClearAllSecCompGrantedPerm function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+    std::vector<AccessTokenID> idList;
+    idList.emplace_back(tokenId);
+    PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(idList); // permPolicySet is null
+}
+
+/**
+ * @tc.name: GetPermissionFlag002
+ * @tc.desc: PermissionManager::GetPermissionFlag function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
+{
+    HapInfoParcel hapInfoParcel;
+    HapPolicyParcel haoPolicyParcel;
+    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    int32_t flag;
+    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPermissionFlag(tokenId, "ohos.permission.CAPTURE_SCREEN", flag));
+
+    // delete test token
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 }
 } // namespace AccessToken
 } // namespace Security

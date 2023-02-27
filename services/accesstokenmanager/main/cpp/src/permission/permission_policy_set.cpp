@@ -76,6 +76,11 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
     permStateList_ = permStateFilterList;
 }
 
+int32_t PermissionPolicySet::GetFlagWroteToDb(int32_t grantFlag)
+{
+    return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
+}
+
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolicy(AccessTokenID tokenId,
     const std::vector<GenericValues>& permStateRes)
 {
@@ -101,8 +106,11 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
 }
 
 void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
-    const PermissionStateFull& state)
+    PermissionStateFull& state)
 {
+    int flag = GetFlagWroteToDb(state.grantFlags[0]);
+    state.grantFlags[0] = flag;
+
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
         if (state.permissionName == iter->permissionName) {
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
@@ -141,16 +149,47 @@ void PermissionPolicySet::StorePermissionPolicySet(std::vector<GenericValues>& p
     StorePermissionState(permStateValueList);
 }
 
-int PermissionPolicySet::VerifyPermissStatus(const std::string& permissionName)
+static bool IsPermOperatedByUser(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return (uFlag & PERMISSION_USER_FIXED) || (uFlag & PERMISSION_USER_SET);
+}
+
+static bool IsPermOperatedBySystem(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return (uFlag & PERMISSION_SYSTEM_FIXED) || (uFlag & PERMISSION_GRANTED_BY_POLICY);
+}
+
+static bool IsPermGrantedBySecComp(int32_t flag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(flag);
+    return uFlag & PERMISSION_COMPONENT_SET;
+}
+
+int32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag)
+{
+    uint32_t uFlag = static_cast<uint32_t>(fullFlag);
+    uint32_t unmaskedFlag = (uFlag) & (~removedFlag);
+    return static_cast<int32_t>(unmaskedFlag);
+}
+
+int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                return perm.grantStatus[0];
+                return IsPermGrantedBySecComp(perm.grantFlags[0]) ? PERMISSION_GRANTED : perm.grantStatus[0];
             } else {
                 return PERMISSION_DENIED;
             }
+        }
+    }
+    // check if undeclared permission is granted by security component.
+    for (const auto& permission : secCompGrantedPermList_) {
+        if (permission == permissionName) {
+            return PERMISSION_GRANTED;
         }
     }
     return PERMISSION_DENIED;
@@ -173,23 +212,25 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
     for (const auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
-                uint32_t unmaskedFlag = (oldFlag) & (~PERMISSION_GRANTED_BY_POLICY);
-                flag = static_cast<int32_t>(unmaskedFlag);
+                flag = perm.grantFlags[0];
                 return RET_SUCCESS;
             } else {
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
         }
     }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
     return AccessTokenError::ERR_PARAM_INVALID;
 }
 
-int32_t PermissionPolicySet::UpdatePermissionStatus(
-    const std::string& permissionName, bool isGranted, uint32_t flag, bool& isUpdated)
+static int32_t UpdateWithNewFlag(int32_t oldFlag, int32_t currFlag)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName %{public}s.", permissionName.c_str());
+    uint32_t newFlag = currFlag | ((static_cast<uint32_t>(oldFlag)) & PERMISSION_GRANTED_BY_POLICY);
+    return static_cast<int32_t>(newFlag);
+}
 
+int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag)
+{
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
         [permissionName](const PermissionStateFull& permState) {
@@ -197,12 +238,8 @@ int32_t PermissionPolicySet::UpdatePermissionStatus(
         });
     if (iter != permStateList_.end()) {
         if (iter->isGeneral) {
-            int32_t oldStatus = iter->grantStatus[0];
             iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
-            uint32_t currFlag = static_cast<uint32_t>(iter->grantFlags[0]);
-            uint32_t newFlag = flag | (currFlag & PERMISSION_GRANTED_BY_POLICY);
-            iter->grantFlags[0] = static_cast<int32_t>(newFlag);
-            isUpdated = (oldStatus == iter->grantStatus[0]) ? false : true;
+            iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
         }
@@ -210,8 +247,104 @@ int32_t PermissionPolicySet::UpdatePermissionStatus(
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-
     return RET_SUCCESS;
+}
+
+void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permissionName, bool isAdded)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    if (isAdded) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is added.");
+        auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
+            [permissionName](const std::string grantedPerm) {
+                return permissionName == grantedPerm;
+            });
+        if (iter == secCompGrantedPermList_.end()) {
+            secCompGrantedPermList_.emplace_back(permissionName);
+            return;
+        }
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is deleted.");
+        auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
+            [permissionName](const std::string grantedPerm) {
+                return permissionName == grantedPerm;
+            });
+        if (iter != secCompGrantedPermList_.end()) {
+            secCompGrantedPermList_.erase(iter);
+            return;
+        }
+    }
+    return;
+}
+
+void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (auto& perm : permStateList_) {
+        if (perm.permissionName == permissionName) {
+            if (perm.isGeneral) {
+                uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+                uint32_t newFlag =
+                    needToAdd ? (oldFlag | flag) : (oldFlag & (~PERMISSION_COMPONENT_SET));
+                perm.grantFlags[0] = static_cast<int32_t>(newFlag);
+                return;
+            }
+        }
+    }
+    return;
+}
+
+int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& permissionName, bool isToGrant)
+{
+    int32_t flag = 0;
+    int32_t ret = QueryPermissionFlag(permissionName, flag);
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "ret is %{public}d. flag is %{public}d", ret, flag);
+    // if the permission has been operated by user or the permission has been granted by system.
+    if ((IsPermOperatedByUser(flag) || IsPermOperatedBySystem(flag))) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission has been operated.");
+        if (isToGrant) {
+            int32_t status = VerifyPermissionStatus(permissionName);
+            // Permission has been granted, there is no need to add perm state in security component permList.
+            if (status == PERMISSION_GRANTED) {
+                return RET_SUCCESS;
+            } else {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Permission has been revoked by user.");
+                return RET_FAILED;
+            }
+        } else {
+            /* revoke is called while the permission has been operated by user or system */
+            /* the permission need to be deleted from secCompGrantedPermList_ */
+            SecCompGrantedPermListUpdated(permissionName, false);
+            return RET_SUCCESS;
+        }
+    }
+    // the permission has not been operated by user or the app has not applied for this permission in config.json
+    SecCompGrantedPermListUpdated(permissionName, isToGrant);
+    // If the app has applied for this permission and security component operation has taken effect.
+    SetPermissionFlag(permissionName, PERMISSION_COMPONENT_SET, isToGrant);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionPolicySet::UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName %{public}s.", permissionName.c_str());
+    if (!IsPermGrantedBySecComp(flag)) {
+        return UpdatePermStateList(permissionName, isGranted, flag);
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is set by security component.");
+    return UpdateSecCompGrantedPermList(permissionName, isGranted);
+}
+
+void PermissionPolicySet::ClearSecCompGrantedPerm(void)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    secCompGrantedPermList_.erase(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end());
+    for (auto& perm : permStateList_) {
+        if (perm.isGeneral) {
+            perm.grantFlags[0] = GetFlagWithoutSpecifiedElement(perm.grantFlags[0], PERMISSION_COMPONENT_SET);
+        }
+    }
 }
 
 void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
@@ -223,6 +356,8 @@ void PermissionPolicySet::ResetUserGrantPermissionStatus(void)
             if ((oldFlag & PERMISSION_SYSTEM_FIXED) != 0) {
                 continue;
             }
+            /* A user_grant permission has been set by system for cancellable pre-authorization. */
+            /* it should keep granted when the app reset. */
             if ((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) {
                 perm.grantStatus[0] = PERMISSION_GRANTED;
                 perm.grantFlags[0] = PERMISSION_GRANTED_BY_POLICY;

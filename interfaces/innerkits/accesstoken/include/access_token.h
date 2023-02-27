@@ -74,11 +74,34 @@ typedef enum TypeGrantMode {
 } GrantMode;
 
 typedef enum TypePermissionFlag {
+    /*
+     * permission has not been set by user.
+     */
     PERMISSION_DEFAULT_FLAG = 0,
+    /*
+     * permission has been set by user, If the permission is not granted,
+     * a permission window is allowed to apply for permission.
+     */
     PERMISSION_USER_SET = 1 << 0,
+    /*
+     * permission has been set by user, If the permission is not granted,
+     * a permission window is not allowed to apply for permission.
+     */
     PERMISSION_USER_FIXED = 1 << 1,
+    /*
+     * permission has been set by system,
+     * the permission can be a user_grant one which is granted for pre-authorization and is non-cancellable.
+     */
     PERMISSION_SYSTEM_FIXED = 1 << 2,
+    /*
+     * a user_grant permission has been set by system for pre-authorization,
+     * and it is cancellable. it always works with other flags.
+     */
     PERMISSION_GRANTED_BY_POLICY = 1 << 3,
+    /*
+     * permission has been set by security component.
+     */
+    PERMISSION_COMPONENT_SET = 1 << 4,
 } PermissionFlag;
 
 typedef enum TypePermissionOper {

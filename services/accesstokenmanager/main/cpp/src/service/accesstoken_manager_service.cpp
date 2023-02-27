@@ -39,6 +39,7 @@
 #include "permission_manager.h"
 #include "privacy_kit.h"
 #include "string_ex.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace Security {
@@ -81,6 +82,7 @@ void AccessTokenManagerService::OnStart()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
         return;
     }
+    (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
     ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, AccessTokenManagerService start successfully!");
 }
 
@@ -88,6 +90,16 @@ void AccessTokenManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
+}
+
+void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    if (systemAbilityId == SECURITY_COMPONENT_SERVICE_ID) {
+        std::vector<AccessTokenID> tokenIdList;
+        AccessTokenIDManager::GetInstance().GetHapTokenIdList(tokenIdList);
+        PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(tokenIdList);
+        return;
+    }
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -113,9 +125,9 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (const auto& perm : permVec) {
-        PermissionDefParcel permPrcel;
-        permPrcel.permissionDef = perm;
-        permList.emplace_back(permPrcel);
+        PermissionDefParcel permParcel;
+        permParcel.permissionDef = perm;
+        permList.emplace_back(permParcel);
     }
     return ret;
 }
@@ -129,9 +141,9 @@ int AccessTokenManagerService::GetReqPermissions(
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
     for (const auto& perm : permList) {
-        PermissionStateFullParcel permPrcel;
-        permPrcel.permStatFull = perm;
-        reqPermList.emplace_back(permPrcel);
+        PermissionStateFullParcel permParcel;
+        permParcel.permStatFull = perm;
+        reqPermList.emplace_back(permParcel);
     }
     return ret;
 }
@@ -206,18 +218,18 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
-    PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
+    int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    return RET_SUCCESS;
+    return ret;
 }
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
-    PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
+    int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    return RET_SUCCESS;
+    return ret;
 }
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)

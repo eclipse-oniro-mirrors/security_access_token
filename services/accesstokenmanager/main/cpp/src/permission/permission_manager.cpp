@@ -80,6 +80,22 @@ PermissionManager::~PermissionManager()
 {
 }
 
+void PermissionManager::ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList)
+{
+    for (const auto& tokenId : tokenIdList) {
+        std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
+            AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+        if (tokenInfoPtr == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is invalid, tokenId=%{public}u", tokenId);
+            continue;
+        }
+        std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
+        if (permPolicySet != nullptr) {
+            permPolicySet->ClearSecCompGrantedPerm();
+        }
+    }
+}
+
 void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
     bool updateFlag)
 {
@@ -128,7 +144,7 @@ int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::st
         return PERMISSION_DENIED;
     }
 
-    return permPolicySet->VerifyPermissStatus(permissionName);
+    return permPolicySet->VerifyPermissionStatus(permissionName);
 }
 
 int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -162,7 +178,7 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
         return PERMISSION_DENIED;
     }
 
-    return permPolicySet->VerifyPermissStatus(permissionName);
+    return permPolicySet->VerifyPermissionStatus(permissionName);
 }
 
 int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -283,7 +299,8 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
 
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
-            ((goalGrantFlags & PERMISSION_USER_SET) != 0)) {
+            ((goalGrantFlags & PERMISSION_USER_SET) != 0) ||
+            ((goalGrantFlags & PERMISSION_COMPONENT_SET) != 0)) {
             permState.state = DYNAMIC_OPER;
             return;
         }
@@ -316,7 +333,12 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return permPolicySet->QueryPermissionFlag(permissionName, flag);
+    int32_t fullFlag;
+    int32_t ret = permPolicySet->QueryPermissionFlag(permissionName, fullFlag);
+    if (ret == RET_SUCCESS) {
+        flag = permPolicySet->GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
+    }
+    return ret;
 }
 
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag)
@@ -362,13 +384,13 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         }
     }
 #endif
-    bool isUpdated = false;
-    int32_t ret =
-        permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag), isUpdated);
+    int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permissionName);
+    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    if (isUpdated) {
+    int32_t statusAfter = permPolicySet->VerifyPermissionStatus(permissionName);
+    if (statusAfter != statusBefore) {
         ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
         int32_t changeType = isGranted ? GRANTED : REVOKED;
         CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
@@ -678,6 +700,7 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
     }
 
     permPolicySet->ResetUserGrantPermissionStatus();
+    permPolicySet->ClearSecCompGrantedPerm();
 }
 
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
