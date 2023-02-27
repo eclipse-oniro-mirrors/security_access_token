@@ -119,6 +119,15 @@
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
           }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/analysis_model:libcodesignature_analysis",
+          "header": {
+            "header_files": [
+              "code_signature_analysis_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/analysis_model/include"
+          }
         }
       ],
       "test": [
