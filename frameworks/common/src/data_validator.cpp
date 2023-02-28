@@ -80,7 +80,7 @@ bool DataValidator::IsPermissionFlagValid(int flag)
                     PermissionFlag::PERMISSION_USER_SET |
                     PermissionFlag::PERMISSION_USER_FIXED |
                     PermissionFlag::PERMISSION_SYSTEM_FIXED |
-                    PERMISSION_COMPONENT_SET|
+                    PermissionFlag::PERMISSION_COMPONENT_SET|
                     PermissionFlag::PERMISSION_POLICY_FIXED;
 
     return (static_cast<uint32_t>(flag) & (~mask)) == 0;
