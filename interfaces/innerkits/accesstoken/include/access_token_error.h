@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,12 +12,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * @addtogroup AccessToken
+ * @{
+ *
+ * @brief Provides permission management interfaces.
+ *
+ * Provides tokenID-based application permission verification mechanism.
+ * When an application accesses sensitive data or APIs, this module can check
+ * whether the application has the corresponding permission. Allows applications
+ * to query their access token information or APL levcels based on token IDs.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
+/**
+ * @file access_token_error.h
+ *
+ * @brief Declares error numbers.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
 #ifndef ACCESS_TOKEN_ERROR_H
 #define ACCESS_TOKEN_ERROR_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief error numbers
+ */
 enum AccessTokenError {
     ERR_PERMISSION_DENIED = 201,
     ERR_NOT_SYSTEM_APP = 202,

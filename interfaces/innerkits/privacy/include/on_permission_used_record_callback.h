@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,25 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file on_permission_used_record_callback.h
+ *
+ * @brief Declares OnPermissionUsedRecordCallback class.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
 #ifndef ON_PERMISSION_USED_RECORD_CALLBACK_H
 #define ON_PERMISSION_USED_RECORD_CALLBACK_H
 
@@ -23,12 +42,25 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Declares OnPermissionUsedRecordCallback interface class
+ */
 class OnPermissionUsedRecordCallback : public IRemoteBroker {
 public:
+    /**
+     * @brief declare interface descritor which used in parcel.
+     * @param const string
+     */
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.OnPermissionUsedRecordCallback");
 
+    /**
+     * @brief pure virtual fuction.
+     * @param code error code
+     * @param result PermissionUsedResult quote, as callback info
+     */
     virtual void OnQueried(ErrCode code, PermissionUsedResult& result) = 0;
 
+    /** interface enum */
     enum {
         ON_QUERIED = 0,
     };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,25 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file permission_used_request.h
+ *
+ * @brief Declares enum PermissionUsageFlagEnum and struct PermissionUsedRequest.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
 #ifndef PERMISSION_USED_REQUEST_H
 #define PERMISSION_USED_REQUEST_H
 
@@ -24,16 +43,26 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief permission usage flag values
+ */
 typedef enum PermissionUsageFlagEnum {
+    /** permission usage for summary */
     FLAG_PERMISSION_USAGE_SUMMARY = 0,
+    /** permission usage for detail */
     FLAG_PERMISSION_USAGE_DETAIL = 1,
 } PermissionUsageFlag;
 
+/**
+ * @brief permission usage flag values
+ */
 struct PermissionUsedRequest {
     AccessTokenID tokenId = 0;
+    /** indicats whether the tokenID is remote tokenID */
     bool isRemote = false;
     std::string deviceId;
     std::string bundleName;
+    /** permission name list */
     std::vector<std::string> permissionList;
     int64_t beginTimeMillis = 0;
     int64_t endTimeMillis = 0;

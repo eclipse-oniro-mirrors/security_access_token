@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,30 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup AccessToken
+ * @{
+ *
+ * @brief Provides permission management interfaces.
+ *
+ * Provides tokenID-based application permission verification mechanism.
+ * When an application accesses sensitive data or APIs, this module can check
+ * whether the application has the corresponding permission. Allows applications
+ * to query their access token information or APL levcels based on token IDs.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
+/**
+ * @file native_token_info.h
+ *
+ * @brief Declares native token infos.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
 #ifndef ACCESSTOKEN_NATIVE_TOKEN_INFO_H
 #define ACCESSTOKEN_NATIVE_TOKEN_INFO_H
 
@@ -24,20 +48,36 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Declares native token info class
+ */
 class NativeTokenInfo final {
 public:
+    /**
+     * apl level, for details about the valid values,
+     * see the definition of ATokenAplEnum in the access_token.h file.
+     */
     ATokenAplEnum apl;
     unsigned char ver;
+    /** native process name */
     std::string processName;
+    /** capsbility list */
     std::vector<std::string> dcap;
     AccessTokenID tokenID;
+    /** token attribute */
     AccessTokenAttr tokenAttr;
+    /** native process access control permission list */
     std::vector<std::string> nativeAcls;
 };
 
+/**
+ * @brief Declares native token info for distributed synchronize class
+ */
 class NativeTokenInfoForSync final {
 public:
+    /** native token info */
     NativeTokenInfo baseInfo;
+    /** permission state list */
     std::vector<PermissionStateFull> permStateList;
 };
 } // namespace AccessToken
