@@ -76,14 +76,12 @@ bool DataValidator::IsDcapValid(const std::string& dcap)
 
 bool DataValidator::IsPermissionFlagValid(int flag)
 {
-    uint32_t mask = PermissionFlag::PERMISSION_DEFAULT_FLAG |
-                    PermissionFlag::PERMISSION_USER_SET |
-                    PermissionFlag::PERMISSION_USER_FIXED |
-                    PermissionFlag::PERMISSION_SYSTEM_FIXED |
-                    PermissionFlag::PERMISSION_COMPONENT_SET|
-                    PermissionFlag::PERMISSION_POLICY_FIXED;
-
-    return (static_cast<uint32_t>(flag) & (~mask)) == 0;
+    return unmaskedFlag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
+        unmaskedFlag == PermissionFlag::PERMISSION_USER_SET ||
+        unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||
+        unmaskedFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
+        unmaskedFlag == PermissionFlag::PERMISSION_COMPONENT_SET ||
+        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED;
 }
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)
