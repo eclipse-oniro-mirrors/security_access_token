@@ -346,7 +346,7 @@ int32_t GetResult(uint8_t *result, uint32_t *resultLen)
         return MODEL_INIT_NOT_COMPLETED;
     }
 
-    uint64_t neededLen = g_riskAppCount * sizeof(NotifyRiskResultInfo);
+    unsigned long long neededLen = g_riskAppCount * sizeof(NotifyRiskResultInfo);
     if (*resultLen < neededLen) {
         MODEL_LOG_ERROR("[%s]:ResultLen %d is smaller than needed %llu",
             __func__, *resultLen, neededLen);
