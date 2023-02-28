@@ -102,6 +102,10 @@ typedef enum TypePermissionFlag {
      * permission has been set by security component.
      */
     PERMISSION_COMPONENT_SET = 1 << 4,
+    /*
+     * permission is fixed by policy and the permission cannot be granted or revoked by user
+     */
+    PERMISSION_POLICY_FIXED = 1 << 5, 
 } PermissionFlag;
 
 typedef enum TypePermissionOper {
