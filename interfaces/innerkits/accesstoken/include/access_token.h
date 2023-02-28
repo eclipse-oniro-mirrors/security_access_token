@@ -105,7 +105,7 @@ typedef enum TypePermissionFlag {
     /*
      * permission is fixed by policy and the permission cannot be granted or revoked by user
      */
-    PERMISSION_POLICY_FIXED = 1 << 5, 
+    PERMISSION_POLICY_FIXED = 1 << 5,
 } PermissionFlag;
 
 typedef enum TypePermissionOper {
