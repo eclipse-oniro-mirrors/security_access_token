@@ -49,7 +49,7 @@ static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 }
 
-AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
+AccessTokenInfoManager::AccessTokenInfoManager() : tokenDataWorker_("TokenStore"), hasInited_(false) {}
 
 AccessTokenInfoManager::~AccessTokenInfoManager()
 {
