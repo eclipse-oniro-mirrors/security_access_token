@@ -298,6 +298,11 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     }
 
     if (goalGrantStatus == PERMISSION_DENIED) {
+        if ((goalGrantFlags & PERMISSION_POLICY_FIXED) != 0) {
+            permState.state = SETTING_OPER;
+            return;
+        }
+
         if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
             ((goalGrantFlags & PERMISSION_USER_SET) != 0) ||
             ((goalGrantFlags & PERMISSION_COMPONENT_SET) != 0)) {

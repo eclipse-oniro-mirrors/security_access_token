@@ -106,7 +106,7 @@ static HapInfoParams g_infoManagerTestInfoParms = {
     .appIDDesc = "testtesttesttest"
 };
 
-static HapPolicyParams g_infoManagerTestPolicyPrams = {
+static HapPolicyParams g_infoManagerTestPolicyPrams1 = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
@@ -178,6 +178,34 @@ static PermissionStateFull g_permState6 = {
     .resDeviceID = {"dev-001"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+static PermissionStateFull g_permState7 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED}
+};
+static PermissionStateFull g_permState8 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED}
+};
+static PermissionStateFull g_permState9 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET}
+};
+static PermissionStateFull g_permState10 = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_POLICY_FIXED | PermissionFlag::PERMISSION_USER_SET}
 };
 
 static PermissionDef g_infoManagerPermDef1 = {
@@ -261,7 +289,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -292,13 +320,13 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
 
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
     AccessTokenIDEx tokenIdEx1 = {0};
     ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx1);
+        g_infoManagerTestPolicyPrams1, tokenIdEx1);
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "add same hap token";
@@ -474,7 +502,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(result, ERR_TOKENID_NOT_EXIST);
 
     result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "add a hap token";
     result = AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID, hapInfo);
@@ -498,7 +526,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapPermissionPolicySet001, TestSize.Leve
     ASSERT_EQ(permPolicySet, nullptr);
 
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
     permPolicySet = AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenIdEx.tokenIdExStruct.tokenID);
@@ -571,7 +599,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -601,11 +629,11 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
-    HapPolicyParams policy = g_infoManagerTestPolicyPrams;
+    HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx,
         false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
@@ -633,7 +661,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    HapPolicyParams policy = g_infoManagerTestPolicyPrams;
+    HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
         tokenIdEx, false, std::string(""), DEFAULT_API_VERSION, policy);
@@ -677,7 +705,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     int result;
     result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, result);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -720,7 +748,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenInfoFromRemote001, TestSize.Leve
 {
     AccessTokenIDEx tokenIdEx = {0};
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -743,7 +771,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -777,7 +805,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
-        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -1495,7 +1523,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
 
     tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
@@ -1638,7 +1666,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
 
     tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
@@ -1692,7 +1720,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
 {
     AccessTokenIDEx tokenIdEx = {0};
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
-        g_infoManagerTestPolicyPrams, tokenIdEx);
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "add a hap token";
 
@@ -1928,7 +1956,7 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel haoPolicyParcel;
     hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
     AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
 
     ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, ""));
@@ -2476,6 +2504,52 @@ HWTEST_F(AccessTokenInfoManagerTest, GetSelfPermissionState001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetSelfPermissionState002
+ * @tc.desc: PermissionManager::GetSelfPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetSelfPermissionState002, TestSize.Level1)
+{
+    std::vector<PermissionStateFull> permsList1;
+    permsList1.emplace_back(g_permState7);
+    PermissionListState permState1;
+    permState1.permissionName = "ohos.permission.CAMERA";
+    int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
+
+    // flag is PERMISSION_POLICY_FIXED and state is denied, return SETTING_OPER
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState1.state);
+
+    std::vector<PermissionStateFull> permsList2;
+    permsList2.emplace_back(g_permState8);
+    PermissionListState permState2;
+    permState2.permissionName = "ohos.permission.CAMERA";
+
+    // flag is PERMISSION_POLICY_FIXED and state is granted, return PASS_OPER
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList2, permState2, apiVersion);
+    ASSERT_EQ(PermissionOper::PASS_OPER, permState2.state);
+
+    std::vector<PermissionStateFull> permsList3;
+    permsList3.emplace_back(g_permState9);
+    PermissionListState permState3;
+    permState3.permissionName = "ohos.permission.CAMERA";
+
+    // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is denied, return SETTING_OPER
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList3, permState3, apiVersion);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState3.state);
+
+    std::vector<PermissionStateFull> permsList4;
+    permsList4.emplace_back(g_permState10);
+    PermissionListState permState4;
+    permState4.permissionName = "ohos.permission.CAMERA";
+
+    // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is granted, return PASS_OPER
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList4, permState4, apiVersion);
+    ASSERT_EQ(PermissionOper::PASS_OPER, permState4.state);
+}
+
+/**
  * @tc.name: GetPermissionFlag001
  * @tc.desc: PermissionManager::GetPermissionFlag function test
  * @tc.type: FUNC
@@ -2956,7 +3030,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Lev
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel haoPolicyParcel;
     hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
     AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -2997,7 +3071,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
     HapInfoParcel hapInfoParcel;
     HapPolicyParcel haoPolicyParcel;
     hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams;
+    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
     AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     int32_t flag;
