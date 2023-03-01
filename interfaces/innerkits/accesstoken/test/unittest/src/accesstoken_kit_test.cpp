@@ -3595,6 +3595,25 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetPermissionFlag006
+ * @tc.desc: Get permission flag after grant permission.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionFlag006, TestSize.Level1)
+{
+    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+    int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_POLICY_FIXED);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    int32_t flag;
+    ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
+    ASSERT_EQ(PERMISSION_POLICY_FIXED, flag);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
  * @tc.name: DumpTokenInfo001
  * @tc.desc: Get dump token information with invalid tokenID
  * @tc.type: FUNC
