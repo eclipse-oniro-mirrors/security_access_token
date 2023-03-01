@@ -22,8 +22,6 @@ ohos_fuzztest("UnRegisterPermActiveStatusCallbackFuzzTest") {
 
   include_dirs = [
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//commonlibrary/c_utils/base/include",
   ]
   cflags = [
     "-g",
@@ -42,5 +40,6 @@ ohos_fuzztest("UnRegisterPermActiveStatusCallbackFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
   ]
 }

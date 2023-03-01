@@ -20,7 +20,6 @@
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
-#include "perm_active_status_change_callback_stub.h"
 #define private public
 #include "active_status_callback_manager.h"
 #include "permission_record_manager.h"

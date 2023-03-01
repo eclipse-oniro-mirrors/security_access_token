@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,30 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup AccessToken
+ * @{
+ *
+ * @brief Provides permission management interfaces.
+ *
+ * Provides tokenID-based application permission verification mechanism.
+ * When an application accesses sensitive data or APIs, this module can check
+ * whether the application has the corresponding permission. Allows applications
+ * to query their access token information or APL levcels based on token IDs.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
+/**
+ * @file permission_state_change_info.h
+ *
+ * @brief Declares PermStateChangeInfo and PermStateChangeScope struct.
+ *
+ * @since 7.0
+ * @version 7.0
+ */
+
 #ifndef INTERFACES_INNER_KITS_PERMISSION_STATE_CHANGE_INFO_H
 #define INTERFACES_INNER_KITS_PERMISSION_STATE_CHANGE_INFO_H
 
@@ -24,17 +48,37 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/** define tokenID list max size */
 #define TOKENIDS_LIST_SIZE_MAX 1024
+/** define permission list max size */
 #define PERMS_LIST_SIZE_MAX 1024
 
+/**
+ * @brief Declares permission state change info struct
+ */
 struct PermStateChangeInfo {
+    /**
+     * permission state change type, for details about the valid values,
+     * see the definition of ActiveChangeType in the active_change_response_info.h file.
+     */
     int32_t permStateChangeType;
     AccessTokenID tokenID;
     std::string permissionName;
 };
 
+/**
+ * @brief Declares permission state change scope struct
+ */
 struct PermStateChangeScope {
+    /**
+     * indicates which tokenID to listen the permission state change,
+     * empty means listen all tokenIDs in the device
+     */
     std::vector<AccessTokenID> tokenIDs;
+    /**
+     * indicates which permission to listen the state change,
+     * empty means listen all permission state changes in the device
+     */
     std::vector<std::string> permList;
 };
 } // namespace AccessToken

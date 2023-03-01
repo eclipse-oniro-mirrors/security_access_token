@@ -1,0 +1,44 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+1.0 {
+  global:
+    extern "C++" {
+        "OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk::PermActiveStatusCustomizedCbk(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> >, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > > > const&)";
+        "OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk::~PermActiveStatusCustomizedCbk()";
+        "OHOS::Security::AccessToken::PrivacyKit::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int, int)";
+        "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::StopUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecords(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::Security::AccessToken::PermissionUsedResult&)";
+        "OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk::GetPermList(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> >, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > > >&) const";
+        "OHOS::Security::AccessToken::PrivacyKit::RegisterPermActiveStatusCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::UnRegisterPermActiveStatusCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::RemovePermissionUsedRecords(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::StateCustomizedCbk::StateCustomizedCbk()";
+        "OHOS::Security::AccessToken::PrivacyKit::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, std::__h::shared_ptr<OHOS::Security::AccessToken::StateCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedRecords(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::sptr<OHOS::Security::AccessToken::OnPermissionUsedRecordCallback> const&)";
+        "OHOS::Security::AccessToken::PrivacyKit::IsAllowedUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::StateCustomizedCbk::~StateCustomizedCbk()";
+        "OHOS::Security::AccessToken::OnPermissionUsedRecordCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
+        "OHOS::Security::AccessToken::PrivacyManagerClient::GetInstance()";
+        "OHOS::Security::AccessToken::PrivacyManagerClient::RegisterPermActiveStatusCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::StateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
+        "OHOS::Security::AccessToken::PermActiveStatusChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
+        "OHOS::Security::AccessToken::PermActiveStatusChangeCallback::PermActiveStatusChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::StateChangeCallback::StateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::StateCustomizedCbk> const&)";
+        "OHOS::Security::AccessToken::PrivacyManagerClient::InitProxy()";
+        "";
+    };
+  local:
+    *;
+};

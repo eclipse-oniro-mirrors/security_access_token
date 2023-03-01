@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,25 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup TokenCallback
+ * @{
+ *
+ * @brief Provides napi RequestPermissionsFromUser callback interface
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file i_token_callback.h
+ *
+ * @brief Declares ITokenCallback interface interfaces.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
 #ifndef I_TOKEN_CALLBACK_H
 #define I_TOKEN_CALLBACK_H
 
@@ -21,13 +40,26 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Declares ITokenCallback interface class
+ */
 class ITokenCallback : public IRemoteBroker {
 public:
+    /**
+     * @brief declare interface descritor which used in parcel.
+     * @param const string
+     */
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.tokencallback");
 
+    /**
+     * @brief pure virtual fuction.
+     * @param permissions permission name list
+     * @param grantResults permission grant result
+     */
     virtual void GrantResultsCallback(
         const std::vector<std::string> &permissions, const std::vector<int> &grantResults) = 0;
 
+    /** interface enum */
     enum InterfaceCode {
         GRANT_RESULT_CALLBACK = 0,
     };

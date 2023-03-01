@@ -1,0 +1,64 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+1.0 {
+  global:
+    extern "C++" {
+        "OHOS::Security::AccessToken::AccessTokenKit::AllocHapToken(OHOS::Security::AccessToken::HapInfoParams const&, OHOS::Security::AccessToken::HapPolicyParams const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenIDEx(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::AllocLocalTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UpdateHapToken(OHOS::Security::AccessToken::AccessTokenIDEx&, bool, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int, OHOS::Security::AccessToken::HapPolicyParams const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::DeleteToken(unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::CheckNativeDCap(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenID(int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfo(unsigned int, OHOS::Security::AccessToken::HapTokenInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenInfo(unsigned int, OHOS::Security::AccessToken::NativeTokenInfo&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionFlag(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GrantPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RevokePermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::ClearUserGrantedPermissionState(unsigned int)";
+        "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::PermStateChangeCallbackCustomize(OHOS::Security::AccessToken::PermStateChangeScope const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::RegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo()";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> >&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoFromRemote(unsigned int, OHOS::Security::AccessToken::HapTokenInfoForSync&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetAllNativeTokenInfo(std::__h::vector<OHOS::Security::AccessToken::NativeTokenInfoForSync, std::__h::allocator<OHOS::Security::AccessToken::NativeTokenInfoForSync> >&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::SetRemoteHapTokenInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, OHOS::Security::AccessToken::HapTokenInfoForSync const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::SetRemoteNativeTokenInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, std::__h::vector<OHOS::Security::AccessToken::NativeTokenInfoForSync, std::__h::allocator<OHOS::Security::AccessToken::NativeTokenInfoForSync> > const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::DeleteRemoteToken(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetRemoteNativeTokenID(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::DeleteRemoteDeviceTokens(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::~PermStateChangeCallbackCustomize()";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetDefPermission(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&, OHOS::Security::AccessToken::PermissionDef&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetDefPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionDef, std::__h::allocator<OHOS::Security::AccessToken::PermissionDef> >&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull> >&, bool)";
+        "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetHapDlpFlag(unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(unsigned int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetSelfPermissionsState(std::__h::vector<OHOS::Security::AccessToken::PermissionListState, std::__h::allocator<OHOS::Security::AccessToken::PermissionListState> >&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetVersion()";
+        "OHOS::Security::AccessToken::PermissionStateChangeCallback::PermissionStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
+        "OHOS::Security::AccessToken::PermissionStateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
+        "OHOS::Security::AccessToken::AccessTokenManagerClient::GetInstance()";
+        "OHOS::Security::AccessToken::AccessTokenManagerClient::InitProxy()";
+        "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char> > const&)";
+        "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::GetScope(OHOS::Security::AccessToken::PermStateChangeScope&) const";
+        "";
+        "";
+    };
+  local:
+    *;
+};

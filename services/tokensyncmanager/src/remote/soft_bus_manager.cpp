@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 #include "soft_bus_manager.h"
 
 #include <securec.h>
+#include <thread>
+#include <pthread.h>
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "dm_device_info.h"
@@ -35,6 +37,7 @@ static const int REASON_EXIST = -3;
 static const int OPENSESSION_RETRY_TIMES = 10 * 3;
 static const int OPENSESSION_RETRY_INTERVAL_MS = 100;
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
+static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 } // namespace
 
 const std::string SoftBusManager::TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
@@ -146,6 +149,8 @@ void SoftBusManager::Initialize()
     }
 
     std::function<void()> runner = [&]() {
+        std::string name = "SoftBusMagInit";
+        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
         auto sleepTime = std::chrono::milliseconds(1000);
         while (1) {
             std::unique_lock<std::mutex> lock(mutex_);

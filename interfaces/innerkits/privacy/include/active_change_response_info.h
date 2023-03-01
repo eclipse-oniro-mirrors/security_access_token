@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,6 +13,25 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file active_change_response_info.h
+ *
+ * @brief Declares enum ActiveChangeType and struct ActiveChangeResponse.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
 #ifndef ACTIVE_CHANGE_RESPONSE_INFO_H
 #define ACTIVE_CHANGE_RESPONSE_INFO_H
 
@@ -24,16 +43,26 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Permission active state state values
+ */
 enum ActiveChangeType {
     PERM_INACTIVE = 0,
     PERM_ACTIVE_IN_FOREGROUND = 1,
     PERM_ACTIVE_IN_BACKGROUND = 2,
 };
 
+/**
+ * @brief Permission active state change response struct
+ */
 struct ActiveChangeResponse {
     AccessTokenID tokenID;
     std::string permissionName;
     std::string deviceId;
+    /**
+     * permission active change type, for details about the valid values,
+     * see the definition above.
+     */
     ActiveChangeType type;
 };
 } // namespace AccessToken

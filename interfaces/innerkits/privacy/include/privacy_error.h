@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,11 +13,33 @@
  * limitations under the License.
  */
 
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file privacy_error.h
+ *
+ * @brief Declares error codes.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
 #ifndef INTERFACES_INNERKITS_PRIVACY_ERROR_H
 #define INTERFACES_INNERKITS_PRIVACY_ERROR_H
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+/**
+ * @brief Error code values
+ */
 enum PrivacyError {
     ERR_PARAM_INVALID = 1,
     ERR_SERVICE_ABNORMAL,

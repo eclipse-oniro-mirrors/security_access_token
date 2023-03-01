@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <future>
 #include <thread>
 #include <datetime_ex.h>
+#include <pthread.h>
 
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
@@ -32,6 +33,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const time_t MAX_TIMEOUT_SEC = 30;
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
+static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 }
 
 ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
@@ -119,6 +121,8 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     }
     auto callbackFunc = [&]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
+        std::string name = "PrivacyCallback";
+        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
         std::vector<sptr<IRemoteObject>> list;
         {
             std::lock_guard<std::mutex> lock(mutex_);
