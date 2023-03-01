@@ -71,7 +71,8 @@ int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t client
     }
     data.WriteInt32(clientId);
     (void)data.WriteRemoteObject(object);
-    int error = Remote()->SendRequest(AudioStandard::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(
+        AudioStandard::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback failed, error: %{public}d", error);
         return error;
