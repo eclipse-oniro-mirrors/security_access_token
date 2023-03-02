@@ -29,7 +29,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenModifyNotifier"};
 }
 
-TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false) {}
+TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false), notifyTokenWorker_("TokenModify") {}
 
 TokenModifyNotifier::~TokenModifyNotifier() {}
 

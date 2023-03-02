@@ -61,7 +61,7 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     return instance;
 }
 
-PermissionRecordManager::PermissionRecordManager() : hasInited_(false) {}
+PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false) {}
 
 PermissionRecordManager::~PermissionRecordManager()
 {
