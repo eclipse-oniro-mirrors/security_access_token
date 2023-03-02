@@ -12,6 +12,7 @@
 # limitations under the License.
 
 foundation_path = "//foundation"
+access_token_path = "//base/security/access_token"
 VENDOR_CONFIG_PATH = rebase_path(
         "//vendor/${product_company}/${product_name}/base/security/access_token/access_token_impl.gni")
 CMD = "if [ -f ${VENDOR_CONFIG_PATH} ]; then echo true; else echo false; fi"
