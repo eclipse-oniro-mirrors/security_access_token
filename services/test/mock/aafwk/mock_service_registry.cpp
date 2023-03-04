@@ -180,4 +180,17 @@ int32_t SystemAbilityManagerProxy::AddSystemProcess(
 {
     return -1;
 }
+
+int32_t SystemAbilityManagerProxy::GetRunningSystemProcess(std::list<SystemProcessInfo>& systemProcessInfos)
+{
+    return -1;
+}
+int32_t SystemAbilityManagerProxy::SubscribeSystemProcess(const sptr<ISystemProcessStatusChange>& listener)
+{
+    return -1;
+}
+int32_t SystemAbilityManagerProxy::UnSubscribeSystemProcess(const sptr<ISystemProcessStatusChange>& listener)
+{
+    return -1;
+}
 }
