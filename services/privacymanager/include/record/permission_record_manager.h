@@ -105,7 +105,7 @@ private:
     void SetCameraCallback(sptr<IRemoteObject>);
 
     bool IsFlowWindowShow(AccessTokenID tokenId);
-    int32_t IsForegroundApp(AccessTokenID tokenId);
+    int32_t GetAppStatus(AccessTokenID tokenId);
 
     bool Register();
     void Unregister();
