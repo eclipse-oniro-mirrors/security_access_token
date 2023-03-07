@@ -98,7 +98,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     if (successCount == 0 && failCount == 0) {
         record.status = PERM_INACTIVE;
     } else {
-        record.status = IsForegroundApp(tokenId);
+        record.status = GetAppStatus(tokenId);
     }
     record.tokenId = tokenId;
     record.accessCount = successCount;
@@ -452,7 +452,7 @@ void PermissionRecordManager::SavePermissionRecords(
     if (switchStatus) {
         ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
         // no need to store in database when status from inactive to foreground or background
-        record.status = IsForegroundApp(record.tokenId);
+        record.status = GetAppStatus(record.tokenId);
         record.timestamp = curStamp;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
@@ -579,7 +579,7 @@ void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenI
 {
     camFloatWindowShowing_ = isShowing;
     floatWindowTokenId_ = tokenId;
-    if (!IsForegroundApp(tokenId) && !isShowing) {
+    if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) && !isShowing) {
         ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
         ExecuteCameraCallbackAsync(tokenId);
     } else {
@@ -694,7 +694,7 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
         return false;
     }
 
-    int32_t status = IsForegroundApp(tokenId);
+    int32_t status = GetAppStatus(tokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
 
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
@@ -733,7 +733,7 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
     return tokenInfo.deviceID;
 }
 
-int32_t PermissionRecordManager::IsForegroundApp(AccessTokenID tokenId)
+int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
 {
     int32_t status = PERM_INACTIVE;
     HapTokenInfo tokenInfo;
