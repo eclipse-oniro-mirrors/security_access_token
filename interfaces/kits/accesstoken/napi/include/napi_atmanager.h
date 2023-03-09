@@ -91,7 +91,6 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     int32_t flag = 0;
     int32_t result = AT_PERM_OPERA_FAIL;
     int32_t errorCode = 0;
-    std::string errorMessage;
 };
 
 struct PermissionStatusCache {
