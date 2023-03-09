@@ -77,7 +77,8 @@ static DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
     .deviceName = "remote_mock",
-    .deviceTypeId = 1
+    .deviceTypeId = 1,
+    .networkId = "deviceid-1"
 };
 
 namespace {
@@ -128,7 +129,7 @@ void TokenSyncServiceTest::TearDown()
 
 void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
 {
-    std::string networkId = info.deviceId;
+    std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
 
