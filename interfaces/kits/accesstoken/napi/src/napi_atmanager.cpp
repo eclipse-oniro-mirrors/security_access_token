@@ -454,15 +454,11 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
         return;
     }
     if (asyncContext->tokenId == 0) {
-        std::string errMsg = GetParamErrorMsg("tokenID", "number");
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = errMsg;
         return;
     }
     if (asyncContext->permissionName.empty() || (asyncContext->permissionName.length() > MAX_LENGTH)) {
-        std::string errMsg = GetParamErrorMsg("permissionName", "string");
         asyncContext->errorCode = JS_ERROR_PARAM_INVALID;
-        asyncContext->errorMessage = errMsg;
         return;
     }
 
@@ -483,7 +479,7 @@ void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, v
 
     napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
-    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+    ReturnPromiseResult(env, asyncContext->errorCode, asyncContext->deferred, result);
 }
 
 napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info)
@@ -1276,37 +1272,13 @@ napi_value NapiAtManager::RequestPermissionsFromUser(napi_env env, napi_callback
     return result;
 }
 
-bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
-    RegisterPermStateChangeInfo& registerPermStateChangeInfo)
+bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
+    const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
-    size_t argc = ON_OFF_MAX_PARAMS;
-    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
-    napi_value thisVar = nullptr;
-    napi_ref callback = nullptr;
-    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
-    if (argc < ON_OFF_MAX_PARAMS) {
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
-        return false;
-    }
-    if (thisVar == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is nullptr");
-        return false;
-    }
-    napi_valuetype valueTypeOfThis = napi_undefined;
-    NAPI_CALL_BASE(env, napi_typeof(env, thisVar, &valueTypeOfThis), false);
-    if (valueTypeOfThis == napi_undefined) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is undefined");
-        return false;
-    }
-    // 0: the first parameter of argv
-    std::string type;
-    std::string errMsg;
-    if (!ParseString(env, argv[0], type)) {
-        errMsg = GetParamErrorMsg("type", "string");
-        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
-        return false;
-    }
     PermStateChangeScope scopeInfo;
+    std::string errMsg;
+    napi_ref callback = nullptr;
+
     // 1: the second parameter of argv
     if (!ParseAccessTokenIDArray(env, argv[1], scopeInfo.tokenIDs)) {
         errMsg = GetParamErrorMsg("tokenIDList", "Array<number>");
@@ -1349,6 +1321,43 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
             delete subscriber;
         }
     }, nullptr, nullptr);
+
+    return true;
+}
+
+bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
+    RegisterPermStateChangeInfo& registerPermStateChangeInfo)
+{
+    size_t argc = ON_OFF_MAX_PARAMS;
+    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
+    napi_value thisVar = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
+    if (argc < ON_OFF_MAX_PARAMS) {
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
+        return false;
+    }
+    if (thisVar == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is nullptr");
+        return false;
+    }
+    napi_valuetype valueTypeOfThis = napi_undefined;
+    NAPI_CALL_BASE(env, napi_typeof(env, thisVar, &valueTypeOfThis), false);
+    if (valueTypeOfThis == napi_undefined) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is undefined");
+        return false;
+    }
+    // 0: the first parameter of argv
+    std::string type;
+    std::string errMsg;
+    if (!ParseString(env, argv[0], type)) {
+        errMsg = GetParamErrorMsg("type", "string");
+        napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
+        return false;
+    }
+    if (!FillPermStateChangeInfo(env, argv, type, thisVar, registerPermStateChangeInfo)) {
+        return false;
+    }
+
     return true;
 }
 
