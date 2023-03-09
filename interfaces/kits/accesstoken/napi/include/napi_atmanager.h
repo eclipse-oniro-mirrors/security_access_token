@@ -95,7 +95,6 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
     int32_t flag = 0;
     int32_t result = AT_PERM_OPERA_FAIL;
     int32_t errorCode = 0;
-    std::string errorMessage;
 };
 
 struct PermissionStatusCache {
@@ -173,6 +172,8 @@ private:
     static void GetPermissionFlagsExecute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
+    static bool FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
+        const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static bool ParseInputToRegister(const napi_env env, napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
