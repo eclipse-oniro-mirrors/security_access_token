@@ -112,7 +112,7 @@ struct PermissionParamCache {
 struct RequestAsyncContext : public AtManagerAsyncWorkData {
     explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
     AccessTokenID tokenId = 0;
-    bool isResultCalled = true;
+    bool needDynamicRequest = true;
     int32_t result = AT_PERM_OPERA_SUCC;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
