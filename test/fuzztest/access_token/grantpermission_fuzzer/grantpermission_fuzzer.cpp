@@ -27,14 +27,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GrantPermissionFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
         AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        result = AccessTokenKit::GrantPermission(TOKENID, testName, 0);
+        int32_t result = AccessTokenKit::GrantPermission(TOKENID, testName, 0);
 
         return result == RET_SUCCESS;
     }

@@ -50,12 +50,16 @@ CallbackManager::~CallbackManager()
 {
 }
 
-int32_t CallbackManager::AddCallback(
-    const std::shared_ptr<PermStateChangeScope>& callbackScopePtr, const sptr<IRemoteObject>& callback)
+int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const sptr<IRemoteObject>& callback)
 {
-    if ((callbackScopePtr == nullptr) || (callback == nullptr)) {
+    if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
         return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
+    if (callbackScopePtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
+        return AccessTokenError::ERR_MALLOC_FAILED;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);

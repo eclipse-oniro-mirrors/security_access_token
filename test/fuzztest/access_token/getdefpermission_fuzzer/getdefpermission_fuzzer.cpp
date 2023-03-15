@@ -29,7 +29,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetDefPermissionFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -39,13 +38,13 @@ namespace OHOS {
             .permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
+            .availableLevel = APL_NORMAL,
             .label = testName,
             .labelId = 1,
             .description = testName,
-            .availableLevel = APL_NORMAL,
             .descriptionId = 1
         };
-        result = AccessTokenKit::GetDefPermission(testName, PERMISSIONDEF);
+        int32_t result = AccessTokenKit::GetDefPermission(testName, PERMISSIONDEF);
 
         return result == RET_SUCCESS;
     }

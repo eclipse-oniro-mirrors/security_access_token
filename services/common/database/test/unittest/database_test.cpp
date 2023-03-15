@@ -496,7 +496,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionDef001, TestSize.L
     genericValues.Put(TokenFiledConst::FIELD_AVAILABLE_LEVEL, ATokenAplEnum::APL_INVALID);
 
     PermissionDef outPermissionDef;
-    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionDef(genericValues, outPermissionDef));
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionDef(genericValues, outPermissionDef));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionDefTest001 end");
 }
 
@@ -518,7 +518,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues001, TestSize.L
     };
     int grantIndex = 1;
     GenericValues genericValues;
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues001 end");
 }
@@ -541,7 +541,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues002, TestSize.L
     };
     int grantIndex = 1;
     GenericValues genericValues;
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues002 end");
 }
@@ -564,7 +564,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoGenericValues003, TestSize.L
     };
     int grantIndex = 1;
     GenericValues genericValues;
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_NE(RET_SUCCESS,
         DataTranslator::TranslationIntoGenericValues(grantPermissionReq, grantIndex, genericValues));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoGenericValues003 end");
 }
@@ -586,7 +586,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull001, Test
     inGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, "");
 
     PermissionDef outPermissionDef;
-    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest001 end");
 }
 
@@ -608,7 +608,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull002, Test
     inGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, "");
 
     PermissionDef outPermissionDef;
-    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest002 end");
 }
 
@@ -631,7 +631,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull003, Test
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, 100);
 
     PermissionDef outPermissionDef;
-    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest003 end");
 }
 
@@ -655,7 +655,7 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
     inGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, 100);
 
     PermissionDef outPermissionDef;
-    ASSERT_EQ(RET_FAILED, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
+    ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
 }
 } // namespace AccessToken

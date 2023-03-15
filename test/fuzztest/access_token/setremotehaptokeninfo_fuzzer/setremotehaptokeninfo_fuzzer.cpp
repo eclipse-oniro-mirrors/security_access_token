@@ -27,7 +27,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool SetRemoteHapTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
 #ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -59,10 +58,11 @@ namespace OHOS {
             .permStateList = permStateList
         };
 
-        result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
-
-#endif
+        int32_t result = AccessTokenKit::SetRemoteHapTokenInfo(testName, remoteTokenInfo);
         return result == RET_SUCCESS;
+#else
+        return true;
+#endif
     }
 }
 

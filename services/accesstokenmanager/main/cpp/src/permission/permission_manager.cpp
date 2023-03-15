@@ -227,7 +227,7 @@ int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Perm
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return RET_FAILED;
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     permPolicySet->GetDefPermissions(permList);
@@ -243,7 +243,7 @@ int PermissionManager::GetReqPermissions(
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return RET_FAILED;
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
@@ -330,13 +330,13 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
+        return AccessTokenError::ERR_PERMISSION_NOT_DEFINE;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t fullFlag;
     int32_t ret = permPolicySet->QueryPermissionFlag(permissionName, fullFlag);
@@ -366,7 +366,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
@@ -424,7 +424,7 @@ int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::str
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
+        return AccessTokenError::ERR_PERMISSION_NOT_DEFINE;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
@@ -445,7 +445,7 @@ int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::st
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
+        return AccessTokenError::ERR_PERMISSION_NOT_DEFINE;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
@@ -511,12 +511,7 @@ int32_t PermissionManager::AddPermStateChangeCallback(
     if (result != RET_SUCCESS) {
         return result;
     }
-    auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
-    if (callbackScopePtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
-        return AccessTokenError::ERR_MALLOC_FAILED;
-    }
-    return CallbackManager::GetInstance().AddCallback(callbackScopePtr, callback);
+    return CallbackManager::GetInstance().AddCallback(scope, callback);
 }
 
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)

@@ -603,7 +603,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::DeleteToken(mapID);
-    ASSERT_EQ(ret, RET_FAILED);
+    ASSERT_NE(ret, RET_SUCCESS);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -1258,6 +1258,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_NE(RET_SUCCESS, res);
 }
 #endif

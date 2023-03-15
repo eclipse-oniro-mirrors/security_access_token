@@ -28,14 +28,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetHapDlpFlagFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
 
-        result = AccessTokenKit::GetHapDlpFlag(tokenId);
+        int32_t result = AccessTokenKit::GetHapDlpFlag(tokenId);
 
         return result == RET_SUCCESS;
     }

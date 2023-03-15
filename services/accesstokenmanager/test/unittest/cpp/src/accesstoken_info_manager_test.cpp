@@ -559,14 +559,14 @@ HWTEST_F(AccessTokenInfoManagerTest, GetNativePermissionPolicySet001, TestSize.L
 HWTEST_F(AccessTokenInfoManagerTest, RemoveHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
-    ASSERT_EQ(AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID), RET_FAILED);
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID), RET_SUCCESS);
 
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // count(id) == 0
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // count(id) == 0
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info is null
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId)); // info is null
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
@@ -718,7 +718,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenSync001, TestSize.Level1)
     GTEST_LOG_(INFO) << "remove the token info";
 
     result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
-    ASSERT_EQ(result, RET_FAILED);
+    ASSERT_NE(result, RET_SUCCESS);
 }
 
 /**
@@ -822,7 +822,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceId2, tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(RET_FAILED, ret);
+    ASSERT_NE(RET_SUCCESS, ret);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1328,7 +1328,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateRemoteHapTokenInfo001, TestSize.Level
     HapTokenInfoForSync hapSync;
 
     // infoPtr is null
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().UpdateRemoteHapTokenInfo(mapID, hapSync));
 
     mapID = 123; // 123 is random input
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
@@ -1357,7 +1357,7 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[123] = info;
 
     // count(id) exsit
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().CreateRemoteHapTokenInfo(mapID, hapSync));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateRemoteHapTokenInfo(mapID, hapSync));
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(123);
 }
@@ -1417,7 +1417,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(537919487, TOKEN_HAP));
     // hap mapID 537919487 is not exist
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
     AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(537919487);
 
@@ -1427,7 +1427,7 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(672137215, TOKEN_NATIVE));
     // native mapID 672137215 is not exist
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID));
     AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(672137215);
 }
@@ -1540,7 +1540,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs = {123};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.tokenIDs.empty());
 
@@ -1553,7 +1553,7 @@ HWTEST_F(AccessTokenInfoManagerTest, ScopeFilter001, TestSize.Level1)
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs.clear();
     inScopeInfo.permList = {"ohos.permission.test"};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.permList.empty());
 
@@ -1585,13 +1585,13 @@ HWTEST_F(AccessTokenInfoManagerTest, AddPermStateChangeCallback001, TestSize.Lev
     PermStateChangeScope inScopeInfo;
     inScopeInfo.tokenIDs = {123};
 
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
 
     inScopeInfo.permList = {"ohos.permission.CAMERA"};
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().AddPermStateChangeCallback(inScopeInfo, nullptr));
-    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+    EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().RemovePermStateChangeCallback(nullptr));
 }
 
@@ -1728,7 +1728,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     AccessTokenID invalidTokenId = 1;
     ret = PermissionManager::GetInstance().GrantPermission(
         invalidTokenId, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
 
     std::shared_ptr<HapTokenInfoInner> infoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
@@ -1736,7 +1736,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     infoPtr->SetRemote(true);
     ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_OPERATE_FAILED, ret);
+    ASSERT_EQ(ERR_PERMISSION_OPERATE_FAILED, ret);
     infoPtr->SetRemote(false);
 
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
@@ -1746,7 +1746,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState001, TestSize.Lev
     infoPtr->SetPermissionPolicySet(infoPtrNull);
     ret = PermissionManager::GetInstance().GrantPermission(
         tokenID, "ohos.permission.READ_CALENDAR", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1764,12 +1764,12 @@ HWTEST_F(AccessTokenInfoManagerTest, GrantPermission001, TestSize.Level1)
     int32_t ret;
     AccessTokenID tokenID = 0;
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -1783,12 +1783,12 @@ HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
     int32_t ret;
     AccessTokenID tokenID = 0;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
 /**
@@ -1854,7 +1854,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetHapTokenID002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
         USER_ID, "com.ohos.test", INST_INDEX);
-    ASSERT_EQ(0, tokenIdEx.tokenIDEx);
+    ASSERT_EQ(static_cast<AccessTokenID>(0), tokenIdEx.tokenIDEx);
 }
 
 /**
@@ -1893,12 +1893,12 @@ HWTEST_F(AccessTokenInfoManagerTest, AddNativeTokenInfo001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, RemoveNativeTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // count(id) == 0
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // count(id) == 0
 
     std::shared_ptr<NativeTokenInfoInner> info = std::make_shared<NativeTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = info;
-    ASSERT_EQ(RET_FAILED, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // remote is true
+    ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(tokenId)); // remote is true
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
@@ -1953,15 +1953,15 @@ HWTEST_F(AccessTokenInfoManagerTest, ProcessNativeTokenInfos001, TestSize.Level1
  */
 HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken001, TestSize.Level1)
 {
-    HapInfoParcel hapInfoParcel;
-    HapPolicyParcel haoPolicyParcel;
-    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
-    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, ""));
+    ASSERT_EQ(
+        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenIdEx.tokenIdExStruct.tokenID, ""));
     // delete test token
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -2023,7 +2023,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RestorePermDefInfo001, TestSize.Level1)
     values.emplace_back(value);
 
     // ret not RET_SUCCESS
-    ASSERT_EQ(RET_FAILED, PermissionDefinitionCache::GetInstance().RestorePermDefInfo(values));
+    ASSERT_NE(RET_SUCCESS, PermissionDefinitionCache::GetInstance().RestorePermDefInfo(values));
 }
 
 /**
@@ -2294,9 +2294,15 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 
     // perm.permissionName != permissionName
     int flag = 0;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
     // isGeneral is false
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST", flag));
+    ASSERT_EQ(ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST", flag));
+
+    perm.isGeneral = true;
+    std::shared_ptr<PermissionPolicySet> policySet1 = PermissionPolicySet::BuildPermissionPolicySet(tokenId,
+        permStateList);
+    // isGeneral is true
+    ASSERT_EQ(ERR_PARAM_INVALID, policySet1->QueryPermissionFlag("ohos.permission.TEST", flag));
 }
 
 /**
@@ -2325,7 +2331,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdatePermissionStatus001, TestSize.Level1)
     // iter reach the end
     bool isGranted = false;
     uint32_t flag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
+    ASSERT_EQ(ERR_PARAM_INVALID, policySet->UpdatePermissionStatus("ohos.permission.TEST1",
         isGranted, flag));
 
     // isGeneral is false
@@ -2448,20 +2454,20 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyAccessToken002, TestSize.Level1)
     std::string permissionName;
 
     // permissionName invalid
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+    ASSERT_EQ(
+        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 
     tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     permissionName = "ohos.permission.DISTRIBUTED_DATASYNC";
     
     // token type is TOKEN_TYPE_BUTT
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+    ASSERT_EQ(
+        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
 
 /**
  * @tc.name: GetDefPermission001
- * @tc.desc: PermissionManager::GetDefPermission function test
+ * @tc.desc: GetDefPermission with invalid permission
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -2470,9 +2476,104 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
     std::string permissionName;
     PermissionDef permissionDefResult;
 
+    // permissionName is empty
+    ASSERT_EQ(
+        ERR_PARAM_INVALID, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+
+    // permissionName is not tmpty, but invalid
+    permissionName = "invalid permisiion";
+    ASSERT_EQ(
+        ERR_PERMISSION_NOT_EXIT, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+}
+
+/**
+ * @tc.name: GetDefPermission002
+ * @tc.desc: GetDefPermission with valid permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission002, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    PermissionDef permissionDefResult;
+
     // permissionName invalid
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
-        PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+}
+
+/**
+ * @tc.name: GetDefPermissions001
+ * @tc.desc: GetDefPermissions with invalid tokenid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetDefPermissions001, TestSize.Level1)
+{
+    std::vector<PermissionDef> result;
+
+    // permissionName is empty
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetDefPermissions(0, result));
+    ASSERT_TRUE(result.empty());
+}
+
+/**
+ * @tc.name: GetDefPermissions002
+ * @tc.desc: GetDefPermissions with valid tokenid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetDefPermissions002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionDef> result;
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    // permissionName is empty
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetDefPermissions(tokenId, result));
+    ASSERT_TRUE(!result.empty());
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
+ * @tc.name: GetReqPermissions001
+ * @tc.desc: GetReqPermissions with invalid tokenid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetReqPermissions001, TestSize.Level1)
+{
+    std::vector<PermissionStateFull> result;
+
+    // permissionName is empty
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetReqPermissions(0, result, true));
+    ASSERT_TRUE(result.empty());
+}
+
+/**
+ * @tc.name: GetReqPermissions002
+ * @tc.desc: GetReqPermissions with valid tokenid
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetReqPermissions002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionStateFull> result;
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    // permissionName is empty
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetReqPermissions(tokenId, result, true));
+
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
 }
 
 /**
@@ -2562,13 +2663,60 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
     int flag = 0;
 
     // permissionName invalid
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+        permissionName, flag));
+
+    permissionName = "ohos.permission.invalid";
+    // permissionName is not defined
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
         permissionName, flag));
 
     permissionName = "ohos.permission.CAMERA";
-    // permPolicySet is null
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+    // tokenid in not exits
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
         permissionName, flag));
+}
+
+/**
+ * @tc.name: GetPermissionFlag002
+ * @tc.desc: PermissionManager::GetPermissionFlag function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
+{
+    HapInfoParams infoParms = {
+        .userID = 1,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .appIDDesc = "testtesttesttest"
+    };
+    PermissionStateFull permStat = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+    };
+    HapPolicyParams policyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {permStat}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoParms, policyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    int32_t flag;
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT,
+        PermissionManager::GetInstance().GetPermissionFlag(tokenId, "ohos.permission.LOCATION", flag));
+
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionManager::GetInstance().GetPermissionFlag(tokenId, permStat.permissionName, flag));
+
+    // delete test token
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
@@ -2588,7 +2736,7 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Lev
     int flag = 0;
 
     // permission not in list
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
         permissionName, isGranted, flag));
 }
 
@@ -2769,14 +2917,14 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoveDeviceMappingTokenID001, TestSize.Lev
     AccessTokenID remoteID = 0;
 
     // input invalid
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_NE(RET_SUCCESS,
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, remoteID));
 
     deviceID = "dev-001";
     remoteID = 123; // 123 is random input
 
     // count < 1
-    ASSERT_EQ(RET_FAILED,
+    ASSERT_NE(RET_SUCCESS,
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, remoteID));
 
     AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_ = remoteDeviceMap; // recovery
@@ -2835,28 +2983,28 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
         .processName = processName,
         .apl = apl
     };
-    ASSERT_EQ(RET_FAILED, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
+    ASSERT_NE(RET_SUCCESS, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
 
     inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
     // processName invalid
-    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
     inGenericValues.Remove(TokenFiledConst::FIELD_PROCESS_NAME);
 
     tokenInfo.processName = "token_sync";
     // apl invalid
-    ASSERT_EQ(RET_FAILED, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
+    ASSERT_NE(RET_SUCCESS, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
 
     inGenericValues.Put(TokenFiledConst::FIELD_PROCESS_NAME, processName);
     inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
     // apl invalid
-    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
     inGenericValues.Remove(TokenFiledConst::FIELD_APL);
 
     apl = static_cast<int>(ATokenAplEnum::APL_NORMAL);
     inGenericValues.Put(TokenFiledConst::FIELD_APL, apl);
     inGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
-    ASSERT_EQ(RET_FAILED, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+    ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
 }
 
 /**
@@ -2935,7 +3083,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
     ATokenTypeEnum type = ATokenTypeEnum::TOKEN_HAP;
 
     // version != 1 + type dismatch
-    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
 
     AccessTokenIDEx tokenIdEx =AccessTokenInfoManager::GetInstance().GetHapTokenID(
         USER_ID, "com.ohos.permissionmanager", INST_INDEX);
@@ -2943,7 +3091,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     // register repeat
-    ASSERT_EQ(RET_FAILED, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
 }
 
 /**
@@ -3021,29 +3169,30 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSiz
 
 /**
  * @tc.name: ClearAllSecCompGrantedPerm001
- * @tc.desc: PermissionManager::ClearAllSecCompGrantedPerm function test
+ * @tc.desc: ClearAllSecCompGrantedPerm function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Level1)
 {
-    HapInfoParcel hapInfoParcel;
-    HapPolicyParcel haoPolicyParcel;
-    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
-    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
-    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
-    atManagerService_->GrantPermission(tokenId, "ohos.permission.LOCATION", PERMISSION_COMPONENT_SET);
-    ASSERT_EQ(PERMISSION_GRANTED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+    ASSERT_EQ(
+        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+    PermissionManager::GetInstance().GrantPermission(tokenId, "ohos.permission.LOCATION", PERMISSION_COMPONENT_SET);
+    ASSERT_EQ(
+        PERMISSION_GRANTED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
 
     std::string deviceId;
     atManagerService_->OnRemoveSystemAbility(SECURITY_COMPONENT_SERVICE_ID, deviceId);
-    ASSERT_EQ(PERMISSION_DENIED, atManagerService_->VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
 
     // delete test token
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
@@ -3058,27 +3207,6 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Lev
     std::vector<AccessTokenID> idList;
     idList.emplace_back(tokenId);
     PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(idList); // permPolicySet is null
-}
-
-/**
- * @tc.name: GetPermissionFlag002
- * @tc.desc: PermissionManager::GetPermissionFlag function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
-{
-    HapInfoParcel hapInfoParcel;
-    HapPolicyParcel haoPolicyParcel;
-    hapInfoParcel.hapInfoParameter = g_infoManagerTestInfoParms;
-    haoPolicyParcel.hapPolicyParameter = g_infoManagerTestPolicyPrams1;
-    AccessTokenIDEx tokenIdEx = atManagerService_->AllocHapToken(hapInfoParcel, haoPolicyParcel);
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    int32_t flag;
-    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->GetPermissionFlag(tokenId, "ohos.permission.CAPTURE_SCREEN", flag));
-
-    // delete test token
-    ASSERT_EQ(RET_SUCCESS, atManagerService_->DeleteToken(tokenId));
 }
 } // namespace AccessToken
 } // namespace Security

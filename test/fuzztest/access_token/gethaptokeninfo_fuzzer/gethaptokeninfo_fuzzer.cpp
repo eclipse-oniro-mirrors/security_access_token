@@ -25,7 +25,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetHapTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -45,7 +44,7 @@ namespace OHOS {
             .tokenID = TOKENID,
             .tokenAttr = TOKENID,
         };
-        result = AccessTokenKit::GetHapTokenInfo(TOKENID, HapTokenInfotest);
+        int32_t result = AccessTokenKit::GetHapTokenInfo(TOKENID, HapTokenInfotest);
 
         return result == RET_SUCCESS;
     }

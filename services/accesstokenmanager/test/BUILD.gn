@@ -14,6 +14,33 @@
 import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
+accesstoken_manager_service_source = [
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/perm_state_callback_death_recipient.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_storage.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/sqlite_storage.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_cache.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_policy_set.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_info_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/hap_token_info_inner.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_info_inner.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
+]
+
+tokensync_source = [
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
+]
+
 ohos_unittest("libaccesstoken_manager_service_standard_test") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -21,25 +48,25 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   include_dirs = [
     "../../../interfaces/innerkits/accesstoken/src",
-    "//base/security/access_token/frameworks/accesstoken/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/frameworks/tokensync/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
-    "//base/security/access_token/interfaces/innerkits/nativetoken/include",
-    "//base/security/access_token/interfaces/innerkits/tokensync/src",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/callback",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/device",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/service",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/token",
-    "//base/security/access_token/services/common/database/include",
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/tokensync/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/main/cpp/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/device",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/common/database/include",
     "//commonlibrary/c_utils/base/include",
     "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
     "//foundation/distributedhardware/device_manager/interfaces/inner_kits/native_cpp/include",
     "//third_party/googletest/include",
     "//third_party/json/include",
+    "//third_party/sqlite/include/",
   ]
 
   sources = [
@@ -47,6 +74,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "unittest/cpp/src/native_token_receptor_test.cpp",
     "unittest/cpp/src/permission_grant_event_test.cpp",
   ]
+  sources += accesstoken_manager_service_source
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
@@ -54,25 +82,37 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
   }
 
-  configs = [ "//base/security/access_token/config:coverage_flags" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+    "${access_token_path}/services/common/database:accesstoken_database_cxx",
+    "//third_party/googletest:gtest_main",
+    "//third_party/sqlite:sqlite",
+  ]
 
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+    sources += tokensync_source
+    include_dirs += [
+      "${access_token_path}/interfaces/innerkits/tokensync/include",
+      "${access_token_path}/interfaces/innerkits/tokensync/src",
+    ]
+    deps += [ "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk" ]
   }
-
-  deps = [
-    "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
-    "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
-    "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
-    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
-    "//third_party/googletest:gtest_main",
-  ]
 
   external_deps = [
     "c_utils:utils",
+    "dsoftbus:softbus_client",
+    "hisysevent_native:libhisysevent",
+    "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
+    "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]

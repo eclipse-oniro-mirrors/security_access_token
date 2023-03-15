@@ -61,7 +61,9 @@ enum AccessTokenError {
     ERR_READ_PARCEL_FAILED,
     ERR_WRITE_PARCEL_FAILED,
     ERR_DEVICE_NOT_EXIST,
-    ERR_PROCESS_NOT_EXIST
+    ERR_PROCESS_NOT_EXIST,
+    ERR_CHECK_DCAP_FAIL,
+    ERR_PERMISSION_NOT_DEFINE,
 };
 } // namespace AccessToken
 } // namespace Security

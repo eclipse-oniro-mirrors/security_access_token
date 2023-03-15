@@ -97,7 +97,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
@@ -113,7 +113,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     sptr<PermissionDefParcel> resultSptr = reply.ReadParcelable<PermissionDefParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read permission def parcel fail");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     permissionDefResult = *resultSptr;
     return result;
@@ -126,12 +126,12 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_DEF_PERMISSIONS, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -142,7 +142,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     uint32_t size = reply.ReadUint32();
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionDefParcel> permissionDef = reply.ReadParcelable<PermissionDefParcel>();
@@ -160,16 +160,16 @@ int AccessTokenManagerProxy::GetReqPermissions(
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(isSystemGrant)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isSystemGrant");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_REQ_PERMISSIONS, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -180,7 +180,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     uint32_t size = reply.ReadUint32();
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
@@ -197,11 +197,11 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
@@ -266,15 +266,15 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
@@ -293,15 +293,15 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
@@ -320,12 +320,12 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::CLEAR_USER_GRANT_PERMISSION, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -339,15 +339,15 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&scope)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write PermStateChangeScopeParcel.");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
@@ -357,7 +357,7 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
     int32_t result;
     if (!reply.ReadInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;
@@ -368,11 +368,11 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write remote object.");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
@@ -383,7 +383,7 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
     int32_t result;
     if (!reply.ReadInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;
@@ -434,12 +434,12 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
 
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::TOKEN_DELETE, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -454,12 +454,12 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
 
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_TOKEN_TYPE, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -474,15 +474,15 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
 
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(dcap)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write dcap");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::CHECK_NATIVE_DCAP, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -566,12 +566,12 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_NATIVE_TOKENINFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -582,7 +582,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     sptr<NativeTokenInfoParcel> resultSptr = reply.ReadParcelable<NativeTokenInfoParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-        return RET_FAILED;
+        return ERR_READ_PARCEL_FAILED;
     }
     nativeTokenInfoRes = *resultSptr;
     return result;
@@ -594,12 +594,12 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_HAP_TOKENINFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -610,7 +610,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     sptr<HapTokenInfoParcel> resultSptr = reply.ReadParcelable<HapTokenInfoParcel>();
     if (resultSptr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-        return RET_FAILED;
+        return ERR_READ_PARCEL_FAILED;
     }
     hapTokenInfoRes = *resultSptr;
     return result;
@@ -623,24 +623,24 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteBool(isSystemApp)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(appIDDesc)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(apiVersion)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
     tokenIdEx.tokenIdExStruct.tokenAttr = reply.ReadUint32();
@@ -653,11 +653,11 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     MessageParcel data;
     if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::RELOAD_NATIVE_TOKEN_INFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -706,12 +706,12 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_HAP_TOKEN_FROM_REMOTE, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -722,7 +722,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     sptr<HapTokenInfoForSyncParcel> hapResult = reply.ReadParcelable<HapTokenInfoForSyncParcel>();
     if (hapResult == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-        return RET_FAILED;
+        return ERR_READ_PARCEL_FAILED;
     }
     hapSyncParcel = *hapResult;
     return result;
@@ -735,7 +735,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoFo
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -746,7 +746,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoFo
     uint32_t size = reply.ReadUint32();
     if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < size; i++) {
         sptr<NativeTokenInfoForSyncParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoForSyncParcel>();
@@ -764,15 +764,15 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&hapSyncParcel)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::SET_REMOTE_HAP_TOKEN_INFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -786,20 +786,20 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteUint32(nativeTokenInfoForSyncParcel.size())) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
     for (const NativeTokenInfoForSyncParcel& parcel : nativeTokenInfoForSyncParcel) {
         if (!data.WriteParcelable(&parcel)) {
-            return RET_FAILED;
+            return ERR_WRITE_PARCEL_FAILED;
         }
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -812,16 +812,16 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteUint32(tokenID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_TOKEN_INFO, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -865,12 +865,12 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
     if (!data.WriteString(deviceID)) {
-        return RET_FAILED;
+        return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(IAccessTokenManager::InterfaceCode::DELETE_REMOTE_DEVICE_TOKEN, data, reply)) {
-        return RET_FAILED;
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
