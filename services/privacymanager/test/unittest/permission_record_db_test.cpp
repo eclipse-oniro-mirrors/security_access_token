@@ -306,7 +306,7 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level
     // begin < 0
     ASSERT_EQ(Constant::FAILURE,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
-    
+
     request.beginTimeMillis = 10;
     request.endTimeMillis = -1;
     // begin > 0 + end < 0
