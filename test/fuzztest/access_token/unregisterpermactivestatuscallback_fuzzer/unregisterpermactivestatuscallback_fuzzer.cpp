@@ -46,7 +46,6 @@ public:
 namespace OHOS {
     bool UnRegisterPermActiveStatusCallbackFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -56,7 +55,7 @@ namespace OHOS {
         auto callback = std::make_shared<UnRegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
 
-        result = PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
+        int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(callback);
 
         return result == RET_SUCCESS;
     }

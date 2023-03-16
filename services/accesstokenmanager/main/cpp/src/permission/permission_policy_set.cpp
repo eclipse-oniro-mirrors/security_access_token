@@ -220,7 +220,7 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
         }
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-    return AccessTokenError::ERR_PARAM_INVALID;
+    return AccessTokenError::ERR_PERMISSION_NOT_EXIT;
 }
 
 static int32_t UpdateWithNewFlag(int32_t oldFlag, int32_t currFlag)

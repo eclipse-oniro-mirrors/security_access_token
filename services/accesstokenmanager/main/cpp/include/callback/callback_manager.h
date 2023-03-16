@@ -49,8 +49,7 @@ public:
     CallbackManager();
     static CallbackManager& GetInstance();
 
-    int32_t AddCallback(
-        const std::shared_ptr<PermStateChangeScope>& callbackScopePtr, const sptr<IRemoteObject>& callback);
+    int32_t AddCallback(const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool CalledAccordingToTokenIdLlist(const std::vector<AccessTokenID>& tokenIDList, AccessTokenID tokenID);
     bool CalledAccordingToPermLlist(const std::vector<std::string>& permList, const std::string& permName);

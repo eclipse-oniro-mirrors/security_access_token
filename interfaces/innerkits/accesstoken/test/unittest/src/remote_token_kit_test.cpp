@@ -492,7 +492,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::GrantPermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIT);
+    ASSERT_EQ(ret, ERR_PERMISSION_NOT_DEFINE);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
@@ -549,7 +549,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::RevokePermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIT);
+    ASSERT_EQ(ret, ERR_PERMISSION_NOT_DEFINE);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
@@ -603,7 +603,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo007, TestSize.Level1)
     ASSERT_NE(mapID, 0);
 
     ret = AccessTokenKit::DeleteToken(mapID);
-    ASSERT_EQ(ret, RET_FAILED);
+    ASSERT_NE(ret, RET_SUCCESS);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID, 0x20100000);
     ASSERT_EQ(ret, RET_SUCCESS);
@@ -1258,6 +1258,6 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
     res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
-    ASSERT_EQ(RET_FAILED, res);
+    ASSERT_NE(RET_SUCCESS, res);
 }
 #endif

@@ -28,7 +28,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool AddPermissionUsedRecordFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -38,7 +37,7 @@ namespace OHOS {
         int32_t successCount = static_cast<int32_t>(size);
         int32_t failCount = static_cast<int32_t>(size);
 
-        result = PrivacyKit::AddPermissionUsedRecord(tokenId, testName, successCount, failCount);
+        int32_t result = PrivacyKit::AddPermissionUsedRecord(tokenId, testName, successCount, failCount);
 
         return result == RET_SUCCESS;
     }

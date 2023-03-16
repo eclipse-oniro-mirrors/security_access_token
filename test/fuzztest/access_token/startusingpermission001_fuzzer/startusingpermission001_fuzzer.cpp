@@ -45,7 +45,6 @@ public:
 namespace OHOS {
     bool StartUsingPermission001FuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -54,7 +53,7 @@ namespace OHOS {
         std::string testName(reinterpret_cast<const char*>(data), size);
         auto callback = std::make_shared<CbCustomizeTest>();
 
-        result = PrivacyKit::StartUsingPermission(tokenId, testName, callback);
+        int32_t result = PrivacyKit::StartUsingPermission(tokenId, testName, callback);
 
         return result == RET_SUCCESS;
     }

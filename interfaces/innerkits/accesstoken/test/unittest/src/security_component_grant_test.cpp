@@ -248,7 +248,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
-    ASSERT_EQ(res, RET_FAILED);
+    ASSERT_NE(res, RET_SUCCESS);
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_DENIED);
 
@@ -481,7 +481,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Lev
 
     // security component revoke repeat
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
-    ASSERT_EQ(res, RET_FAILED);
+    ASSERT_NE(res, RET_SUCCESS);
     ASSERT_EQ(callbackPtr->ready_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -525,7 +525,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Lev
 
     // security component revoke
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
-    ASSERT_EQ(res, RET_FAILED);
+    ASSERT_NE(res, RET_SUCCESS);
     ASSERT_EQ(callbackPtr->ready_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);

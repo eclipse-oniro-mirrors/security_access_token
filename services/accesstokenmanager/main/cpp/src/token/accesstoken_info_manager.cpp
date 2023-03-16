@@ -484,7 +484,7 @@ int AccessTokenInfoManager::CheckNativeDCap(AccessTokenID tokenID, const std::st
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is invalid.", tokenID);
-        return RET_FAILED;
+        return ERR_TOKENID_NOT_EXIST;
     }
 
     std::vector<std::string> dcaps = infoPtr->GetDcap();
@@ -493,7 +493,7 @@ int AccessTokenInfoManager::CheckNativeDCap(AccessTokenID tokenID, const std::st
             return RET_SUCCESS;
         }
     }
-    return RET_FAILED;
+    return ERR_CHECK_DCAP_FAIL;
 }
 
 AccessTokenIDEx AccessTokenInfoManager::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)

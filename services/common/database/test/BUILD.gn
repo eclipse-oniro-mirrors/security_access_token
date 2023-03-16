@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
 
 ohos_unittest("libdatabase_test") {
@@ -21,28 +22,36 @@ ohos_unittest("libdatabase_test") {
   include_dirs = [
     "//commonlibrary/c_utils/base/include",
     "//third_party/googletest/include",
-    "//base/security/access_token/services/common/database/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/database",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/token",
-    "//base/security/access_token/services/accesstokenmanager/main/cpp/include/permission",
+    "${access_token_path}/services/common/database/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
   ]
 
-  sources = [ "unittest/database_test.cpp" ]
+  sources = [
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_storage.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/sqlite_storage.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
+    "unittest/database_test.cpp",
+  ]
 
-  configs = [ "//base/security/access_token/config:coverage_flags" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
-    "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
-    "//base/security/access_token/services/common/database:accesstoken_database_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/services/common/database:accesstoken_database_cxx",
     "//third_party/sqlite:sqlite",
   ]
 
   external_deps = [
     "c_utils:utils",
+    "hisysevent_native:libhisysevent",
     "hiviewdfx_hilog_native:libhilog",
   ]
 }

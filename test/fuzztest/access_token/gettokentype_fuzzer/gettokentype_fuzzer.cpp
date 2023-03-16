@@ -24,7 +24,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetTokenTypeFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         ATokenTypeEnum ATokenType;
         if ((data == nullptr) || (size == 0)) {
             return false;
@@ -32,9 +31,8 @@ namespace OHOS {
 
         AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
         ATokenType = AccessTokenKit::GetTokenType(TOKENID);
-        result = true;
 
-        return result == RET_SUCCESS;
+        return true;
     }
 }
 

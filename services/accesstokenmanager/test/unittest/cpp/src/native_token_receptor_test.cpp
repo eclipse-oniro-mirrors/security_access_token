@@ -353,9 +353,9 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     std::string dcap = "AT_CAP";
     ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, dcap), RET_SUCCESS);
     std::string ndcap = "AT";
-    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, ndcap), RET_FAILED);
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().CheckNativeDCap(findInfo.tokenID, ndcap), RET_SUCCESS);
     AccessTokenID testId = 1;
-    ASSERT_EQ(AccessTokenInfoManager::GetInstance().CheckNativeDCap(testId, dcap), RET_FAILED);
+    ASSERT_NE(AccessTokenInfoManager::GetInstance().CheckNativeDCap(testId, dcap), RET_SUCCESS);
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
