@@ -803,7 +803,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
 
     int32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_GAMMA, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_DEFINE, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "", flag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -818,7 +818,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_DEFINE, ret);
 }
 
 /**
@@ -1037,7 +1037,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
 
     ret = AccessTokenKit::GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1052,7 +1052,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
 }
 
 /**
@@ -1170,7 +1170,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
 
     ret = AccessTokenKit::RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1185,7 +1185,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
 }
 
 /**

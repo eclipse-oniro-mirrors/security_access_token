@@ -492,7 +492,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::GrantPermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIT);
+    ASSERT_EQ(ret, ERR_PERMISSION_NOT_DEFINE);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
@@ -549,7 +549,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::RevokePermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
-    ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIT);
+    ASSERT_EQ(ret, ERR_PERMISSION_NOT_DEFINE);
 
     ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);

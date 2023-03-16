@@ -1188,7 +1188,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
 
     if (!IsDynamicRequest(asyncContext->permissionList, asyncContext->permissionsState)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
-        asyncContext->isResultCalled = false;
+        asyncContext->needDynamicRequest = false;
         return;
     }
 
@@ -1199,7 +1199,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         curRequestCode_, reinterpret_cast<void *>(asyncContext));
     if (remoteObject == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
-        asyncContext->isResultCalled = false;
+        asyncContext->needDynamicRequest = false;
         asyncContext->result = JsErrorCode::JS_ERROR_INNER;
         return;
     }
@@ -1215,7 +1215,7 @@ void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status
     }
     std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
 
-    if (asyncContext->isResultCalled) {
+    if (asyncContext->needDynamicRequest) {
         callbackPtr.release();
         return;
     }

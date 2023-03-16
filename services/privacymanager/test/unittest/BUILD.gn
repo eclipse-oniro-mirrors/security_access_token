@@ -21,28 +21,18 @@ if (is_standard_system && ability_base_enable == true) {
     module_out_path = part_name + "/" + part_name
 
     include_dirs = [
-      "../../../../interfaces/innerkits/privacy/src",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/frameworks/privacy/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/interfaces/innerkits/privacy/include",
+      "${access_token_path}/interfaces/innerkits/privacy/src",
+      "${access_token_path}/services/common/database/include",
+      "${access_token_path}/services/privacymanager/include/active",
+      "${access_token_path}/services/privacymanager/include/common",
+      "${access_token_path}/services/privacymanager/include/database",
+      "${access_token_path}/services/privacymanager/include/record",
+      "${access_token_path}/services/privacymanager/include/service",
       "//base/global/resource_management/interfaces/inner_api/include",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/frameworks/privacy/include",
-      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-      "//base/security/access_token/interfaces/innerkits/privacy/include",
-      "//base/security/access_token/services/common/database/include",
-      "//base/security/access_token/services/privacymanager/include/active",
-      "//base/security/access_token/services/privacymanager/include/common",
-      "//base/security/access_token/services/privacymanager/include/database",
-      "//base/security/access_token/services/privacymanager/include/record",
-      "//base/security/access_token/services/privacymanager/include/sensitive",
-      "//base/security/access_token/services/privacymanager/include/sensitive/ability_manager",
-      "//base/security/access_token/services/privacymanager/include/sensitive/app_manager",
-      "//base/security/access_token/services/privacymanager/include/sensitive/audio_manager",
-      "//base/security/access_token/services/privacymanager/include/sensitive/window_manager",
-      "//base/security/access_token/services/privacymanager/include/sensitive/camera_manager",
-      "//base/security/access_token/services/privacymanager/include/service",
-      "//commonlibrary/c_utils/base/include",
-      "//foundation/arkui/napi",
-      "//foundation/graphic/graphic_2d/frameworks/surface/include",
-      "//foundation/window/window_manager/wm/include",
       "//third_party/googletest/include",
       "//third_party/sqlite/include",
     ]
@@ -51,7 +41,6 @@ if (is_standard_system && ability_base_enable == true) {
       "permission_record_db_test.cpp",
       "permission_record_manager_test.cpp",
       "privacy_manager_service_test.cpp",
-      "sensitive_manager_test.cpp",
     ]
 
     configs = [ "//base/security/access_token/config:coverage_flags" ]
@@ -62,10 +51,7 @@ if (is_standard_system && ability_base_enable == true) {
       "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
       "//base/security/access_token/services/common/database:accesstoken_database_cxx",
       "//base/security/access_token/services/privacymanager:privacy_manager_service",
-      "//foundation/arkui/ace_engine/interfaces/inner_api/ui_service_manager:ui_service_mgr",
-      "//foundation/graphic/graphic_2d:libsurface",
       "//third_party/googletest:gtest_main",
-      "//third_party/libuv:uv",
     ]
 
     external_deps = [
@@ -74,7 +60,50 @@ if (is_standard_system && ability_base_enable == true) {
       "c_utils:utils",
       "hiviewdfx_hilog_native:libhilog",
       "ipc:ipc_core",
-      "multimedia_audio_framework:audio_client",
+      "safwk:system_ability_fwk",
+    ]
+  }
+
+  ohos_unittest("libsensitive_manager_test") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    module_out_path = part_name + "/" + part_name
+
+    include_dirs = [
+      "${access_token_path}/services/privacymanager/include/active",
+      "${access_token_path}/services/privacymanager/include/common",
+      "${access_token_path}/services/privacymanager/include/database",
+      "${access_token_path}/services/privacymanager/include/record",
+      "${access_token_path}/services/privacymanager/include/sensitive/ability_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/adapter",
+      "${access_token_path}/services/privacymanager/include/sensitive/app_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/window_manager",
+      "${foundation_path}/arkui/napi",
+      "${foundation_path}/graphic/graphic_2d/frameworks/surface/include",
+      "${foundation_path}/window/window_manager/wm/include",
+      "//third_party/googletest/include",
+      "//third_party/sqlite/include",
+    ]
+
+    sources = [ "sensitive_manager_test.cpp" ]
+
+    configs = [ "${access_token_path}/config:coverage_flags" ]
+
+    deps = [
+      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+      "${access_token_path}/services/common/database:accesstoken_database_cxx",
+      "${access_token_path}/services/privacymanager:sensitive_manager_service",
+      "//third_party/googletest:gtest_main",
+    ]
+
+    external_deps = [
+      "ability_base:want",
+      "c_utils:utils",
+      "hiviewdfx_hilog_native:libhilog",
+      "ipc:ipc_core",
       "safwk:system_ability_fwk",
     ]
   }
@@ -82,5 +111,8 @@ if (is_standard_system && ability_base_enable == true) {
 
 group("unittest") {
   testonly = true
-  deps = [ ":libprivacy_manager_service_standard_test" ]
+  deps = [
+    ":libprivacy_manager_service_standard_test",
+    ":libsensitive_manager_test",
+  ]
 }

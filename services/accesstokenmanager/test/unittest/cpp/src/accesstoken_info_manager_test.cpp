@@ -2482,8 +2482,8 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
 
     // permissionName is not tmpty, but invalid
     permissionName = "invalid permisiion";
-    ASSERT_EQ(
-        ERR_PERMISSION_NOT_EXIT, PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT,
+        PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
 }
 
 /**
@@ -3189,7 +3189,8 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm001, TestSize.Lev
 
     std::string deviceId;
     atManagerService_->OnRemoveSystemAbility(SECURITY_COMPONENT_SERVICE_ID, deviceId);
-    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
+    ASSERT_EQ(
+        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, "ohos.permission.LOCATION"));
 
     // delete test token
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));

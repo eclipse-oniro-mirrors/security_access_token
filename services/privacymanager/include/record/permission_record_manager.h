@@ -22,17 +22,12 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
-#include "app_manager_death_recipient.h"
-#include "app_status_change_callback.h"
-#include "audio_global_switch_change_stub.h"
-#include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
-#include "window_manager_privacy_agent.h"
 
 #include "rwlock.h"
 #include "thread_pool.h"
@@ -40,6 +35,26 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+struct PrivacyAppStateData : public Parcelable {
+    virtual bool Marshalling(Parcel &parcel) const override;
+    static PrivacyAppStateData* Unmarshalling(Parcel &parcel);
+
+    std::string bundleName;
+    int32_t pid = -1;
+    int32_t uid = 0;
+    int32_t state = 0;
+    int32_t accessTokenId = 0;
+    bool isFocused = false;
+};
+
+enum class PrivacyWindowManagerAgentType : uint32_t {
+    WINDOW_MANAGER_AGENT_TYPE_FOCUS,
+    WINDOW_MANAGER_AGENT_TYPE_SYSTEM_BAR,
+    WINDOW_MANAGER_AGENT_TYPE_WINDOW_UPDATE,
+    WINDOW_MANAGER_AGENT_TYPE_WINDOW_VISIBILITY,
+    WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT,
+};
 class PermissionRecordManager final {
 public:
     static PermissionRecordManager& GetInstance();
@@ -78,6 +93,7 @@ private:
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
 
     void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
+    bool DelRecordFromStartList(std::vector<PermissionRecord>::iterator it, PermissionRecord& record);
     void AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
         int32_t successCount, int32_t failCount, PermissionRecord& record);
@@ -105,32 +121,40 @@ private:
     void SetCameraCallback(sptr<IRemoteObject>);
 
     bool IsFlowWindowShow(AccessTokenID tokenId);
-    int32_t IsForegroundApp(AccessTokenID tokenId);
+    int32_t GetAppStatus(AccessTokenID tokenId);
 
     bool Register();
+    bool RegisterAudioRoutingManagerListener();
+    bool RegisterApplicationStateObserver();
+    bool RegisterCameraServiceCallback();
+    bool RegisterWindowManagerPrivacyAgent();
     void Unregister();
+    bool LoadSensitiveLib();
+    bool UnLoadSensitiveLib();
 
 private:
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
     OHOS::Utils::RWLock rwLock_;
     std::mutex startRecordListMutex_;
+    std::mutex handlerMutex_;
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
     sptr<IRemoteObject> cameraCallback_;
 
     // microphone
-    sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
+    void* micMuteCallback_ = nullptr;
 
     // camera
-    sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
+    void* camMuteCallback_ = nullptr;
 
     // camera float window
     AccessTokenID floatWindowTokenId_ = 0;
     bool camFloatWindowShowing_ = false;
-    sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
+    void* floatWindowCallback_ = nullptr;
 
-    sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
+    void* appStateCallback_ = nullptr;
+    void* handler_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

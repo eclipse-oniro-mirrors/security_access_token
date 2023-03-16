@@ -61,7 +61,8 @@ namespace OHOS {
             .permStateList = {TestState}
         };
         constexpr int32_t DEFAULT_API_VERSION = 8;
-        int32_t result = AccessTokenKit::UpdateHapToken(TOKENIDEX, false, testName, DEFAULT_API_VERSION, TestPolicyPrams);
+        int32_t result = AccessTokenKit::UpdateHapToken(
+            TOKENIDEX, false, testName, DEFAULT_API_VERSION, TestPolicyPrams);
 
         return result == RET_SUCCESS;
     }
