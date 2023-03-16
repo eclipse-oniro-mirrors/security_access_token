@@ -64,6 +64,7 @@ if (is_standard_system && ability_base_enable == true) {
       "src/active/perm_active_status_change_callback_proxy.cpp",
       "src/active/state_change_callback_proxy.cpp",
       "src/common/constant.cpp",
+      "src/common/memory_guard.cpp",
       "src/common/privacy_field_const.cpp",
       "src/common/time_util.cpp",
       "src/database/data_translator.cpp",
@@ -97,6 +98,11 @@ if (is_standard_system && ability_base_enable == true) {
       "src/service/privacy_manager_stub.cpp",
     ]
 
+    if (use_musl) {
+      if (use_jemalloc && use_jemalloc_dfx_intf) {
+        defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
+      }
+    }
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [ "//base/security/access_token/config:coverage_flags" ]
 
