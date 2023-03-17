@@ -15,6 +15,9 @@
 
 #ifndef MEMORY_GUARD_H
 #define MEMORY_GUARD_H
+
+#include <cstdint>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
