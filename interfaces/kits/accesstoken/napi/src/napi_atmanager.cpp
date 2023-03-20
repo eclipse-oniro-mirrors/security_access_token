@@ -1349,9 +1349,8 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
     }
     // 0: the first parameter of argv
     std::string type;
-    std::string errMsg;
     if (!ParseString(env, argv[0], type)) {
-        errMsg = GetParamErrorMsg("type", "string");
+        std::string errMsg = GetParamErrorMsg("type", "string");
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }

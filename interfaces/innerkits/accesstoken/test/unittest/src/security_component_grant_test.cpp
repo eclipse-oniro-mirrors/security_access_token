@@ -216,7 +216,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_GRANTED);
     int32_t flag;
-    res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
+    AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
     // security component revoke
@@ -262,7 +262,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_DENIED);
-    res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
+    AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -293,7 +293,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Lev
     ASSERT_NE(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
-    res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
+    AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
     // security component revoke
@@ -333,7 +333,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_DENIED);
-    res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
+    AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
     // security component revoke
@@ -377,7 +377,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
 
     // check not to pop up
     SetSelfTokenID(nativeTokenID);
-    res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
+    AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
 
     SetSelfTokenID(tokenID);
     result = AccessTokenKit::GetSelfPermissionsState(permList);
@@ -439,7 +439,7 @@ public:
         ready_ = true;
     }
 
-    bool ready_;
+    bool ready_ = false;
 };
 
 /**

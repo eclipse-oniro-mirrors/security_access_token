@@ -57,10 +57,6 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
-    if (callbackScopePtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callbackScopePtr is nullptr");
-        return AccessTokenError::ERR_MALLOC_FAILED;
-    }
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
