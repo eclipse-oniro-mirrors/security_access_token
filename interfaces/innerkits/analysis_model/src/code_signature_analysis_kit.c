@@ -360,6 +360,10 @@ int32_t GetResult(uint8_t *result, uint32_t *resultLen)
     }
 
     NotifyRiskResultInfo *data = (NotifyRiskResultInfo *)malloc(neededLen);
+    if (data == NULL) {
+        (void)pthread_mutex_unlock(&g_modelVisitLock);
+        return SHORT_OF_MEMORY;
+    }
     AppRiskInfo *node = g_modelDataHead->next;
     uint32_t index = 0;
     while (node != NULL) {
