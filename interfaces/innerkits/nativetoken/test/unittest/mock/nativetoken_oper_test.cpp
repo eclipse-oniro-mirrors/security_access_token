@@ -27,7 +27,9 @@ using namespace testing::ext;
 using namespace OHOS::Security;
 
 void TokenOperTest::SetUpTestCase()
-{}
+{
+    GetHandle();
+}
 
 void TokenOperTest::TearDownTestCase()
 {}
