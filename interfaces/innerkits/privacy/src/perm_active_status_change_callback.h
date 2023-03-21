@@ -28,7 +28,7 @@ namespace Security {
 namespace AccessToken {
 class PermActiveStatusChangeCallback : public PermActiveStatusChangeCallbackStub {
 public:
-    explicit PermActiveStatusChangeCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk> &subscriber);
+    explicit PermActiveStatusChangeCallback(const std::shared_ptr<PermActiveStatusCustomizedCbk> &customizedCallback);
     ~PermActiveStatusChangeCallback() override;
 
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;

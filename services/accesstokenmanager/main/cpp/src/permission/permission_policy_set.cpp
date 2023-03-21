@@ -15,6 +15,8 @@
 
 #include "permission_policy_set.h"
 
+#include <algorithm>
+
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "data_storage.h"
@@ -187,10 +189,9 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
         }
     }
     // check if undeclared permission is granted by security component.
-    for (const auto& permission : secCompGrantedPermList_) {
-        if (permission == permissionName) {
+    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
+        [permissionName](const auto& permission) { return permission == permissionName; })) {
             return PERMISSION_GRANTED;
-        }
     }
     return PERMISSION_DENIED;
 }
@@ -256,7 +257,7 @@ void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
     if (isAdded) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is added.");
         auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-            [permissionName](const std::string grantedPerm) {
+            [permissionName](const std::string &grantedPerm) {
                 return permissionName == grantedPerm;
             });
         if (iter == secCompGrantedPermList_.end()) {
@@ -266,7 +267,7 @@ void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
     } else {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "The permission in secCompGrantedPermList_  is deleted.");
         auto iter = std::find_if(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
-            [permissionName](const std::string grantedPerm) {
+            [permissionName](const std::string &grantedPerm) {
                 return permissionName == grantedPerm;
             });
         if (iter != secCompGrantedPermList_.end()) {
