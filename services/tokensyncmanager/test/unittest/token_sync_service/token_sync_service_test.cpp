@@ -410,6 +410,165 @@ HWTEST_F(TokenSyncServiceTest, ClientProcessResult002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: ToNativeTokenInfoJson001
+ * @tc.desc: ToNativeTokenInfoJson function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ToNativeTokenInfoJson001, TestSize.Level1)
+{
+    NativeTokenInfoForSync native1 = {
+        .baseInfo.apl = APL_NORMAL,
+        .baseInfo.ver = 1,
+        .baseInfo.processName = "token_sync_test",
+        .baseInfo.dcap = {"AT_CAP"},
+        .baseInfo.tokenID = 1,
+        .baseInfo.tokenAttr = 0,
+        .baseInfo.nativeAcls = {},
+    };
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    EXPECT_NE(nullptr, cmd->ToNativeTokenInfoJson(native1));
+}
+
+/**
+ * @tc.name: FromPermStateListJson001
+ * @tc.desc: FromPermStateListJson function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, FromPermStateListJson001, TestSize.Level1)
+{
+    HapTokenInfo baseInfo = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .userID = 1,
+        .bundleName = "com.ohos.access_token",
+        .instIndex = 1,
+        .appID = "testtesttesttest",
+        .deviceID = "id",
+        .tokenID = 0x20100000,
+        .tokenAttr = 0
+    };
+
+    PermissionStateFull infoManagerTestState = {
+        .permissionName = "ohos.permission.test1",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+    std::vector<PermissionStateFull> permStateList;
+    permStateList.emplace_back(infoManagerTestState);
+
+    HapTokenInfoForSync remoteTokenInfo = {
+        .baseInfo = baseInfo,
+        .permStateList = permStateList
+    };
+    nlohmann::json hapTokenJson;
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    hapTokenJson = cmd->ToHapTokenInfosJson(remoteTokenInfo);
+
+    HapTokenInfoForSync hap;
+    cmd->FromHapTokenBasicInfoJson(hapTokenJson, hap.baseInfo);
+    cmd->FromPermStateListJson(hapTokenJson, hap.permStateList);
+
+    PermissionStateFull state1 = {
+        .permissionName = "ohos.permission.test1",
+        .isGeneral = true,
+        .resDeviceID = {"local", "local1"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+    nlohmann::json permStateJson;
+    cmd->ToPermStateJson(permStateJson, state1);
+
+    PermissionStateFull state2 = {
+        .permissionName = "ohos.permission.test1",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED, PermissionFlag::PERMISSION_SYSTEM_FIXED}};
+    cmd->ToPermStateJson(permStateJson, state2);
+
+    EXPECT_EQ(hap.baseInfo.tokenID, remoteTokenInfo.baseInfo.tokenID);
+    EXPECT_EQ(hap.baseInfo.apl, remoteTokenInfo.baseInfo.apl);
+}
+
+/**
+ * @tc.name: FromNativeTokenInfoJson001
+ * @tc.desc: FromNativeTokenInfoJson function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, FromNativeTokenInfoJson001, TestSize.Level1)
+{
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+
+    nlohmann::json nativeTokenListJsonNull;
+    NativeTokenInfoForSync tokenNull;
+    cmd->FromNativeTokenInfoJson(nativeTokenListJsonNull, tokenNull);
+
+    nlohmann::json hapTokenJsonNull;
+    HapTokenInfo hapTokenBasicInfoNull;
+    cmd->FromHapTokenBasicInfoJson(hapTokenJsonNull, hapTokenBasicInfoNull);
+
+    NativeTokenInfoForSync native1 = {
+        .baseInfo.apl = APL_NORMAL,
+        .baseInfo.ver = 2,
+        .baseInfo.processName = "token_sync_test",
+        .baseInfo.dcap = {"AT_CAP"},
+        .baseInfo.tokenID = 1,
+        .baseInfo.tokenAttr = 0,
+        .baseInfo.nativeAcls = {},
+    };
+    nlohmann::json nativeTokenListJson = cmd->ToNativeTokenInfoJson(native1);
+    NativeTokenInfoForSync token;
+    cmd->FromNativeTokenInfoJson(nativeTokenListJson, token);
+    EXPECT_EQ(token.baseInfo.processName, "token_sync_test");
+    EXPECT_EQ(token.baseInfo.apl, ATokenAplEnum::APL_NORMAL);
+}
+
+/**
+ * @tc.name: FromPermStateListJson002
+ * @tc.desc: FromPermStateListJson function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, FromPermStateListJson002, TestSize.Level1)
+{
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+
+    nlohmann::json hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
+        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"grantConfig\\\":[{\\\"resDeviceID\\\":\\\"device\\\", "
+        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+    std::vector<PermissionStateFull> permStateListNull;
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+
+    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
+        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+
+    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
+        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"isGeneral\\\":1}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+
+    hapTokenJsonNull = "{\\\"apl\\\":1,\\\"appID\\\":\\\"\\\",\\\"bundleName\\\":\\\"\\\","
+        "\\\"deviceID\\\":\\\"\\\",\\\"instIndex\\\":0,\\\"permState\\\":[{\\\"permissionName\\\":\\\"TEST\\\", "
+        "\\\"isGeneral\\\":1, \\\"grantConfig\\\":[{"
+        "\\\"grantStatus\\\":0, \\\"grantFlags\\\":0}]}],\\\"tokenAttr\\\":0,"
+        "\\\"tokenID\\\":111,\\\"userID\\\":0,\\\"version\\\":1}";
+    cmd->FromPermStateListJson(hapTokenJsonNull, permStateListNull);
+    EXPECT_EQ(permStateListNull.size(), 0);
+}
+
+/**
  * @tc.name: GetRemoteHapTokenInfo002
  * @tc.desc: test remote hap recv func
  * @tc.type: FUNC
