@@ -128,7 +128,7 @@ std::string SoftBusChannel::GetUuid()
     char uuidbuf[uuidStrLen];
     RandomUuid(uuidbuf, uuidStrLen);
     std::string uuid(uuidbuf);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", uuid.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", ConstantCommon::EncryptDevId(uuid).c_str());
 
     return uuid;
 }
@@ -385,7 +385,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
     // execute command
     command->Execute();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "command uniqueId: %{public}s, finish with status: %{public}d, message: %{public}s",
-        command->remoteProtocol_.uniqueId.c_str(), command->remoteProtocol_.statusCode,
+        ConstantCommon::EncryptDevId(command->remoteProtocol_.uniqueId).c_str(), command->remoteProtocol_.statusCode,
         command->remoteProtocol_.message.c_str());
 
     // send result back
