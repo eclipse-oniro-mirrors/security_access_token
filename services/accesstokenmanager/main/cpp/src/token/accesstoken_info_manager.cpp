@@ -926,8 +926,8 @@ std::string AccessTokenInfoManager::GetUdidByNodeId(const std::string &nodeId)
 {
     uint8_t info[UDID_MAX_LENGTH + 1] = {0};
 
-    int32_t ret = ::GetNodeKeyInfo(ACCESS_TOKEN_PACKAGE_NAME.c_str(), ConstantCommon::EncryptDevId(nodeId).c_str(),
-        NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
+    int32_t ret = ::GetNodeKeyInfo(
+        ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(), NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
         return "";
