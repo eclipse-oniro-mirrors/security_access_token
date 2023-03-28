@@ -362,7 +362,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), ConstantCommon::EncryptDevId(nodeId).c_str(),
+    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
         NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
         delete[] info;
