@@ -234,7 +234,8 @@ struct applicationItem {
    * Lifecycle function, executed when the page is initialized
    */
   aboutToAppear() {
-    for (let i = 0; i < routerData[0].bundleNames.length; i++) {
+    let bundleNames = routerData.length > 0 ? routerData[0].bundleNames : routerData;
+    for (let i = 0; i < bundleNames.length; i++) {
       // Get BundleInfo based on bundle name
       bundle.getBundleInfo(routerData[0].bundleNames[i], Constants.PARMETER_BUNDLE_FLAG).then(res => {
         Promise.all([getAppLabel(res.appInfo.labelId, res.name),
