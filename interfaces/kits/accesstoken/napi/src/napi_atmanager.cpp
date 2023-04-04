@@ -290,6 +290,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("checkAccessToken", CheckAccessToken),
+        DECLARE_NAPI_FUNCTION("checkAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
         DECLARE_NAPI_FUNCTION("on", RegisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
