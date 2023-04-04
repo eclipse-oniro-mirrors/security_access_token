@@ -25,7 +25,6 @@ group("privacymanager") {
   if (is_standard_system && ability_base_enable == true) {
     deps = [
       "${access_token_path}/services/privacymanager:privacy_manager_service",
-      "${access_token_path}/services/privacymanager:sensitive_manager_service",
       "${access_token_path}/services/privacymanager/sa_profile:privacy_sa_profile_standard",
     ]
   }
@@ -43,77 +42,8 @@ if (is_standard_system && ability_base_enable == true) {
       "include/database",
       "include/record",
       "include/service",
-      "${access_token_path}/frameworks/privacy/include",
-      "${access_token_path}/frameworks/common/include",
-      "${access_token_path}/interfaces/innerkits/accesstoken/include",
-      "${access_token_path}/interfaces/innerkits/privacy/include",
-      "${access_token_path}/services/common/database/include",
-      "//third_party/json/include",
-      "//third_party/sqlite/include/",
-    ]
-
-    sources = [
-      "src/active/active_status_callback_manager.cpp",
-      "src/active/perm_active_status_callback_death_recipient.cpp",
-      "src/active/perm_active_status_change_callback_proxy.cpp",
-      "src/active/state_change_callback_proxy.cpp",
-      "src/common/constant.cpp",
-      "src/common/memory_guard.cpp",
-      "src/common/privacy_field_const.cpp",
-      "src/common/time_util.cpp",
-      "src/database/data_translator.cpp",
-      "src/database/permission_used_record_db.cpp",
-      "src/record/on_permission_used_record_callback_proxy.cpp",
-      "src/record/permission_record.cpp",
-      "src/record/permission_record_manager.cpp",
-      "src/record/permission_record_repository.cpp",
-      "src/record/permission_used_record_cache.cpp",
-      "src/service/privacy_manager_service.cpp",
-      "src/service/privacy_manager_stub.cpp",
-    ]
-
-    if (use_musl) {
-      if (use_jemalloc && use_jemalloc_dfx_intf) {
-        defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
-      }
-    }
-    cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "${access_token_path}/config:coverage_flags" ]
-
-    deps = [
-      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-      "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-      "${access_token_path}/services/common/database:accesstoken_database_cxx",
-      "${access_token_path}/services/privacymanager:privacy.rc",
-    ]
-
-    external_deps = [
-      "ability_base:want",
-      "c_utils:utils",
-      "hisysevent_native:libhisysevent",
-      "hiviewdfx_hilog_native:libhilog",
-      "ipc:ipc_core",
-      "safwk:system_ability_fwk",
-      "samgr:samgr_proxy",
-    ]
-    shlib_type = "sa"
-  }
-
-  ohos_shared_library("sensitive_manager_service") {
-    subsystem_name = "security"
-    part_name = "access_token"
-
-    include_dirs = [
-      "include/active",
-      "include/common",
-      "include/database",
-      "include/record",
-      "include/service",
       "include/sensitive",
       "include/sensitive/ability_manager/",
-      "include/adapter/",
       "include/sensitive/app_manager/",
       "include/sensitive/audio_manager/",
       "include/sensitive/camera_manager/",
@@ -135,7 +65,6 @@ if (is_standard_system && ability_base_enable == true) {
       "src/active/perm_active_status_callback_death_recipient.cpp",
       "src/active/perm_active_status_change_callback_proxy.cpp",
       "src/active/state_change_callback_proxy.cpp",
-      "src/adapter/adapter.cpp",
       "src/common/constant.cpp",
       "src/common/memory_guard.cpp",
       "src/common/privacy_field_const.cpp",
@@ -171,8 +100,13 @@ if (is_standard_system && ability_base_enable == true) {
       "src/service/privacy_manager_stub.cpp",
     ]
 
+    if (use_musl) {
+      if (use_jemalloc && use_jemalloc_dfx_intf) {
+        defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
+      }
+    }
     cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
@@ -192,5 +126,6 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+    shlib_type = "sa"
   }
 }

@@ -68,6 +68,7 @@ cJSON* cJSON_GetArrayItem(const cJSON* array, int index);
 cJSON* cJSON_Parse(const char* value);
 void cJSON_free(void* object);
 char* cJSON_PrintUnformatted(const cJSON* item);
+void GetHandle(void);
 
 #ifdef __cplusplus
 }

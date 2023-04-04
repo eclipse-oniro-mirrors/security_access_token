@@ -335,21 +335,18 @@ void Release(void)
 int32_t GetResult(uint8_t *result, uint32_t *resultLen)
 {
     if (result == NULL) {
-        MODEL_LOG_ERROR("[%s]:Result is null", __func__);
         return INPUT_POINT_NULL;
     }
 
     (void)pthread_mutex_lock(&g_modelVisitLock);
     if (g_modelDataHead == NULL) {
-        MODEL_LOG_ERROR("[%s]:Init operation is not completed yet", __func__);
         (void)pthread_mutex_unlock(&g_modelVisitLock);
         return MODEL_INIT_NOT_COMPLETED;
     }
 
     unsigned long long neededLen = g_riskAppCount * sizeof(NotifyRiskResultInfo);
     if (*resultLen < neededLen) {
-        MODEL_LOG_ERROR("[%s]:ResultLen %d is smaller than needed %llu",
-            __func__, *resultLen, neededLen);
+        MODEL_LOG_ERROR("[%s]:ResultLen %d is smaller than needed %llu", __func__, *resultLen, neededLen);
         (void)pthread_mutex_unlock(&g_modelVisitLock);
         return SHORT_OF_MEMORY;
     }
@@ -360,6 +357,10 @@ int32_t GetResult(uint8_t *result, uint32_t *resultLen)
     }
 
     NotifyRiskResultInfo *data = (NotifyRiskResultInfo *)malloc(neededLen);
+    if (data == NULL) {
+        (void)pthread_mutex_unlock(&g_modelVisitLock);
+        return SHORT_OF_MEMORY;
+    }
     AppRiskInfo *node = g_modelDataHead->next;
     uint32_t index = 0;
     while (node != NULL) {

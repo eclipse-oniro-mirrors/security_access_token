@@ -36,11 +36,6 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
-tokensync_source = [
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-  "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
-]
-
 ohos_unittest("libaccesstoken_manager_service_standard_test") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -102,7 +97,10 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
 
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    sources += tokensync_source
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
+    ]
     include_dirs += [
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
