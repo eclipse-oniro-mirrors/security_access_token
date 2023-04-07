@@ -548,7 +548,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission002, TestSize.Level1)
 {
     PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission(TEST_PERMISSION_NAME_GAMMA, permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
     ret = AccessTokenKit::GetDefPermission("", permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -803,7 +803,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
 
     int32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_GAMMA, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, "", flag);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -818,7 +818,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 }
 
 /**
@@ -1037,7 +1037,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
 
     ret = AccessTokenKit::GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1052,7 +1052,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission002, TestSize.Level0)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
 }
 
 /**
@@ -1170,7 +1170,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_GAMMA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
 
     ret = AccessTokenKit::RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
@@ -1185,7 +1185,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission002, TestSize.Level0)
     AccessTokenKit::DeleteToken(tokenID);
 
     ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
 }
 
 /**
@@ -1487,7 +1487,7 @@ HWTEST_F(AccessTokenKitTest, DeleteToken001, TestSize.Level1)
 
     PermissionDef defResult;
     ret = AccessTokenKit::GetDefPermission(TEST_PERMISSION_NAME_ALPHA, defResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 }
 
 /**
@@ -1958,7 +1958,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken007, TestSize.Level1)
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
     g_infoManagerTestPolicyPrams.permList[0].bundleName  = backUp;
@@ -1989,7 +1989,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken008, TestSize.Level1)
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
     g_infoManagerTestPolicyPrams.permList[0].label  = backUp;
@@ -2021,7 +2021,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken009, TestSize.Level1)
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -2176,7 +2176,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken015, TestSize.Level1)
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
     g_infoManagerTestPolicyPrams.permList[0].bundleName = backup;
@@ -2505,7 +2505,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     g_infoManagerTestPolicyPrams.permList[0].bundleName = backup;
     g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
 
@@ -2619,7 +2619,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
     PermissionDef permDefResult;
     /* check permission define before update */
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIT, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
     backup = g_infoManagerTestPolicyPrams.permList[0].permissionName;
     g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.test3";

@@ -102,7 +102,7 @@ BENCHMARK_F(NapiAtmanagerTest, GetDefPermissionTestCase003)(
     GTEST_LOG_(INFO) << "NapiAtmanagerTest GetDefPermissionTestCase003 start!";
     for (auto _ : st) {
         EXPECT_EQ(AccessTokenKit::GetDefPermission(BENCHMARK_TEST_PERMISSION_NAME_ALPHA, PERMISSIONDEF),
-            AccessTokenError::ERR_PERMISSION_NOT_EXIT);
+            AccessTokenError::ERR_PERMISSION_NOT_EXIST);
     }
 }
 
