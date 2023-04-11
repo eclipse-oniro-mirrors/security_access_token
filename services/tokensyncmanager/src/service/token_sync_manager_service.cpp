@@ -176,11 +176,6 @@ bool TokenSyncManagerService::Initialize()
     }
 
     sendHandler_ = std::make_shared<TokenSyncEventHandler>(sendRunner_);
-    if (!sendHandler_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sendHandler_ is nullptr.");
-        return false;
-    }
-
     recvRunner_ = AppExecFwk::EventRunner::Create(true);
     if (!recvRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
@@ -188,11 +183,6 @@ bool TokenSyncManagerService::Initialize()
     }
 
     recvHandler_ = std::make_shared<TokenSyncEventHandler>(recvRunner_);
-    if (!recvHandler_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "recvHandler_ is nullptr.");
-        return false;
-    }
-
     SoftBusManager::GetInstance().Initialize();
     return true;
 }

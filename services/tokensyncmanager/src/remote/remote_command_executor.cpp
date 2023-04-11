@@ -46,10 +46,6 @@ const std::shared_ptr<RpcChannel> RemoteCommandExecutor::CreateChannel(const std
         ConstantCommon::EncryptDevId(targetNodeId).c_str());
     // only consider SoftBusChannel
     std::shared_ptr<RpcChannel> ptrChannel = std::make_shared<SoftBusChannel>(targetNodeId);
-    if (ptrChannel == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "CreateChannel: create channel failed, targetNodeId=%{public}s",
-            ConstantCommon::EncryptDevId(targetNodeId).c_str());
-    }
     return ptrChannel;
 }
 
