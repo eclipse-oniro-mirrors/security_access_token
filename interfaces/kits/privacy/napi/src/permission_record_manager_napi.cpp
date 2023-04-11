@@ -447,11 +447,8 @@ static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, vo
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddPermissionUsedRecord complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
-
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr {asyncContext};
+
     napi_value result = GetNapiNull(env);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
@@ -513,11 +510,8 @@ static void StartUsingPermissionComplete(napi_env env, napi_status status, void*
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
-
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
+
     napi_value result = GetNapiNull(env);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
@@ -578,13 +572,9 @@ static void StopUsingPermissionComplete(napi_env env, napi_status status, void* 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
-
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
-    napi_value result = GetNapiNull(env);
 
+    napi_value result = GetNapiNull(env);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
     } else {
@@ -644,11 +634,8 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords complete.");
     RecordManagerAsyncContext* asyncContext = reinterpret_cast<RecordManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
-
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
+
     napi_value result = GetNapiNull(env);
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
     ProcessRecordResult(env, result, asyncContext->result);

@@ -96,11 +96,6 @@ void AccessTokenInfoManager::InitHapTokenInfos()
             continue;
         }
         std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-        if (hap == nullptr) {
-            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
-            continue;
-        }
         ret = hap->RestoreHapTokenInfo(tokenId, tokenValue, permStateRes);
         if (ret != RET_SUCCESS) {
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
@@ -143,11 +138,6 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
             continue;
         }
         std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
-        if (native == nullptr) {
-            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId %{public}u alloc failed.", tokenId);
-            continue;
-        }
 
         ret = native->RestoreNativeTokenInfo(tokenId, nativeTokenValue, permStateRes);
         if (ret != RET_SUCCESS) {
@@ -449,11 +439,6 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
 #else
     std::shared_ptr<HapTokenInfoInner> tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
 #endif
-    if (tokenInfo == nullptr) {
-        AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-        ACCESSTOKEN_LOG_INFO(LABEL, "alloc token info failed");
-        return RET_FAILED;
-    }
     int ret = AddHapTokenInfo(tokenInfo);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
@@ -705,10 +690,6 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 {
     std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(mapID,
         hapSync.baseInfo, hapSync.permStateList);
-    if (hap == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "alloc local token failed.");
-        return RET_FAILED;
-    }
     hap->SetRemote(true);
 
     int ret = AddHapTokenInfo(hap);
@@ -835,12 +816,6 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
 
         std::shared_ptr<NativeTokenInfoInner> nativePtr =
             std::make_shared<NativeTokenInfoInner>(nativeToken.baseInfo, nativeToken.permStateList);
-        if (nativePtr == nullptr) {
-            AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u alloc local token failed.",
-                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
-            continue;
-        }
         nativePtr->SetRemote(true);
         int ret = AddNativeTokenInfo(nativePtr);
         if (ret != RET_SUCCESS) {

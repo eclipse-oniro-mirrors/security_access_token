@@ -107,6 +107,19 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     PermActiveStatusWorker* permActiveStatusData = reinterpret_cast<PermActiveStatusWorker*>(work->data);
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusData};
+
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(permActiveStatusData->env, &scope);
+    if (scope == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "scope is null");
+        return;
+    }
+    NotifyChangeResponse(permActiveStatusData);
+    napi_close_handle_scope(permActiveStatusData->env, scope);
+}
+
+void NotifyChangeResponse(const PermActiveStatusWorker* permActiveStatusData)
+{
     napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
         napi_create_array(permActiveStatusData->env, &result));
@@ -116,13 +129,14 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
     }
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
-    napi_value resultout = nullptr;
+    napi_value resultOut = nullptr;
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
         napi_get_undefined(permActiveStatusData->env, &undefined));
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
         napi_get_reference_value(permActiveStatusData->env, permActiveStatusData->ref, &callback));
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
-        napi_call_function(permActiveStatusData->env, undefined, callback, 1, &result, &resultout));
+        napi_call_function(permActiveStatusData->env, undefined, callback, 1, &result, &resultOut));
+    return;
 }
 
 bool ConvertActiveChangeResponse(napi_env env, napi_value value, const ActiveChangeResponse& result)

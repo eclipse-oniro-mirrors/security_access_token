@@ -42,10 +42,9 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
-    if (policySet != nullptr) {
-        PermissionValidator::FilterInvalidPermissionState(permStateList, policySet->permStateList_);
-        policySet->tokenId_ = tokenId;
-    }
+    PermissionValidator::FilterInvalidPermissionState(permStateList, policySet->permStateList_);
+    policySet->tokenId_ = tokenId;
+
     return policySet;
 }
 
@@ -87,10 +86,6 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
     const std::vector<GenericValues>& permStateRes)
 {
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
-    if (policySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x new failed.", tokenId);
-        return nullptr;
-    }
     policySet->tokenId_ = tokenId;
 
     for (const GenericValues& stateValue : permStateRes) {
