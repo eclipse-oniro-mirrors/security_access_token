@@ -57,23 +57,32 @@ ohos_unittest("libprivacy_mock_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
+    "../include",
     "../src",
+    "../../../../frameworks/privacy/include",
     "//base/security/access_token/frameworks/common/include",
     "//base/security/access_token/frameworks/accesstoken/include",
     "//base/security/access_token/frameworks/tokensync/include",
     "//base/security/access_token/interfaces/innerkits/accesstoken/include",
     "//base/security/access_token/interfaces/innerkits/nativetoken/include",
-    "//foundation/systemabilitymgr/safwk/interfaces/innerkits/safwk",
-    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/common/include",
-    "//foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy/include",
     "//foundation/systemabilitymgr/samgr/services/samgr/native/include",
     "//foundation/systemabilitymgr/samgr/services/samgr/native/include/collect",
-    "//foundation/systemabilitymgr/samgr/services/samgr/dfx/include",
-    "//foundation/systemabilitymgr/samgr/services/samgr/lsamgr/include",
+
     "//third_party/googletest/include",
   ]
 
   sources = [
+    "../src/on_permission_used_record_callback_stub.cpp",
+    "../src/perm_active_status_change_callback.cpp",
+    "../src/perm_active_status_change_callback_stub.cpp",
+    "../src/perm_active_status_customized_cbk.cpp",
+    "../src/privacy_death_recipient.cpp",
+    "../src/privacy_kit.cpp",
+    "../src/privacy_manager_client.cpp",
+    "../src/privacy_manager_proxy.cpp",
+    "../src/state_change_callback.cpp",
+    "../src/state_change_callback_stub.cpp",
+    "../src/state_customized_cbk.cpp",
     "//base/security/access_token/interfaces/innerkits/privacy/test/mock/src/iservice_registry.cpp",
     "//base/security/access_token/interfaces/innerkits/privacy/test/unittest/privacy_mock_test/privacy_kit_test.cpp",
   ]
@@ -81,9 +90,10 @@ ohos_unittest("libprivacy_mock_test") {
   configs = [ "//base/security/access_token/config:coverage_flags" ]
 
   deps = [
+    "../../../../frameworks/common:accesstoken_common_cxx",
+    "../../../../frameworks/privacy:privacy_communication_adapter_cxx",
     "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken",
-    "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
     "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
@@ -100,6 +110,12 @@ ohos_unittest("libprivacy_mock_test") {
     "ipc:ipc_core",
     "ipc:libdbinder",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DDEBUG_API_PERFORMANCE",
   ]
 }
 
