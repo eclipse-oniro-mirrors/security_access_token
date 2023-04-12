@@ -14,10 +14,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <dlfcn.h>
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "audio_manager_privacy_client.h"
+#include "camera_manager_privacy_client.h"
 #include "constant.h"
 #define private public
 #include "active_status_callback_manager.h"
@@ -28,16 +29,10 @@
 #include "privacy_kit.h"
 #include "state_change_callback.h"
 #include "token_setproc.h"
-#include "want.h"
 
 using namespace testing;
 using namespace testing::ext;
 using namespace OHOS;
-
-using MuteCameraFunc = int32_t (*)(bool muteMode);
-using IsCameraMutedFunc = bool (*)();
-using SetMicrophoneMuteFunc = int32_t (*)(bool isMute);
-using IsMicrophoneMuteFunc = bool (*)();
 
 namespace OHOS {
 namespace Security {
@@ -48,12 +43,6 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
-const std::string SENSITIVE_MANAGER_PATH = "libsensitive_manager_service.z.so";
-void* g_handler = nullptr;
-IsMicrophoneMuteFunc g_isMicrophoneMute = nullptr;
-SetMicrophoneMuteFunc g_setMicrophoneMute = nullptr;
-IsCameraMutedFunc g_isCameraMuted = nullptr;
-MuteCameraFunc g_muteCamera = nullptr;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -148,22 +137,12 @@ public:
 void PermissionRecordManagerTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
-    g_handler = dlopen(SENSITIVE_MANAGER_PATH.c_str(), RTLD_LAZY);
-    ASSERT_NE(g_handler, nullptr);
-    g_isMicrophoneMute = reinterpret_cast<IsMicrophoneMuteFunc>(dlsym(g_handler, "IsMicrophoneMute"));
-    g_setMicrophoneMute = reinterpret_cast<SetMicrophoneMuteFunc>(dlsym(g_handler, "SetMicrophoneMute"));
-    g_isCameraMuted = reinterpret_cast<IsCameraMutedFunc>(dlsym(g_handler, "IsCameraMuted"));
-    g_muteCamera = reinterpret_cast<MuteCameraFunc>(dlsym(g_handler, "MuteCamera"));
 }
 
-void PermissionRecordManagerTest::TearDownTestCase()
-{
-    dlclose(g_handler);
-}
+void PermissionRecordManagerTest::TearDownTestCase() {}
 
 void PermissionRecordManagerTest::SetUp()
 {
-    PermissionRecordManager::GetInstance().LoadSensitiveLib();
     PermissionRecordManager::GetInstance().Register();
 
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
@@ -325,8 +304,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    ASSERT_NE(g_muteCamera, nullptr);
-    g_muteCamera(false);
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
@@ -510,17 +488,17 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
  */
 HWTEST_F(PermissionRecordManagerTest, GetGlobalSwitchStatus001, TestSize.Level1)
 {
-    bool isMuteMic = g_isMicrophoneMute();
-    g_setMicrophoneMute(false); // false means open
-    ASSERT_EQ(false, g_isMicrophoneMute());
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    ASSERT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(MICROPHONE_PERMISSION_NAME));
-    g_setMicrophoneMute(isMuteMic);
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 
-    bool isMuteCam = g_isCameraMuted();
-    g_muteCamera(false);
-    ASSERT_EQ(false, g_isCameraMuted());
+    bool isMuteCam = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
+    ASSERT_EQ(false, CameraManagerPrivacyClient::GetInstance().IsCameraMuted());
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(CAMERA_PERMISSION_NAME));
-    g_muteCamera(isMuteCam);
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(isMuteCam);
 
     // microphone is not sure
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().GetGlobalSwitchStatus(LOCATION_PERMISSION_NAME));
@@ -549,7 +527,7 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level1)
 {
-    g_setMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
@@ -566,7 +544,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level1)
 {
-    g_setMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is background
@@ -583,7 +561,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level1)
 {
-    g_setMicrophoneMute(true); // true means close
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
@@ -601,7 +579,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level1)
 {
-    g_setMicrophoneMute(true); // true means close
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
@@ -609,7 +587,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level
     sleep(3); // wait for dialog disappear
     PermissionRecordManager::GetInstance().NotifyMicChange(false); // fill false status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    g_setMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
 }
 
 /*
