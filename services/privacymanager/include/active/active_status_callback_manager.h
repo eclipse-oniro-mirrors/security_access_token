@@ -47,7 +47,6 @@ public:
     int32_t AddCallback(
         const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
-    bool HasCallback();
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
     void ExecuteCallbackAsync(
         AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType);

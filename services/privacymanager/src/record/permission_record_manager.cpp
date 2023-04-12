@@ -17,12 +17,15 @@
 
 #include <algorithm>
 #include <cinttypes>
-#include <dlfcn.h>
 #include <numeric>
 
+#include "ability_manager_privacy_client.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
+#include "app_manager_privacy_client.h"
+#include "audio_manager_privacy_client.h"
+#include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -36,27 +39,8 @@
 #include "system_ability_definition.h"
 #include "time_util.h"
 #include "want.h"
+#include "window_manager_privacy_client.h"
 
-using StartAbilityFunc = int32_t (*)(const OHOS::AAFwk::Want& want, void* callerToken);
-using SetMuteCallbackFunc = int32_t (*)(void* callback);
-using IsCameraMutedFunc = bool (*)();
-using GetCameraServiceCallbackStubFunc = void* (*)();
-using DelCameraServiceCallbackStubFunc = void (*)(void* cameraServiceCallbackStub);
-using RegisterApplicationStateObserverFunc = int32_t (*)(void* observer);
-using UnregisterApplicationStateObserverFunc = int32_t (*)(void* observer);
-using GetForegroundApplicationsFunc = void* (*)(std::vector<OHOS::Security::AccessToken::PrivacyAppStateData>& list);
-using GetApplicationStateObserverStubFunc = void* (*)();
-using DelApplicationStateObserverStubFunc = void (*)(void* applicationStateObserverStub);
-using SetMicStateChangeCallbackFunc = int32_t (*)(void* callback);
-using IsMicrophoneMuteFunc = bool (*)();
-using GetAudioRoutingManagerListenerStubFunc = void* (*)();
-using DelAudioRoutingManagerListenerStubFunc = void (*)(void* audioRoutingManagerListenerStub);
-using RegisterWindowManagerAgentFunc = bool (*)(
-    OHOS::Security::AccessToken::PrivacyWindowManagerAgentType type, void* windowManagerAgent);
-using UnregisterWindowManagerAgentFunc = bool (*)(
-    OHOS::Security::AccessToken::PrivacyWindowManagerAgentType type, void* windowManagerAgent);
-using GetWindowManagerPrivacyAgentFunc = void* (*)();
-using DelGetWindowManagerPrivacyAgentFunc = void (*)(void* windowManagerAgent);
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -71,7 +55,6 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 static const std::string PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
-const std::string SENSITIVE_MANAGER_PATH = "libsensitive_manager_service.z.so";
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -89,36 +72,6 @@ PermissionRecordManager::~PermissionRecordManager()
     deleteTaskWorker_.Stop();
     hasInited_ = false;
     Unregister();
-    UnLoadSensitiveLib();
-}
-
-bool PermissionRecordManager::LoadSensitiveLib()
-{
-    std::lock_guard<std::mutex> lock(handlerMutex_);
-    if (handler_ == nullptr) {
-        dlerror();
-        handler_ = dlopen(SENSITIVE_MANAGER_PATH.c_str(), RTLD_LAZY);
-        if (handler_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "open sensitivelib fail");
-            return false;
-        }
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "open sensitivelib success");
-    }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "sensitivelib is already opened");
-    return true;
-}
-
-bool PermissionRecordManager::UnLoadSensitiveLib()
-{
-    std::lock_guard<std::mutex> lock(handlerMutex_);
-    if (handler_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sensitivelib handler is nullptr");
-        return false;
-    }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlclose called");
-    dlclose(handler_);
-    handler_ = nullptr;
-    return true;
 }
 
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -458,25 +411,13 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
-            return DelRecordFromStartList(it, record);
+            record = *it;
+            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            startRecordList_.erase(it);
+            return true;
         }
     }
     return false;
-}
-
-bool PermissionRecordManager::DelRecordFromStartList(
-    std::vector<PermissionRecord>::iterator it, PermissionRecord& record)
-{
-    record = *it;
-    record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
-    startRecordList_.erase(it);
-    if ((startRecordList_.empty()) && (!ActiveStatusCallbackManager::GetInstance().HasCallback())) {
-        if (!UnLoadSensitiveLib()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "UnLoadSensitiveLib failed");
-            return ERR_SERVICE_ABNORMAL;
-        }
-    }
-    return true;
 }
 
 void PermissionRecordManager::CallbackExecute(
@@ -490,22 +431,11 @@ void PermissionRecordManager::CallbackExecute(
 bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissionName)
 {
     bool isOpen = true;
-    std::lock_guard<std::mutex> lock(handlerMutex_);
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        auto isMicrophoneMute = reinterpret_cast<IsCameraMutedFunc>(dlsym(handler_, "IsMicrophoneMute"));
-        if (isMicrophoneMute == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "isMicrophoneMute is nullptr");
-            return false;
-        }
-        isOpen = !isMicrophoneMute();
+        isOpen = !AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
-        auto isCameraMuted = reinterpret_cast<IsCameraMutedFunc>(dlsym(handler_, "IsCameraMuted"));
-        if (isCameraMuted == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "isCameraMuted is nullptr");
-            return false;
-        }
-        isOpen = !isCameraMuted();
+        isOpen = !CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
@@ -564,15 +494,6 @@ void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 
 bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
 {
-    StartAbilityFunc startAbility;
-    {
-        std::lock_guard<std::mutex> lock(handlerMutex_);
-        startAbility = reinterpret_cast<StartAbilityFunc>(dlsym(handler_, "StartAbility"));
-        if (startAbility == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "startAbility is nullptr");
-            return false;
-        }
-    }
     std::string resource;
     if (permissionName == CAMERA_PERMISSION_NAME) {
         resource = "camera";
@@ -586,7 +507,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(PERMISSION_MANAGER_BUNDLE_NAME, PERMISSION_MANAGER_DIALOG_ABILITY);
     want.SetParam(RESOURCE_KEY, resource);
-    ErrCode err = startAbility(want, nullptr);
+    ErrCode err = AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
@@ -596,9 +517,6 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    if (!LoadSensitiveLib()) {
-        return PrivacyError::ERR_MALLOC_FAILED;
-    }
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
@@ -673,9 +591,6 @@ void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenI
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
-    if (!LoadSensitiveLib()) {
-        return PrivacyError::ERR_MALLOC_FAILED;
-    }
     if (permissionName != CAMERA_PERMISSION_NAME) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ERR_PARAM_INVALID is null.");
         return PrivacyError::ERR_PARAM_INVALID;
@@ -769,9 +684,6 @@ int32_t PermissionRecordManager::PermissionListFilter(
 
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    if (!LoadSensitiveLib()) {
-        return PrivacyError::ERR_MALLOC_FAILED;
-    }
     // when app in foreground, return true, only for camera and microphone
     if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
         return false;
@@ -797,9 +709,6 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
     const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
-    if (!LoadSensitiveLib()) {
-        return PrivacyError::ERR_MALLOC_FAILED;
-    }
     std::vector<std::string> permListRes;
     int32_t res = PermissionListFilter(permList, permListRes);
     if (res != Constant::SUCCESS) {
@@ -810,14 +719,7 @@ int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
 
 int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
 {
-    int32_t res = ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
-    if ((!ActiveStatusCallbackManager::GetInstance().HasCallback()) && (startRecordList_.empty())) {
-        if (!UnLoadSensitiveLib()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "UnLoadSensitiveLib failed");
-            return ERR_SERVICE_ABNORMAL;
-        }
-    }
-    return res;
+    return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
 }
 
 std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
@@ -834,16 +736,6 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
 
 int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
 {
-    GetForegroundApplicationsFunc getForegroundApplications;
-    {
-        std::lock_guard<std::mutex> lock(handlerMutex_);
-        getForegroundApplications = reinterpret_cast<GetForegroundApplicationsFunc>(
-            dlsym(handler_, "GetForegroundApplications"));
-        if (getForegroundApplications == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "getForegroundApplications is nullptr");
-            return PrivacyError::ERR_SERVICE_ABNORMAL;
-        }
-    }
     int32_t status = PERM_INACTIVE;
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
@@ -851,11 +743,13 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
         return status;
     }
     status = PERM_ACTIVE_IN_BACKGROUND;
-    std::vector<PrivacyAppStateData> foreGroundAppList;
-    getForegroundApplications(foreGroundAppList);
+    std::vector<AppStateData> foreGroundAppList;
+    AppManagerPrivacyClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
         status = PERM_ACTIVE_IN_FOREGROUND;
+        std::vector<AppStateData> foreGroundAppList;
+        AppManagerPrivacyClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     }
     return status;
 }
@@ -867,227 +761,68 @@ bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
 
 bool PermissionRecordManager::Register()
 {
-    std::lock_guard<std::mutex> lock(handlerMutex_);
-    if (RegisterAudioRoutingManagerListener() && RegisterApplicationStateObserver() &&
-        RegisterCameraServiceCallback() && RegisterWindowManagerPrivacyAgent()) {
-        return true;
-    }
-    return false;
-}
-
-bool PermissionRecordManager::RegisterAudioRoutingManagerListener()
-{
     if (micMuteCallback_ == nullptr) {
-        auto getAudioRoutingManagerListenerStub = reinterpret_cast<GetAudioRoutingManagerListenerStubFunc>(
-            dlsym(handler_, "GetAudioRoutingManagerListenerStub"));
-        if (getAudioRoutingManagerListenerStub == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed getAudioRoutingManagerListenerStub is nullptr");
-            return false;
-        }
-        micMuteCallback_ = getAudioRoutingManagerListenerStub();
+        micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
         if (micMuteCallback_ == nullptr) {
             return false;
         }
-        auto setMicStateChangeCallback = reinterpret_cast<SetMicStateChangeCallbackFunc>(
-            dlsym(handler_, "SetMicStateChangeCallback"));
-        if (setMicStateChangeCallback == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed setMicStateChangeCallback is nullptr");
-            auto delAudioRoutingManagerListenerStub = reinterpret_cast<DelAudioRoutingManagerListenerStubFunc>(
-                dlsym(handler_, "DelAudioRoutingManagerListenerStub"));
-            if (delAudioRoutingManagerListenerStub == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delAudioRoutingManagerListenerStub is nullptr");
-                return false;
-            }
-            delAudioRoutingManagerListenerStub(micMuteCallback_);
-            micMuteCallback_ = nullptr;
-            return false;
-        }
-        setMicStateChangeCallback(micMuteCallback_);
+        AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
     }
-    return true;
-}
-
-bool PermissionRecordManager::RegisterApplicationStateObserver()
-{
-    if (appStateCallback_ == nullptr) {
-        auto getApplicationStateObserverStub = reinterpret_cast<GetApplicationStateObserverStubFunc>(
-            dlsym(handler_, "GetApplicationStateObserverStub"));
-        if (getApplicationStateObserverStub == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed getApplicationStateObserverStub is nullptr");
-            return false;
-        }
-        appStateCallback_ = getApplicationStateObserverStub();
-        if (appStateCallback_ == nullptr) {
-            return false;
-        }
-        auto registerApplicationStateObserver = reinterpret_cast<RegisterApplicationStateObserverFunc>(
-            dlsym(handler_, "RegisterApplicationStateObserver"));
-        if (registerApplicationStateObserver == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed registerApplicationStateObserver is nullptr");
-            auto delApplicationStateObserverStub = reinterpret_cast<DelApplicationStateObserverStubFunc>(
-                dlsym(handler_, "DelApplicationStateObserverStub"));
-            if (delApplicationStateObserverStub == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delApplicationStateObserverStub is nullptr");
-                return false;
-            }
-            delApplicationStateObserverStub(appStateCallback_);
-            appStateCallback_ = nullptr;
-            return false;
-        }
-        registerApplicationStateObserver(appStateCallback_);
-    }
-    return true;
-}
-
-bool PermissionRecordManager::RegisterCameraServiceCallback()
-{
     if (camMuteCallback_ == nullptr) {
-        auto getCameraServiceCallbackStub = reinterpret_cast<GetCameraServiceCallbackStubFunc>(
-            dlsym(handler_, "GetCameraServiceCallbackStub"));
-        if (getCameraServiceCallbackStub == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed getCameraServiceCallbackStub is nullptr");
-            return false;
-        }
-        camMuteCallback_ = getCameraServiceCallbackStub();
+        camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
         if (camMuteCallback_ == nullptr) {
             return false;
         }
-        auto setMuteCallback = reinterpret_cast<SetMuteCallbackFunc>(dlsym(handler_, "SetMuteCallback"));
-        if (setMuteCallback == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed setMuteCallback is nullptr");
-            auto delCameraServiceCallbackStub = reinterpret_cast<DelCameraServiceCallbackStubFunc>(
-                dlsym(handler_, "DelCameraServiceCallbackStub"));
-            if (delCameraServiceCallbackStub == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delCameraServiceCallbackStub is nullptr");
-                return false;
-            }
-            delCameraServiceCallbackStub(camMuteCallback_);
-            camMuteCallback_ = nullptr;
-            return false;
-        }
-        setMuteCallback(camMuteCallback_);
+        CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
     }
-    return true;
-}
-
-bool PermissionRecordManager::RegisterWindowManagerPrivacyAgent()
-{
-    if (floatWindowCallback_ == nullptr) {
-        auto getWindowManagerPrivacyAgent = reinterpret_cast<GetWindowManagerPrivacyAgentFunc>(
-            dlsym(handler_, "GetWindowManagerPrivacyAgent"));
-        if (getWindowManagerPrivacyAgent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed getWindowManagerPrivacyAgent is nullptr");
+    if (appStateCallback_ == nullptr) {
+        appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
+        if (appStateCallback_ == nullptr) {
             return false;
         }
-        floatWindowCallback_ = getWindowManagerPrivacyAgent();
+        AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+    }
+    if (floatWindowCallback_ == nullptr) {
+        floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
         if (floatWindowCallback_ == nullptr) {
             return false;
         }
-        auto registerWindowManagerAgent = reinterpret_cast<RegisterWindowManagerAgentFunc>(
-            dlsym(handler_, "RegisterWindowManagerAgent"));
-        if (registerWindowManagerAgent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed registerWindowManagerAgent is nullptr");
-            auto delGetWindowManagerPrivacyAgent = reinterpret_cast<DelGetWindowManagerPrivacyAgentFunc>(
-                dlsym(handler_, "DelGetWindowManagerPrivacyAgent"));
-            if (delGetWindowManagerPrivacyAgent == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delGetWindowManagerPrivacyAgent is nullptr");
-                return false;
-            }
-            delGetWindowManagerPrivacyAgent(floatWindowCallback_);
-            floatWindowCallback_ = nullptr;
-            return false;
-        }
-        registerWindowManagerAgent(
-            PrivacyWindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
+        WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
+            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
     }
     return true;
 }
 
 void PermissionRecordManager::Unregister()
 {
-    std::lock_guard<std::mutex> lock(handlerMutex_);
     if (appStateCallback_ != nullptr) {
-        auto unregisterApplicationStateObserver = reinterpret_cast<UnregisterApplicationStateObserverFunc>(
-            dlsym(handler_, "UnregisterApplicationStateObserver"));
-        if (unregisterApplicationStateObserver == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "unregisterApplicationStateObserver is nullptr");
-            return;
-        }
-        unregisterApplicationStateObserver(appStateCallback_);
-        auto delApplicationStateObserverStub = reinterpret_cast<DelApplicationStateObserverStubFunc>(
-            dlsym(handler_, "DelApplicationStateObserverStub"));
-        if (delApplicationStateObserverStub == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delApplicationStateObserverStub is nullptr");
-            return;
-        }
-        delApplicationStateObserverStub(appStateCallback_);
-        appStateCallback_ = nullptr;
+        AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+        appStateCallback_= nullptr;
     }
     if (floatWindowCallback_ == nullptr) {
-        auto unregisterWindowManagerAgent = reinterpret_cast<UnregisterWindowManagerAgentFunc>(
-            dlsym(handler_, "UnregisterWindowManagerAgent"));
-        if (unregisterWindowManagerAgent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "unregisterWindowManagerAgent is nullptr");
-            return;
-        }
-        unregisterWindowManagerAgent(
-            PrivacyWindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
-        auto delGetWindowManagerPrivacyAgent = reinterpret_cast<DelGetWindowManagerPrivacyAgentFunc>(
-            dlsym(handler_, "DelGetWindowManagerPrivacyAgent"));
-        if (delGetWindowManagerPrivacyAgent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delGetWindowManagerPrivacyAgent is nullptr");
-            return;
-        }
-        delGetWindowManagerPrivacyAgent(floatWindowCallback_);
+        WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
+            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
         floatWindowCallback_ = nullptr;
     }
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 {
-    auto delApplicationStateObserverStub = reinterpret_cast<DelApplicationStateObserverStubFunc>(
-        dlsym(handler_, "DelApplicationStateObserverStub"));
-    if (delApplicationStateObserverStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delApplicationStateObserverStub is nullptr");
-        return;
-    }
-    delApplicationStateObserverStub(appStateCallback_);
     appStateCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
-    auto delAudioRoutingManagerListenerStub = reinterpret_cast<DelAudioRoutingManagerListenerStubFunc>(
-        dlsym(handler_, "DelAudioRoutingManagerListenerStub"));
-    if (delAudioRoutingManagerListenerStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delAudioRoutingManagerListenerStub is nullptr");
-        return;
-    }
-    delAudioRoutingManagerListenerStub(micMuteCallback_);
     micMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
-    auto delCameraServiceCallbackStub = reinterpret_cast<DelCameraServiceCallbackStubFunc>(
-        dlsym(handler_, "DelCameraServiceCallbackStub"));
-    if (delCameraServiceCallbackStub == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delCameraServiceCallbackStub is nullptr");
-        return;
-    }
-    delCameraServiceCallbackStub(camMuteCallback_);
     camMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
 {
-    auto delGetWindowManagerPrivacyAgent = reinterpret_cast<DelGetWindowManagerPrivacyAgentFunc>(
-        dlsym(handler_, "DelGetWindowManagerPrivacyAgent"));
-    if (delGetWindowManagerPrivacyAgent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "dlsym failed delGetWindowManagerPrivacyAgent is nullptr");
-        return;
-    }
-    delGetWindowManagerPrivacyAgent(floatWindowCallback_);
     floatWindowCallback_ = nullptr;
 }
 

@@ -101,12 +101,6 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
     return RET_SUCCESS;
 }
 
-bool ActiveStatusCallbackManager::HasCallback()
-{
-    return !callbackDataList_.empty();
-}
-
-
 bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& permList, const std::string& permName)
 {
     if (permList.empty()) {
