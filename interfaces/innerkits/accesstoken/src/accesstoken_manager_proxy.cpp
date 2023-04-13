@@ -157,12 +157,12 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
         return RET_FAILED;
     }
 
-    int32_t size = reply.ReadInt32();
+    uint32_t size = reply.ReadUint32();
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
         return RET_FAILED;
     }
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionDefParcel> permissionDef = reply.ReadParcelable<PermissionDefParcel>();
         if (permissionDef != nullptr) {
             permList.emplace_back(*permissionDef);
@@ -201,12 +201,12 @@ int AccessTokenManagerProxy::GetReqPermissions(
         return RET_FAILED;
     }
 
-    int32_t size = reply.ReadInt32();
+    uint32_t size = reply.ReadUint32();
     if (size > MAX_PERMISSION_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
         return RET_FAILED;
     }
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
         if (permissionReq != nullptr) {
             reqPermList.emplace_back(*permissionReq);
@@ -755,12 +755,12 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoPa
         return RET_FAILED;
     }
 
-    int32_t size = reply.ReadInt32();
+    uint32_t size = reply.ReadUint32();
     if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
         return RET_FAILED;
     }
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
         sptr<NativeTokenInfoParcel> nativeResult = reply.ReadParcelable<NativeTokenInfoParcel>();
         if (nativeResult != nullptr) {
             nativeTokenInfoRes.emplace_back(*nativeResult);
