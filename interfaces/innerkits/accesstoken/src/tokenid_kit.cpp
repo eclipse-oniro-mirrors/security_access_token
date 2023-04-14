@@ -15,12 +15,20 @@
 
 #include "tokenid_kit.h"
 
+#include <cinttypes>
+
+#include "accesstoken_log.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenIdKit"};
 static const uint64_t SYSTEM_APP_MASK = (static_cast<uint64_t>(1) << 32);
+}
 bool TokenIdKit::IsSystemAppByFullTokenID(uint64_t tokenId)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenId=%{public}" PRId64, tokenId);
     return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
 }
 }  // namespace AccessToken

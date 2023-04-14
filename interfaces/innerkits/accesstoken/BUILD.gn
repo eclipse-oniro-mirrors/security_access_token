@@ -83,11 +83,14 @@ if (is_standard_system) {
     output_name = "libtokenid_sdk"
     public_configs = [ ":accesstoken" ]
 
-    include_dirs = []
+    include_dirs = [ "../../../frameworks/common/include" ]
     sources = [ "src/tokenid_kit.cpp" ]
 
     deps = []
-    external_deps = [ "c_utils:utils" ]
+    external_deps = [
+      "c_utils:utils",
+      "hiviewdfx_hilog_native:libhilog",
+    ]
 
     configs = [ "//base/security/access_token/config:coverage_flags" ]
     cflags_cc = [ "-DHILOG_ENABLE" ]
