@@ -4320,7 +4320,10 @@ HWTEST_F(AccessTokenKitTest, PermStateChangeCallback001, TestSize.Level1)
     std::shared_ptr<CbCustomizeTest> callbackPtr = nullptr;
     std::shared_ptr<PermissionStateChangeCallback> callback = std::make_shared<PermissionStateChangeCallback>(
         callbackPtr);
+    ASSERT_NE(callback, nullptr);
+
     callback->PermStateChangeCallback(result);
+    ASSERT_EQ(callback->customizedCallback_, nullptr);
 }
 
 class TestCallBack : public PermissionStateChangeCallbackStub {

@@ -3208,6 +3208,8 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Lev
     std::vector<AccessTokenID> idList;
     idList.emplace_back(tokenId);
     PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(idList); // permPolicySet is null
+    auto tokenInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_EQ(tokenInfoPtr, nullptr);
 }
 } // namespace AccessToken
 } // namespace Security
