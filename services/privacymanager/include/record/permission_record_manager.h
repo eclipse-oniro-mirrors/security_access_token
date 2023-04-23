@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -83,7 +83,7 @@ private:
         int32_t successCount, int32_t failCount, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
-    int32_t DeletePermissionRecord(int32_t days);
+    int32_t DeletePermissionRecord(int64_t days);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
     void GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);

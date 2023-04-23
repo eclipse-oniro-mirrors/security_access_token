@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -61,7 +61,7 @@ private:
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
     std::vector<std::shared_ptr<PermissionUsedRecordNode>> persistPendingBufferQueue_;
     int64_t nextPersistTimestamp_ = 0L;
-    const static int32_t INTERVAL = 60 * 15;
+    const static int64_t INTERVAL = 15 * 60 * 1000; // 1s = 1000ms
     const static int32_t MAX_PERSIST_SIZE = 100;
     bool persistIsRunning_ = false;
     // cacheLock1_ is used for locking recordBufferHead_ and curRecordBufferPos_

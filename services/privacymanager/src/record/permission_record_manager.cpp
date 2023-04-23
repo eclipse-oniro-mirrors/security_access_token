@@ -311,7 +311,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
     deleteTaskWorker_.AddTask(deleteRecordsTask);
 }
 
-int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
+int32_t PermissionRecordManager::DeletePermissionRecord(int64_t days)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -637,7 +637,7 @@ static void GetPermissionUsedRecordsComplete(napi_env env, napi_status status, v
     std::unique_ptr<RecordManagerAsyncContext> callbackPtr{asyncContext};
 
     napi_value result = GetNapiNull(env);
-    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
+    NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &result));
     ProcessRecordResult(env, result, asyncContext->result);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, *asyncContext, result);
