@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -68,9 +68,10 @@ public:
 
     const static int32_t MAX_TOTAL_RECORD = 10000;
     const static int32_t MAX_DETAIL_RECORD = 10;
-    const static int32_t RECORD_DELETE_TIME = 30 * 86400;
-    const static int32_t PRECISE = 60;
-    const static int32_t LATEST_RECORD_TIME = 7 * 86400;
+    const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
+    const static int64_t RECORD_DELETE_TIME = 30 * 86400 * MILLISECONDS;
+    const static int64_t PRECISE = 60 * MILLISECONDS;
+    const static int64_t LATEST_RECORD_TIME = 7 * 86400 * MILLISECONDS;
 
     const static std::map<std::string, int32_t> PERMISSION_OPCODE_MAP;
 public:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,15 +14,17 @@
  */
 
 #include "time_util.h"
-#include <ctime>
+#include <chrono>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 int64_t TimeUtil::GetCurrentTimestamp()
 {
-    const time_t timestamp = time(nullptr);
-    return static_cast<int64_t>(timestamp);
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+    return ms.count();
 }
 } // namespace AccessToken
 } // namespace Security
