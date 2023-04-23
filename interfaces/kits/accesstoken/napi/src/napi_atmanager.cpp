@@ -109,16 +109,8 @@ static bool ConvertPermStateChangeInfo(napi_env env, napi_value value, const Per
     return true;
 };
 
-static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
+static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermStateChangeData)
 {
-    if (work == nullptr || work->data == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    RegisterPermStateChangeWorker* registerPermStateChangeData =
-        reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
-    std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeData};
     napi_value result = {nullptr};
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
         napi_create_array(registerPermStateChangeData->env, &result));
@@ -130,14 +122,34 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
 
     napi_value undefined = nullptr;
     napi_value callback = nullptr;
-    napi_value resultout = nullptr;
+    napi_value resultOut = nullptr;
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
         napi_get_undefined(registerPermStateChangeData->env, &undefined));
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
         napi_get_reference_value(registerPermStateChangeData->env, registerPermStateChangeData->ref, &callback));
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
-        napi_call_function(registerPermStateChangeData->env,
-        undefined, callback, 1, &result, &resultout));
+        napi_call_function(registerPermStateChangeData->env, undefined, callback, 1, &result, &resultOut));
+}
+
+static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
+{
+    if (work == nullptr || work->data == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
+        return;
+    }
+    std::unique_ptr<uv_work_t> uvWorkPtr {work};
+    RegisterPermStateChangeWorker* registerPermStateChangeData =
+        reinterpret_cast<RegisterPermStateChangeWorker*>(work->data);
+    std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeData};
+
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(registerPermStateChangeData->env, &scope);
+    if (scope == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to open scope");
+        return;
+    }
+    NotifyPermStateChanged(registerPermStateChangeData);
+    napi_close_handle_scope(registerPermStateChangeData->env, scope);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkPermStateChanged end");
 };
 } // namespace
@@ -290,6 +302,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("grantUserGrantedPermission", GrantUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("revokeUserGrantedPermission", RevokeUserGrantedPermission),
         DECLARE_NAPI_FUNCTION("checkAccessToken", CheckAccessToken),
+        DECLARE_NAPI_FUNCTION("checkAccessTokenSync", VerifyAccessTokenSync),
         DECLARE_NAPI_FUNCTION("getPermissionFlags", GetPermissionFlags),
         DECLARE_NAPI_FUNCTION("on", RegisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
@@ -400,9 +413,6 @@ void NapiAtManager::VerifyAccessTokenExecute(napi_env env, void *data)
 void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
@@ -469,13 +479,7 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
 
 void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
 {
-    if (data == nullptr) {
-        return;
-    }
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
 
     napi_value result = nullptr;
@@ -700,9 +704,6 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
     napi_value result = GetNapiNull(env);
 
@@ -752,9 +753,6 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
 void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
@@ -840,11 +838,8 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
-
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+
     napi_value result = GetNapiNull(env);
     if (asyncContext->deferred != nullptr) {
         ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
@@ -900,9 +895,6 @@ void NapiAtManager::GetPermissionFlagsExecute(napi_env env, void *data)
 void NapiAtManager::GetPermissionFlagsComplete(napi_env env, napi_status status, void *data)
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
 
     napi_value result = nullptr;
@@ -1073,9 +1065,16 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantResults empty");
         result = JsErrorCode::JS_ERROR_INNER;
     }
+    napi_handle_scope scope = nullptr;
+    napi_open_handle_scope(context->env, &scope);
+    if (scope == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_open_handle_scope failed");
+        return;
+    }
     napi_value requestResult = WrapRequestResult(context->env, retCB->permissions, retCB->grantResults);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "wrap requestResult failed");
+        napi_close_handle_scope(context->env, scope);
         result = JsErrorCode::JS_ERROR_INNER;
     }
 
@@ -1084,6 +1083,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     } else {
         ReturnCallbackResult(context->env, result, context->callbackRef, requestResult);
     }
+    napi_close_handle_scope(context->env, scope);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnRequestPermissionsFromUser async callback is called end");
 }
 
@@ -1210,9 +1210,6 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
 void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
-    if (asyncContext == nullptr) {
-        return;
-    }
     std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
 
     if (asyncContext->needDynamicRequest) {

@@ -434,7 +434,7 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
 {
     std::vector<GenericValues> values;
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    PermissionUsedRecordDb::GetInstance().Add(type, values);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
 }
 
 /*

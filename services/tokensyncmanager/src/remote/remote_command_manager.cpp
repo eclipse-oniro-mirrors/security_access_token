@@ -232,12 +232,6 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
     }
 
     auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
-    if (executor == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "cannot create remote command executor, nodeId: %{public}s",
-            ConstantCommon::EncryptDevId(nodeId).c_str());
-        return nullptr;
-    }
-
     executors_.insert(std::pair<std::string, std::shared_ptr<RemoteCommandExecutor>>(nodeId, executor));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "executor added, nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
     return executor;

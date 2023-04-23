@@ -1766,7 +1766,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GrantPermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
@@ -1785,7 +1785,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RevokePermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, ret);
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     int32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
@@ -2294,7 +2294,7 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 
     // perm.permissionName != permissionName
     int flag = 0;
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, policySet->QueryPermissionFlag("ohos.permission.TEST1", flag));
     // isGeneral is false
     ASSERT_EQ(ERR_PARAM_INVALID, policySet->QueryPermissionFlag("ohos.permission.TEST", flag));
 
@@ -2482,7 +2482,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetDefPermission001, TestSize.Level1)
 
     // permissionName is not tmpty, but invalid
     permissionName = "invalid permisiion";
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT,
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
         PermissionManager::GetInstance().GetDefPermission(permissionName, permissionDefResult));
 }
 
@@ -2668,7 +2668,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag001, TestSize.Level1)
 
     permissionName = "ohos.permission.invalid";
     // permissionName is not defined
-    ASSERT_EQ(ERR_PERMISSION_NOT_DEFINE, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
         permissionName, flag));
 
     permissionName = "ohos.permission.CAMERA";
@@ -2709,7 +2709,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     int32_t flag;
-    ASSERT_EQ(ERR_PERMISSION_NOT_EXIT,
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
         PermissionManager::GetInstance().GetPermissionFlag(tokenId, "ohos.permission.LOCATION", flag));
 
     ASSERT_EQ(RET_SUCCESS,
@@ -3208,6 +3208,8 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Lev
     std::vector<AccessTokenID> idList;
     idList.emplace_back(tokenId);
     PermissionManager::GetInstance().ClearAllSecCompGrantedPerm(idList); // permPolicySet is null
+    auto tokenInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_EQ(tokenInfoPtr, nullptr);
 }
 } // namespace AccessToken
 } // namespace Security
