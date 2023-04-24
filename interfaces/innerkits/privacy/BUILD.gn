@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 config("pricacy") {
   visibility = [ ":*" ]
@@ -30,11 +31,10 @@ if (is_standard_system) {
     public_configs = [ ":pricacy" ]
 
     include_dirs = [
+      "${access_token_path}/frameworks/privacy/include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "src",
-      "//base/security/access_token/frameworks/privacy/include",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-      "//base/security/access_token/interfaces/innerkits/privacy/include",
     ]
 
     sources = [
@@ -52,11 +52,11 @@ if (is_standard_system) {
     ]
 
     deps = [
-      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-      "//base/security/access_token/frameworks/privacy:privacy_communication_adapter_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
     ]
 
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     external_deps = [
       "c_utils:utils",

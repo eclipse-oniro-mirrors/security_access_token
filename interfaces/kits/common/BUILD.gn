@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,25 +12,27 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 ohos_static_library("libnapi_common") {
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//foundation/arkui/napi/interfaces/inner_api",
-    "//foundation/arkui/napi/interfaces/kits",
   ]
 
   sources = [
     "src/napi_common.cpp",
     "src/napi_error.cpp",
   ]
-  configs = [ "//base/security/access_token/config:coverage_flags" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [ "//foundation/arkui/napi:ace_napi" ]
+  deps = []
   cflags_cc = [ "-DHILOG_ENABLE" ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [
+    "hiviewdfx_hilog_native:libhilog",
+    "napi:ace_napi",
+  ]
 
   subsystem_name = "security"
   part_name = "access_token"

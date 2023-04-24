@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
+import("../../../../access_token.gni")
 
 ohos_unittest("lib_code_signature_analysis_test") {
   subsystem_name = "security"
@@ -27,7 +28,7 @@ ohos_unittest("lib_code_signature_analysis_test") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  configs = [ "../../../../config:coverage_flags" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
     "../../analysis_model:libcodesignature_analysis",

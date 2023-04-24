@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 config("accesstoken") {
   visibility = [ ":*" ]
@@ -31,11 +31,10 @@ if (is_standard_system) {
     public_configs = [ ":accesstoken" ]
 
     include_dirs = [
+      "${access_token_path}/frameworks/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/token_setproc/include",
       "src",
-      "//base/security/access_token/frameworks/accesstoken/include",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-      "//base/security/access_token/interfaces/innerkits/token_setproc/include",
     ]
 
     sources = [
@@ -49,10 +48,10 @@ if (is_standard_system) {
     ]
 
     deps = [
-      "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
-      "//base/security/access_token/interfaces/innerkits/accesstoken:libtokenid_sdk",
-      "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
+      ":libtokenid_sdk",
+      "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 
     external_deps = [
@@ -63,7 +62,7 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     cflags_cc = [
       "-DHILOG_ENABLE",
@@ -83,7 +82,7 @@ if (is_standard_system) {
     output_name = "libtokenid_sdk"
     public_configs = [ ":accesstoken" ]
 
-    include_dirs = [ "../../../frameworks/common/include" ]
+    include_dirs = [ "${access_token_path}/frameworks/common/include" ]
     sources = [ "src/tokenid_kit.cpp" ]
 
     deps = []
@@ -92,7 +91,7 @@ if (is_standard_system) {
       "hiviewdfx_hilog_native:libhilog",
     ]
 
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
     cflags_cc = [ "-DHILOG_ENABLE" ]
   }
 }

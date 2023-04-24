@@ -14,7 +14,6 @@
  */
 
 #include "iservice_registry.h"
-#include "system_ability_manager.h"
 
 namespace OHOS {
 SystemAbilityManagerClient& SystemAbilityManagerClient::GetInstance()

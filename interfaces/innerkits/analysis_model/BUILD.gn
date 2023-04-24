@@ -29,7 +29,6 @@ if (is_standard_system) {
     cflags = [ "-Wall" ]
 
     include_dirs = [
-      "include",
       "src",
       "//third_party/bounds_checking_function/include",
     ]

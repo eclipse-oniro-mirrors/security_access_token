@@ -17,9 +17,9 @@ group("napi_packages") {
   deps = []
   if (support_jsapi) {
     deps += [
-      "//base/security/access_token/interfaces/kits/accesstoken:libabilityaccessctrl",
-      "//base/security/access_token/interfaces/kits/common:libnapi_common",
-      "//base/security/access_token/interfaces/kits/privacy:libprivacymanager",
+      "accesstoken:libabilityaccessctrl",
+      "common:libnapi_common",
+      "privacy:libprivacymanager",
     ]
   }
 }

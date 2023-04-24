@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 config("token_callback") {
   visibility = [ ":*" ]
@@ -29,12 +30,12 @@ if (is_standard_system) {
 
     public_configs = [ ":token_callback" ]
 
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     include_dirs = [
       "src",
-      "//base/security/access_token/frameworks/privacy/include",
-      "//base/security/access_token/frameworks/common/include",
+      "${access_token_path}/frameworks/privacy/include",
+      "${access_token_path}/frameworks/common/include",
     ]
 
     sources = [ "src/token_callback_stub.cpp" ]
