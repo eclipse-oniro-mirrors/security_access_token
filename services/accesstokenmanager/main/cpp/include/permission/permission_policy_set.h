@@ -66,7 +66,7 @@ private:
     void PermStateFullToString(const PermissionStateFull& state, std::string& info) const;
     int32_t UpdateSecCompGrantedPermList(const std::string& permissionName, bool isGranted);
     int32_t UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag);
-    void SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd);
+    void SetPermissionFlag(const std::string& permissionName, uint32_t flag, bool needToAdd);
     void SecCompGrantedPermListUpdated(const std::string& permissionName, bool isToGrant);
 
     OHOS::Utils::RWLock permPolicySetLock_;
