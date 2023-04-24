@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 config("tokensync") {
   visibility = [ ":*" ]
@@ -28,13 +28,12 @@ if (is_standard_system) {
     public_configs = [ ":tokensync" ]
 
     include_dirs = [
-      "//commonlibrary/c_utils/base/include",
+      "${access_token_path}/frameworks/accesstoken/include",
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/frameworks/tokensync/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "include",
       "src",
-      "//base/security/access_token/frameworks/tokensync/include",
-      "//base/security/access_token/frameworks/common/include",
-      "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-      "//base/security/access_token/frameworks/accesstoken/include",
     ]
 
     sources = [
@@ -44,8 +43,8 @@ if (is_standard_system) {
     ]
 
     deps = [
-      "//base/security/access_token/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
-      "//base/security/access_token/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+      "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     ]
 
     external_deps = [
@@ -55,7 +54,7 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "//base/security/access_token/config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
   }

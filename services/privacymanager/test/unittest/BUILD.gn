@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/security/access_token/access_token.gni")
 import("//build/test.gni")
+import("../../../../access_token.gni")
 
 if (is_standard_system && ability_base_enable == true) {
   ohos_unittest("libprivacy_manager_service_standard_test") {
@@ -32,21 +32,11 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/database",
       "${access_token_path}/services/privacymanager/include/record",
       "${access_token_path}/services/privacymanager/include/service",
-      "//base/global/resource_management/interfaces/inner_api/include",
-      "//third_party/googletest/include",
-      "//third_party/sqlite/include",
-      "${access_token_path}/services/privacymanager/include/active",
-      "${access_token_path}/services/privacymanager/include/common",
-      "${access_token_path}/services/privacymanager/include/database",
-      "${access_token_path}/services/privacymanager/include/record",
       "${access_token_path}/services/privacymanager/include/sensitive/ability_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/app_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/window_manager",
-      "${foundation_path}/arkui/napi",
-      "${foundation_path}/graphic/graphic_2d/frameworks/surface/include",
-      "${foundation_path}/window/window_manager/wm/include",
       "//third_party/googletest/include",
       "//third_party/sqlite/include",
     ]

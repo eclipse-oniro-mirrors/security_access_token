@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
+import("../../access_token.gni")
 
 ohos_prebuilt_etc("privacy.rc") {
   source = "privacy.cfg"
@@ -36,7 +36,7 @@ if (is_standard_system && ability_base_enable == true) {
     part_name = "access_token"
     version_script = "libprivacy_map"
     include_dirs = [
-      "../../interfaces/innerkits/privacy/src",
+      "${access_token_path}/interfaces/innerkits/privacy/src",
       "include/active",
       "include/common",
       "include/database",
@@ -55,9 +55,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/database/include",
       "//third_party/json/include",
       "//third_party/sqlite/include/",
-      "${foundation_path}/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include",
-      "${foundation_path}/multimedia/audio_framework/services/audio_policy/common/include",
-      "${foundation_path}/graphic/graphic_2d/frameworks/surface/include",
     ]
 
     sources = [
@@ -106,7 +103,7 @@ if (is_standard_system && ability_base_enable == true) {
       }
     }
     cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [ "../../config:coverage_flags" ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
@@ -119,6 +116,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
+      "audio_framework:audio_client",
       "c_utils:utils",
       "hisysevent_native:libhisysevent",
       "hiviewdfx_hilog_native:libhilog",

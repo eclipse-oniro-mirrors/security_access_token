@@ -29,7 +29,6 @@
 #define private public
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
-#include "dm_device_info.h"
 #include "token_field_const.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"

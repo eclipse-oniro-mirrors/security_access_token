@@ -12,18 +12,15 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 ohos_shared_library("libprivacymanager") {
   include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/privacy/include",
+    "${access_token_path}/interfaces/kits/common/include",
     "napi/include",
-    "//base/security/access_token/frameworks/common/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "//base/security/access_token/interfaces/kits/common/include",
-    "//foundation/arkui/napi/interfaces/inner_api",
-    "//foundation/arkui/napi/interfaces/kits",
-    "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
-    "//commonlibrary/c_utils/base/include",
   ]
 
   sources = [
@@ -33,16 +30,17 @@ ohos_shared_library("libprivacymanager") {
   ]
 
   deps = [
-    "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
-    "//base/security/access_token/interfaces/kits/common:libnapi_common",
-    "//foundation/arkui/napi:ace_napi",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+    "../common:libnapi_common",
   ]
   cflags_cc = [ "-DHILOG_ENABLE" ]
   external_deps = [
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_single",
+    "napi:ace_napi",
   ]
-  configs = [ "//base/security/access_token/config:coverage_flags" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
 
   relative_install_dir = "module"
   subsystem_name = "security"

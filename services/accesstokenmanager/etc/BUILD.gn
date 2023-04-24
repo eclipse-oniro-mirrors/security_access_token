@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//base/security/access_token/access_token.gni")
 import("//build/ohos.gni")
+import("../../../access_token.gni")
 
 group("param_files") {
   deps = [
@@ -22,14 +22,15 @@ group("param_files") {
 }
 
 ohos_prebuilt_etc("access_token.para") {
-  source = "//base/security/access_token/services/accesstokenmanager/etc/access_token.para"
+  source =
+      "${access_token_path}/services/accesstokenmanager/etc/access_token.para"
   module_install_dir = "etc/param"
   part_name = "access_token"
   subsystem_name = "security"
 }
 
 ohos_prebuilt_etc("access_token.para.dac") {
-  source = "//base/security/access_token/services/accesstokenmanager/etc/access_token.para.dac"
+  source = "${access_token_path}/services/accesstokenmanager/etc/access_token.para.dac"
   module_install_dir = "etc/param"
   part_name = "access_token"
   subsystem_name = "security"
