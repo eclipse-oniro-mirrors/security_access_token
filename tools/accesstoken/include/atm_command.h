@@ -16,7 +16,14 @@
 #ifndef ACCESSTOKENMANAGER_COMMAND_H
 #define ACCESSTOKENMANAGER_COMMAND_H
 
-#include "shell_command.h"
+#include <cstdint>
+#include <functional>
+#include <getopt.h>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -29,31 +36,40 @@ typedef enum TypeOptType {
     PERM_REVOKE,
 } OptType;
 
-class AtmCommand : public OHOS::AAFwk::ShellCommand {
+class AtmCommand final {
 public:
-    AtmCommand(int argc, char *argv[]);
-    ~AtmCommand() override
-    {}
+    AtmCommand(int32_t argc, char *argv[]);
+    virtual ~AtmCommand() = default;
+
+    std::string ExecCommand();
 
 private:
-    ErrCode CreateCommandMap() override;
-    ErrCode CreateMessageMap() override;
-    ErrCode init() override;
-
-    ErrCode RunAsHelpCommand();
-    ErrCode RunAsDumpCommand();
-    ErrCode RunAsPermCommand();
-
-    ErrCode RunAsCommandError(void);
-    ErrCode RunAsCommandExistentOptionArgument(const int& option,
-        OptType& type, uint32_t& tokenId, std::string& permissionName);
-    ErrCode RunCommandByOperationType(const OptType& type,
-        uint32_t& tokenId, std::string& permissionName);
-
-    ErrCode RunAsCommandMissingOptionArgument(void);
-    ErrCode ModifyPermission(const OptType& type, uint32_t& tokenId, std::string& permissionName);
-
+    std::string GetCommandErrorMsg() const;
+    int32_t RunAsCommandError(void);
+    std::string GetUnknownOptionMsg() const;
+    int32_t RunAsCommandMissingOptionArgument(void);
+    int32_t RunAsCommandExistentOptionArgument(const int32_t& option,
+        OptType& type, AccessTokenID tokenId, std::string& permissionName);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
+    int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
+    int32_t RunCommandByOperationType(const OptType& type,
+        AccessTokenID tokenId, const std::string& permissionName);
+    int32_t HandleComplexCommand(const std::string& shortOption, const struct option longOption[],
+        const std::string& helpMsg);
+
+    int32_t RunAsHelpCommand();
+    int32_t RunAsComplexCommand();
+
+    int32_t argc_;
+    char** argv_;
+
+    std::string cmd_;
+    std::vector<std::string> argList_;
+
+    std::string name_;
+    std::map<std::string, std::function<int32_t()>> commandMap_;
+
+    std::string resultReceiver_;
 };
 } // namespace AccessToken
 } // namespace Security

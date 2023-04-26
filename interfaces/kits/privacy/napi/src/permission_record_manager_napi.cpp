@@ -820,7 +820,7 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     RegisterPermActiveChangeContext* registerPermActiveChangeContext =
         new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for registerPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {registerPermActiveChangeContext};
@@ -858,7 +858,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
         new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for unregisterPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<UnregisterPermActiveChangeContext> callbackPtr {unregisterPermActiveChangeContext};
