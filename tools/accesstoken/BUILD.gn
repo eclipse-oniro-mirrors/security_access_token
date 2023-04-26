@@ -12,33 +12,27 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("//foundation/ability/ability_runtime/ability_runtime.gni")
+import("../../access_token.gni")
 
-ohos_source_set("tools_atm_source_set") {
-  include_dirs = [
-    "include",
-    "//base/security/access_token/frameworks/common/include",
-    "${ability_runtime_path}/tools/aa/include",
-    "//base/security/access_token/interfaces/innerkits/accesstoken/main/cpp/include",
-    "//base/security/access_token/interfaces/innerkits/privacy/include",
-    "${ability_runtime_services_path}/common/include",
-  ]
+ohos_executable("atm") {
+  install_enable = true
+  subsystem_name = "security"
+  part_name = "access_token"
+
+  include_dirs = [ "include" ]
 
   sources = [
-    "${ability_runtime_path}/tools/aa/src/shell_command.cpp",
     "src/atm_command.cpp",
-    "src/atm_receiver_impl.cpp",
     "src/main.cpp",
     "src/to_string.cpp",
   ]
 
   deps = [
-    "${ability_runtime_path}/tools/aa:aa",
-    "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
   ]
 
-  cflags = [ "-DHILOG_ENABLE" ]
+  cflags = []
 
   if (target_cpu == "arm") {
     cflags += [ "-DBINDER_IPC_32BIT" ]
@@ -47,28 +41,6 @@ ohos_source_set("tools_atm_source_set") {
   external_deps = [
     "c_utils:utils",
     "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_single",
   ]
-
-  if (is_asan) {
-    external_deps += [
-      "bundle_framework:appexecfwk_core",
-      "ipc:ipc_core",
-    ]
-  } else {
-    include_dirs += [
-      "//foundation/bundlemanager/bundle_framework/interfaces/inner_api/appexecfwk_core/include/bundlemgr",
-      "//foundation/communication/ipc/interfaces/innerkits/ipc_core/include",
-    ]
-  }
-
-  subsystem_name = "security"
-  part_name = "access_token"
-}
-
-ohos_executable("atm") {
-  deps = [ ":tools_atm_source_set" ]
-
-  install_enable = true
-  subsystem_name = "security"
-  part_name = "access_token"
 }

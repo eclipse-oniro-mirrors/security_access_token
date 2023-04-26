@@ -16,6 +16,6 @@ import("//build/ohos.gni")
 group("tools_atm") {
   deps = []
   if (support_jsapi) {
-    deps += [ "./accesstoken:atm" ]
+    deps += [ "accesstoken:atm" ]
   }
 }

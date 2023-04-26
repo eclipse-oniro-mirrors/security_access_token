@@ -103,7 +103,7 @@ if (is_standard_system && ability_base_enable == true) {
       }
     }
     cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "../../config:coverage_flags" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
