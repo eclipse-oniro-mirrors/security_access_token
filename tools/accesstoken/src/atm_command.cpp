@@ -80,8 +80,8 @@ AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), n
 
     commandMap_ = {
         {"help", std::bind(&AtmCommand::RunAsHelpCommand, this)},
-        {"dump", std::bind(&AtmCommand::RunAsComplexCommand, this)},
-        {"perm", std::bind(&AtmCommand::RunAsComplexCommand, this)},
+        {"dump", std::bind(&AtmCommand::RunAsCommonCommand, this)},
+        {"perm", std::bind(&AtmCommand::RunAsCommonCommand, this)},
     };
 
     if ((argc < MIN_ARGUMENT_NUMBER) || (argc > MAX_ARGUMENT_NUMBER)) {
@@ -324,7 +324,7 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
     return result;
 }
 
-int32_t AtmCommand::RunAsComplexCommand()
+int32_t AtmCommand::RunAsCommonCommand()
 {
     if (cmd_ == "dump") {
         return HandleComplexCommand(SHORT_OPTIONS_DUMP, LONG_OPTIONS_DUMP, HELP_MSG_DUMP);

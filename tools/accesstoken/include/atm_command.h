@@ -58,7 +58,7 @@ private:
         const std::string& helpMsg);
 
     int32_t RunAsHelpCommand();
-    int32_t RunAsComplexCommand();
+    int32_t RunAsCommonCommand();
 
     int32_t argc_;
     char** argv_;

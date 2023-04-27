@@ -116,7 +116,6 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
-      "audio_framework:audio_client",
       "c_utils:utils",
       "hisysevent_native:libhisysevent",
       "hiviewdfx_hilog_native:libhilog",
