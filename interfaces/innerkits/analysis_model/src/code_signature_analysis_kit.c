@@ -40,14 +40,14 @@ static AppRiskInfo *FindExistingNode(uint32_t tokenId)
 
 static int32_t IsRiskStatusChanged(AppRiskInfo *node)
 {
-    uint32_t totalCount = 0;
-    uint32_t eventCount = 0;
+    int64_t totalCount = 0;
+    int32_t eventCount = 0;
     RiskPolicyType policy = node->status.policy;
 
     for (int32_t i = 0; i < CODE_SIGNATURE_ERROR_TYPE_SIZE; i++) {
         TimeStampNode *tmp = ((node->errInfoList)[i]).timeStampChain;
         totalCount += tmp->timeStamp.timeStampCount;
-        eventCount += (tmp->timeStamp.timeStampCount > 0) ? 1 : 0;
+        eventCount += (tmp->timeStamp.timeStampCount != 0) ? 1 : 0;
     }
     node->status.eventCount = eventCount;
     node->status.totalCount = totalCount;
@@ -230,7 +230,7 @@ static int32_t DataProcess(const CodeSignatureReportedInfo *report, uint32_t opt
         return INPUT_EVENT_TYPE_INVALID;
     }
     if (optType >= DATA_CHANGE_TYPE_BUFF) {
-        MODEL_LOG_ERROR("[%s]:optType %d is invalid.", __func__, optType);
+        MODEL_LOG_ERROR("[%s]:optType %u is invalid.", __func__, optType);
         return INPUT_OPER_TYPE_INVALID;
     }
 
@@ -262,7 +262,7 @@ static int32_t DataProcess(const CodeSignatureReportedInfo *report, uint32_t opt
 static void DatabaseListener(uint32_t optType, uint8_t *result, uint32_t resultLen)
 {
     if ((result == NULL) || (resultLen != sizeof(CodeSignatureReportedInfo))) {
-        MODEL_LOG_ERROR("[%s]:ResultLen %d.", __func__, resultLen);
+        MODEL_LOG_ERROR("[%s]:ResultLen %u.", __func__, resultLen);
         return;
     }
 
@@ -346,7 +346,7 @@ int32_t GetResult(uint8_t *result, uint32_t *resultLen)
 
     unsigned long long neededLen = g_riskAppCount * sizeof(NotifyRiskResultInfo);
     if (*resultLen < neededLen) {
-        MODEL_LOG_ERROR("[%s]:ResultLen %d is smaller than needed %llu", __func__, *resultLen, neededLen);
+        MODEL_LOG_ERROR("[%s]:ResultLen %u is smaller than needed %llu", __func__, *resultLen, neededLen);
         (void)pthread_mutex_unlock(&g_modelVisitLock);
         return SHORT_OF_MEMORY;
     }

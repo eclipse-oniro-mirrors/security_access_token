@@ -81,7 +81,7 @@ typedef enum RiskPolicyType {
 
 typedef union TimeStampInfo {
     int64_t timeStampMs;
-    int64_t timeStampCount;
+    int32_t timeStampCount;
 } TimeStampInfo;
 
 typedef struct TimeStampInfoNode {
@@ -104,8 +104,8 @@ typedef struct CodeSignatureErrorInfo {
 
 typedef struct AppRiskStatus {
     RiskPolicyType policy;
-    uint32_t totalCount;
-    uint32_t eventCount;
+    int32_t eventCount;
+    int64_t totalCount;
 } AppRiskStatus;
 
 typedef struct AppRiskInfo {

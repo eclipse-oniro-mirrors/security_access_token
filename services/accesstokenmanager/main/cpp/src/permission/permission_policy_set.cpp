@@ -166,8 +166,9 @@ static bool IsPermGrantedBySecComp(int32_t flag)
 
 int32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag)
 {
-    uint32_t uFlag = static_cast<uint32_t>(fullFlag);
-    uint32_t unmaskedFlag = (uFlag) & (~removedFlag);
+    uint32_t uFullFlag = static_cast<uint32_t>(fullFlag);
+    uint32_t uRemovedFlag = static_cast<uint32_t>(removedFlag);
+    uint32_t unmaskedFlag = (uFullFlag) & (~uRemovedFlag);
     return static_cast<int32_t>(unmaskedFlag);
 }
 
@@ -221,7 +222,8 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
 
 static int32_t UpdateWithNewFlag(int32_t oldFlag, int32_t currFlag)
 {
-    uint32_t newFlag = currFlag | ((static_cast<uint32_t>(oldFlag)) & PERMISSION_GRANTED_BY_POLICY);
+    uint32_t newFlag = static_cast<uint32_t>(currFlag) |
+        ((static_cast<uint32_t>(oldFlag)) & PERMISSION_GRANTED_BY_POLICY);
     return static_cast<int32_t>(newFlag);
 }
 
@@ -273,7 +275,7 @@ void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
     return;
 }
 
-void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, int32_t flag, bool needToAdd)
+void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, uint32_t flag, bool needToAdd)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
