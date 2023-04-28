@@ -45,6 +45,12 @@ public:
     virtual bool IsMicrophoneMute() = 0;
     virtual int32_t SetMicrophoneMute(bool isMute) = 0;
     virtual int32_t SetMicStateChangeCallback(const int32_t clientId, const sptr<IRemoteObject> &object) = 0;
+
+    enum AudioPolicyCommand {
+        SET_MICROPHONE_MUTE = 15,
+        IS_MICROPHONE_MUTE = 17,
+        SET_MIC_STATE_CHANGE_CALLBACK = 58,
+    };
 };
 
 class AudioManagerPrivacyProxy : public IRemoteProxy<IAudioPolicy> {

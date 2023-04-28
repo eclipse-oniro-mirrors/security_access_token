@@ -22,25 +22,24 @@
     "adapted_system_type": [ "standard" ],
     "rom": "2048KB",
     "ram": "5102KB",
-    "deps": {
+    "external_deps": {
       "components": [
-        "ability_tools",
-        "bounds_checking_function",
-        "bundle_framework",
-        "cjson",
-        "common",
+        "ability_base",
+        "ability_runtime",
+        "c_utils",
         "device_manager",
         "dsoftbus",
         "eventhandler",
+        "hicollie_native",
+        "hisysevent_native",
+        "hitrace_native",
         "hiviewdfx_hilog_native",
         "init",
         "ipc",
         "napi",
         "safwk",
         "samgr",
-        "selinux",
-        "startup_l2",
-        "zlib"
+        "selinux"
       ],
       "third_party": [
         "cJSON",
