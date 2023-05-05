@@ -15,7 +15,7 @@
 
 #include "privacy_manager_service.h"
 
-#include <ctime>
+#include <cstring>
 
 #include "accesstoken_log.h"
 #include "constant_common.h"
@@ -151,8 +151,7 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector
         infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
                      R"(")" + ",\n");
         time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
-        std::string LastAccessTime = ctime(&lastAccessTime);
-        infos.append(R"(    "lastAccessTime": )" + LastAccessTime + ",\n");
+        infos.append(R"(    "lastAccessTime": )" + std::to_string(lastAccessTime) + ",\n");
         infos.append(R"(    "lastAccessDuration": )" +
                      std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
         infos.append(R"(    "accessCount": ")" +
