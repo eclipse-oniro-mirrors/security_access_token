@@ -20,8 +20,8 @@
     ],
     "features": [ "access_token_feature_coverage = false" ],
     "adapted_system_type": [ "standard" ],
-    "rom": "2048KB",
-    "ram": "5102KB",
+    "rom": "10000KB",
+    "ram": "5000KB",
     "deps": {},
     "external_deps": {
       "components": [
