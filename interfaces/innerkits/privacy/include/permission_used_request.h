@@ -60,12 +60,12 @@ struct PermissionUsedRequest {
     AccessTokenID tokenId = 0;
     /** indicats whether the tokenID is remote tokenID */
     bool isRemote = false;
-    std::string deviceId;
-    std::string bundleName;
+    std::string deviceId = "";
+    std::string bundleName = "";
     /** permission name list */
     std::vector<std::string> permissionList;
-    int64_t beginTimeMillis = 0;
-    int64_t endTimeMillis = 0;
+    int64_t beginTimeMillis = 0L;
+    int64_t endTimeMillis = 0L;
     PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
 };
 } // namespace AccessToken
