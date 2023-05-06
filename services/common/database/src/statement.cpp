@@ -53,8 +53,8 @@ void Statement::Bind(const int32_t index, int32_t value)
 
 void Statement::Bind(const int32_t index, int64_t value)
 {
-    if (sqlite3_bind_int(statement_, index, value) != SQLITE_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int32_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
+    if (sqlite3_bind_int64(statement_, index, value) != SQLITE_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot bind int64_t, errorMsg: %{public}s", sqlite3_errmsg(db_));
     }
 }
 

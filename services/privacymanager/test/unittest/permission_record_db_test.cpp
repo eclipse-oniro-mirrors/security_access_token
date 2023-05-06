@@ -438,27 +438,6 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
 }
 
 /*
- * @tc.name: Modify001
- * @tc.desc: PermissionUsedRecordDb::Modify function test
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PermissionRecordDBTest, Modify001, TestSize.Level1)
-{
-    GenericValues modifyValues;
-    modifyValues.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-
-    GenericValues conditions;
-    conditions.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
-    conditions.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    conditions.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    conditions.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Modify(type, modifyValues, conditions));
-}
-
-/*
  * @tc.name: FindByConditions001
  * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
  * @tc.type: FUNC
