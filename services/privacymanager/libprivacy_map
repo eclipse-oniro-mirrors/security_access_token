@@ -38,7 +38,6 @@
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_ACCESS_COUNT";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::Remove(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&)";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_ACCESS_DURATION";
-        "OHOS::Security::AccessToken::PermissionUsedRecordDb::Modify(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::GenericValues const&)";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::FindByConditions(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::GenericValues const&, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues>>&)";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::GetDistinctValue(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues>>&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::Register()";
@@ -46,7 +45,6 @@
         "OHOS::Security::AccessToken::PermissionRecordManager::GetInstance()";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::DeleteExcessiveRecords(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, unsigned int)";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreatePermissionRecordTable() const";
-        "OHOS::Security::AccessToken::PermissionUsedRecordDb::Modify(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::GenericValues const&)";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::DeleteExpireRecords(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::UnRegisterPermActiveStatusCallback(OHOS::sptr<OHOS::IRemoteObject> const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::NotifyAppStateChange(unsigned int, OHOS::Security::AccessToken::ActiveChangeType)";
