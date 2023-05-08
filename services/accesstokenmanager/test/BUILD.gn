@@ -111,7 +111,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "c_utils:utils",
     "dsoftbus:softbus_client",
     "hisysevent_native:libhisysevent",
-    "hitrace_native:hitrace_meter",
     "hiviewdfx_hilog_native:libhilog",
     "init:libbegetutil",
     "ipc:ipc_core",

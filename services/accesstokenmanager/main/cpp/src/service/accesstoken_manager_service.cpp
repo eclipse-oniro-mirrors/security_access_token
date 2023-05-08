@@ -31,7 +31,9 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "hisysevent.h"
+#ifdef HITRACE_NATIVE_ENABLE
 #include "hitrace_meter.h"
+#endif
 #include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
@@ -104,11 +106,15 @@ void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, c
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
+#ifdef HITRACE_NATIVE_ENABLE
     StartTrace(HITRACE_TAG_ACCESS_CONTROL, "AccessTokenVerifyPermission");
+#endif
     int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
+#ifdef HITRACE_NATIVE_ENABLE
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
+#endif
     return res;
 }
 
