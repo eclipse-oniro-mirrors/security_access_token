@@ -53,3 +53,10 @@ if (!defined(global_parts_info) ||
 } else {
   hicollie_enable = false
 }
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.hiviewdfx_hitrace_native)) {
+  hiviewdfx_hitrace_native_enable = true
+} else {
+  hiviewdfx_hitrace_native_enable = false
+}
