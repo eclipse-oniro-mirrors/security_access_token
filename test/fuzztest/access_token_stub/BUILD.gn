@@ -41,5 +41,10 @@ group("fuzztest") {
     "registerpermstatechangecallbackstub_fuzzer:RegisterPermStateChangeCallbackStubFuzzTest",
     "reloadnativetokeninfostub_fuzzer:ReloadNativeTokenInfoStubFuzzTest",
     "revokepermissionstub_fuzzer:RevokePermissionStubFuzzTest",
+    "setremotehaptokeninfostub_fuzzer:SetRemoteHapTokenInfoStubFuzzTest",
+    "setremotenativetokeninfostub_fuzzer:SetRemoteNativeTokenInfoStubFuzzTest",
+    "unregisterpermstatechangecallbackstub_fuzzer:UnRegisterPermStateChangeCallbackStubFuzzTest",
+    "updatehaptokenstub_fuzzer:UpdateHapTokenStubFuzzTest",
+    "verifyaccesstokenstub_fuzzer:VerifyAccessTokenStubFuzzTest",
   ]
 }
