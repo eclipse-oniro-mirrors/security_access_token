@@ -26,5 +26,10 @@ group("fuzztest") {
     "dumptokeninfostub_fuzzer:DumpTokenInfoStubFuzzTest",
     "getallnativetokeninfostub_fuzzer:GetAllNativeTokenInfoStubFuzzTest",
     "getdefpermissionsstub_fuzzer:GetDefPermissionsStubFuzzTest",
+    "getdefpermissionstub_fuzzer:GetDefPermissionStubFuzzTest",
+    "gethaptokenidstub_fuzzer:GetHapTokenIDStubFuzzTest",
+    "gethaptokeninfofromremotestub_fuzzer:GetHapTokenInfoFromRemoteStubFuzzTest",
+    "gethaptokeninfostub_fuzzer:GetHapTokenInfoStubFuzzTest",
+    "getnativetokenidstub_fuzzer:GetNativeTokenIdStubFuzzTest",
   ]
 }
