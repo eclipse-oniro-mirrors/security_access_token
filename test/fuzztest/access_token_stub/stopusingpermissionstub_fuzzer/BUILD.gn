@@ -17,11 +17,11 @@ import("../../../../access_token.gni")
 
 module_output_path = "access_token/access_token_stub"
 
-ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
+ohos_fuzztest("StopUsingPermissionStubFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file = "."
 
-  sources = [ "getpermissionusedrecordsasyncstub_fuzzer.cpp" ]
+  sources = [ "stopusingpermissionstub_fuzzer.cpp" ]
 
   cflags = [
     "-g",
@@ -106,7 +106,6 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
     "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-    "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
     "${access_token_path}/services/common/database:accesstoken_database_cxx",
   ]
 
