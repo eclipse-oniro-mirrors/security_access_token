@@ -79,7 +79,7 @@ void NativeTokenGet()
 
     infoInstance.processName = "TestCase";
     tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 }
@@ -111,7 +111,7 @@ void SecurityComponentGrantTest::SetUp()
 
 void SecurityComponentGrantTest::TearDown()
 {
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 void SecurityComponentGrantTest::DeleteTestToken() const
@@ -371,20 +371,20 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
     std::vector<PermissionListState> permList;
     permList.emplace_back(perm1);
     // check to pop up
-    SetSelfTokenID(tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
     result = AccessTokenKit::GetSelfPermissionsState(permList);
     ASSERT_EQ(result, DYNAMIC_OPER);
 
     // check not to pop up
-    SetSelfTokenID(nativeTokenID);
+    EXPECT_EQ(0, SetSelfTokenID(nativeTokenID));
     AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
 
-    SetSelfTokenID(tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
     result = AccessTokenKit::GetSelfPermissionsState(permList);
     ASSERT_EQ(result, PASS_OPER);
 
     // security component revoke
-    SetSelfTokenID(nativeTokenID);
+    EXPECT_EQ(0, SetSelfTokenID(nativeTokenID));
     AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
 
     res = AccessTokenKit::DeleteToken(tokenID);

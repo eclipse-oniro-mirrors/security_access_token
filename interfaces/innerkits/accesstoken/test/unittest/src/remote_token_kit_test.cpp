@@ -121,7 +121,7 @@ void NativeTokenGet()
 {
     uint32_t tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
     ASSERT_NE(tokenId, INVALID_TOKENID);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
 }
 
@@ -170,7 +170,7 @@ void RemoteTokenKitTest::TearDown()
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
     udid_.clear();
     networkId_.clear();
 }
@@ -1190,7 +1190,7 @@ HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 HWTEST_F(RemoteTokenKitTest, GetAllNativeTokenInfo002, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("token_sync_service");
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     std::vector<NativeTokenInfoForSync> nativeTokenInfoRes;
     int res = AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfoRes);
     ASSERT_EQ(0, res);

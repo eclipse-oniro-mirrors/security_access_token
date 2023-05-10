@@ -114,7 +114,7 @@ void PrivacyManagerServiceTest::TearDown()
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -202,7 +202,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);

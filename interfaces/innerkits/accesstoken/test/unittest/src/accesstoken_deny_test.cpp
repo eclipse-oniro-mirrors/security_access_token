@@ -49,8 +49,8 @@ void AccessTokenDenyTest::SetUpTestCase()
 
 void AccessTokenDenyTest::TearDownTestCase()
 {
-    SetSelfTokenID(g_selfTokenId);
     setuid(g_selfUid);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  tokenID is " << GetSelfTokenID();
     GTEST_LOG_(INFO) << "PermStateChangeCallback,  uid is " << getuid();
 }
@@ -63,13 +63,15 @@ void AccessTokenDenyTest::SetUp()
                                                       g_InfoParms.bundleName,
                                                       g_InfoParms.instIndex);
     ASSERT_NE(INVALID_TOKENID, g_testTokenIDEx.tokenIDEx);
-    SetSelfTokenID(g_testTokenIDEx.tokenIDEx);
+    setuid(g_selfUid);
+    EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
     setuid(1234); // 1234: UID
 }
 
 void AccessTokenDenyTest::TearDown()
 {
-    SetSelfTokenID(g_selfTokenId);
+    setuid(g_selfUid);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     setuid(g_selfUid);
 }
 
@@ -289,7 +291,7 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
     };
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, policyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -297,11 +299,11 @@ HWTEST_F(AccessTokenDenyTest, UnregisterPermStateChangeCallback001, TestSize.Lev
     auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfo);
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
 
-    SetSelfTokenID(g_testTokenIDEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(g_testTokenIDEx.tokenIDEx));
 
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 
     setuid(g_selfUid);
