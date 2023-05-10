@@ -50,11 +50,15 @@ group("fuzztest") {
 
   if (is_standard_system && ability_base_enable == true) {
     deps += [
+      "addpermissionusedrecordstub_fuzzer:AddPermissionUsedRecordStubFuzzTest",
       "getpermissionusedrecordsasyncstub_fuzzer:GetPermissionUsedRecordsAsyncStubFuzzTest",
       "getpermissionusedrecordsstub_fuzzer:GetPermissionUsedRecordsStubFuzzTest",
       "isallowedusingpermissionstub_fuzzer:IsAllowedUsingPermissionStubFuzzTest",
       "registerpermactivestatuscallbackstub_fuzzer:RegisterPermActiveStatusCallbackStubFuzzTest",
       "removepermissionusedrecordsstub_fuzzer:RemovePermissionUsedRecordsStubFuzzTest",
+      "startusingpermissioncallbackstub_fuzzer:StartUsingPermissionCallbackStubFuzzTest",
+      "startusingpermissionstub_fuzzer:StartUsingPermissionStubFuzzTest",
+      "stopusingpermissionstub_fuzzer:StopUsingPermissionStubFuzzTest",
     ]
   }
 }

@@ -108,7 +108,6 @@ ohos_fuzztest("IsAllowedUsingPermissionStubFuzzTest") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
     "${access_token_path}/services/common/database:accesstoken_database_cxx",
-    "${access_token_path}/services/privacymanager:privacy.rc",
   ]
 
   external_deps = [
