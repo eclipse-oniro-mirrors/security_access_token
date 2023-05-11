@@ -59,6 +59,7 @@ group("fuzztest") {
       "startusingpermissioncallbackstub_fuzzer:StartUsingPermissionCallbackStubFuzzTest",
       "startusingpermissionstub_fuzzer:StartUsingPermissionStubFuzzTest",
       "stopusingpermissionstub_fuzzer:StopUsingPermissionStubFuzzTest",
+      "unregisterpermactivestatuscallbackstub_fuzzer:UnRegisterPermActiveStatusCallbackStubFuzzTest",
     ]
   }
 }
