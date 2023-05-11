@@ -87,25 +87,6 @@ static void ParamResolveErrorThrow(const napi_env& env, const std::string& param
     NAPI_CALL_RETURN_VOID(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, errMsg)));
 }
 
-static bool ParseRequestResolveSomeParam(
-    const napi_env& env, const napi_value& value, PermissionUsedRequest& request, napi_value& property)
-{
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "isRemote", &property), false) ;
-    if (!ParseBool(env, property, request.isRemote)) {
-        ParamResolveErrorThrow(env, "request:isRemote", "boolean");
-        return false;
-    }
-
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "deviceId", &property), false);
-    if (!ParseString(env, property, request.deviceId)) {
-        ParamResolveErrorThrow(env, "request:deviceId", "string");
-        return false;
-    }
-    return true;
-}
-
 static void ReturnPromiseResult(napi_env env, const RecordManagerAsyncContext& context, napi_value result)
 {
     if (context.retCode != RET_SUCCESS) {
@@ -177,7 +158,7 @@ static bool ParseAddPermissionRecord(
     }
     if (argc == ADD_PERMISSION_RECORD_MAX_PARAMS) {
         // 4: : the fifth parameter of argv
-        if (!ParseCallback(env, argv[4], asyncContext.callbackRef)) {
+        if (!IsUndefinedOrNull(env, argv[4]) && !ParseCallback(env, argv[4], asyncContext.callbackRef)) {
             ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
@@ -214,7 +195,7 @@ static bool ParseStartAndStopUsingPermission(
     }
     if (argc == START_STOP_MAX_PARAMS) {
         // 2: the third parameter of argv
-        if (!ParseCallback(env, argv[2], asyncContext.callbackRef)) {
+        if (!IsUndefinedOrNull(env, argv[2]) && !ParseCallback(env, argv[2], asyncContext.callbackRef)) {
             ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }
@@ -346,44 +327,39 @@ static void ProcessRecordResult(napi_env env, napi_value value, const Permission
 
 static bool ParseRequest(const napi_env& env, const napi_value& value, PermissionUsedRequest& request)
 {
-    if (!CheckType(env, value, napi_object)) {
-        return false;
-    }
     napi_value property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "tokenId", &property), false);
-    if (!ParseUint32(env, property, request.tokenId)) {
+    if (IsNeedParseProperty(env, value, "tokenId", property) && !ParseUint32(env, property, request.tokenId)) {
         ParamResolveErrorThrow(env, "request:tokenId", "number");
         return false;
     }
 
-    if (!ParseRequestResolveSomeParam(env, value, request, property)) {
+    if (IsNeedParseProperty(env, value, "isRemote", property) && !ParseBool(env, property, request.isRemote)) {
+        ParamResolveErrorThrow(env, "request:isRemote", "boolean");
         return false;
     }
 
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "bundleName", &property), false);
-    if (!ParseString(env, property, request.bundleName)) {
+    if (IsNeedParseProperty(env, value, "deviceId", property) && !ParseString(env, property, request.deviceId)) {
+        ParamResolveErrorThrow(env, "request:deviceId", "string");
+        return false;
+    }
+
+    if (IsNeedParseProperty(env, value, "bundleName", property) && !ParseString(env, property, request.bundleName)) {
         ParamResolveErrorThrow(env, "request:bundleName", "string");
         return false;
     }
 
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "beginTime", &property), false);
-    if (!ParseInt64(env, property, request.beginTimeMillis)) {
+    if (IsNeedParseProperty(env, value, "beginTime", property) && !ParseInt64(env, property, request.beginTimeMillis)) {
         ParamResolveErrorThrow(env, "request:beginTime", "number");
         return false;
     }
 
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "endTime", &property), false);
-    if (!ParseInt64(env, property, request.endTimeMillis)) {
+    if (IsNeedParseProperty(env, value, "endTime", property) && !ParseInt64(env, property, request.endTimeMillis)) {
         ParamResolveErrorThrow(env, "request:endTime", "number");
         return false;
     }
 
-    property = nullptr;
-    NAPI_CALL_BASE(env, napi_get_named_property(env, value, "permissionNames", &property), false);
-    if (!ParseStringArray(env, property, request.permissionList)) {
+    if (IsNeedParseProperty(env, value, "permissionNames", property) &&
+        !ParseStringArray(env, property, request.permissionList)) {
         ParamResolveErrorThrow(env, "request:permissionNames", "Array<string>");
         return false;
     }
@@ -396,7 +372,6 @@ static bool ParseRequest(const napi_env& env, const napi_value& value, Permissio
         return false;
     }
     request.flag = static_cast<PermissionUsageFlagEnum>(flag);
-
     return true;
 }
 
@@ -417,13 +392,17 @@ static bool ParseGetPermissionUsedRecords(
     asyncContext.env = env;
 
     // 0: the first parameter of argv
+    if (!CheckType(env, argv[0], napi_object)) {
+        ParamResolveErrorThrow(env, "request", "PermissionUsedRequest");
+        return false;
+    }
     if (!ParseRequest(env, argv[0], asyncContext.request)) {
         return false;
     }
 
     if (argc == GET_PERMISSION_RECORD_MAX_PARAMS) {
         // 1: the second parameter of argv
-        if (!ParseCallback(env, argv[1], asyncContext.callbackRef)) {
+        if (!IsUndefinedOrNull(env, argv[1]) && !ParseCallback(env, argv[1], asyncContext.callbackRef)) {
             ParamResolveErrorThrow(env, "callback", "AsyncCallback");
             return false;
         }

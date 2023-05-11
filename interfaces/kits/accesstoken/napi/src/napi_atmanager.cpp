@@ -654,7 +654,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
 
     if (argc == GRANT_OR_REVOKE_INPUT_MAX_PARAMS) {
         // 3: the fourth parameter of argv
-        if (!ParseCallback(env, argv[3], asyncContext.callbackRef)) {
+        if (!IsUndefinedOrNull(env, argv[3]) && !ParseCallback(env, argv[3], asyncContext.callbackRef)) {
             NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
                                 GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_ILLEGAL))), false);
             return false;
@@ -1002,7 +1002,8 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
     ACCESSTOKEN_LOG_INFO(LABEL, "asyncContext.permissionList size: %{public}zu.", asyncContext.permissionList.size());
 
     if (argc == REQUEST_PERMISSION_MAX_PARAMS) {
-        if (!ParseCallback(env, argv[2], asyncContext.callbackRef)) {    // argv[2] : callback
+        // argv[2] : callback
+        if (!IsUndefinedOrNull(env, argv[2]) && !ParseCallback(env, argv[2], asyncContext.callbackRef)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionRequestResult>");
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
             return false;

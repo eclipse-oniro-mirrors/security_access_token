@@ -157,6 +157,28 @@ bool IsArray(const napi_env& env, const napi_value& value)
     return isArray;
 }
 
+bool IsUndefinedOrNull(const napi_env& env, const napi_value& value)
+{
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, value, &valueType);
+    return (valueType == napi_undefined) || (valueType == napi_null) ;
+}
+
+bool IsNeedParseProperty(
+    const napi_env& env, const napi_value& value, const std::string& key, napi_value& property)
+{
+    bool hasProp = false;
+    property = nullptr;
+    napi_has_named_property(env, value, key.c_str(), &hasProp);
+    if (hasProp) {
+        napi_get_named_property(env, value, key.c_str(), &property);
+        napi_valuetype valueType = napi_undefined;
+        napi_typeof(env, property, &valueType);
+        return (valueType != napi_undefined) && (valueType != napi_null);
+    }
+    return false;
+}
+
 bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& result)
 {
     if (!CheckType(env, value, napi_function)) {
