@@ -59,6 +59,8 @@ public:
         OP_WRITE_DOCUMENT = 30,
         OP_READ_WHOLE_CALENDAR = 31,
         OP_WRITE_WHOLE_CALENDAR = 32,
+        OP_APP_TRACKING_CONSENT = 33,
+        OP_GET_INSTALLED_BUNDLE_LIST = 34,
     };
 
     enum ErrorCode {

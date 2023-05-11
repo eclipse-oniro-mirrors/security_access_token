@@ -21,33 +21,33 @@ namespace AccessToken {
 const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.ANSWER_CALL", Constant::OP_ANSWER_CALL),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CALENDAR", Constant::OP_READ_CALENDAR),
-    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CALENDAR", Constant::OP_WRITE_CALENDAR),
-    std::map<std::string, int32_t>::value_type("ohos.permission.SEND_MESSAGES", Constant::OP_SEND_MESSAGES),
-    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CALL_LOG", Constant::OP_WRITE_CALL_LOG),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CALL_LOG", Constant::OP_READ_CALL_LOG),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_CELL_MESSAGES", Constant::OP_READ_CELL_MESSAGES),
-    std::map<std::string, int32_t>::value_type("ohos.permission.MICROPHONE", Constant::OP_MICROPHONE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_CONTACTS", Constant::OP_READ_CONTACTS),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_MESSAGES", Constant::OP_READ_MESSAGES),
+    std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_MMS", Constant::OP_RECEIVE_MMS),
+    std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_SMS", Constant::OP_RECEIVE_SMS),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.RECEIVE_WAP_MESSAGES", Constant::OP_RECEIVE_WAP_MESSAGES),
-    std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_SMS", Constant::OP_RECEIVE_SMS),
-    std::map<std::string, int32_t>::value_type("ohos.permission.RECEIVE_MMS", Constant::OP_RECEIVE_MMS),
-    std::map<std::string, int32_t>::value_type("ohos.permission.READ_MESSAGES", Constant::OP_READ_MESSAGES),
-    std::map<std::string, int32_t>::value_type("ohos.permission.READ_CONTACTS", Constant::OP_READ_CONTACTS),
+    std::map<std::string, int32_t>::value_type("ohos.permission.MICROPHONE", Constant::OP_MICROPHONE),
+    std::map<std::string, int32_t>::value_type("ohos.permission.SEND_MESSAGES", Constant::OP_SEND_MESSAGES),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CALENDAR", Constant::OP_WRITE_CALENDAR),
+    std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CALL_LOG", Constant::OP_WRITE_CALL_LOG),
     std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_CONTACTS", Constant::OP_WRITE_CONTACTS),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.DISTRIBUTED_DATASYNC", Constant::OP_DISTRIBUTED_DATASYNC),
+    std::map<std::string, int32_t>::value_type("ohos.permission.MANAGE_VOICEMAIL", Constant::OP_MANAGE_VOICEMAIL),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.LOCATION_IN_BACKGROUND", Constant::OP_LOCATION_IN_BACKGROUND),
     std::map<std::string, int32_t>::value_type("ohos.permission.LOCATION", Constant::OP_LOCATION),
-    std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.APPROXIMATELY_LOCATION", Constant::OP_APPROXIMATELY_LOCATION),
+    std::map<std::string, int32_t>::value_type("ohos.permission.MEDIA_LOCATION", Constant::OP_MEDIA_LOCATION),
     std::map<std::string, int32_t>::value_type("ohos.permission.CAMERA", Constant::OP_CAMERA),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_MEDIA", Constant::OP_READ_MEDIA),
     std::map<std::string, int32_t>::value_type("ohos.permission.WRITE_MEDIA", Constant::OP_WRITE_MEDIA),
     std::map<std::string, int32_t>::value_type("ohos.permission.ACTIVITY_MOTION", Constant::OP_ACTIVITY_MOTION),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_HEALTH_DATA", Constant::OP_READ_HEALTH_DATA),
-    std::map<std::string, int32_t>::value_type("ohos.permission.MANAGE_VOICEMAIL", Constant::OP_MANAGE_VOICEMAIL),
-    std::map<std::string, int32_t>::value_type(
-        "ohos.permission.DISTRIBUTED_DATASYNC", Constant::OP_DISTRIBUTED_DATASYNC),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_IMAGEVIDEO", Constant::OP_READ_IMAGEVIDEO),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_AUDIO", Constant::OP_READ_AUDIO),
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_DOCUMENT", Constant::OP_READ_DOCUMENT),
@@ -57,6 +57,10 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
     std::map<std::string, int32_t>::value_type("ohos.permission.READ_WHOLE_CALENDAR", Constant::OP_READ_WHOLE_CALENDAR),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.WRITE_WHOLE_CALENDAR", Constant::OP_WRITE_WHOLE_CALENDAR),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.APP_TRACKING_CONSENT", Constant::OP_APP_TRACKING_CONSENT),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.GET_INSTALLED_BUNDLE_LIST", Constant::OP_GET_INSTALLED_BUNDLE_LIST),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
