@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -45,7 +45,6 @@ private:
     void ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply);
     void AllocHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply);
-    void AllocNativeTokenInner(MessageParcel& data, MessageParcel& reply);
     void UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
@@ -66,7 +65,6 @@ private:
     void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
-    void GetRemoteHapTokenIDInner(MessageParcel& data, MessageParcel& reply);
 #endif
 
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
