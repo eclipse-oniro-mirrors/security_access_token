@@ -59,8 +59,15 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
 bool PermissionDefinitionCache::Update(const PermissionDef& info)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    permissionDefinitionMap_[info.permissionName].permDef = info;
-    return true;
+    auto it = permissionDefinitionMap_.find(info.permissionName);
+    if (it != permissionDefinitionMap_.end()) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "info for permission: %{public}s has been found, update it!",
+            info.permissionName.c_str());
+        permissionDefinitionMap_[info.permissionName].permDef = info;
+        return true;
+    }
+    
+    return false;
 }
 
 void PermissionDefinitionCache::DeleteByBundleName(const std::string& bundleName)
