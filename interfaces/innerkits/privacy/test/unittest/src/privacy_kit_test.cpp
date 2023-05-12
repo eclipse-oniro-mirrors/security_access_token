@@ -196,12 +196,12 @@ void PrivacyKitTest::SetUp()
     g_tokenIdE = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID, g_infoParmsE.bundleName, g_infoParmsE.instIndex);
 
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0); // 100 is userID
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 }
 
 void PrivacyKitTest::TearDown()
 {
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     DeleteTestToken();
 }
 
@@ -247,7 +247,7 @@ void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& requ
 static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
     std::vector<AccessTokenID>& g_TokenId_List, int32_t number)
 {
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     for (int32_t i = 0; i < number; i++) {
         HapInfoParams g_InfoParmsTmp = {
             .userID = i,
@@ -267,12 +267,12 @@ static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
         g_TokenId_List.push_back(g_TokenId_Tmp);
     }
     AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 }
 
 static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
 {
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     for (size_t i = 0; i < g_InfoParms_List.size(); i++) {
         AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParms_List[i].userID,
                                                                     g_InfoParms_List[i].bundleName,
@@ -280,7 +280,7 @@ static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
         AccessTokenKit::DeleteToken(g_TokenId_Tmp);
     }
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
 
 /**
@@ -525,7 +525,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA,
         "ohos.permission.CAMERA", 1, 0));
@@ -711,7 +711,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecords005, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermissionUsedRequest request;
     PermissionUsedResult result;
@@ -1073,7 +1073,7 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback010, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     std::vector<std::string> permList1 = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList1);
@@ -1095,10 +1095,10 @@ HWTEST_F(PrivacyKitTest, RegisterPermActiveStatusCallback011, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
 
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr1));
 }
 
@@ -1124,7 +1124,7 @@ HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission001, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission002, TestSize.Level1)
 {
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
 }
@@ -1296,7 +1296,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
@@ -1381,7 +1381,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));

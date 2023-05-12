@@ -157,7 +157,7 @@ void PermissionRecordManagerTest::TearDown()
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 class CbCustomizeTest1 : public StateCustomizedCbk {
@@ -296,7 +296,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
 

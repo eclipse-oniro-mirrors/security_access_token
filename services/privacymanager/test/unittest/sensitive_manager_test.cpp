@@ -105,7 +105,7 @@ void SensitiveManagerServiceTest::SetUp()
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID,
                                                           g_InfoParms1.bundleName,
                                                           g_InfoParms1.instIndex);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
 
 void SensitiveManagerServiceTest::TearDown()
@@ -114,7 +114,7 @@ void SensitiveManagerServiceTest::TearDown()
                                                           g_infoManagerTestSystemInfoParms.bundleName,
                                                           g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
 /*
@@ -180,7 +180,7 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_PolicyPrams1);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     sptr<ApplicationStateObserverStub> listener = new(std::nothrow) ApplicationStateObserverStub();
     ASSERT_NE(listener, nullptr);

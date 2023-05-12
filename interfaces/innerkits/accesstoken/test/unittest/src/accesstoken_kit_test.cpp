@@ -281,7 +281,7 @@ void NativeTokenGet()
 
     infoInstance.processName = "TestCase";
     tokenId = GetAccessTokenId(&infoInstance);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 }
@@ -468,7 +468,7 @@ void AccessTokenKitTest::TearDown()
                                             g_infoManagerTestSystemInfoParms.bundleName,
                                             g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 void AccessTokenKitTest::AllocHapToken(std::vector<PermissionDef>& permmissionDefs,
@@ -853,7 +853,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag004, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
 
@@ -873,7 +873,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -1105,7 +1105,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission005, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -1124,7 +1124,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission006, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -1238,7 +1238,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission005, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -1257,7 +1257,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission006, TestSize.Level0)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
@@ -3071,7 +3071,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState002, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3108,7 +3108,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState003, TestSize.Level1)
     ASSERT_EQ(SETTING_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3145,7 +3145,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState004, TestSize.Level1)
     ASSERT_EQ(PASS_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3182,7 +3182,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState005, TestSize.Level1)
     ASSERT_EQ(INVALID_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3227,7 +3227,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState006, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3272,7 +3272,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState007, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3317,7 +3317,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState008, TestSize.Level1)
     ASSERT_EQ(SETTING_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3362,7 +3362,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState009, TestSize.Level1)
     ASSERT_EQ(PASS_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3423,7 +3423,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState010, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[3].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3460,7 +3460,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState011, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3505,7 +3505,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState012, TestSize.Level1)
     ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
@@ -3538,7 +3538,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState013, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState014, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("hdcd");
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     std::vector<PermissionListState> permsList;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
@@ -3557,7 +3557,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState014, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState015, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    SetSelfTokenID(tokenId);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
     std::vector<PermissionListState> permsList;
     PermissionListState tmp = {
@@ -4143,7 +4143,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback011, TestSize.Level0
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -4171,7 +4171,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback012, TestSize.Level0
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, policyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     PermStateChangeScope scopeInfo;
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -4247,12 +4247,12 @@ HWTEST_F(AccessTokenKitTest, UnRegisterPermStateChangeCallback003, TestSize.Leve
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
 
-    SetSelfTokenID(selfTokenId_);
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
 }
@@ -4280,7 +4280,7 @@ HWTEST_F(AccessTokenKitTest, GetVersion002, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     int32_t res = AccessTokenKit::GetVersion();
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
@@ -4297,7 +4297,7 @@ HWTEST_F(AccessTokenKitTest, GetVersion003, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    SetSelfTokenID(tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
     int32_t res = AccessTokenKit::GetVersion();
     ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);

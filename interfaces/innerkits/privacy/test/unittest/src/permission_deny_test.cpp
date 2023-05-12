@@ -60,12 +60,12 @@ void PermDenyTest::SetUp()
                                                   g_InfoParms.bundleName,
                                                   g_InfoParms.instIndex);
     AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
-    SetSelfTokenID(tokenIDEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
 }
 
 void PermDenyTest::TearDown()
 {
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
                                                           g_InfoParms.bundleName,
                                                           g_InfoParms.instIndex);
@@ -184,19 +184,19 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
 
     // register success with no permission
-    SetSelfTokenID(tokenIDEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // register success with permission
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     ASSERT_EQ(NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister fail with no permission
-    SetSelfTokenID(tokenIDEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister success with permission
-    SetSelfTokenID(g_selfTokenId);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     ASSERT_EQ(NO_ERROR, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 }
 
