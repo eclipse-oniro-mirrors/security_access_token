@@ -62,4 +62,12 @@ group("fuzztest") {
       "unregisterpermactivestatuscallbackstub_fuzzer:UnRegisterPermActiveStatusCallbackStubFuzzTest",
     ]
   }
+
+  if (is_standard_system && token_sync_enable == true) {
+    deps += [
+      "deleteremotehaptokeninfostub_fuzzer:DeleteRemoteHapTokenInfoStubFuzzTest",
+      "getremotehaptokeninfostub_fuzzer:GetRemoteHapTokenInfoStubFuzzTest",
+      "updateremotehaptokeninfostub_fuzzer:UpdateRemoteHapTokenInfoStubFuzzTest",
+    ]
+  }
 }
