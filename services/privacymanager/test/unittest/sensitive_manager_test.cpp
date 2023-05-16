@@ -20,12 +20,22 @@
 #include "accesstoken_kit.h"
 #include "app_manager_privacy_client.h"
 #include "app_manager_privacy_proxy.h"
+#ifdef ABILITY_RUNTIME_ENABLE
+#include "ability_manager_interface.h"
+#include "app_mgr_interface.h"
+#endif
 #include "app_state_data.h"
 #include "audio_manager_privacy_client.h"
 #include "audio_manager_privacy_proxy.h"
+#ifdef AUDIO_FRAMEWORK_ENABLE
+#include "audio_policy_types.h"
+#endif
 #include "camera_manager_privacy_client.h"
 #include "camera_manager_privacy_proxy.h"
 #include "camera_service_callback_stub.h"
+#ifdef CAMERA_FRAMEWORK_ENABLE
+#include "remote_request_code.h"
+#endif
 #include "token_setproc.h"
 #include "window_manager_privacy_agent.h"
 #define private public
@@ -117,6 +127,24 @@ void SensitiveManagerServiceTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
+#ifdef AUDIO_FRAMEWORK_ENABLE
+/*
+ * @tc.name: AudioManagerPrivacyCode001
+ * @tc.desc: test api function
+ * @tc.type: FUNC
+ * @tc.require: 
+ */
+HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level1)
+{
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::SET_MICROPHONE_MUTE),
+        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MICROPHONE_MUTE)); // 15
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::IS_MICROPHONE_MUTE),
+        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::IS_MICROPHONE_MUTE)); // 17
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK),
+        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK)); // 59
+}
+#endif
+
 /*
  * @tc.name: AudioManagerPrivacyTest001
  * @tc.desc: test api function
@@ -142,6 +170,24 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyTest001, TestSize.Level
 
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
 }
+
+#ifdef CAMERA_FRAMEWORK_ENABLE
+/*
+ * @tc.name: CameraManagerPrivacyCode001
+ * @tc.desc: test api function
+ * @tc.type: FUNC
+ * @tc.require: 
+ */
+HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyCode001, TestSize.Level1)
+{
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_SET_MUTE_CALLBACK),
+        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_SET_MUTE_CALLBACK)); // 2
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_MUTE_CAMERA),
+        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_MUTE_CAMERA)); // 11
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
+        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_IS_CAMERA_MUTED)); // 12
+}
+#endif
 
 /*
  * @tc.name: CameraManagerPrivacyTest001
@@ -169,6 +215,24 @@ HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyTest001, TestSize.Leve
     CameraManagerPrivacyClient::GetInstance().MuteCamera(initMute);
 }
 
+#ifdef ABILITY_RUNTIME_ENABLE
+/*
+ * @tc.name: AppManagerPrivacyCode001
+ * @tc.desc: test api function
+ * @tc.type: FUNC
+ * @tc.require: 
+ */
+HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyCode001, TestSize.Level1)
+{
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER),
+        static_cast<uint32_t>(IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER)); // 12
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER),
+        static_cast<uint32_t>(IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER)); // 13
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::GET_FOREGROUND_APPLICATIONS),
+        static_cast<uint32_t>(IAppMgr::Message::GET_FOREGROUND_APPLICATIONS)); // 14
+}
+#endif
+
 /*
  * @tc.name: AppManagerPrivacyTest001
  * @tc.desc: test api function
@@ -193,6 +257,20 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
     ASSERT_NE(0, AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(nullptr));
     ASSERT_EQ(0, AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(listener));
 }
+
+#ifdef ABILITY_RUNTIME_ENABLE
+/*
+ * @tc.name: AbilityManagerPrivacyCode001
+ * @tc.desc: test api function
+ * @tc.type: FUNC
+ * @tc.require: 
+ */
+HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
+{
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAbilityManager::START_ABILITY_ADD_CALLER),
+        static_cast<uint32_t>(IAbilityManager::AbilityManagerMessage::START_ABILITY_ADD_CALLER)); // 1005
+}
+#endif
 
 /*
  * @tc.name: AbilityManagerPrivacyTest001
