@@ -110,7 +110,7 @@ bool ParseStringArray(const napi_env& env, const napi_value& value, std::vector<
     uint32_t length = 0;
     napi_get_array_length(env, value, &length);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "array size is %{public}zu", length);
+    ACCESSTOKEN_LOG_INFO(LABEL, "array size is %{public}d", length);
 
     if (length == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "array is empty");
