@@ -56,10 +56,11 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
     return true;
 }
 
-bool PermissionDefinitionCache::Update(const PermissionDef& info)
+bool PermissionDefinitionCache::Update(const PermissionDef& info, AccessTokenID tokenId)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     permissionDefinitionMap_[info.permissionName].permDef = info;
+    permissionDefinitionMap_[info.permissionName].tokenId = tokenId;
     return true;
 }
 

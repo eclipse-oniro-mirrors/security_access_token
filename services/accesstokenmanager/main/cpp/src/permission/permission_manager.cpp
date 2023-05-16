@@ -104,7 +104,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 
     for (const auto& perm : permFilterList) {
         if (updateFlag) {
-            PermissionDefinitionCache::GetInstance().Update(perm);
+            PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
             continue;
         }
 

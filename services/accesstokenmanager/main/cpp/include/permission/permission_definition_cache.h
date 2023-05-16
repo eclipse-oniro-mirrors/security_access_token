@@ -36,7 +36,7 @@ public:
 
     bool Insert(const PermissionDef& info, AccessTokenID tokenId);
 
-    bool Update(const PermissionDef& info);
+    bool Update(const PermissionDef& info, AccessTokenID tokenId);
 
     void DeleteByBundleName(const std::string& bundleName);
 
