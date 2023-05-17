@@ -16,6 +16,7 @@ import("../../access_token.gni")
 
 ohos_shared_library("privacy_communication_adapter_cxx") {
   subsystem_name = "security"
+  innerapi_tags = [ "platformsdk_indirect" ]
   part_name = "access_token"
 
   include_dirs = [
