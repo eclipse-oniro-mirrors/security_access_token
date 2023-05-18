@@ -48,6 +48,8 @@ if (is_standard_system && ability_base_enable == true) {
       "sensitive_manager_test.cpp",
     ]
 
+    cflags_cc = []
+
     configs = [ "${access_token_path}/config:coverage_flags" ]
 
     deps = [
@@ -67,6 +69,24 @@ if (is_standard_system && ability_base_enable == true) {
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
     ]
+
+    if (audio_framework_enable) {
+      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+      external_deps += [ "audio_framework:audio_client" ]
+    }
+
+    if (camera_framework_enable) {
+      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
+      external_deps += [ "multimedia_camera_framework:camera_framework" ]
+    }
+
+    if (ability_runtime_enable) {
+      cflags_cc += [ "-DABILITY_RUNTIME_ENABLE" ]
+      external_deps += [
+        "ability_runtime:ability_manager",
+        "ability_runtime:app_manager",
+      ]
+    }
   }
 }
 
