@@ -14,7 +14,7 @@
 on late-fs
     start accesstoken_service
 
-service accesstoken_service /system/bin/sa_main /system/profile/accesstoken_service.xml
+service accesstoken_service /system/bin/sa_main /system/profile/accesstoken_service.json
     class accesstoken_service
     priority -20
     user access_token
