@@ -34,7 +34,9 @@ if (is_standard_system && ability_base_enable == true) {
   ohos_shared_library("privacy_manager_service") {
     subsystem_name = "security"
     part_name = "access_token"
-    version_script = "libprivacy_map"
+    if (!use_clang_coverage) {
+      version_script = "libprivacy_map"
+    }
     include_dirs = [
       "${access_token_path}/interfaces/innerkits/privacy/src",
       "include/active",
@@ -123,6 +125,8 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
-    shlib_type = "sa"
+    if (!use_clang_coverage) {
+      shlib_type = "sa"
+    }
   }
 }

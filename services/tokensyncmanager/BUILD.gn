@@ -34,7 +34,9 @@ group("tokensyncmanager") {
 ohos_shared_library("token_sync_manager_service") {
   subsystem_name = "security"
   part_name = "access_token"
-  version_script = "tokensync_manager_service.map"
+  if (!use_clang_coverage) {
+    version_script = "tokensync_manager_service.map"
+  }
 
   include_dirs = [
     "include/service",
@@ -99,5 +101,7 @@ ohos_shared_library("token_sync_manager_service") {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
     external_deps += [ "device_manager:devicemanagersdk" ]
   }
-  shlib_type = "sa"
+  if (!use_clang_coverage) {
+    shlib_type = "sa"
+  }
 }

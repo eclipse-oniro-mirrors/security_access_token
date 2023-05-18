@@ -25,7 +25,9 @@ if (is_standard_system) {
   ohos_shared_library("accesstoken_manager_service") {
     subsystem_name = "security"
     part_name = "access_token"
-    version_script = "accesstoken_manager_service.map"
+    if (!use_clang_coverage) {
+      version_script = "accesstoken_manager_service.map"
+    }
 
     include_dirs = [
       "${access_token_path}/frameworks/common/include",
@@ -128,6 +130,8 @@ if (is_standard_system) {
       external_deps += [ "hitrace_native:hitrace_meter" ]
     }
 
-    shlib_type = "sa"
+    if (!use_clang_coverage) {
+      shlib_type = "sa"
+    }
   }
 }
