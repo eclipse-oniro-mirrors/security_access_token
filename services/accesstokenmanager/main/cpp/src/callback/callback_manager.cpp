@@ -136,7 +136,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
                 }
                 if (!CalledAccordingToTokenIdLlist(scopePtr_->tokenIDs, tokenID) ||
                     !CalledAccordingToPermLlist(scopePtr_->permList, permName)) {
-                        ACCESSTOKEN_LOG_INFO(LABEL,
+                        ACCESSTOKEN_LOG_DEBUG(LABEL,
                             "tokenID is %{public}u, permName is  %{public}s", tokenID, permName.c_str());
                         continue;
                 }
@@ -146,7 +146,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
         for (auto it = list.begin(); it != list.end(); ++it) {
             auto callback = iface_cast<IPermissionStateCallback>(*it);
             if (callback != nullptr) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "callback excute");
+                ACCESSTOKEN_LOG_INFO(LABEL, "callback execute");
                 PermStateChangeInfo resInfo;
                 resInfo.permStateChangeType = changeType;
                 resInfo.permissionName = permName;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -346,11 +346,11 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return ret;
 }
 
-void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag)
+void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permParamSetLock_);
-    if (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName) &&
-        ((flag != PERMISSION_GRANTED_BY_POLICY) && (flag != PERMISSION_SYSTEM_FIXED))) {
+    if (filtered || (PermissionDefinitionCache::GetInstance().IsUserGrantedPermission(permissionName) &&
+        ((flag != PERMISSION_GRANTED_BY_POLICY) && (flag != PERMISSION_SYSTEM_FIXED)))) {
         paramValue_++;
         ACCESSTOKEN_LOG_DEBUG(LABEL,
             "paramValue_ change %{public}llu", static_cast<unsigned long long>(paramValue_));
@@ -403,7 +403,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
-        ParamUpdate(permissionName, static_cast<uint32_t>(flag));
+        ParamUpdate(permissionName, static_cast<uint32_t>(flag), false);
     }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -698,9 +698,16 @@ void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return;
     }
+    std::vector<std::string> permissionList;
+    std::vector<PermStateChangeType> changeTypeList;
+    permPolicySet->GetResetPermissionListToNotify(permissionList, changeTypeList);
 
     permPolicySet->ResetUserGrantPermissionStatus();
     permPolicySet->ClearSecCompGrantedPerm();
+    for (uint32_t i = 0; i < permissionList.size(); i++) {
+        CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionList[i], changeTypeList[i]);
+        ParamUpdate(permissionList[i], 0, true);
+    }
 }
 
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -374,6 +374,46 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& state : permStateList_) {
         stateList.emplace_back(state);
+    }
+}
+
+void PermissionPolicySet::GetResetPermissionListToNotify(
+    std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& perm : permStateList_) {
+        if (perm.isGeneral) {
+            uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+            if (((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) && (perm.grantStatus[0] == PERMISSION_DENIED)) {
+                permissionList.emplace_back(perm.permissionName);
+                changeTypeList.emplace_back(PermStateChangeType::GRANTED);
+                continue;
+            }
+            if ((oldFlag & PERMISSION_SYSTEM_FIXED) == 0 && (perm.grantStatus[0] == PERMISSION_GRANTED)) {
+                permissionList.emplace_back(perm.permissionName);
+                changeTypeList.emplace_back(PermStateChangeType::REVOKED);
+            }
+        }
+    }
+
+    for (const auto& permission : secCompGrantedPermList_) {
+        permissionList.emplace_back(permission);
+        changeTypeList.emplace_back(PermStateChangeType::REVOKED);
+    }
+}
+
+void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& perm : permStateList_) {
+        if (perm.isGeneral) {
+            if (perm.grantStatus[0] == PERMISSION_GRANTED) {
+                permissionList.emplace_back(perm.permissionName);
+            }
+        }
+    }
+    for (const auto& permission : secCompGrantedPermList_) {
+        permissionList.emplace_back(permission);
     }
 }
 

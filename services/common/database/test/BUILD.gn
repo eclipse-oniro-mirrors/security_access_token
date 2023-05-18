@@ -20,9 +20,11 @@ ohos_unittest("libdatabase_test") {
   module_out_path = part_name + "/" + part_name
 
   include_dirs = [
+    "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/services/common/database/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
@@ -30,6 +32,7 @@ ohos_unittest("libdatabase_test") {
   ]
 
   sources = [
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_storage.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/sqlite_storage.cpp",
@@ -43,6 +46,7 @@ ohos_unittest("libdatabase_test") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/services/common/database:accesstoken_database_cxx",
     "//third_party/sqlite:sqlite",
@@ -52,6 +56,7 @@ ohos_unittest("libdatabase_test") {
     "c_utils:utils",
     "hisysevent_native:libhisysevent",
     "hiviewdfx_hilog_native:libhilog",
+    "ipc:ipc_core",
   ]
 }
 

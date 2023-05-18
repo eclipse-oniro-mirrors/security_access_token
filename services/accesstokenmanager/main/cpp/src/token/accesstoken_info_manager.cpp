@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include "accesstoken_log.h"
 #include "accesstoken_remote_token_manager.h"
 #include "access_token_error.h"
+#include "callback_manager.h"
 #include "constant_common.h"
 #include "data_storage.h"
 #include "data_translator.h"
@@ -321,7 +322,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
             LABEL, "token %{public}u is not hap.", id);
         return RET_FAILED;
     }
-
+    std::shared_ptr<HapTokenInfoInner> info;
     // make sure that RemoveDefPermissions is called outside of the lock to avoid deadlocks.
     PermissionManager::GetInstance().RemoveDefPermissions(id);
     {
@@ -331,7 +332,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
             return RET_FAILED;
         }
 
-        const std::shared_ptr<HapTokenInfoInner> info = hapTokenInfoMap_[id];
+        info = hapTokenInfoMap_[id];
         if (info == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "hap token %{public}u is null.", id);
             return RET_FAILED;
@@ -351,6 +352,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token %{public}u ok!", id);
     RefreshTokenInfoIfNeeded();
+    PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
 #endif
@@ -1008,6 +1010,20 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
         // Sleep for one second to avoid frequent refresh of the database.
         std::this_thread::sleep_for(std::chrono::seconds(1));
     });
+}
+void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id)
+{
+    std::shared_ptr<PermissionPolicySet> policy = info->GetHapInfoPermissionPolicySet();
+    if (policy == nullptr) {
+        return;
+    }
+
+    std::vector<std::string> permissionList;
+    policy->GetDeletedPermissionListToNotify(permissionList);
+    for (const auto& permissionName : permissionList) {
+        CallbackManager::GetInstance().ExecuteCallbackAsync(id, permissionName, PermStateChangeType::REVOKED);
+        PermissionManager::GetInstance().ParamUpdate(permissionName, 0, true);
+    }
 }
 
 AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)

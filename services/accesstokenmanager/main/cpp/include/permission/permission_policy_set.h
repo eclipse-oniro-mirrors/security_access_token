@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "callback_manager.h"
 #include "generic_values.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
@@ -55,6 +56,9 @@ public:
     void ClearSecCompGrantedPerm(void);
     static int32_t GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag);
     static int32_t GetFlagWroteToDb(int32_t grantFlag);
+    void GetResetPermissionListToNotify(
+        std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList);
+    void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
@@ -68,7 +72,6 @@ private:
     int32_t UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag);
     void SetPermissionFlag(const std::string& permissionName, uint32_t flag, bool needToAdd);
     void SecCompGrantedPermListUpdated(const std::string& permissionName, bool isToGrant);
-
     OHOS::Utils::RWLock permPolicySetLock_;
     std::vector<PermissionStateFull> permStateList_;
     std::vector<std::string> secCompGrantedPermList_;
