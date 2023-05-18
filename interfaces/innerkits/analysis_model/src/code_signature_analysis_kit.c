@@ -144,12 +144,11 @@ static AppRiskInfo *AppRiskInfoNodeInit(void)
 static void ReleaseTimeStampChain(AppRiskInfo *node)
 {
     for (int32_t i = 0; i < CODE_SIGNATURE_ERROR_TYPE_SIZE; i++) {
-        TimeStampNode *head = (node->errInfoList[i]).timeStampChain;
-        while (head->next != NULL) {
+        TimeStampNode *head = (node->errInfoList[i]).timeStampChain->next;
+        while (head != NULL) {
             TimeStampNode *tmp = head->next;
-            head = head->next;
-            free(tmp);
-            tmp = NULL;
+            free(head);
+            head = tmp;
         }
     }
     // Free timeStampChain head for each error type. They was allocated together.
