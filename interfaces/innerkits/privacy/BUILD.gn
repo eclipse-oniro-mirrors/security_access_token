@@ -24,7 +24,9 @@ if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
     innerapi_tags = [ "platformsdk" ]
-    version_script = "libprivacy_sdk.map"
+    if (!use_clang_coverage) {
+      version_script = "libprivacy_sdk.map"
+    }
 
     output_name = "libprivacy_sdk"
 
