@@ -172,7 +172,7 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
-        reply.WriteInt32(PERMISSION_DEFAULT_FLAG);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
     int32_t flag;
