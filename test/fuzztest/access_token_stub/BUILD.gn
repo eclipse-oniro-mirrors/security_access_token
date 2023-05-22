@@ -70,4 +70,10 @@ group("fuzztest") {
       "updateremotehaptokeninfostub_fuzzer:UpdateRemoteHapTokenInfoStubFuzzTest",
     ]
   }
+  if (is_standard_system) {
+    deps += [
+      "getaccesstokenid_fuzzer:GetAccessTokenIdFuzzTest",
+      "setfirstcallertokenid_fuzzer:SetFirstCallerTokenIDFuzzTest",
+    ]
+  }
 }
