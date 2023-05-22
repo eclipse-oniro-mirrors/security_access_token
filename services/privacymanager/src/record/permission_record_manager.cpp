@@ -178,7 +178,7 @@ void PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>&
 {
     std::vector<GenericValues> results;
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+        Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
         // find tokenId from cache
         PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
         // find tokenId from database
@@ -206,7 +206,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         tokenIdList.emplace(request.tokenId);
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetLocalRecordTokenIdList.size = %{public}zu", tokenIdList.size());
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
         andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         std::vector<GenericValues> findRecordsValues;

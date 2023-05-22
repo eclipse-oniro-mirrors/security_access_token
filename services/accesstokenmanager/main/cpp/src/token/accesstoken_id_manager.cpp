@@ -70,7 +70,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 
 void AccessTokenIDManager::GetHapTokenIdList(std::vector<AccessTokenID>& idList)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
         idList.emplace_back(*it);
