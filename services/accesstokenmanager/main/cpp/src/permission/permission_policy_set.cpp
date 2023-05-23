@@ -277,7 +277,7 @@ void PermissionPolicySet::SecCompGrantedPermListUpdated(const std::string& permi
 
 void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, uint32_t flag, bool needToAdd)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
