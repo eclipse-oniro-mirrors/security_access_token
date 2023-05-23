@@ -243,7 +243,6 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     return RET_SUCCESS;
 }
 
