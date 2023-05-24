@@ -54,6 +54,9 @@ public:
         std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
     void AddRecordNode(const PermissionRecord& record);
     void DeleteRecordNode(std::shared_ptr<PermissionUsedRecordNode> deleteRecordNode);
+#ifdef POWER_MANAGER_ENABLE
+    void PersistPendingRecordsImmediately();
+#endif
 
 private:
     int32_t readableSize_ = 0;
