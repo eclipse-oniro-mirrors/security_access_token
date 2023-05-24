@@ -39,35 +39,35 @@ void CodeSignatureAnalysisKitTest::SetUp()
 void CodeSignatureAnalysisKitTest::TearDown()
 {}
 
-int32_t GetDataFromSqlMock(const char* sql, uint8_t *result, uint32_t resultLen)
+static int32_t GetDataFromSqlMock(const char* sql, uint8_t *result, uint32_t resultLen)
 {
     return 0;
 }
 
-DbListener g_dbSubscribeMock;
+static DbListener g_dbSubscribeMock;
 
-CodeSignatureReportedInfo g_reportInfo;
+static CodeSignatureReportedInfo g_reportInfo;
 
-int64_t g_timeStamp = 0;
+static int64_t g_timeStamp = 0;
 
 typedef struct BundleInfo {
     const char *name;
     uint32_t tokenId;
 } BundleInfo;
 
-BundleInfo g_bundleInfo[3] = {
+static BundleInfo g_bundleInfo[3] = {
     {"test0", 12345}, // 12345 random tokenId.
     {"test1", 123456}, // 123456 random tokenId.
     {"test2", 1234567} // 1234567 random tokenId.
 };
 
-int32_t SubscribeDbMock(const int64_t *eventId, uint32_t eventIdLen, DbListener listener)
+static int32_t SubscribeDbMock(const int64_t *eventId, uint32_t eventIdLen, DbListener listener)
 {
     g_dbSubscribeMock = listener;
     return 0;
 }
 
-int32_t g_retListenerMockTime = 0;
+static int32_t g_retListenerMockTime = 0;
 /**
  * @tc.name: GetModelApi001
  * @tc.desc: GetModelApi test.
@@ -324,7 +324,7 @@ HWTEST_F(CodeSignatureAnalysisKitTest, GetResult004, TestSize.Level1)
     delete[] result;
 }
 
-void RetListenerMock(uint8_t *result, uint32_t resultLen)
+static void RetListenerMock(uint8_t *result, uint32_t resultLen)
 {
     g_retListenerMockTime++;
     ASSERT_EQ(resultLen, sizeof(NotifyRiskResultInfo));

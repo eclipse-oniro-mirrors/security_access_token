@@ -38,7 +38,7 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 
-PermissionStateFull g_grantPermissionReq = {
+static PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
     .resDeviceID = {"device"},

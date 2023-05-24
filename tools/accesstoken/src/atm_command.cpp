@@ -184,7 +184,7 @@ int32_t AtmCommand::RunAsCommandMissingOptionArgument(void)
 }
 
 int32_t AtmCommand::RunAsCommandExistentOptionArgument(
-    const int32_t& option, OptType& type, AccessTokenID tokenId, std::string& permissionName)
+    const int32_t& option, OptType& type, AccessTokenID& tokenId, std::string& permissionName)
 {
     int32_t result = RET_SUCCESS;
     switch (option) {

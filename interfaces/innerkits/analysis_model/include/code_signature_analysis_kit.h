@@ -45,7 +45,7 @@ typedef struct ModelApi {
  * @brief Get the model.
  * @return A pointer to the model.
  */
-ModelApi *GetModelApi();
+ModelApi *GetModelApi(void);
 
 /**
  * @brief Init the model.

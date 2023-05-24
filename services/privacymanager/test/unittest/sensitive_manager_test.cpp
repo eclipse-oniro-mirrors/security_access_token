@@ -132,7 +132,7 @@ void SensitiveManagerServiceTest::TearDown()
  * @tc.name: AudioManagerPrivacyCode001
  * @tc.desc: test api function
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level1)
 {
@@ -176,7 +176,7 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyTest001, TestSize.Level
  * @tc.name: CameraManagerPrivacyCode001
  * @tc.desc: test api function
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyCode001, TestSize.Level1)
 {
@@ -220,7 +220,7 @@ HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyTest001, TestSize.Leve
  * @tc.name: AppManagerPrivacyCode001
  * @tc.desc: test api function
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyCode001, TestSize.Level1)
 {
@@ -263,7 +263,7 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
  * @tc.name: AbilityManagerPrivacyCode001
  * @tc.desc: test api function
  * @tc.type: FUNC
- * @tc.require: 
+ * @tc.require:
  */
 HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
 {
