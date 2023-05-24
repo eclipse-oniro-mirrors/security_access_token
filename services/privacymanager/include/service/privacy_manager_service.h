@@ -21,6 +21,9 @@
 #include "privacy_manager_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
+#ifdef POWER_MANAGER_ENABLE
+#include "privacy_power_shutdown_callback.h"
+#endif
 #include "singleton.h"
 #include "system_ability.h"
 
@@ -53,10 +56,17 @@ public:
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
 private:
+#ifdef POWER_MANAGER_ENABLE
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
+#endif
     bool Initialize() const;
     int32_t ResponseDumpCommand(int32_t fd,  const std::vector<std::u16string>& args);
 
     ServiceRunningState state_;
+
+#ifdef POWER_MANAGER_ENABLE
+    sptr<PrivacyPowerShutDownCallback> powerShutDownCallback_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security
