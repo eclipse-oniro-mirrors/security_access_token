@@ -149,13 +149,13 @@ int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector
         infos.append(R"(    "bundleName": )" + result.bundleRecords[0].bundleName + ",\n");
         infos.append(R"(    "isRemote": )" + std::to_string(result.bundleRecords[0].isRemote) + ",\n");
         infos.append(R"(    "permissionName": ")" + result.bundleRecords[0].permissionRecords[index].permissionName +
-                     R"(")" + ",\n");
+                    R"(")" + ",\n");
         time_t lastAccessTime = static_cast<time_t>(result.bundleRecords[0].permissionRecords[index].lastAccessTime);
         infos.append(R"(    "lastAccessTime": )" + std::to_string(lastAccessTime) + ",\n");
         infos.append(R"(    "lastAccessDuration": )" +
-                     std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
+                    std::to_string(result.bundleRecords[0].permissionRecords[index].lastAccessDuration) + ",\n");
         infos.append(R"(    "accessCount": ")" +
-                     std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
+                    std::to_string(result.bundleRecords[0].permissionRecords[index].accessCount) + R"(")" + ",\n");
         infos.append("  ]");
         infos.append("\n");
     }

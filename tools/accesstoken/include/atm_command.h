@@ -49,7 +49,7 @@ private:
     std::string GetUnknownOptionMsg() const;
     int32_t RunAsCommandMissingOptionArgument(void);
     int32_t RunAsCommandExistentOptionArgument(const int32_t& option,
-        OptType& type, AccessTokenID tokenId, std::string& permissionName);
+        OptType& type, AccessTokenID& tokenId, std::string& permissionName);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
     int32_t RunCommandByOperationType(const OptType& type,

@@ -15,18 +15,16 @@
 
 #ifndef CJSON__H
 #define CJSON__H
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include <stddef.h>
-
 /* The cJSON structure: */
 typedef int cJSON_bool;
-typedef struct cJSON
-{
+typedef struct cJSON {
     struct cJSON* next;
     struct cJSON* prev;
     struct cJSON* child;

@@ -403,7 +403,7 @@ int32_t SubscribeResult(RetListener listener)
     return OPER_SUCCESS;
 }
 
-ModelApi *GetModelApi()
+ModelApi *GetModelApi(void)
 {
     int32_t res = pthread_mutex_init(&g_modelVisitLock, NULL);
     if (res != OPER_SUCCESS) {
