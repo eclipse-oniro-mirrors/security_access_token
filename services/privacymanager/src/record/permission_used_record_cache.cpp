@@ -72,7 +72,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
         AddRecordNode(mergedRecord); // refresh curRecordBUfferPos and readableSize
         remainCount++;
         if ((remainCount >= MAX_PERSIST_SIZE) || (persistPendingBufferEnd != nullptr)) {
-            ResetRecordBuffer(remainCount, persistPendingBufferEnd);
+            ResetRecordBufferWhenAdd(remainCount, persistPendingBufferEnd);
         }
     }
     if (persistPendingBufferEnd != nullptr) {
@@ -313,7 +313,7 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
     }
 }
 
-void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
+void PermissionUsedRecordCache::ResetRecordBufferWhenAdd(const int32_t remainCount,
     std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd)
 {
     std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
@@ -334,6 +334,26 @@ void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
     recordBufferHead_ = tmpRecordBufferHead;
     // recordBufferHead_->next->pre equals to persistPendingBufferEnd, reset recordBufferHead_->next->pre
     recordBufferHead_->next->pre = recordBufferHead_;
+}
+
+void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
+    std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd)
+{
+    readableSize_ = remainCount;
+    // refresh recordBufferHead
+    std::shared_ptr<PermissionUsedRecordNode> tmpRecordBufferHead =
+        std::make_shared<PermissionUsedRecordNode>();
+    tmpRecordBufferHead->next = persistPendingBufferEnd->next;
+    persistPendingBufferEnd->next.reset();
+    recordBufferHead_ = tmpRecordBufferHead;
+
+    if (persistPendingBufferEnd == curRecordBufferPos_) {
+        // persistPendingBufferEnd == curRecordBufferPos, reset curRecordBufferPos
+        curRecordBufferPos_ = recordBufferHead_;
+    } else {
+        // recordBufferHead_->next->pre = persistPendingBufferEnd, reset recordBufferHead_->next->pre
+        recordBufferHead_->next->pre = recordBufferHead_;
+    }
 }
 
 void PermissionUsedRecordCache::TransferToOpcode(std::set<int32_t>& opCodeList,
