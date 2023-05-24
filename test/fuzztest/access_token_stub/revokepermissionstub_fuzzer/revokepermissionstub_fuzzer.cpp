@@ -43,10 +43,9 @@ namespace OHOS {
         if (!datas.WriteString(testName)) {
             return false;
         }
-        if (datas.WriteInt32(0)) {
+        if (!datas.WriteInt32(0)) {
             return false;
         }
-
         uint32_t code = static_cast<uint32_t>(
             IAccessTokenManager::InterfaceCode::REVOKE_PERMISSION);
 

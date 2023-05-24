@@ -19,14 +19,24 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "errors.h"
 #include "i_privacy_manager.h"
-#include "privacy_manager_service.h"
+#include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
+#include "privacy_manager_service.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
+class TestCallBack : public OnPermissionUsedRecordCallbackStub {
+public:
+    TestCallBack() = default;
+    virtual ~TestCallBack() = default;
+
+    void OnQueried(OHOS::ErrCode code, PermissionUsedResult& result)
+    {}
+};
 namespace OHOS {
     bool GetPermissionUsedRecordsAsyncStubFuzzTest(const uint8_t* data, size_t size)
     {
@@ -60,7 +70,7 @@ namespace OHOS {
             return false;
         }
 
-        sptr<OnPermissionUsedRecordCallback> callback;
+        sptr<TestCallBack> callback(new TestCallBack());
         if (!datas.WriteRemoteObject(callback->AsObject())) {
             return false;
         }
