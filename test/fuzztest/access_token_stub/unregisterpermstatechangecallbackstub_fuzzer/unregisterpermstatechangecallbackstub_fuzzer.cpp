@@ -33,12 +33,8 @@ namespace OHOS {
             return false;
         }
 
-        sptr<PermissionStateChangeCallback> callback;
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteRemoteObject(callback)) {
-            return false;
-        }
 
         uint32_t code = static_cast<uint32_t>(
             IAccessTokenManager::InterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK);
