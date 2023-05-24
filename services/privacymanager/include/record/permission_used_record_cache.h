@@ -52,6 +52,8 @@ public:
         const std::vector<std::string>& permissionList);
     void ResetRecordBuffer(const int32_t remainCount,
         std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
+    void ResetRecordBufferWhenAdd(const int32_t remainCount,
+        std::shared_ptr<PermissionUsedRecordNode>& persistPendingBufferEnd);
     void AddRecordNode(const PermissionRecord& record);
     void DeleteRecordNode(std::shared_ptr<PermissionUsedRecordNode> deleteRecordNode);
 #ifdef POWER_MANAGER_ENABLE
