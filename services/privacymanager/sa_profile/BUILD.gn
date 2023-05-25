@@ -18,6 +18,6 @@ if (is_standard_system) {
   ohos_sa_profile("privacy_sa_profile_standard") {
     part_name = "access_token"
 
-    sources = [ "3505.xml" ]
+    sources = [ "3505.json" ]
   }
 }

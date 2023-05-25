@@ -1,0 +1,12 @@
+{
+    "process": "privacy_service",
+    "systemability": [
+        {
+            "name": 3505,
+            "libpath": "libprivacy_manager_service.z.so",
+            "run-on-create": true,
+            "distributed": true,
+            "dump_level": 1
+        }
+    ]
+}
