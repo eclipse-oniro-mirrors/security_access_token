@@ -43,9 +43,11 @@
         "selinux"
       ],
       "third_party": [
-        "cJSON",
+        "bounds_checking_function",
+        "cjson",
+        "mbedtls",
         "sqlite",
-        "mbedtls"
+        "zlib"
       ]
     },
     "build": {
