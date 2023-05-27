@@ -1075,7 +1075,6 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     napi_value requestResult = WrapRequestResult(context->env, retCB->permissions, retCB->grantResults);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "wrap requestResult failed");
-        napi_close_handle_scope(context->env, scope);
         result = JsErrorCode::JS_ERROR_INNER;
     }
 
