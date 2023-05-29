@@ -22,8 +22,7 @@
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",
     "ram": "5000KB",
-    "deps": {},
-    "external_deps": {
+    "deps": {
       "components": [
         "ability_base",
         "ability_runtime",
@@ -38,6 +37,7 @@
         "init",
         "ipc",
         "napi",
+        "power_manager",
         "safwk",
         "samgr",
         "selinux"
