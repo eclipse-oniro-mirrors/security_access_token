@@ -22,6 +22,10 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#ifdef POWER_MANAGER_ENABLE
+#include "power_mgr_client.h"
+#include "system_ability_definition.h"
+#endif
 #include "string_ex.h"
 
 namespace OHOS {
@@ -57,6 +61,11 @@ void PrivacyManagerService::OnStart()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
         return;
     }
+
+#ifdef POWER_MANAGER_ENABLE
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
+#endif
+
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
     if (!ret) {
@@ -70,6 +79,13 @@ void PrivacyManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
+
+#ifdef POWER_MANAGER_ENABLE
+    if (powerShutDownCallback_ != nullptr) {
+        PowerMgr::PowerMgrClient::GetInstance().UnRegisterShutdownCallback(powerShutDownCallback_);
+        powerShutDownCallback_ = nullptr;
+    }
+#endif
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(
@@ -198,6 +214,29 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 {
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
+
+#ifdef POWER_MANAGER_ENABLE
+void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "systemAbilityId is %{public}d", systemAbilityId);
+
+    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
+        if (powerShutDownCallback_ == nullptr) {
+            powerShutDownCallback_ = new(std::nothrow) PrivacyPowerShutDownCallback();
+            if (powerShutDownCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "failed to new shutdown callback.");
+                return;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "register power shutdown callback!");
+
+            if (PowerMgr::PowerMgrClient::GetInstance().RegisterShutdownCallback(powerShutDownCallback_)) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "register success!");
+            }
+        }
+    }
+}
+#endif
 
 bool PrivacyManagerService::Initialize() const
 {

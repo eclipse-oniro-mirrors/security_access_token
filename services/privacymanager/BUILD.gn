@@ -124,5 +124,15 @@ if (is_standard_system && ability_base_enable == true) {
       "samgr:samgr_proxy",
     ]
     shlib_type = "sa"
+
+    if (power_manager_enable) {
+      cflags_cc += [ "-DPOWER_MANAGER_ENABLE" ]
+      include_dirs += [ "include/power" ]
+      sources += [
+        "src/power/privacy_power_shutdown_callback.cpp",
+        "src/power/privacy_power_shutdown_callback_stub.cpp",
+      ]
+      external_deps += [ "power_manager:powermgr_client" ]
+    }
   }
 }
