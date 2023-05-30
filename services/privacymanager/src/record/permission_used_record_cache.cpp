@@ -170,6 +170,19 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     return true;
 }
 
+#ifdef POWER_MANAGER_ENABLE
+void PermissionUsedRecordCache::PersistPendingRecordsImmediately()
+{
+    // this function can be use only when receive shut down callback
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
+        persistPendingBufferQueue_.emplace_back(recordBufferHead_);
+    }
+
+    PersistPendingRecords();
+}
+#endif
+
 int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
 {
     std::shared_ptr<PermissionUsedRecordNode> curFindDeletePos;

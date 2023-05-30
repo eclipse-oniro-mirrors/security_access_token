@@ -81,3 +81,10 @@ if (!defined(global_parts_info) ||
 } else {
   ability_runtime_enable = false
 }
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.powermgr_power_manager)) {
+  power_manager_enable = true
+} else {
+  power_manager_enable = false
+}
