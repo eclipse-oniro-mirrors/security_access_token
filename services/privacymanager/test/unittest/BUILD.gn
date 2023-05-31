@@ -53,6 +53,7 @@ if (is_standard_system && ability_base_enable == true) {
     configs = [ "${access_token_path}/config:coverage_flags" ]
 
     deps = [
+      "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",

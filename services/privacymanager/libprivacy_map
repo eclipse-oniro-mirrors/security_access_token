@@ -126,6 +126,7 @@
         "OHOS::Security::AccessToken::AbilityManagerPrivacyClient::StartAbility(OHOS::AAFwk::Want const&, OHOS::sptr<OHOS::IRemoteObject> const&, int, int)";
         "non-virtual thunk to OHOS::Security::AccessToken::CameraServiceCallbackStub::OnCameraMute(bool)";
         "virtual thunk to OHOS::Security::AccessToken::CameraServiceCallbackStub::~CameraServiceCallbackStub()";
+        "OHOS::Security::AccessToken::PrivacyManagerStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
     };
   local:
     *;
