@@ -14,16 +14,20 @@
  */
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "accesstoken_kit.h"
 #include "constant.h"
-#include "privacy_field_const.h"
+#include "on_permission_used_record_callback_stub.h"
 #define private public
 #include "permission_record_manager.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
+#include "perm_active_status_change_callback.h"
 #include "privacy_error.h"
+#include "privacy_field_const.h"
 #include "privacy_manager_service.h"
+#include "state_change_callback.h"
 #include "string_ex.h"
 #include "token_setproc.h"
 
@@ -34,9 +38,14 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr int32_t PERMISSION_USAGE_RECORDS_MAX_NUM = 10;
+static const uint64_t TOKEN_ID_UPMASK = 0x100000000;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
+static const int32_t ERROR = -1;
+static const int32_t SUCCESS = 0;
+static const int32_t USER_ID = 100;
+static const int32_t INST_INDEX = 0;
 static PermissionStateFull g_testState = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -224,6 +233,841 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1
 {
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, "test"));
+}
+
+class TestPrivacyManagerStub : public PrivacyManagerStub {
+public:
+    TestPrivacyManagerStub() = default;
+    virtual ~TestPrivacyManagerStub() = default;
+
+    int32_t AddPermissionUsedRecord(
+        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
+    {
+        return SUCCESS;
+    }
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    {
+        return SUCCESS;
+    }
+    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+        const sptr<IRemoteObject>& callback)
+    {
+        return SUCCESS;
+    }
+    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    {
+        return SUCCESS;
+    }
+    int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
+    {
+        return SUCCESS;
+    }
+    int32_t GetPermissionUsedRecords(
+        const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
+    {
+        return SUCCESS;
+    }
+    int32_t GetPermissionUsedRecords(
+        const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
+    {
+        return SUCCESS;
+    }
+    int32_t RegisterPermActiveStatusCallback(
+        std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    {
+        return SUCCESS;
+    }
+    int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
+    {
+        return SUCCESS;
+    }
+    bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    {
+        return true;
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: OnRemoteRequest test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, OnRemoteRequest001, TestSize.Level1)
+{
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    // descriptor error
+    ASSERT_EQ(ERROR, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
+    
+    uint32_t code = 99999999; // code not exsit
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_NE(SUCCESS, testSub.OnRemoteRequest(code, data, reply, option)); // descriptor true + error msgCode
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecordInner001
+ * @tc.desc: AddPermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+    int32_t successCount = 1; // number 1
+    int32_t failCount = 1; // number 1
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(true, data.WriteInt32(successCount));
+    ASSERT_EQ(true, data.WriteInt32(failCount));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecordInner002
+ * @tc.desc: AddPermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+    int32_t successCount = 1; // number 1
+    int32_t failCount = 1; // number 1
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(true, data.WriteInt32(successCount));
+    ASSERT_EQ(true, data.WriteInt32(failCount));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecordInner003
+ * @tc.desc: AddPermissionUsedRecordInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+    int32_t successCount = 1; // number 1
+    int32_t failCount = 1; // number 1
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(true, data.WriteInt32(successCount));
+    ASSERT_EQ(true, data.WriteInt32(failCount));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
+    // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StartUsingPermissionInner001
+ * @tc.desc: StartUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StartUsingPermissionInner002
+ * @tc.desc: StartUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StartUsingPermissionInner003
+ * @tc.desc: StartUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION), data, reply, option));
+    // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+class CbCustomizeTest2 : public StateCustomizedCbk {
+public:
+    CbCustomizeTest2()
+    {}
+
+    ~CbCustomizeTest2()
+    {}
+
+    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {}
+};
+
+/**
+ * @tc.name: StartUsingPermissionCallbackInner001
+ * @tc.desc: StartUsingPermissionCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+    auto callbackPtr = std::make_shared<CbCustomizeTest2>();
+    ASSERT_NE(nullptr, callbackPtr);
+    auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callbackWrap);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION_CALLBACK), data, reply, option));
+    // callingTokenID has no request permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StartUsingPermissionCallbackInner002
+ * @tc.desc: StartUsingPermissionCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+    auto callbackPtr = std::make_shared<CbCustomizeTest2>();
+    ASSERT_NE(nullptr, callbackPtr);
+    auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callbackWrap);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION_CALLBACK), data, reply, option));
+    // callingTokenID is native token hdcd with request permission
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StopUsingPermissionInner001
+ * @tc.desc: StopUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StopUsingPermissionInner002
+ * @tc.desc: StopUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: StopUsingPermissionInner003
+ * @tc.desc: StopUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION), data, reply, option));
+    // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecordsInner001
+ * @tc.desc: RemovePermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string deviceID = "abc"; // abc is random input
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(deviceID));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: RemovePermissionUsedRecordsInner002
+ * @tc.desc: RemovePermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string deviceID = "abc"; // abc is random input
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID nativeTokenID = AccessTokenKit::GetNativeTokenId("device_manager");
+    ASSERT_NE(nativeTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(nativeTokenID); // set self tokenID to native device_manager
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(deviceID));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
+    // native token device_manager don't have request permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordsInner001
+ * @tc.desc: GetPermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.Level1)
+{
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
+     // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordsInner002
+ * @tc.desc: GetPermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner002, TestSize.Level1)
+{
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: GetPermissionUsedRecordsInner003
+ * @tc.desc: GetPermissionUsedRecordsInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.Level1)
+{
+    PermissionUsedRequestParcel request;
+    request.request.isRemote = true;
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteParcelable(&request));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
+    // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+class TestCallBack : public OnPermissionUsedRecordCallbackStub {
+public:
+    TestCallBack() = default;
+    virtual ~TestCallBack() = default;
+
+    void OnQueried(ErrCode code, PermissionUsedResult& result)
+    {
+        GTEST_LOG_(INFO) << "TestCallBack, code :" << code << ", bundleSize :" << result.bundleRecords.size();
+    }
+};
+
+class CbCustomizeTest1 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest1(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {}
+
+    ~CbCustomizeTest1()
+    {}
+
+    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    {
+        type_ = result.type;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 ActiveChangeResponse";
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 tokenid " << result.tokenID;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 permissionName " << result.permissionName;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 deviceId " << result.deviceId;
+        GTEST_LOG_(INFO) << "CbCustomizeTest1 type " << result.type;
+    }
+
+    ActiveChangeType type_ = PERM_INACTIVE;
+};
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallbackInner001
+ * @tc.desc: RegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(permList.size()));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallbackInner002
+ * @tc.desc: RegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(permList.size()));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: RegisterPermActiveStatusCallbackInner003
+ * @tc.desc: RegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(0));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+    // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: UnRegisterPermActiveStatusCallbackInner001
+ * @tc.desc: UnRegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+     // callingTokenID is native token hdcd whith need permission
+    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: UnRegisterPermActiveStatusCallbackInner002
+ * @tc.desc: UnRegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+     // callingTokenID is normal hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: UnRegisterPermActiveStatusCallbackInner003
+ * @tc.desc: UnRegisterPermActiveStatusCallbackInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, TestSize.Level1)
+{
+    std::vector<std::string> permList = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
+    ASSERT_NE(callbackPtr, nullptr);
+    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
+    ASSERT_NE(callbackWrap, nullptr);
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
+    ASSERT_NE(id, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
+        IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
+     // callingTokenID is system hap without need permission
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermissionInner001
+ * @tc.desc: IsAllowedUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION), data, reply, option));
+     // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
+    ASSERT_EQ(true, reply.ReadBool());
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermissionInner002
+ * @tc.desc: IsAllowedUsingPermissionInner test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner002, TestSize.Level1)
+{
+    AccessTokenID tokenID = 123; // 123 is random input
+    std::string permissionName = "ohos.permission.test";
+
+    TestPrivacyManagerStub testSub;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option(MessageOption::TF_SYNC);
+
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
+    SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
+    ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteString(permissionName));
+    ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
+        static_cast<uint32_t>(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION), data, reply, option));
+    // callingTokenID is normal hap without need permission
+    ASSERT_EQ(false, reply.ReadBool());
 }
 } // namespace AccessToken
 } // namespace Security
