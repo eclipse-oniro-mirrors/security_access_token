@@ -392,11 +392,11 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner003, TestSize.Le
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -480,11 +480,11 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -527,11 +527,11 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -644,11 +644,11 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner003, TestSize.Level1
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
@@ -782,11 +782,11 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner003, TestSize.L
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&request));
@@ -909,11 +909,11 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(0));
@@ -1001,11 +1001,11 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
 
-    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.note", INST_INDEX);
+    AccessTokenID hapTokenID = AccessTokenKit::GetHapTokenID(USER_ID, "com.ohos.camera", INST_INDEX);
     ASSERT_NE(hapTokenID, static_cast<AccessTokenID>(0));
     FullTokenID id = hapTokenID | TOKEN_ID_UPMASK;
     ASSERT_NE(id, static_cast<AccessTokenID>(0));
-    SetSelfTokenID(id); // set self tokenID to system app com.ohos.note
+    SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));

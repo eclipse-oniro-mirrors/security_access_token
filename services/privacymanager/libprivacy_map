@@ -52,7 +52,7 @@
         "OHOS::Security::AccessToken::CameraManagerPrivacyClient::MuteCamera(bool)";
         "OHOS::Security::AccessToken::PermissionRecordManager::AddRecordToStartList(OHOS::Security::AccessToken::PermissionRecord const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::NotifyCameraFloatWindowChange(unsigned int, bool)";
-        "OHOS::Security::AccessToken::PermissionRecordManager::FindRecordsToUpdateAndExecuted(unsigned int, OHOS::Security::AccessToken::ActiveChangeType, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>&, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>>&)";
+        "OHOS::Security::AccessToken::PermissionRecordManager::FindRecordsToUpdateAndExecuted(unsigned int, OHOS::Security::AccessToken::ActiveChangeType)";
         "OHOS::Security::AccessToken::PermissionRecordManager::GetRecordFromStartList(unsigned int, int, OHOS::Security::AccessToken::PermissionRecord&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::StartUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::sptr<OHOS::IRemoteObject> const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::SetCameraCallback(OHOS::sptr<OHOS::IRemoteObject>)";
