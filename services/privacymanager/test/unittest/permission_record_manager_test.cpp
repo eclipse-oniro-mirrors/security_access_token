@@ -308,16 +308,12 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
-    std::vector<std::string> permList;
-    std::vector<std::string> camPermList;
-
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
 
-    ASSERT_EQ(static_cast<size_t>(1), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -341,16 +337,11 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
-    std::vector<std::string> permList;
-    std::vector<std::string> camPermList;
-
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-
-    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -374,15 +365,11 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
-    std::vector<std::string> permList;
-    std::vector<std::string> camPermList;
-
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
 
-    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 
@@ -406,15 +393,10 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 
-    std::vector<std::string> permList;
-    std::vector<std::string> camPermList;
-
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
+    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-
-    ASSERT_EQ(static_cast<size_t>(0), camPermList.size());
     ASSERT_EQ(record1.tokenId, tokenId);
 }
 

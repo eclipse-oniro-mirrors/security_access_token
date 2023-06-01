@@ -345,10 +345,11 @@ bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
     return hasStarted;
 }
 
-void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
-    ActiveChangeType status, std::vector<std::string>& permList, std::vector<std::string>& camPermList)
+void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    std::vector<std::string> permList;
+    std::vector<std::string> camPermList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->tokenId == tokenId) && ((it->status) != status)) {
             std::string perm;
@@ -377,6 +378,13 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
             ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
         }
     }
+    if (!camPermList.empty()) {
+        ExecuteCameraCallbackAsync(tokenId);
+    }
+    // each permission sends a status change notice
+    for (const auto& perm : permList) {
+        CallbackExecute(tokenId, perm, status);
+    }
 }
 
 /*
@@ -386,18 +394,8 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId,
 void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status %{public}d", tokenId, status);
-    std::vector<std::string> permList;
-    std::vector<std::string> camPermList;
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    FindRecordsToUpdateAndExecuted(tokenId, status, permList, camPermList);
-
-    if (!camPermList.empty()) {
-        ExecuteCameraCallbackAsync(tokenId);
-    }
-    // each permission sends a status change notice
-    for (const auto& perm : permList) {
-        CallbackExecute(tokenId, perm, status);
-    }
+    FindRecordsToUpdateAndExecuted(tokenId, status);
 }
 
 void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
@@ -555,21 +553,26 @@ void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "entry");
-    sptr<IRemoteObject> cameraCallback = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(cameraMutex_);
-        cameraCallback = cameraCallback_;
-        if (cameraCallback == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
-            return;
+    auto task = [tokenId, this]() {
+        ACCESSTOKEN_LOG_INFO(LABEL, "ExecuteCameraCallbackAsync task called");
+        sptr<IRemoteObject> cameraCallback = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(this->cameraMutex_);
+            cameraCallback = this->cameraCallback_;
+            if (cameraCallback == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
+                return;
+            }
         }
-    }
-    auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
-    if (callback != nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
-        callback->StateChangeNotify(tokenId, false);
-        SetCameraCallback(nullptr);
-    }
+        auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
+        if (callback != nullptr) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
+            callback->StateChangeNotify(tokenId, false);
+            SetCameraCallback(nullptr);
+        }
+    };
+    std::thread executeThread(task);
+    executeThread.detach();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }
 
