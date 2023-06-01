@@ -78,7 +78,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     if (camera_framework_enable) {
       cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
-      external_deps += [ "multimedia_camera_framework:camera_framework" ]
+      external_deps += [ "camera_framework:camera_framework" ]
     }
 
     if (ability_runtime_enable) {
