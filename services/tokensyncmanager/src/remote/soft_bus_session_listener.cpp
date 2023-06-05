@@ -102,10 +102,10 @@ void SoftBusSessionListener::OnBytesReceived(int32_t sessionId, const void *data
         return;
     }
     std::string networkId(contents);
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId = %{public}s, data length = %{public}u", contents, dataLen);
+    ACCESSTOKEN_LOG_INFO(LABEL, "data length = %{public}u", dataLen);
     auto channel = RemoteCommandManager::GetInstance().GetExecutorChannel(networkId);
     if (channel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetExecutorChannel, failed, networkId: %{public}s", contents);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetExecutorChannel failed");
         return;
     }
     channel->HandleDataReceived(sessionId, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
