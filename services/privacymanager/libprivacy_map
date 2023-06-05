@@ -50,7 +50,7 @@
         "OHOS::Security::AccessToken::PermissionRecordManager::NotifyAppStateChange(unsigned int, OHOS::Security::AccessToken::ActiveChangeType)";
         "OHOS::Security::AccessToken::CameraManagerPrivacyClient::GetInstance()";
         "OHOS::Security::AccessToken::CameraManagerPrivacyClient::MuteCamera(bool)";
-        "OHOS::Security::AccessToken::PermissionRecordManager::AddRecordToStartList(OHOS::Security::AccessToken::PermissionRecord const&)";
+        "OHOS::Security::AccessToken::PermissionRecordManager::AddRecordIfNotStarted(OHOS::Security::AccessToken::PermissionRecord const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::NotifyCameraFloatWindowChange(unsigned int, bool)";
         "OHOS::Security::AccessToken::PermissionRecordManager::FindRecordsToUpdateAndExecuted(unsigned int, OHOS::Security::AccessToken::ActiveChangeType)";
         "OHOS::Security::AccessToken::PermissionRecordManager::GetRecordFromStartList(unsigned int, int, OHOS::Security::AccessToken::PermissionRecord&)";

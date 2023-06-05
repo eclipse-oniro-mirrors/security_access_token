@@ -332,7 +332,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int64_t days)
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
+bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& record)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
@@ -340,8 +340,9 @@ bool PermissionRecordManager::HasStarted(const PermissionRecord& record)
     if (hasStarted) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
             record.tokenId, record.opCode);
+    } else {
+        startRecordList_.emplace_back(record);
     }
-
     return hasStarted;
 }
 
@@ -398,10 +399,15 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
     FindRecordsToUpdateAndExecuted(tokenId, status);
 }
 
-void PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
+void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    startRecordList_.emplace_back(record);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode == record.opCode) && (it->tokenId == record.tokenId)) {
+            startRecordList_.erase(it);
+            return;
+        }
+    }
 }
 
 bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record)
@@ -527,20 +533,20 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return result;
     }
 
-    if (HasStarted(record)) {
+    if (AddRecordIfNotStarted(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
     if (!GetGlobalSwitchStatus(permissionName)) {
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
+            RemoveRecordFromStartList(record);
             return ERR_SERVICE_ABNORMAL;
         }
         record.status = PERM_INACTIVE;
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-    AddRecordToStartList(record);
     return Constant::SUCCESS;
 }
 
@@ -611,20 +617,20 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return result;
     }
 
-    if (HasStarted(record)) {
+    if (AddRecordIfNotStarted(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
     if (!GetGlobalSwitchStatus(permissionName)) {
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
+            RemoveRecordFromStartList(record);
             return ERR_SERVICE_ABNORMAL;
         }
         record.status = PERM_INACTIVE;
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-    AddRecordToStartList(record);
     SetCameraCallback(callback);
     return Constant::SUCCESS;
 }
