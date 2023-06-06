@@ -124,8 +124,7 @@ void SoftBusChannel::Release()
 std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const std::string &jsonPayload)
 {
     if (commandName.empty() || jsonPayload.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params, commandName: %{public}s, jsonPayload: %{public}s",
-            commandName.c_str(), jsonPayload.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params, commandName: %{public}s", commandName.c_str());
         return "";
     }
 
@@ -151,7 +150,6 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
 
     std::unique_lock<std::mutex> lock(sessionMutex_);
     std::function<void(const std::string &)> callback = [&](const std::string &result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "onResponse called, data: %{public}s", result.c_str());
         responseResult_ = std::string(result);
         loadedCond_.notify_all();
         ACCESSTOKEN_LOG_DEBUG(LABEL, "onResponse called end");
@@ -348,8 +346,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
         RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, jsonPayload);
     if (command == nullptr) {
         // send result back directly
-        ACCESSTOKEN_LOG_WARN(LABEL, "command %{public}s cannot get from json %{public}s", commandName.c_str(),
-            jsonPayload.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "command %{public}s cannot get from json", commandName.c_str());
 
         int sendlen = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
         unsigned char *sendbuf = new (std::nothrow) unsigned char[sendlen + 1];

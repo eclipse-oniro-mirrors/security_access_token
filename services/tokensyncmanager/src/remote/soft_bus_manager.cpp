@@ -386,8 +386,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
         return Constant::FAILURE;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished, networkId:%{public}s, name:%{public}s, type:%{public}d",
-        info.networkId, info.deviceName, info.deviceTypeId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished, type:%{public}d", info.deviceTypeId);
 
     std::string uuid = GetUuidByNodeId(info.networkId);
     std::string udid = GetUdidByNodeId(info.networkId);
@@ -399,8 +398,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
 
     DeviceInfoManager::GetInstance().AddDeviceInfo(info.networkId, uuid, udid, info.deviceName,
         std::to_string(info.deviceTypeId));
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished, networkId:%{public}s",
-        info.networkId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished");
 
     fulfillMutex_.unlock();
     return Constant::SUCCESS;
