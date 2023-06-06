@@ -21,7 +21,8 @@ namespace AccessToken {
 bool AppStateData::Marshalling(Parcel &parcel) const
 {
     return (parcel.WriteString(bundleName) && parcel.WriteInt32(uid) && parcel.WriteInt32(state)
-        && parcel.WriteInt32(pid) && parcel.WriteInt32(accessTokenId) && parcel.WriteBool(isFocused));
+        && parcel.WriteInt32(pid) && parcel.WriteInt32(accessTokenId) && parcel.WriteBool(isFocused)
+        && parcel.WriteInt32Vector(renderPids));
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -36,6 +37,7 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     appStateData->pid = parcel.ReadInt32();
     appStateData->accessTokenId = parcel.ReadInt32();
     appStateData->isFocused = parcel.ReadBool();
+    parcel.ReadInt32Vector(&appStateData->renderPids);
     return appStateData;
 }
 }  // namespace AccessToken
