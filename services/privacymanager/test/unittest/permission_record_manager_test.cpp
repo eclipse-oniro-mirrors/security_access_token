@@ -305,7 +305,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
         .opCode = Constant::OP_CAMERA,
     };
     CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
@@ -334,7 +334,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_MICROPHONE,
     };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
@@ -362,7 +362,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
@@ -390,7 +390,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);

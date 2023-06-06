@@ -90,9 +90,9 @@ private:
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     void FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status);
-    void AddRecordToStartList(const PermissionRecord& record);
+    void RemoveRecordFromStartList(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
-    bool HasStarted(const PermissionRecord& record);
+    bool AddRecordIfNotStarted(const PermissionRecord& record);
 
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
