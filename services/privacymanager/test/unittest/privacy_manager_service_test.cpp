@@ -305,7 +305,7 @@ HWTEST_F(PrivacyManagerServiceTest, OnRemoteRequest001, TestSize.Level1)
     // descriptor error
     ASSERT_EQ(ERROR, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
-    
+
     uint32_t code = 99999999; // code not exsit
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_NE(SUCCESS, testSub.OnRemoteRequest(code, data, reply, option)); // descriptor true + error msgCode
@@ -336,7 +336,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Le
     ASSERT_EQ(true, data.WriteInt32(failCount));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -430,7 +430,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -594,7 +594,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -680,7 +680,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSiz
     ASSERT_EQ(true, data.WriteString(deviceID));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -733,7 +733,7 @@ HWTEST_F(PrivacyManagerServiceTest, GetPermissionUsedRecordsInner001, TestSize.L
     ASSERT_EQ(true, data.WriteParcelable(&request));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS), data, reply, option));
-     // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
+    // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -853,7 +853,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission
+    // callingTokenID is native token hdcd whith need permission
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -946,7 +946,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, 
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-     // callingTokenID is native token hdcd whith need permission
+    // callingTokenID is native token hdcd whith need permission
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -978,7 +978,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, 
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-     // callingTokenID is normal hap without need permission
+    // callingTokenID is normal hap without need permission
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, reply.ReadInt32());
 }
 
@@ -1011,7 +1011,7 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, 
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-     // callingTokenID is system hap without need permission
+    // callingTokenID is system hap without need permission
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
 }
 
@@ -1036,7 +1036,7 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermissionInner001, TestSize.L
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION), data, reply, option));
-     // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
+    // callingTokenID is native token hdcd with need permission, remote is true return ERR_PARAM_INVALID
     ASSERT_EQ(true, reply.ReadBool());
 }
 
