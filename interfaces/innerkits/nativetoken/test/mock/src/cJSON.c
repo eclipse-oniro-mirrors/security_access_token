@@ -49,7 +49,7 @@ void GetHandle(void)
         return;
     }
 #if defined(__LP64__)
-    g_handle = dlopen("/system/lib64/libcjson.z.so", RTLD_LAZY);
+    g_handle = dlopen("/system/lib64/chipset-pub-sdk/libcjson.z.so", RTLD_LAZY);
 #else
     g_handle = dlopen("/system/lib/libcjson.z.so", RTLD_LAZY);
 #endif
