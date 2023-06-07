@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -72,7 +72,9 @@ public:
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
+    void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
     PermissionManager();
+
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
 private:
@@ -87,7 +89,6 @@ private:
         const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
     void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
-    void ParamUpdate(const std::string& permissionName, uint32_t flag);
 
     PermissionGrantEvent grantEvent_;
     static PermissionManager* implInstance_;

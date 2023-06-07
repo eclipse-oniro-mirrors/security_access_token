@@ -4186,6 +4186,123 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback012, TestSize.Level0
 }
 
 /**
+ * @tc.name: RegisterPermStateChangeCallback013
+ * @tc.desc: ClearUserGrantedPermissionState notify.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback013, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestStateA}
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+
+    scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
+    scopeInfo.permList = {"ohos.permission.CAMERA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: RegisterPermStateChangeCallback014
+ * @tc.desc: ClearUserGrantedPermissionState notify.
+ * @tc.type: FUNC
+ * @tc.require: issueI5NT1X
+ */
+HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback014, TestSize.Level1)
+{
+    PermStateChangeScope scopeInfo;
+    static PermissionStateFull infoManagerTestStateA = {
+        .permissionName = "ohos.permission.READ_MEDIA",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {PERMISSION_DENIED},
+        .grantFlags = {1}
+    };
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "testA.domain",
+        .permList = {},
+        .permStateList = {infoManagerTestStateA}
+    };
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+
+    scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
+    scopeInfo.permList = {"ohos.permission.READ_MEDIA"};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
+    int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID,
+        "ohos.permission.READ_MEDIA", PERMISSION_SYSTEM_FIXED);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(false, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::RevokePermission(tokenIdEx.tokenIdExStruct.tokenID,
+        "ohos.permission.READ_MEDIA", PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    callbackPtr->ready_ = false;
+    res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    EXPECT_EQ(RET_SUCCESS, res);
+    EXPECT_EQ(true, callbackPtr->ready_);
+
+    res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
  * @tc.name: UnRegisterPermStateChangeCallback001
  * @tc.desc: UnRegisterPermStateChangeCallback with invalid input.
  * @tc.type: FUNC
