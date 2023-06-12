@@ -30,7 +30,7 @@
         "device_manager",
         "dsoftbus",
         "eventhandler",
-        "hicollie_native",
+        "hicollie",
         "hisysevent_native",
         "hitrace_native",
         "hiviewdfx_hilog_native",

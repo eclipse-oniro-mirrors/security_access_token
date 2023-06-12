@@ -104,7 +104,7 @@ if (is_standard_system) {
     ]
 
     if (hicollie_enable == true) {
-      external_deps += [ "hicollie_native:libhicollie" ]
+      external_deps += [ "hicollie:libhicollie" ]
       cflags_cc += [ "-DHICOLLIE_ENABLE" ]
     }
 
