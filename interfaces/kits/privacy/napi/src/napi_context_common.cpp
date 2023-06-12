@@ -122,7 +122,7 @@ void NotifyChangeResponse(const PermActiveStatusWorker* permActiveStatusData)
 {
     napi_value result = nullptr;
     NAPI_CALL_RETURN_VOID(permActiveStatusData->env,
-        napi_create_array(permActiveStatusData->env, &result));
+        napi_create_object(permActiveStatusData->env, &result));
     if (!ConvertActiveChangeResponse(permActiveStatusData->env, result, permActiveStatusData->result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertActiveChangeResponse failed");
         return;
