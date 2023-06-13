@@ -113,7 +113,7 @@ static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermSt
 {
     napi_value result = {nullptr};
     NAPI_CALL_RETURN_VOID(registerPermStateChangeData->env,
-        napi_create_array(registerPermStateChangeData->env, &result));
+        napi_create_object(registerPermStateChangeData->env, &result));
     if (!ConvertPermStateChangeInfo(registerPermStateChangeData->env,
         result, registerPermStateChangeData->result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ConvertPermStateChangeInfo failed");
