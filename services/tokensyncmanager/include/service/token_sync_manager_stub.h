@@ -16,9 +16,9 @@
 #ifndef TOKEN_SYNC_MANAGER_STUB_H
 #define TOKEN_SYNC_MANAGER_STUB_H
 
-#include "i_token_sync_manager.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
+#include "token_sync_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

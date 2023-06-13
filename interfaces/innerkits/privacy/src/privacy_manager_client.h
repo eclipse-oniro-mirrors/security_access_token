@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-#include "i_privacy_manager.h"
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_death_recipient.h"
+#include "privacy_service_ipc_interface_code.h"
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
 

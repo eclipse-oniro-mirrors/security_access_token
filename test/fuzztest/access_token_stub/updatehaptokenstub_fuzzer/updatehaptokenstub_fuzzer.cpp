@@ -71,7 +71,7 @@ namespace OHOS {
         if (!datas.WriteParcelable(&hapPolicyParcel)) {
             return false;
         }
-        uint32_t code = static_cast<uint32_t>(IAccessTokenManager::InterfaceCode::UPDATE_HAP_TOKEN);
+        uint32_t code = static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::UPDATE_HAP_TOKEN);
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);

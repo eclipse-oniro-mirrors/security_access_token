@@ -20,9 +20,9 @@
 
 #include "access_token.h"
 #include "hap_token_info_for_sync_parcel.h"
-#include "i_token_sync_manager.h"
 #include "iremote_broker.h"
 #include "iremote_proxy.h"
+#include "token_sync_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

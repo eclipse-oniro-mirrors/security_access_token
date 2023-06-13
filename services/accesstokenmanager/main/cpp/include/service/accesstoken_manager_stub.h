@@ -16,9 +16,9 @@
 #ifndef ACCESSTOKEN_MANAGER_STUB_H
 #define ACCESSTOKEN_MANAGER_STUB_H
 
-#include "i_accesstoken_manager.h"
-
 #include <map>
+
+#include "accesstoken_service_ipc_interface_code.h"
 
 #include "iremote_stub.h"
 #include "nocopyable.h"

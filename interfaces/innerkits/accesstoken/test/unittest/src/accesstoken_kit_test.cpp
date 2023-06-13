@@ -16,10 +16,10 @@
 #include "accesstoken_kit_test.h"
 #include <thread>
 
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
-#include "access_token_error.h"
-#include "i_accesstoken_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
 #include "permission_state_change_info_parcel.h"
