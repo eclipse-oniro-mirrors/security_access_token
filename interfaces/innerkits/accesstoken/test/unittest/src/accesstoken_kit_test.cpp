@@ -4560,7 +4560,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken020, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
 {
-    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.photos", 0); // tokenId for photo app
+    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0); // tokenId for photo app
     ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
     std::string permissionName;
@@ -4568,7 +4568,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
     // ret = PERMISSION_GRANTED + firstTokenID = 0
     permissionName = "ohos.permission.READ_MEDIA";
     firstTokenID = 0;
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName));
 
     firstTokenID = 1;
