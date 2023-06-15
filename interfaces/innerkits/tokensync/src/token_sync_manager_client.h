@@ -20,8 +20,8 @@
 
 #include "access_token.h"
 #include "hap_token_info.h"
-#include "i_token_sync_manager.h"
 #include "nocopyable.h"
+#include "token_sync_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

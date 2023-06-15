@@ -20,7 +20,7 @@
 #include <vector>
 #undef private
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -45,7 +45,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::InterfaceCode::VERIFY_ACCESSTOKEN);
+            IAccessTokenManager::AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN);
 
         MessageParcel reply;
         MessageOption option;

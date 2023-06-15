@@ -38,13 +38,13 @@
 #include "device_info.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
-#include "i_token_sync_manager.h"
 #include "remote_command_manager.h"
 #include "session.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_session_listener.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
+#include "token_sync_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace testing::ext;
@@ -1390,17 +1390,17 @@ HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level1)
     ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
     // msgCode GET_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
     ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
-        ITokenSyncManager::InterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+        ITokenSyncManager::TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option));
 
     ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
     // msgCode DELETE_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
     ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
-        ITokenSyncManager::InterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+        ITokenSyncManager::TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
 
     ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
     // msgCode UPDATE_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
     ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
-        ITokenSyncManager::InterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+        ITokenSyncManager::TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
 }
 
 namespace {

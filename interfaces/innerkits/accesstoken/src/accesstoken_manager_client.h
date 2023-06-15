@@ -23,10 +23,10 @@
 
 #include "access_token.h"
 #include "accesstoken_death_recipient.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info.h"
-#include "i_accesstoken_manager.h"
 #include "native_token_info.h"
 #include "nocopyable.h"
 #include "permission_def.h"

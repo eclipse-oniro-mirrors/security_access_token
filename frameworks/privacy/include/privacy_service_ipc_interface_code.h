@@ -26,6 +26,7 @@
 #include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
 
+/* SAID:3505 */
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -50,8 +51,8 @@ public:
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
-    enum class InterfaceCode {
-        ADD_PERMISSION_USED_RECORD = 0xf001,
+    enum class PrivacyInterfaceCode {
+        ADD_PERMISSION_USED_RECORD = 0x0000,
         START_USING_PERMISSION,
         START_USING_PERMISSION_CALLBACK,
         STOP_USING_PERMISSION,
