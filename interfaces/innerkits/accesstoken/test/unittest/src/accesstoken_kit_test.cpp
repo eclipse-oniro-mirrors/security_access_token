@@ -4560,7 +4560,8 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken020, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
 {
-    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0); // tokenId for photo app
+    std::string bundleName = "com.ohos.medialibrary.medialibrarydata";
+    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, bundleName, 0); // tokenId for photo app
     ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
     std::string permissionName;
