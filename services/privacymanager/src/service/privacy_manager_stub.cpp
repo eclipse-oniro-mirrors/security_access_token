@@ -197,11 +197,16 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, callback);
     reply.WriteInt32(result);
 }
