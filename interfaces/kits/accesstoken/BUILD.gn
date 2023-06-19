@@ -43,7 +43,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "ability_runtime:abilitykit_native",
     "ability_runtime:napi_base_context",
     "c_utils:utils",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",

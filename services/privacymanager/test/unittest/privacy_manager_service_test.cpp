@@ -853,7 +853,7 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission
+    // callingTokenID is native token hdcd with need permission
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 

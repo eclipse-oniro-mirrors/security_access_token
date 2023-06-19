@@ -35,5 +35,5 @@ ohos_shared_library("accesstoken_database_cxx") {
 
   deps = [ "//third_party/sqlite:sqlite" ]
 
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
 }

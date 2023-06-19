@@ -86,7 +86,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "device_manager:devicemanagersdk",
     "dsoftbus:softbus_client",
     "eventhandler:libeventhandler",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]

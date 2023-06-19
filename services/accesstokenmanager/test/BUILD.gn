@@ -110,8 +110,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   external_deps = [
     "c_utils:utils",
     "dsoftbus:softbus_client",
-    "hisysevent_native:libhisysevent",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
