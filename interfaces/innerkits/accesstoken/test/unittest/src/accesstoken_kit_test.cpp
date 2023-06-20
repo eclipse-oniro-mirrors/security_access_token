@@ -16,10 +16,10 @@
 #include "accesstoken_kit_test.h"
 #include <thread>
 
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
-#include "access_token_error.h"
-#include "i_accesstoken_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
 #include "permission_state_change_info_parcel.h"
@@ -4560,7 +4560,8 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken020, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
 {
-    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, "com.ohos.photos", 0); // tokenId for photo app
+    std::string bundleName = "com.ohos.medialibrary.medialibrarydata";
+    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, bundleName, 0); // tokenId for photo app
     ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
     std::string permissionName;
@@ -4568,7 +4569,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken005, TestSize.Level1)
     // ret = PERMISSION_GRANTED + firstTokenID = 0
     permissionName = "ohos.permission.READ_MEDIA";
     firstTokenID = 0;
-    ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
+    ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName));
 
     firstTokenID = 1;

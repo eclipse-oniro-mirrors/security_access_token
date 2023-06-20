@@ -24,6 +24,7 @@
 #include "access_token.h"
 #include "hap_token_info_for_sync_parcel.h"
 
+/* SAID:3504 */
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -45,10 +46,10 @@ public:
     virtual int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) = 0;
     virtual int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) = 0;
 
-    enum class InterfaceCode {
-        GET_REMOTE_HAP_TOKEN_INFO = 0xff01,
-        DELETE_REMOTE_HAP_TOKEN_INFO = 0xff02,
-        UPDATE_REMOTE_HAP_TOKEN_INFO = 0xff03
+    enum class TokenSyncInterfaceCode {
+        GET_REMOTE_HAP_TOKEN_INFO = 0x0000,
+        DELETE_REMOTE_HAP_TOKEN_INFO,
+        UPDATE_REMOTE_HAP_TOKEN_INFO,
     };
 };
 } // namespace AccessToken

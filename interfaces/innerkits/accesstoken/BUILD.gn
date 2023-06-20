@@ -58,8 +58,8 @@ if (is_standard_system) {
 
     external_deps = [
       "c_utils:utils",
-      "hisysevent_native:libhisysevent",
-      "hiviewdfx_hilog_native:libhilog",
+      "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "ipc:ipc_single",
       "samgr:samgr_proxy",
     ]
@@ -91,7 +91,7 @@ if (is_standard_system) {
     deps = []
     external_deps = [
       "c_utils:utils",
-      "hiviewdfx_hilog_native:libhilog",
+      "hilog:libhilog",
     ]
 
     configs = [ "${access_token_path}/config:coverage_flags" ]

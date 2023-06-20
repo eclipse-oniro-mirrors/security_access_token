@@ -69,7 +69,7 @@ if (!defined(global_parts_info) ||
 }
 
 if (!defined(global_parts_info) ||
-    defined(global_parts_info.multimedia_multimedia_camera_framework)) {
+    defined(global_parts_info.multimedia_camera_framework)) {
   camera_framework_enable = true
 } else {
   camera_framework_enable = false

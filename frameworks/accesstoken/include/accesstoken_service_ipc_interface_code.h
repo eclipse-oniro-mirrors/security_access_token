@@ -34,6 +34,7 @@
 #include "permission_state_change_scope_parcel.h"
 #include "system_ability_definition.h"
 
+/* SAIDL3503 */
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -85,8 +86,8 @@ public:
 
     virtual void DumpTokenInfo(AccessTokenID tokenID, std::string& tokenInfo) = 0;
 
-    enum class InterfaceCode {
-        VERIFY_ACCESSTOKEN = 0xff10,
+    enum class AccessTokenInterfaceCode {
+        VERIFY_ACCESSTOKEN = 0x0000,
         GET_DEF_PERMISSION,
         GET_DEF_PERMISSIONS,
         GET_REQ_PERMISSIONS,
@@ -97,7 +98,7 @@ public:
         ALLOC_TOKEN_HAP,
         TOKEN_DELETE,
 
-        GET_TOKEN_TYPE = 0xff20,
+        GET_TOKEN_TYPE = 0x0010,
         CHECK_NATIVE_DCAP,
         GET_HAP_TOKEN_ID,
         ALLOC_LOCAL_TOKEN_ID,
@@ -105,7 +106,7 @@ public:
         GET_HAP_TOKENINFO,
         UPDATE_HAP_TOKEN,
 
-        GET_HAP_TOKEN_FROM_REMOTE = 0xff30,
+        GET_HAP_TOKEN_FROM_REMOTE = 0x0020,
         GET_ALL_NATIVE_TOKEN_FROM_REMOTE,
         SET_REMOTE_HAP_TOKEN_INFO,
         SET_REMOTE_NATIVE_TOKEN_INFO,
@@ -113,7 +114,7 @@ public:
         DELETE_REMOTE_DEVICE_TOKEN,
         GET_NATIVE_REMOTE_TOKEN,
 
-        DUMP_TOKENINFO = 0xff50,
+        DUMP_TOKENINFO = 0x0030,
         GET_PERMISSION_OPER_STATE,
         REGISTER_PERM_STATE_CHANGE_CALLBACK,
         UNREGISTER_PERM_STATE_CHANGE_CALLBACK,

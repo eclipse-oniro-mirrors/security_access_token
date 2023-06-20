@@ -19,10 +19,10 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "i_privacy_manager.h"
 #include "perm_active_status_change_callback.h"
 #include "perm_active_status_customized_cbk.h"
 #include "privacy_manager_service.h"
+#include "privacy_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -67,7 +67,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK);
+            IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK);
 
         MessageParcel reply;
         MessageOption option;

@@ -36,7 +36,7 @@ ohos_unittest("lib_code_signature_analysis_test") {
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
-  external_deps = [ "hiviewdfx_hilog_native:libhilog" ]
+  external_deps = [ "hilog:libhilog" ]
 }
 
 group("unittest") {

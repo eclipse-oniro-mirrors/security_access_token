@@ -20,11 +20,11 @@
 #include <vector>
 #undef private
 #include "errors.h"
-#include "i_privacy_manager.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "permission_used_request.h"
 #include "permission_used_request_parcel.h"
 #include "privacy_manager_service.h"
+#include "privacy_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -76,7 +76,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
+            IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
 
         MessageParcel reply;
         MessageOption option;

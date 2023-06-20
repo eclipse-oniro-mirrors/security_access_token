@@ -16,10 +16,9 @@
 #ifndef PRIVACY_MANAGER_STUB_H
 #define PRIVACY_MANAGER_STUB_H
 
-#include "i_privacy_manager.h"
-
 #include "iremote_stub.h"
 #include "nocopyable.h"
+#include "privacy_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

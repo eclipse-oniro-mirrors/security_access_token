@@ -20,7 +20,7 @@
 #include <vector>
 #undef private
 #include "accesstoken_manager_service.h"
-#include "i_accesstoken_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "permission_state_change_callback.h"
 
 using namespace std;
@@ -37,7 +37,7 @@ namespace OHOS {
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::InterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK);
+            IAccessTokenManager::AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK);
 
         MessageParcel reply;
         MessageOption option;

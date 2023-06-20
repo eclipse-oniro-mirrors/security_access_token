@@ -119,8 +119,8 @@ if (is_standard_system && ability_base_enable == true) {
     external_deps = [
       "ability_base:want",
       "c_utils:utils",
-      "hisysevent_native:libhisysevent",
-      "hiviewdfx_hilog_native:libhilog",
+      "hilog:libhilog",
+      "hisysevent:libhisysevent",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",

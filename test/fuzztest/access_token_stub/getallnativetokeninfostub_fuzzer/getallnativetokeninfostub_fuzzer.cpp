@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 #undef private
-#include "i_accesstoken_manager.h"
+#include "accesstoken_service_ipc_interface_code.h"
 #include "service/accesstoken_manager_service.h"
 
 using namespace std;
@@ -37,7 +37,7 @@ namespace OHOS {
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::InterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE);
+            IAccessTokenManager::AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE);
 
         MessageParcel reply;
         MessageOption option;

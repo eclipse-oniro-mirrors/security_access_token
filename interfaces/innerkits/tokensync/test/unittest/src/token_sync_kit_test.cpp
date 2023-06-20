@@ -15,8 +15,8 @@
 
 #include "token_sync_kit_test.h"
 
-#include "i_token_sync_manager.h"
 #include "token_sync_manager_client.h"
+#include "token_sync_service_ipc_interface_code.h"
 
 using namespace testing::ext;
 

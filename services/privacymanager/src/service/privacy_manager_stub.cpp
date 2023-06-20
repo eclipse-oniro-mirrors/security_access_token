@@ -45,34 +45,35 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         return ERROR;
     }
     switch (code) {
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::ADD_PERMISSION_USED_RECORD):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD):
             AddPermissionUsedRecordInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION):
             StartUsingPermissionInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::START_USING_PERMISSION_CALLBACK):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK):
             StartUsingPermissionCallbackInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::STOP_USING_PERMISSION):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::STOP_USING_PERMISSION):
             StopUsingPermissionInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::DELETE_PERMISSION_USED_RECORDS):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS):
             RemovePermissionUsedRecordsInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS):
             GetPermissionUsedRecordsInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC):
             GetPermissionUsedRecordsAsyncInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
             RegisterPermActiveStatusCallbackInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+        case static_cast<uint32_t>(
+            IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
             UnRegisterPermActiveStatusCallbackInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::InterfaceCode::IS_ALLOWED_USING_PERMISSION):
+        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION):
             IsAllowedUsingPermissionInner(data, reply);
             break;
         default:
@@ -196,11 +197,16 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
     }
     sptr<PermissionUsedRequestParcel> requestParcel = data.ReadParcelable<PermissionUsedRequestParcel>();
     if (requestParcel == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
     sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, callback);
     reply.WriteInt32(result);
 }

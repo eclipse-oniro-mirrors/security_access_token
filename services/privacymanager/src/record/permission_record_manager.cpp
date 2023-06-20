@@ -341,6 +341,8 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d), opCode(%{public}d) has been started.",
             record.tokenId, record.opCode);
     } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId(%{public}d), opCode(%{public}d) add record.",
+            record.tokenId, record.opCode);
         startRecordList_.emplace_back(record);
     }
     return hasStarted;
@@ -401,10 +403,23 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
 {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d, opCode %{public}d", record.tokenId, record.opCode);
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode == record.opCode) && (it->tokenId == record.tokenId)) {
             startRecordList_.erase(it);
+            return;
+        }
+    }
+}
+
+void PermissionRecordManager::UpdateRecord(const PermissionRecord& record)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d, opCode %{public}d", record.tokenId, record.opCode);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->opCode == record.opCode) && (it->tokenId == record.tokenId)) {
+            it->status = record.status;
             return;
         }
     }
@@ -547,6 +562,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
+    UpdateRecord(record);
     return Constant::SUCCESS;
 }
 
@@ -632,6 +648,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         CallbackExecute(tokenId, permissionName, record.status);
     }
     SetCameraCallback(callback);
+    UpdateRecord(record);
     return Constant::SUCCESS;
 }
 
@@ -773,6 +790,7 @@ bool PermissionRecordManager::Register()
     if (micMuteCallback_ == nullptr) {
         micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
         if (micMuteCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "register micMuteCallback failed.");
             return false;
         }
         AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
@@ -780,6 +798,7 @@ bool PermissionRecordManager::Register()
     if (camMuteCallback_ == nullptr) {
         camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
         if (camMuteCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "register camMuteCallback failed.");
             return false;
         }
         CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
@@ -787,6 +806,7 @@ bool PermissionRecordManager::Register()
     if (appStateCallback_ == nullptr) {
         appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
         if (appStateCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
             return false;
         }
         AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
@@ -794,6 +814,7 @@ bool PermissionRecordManager::Register()
     if (floatWindowCallback_ == nullptr) {
         floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
         if (floatWindowCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "register floatWindowCallback failed.");
             return false;
         }
         WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
