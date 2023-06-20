@@ -51,7 +51,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
   external_deps = [
     "c_utils:utils",
     "dsoftbus:softbus_client",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
     "ipc:ipc_single",
   ]
   if (token_sync_enable == true) {
@@ -102,8 +102,8 @@ ohos_unittest("accesstoken_mock_test") {
   external_deps = [
     "c_utils:utils",
     "eventhandler:libeventhandler",
-    "hisysevent_native:libhisysevent",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_core",

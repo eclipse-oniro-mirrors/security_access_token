@@ -92,7 +92,7 @@ ohos_shared_library("token_sync_manager_service") {
     "c_utils:utils",
     "dsoftbus:softbus_client",
     "eventhandler:libeventhandler",
-    "hiviewdfx_hilog_native:libhilog",
+    "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]
