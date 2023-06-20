@@ -336,7 +336,7 @@ HWTEST_F(PrivacyManagerServiceTest, AddPermissionUsedRecordInner001, TestSize.Le
     ASSERT_EQ(true, data.WriteInt32(failCount));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -430,7 +430,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner001, TestSize.Level
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -594,7 +594,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::STOP_USING_PERMISSION), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -680,7 +680,7 @@ HWTEST_F(PrivacyManagerServiceTest, RemovePermissionUsedRecordsInner001, TestSiz
     ASSERT_EQ(true, data.WriteString(deviceID));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission, but input tokenID is not a real hap
+    // callingTokenID is native token hdcd with need permission, but input tokenID is not a real hap
     ASSERT_EQ(SUCCESS, reply.ReadInt32());
 }
 
@@ -850,11 +850,10 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(permList.size()));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
     // callingTokenID is native token hdcd with need permission
-    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+    ASSERT_EQ(PrivacyError::ERR_READ_PARCEL_FAILED, reply.ReadInt32());
 }
 
 /**
@@ -883,7 +882,6 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, Te
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(permList.size()));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
     // callingTokenID is normal hap without need permission
@@ -917,7 +915,6 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(0));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
     // callingTokenID is system hap without need permission
@@ -943,11 +940,10 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, 
     MessageParcel reply;
     MessageOption option(MessageOption::TF_SYNC);
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
-    // callingTokenID is native token hdcd whith need permission
-    ASSERT_EQ(SUCCESS, reply.ReadInt32());
+    // callingTokenID is native token hdcd with need permission
+    ASSERT_EQ(PrivacyError::ERR_READ_PARCEL_FAILED, reply.ReadInt32());
 }
 
 /**
@@ -975,7 +971,6 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, 
     SetSelfTokenID(hapTokenID); // set self tokenID to hapTokenID
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
     // callingTokenID is normal hap without need permission
@@ -1008,7 +1003,6 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, 
     SetSelfTokenID(id); // set self tokenID to system app com.ohos.camera
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
         IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK), data, reply, option));
     // callingTokenID is system hap without need permission
