@@ -28,7 +28,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-void PrivacyPowerShutDownCallback::ShutdownCallback()
+void PrivacyPowerShutDownCallback::OnAsyncShutdown()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 
