@@ -69,26 +69,51 @@ int32_t NativeReqPermsGet(
     return RET_SUCCESS;
 }
 
+static bool GetStringFromJson(const nlohmann::json& j, const std::string& tag, std::string& out)
+{
+    if (j.find(tag) != j.end() && j.at(tag).is_string()) {
+        out = j.at(tag).get<std::string>();
+        return true;
+    }
+    return false;
+}
+
+static bool GetIntFromJson(const nlohmann::json& j, const std::string& tag, int& out)
+{
+    if (j.find(tag) != j.end() && j.at(tag).is_number()) {
+        out = j.at(tag).get<int>();
+        return true;
+    }
+    return false;
+}
+
+static bool GetUnsignIntFromJson(const nlohmann::json& j, const std::string& tag, unsigned int& out)
+{
+    if (j.find(tag) != j.end() && j.at(tag).is_number()) {
+        out = j.at(tag).get<unsigned int>();
+        return true;
+    }
+    return false;
+}
+
 // nlohmann json need the function named from_json to parse NativeTokenInfo
 void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p)
 {
     NativeTokenInfo native;
-    if (j.find(JSON_PROCESS_NAME) != j.end()) {
-        native.processName = j.at(JSON_PROCESS_NAME).get<std::string>();
-        if (!DataValidator::IsProcessNameValid(native.processName)) {
-            return;
-        }
-    } else {
+
+    if (!GetStringFromJson(j, JSON_PROCESS_NAME, native.processName)) {
+        return;
+    }
+    if (!DataValidator::IsProcessNameValid(native.processName)) {
         return;
     }
 
-    if (j.find(JSON_APL) != j.end()) {
-        int aplNum = j.at(JSON_APL).get<int>();
-        if (DataValidator::IsAplNumValid(aplNum)) {
-            native.apl = static_cast<ATokenAplEnum>(aplNum);
-        } else {
-            return;
-        }
+    int aplNum = 0;
+    if (!GetIntFromJson(j, JSON_APL, aplNum)) {
+        return;
+    }
+    if (DataValidator::IsAplNumValid(aplNum)) {
+        native.apl = static_cast<ATokenAplEnum>(aplNum);
     } else {
         return;
     }
@@ -102,22 +127,18 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (j.find(JSON_TOKEN_ID) != j.end()) {
-        native.tokenID = j.at(JSON_TOKEN_ID).get<unsigned int>();
-        if (native.tokenID == 0) {
-            return;
-        }
-        ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
-        if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
-            return;
-        }
-    } else {
+    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ID, native.tokenID)) {
+        return;
+    }
+    if (native.tokenID == 0) {
+        return;
+    }
+    ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
+    if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         return;
     }
 
-    if (j.find(JSON_TOKEN_ATTR) != j.end()) {
-        native.tokenAttr = j.at(JSON_TOKEN_ATTR).get<unsigned int>();
-    } else {
+    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ATTR, native.tokenAttr)) {
         return;
     }
 
