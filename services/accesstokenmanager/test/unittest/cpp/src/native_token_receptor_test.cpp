@@ -398,35 +398,9 @@ HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 #endif
-/**
- * @tc.name: ProcessNativeTokenInfos002
- * @tc.desc: test add two native tokens.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
+
+void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos002!");
-    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
-
-    NativeTokenInfo info1 = {
-        .apl = APL_NORMAL,
-        .ver = 1,
-        .processName = "native_token_test1",
-        .dcap =  {"AT_CAP", "ST_CAP"},
-        .tokenID = 0x28100001,
-        .tokenAttr = 0
-    };
-
-    NativeTokenInfo info2 = {
-        .apl = APL_SYSTEM_BASIC,
-        .ver = 1,
-        .processName = "native_token_test2",
-        .dcap =  {"AT_CAP", "ST_CAP"},
-        .tokenID = 0x28100002,
-        .tokenAttr = 0
-    };
-
     PermissionStateFull infoManagerTestState1 = {
         .permissionName = "ohos.permission.ACCELEROMETER",
         .isGeneral = true,
@@ -450,9 +424,52 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
         .grantStatus = {0, 0},
         .grantFlags = {0, 2}
     };
+    permStateList.emplace_back(infoManagerTestState1);
+    permStateList.emplace_back(infoManagerTestState2);
+    permStateList.emplace_back(infoManagerTestState3);
+}
 
-    std::vector<PermissionStateFull> permStateList = {
-        infoManagerTestState1, infoManagerTestState2, infoManagerTestState3};
+void CompareGoalTokenInfo(NativeTokenInfo &info)
+{
+    NativeTokenInfo findInfo;
+    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+    ASSERT_EQ(findInfo.apl, info.apl);
+    ASSERT_EQ(findInfo.ver, info.ver);
+    ASSERT_EQ(findInfo.processName, info.processName);
+    ASSERT_EQ(findInfo.tokenID, info.tokenID);
+    ASSERT_EQ(findInfo.tokenAttr, info.tokenAttr);
+    ASSERT_EQ(findInfo.dcap, info.dcap);
+}
+
+/**
+ * @tc.name: ProcessNativeTokenInfos002
+ * @tc.desc: test add two native tokens.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "test ProcessNativeTokenInfos002!");
+    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
+    NativeTokenInfo info1;
+    info1.apl = APL_NORMAL;
+    info1.ver = 1;
+    info1.processName = "native_token_test1";
+    info1.dcap =  {"AT_CAP", "ST_CAP"};
+    info1.tokenID = 0x28100001;
+    info1.tokenAttr = 0;
+
+    NativeTokenInfo info2;
+    info2.apl = APL_SYSTEM_BASIC;
+    info2.ver = 1;
+    info2.processName = "native_token_test2";
+    info2.dcap =  {"AT_CAP", "ST_CAP"};
+    info2.tokenID = 0x28100002;
+    info2.tokenAttr = 0;
+
+    std::vector<PermissionStateFull> permStateList;
+    PermStateListSet(permStateList);
     std::shared_ptr<NativeTokenInfoInner> nativeToken1 = std::make_shared<NativeTokenInfoInner>(info1, permStateList);
 
     std::shared_ptr<PermissionPolicySet> permPolicySet =
@@ -471,32 +488,17 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos002, TestSize.Level1)
     tokenInfos.emplace_back(nativeToken2);
 
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-    NativeTokenInfo findInfo;
 
-    int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info1.tokenID, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, info1.apl);
-    ASSERT_EQ(findInfo.ver, info1.ver);
-    ASSERT_EQ(findInfo.processName, info1.processName);
-    ASSERT_EQ(findInfo.tokenID, info1.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info1.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info1.dcap);
+    CompareGoalTokenInfo(info1);
 
-    ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.MANAGE_USER_IDM");
+    int ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.MANAGE_USER_IDM");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
     ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.ACCELEROMETER");
     ASSERT_EQ(ret, PERMISSION_GRANTED);
     ret = PermissionManager::GetInstance().VerifyAccessToken(info1.tokenID, "ohos.permission.DISCOVER_BLUETOOTH");
     ASSERT_EQ(ret, PERMISSION_DENIED);
 
-    ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info2.tokenID, findInfo);
-    ASSERT_EQ(ret, RET_SUCCESS);
-    ASSERT_EQ(findInfo.apl, info2.apl);
-    ASSERT_EQ(findInfo.ver, info2.ver);
-    ASSERT_EQ(findInfo.processName, info2.processName);
-    ASSERT_EQ(findInfo.tokenID, info2.tokenID);
-    ASSERT_EQ(findInfo.tokenAttr, info2.tokenAttr);
-    ASSERT_EQ(findInfo.dcap, info2.dcap);
+    CompareGoalTokenInfo(info2);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info1.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);

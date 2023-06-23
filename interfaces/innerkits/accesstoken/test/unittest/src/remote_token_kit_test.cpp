@@ -264,6 +264,36 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
+void SetRemoteHapTokenInfoWithWrongInfo(HapTokenInfo &wrongBaseInfo, HapTokenInfo &rightBaseInfo,
+    HapTokenInfoForSync &remoteTokenInfo, const std::string &deviceID)
+{
+    std::string wrongStr(10241, 'x'); // 10241 means the invalid string length
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.appID = wrongStr; // wrong appID
+    remoteTokenInfo.baseInfo = wrongBaseInfo;
+    int32_t ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    EXPECT_NE(ret, RET_SUCCESS);
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
+    remoteTokenInfo.baseInfo = wrongBaseInfo;
+    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    EXPECT_NE(ret, RET_SUCCESS);
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
+    remoteTokenInfo.baseInfo = wrongBaseInfo;
+    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    EXPECT_NE(ret, RET_SUCCESS);
+
+    wrongBaseInfo = rightBaseInfo;
+    wrongBaseInfo.tokenID = 0; // wrong tokenID
+    remoteTokenInfo.baseInfo = wrongBaseInfo;
+    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
+    EXPECT_NE(ret, RET_SUCCESS);
+}
+
 /**
  * @tc.name: SetRemoteHapTokenInfo002
  * @tc.desc: set remote hap token info, token info is wrong
@@ -307,31 +337,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo002, TestSize.Level1)
     int ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
     ASSERT_NE(ret, RET_SUCCESS);
 
-    std::string wrongStr(10241, 'x');
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.appID = wrongStr; // wrong appID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    ASSERT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.bundleName = wrongStr; // wrong bundleName
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    ASSERT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.deviceID = wrongStr; // wrong deviceID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    ASSERT_NE(ret, RET_SUCCESS);
-
-    wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.tokenID = 0; // wrong tokenID
-    remoteTokenInfo.baseInfo = wrongBaseInfo;
-    ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
-    ASSERT_NE(ret, RET_SUCCESS);
+    SetRemoteHapTokenInfoWithWrongInfo(wrongBaseInfo, rightBaseInfo, remoteTokenInfo, deviceID);
 }
 
 /**

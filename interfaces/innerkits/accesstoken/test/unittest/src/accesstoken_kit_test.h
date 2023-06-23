@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "access_token.h"
+#include "accesstoken_kit.h"
 #include "permission_def.h"
 #include "permission_state_full.h"
 
@@ -56,6 +57,7 @@ public:
         std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
     void DeleteTestToken() const;
     void AllocTestToken() const;
+    void GetDlpFlagTest(HapInfoParams info, HapPolicyParams policy, int flag);
 
     uint64_t selfTokenId_;
 };
