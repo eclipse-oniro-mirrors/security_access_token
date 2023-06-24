@@ -22,43 +22,63 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BaseRemoteCommand"};
+static const std::string JSON_COMMAND_NAME = "commandName";
+static const std::string JSON_UNIQUEID = "uniqueId";
+static const std::string JSON_REQUEST_VERSION = "requestVersion";
+static const std::string JSON_SRC_DEVICEID = "srcDeviceId";
+static const std::string JSON_SRC_DEVICE_LEVEL = "srcDeviceLevel";
+static const std::string JSON_DST_DEVICEID = "dstDeviceId";
+static const std::string JSON_DST_DEVICE_LEVEL = "dstDeviceLevel";
+static const std::string JSON_STATUS_CODE = "statusCode";
+static const std::string JSON_MESSAGE = "message";
+static const std::string JSON_RESPONSE_VERSION = "responseVersion";
+static const std::string JSON_RESPONSE_DEVICEID = "responseDeviceId";
+static const std::string JSON_VERSION = "version";
+static const std::string JSON_TOKENID = "tokenID";
+static const std::string JSON_TOKEN_ATTR = "tokenAttr";
+static const std::string JSON_USERID = "userID";
+static const std::string JSON_BUNDLE_NAME = "bundleName";
+static const std::string JSON_INST_INDEX = "instIndex";
+static const std::string JSON_DLP_TYPE = "dlpType";
+static const std::string JSON_APPID = "appID";
+static const std::string JSON_DEVICEID = "deviceID";
+}
+
+static void GetStringFromJson(const nlohmann::json& jsonObject, const std::string& tag, std::string& out)
+{
+    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_string()) {
+        out = jsonObject.at(tag).get<std::string>();
+    }
+}
+
+static void GetIntFromJson(const nlohmann::json& jsonObject, const std::string& tag, int32_t& out)
+{
+    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_number()) {
+        out = jsonObject.at(tag).get<int32_t>();
+    }
+}
+
+static void GetUnSignedIntFromJson(const nlohmann::json& jsonObject, const std::string& tag,
+    unsigned int& out)
+{
+    if (jsonObject.find(tag) != jsonObject.end() && jsonObject.at(tag).is_number()) {
+        out = jsonObject.at(tag).get<unsigned int>();
+    }
 }
 
 void BaseRemoteCommand::FromRemoteProtocolJson(const nlohmann::json& jsonObject)
 {
-    if (jsonObject.find("commandName") != jsonObject.end() && jsonObject.at("commandName").is_string()) {
-        remoteProtocol_.commandName = jsonObject.at("commandName").get<std::string>();
-    }
-    if (jsonObject.find("uniqueId") != jsonObject.end() && jsonObject.at("uniqueId").is_string()) {
-        remoteProtocol_.uniqueId = jsonObject.at("uniqueId").get<std::string>();
-    }
-    if (jsonObject.find("requestVersion") != jsonObject.end() && jsonObject.at("requestVersion").is_number()) {
-        remoteProtocol_.requestVersion = jsonObject.at("requestVersion").get<int32_t>();
-    }
-    if (jsonObject.find("srcDeviceId") != jsonObject.end() && jsonObject.at("srcDeviceId").is_string()) {
-        remoteProtocol_.srcDeviceId = jsonObject.at("srcDeviceId").get<std::string>();
-    }
-    if (jsonObject.find("srcDeviceLevel") != jsonObject.end() && jsonObject.at("srcDeviceLevel").is_string()) {
-        remoteProtocol_.srcDeviceLevel = jsonObject.at("srcDeviceLevel").get<std::string>();
-    }
-    if (jsonObject.find("dstDeviceId") != jsonObject.end() && jsonObject.at("dstDeviceId").is_string()) {
-        remoteProtocol_.dstDeviceId = jsonObject.at("dstDeviceId").get<std::string>();
-    }
-    if (jsonObject.find("dstDeviceLevel") != jsonObject.end() && jsonObject.at("dstDeviceLevel").is_string()) {
-        remoteProtocol_.dstDeviceLevel = jsonObject.at("dstDeviceLevel").get<std::string>();
-    }
-    if (jsonObject.find("statusCode") != jsonObject.end() && jsonObject.at("statusCode").is_number()) {
-        remoteProtocol_.statusCode = jsonObject.at("statusCode").get<int32_t>();
-    }
-    if (jsonObject.find("message") != jsonObject.end() && jsonObject.at("message").is_string()) {
-        remoteProtocol_.message = jsonObject.at("message").get<std::string>();
-    }
-    if (jsonObject.find("responseVersion") != jsonObject.end() && jsonObject.at("responseVersion").is_number()) {
-        remoteProtocol_.responseVersion = jsonObject.at("responseVersion").get<int32_t>();
-    }
-    if (jsonObject.find("responseDeviceId") != jsonObject.end() && jsonObject.at("responseDeviceId").is_string()) {
-        remoteProtocol_.responseDeviceId = jsonObject.at("responseDeviceId").get<std::string>();
-    }
+    GetStringFromJson(jsonObject, JSON_COMMAND_NAME, remoteProtocol_.commandName);
+    GetStringFromJson(jsonObject, JSON_UNIQUEID, remoteProtocol_.uniqueId);
+    GetIntFromJson(jsonObject, JSON_REQUEST_VERSION, remoteProtocol_.requestVersion);
+    GetStringFromJson(jsonObject, JSON_SRC_DEVICEID, remoteProtocol_.srcDeviceId);
+    GetStringFromJson(jsonObject, JSON_SRC_DEVICE_LEVEL, remoteProtocol_.srcDeviceLevel);
+    GetStringFromJson(jsonObject, JSON_DST_DEVICEID, remoteProtocol_.dstDeviceId);
+    GetStringFromJson(jsonObject, JSON_DST_DEVICE_LEVEL, remoteProtocol_.dstDeviceLevel);
+    GetIntFromJson(jsonObject, JSON_STATUS_CODE, remoteProtocol_.statusCode);
+    GetStringFromJson(jsonObject, JSON_MESSAGE, remoteProtocol_.message);
+    GetIntFromJson(jsonObject, JSON_RESPONSE_VERSION, remoteProtocol_.responseVersion);
+    GetStringFromJson(jsonObject, JSON_RESPONSE_DEVICEID, remoteProtocol_.responseDeviceId);
 }
 
 nlohmann::json BaseRemoteCommand::ToRemoteProtocolJson()
@@ -155,30 +175,16 @@ void BaseRemoteCommand::FromHapTokenBasicInfoJson(const nlohmann::json& hapToken
     if (hapTokenJson.find("version") != hapTokenJson.end() && hapTokenJson.at("version").is_number()) {
         hapTokenJson.at("version").get_to(hapTokenBasicInfo.ver);
     }
-    if (hapTokenJson.find("tokenID") != hapTokenJson.end() && hapTokenJson.at("tokenID").is_number()) {
-        hapTokenJson.at("tokenID").get_to(hapTokenBasicInfo.tokenID);
-    }
-    if (hapTokenJson.find("tokenAttr") != hapTokenJson.end() && hapTokenJson.at("tokenAttr").is_number()) {
-        hapTokenJson.at("tokenAttr").get_to(hapTokenBasicInfo.tokenAttr);
-    }
-    if (hapTokenJson.find("userID") != hapTokenJson.end() && hapTokenJson.at("userID").is_number()) {
-        hapTokenJson.at("userID").get_to(hapTokenBasicInfo.userID);
-    }
-    if (hapTokenJson.find("bundleName") != hapTokenJson.end() && hapTokenJson.at("bundleName").is_string()) {
-        hapTokenJson.at("bundleName").get_to(hapTokenBasicInfo.bundleName);
-    }
-    if (hapTokenJson.find("instIndex") != hapTokenJson.end() && hapTokenJson.at("instIndex").is_number()) {
-        hapTokenJson.at("instIndex").get_to(hapTokenBasicInfo.instIndex);
-    }
-    if (hapTokenJson.find("dlpType") != hapTokenJson.end() && hapTokenJson.at("dlpType").is_number()) {
-        hapTokenJson.at("dlpType").get_to(hapTokenBasicInfo.dlpType);
-    }
-    if (hapTokenJson.find("appID") != hapTokenJson.end() && hapTokenJson.at("appID").is_string()) {
-        hapTokenJson.at("appID").get_to(hapTokenBasicInfo.appID);
-    }
-    if (hapTokenJson.find("deviceID") != hapTokenJson.end() && hapTokenJson.at("deviceID").is_string()) {
-        hapTokenJson.at("deviceID").get_to(hapTokenBasicInfo.deviceID);
-    }
+
+    GetUnSignedIntFromJson(hapTokenJson, JSON_TOKENID, hapTokenBasicInfo.tokenID);
+    GetUnSignedIntFromJson(hapTokenJson, JSON_TOKEN_ATTR, hapTokenBasicInfo.tokenAttr);
+    GetIntFromJson(hapTokenJson, JSON_USERID, hapTokenBasicInfo.userID);
+    GetStringFromJson(hapTokenJson, JSON_BUNDLE_NAME, hapTokenBasicInfo.bundleName);
+    GetIntFromJson(hapTokenJson, JSON_INST_INDEX, hapTokenBasicInfo.instIndex);
+    GetIntFromJson(hapTokenJson, JSON_DLP_TYPE, hapTokenBasicInfo.dlpType);
+    GetStringFromJson(hapTokenJson, JSON_APPID, hapTokenBasicInfo.appID);
+    GetStringFromJson(hapTokenJson, JSON_DEVICEID, hapTokenBasicInfo.deviceID);
+
     if (hapTokenJson.find("apl") != hapTokenJson.end() && hapTokenJson.at("apl").is_number()) {
         int apl = hapTokenJson.at("apl").get<int>();
         if (DataValidator::IsAplNumValid(apl)) {
