@@ -54,6 +54,8 @@ public:
      */
     int BuildConnection() override;
 
+    void InsertCallback(int result, std::string &uuid);
+
     /**
      * @brief Execute BaseRemoteCommand at peer device.
      *

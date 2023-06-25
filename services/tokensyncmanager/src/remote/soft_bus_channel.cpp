@@ -133,6 +133,20 @@ std::string SoftBusChannel::GetUuid()
     return uuid;
 }
 
+void SoftBusChannel::InsertCallback(int result, std::string &uuid)
+{
+    std::unique_lock<std::mutex> lock(sessionMutex_);
+    std::function<void(const std::string &)> callback = [&](const std::string &result) {
+        responseResult_ = std::string(result);
+        loadedCond_.notify_all();
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "onResponse called end");
+    };
+    callbacks_.insert(std::pair<std::string, std::function<void(std::string)>>(uuid, callback));
+
+    isSessionUsing_ = true;
+    lock.unlock();
+}
+
 std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const std::string &jsonPayload)
 {
     if (commandName.empty() || jsonPayload.empty()) {
@@ -157,18 +171,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
         delete[] buf;
         return "";
     }
-
-    std::unique_lock<std::mutex> lock(sessionMutex_);
-    std::function<void(const std::string &)> callback = [&](const std::string &result) {
-        responseResult_ = std::string(result);
-        loadedCond_.notify_all();
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "onResponse called end");
-    };
-    callbacks_.insert(std::pair<std::string, std::function<void(std::string)>>(uuid, callback));
-
-    isSessionUsing_ = true;
-    lock.unlock();
-
+    InsertCallback(result, uuid);
     int retCode = SendRequestBytes(buf, info.bytesLength);
     delete[] buf;
 
