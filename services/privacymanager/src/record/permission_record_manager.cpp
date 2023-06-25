@@ -344,6 +344,7 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
         ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId(%{public}d), opCode(%{public}d) add record.",
             record.tokenId, record.opCode);
         startRecordList_.emplace_back(record);
+        AddRecord(record); // when start using permission, add a instananeous record which accessDuration is 0
     }
     return hasStarted;
 }
