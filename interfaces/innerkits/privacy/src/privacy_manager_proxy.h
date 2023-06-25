@@ -18,8 +18,8 @@
 
 #include <string>
 
+#include "i_privacy_manager.h"
 #include "iremote_proxy.h"
-#include "privacy_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
@@ -46,7 +46,7 @@ public:
     bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
 
 private:
-    bool SendRequest(IPrivacyManager::PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply);
+    bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply);
     static inline BrokerDelegator<PrivacyManagerProxy> delegator_;
 };
 } // namespace AccessToken

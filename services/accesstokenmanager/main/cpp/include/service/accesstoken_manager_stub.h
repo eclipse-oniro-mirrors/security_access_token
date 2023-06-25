@@ -18,7 +18,7 @@
 
 #include <map>
 
-#include "accesstoken_service_ipc_interface_code.h"
+#include "i_accesstoken_manager.h"
 
 #include "iremote_stub.h"
 #include "nocopyable.h"

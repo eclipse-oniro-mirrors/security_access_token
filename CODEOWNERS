@@ -13,20 +13,7 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_SYNC_SERVICE_IPC_INTERFACE_CODE_H
-#define TOKEN_SYNC_SERVICE_IPC_INTERFACE_CODE_H
-
-namespace OHOS {
-namespace Security {
-namespace AccessToken {
-/* SAID:3504 */
-enum class TokenSyncInterfaceCode {
-    GET_REMOTE_HAP_TOKEN_INFO = 0x0000,
-    DELETE_REMOTE_HAP_TOKEN_INFO,
-    UPDATE_REMOTE_HAP_TOKEN_INFO,
-};
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
-
-#endif // TOKEN_SYNC_SERVICE_IPC_INTERFACE_CODE_H
+# any change to behind files needs to be reviewed by @leonchan5
+frameworks/accesstoken/include/accesstoken_service_ipc_interface_code.h @leonchan5
+frameworks/privacy/include/privacy_service_ipc_interface_code.h @leonchan5
+frameworks/tokensync/include/token_sync_service_ipc_interface_code.h @leonchan5

@@ -37,7 +37,7 @@ namespace OHOS {
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO);
+            AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO);
 
         MessageParcel reply;
         MessageOption option;

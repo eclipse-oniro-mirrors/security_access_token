@@ -19,8 +19,8 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "i_token_sync_manager.h"
 #include "token_sync_manager_service.h"
-#include "token_sync_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -42,7 +42,7 @@ namespace OHOS {
         }
        
         uint32_t code = static_cast<uint32_t>(
-            ITokenSyncManager::TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO);
+            TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO);
 
         MessageParcel reply;
         MessageOption option(MessageOption::TF_SYNC);

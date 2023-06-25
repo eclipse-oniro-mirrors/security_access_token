@@ -21,7 +21,7 @@
 #undef private
 #include "access_token.h"
 #include "accesstoken_manager_service.h"
-#include "accesstoken_service_ipc_interface_code.h"
+#include "i_accesstoken_manager.h"
 #include "permission_state_full.h"
 
 using namespace std;
@@ -74,7 +74,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO);
+            AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO);
 
         MessageParcel reply;
         MessageOption option;

@@ -57,7 +57,7 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -78,7 +78,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::START_USING_PERMISSION, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -104,7 +104,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK, data, reply)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest fail");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
@@ -128,7 +128,7 @@ int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const st
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::STOP_USING_PERMISSION, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::STOP_USING_PERMISSION, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -149,7 +149,7 @@ int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, 
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -167,7 +167,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -199,7 +199,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     }
 
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -232,7 +232,7 @@ int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -252,7 +252,7 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
     }
     MessageParcel reply;
     if (!SendRequest(
-        IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
+        PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -275,7 +275,7 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
         return false;
     }
-    if (!SendRequest(IPrivacyManager::PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -283,7 +283,7 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
 }
 
 bool PrivacyManagerProxy::SendRequest(
-    IPrivacyManager::PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply)
+    PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply)
 {
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
