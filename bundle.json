@@ -40,7 +40,7 @@
         "power_manager",
         "safwk",
         "samgr",
-        "selinux"
+        "selinux_adapter"
       ],
       "third_party": [
         "bounds_checking_function",
