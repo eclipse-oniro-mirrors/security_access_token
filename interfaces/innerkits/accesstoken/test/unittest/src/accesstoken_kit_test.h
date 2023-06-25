@@ -53,8 +53,6 @@ public:
 
     void TearDown();
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
-    void AllocHapToken(std::vector<PermissionDef>& permmissionDefs,
-        std::vector<PermissionStateFull>& permissionStateFulls, int32_t apiVersion);
     void DeleteTestToken() const;
     void AllocTestToken() const;
     void GetDlpFlagTest(HapInfoParams info, HapPolicyParams policy, int flag);
