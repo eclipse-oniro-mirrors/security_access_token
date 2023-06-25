@@ -65,8 +65,10 @@ private:
     void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
+    void SetTokenSyncFuncInMap();
 #endif
-
+    void SetPermissionOpFuncInMap();
+    void SetLocalTokenOpFuncInMap();
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
