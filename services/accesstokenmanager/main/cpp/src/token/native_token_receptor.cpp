@@ -101,38 +101,30 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
 {
     NativeTokenInfo native;
 
-    if (!GetStringFromJson(j, JSON_PROCESS_NAME, native.processName)) {
-        return;
-    }
-    if (!DataValidator::IsProcessNameValid(native.processName)) {
+    if (!GetStringFromJson(j, JSON_PROCESS_NAME, native.processName) ||
+        !DataValidator::IsProcessNameValid(native.processName)) {
         return;
     }
 
     int aplNum = 0;
-    if (!GetIntFromJson(j, JSON_APL, aplNum)) {
+    if (!GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
         return;
     }
-    if (DataValidator::IsAplNumValid(aplNum)) {
-        native.apl = static_cast<ATokenAplEnum>(aplNum);
-    } else {
+    
+    native.apl = static_cast<ATokenAplEnum>(aplNum);
+    
+    if (j.find(JSON_VERSION) == j.end()) {
         return;
     }
-
-    if (j.find(JSON_VERSION) != j.end()) {
-        native.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
-        if (native.ver != DEFAULT_TOKEN_VERSION) {
-            return;
-        }
-    } else {
+    native.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
+    if (native.ver != DEFAULT_TOKEN_VERSION) {
         return;
     }
 
-    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ID, native.tokenID)) {
+    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
         return;
     }
-    if (native.tokenID == 0) {
-        return;
-    }
+    
     ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         return;
@@ -142,21 +134,19 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (j.find(JSON_DCAPS) != j.end()) {
-        native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
-        if (native.dcap.size() > MAX_DCAPS_NUM) {
-            return;
-        }
-    } else {
+    if (j.find(JSON_DCAPS) == j.end()) {
+        return;
+    }
+    native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
+    if (native.dcap.size() > MAX_DCAPS_NUM) {
         return;
     }
 
-    if (j.find(JSON_ACLS) != j.end()) {
-        native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
-        if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
-            return;
-        }
-    } else {
+    if (j.find(JSON_ACLS) == j.end()) {
+        return;
+    }
+    native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
+    if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
         return;
     }
 

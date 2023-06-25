@@ -783,38 +783,34 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
     }
 
     for (NativeTokenInfoForSync& nativeToken : nativeTokenInfoList) {
-        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(nativeToken.baseInfo.tokenID);
+        AccessTokenID remoteID = nativeToken.baseInfo.tokenID;
+        auto encryptDevId = ConstantCommon::EncryptDevId(deviceID).c_str();
+        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(remoteID);
         if (!DataValidator::IsAplNumValid(nativeToken.baseInfo.apl) ||
             nativeToken.baseInfo.ver != DEFAULT_TOKEN_VERSION ||
             !DataValidator::IsProcessNameValid(nativeToken.baseInfo.processName) ||
             nativeToken.baseInfo.dcap.empty() ||
             (type != TOKEN_NATIVE && type != TOKEN_SHELL)) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}u is invalid.",
-                ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u is invalid.", encryptDevId, remoteID);
             continue;
         }
 
-        AccessTokenID remoteID = nativeToken.baseInfo.tokenID;
         AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(deviceID, remoteID);
         if (mapID != 0) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}u has maped, no need update it.",
-                ConstantCommon::EncryptDevId(deviceID).c_str(), nativeToken.baseInfo.tokenID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u has maped, no need update it.",
+                encryptDevId, remoteID);
             continue;
         }
 
         mapID = AccessTokenRemoteTokenManager::GetInstance().MapRemoteDeviceTokenToLocal(deviceID, remoteID);
         if (mapID == 0) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}u map failed.",
-                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u map failed.", encryptDevId, remoteID);
             continue;
         }
         nativeToken.baseInfo.tokenID = mapID;
         ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u.",
-            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
+            encryptDevId, remoteID, mapID);
 
         std::shared_ptr<NativeTokenInfoInner> nativePtr =
             std::make_shared<NativeTokenInfoInner>(nativeToken.baseInfo, nativeToken.permStateList);
@@ -823,11 +819,11 @@ int AccessTokenInfoManager::SetRemoteNativeTokenInfo(const std::string& deviceID
         if (ret != RET_SUCCESS) {
             AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
             ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u add local token failed.",
-                ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
+                encryptDevId, remoteID);
             continue;
         }
         ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map token %{public}u add success.",
-            ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
+            encryptDevId, remoteID, mapID);
     }
 
     return RET_SUCCESS;
