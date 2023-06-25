@@ -40,7 +40,7 @@ AccessTokenManagerProxy::~AccessTokenManagerProxy()
 {}
 
 bool AccessTokenManagerProxy::SendRequest(
-    IAccessTokenManager::AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply)
+    AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply)
 {
     MessageOption option(MessageOption::TF_SYNC);
 
@@ -79,7 +79,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
         return PERMISSION_DENIED;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN), data, reply, option);
+        static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return PERMISSION_DENIED;
@@ -101,7 +101,7 @@ int AccessTokenManagerProxy::GetDefPermission(
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_DEF_PERMISSION, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_DEF_PERMISSION, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -130,7 +130,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_DEF_PERMISSIONS, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -168,7 +168,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_REQ_PERMISSIONS, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_REQ_PERMISSIONS, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -205,7 +205,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_PERMISSION_FLAG, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_FLAG, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -235,7 +235,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE, data, reply)) {
         return INVALID_OPER;
     }
 
@@ -278,7 +278,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GRANT_PERMISSION, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GRANT_PERMISSION, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -305,7 +305,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::REVOKE_PERMISSION, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::REVOKE_PERMISSION, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -324,7 +324,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -350,7 +350,7 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -377,7 +377,7 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
 
     MessageParcel reply;
     if (!SendRequest(
-        IAccessTokenManager::AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
+        AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -415,7 +415,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
         return res;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::ALLOC_TOKEN_HAP), data, reply, option);
+        static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_TOKEN_HAP), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         res.tokenIDEx = 0;
@@ -439,7 +439,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::TOKEN_DELETE, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::TOKEN_DELETE, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -459,7 +459,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_TOKEN_TYPE, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_TOKEN_TYPE, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -482,7 +482,7 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
         return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::CHECK_NATIVE_DCAP, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -517,7 +517,7 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
         return tokenIdEx;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKEN_ID), data, reply, option);
+        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return tokenIdEx;
@@ -550,7 +550,7 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
         return 0;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        IAccessTokenManager::AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID), data, reply, option);
+        AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return 0;
@@ -571,7 +571,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -599,7 +599,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKENINFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKENINFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -640,7 +640,7 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::UPDATE_HAP_TOKEN, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
@@ -657,7 +657,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
         return ERR_WRITE_PARCEL_FAILED;
     }
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -686,7 +686,7 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
         return INVALID_TOKENID;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID), data, reply, option);
+        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
         return INVALID_TOKENID;
@@ -711,7 +711,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -735,7 +735,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoFo
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -772,7 +772,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -799,7 +799,7 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -821,7 +821,7 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -850,7 +850,7 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
         return 0;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN), data, reply, option);
+        AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return 0;
@@ -870,7 +870,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     }
 
     MessageParcel reply;
-    if (!SendRequest(IAccessTokenManager::AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN, data, reply)) {
         return ERR_SA_WORK_ABNORMAL;
     }
 
@@ -896,7 +896,7 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
         return;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::DUMP_TOKENINFO), data, reply, option);
+        static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;

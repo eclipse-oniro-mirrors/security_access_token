@@ -20,11 +20,11 @@
 #include <vector>
 
 #include "access_token.h"
-#include "accesstoken_service_ipc_interface_code.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
+#include "i_accesstoken_manager.h"
 #include "iremote_proxy.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
@@ -80,7 +80,7 @@ public:
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:
-    bool SendRequest(IAccessTokenManager::AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply);
+    bool SendRequest(AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply);
     static inline BrokerDelegator<AccessTokenManagerProxy> delegator_;
 };
 } // namespace AccessToken

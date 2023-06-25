@@ -39,13 +39,13 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
         return -1;
     }
     switch (code) {
-        case static_cast<uint32_t>(ITokenSyncManager::TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO):
+        case static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO):
             GetRemoteHapTokenInfoInner(data, reply);
             break;
-        case static_cast<uint32_t>(ITokenSyncManager::TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO):
+        case static_cast<uint32_t>(TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO):
             DeleteRemoteHapTokenInfoInner(data, reply);
             break;
-        case static_cast<uint32_t>(ITokenSyncManager::TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO):
+        case static_cast<uint32_t>(TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO):
             UpdateRemoteHapTokenInfoInner(data, reply);
             break;
         default:

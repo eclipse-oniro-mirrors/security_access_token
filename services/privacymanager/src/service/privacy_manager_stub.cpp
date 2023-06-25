@@ -45,35 +45,35 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         return ERROR;
     }
     switch (code) {
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD):
             AddPermissionUsedRecordInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION):
             StartUsingPermissionInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK):
             StartUsingPermissionCallbackInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::STOP_USING_PERMISSION):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::STOP_USING_PERMISSION):
             StopUsingPermissionInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS):
             RemovePermissionUsedRecordsInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS):
             GetPermissionUsedRecordsInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC):
             GetPermissionUsedRecordsAsyncInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
             RegisterPermActiveStatusCallbackInner(data, reply);
             break;
         case static_cast<uint32_t>(
-            IPrivacyManager::PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
+            PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
             UnRegisterPermActiveStatusCallbackInner(data, reply);
             break;
-        case static_cast<uint32_t>(IPrivacyManager::PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION):
+        case static_cast<uint32_t>(PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION):
             IsAllowedUsingPermissionInner(data, reply);
             break;
         default:

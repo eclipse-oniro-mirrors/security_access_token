@@ -53,7 +53,7 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        ITokenSyncManager::TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
+        TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
@@ -81,7 +81,7 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        ITokenSyncManager::TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
+        TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
@@ -113,7 +113,7 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        ITokenSyncManager::TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
+        TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;

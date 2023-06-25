@@ -652,77 +652,77 @@ bool AccessTokenManagerStub::IsSystemAppCalling() const
 
 void AccessTokenManagerStub::SetTokenSyncFuncInMap()
 {
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;
     requestFuncMap_[
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
+        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetAllNativeTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO)] =
         &AccessTokenManagerStub::SetRemoteHapTokenInfoInner;
     requestFuncMap_[
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO)] =
+        static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO)] =
         &AccessTokenManagerStub::SetRemoteNativeTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO)] =
         &AccessTokenManagerStub::DeleteRemoteTokenInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =
         &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
         &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
 }
 
 void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 {
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::ALLOC_TOKEN_HAP)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_TOKEN_HAP)] =
         &AccessTokenManagerStub::AllocHapTokenInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::TOKEN_DELETE)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::TOKEN_DELETE)] =
         &AccessTokenManagerStub::DeleteTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_TOKEN_TYPE)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_TOKEN_TYPE)] =
         &AccessTokenManagerStub::GetTokenTypeInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::CHECK_NATIVE_DCAP)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP)] =
         &AccessTokenManagerStub::CheckNativeDCapInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKEN_ID)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID)] =
         &AccessTokenManagerStub::GetHapTokenIDInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID)] =
         &AccessTokenManagerStub::AllocLocalTokenIDInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO)] =
         &AccessTokenManagerStub::GetNativeTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_HAP_TOKENINFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKENINFO)] =
         &AccessTokenManagerStub::GetHapTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::UPDATE_HAP_TOKEN)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
         &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID)] =
         &AccessTokenManagerStub::GetNativeTokenIdInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
 {
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
         &AccessTokenManagerStub::GetDefPermissionInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_DEF_PERMISSIONS)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS)] =
         &AccessTokenManagerStub::GetDefPermissionsInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_REQ_PERMISSIONS)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_REQ_PERMISSIONS)] =
         &AccessTokenManagerStub::GetReqPermissionsInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_PERMISSION_FLAG)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_FLAG)] =
         &AccessTokenManagerStub::GetPermissionFlagInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GRANT_PERMISSION)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GRANT_PERMISSION)] =
         &AccessTokenManagerStub::GrantPermissionInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::REVOKE_PERMISSION)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REVOKE_PERMISSION)] =
         &AccessTokenManagerStub::RevokePermissionInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION)] =
         &AccessTokenManagerStub::ClearUserGrantedPermissionStateInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =
         &AccessTokenManagerStub::GetSelfPermissionsStateInner;
     requestFuncMap_[
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK)] =
+        static_cast<uint32_t>(AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK)] =
         &AccessTokenManagerStub::RegisterPermStateChangeCallbackInner;
     requestFuncMap_[
-        static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK)] =
+        static_cast<uint32_t>(AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK)] =
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
-    requestFuncMap_[static_cast<uint32_t>(IAccessTokenManager::AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
 }
 

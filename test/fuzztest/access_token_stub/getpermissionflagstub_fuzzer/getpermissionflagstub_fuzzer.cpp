@@ -20,7 +20,7 @@
 #include <vector>
 #undef private
 #include "accesstoken_manager_service.h"
-#include "accesstoken_service_ipc_interface_code.h"
+#include "i_accesstoken_manager.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -45,7 +45,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IAccessTokenManager::AccessTokenInterfaceCode::GET_PERMISSION_FLAG);
+            AccessTokenInterfaceCode::GET_PERMISSION_FLAG);
 
         MessageParcel reply;
         MessageOption option;

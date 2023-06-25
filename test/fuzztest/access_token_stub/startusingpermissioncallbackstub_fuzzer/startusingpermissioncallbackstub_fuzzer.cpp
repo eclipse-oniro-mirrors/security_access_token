@@ -19,10 +19,10 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "i_privacy_manager.h"
 #include "state_change_callback.h"
 #include "state_customized_cbk.h"
 #include "privacy_manager_service.h"
-#include "privacy_service_ipc_interface_code.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
@@ -71,7 +71,7 @@ namespace OHOS {
         }
 
         uint32_t code = static_cast<uint32_t>(
-            IPrivacyManager::PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK);
+            PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK);
 
         MessageParcel reply;
         MessageOption option;
