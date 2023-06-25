@@ -294,6 +294,13 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     delete[] dcaps;
 }
 
+void SetNativeDcaps(NativeTokenInfoParams &infoInstance,
+    int32_t dcapsNum, const char **dcaps, const char *process)
+{
+    infoInstance.dcapsNum = dcapsNum;
+    infoInstance.dcaps = dcaps;
+    infoInstance.processName = process;
+}
 /**
  * @tc.name: GetAccessTokenId003
  * @tc.desc: cannot getAccessTokenId with invalid dcaps.
@@ -306,22 +313,20 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId003, TestSize.Level1)
     ASSERT_NE(dcaps, nullptr);
     dcaps[0] = "AT_CAP";
     dcaps[1] = "ST_CAP";
-    int32_t dcapNum = 2;
-    uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
+        .dcapsNum = 2,
         .permsNum = 0,
         .aclsNum = 0,
         .dcaps = dcaps,
         .perms = nullptr,
         .aplStr = "system_core",
     };
-    infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = nullptr;
     infoInstance.processName = "GetAccessTokenId003";
-    tokenId = GetAccessTokenId(&infoInstance);
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
-    dcapNum = 0;
+    int32_t dcapNum = 0;
     infoInstance.dcapsNum = dcapNum;
     infoInstance.dcaps = nullptr;
     infoInstance.processName = "GetAccessTokenId003_01";
@@ -705,23 +710,21 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId013, TestSize.Level1)
     ASSERT_NE(acls, nullptr);
     acls[0] = "AT_CAP";
     acls[1] = "ST_CAP";
-    int32_t aclsNum = 2;
-    uint64_t tokenId;
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
         .permsNum = 2,
+        .aclsNum = 2,
         .dcaps = nullptr,
         .perms = acls,
         .aplStr = "system_core",
     };
 
-    infoInstance.aclsNum = aclsNum;
     infoInstance.acls = nullptr;
     infoInstance.processName = "GetAccessTokenId013";
-    tokenId = GetAccessTokenId(&infoInstance);
+    uint64_t tokenId = GetAccessTokenId(&infoInstance);
     ASSERT_EQ(tokenId, 0);
 
-    aclsNum = 0;
+    int32_t aclsNum = 0;
     infoInstance.aclsNum = aclsNum;
     infoInstance.acls = nullptr;
     infoInstance.processName = "GetAccessTokenId013_01";
