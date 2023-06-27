@@ -22,7 +22,7 @@
 #include "iremote_object.h"
 #include "nocopyable.h"
 #ifdef POWER_MANAGER_ENABLE
-#include "privacy_power_shutdown_callback.h"
+#include "shutdown/iasync_shutdown_callback.h"
 #endif
 #include "singleton.h"
 #include "system_ability.h"
@@ -65,7 +65,7 @@ private:
     ServiceRunningState state_;
 
 #ifdef POWER_MANAGER_ENABLE
-    sptr<PrivacyPowerShutDownCallback> powerShutDownCallback_ = nullptr;
+    sptr<PowerMgr::IAsyncShutdownCallback> powerShutDownCallback_ = nullptr;
 #endif
 };
 } // namespace AccessToken

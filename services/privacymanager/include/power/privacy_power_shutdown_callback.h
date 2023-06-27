@@ -16,20 +16,16 @@
 #ifndef PRIVACY_POWER_SHUTDOWN_CALLBACK_H
 #define PRIVACY_POWER_SHUTDOWN_CALLBACK_H
 
-#include "ishutdown_callback.h"
-
-#include "iremote_stub.h"
-#include "nocopyable.h"
-#include "privacy_power_shutdown_callback_stub.h"
+#include "shutdown/async_shutdown_callback_stub.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class PrivacyPowerShutDownCallback final : public PrivacyPowerShutDownCallbackStub {
+class PrivacyPowerShutDownCallback : public PowerMgr::AsyncShutdownCallbackStub {
 public:
     PrivacyPowerShutDownCallback() = default;
-    virtual ~PrivacyPowerShutDownCallback() = default;
-    virtual void ShutdownCallback() override;
+    ~PrivacyPowerShutDownCallback() override = default;
+    void OnAsyncShutdown() override;
 };
 } // namespace AccessToken
 } // namespace Security

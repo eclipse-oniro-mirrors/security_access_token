@@ -23,7 +23,8 @@
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
 #ifdef POWER_MANAGER_ENABLE
-#include "power_mgr_client.h"
+#include "privacy_power_shutdown_callback.h"
+#include "shutdown/shutdown_client.h"
 #include "system_ability_definition.h"
 #endif
 #include "string_ex.h"
@@ -82,7 +83,7 @@ void PrivacyManagerService::OnStop()
 
 #ifdef POWER_MANAGER_ENABLE
     if (powerShutDownCallback_ != nullptr) {
-        PowerMgr::PowerMgrClient::GetInstance().UnRegisterShutdownCallback(powerShutDownCallback_);
+        PowerMgr::ShutdownClient::GetInstance().UnRegisterShutdownCallback(powerShutDownCallback_);
         powerShutDownCallback_ = nullptr;
     }
 #endif
@@ -228,11 +229,10 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
                 return;
             }
 
-            ACCESSTOKEN_LOG_INFO(LABEL, "register power shutdown callback!");
+            PowerMgr::ShutdownClient::GetInstance().RegisterShutdownCallback(powerShutDownCallback_,
+                PowerMgr::ShutdownPriority::HIGH);
 
-            if (PowerMgr::PowerMgrClient::GetInstance().RegisterShutdownCallback(powerShutDownCallback_)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "register success!");
-            }
+            ACCESSTOKEN_LOG_INFO(LABEL, "register power shutdown callback complete!");
         }
     }
 }
