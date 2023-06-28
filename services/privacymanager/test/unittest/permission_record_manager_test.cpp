@@ -15,11 +15,13 @@
 
 #include <gtest/gtest.h>
 
+#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
+#include "permission_record.h"
 #define private public
 #include "active_status_callback_manager.h"
 #include "permission_record_manager.h"
@@ -437,6 +439,18 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.LOCATION", callbackWrap->AsObject()));
+
+    // tokenId invaild
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StartUsingPermission(
+        static_cast<AccessTokenID>(123), "ohos.permission.CAMERA", nullptr));
+    
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, "ohos.permission.CAMERA", nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.CAMERA", nullptr));
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
 }
 
 /*
@@ -668,6 +682,265 @@ HWTEST_F(PermissionRecordManagerTest, RemoveCallback001, TestSize.Level1)
     // recovery
     ActiveStatusCallbackManager::GetInstance().callbackDataList_ = callbackDataList;
     ActiveStatusCallbackManager::GetInstance().callbackDeathRecipient_ = callbackDeathRecipient;
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecord001
+ * @tc.desc: PermissionRecordManager::AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    std::string permissionName = "com.ohos.test";
+    int32_t successCount = 1;
+    int32_t failCount = 0;
+
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        tokenId, permissionName, successCount, failCount)); // invaild permission error
+}
+
+/*
+ * @tc.name: AddPermissionUsedRecord002
+ * @tc.desc: PermissionRecordManager::AddPermissionUsedRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    std::string permissionName = "ohos.permission.READ_MEDIA";
+    int32_t successCount = 0;
+    int32_t failCount = 0;
+
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        tokenId, permissionName, successCount, failCount));
+}
+
+/*
+ * @tc.name: RemovePermissionUsedRecords001
+ * @tc.desc: PermissionRecordManager::RemovePermissionUsedRecords function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    std::string deviceID;
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID); // deviceID is empty
+
+    deviceID = "what's is";
+    // deviceID is not empty, but device which deps on tokenID is empty not equals deviceID
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(static_cast<AccessTokenID>(123), deviceID);
+
+    deviceID = "0";
+    // deviceID is not empty, device which deps on tokenID is not empty and equals deviceID
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
+}
+
+/*
+ * @tc.name: UpdateRecords001
+ * @tc.desc: PermissionRecordManager::UpdateRecords function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    int32_t flag = 0;
+    PermissionUsedRecord inBundleRecord;
+    PermissionUsedRecord outBundleRecord;
+
+    inBundleRecord.lastAccessTime = 1000;
+    outBundleRecord.lastAccessTime = 900;
+    // inBundleRecord.lastAccessTime > outBundleRecord.lastAccessTime && flag == 0
+    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+
+    UsedRecordDetail detail;
+    detail.accessDuration = 10;
+    detail.status = PERM_ACTIVE_IN_FOREGROUND;
+    detail.timestamp = 10000;
+    flag = 1;
+    inBundleRecord.lastRejectTime = 1000;
+    inBundleRecord.accessRecords.emplace_back(detail);
+    inBundleRecord.rejectRecords.emplace_back(detail);
+    // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() < 10
+    // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < 10
+    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+
+    std::vector<UsedRecordDetail> accessRecords(11, detail);
+    outBundleRecord.accessRecords = accessRecords;
+    outBundleRecord.rejectRecords = accessRecords;
+    // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() >= 10
+    // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() >= 10
+    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+
+    inBundleRecord.lastAccessTime = 0;
+    inBundleRecord.lastRejectTime = 0;
+    // flag != 0 && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.accessRecords.size() >= 10
+    // && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.rejectRecords.size() >= 10
+    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+}
+
+/*
+ * @tc.name: RemoveRecordFromStartList001
+ * @tc.desc: PermissionRecordManager::RemoveRecordFromStartList function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+    PermissionRecord record;
+    record.tokenId = tokenId;
+    record.opCode = Constant::OP_READ_MEDIA;
+    // it->opcode == record.opcode && it->tokenId == record.tokenId
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record); // record in cache has delete
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+    record.tokenId = 123; // 123 is random input
+    // it->opcode == record.opcode && it->tokenId != record.tokenId
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record);
+
+    record.opCode = Constant::OP_MICROPHONE;
+    // it->opcode != record.opcode && it->tokenId != record.tokenId
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record);
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: StartUsingPermission001
+ * @tc.desc: PermissionRecordManager::StartUsingPermission function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermission001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    // tokenId invaild
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StartUsingPermission(
+        static_cast<AccessTokenID>(123), "ohos.permission.READ_MEDIA"));
+    
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, "ohos.permission.READ_MEDIA"));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: StopUsingPermission001
+ * @tc.desc: PermissionRecordManager::StopUsingPermission function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    // tokenId invaild
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StopUsingPermission(
+        static_cast<AccessTokenID>(0), "ohos.permission.READ_MEDIA"));
+
+    // permission invaild
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, "ohos.permission.test"));
+
+    // not start using
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: PermissionListFilter001
+ * @tc.desc: PermissionRecordManager::PermissionListFilter function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, PermissionListFilter001, TestSize.Level1)
+{
+    std::vector<std::string> listSrc;
+    std::vector<std::string> listRes;
+
+    listSrc.emplace_back("com.ohos.TEST");
+    // GetDefPermission != Constant::SUCCESS && listRes is empty && listSrc is not empty
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().PermissionListFilter(listSrc, listRes));
+
+    listRes.emplace_back("com.ohos.TEST");
+    // listRes is not empty
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().PermissionListFilter(listSrc, listRes));
+
+    listSrc.clear();
+    listRes.clear();
+    // listRes is empty && listSrc is empty
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().PermissionListFilter(listSrc, listRes));
+}
+
+/*
+ * @tc.name: RegisterPermActiveStatusCallback003
+ * @tc.desc: PermissionRecordManager::RegisterPermActiveStatusCallback function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestSize.Level1)
+{
+    std::vector<std::string> permList;
+
+    permList.emplace_back("com.ohos.TEST");
+    // GetDefPermission != Constant::SUCCESS && listRes is empty && listSrc is not empty
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+}
+
+/*
+ * @tc.name: Unregister001
+ * @tc.desc: PermissionRecordManager::Unregister function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, "ohos.permission.READ_MEDIA"));
+
+    PermissionRecordManager::GetInstance().Unregister();
+    PermissionRecordManager::GetInstance().Unregister();
+
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
+        tokenId, "ohos.permission.READ_MEDIA"));
 }
 } // namespace AccessToken
 } // namespace Security
