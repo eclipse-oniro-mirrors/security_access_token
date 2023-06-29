@@ -44,6 +44,18 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
+static const std::vector<std::string> g_notDisplayedPerms = {
+    "ohos.permission.ANSWER_CALL",
+    "ohos.permission.MANAGE_VOICEMAIL",
+    "ohos.permission.READ_CELL_MESSAGES",
+    "ohos.permission.READ_MESSAGES",
+    "ohos.permission.RECEIVE_MMS",
+    "ohos.permission.RECEIVE_SMS",
+    "ohos.permission.RECEIVE_WAP_MESSAGES",
+    "ohos.permission.SEND_MESSAGES",
+    "ohos.permission.READ_CALL_LOG",
+    "ohos.permission.WRITE_CALL_LOG"
+};
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -266,9 +278,8 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     int32_t goalGrantStatus;
     uint32_t goalGrantFlags;
 
-    // api8 require vague location permission refuse directlty beause there is no vague location permission in api8
-    if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) &&
-       (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
+    // api8 require vague location permission refuse directly because there is no vague location permission in api8
+    if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
         permState.state = INVALID_OPER;
         return;
     }
@@ -285,14 +296,12 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     }
 
     if (foundGoal == false) {
-        ACCESSTOKEN_LOG_WARN(LABEL,
-            "can not find permission: %{public}s define!", permState.permissionName.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "can not find permission: %{public}s define!", permState.permissionName.c_str());
         permState.state = INVALID_OPER;
         return;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permState.permissionName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL,
-            "no definition for permission: %{public}s!", permState.permissionName.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "no definition for permission: %{public}s!", permState.permissionName.c_str());
         permState.state = INVALID_OPER;
         return;
     }
@@ -303,8 +312,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
             return;
         }
 
-        if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) ||
-            ((goalGrantFlags & PERMISSION_USER_SET) != 0) ||
+        if ((goalGrantFlags == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlags & PERMISSION_USER_SET) != 0) ||
             ((goalGrantFlags & PERMISSION_COMPONENT_SET) != 0)) {
             permState.state = DYNAMIC_OPER;
             return;
@@ -313,8 +321,11 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
             permState.state = SETTING_OPER;
             return;
         }
+        auto iter = std::find(g_notDisplayedPerms.begin(), g_notDisplayedPerms.end(), permState.permissionName);
+        if (iter != g_notDisplayedPerms.end()) {
+            permState.state = INVALID_OPER;
+        }
     }
-
     permState.state = PASS_OPER;
     return;
 }
