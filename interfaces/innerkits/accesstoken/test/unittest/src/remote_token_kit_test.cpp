@@ -264,7 +264,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(ret, RET_SUCCESS);
 }
 
-void SetRemoteHapTokenInfoWithWrongInfo(HapTokenInfo &wrongBaseInfo, HapTokenInfo &rightBaseInfo,
+void SetRemoteHapTokenInfoWithWrongInfo(HapTokenInfo &wrongBaseInfo, const HapTokenInfo &rightBaseInfo,
     HapTokenInfoForSync &remoteTokenInfo, const std::string &deviceID)
 {
     std::string wrongStr(10241, 'x'); // 10241 means the invalid string length
