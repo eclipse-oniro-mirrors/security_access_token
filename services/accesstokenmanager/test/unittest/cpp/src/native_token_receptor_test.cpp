@@ -399,7 +399,7 @@ HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
 }
 #endif
 
-void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
+static void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
 {
     PermissionStateFull infoManagerTestState1 = {
         .permissionName = "ohos.permission.ACCELEROMETER",
@@ -429,7 +429,7 @@ void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
     permStateList.emplace_back(infoManagerTestState3);
 }
 
-void CompareGoalTokenInfo(NativeTokenInfo &info)
+static void CompareGoalTokenInfo(NativeTokenInfo &info)
 {
     NativeTokenInfo findInfo;
     int ret = AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(info.tokenID, findInfo);
