@@ -294,13 +294,6 @@ HWTEST_F(TokenLibKitTest, GetAccessTokenId002, TestSize.Level1)
     delete[] dcaps;
 }
 
-void SetNativeDcaps(NativeTokenInfoParams &infoInstance,
-    int32_t dcapsNum, const char **dcaps, const char *process)
-{
-    infoInstance.dcapsNum = dcapsNum;
-    infoInstance.dcaps = dcaps;
-    infoInstance.processName = process;
-}
 /**
  * @tc.name: GetAccessTokenId003
  * @tc.desc: cannot getAccessTokenId with invalid dcaps.
