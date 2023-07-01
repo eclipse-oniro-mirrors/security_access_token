@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 
 #include <iremote_proxy.h>
 #include "app_state_data.h"
+#include "process_data.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,9 +28,11 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.appexecfwk.IApplicationStateObserver");
 
     virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) = 0;
+    virtual void OnProcessDied(const ProcessData &processData) = 0;
 
     enum class Message {
         TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
+        TRANSACT_ON_PROCESS_DIED = 5,
     };
 };
 

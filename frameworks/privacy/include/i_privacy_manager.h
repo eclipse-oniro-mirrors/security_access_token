@@ -26,6 +26,9 @@
 #include "privacy_service_ipc_interface_code.h"
 #include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data_parcel.h"
+#endif
 
 /* SAID:3505 */
 namespace OHOS {
@@ -52,6 +55,11 @@ public:
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    virtual int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) = 0;
+    virtual int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) = 0;
+    virtual int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) = 0;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

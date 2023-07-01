@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -56,6 +56,12 @@ public:
         sptr<PermActiveStatusChangeCallback>& callbackWrap);
     bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     void OnRemoteDiedHandle();
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
+    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
+    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
+#endif
+
 private:
     PrivacyManagerClient();
 

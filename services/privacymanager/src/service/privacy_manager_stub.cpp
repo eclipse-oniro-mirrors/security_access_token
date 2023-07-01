@@ -33,6 +33,9 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static const int32_t ERROR = -1;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
+#endif
 }
 
 int32_t PrivacyManagerStub::OnRemoteRequest(
@@ -77,6 +80,11 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
             IsAllowedUsingPermissionInner(data, reply);
             break;
         default:
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+            if (HandleSecCompReq(code, data, reply)) {
+                return NO_ERROR;
+            }
+#endif
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }
     return NO_ERROR;
@@ -280,6 +288,93 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
         return;
     }
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+bool PrivacyManagerStub::HandleSecCompReq(uint32_t code, MessageParcel& data, MessageParcel& reply)
+{
+    switch (code) {
+        case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE):
+            RegisterSecCompEnhanceInner(data, reply);
+            break;
+        case static_cast<uint32_t>(PrivacyInterfaceCode::DEPOSIT_SEC_COMP_ENHANCE):
+            DepositSecCompEnhanceInner(data, reply);
+            break;
+        case static_cast<uint32_t>(PrivacyInterfaceCode::RECOVER_SEC_COMP_ENHANCE):
+            RecoverSecCompEnhanceInner(data, reply);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+{
+    sptr<SecCompEnhanceDataParcel> requestParcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
+    if (requestParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    int32_t result = this->RegisterSecCompEnhance(*requestParcel);
+    reply.WriteInt32(result);
+}
+
+void PrivacyManagerStub::DepositSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsSecCompServiceCalling()) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    uint32_t size = data.ReadUint32();
+    if (size > MAX_SEC_COMP_ENHANCE_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size %{public}u is invalid", size);
+        reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
+        return;
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<SecCompEnhanceDataParcel> parcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
+        if (parcel == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "parcel read faild");
+            continue;
+        }
+        parcelList.emplace_back(*parcel);
+    }
+
+    int32_t result = this->DepositSecCompEnhance(parcelList);
+    reply.WriteInt32(result);
+}
+
+void PrivacyManagerStub::RecoverSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsSecCompServiceCalling()) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    int32_t result = this->RecoverSecCompEnhance(parcelList);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteUint32(parcelList.size());
+    for (const auto& parcel : parcelList) {
+        reply.WriteParcelable(&parcel);
+    }
+}
+
+bool PrivacyManagerStub::IsSecCompServiceCalling()
+{
+    uint32_t tokenCaller = IPCSkeleton::GetCallingTokenID();
+    if (secCompTokenId_ == 0) {
+        secCompTokenId_ = AccessTokenKit::GetNativeTokenId("security_component_service");
+    }
+    return tokenCaller == secCompTokenId_;
+}
+#endif
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const
 {

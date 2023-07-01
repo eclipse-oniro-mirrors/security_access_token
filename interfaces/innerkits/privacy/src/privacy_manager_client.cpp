@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,9 @@
 #include "iservice_registry.h"
 #include "privacy_error.h"
 #include "privacy_manager_proxy.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data_parcel.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -262,6 +265,55 @@ bool PrivacyManagerClient::IsAllowedUsingPermission(AccessTokenID tokenID, const
     }
     return proxy->IsAllowedUsingPermission(tokenID, permissionName);
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    SecCompEnhanceDataParcel registerParcel;
+    registerParcel.enhanceData = enhance;
+    return proxy->RegisterSecCompEnhance(registerParcel);
+}
+
+int32_t PrivacyManagerClient::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    for (const auto& data : enhanceList) {
+        SecCompEnhanceDataParcel parcel;
+        parcel.enhanceData = data;
+        parcelList.emplace_back(parcel);
+    }
+    return proxy->DepositSecCompEnhance(parcelList);
+}
+
+int32_t PrivacyManagerClient::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    int32_t res = proxy->RecoverSecCompEnhance(parcelList);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+
+    for (const auto& parcel : parcelList) {
+        enhanceList.emplace_back(parcel.enhanceData);
+    }
+    return RET_SUCCESS;
+}
+#endif
 
 void PrivacyManagerClient::InitProxy()
 {

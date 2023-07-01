@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,9 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "privacy_sec_comp_enhance_agent.h"
+#endif
 #ifdef POWER_MANAGER_ENABLE
 #include "privacy_power_shutdown_callback.h"
 #include "shutdown/shutdown_client.h"
@@ -138,6 +141,36 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
 {
     return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+{
+    return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
+}
+
+int32_t PrivacyManagerService::DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+{
+    std::vector<SecCompEnhanceData> enhanceList;
+    std::transform(enhanceParcelList.begin(),
+        enhanceParcelList.end(), std::back_inserter(enhanceList),
+        [](const auto& parcel) { return parcel.enhanceData; });
+
+    return PrivacySecCompEnhanceAgent::GetInstance().DepositSecCompEnhance(enhanceList);
+}
+
+int32_t PrivacyManagerService::RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+{
+    std::vector<SecCompEnhanceData> enhanceList;
+    PrivacySecCompEnhanceAgent::GetInstance().RecoverSecCompEnhance(enhanceList);
+    for (const auto& enhance : enhanceList) {
+        SecCompEnhanceDataParcel parcel;
+        parcel.enhanceData = enhance;
+        enhanceParcelList.emplace_back(parcel);
+    }
+
+    return RET_SUCCESS;
+}
+#endif
 
 int32_t PrivacyManagerService::ResponseDumpCommand(int32_t fd, const std::vector<std::u16string>& args)
 {

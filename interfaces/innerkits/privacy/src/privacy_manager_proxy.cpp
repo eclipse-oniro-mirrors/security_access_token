@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,10 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerProxy"
 };
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
+#endif
 }
 
 PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
@@ -281,6 +285,88 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
 
     return reply.ReadBool();
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteParcelable(&enhanceParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write parcel.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!SendRequest(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return reply.ReadInt32();
+}
+
+int32_t PrivacyManagerProxy::DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(enhanceParcelList.size())) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Failed to write uint32.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    for (const auto& parcel : enhanceParcelList) {
+        if (!data.WriteParcelable(&parcel)) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to write parcel.");
+            continue;
+        }
+    }
+
+    if (!SendRequest(PrivacyInterfaceCode::DEPOSIT_SEC_COMP_ENHANCE, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return reply.ReadInt32();
+}
+
+int32_t PrivacyManagerProxy::RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!SendRequest(PrivacyInterfaceCode::RECOVER_SEC_COMP_ENHANCE, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    uint32_t size = reply.ReadUint32();
+    if (size > MAX_SEC_COMP_ENHANCE_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+        return PrivacyError::ERR_OVERSIZE;
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<SecCompEnhanceDataParcel> parcel = reply.ReadParcelable<SecCompEnhanceDataParcel>();
+        if (parcel != nullptr) {
+            enhanceParcelList.emplace_back(*parcel);
+        }
+    }
+    return result;
+}
+#endif
 
 bool PrivacyManagerProxy::SendRequest(
     PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply)

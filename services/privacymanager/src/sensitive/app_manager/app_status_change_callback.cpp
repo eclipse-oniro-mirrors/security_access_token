@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -48,6 +48,10 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
             HandleOnForegroundApplicationChanged(data, reply);
             return NO_ERROR;
         }
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED: {
+            HandleOnProcessDied(data, reply);
+            return NO_ERROR;
+        }
         default: {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
@@ -65,6 +69,18 @@ int32_t ApplicationStateObserverStub::HandleOnForegroundApplicationChanged(Messa
     }
 
     OnForegroundApplicationChanged(*processData);
+    return NO_ERROR;
+}
+
+int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, MessageParcel &reply)
+{
+    std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
+    if (processData == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        return -1;
+    }
+
+    OnProcessDied(*processData);
     return NO_ERROR;
 }
 
