@@ -83,6 +83,7 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/app_manager/app_manager_privacy_proxy.cpp",
       "src/sensitive/app_manager/app_state_data.cpp",
       "src/sensitive/app_manager/app_status_change_callback.cpp",
+      "src/sensitive/app_manager/process_data.cpp",
       "src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
       "src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
       "src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
@@ -134,6 +135,12 @@ if (is_standard_system && ability_base_enable == true) {
       include_dirs += [ "include/power" ]
       sources += [ "src/power/privacy_power_shutdown_callback.cpp" ]
       external_deps += [ "power_manager:powermgr_client" ]
+    }
+
+    if (security_component_enhance_enable == true) {
+      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+      include_dirs += [ "include/seccomp" ]
+      sources += [ "src/seccomp/privacy_sec_comp_enhance_agent.cpp" ]
     }
   }
 }

@@ -96,5 +96,8 @@ if (is_standard_system) {
 
     configs = [ "${access_token_path}/config:coverage_flags" ]
     cflags_cc = [ "-DHILOG_ENABLE" ]
+    if (security_component_enhance_enable == true) {
+      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+    }
   }
 }

@@ -81,6 +81,7 @@ ohos_fuzztest("RegisterPermActiveStatusCallbackStubFuzzTest") {
     "${access_token_path}/services/privacymanager/src/sensitive/app_manager/app_manager_privacy_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/app_manager/app_state_data.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/app_manager/app_status_change_callback.cpp",
+    "${access_token_path}/services/privacymanager/src/sensitive/app_manager/process_data.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",

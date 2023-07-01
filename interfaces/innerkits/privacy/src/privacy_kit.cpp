@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -135,6 +135,23 @@ bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::stri
     }
     return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName);
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+int32_t PrivacyKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
+{
+    return PrivacyManagerClient::GetInstance().RegisterSecCompEnhance(enhance);
+}
+
+int32_t PrivacyKit::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+{
+    return PrivacyManagerClient::GetInstance().DepositSecCompEnhance(enhanceList);
+}
+
+int32_t PrivacyKit::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
+{
+    return PrivacyManagerClient::GetInstance().RecoverSecCompEnhance(enhanceList);
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

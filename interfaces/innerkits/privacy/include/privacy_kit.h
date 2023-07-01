@@ -42,6 +42,9 @@
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 #include "perm_active_status_customized_cbk.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "sec_comp_enhance_data.h"
+#endif
 #include "state_customized_cbk.h"
 
 namespace OHOS {
@@ -128,6 +131,27 @@ public:
      * @return true means allow to user the permission, false means not allow
      */
     static bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    /**
+     * @brief Register security component enhance data when security component service did not start
+     * @param enhance enhance data
+     * @return error code, see privacy_error.h
+     */
+    static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
+    /**
+     * @brief deposit security component enhance data when security component service exit
+     * @param enhanceList enhance data
+     * @return error code, see privacy_error.h
+     */
+    static int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
+    /**
+     * @brief recover security component enhance data to security component service
+     * @param enhanceList enhance data
+     * @return error code, see privacy_error.h
+     */
+    static int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

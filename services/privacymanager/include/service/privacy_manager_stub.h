@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,10 +41,20 @@ private:
     void RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply);
     void IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply);
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    bool HandleSecCompReq(uint32_t code, MessageParcel& data, MessageParcel& reply);
+    void RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
+    void DepositSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
+    void RecoverSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
+    bool IsSecCompServiceCalling();
+#endif
     bool IsAccessTokenCalling() const;
     bool IsSystemAppCalling() const;
     bool VerifyPermission(const std::string& permission) const;
     static const int32_t ACCESSTOKEN_UID = 3020;
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    AccessTokenID secCompTokenId_ = 0;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

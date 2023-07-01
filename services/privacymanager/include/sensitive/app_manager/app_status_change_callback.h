@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,9 +33,11 @@ public:
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
     virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    virtual void OnProcessDied(const ProcessData &processData) override {};
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
     int32_t HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleOnProcessDied(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AccessToken
 } // namespace Security

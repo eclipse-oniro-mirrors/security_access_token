@@ -71,5 +71,9 @@ if (is_standard_system) {
       "-DHILOG_ENABLE",
       "-DDEBUG_API_PERFORMANCE",
     ]
+
+    if (security_component_enhance_enable == true) {
+      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+    }
   }
 }

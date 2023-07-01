@@ -13,32 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef PRIVACY_SERVICE_IPC_INTERFACE_CODE_H
-#define PRIVACY_SERVICE_IPC_INTERFACE_CODE_H
+#ifndef SEC_COMP_ENHANCE_DATA_PARCEL_H
+#define SEC_COMP_ENHANCE_DATA_PARCEL_H
+
+#include "parcel.h"
+#include "sec_comp_enhance_data.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/* SAID:3505 */
-enum class PrivacyInterfaceCode {
-    ADD_PERMISSION_USED_RECORD = 0x0000,
-    START_USING_PERMISSION,
-    START_USING_PERMISSION_CALLBACK,
-    STOP_USING_PERMISSION,
-    DELETE_PERMISSION_USED_RECORDS,
-    GET_PERMISSION_USED_RECORDS,
-    GET_PERMISSION_USED_RECORDS_ASYNC,
-    REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK,
-    UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK,
-    IS_ALLOWED_USING_PERMISSION,
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    REGISTER_SEC_COMP_ENHANCE,
-    DEPOSIT_SEC_COMP_ENHANCE,
-    RECOVER_SEC_COMP_ENHANCE
-#endif
+struct SecCompEnhanceDataParcel final : public Parcelable {
+    SecCompEnhanceDataParcel() = default;
+
+    ~SecCompEnhanceDataParcel() override = default;
+
+    bool Marshalling(Parcel& out) const override;
+
+    static SecCompEnhanceDataParcel* Unmarshalling(Parcel& in);
+
+    SecCompEnhanceData enhanceData;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif // PRIVACY_SERVICE_IPC_INTERFACE_CODE_H
+#endif // SEC_COMP_ENHANCE_DATA_PARCEL_H
