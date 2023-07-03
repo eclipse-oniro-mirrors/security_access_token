@@ -18,19 +18,11 @@
 
 #include <iremote_proxy.h>
 
+#include "privacy_camera_service_ipc_interface_code.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum CameraMuteServiceCallbackRequestCode {
-    CAMERA_CALLBACK_MUTE_MODE = 0
-};
-
-enum CameraServiceRequestCode {
-    CAMERA_SERVICE_SET_MUTE_CALLBACK = 2,
-    CAMERA_SERVICE_MUTE_CAMERA = 11,
-    CAMERA_SERVICE_IS_CAMERA_MUTED = 12,
-};
-
 class ICameraMuteServiceCallback : public IRemoteBroker {
 public:
     virtual int32_t OnCameraMute(bool muteMode) = 0;

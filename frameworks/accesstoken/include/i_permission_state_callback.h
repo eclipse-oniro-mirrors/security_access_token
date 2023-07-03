@@ -19,6 +19,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "accesstoken_state_change_ipc_interface_code.h"
 #include "errors.h"
 #include "iremote_broker.h"
 #include "permission_state_change_info.h"
@@ -31,10 +32,6 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermissionStateCallback");
 
     virtual void PermStateChangeCallback(PermStateChangeInfo& result) = 0;
-
-    enum {
-        PERMISSION_STATE_CHANGE = 0,
-    };
 };
 } // namespace AccessToken
 } // namespace Security

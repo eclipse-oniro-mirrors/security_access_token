@@ -1473,7 +1473,7 @@ HWTEST_F(PrivacyKitTest, OnRemoteRequest002, TestSize.Level1)
 
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(OnPermissionUsedRecordCallback::ON_QUERIED),
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(PrivacyPermissionRecordInterfaceCode::ON_QUERIED),
         data, reply, option)); // descriptor false
 
     ASSERT_EQ(true, data.WriteInterfaceToken(OnPermissionUsedRecordCallback::GetDescriptor()));
@@ -1485,7 +1485,7 @@ HWTEST_F(PrivacyKitTest, OnRemoteRequest002, TestSize.Level1)
     ASSERT_EQ(true, data.WriteInterfaceToken(OnPermissionUsedRecordCallback::GetDescriptor()));
     ASSERT_EQ(true, data.ReadInt32(errCode));
     ASSERT_EQ(true, data.WriteParcelable(&resultParcel));
-    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(OnPermissionUsedRecordCallback::ON_QUERIED),
+    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(PrivacyPermissionRecordInterfaceCode::ON_QUERIED),
         data, reply, option)); // descriptor flase + msgCode true + error != 0
 }
 
@@ -1527,7 +1527,7 @@ HWTEST_F(PrivacyKitTest, OnRemoteRequest003, TestSize.Level1)
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
     ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IPermActiveStatusCallback::PERM_ACTIVE_STATUS_CHANGE), data, reply, option)); // descriptor false
+        PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE), data, reply, option)); // descriptor false
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPermActiveStatusCallback::GetDescriptor()));
     ASSERT_EQ(true, data.WriteParcelable(&responseParcel));

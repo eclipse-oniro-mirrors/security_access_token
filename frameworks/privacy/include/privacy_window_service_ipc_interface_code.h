@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef I_STATE_CHANGE_CALLBACK_H
-#define I_STATE_CHANGE_CALLBACK_H
-
-#include "iremote_broker.h"
-#include "access_token.h"
-#include "privacy_state_change_ipc_interface_code.h"
+#ifndef PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H
+#define PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class IStateChangeCallback : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.privacy.IStateChangeCallback");
-
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing) = 0;
-
-    enum {
-        STATE_CHANGE_CALLBACK = 0,
-    };
+enum class PrivacyWindowServiceInterfaceCode {
+    TRANS_ID_UPDATE_FOCUS  = 1,
+    TRANS_ID_UPDATE_SYSTEM_BAR_PROPS,
+    TRANS_ID_UPDATE_WINDOW_STATUS,
+    TRANS_ID_UPDATE_WINDOW_VISIBILITY,
+    TRANS_ID_UPDATE_CAMERA_FLOAT,
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 
-#endif // I_STATE_CHANGE_CALLBACK_H
+#endif // PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H

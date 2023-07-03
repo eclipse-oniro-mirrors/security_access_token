@@ -21,6 +21,7 @@
 #include "access_token.h"
 #include "active_change_response_info.h"
 #include "iremote_broker.h"
+#include "privacy_active_change_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
@@ -30,10 +31,6 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPermActiveStatusCallback");
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result) = 0;
-
-    enum {
-        PERM_ACTIVE_STATUS_CHANGE = 0,
-    };
 };
 } // namespace AccessToken
 } // namespace Security

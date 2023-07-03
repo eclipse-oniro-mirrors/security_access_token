@@ -18,6 +18,8 @@
 
 #include <iremote_proxy.h>
 
+#include "privacy_window_service_ipc_interface_code.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -32,13 +34,6 @@ enum class WindowManagerAgentType : uint32_t {
 class IWindowManagerAgent : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.IWindowManagerAgent");
-    enum class WindowManagerAgentMsg : uint32_t {
-        TRANS_ID_UPDATE_FOCUS  = 1,
-        TRANS_ID_UPDATE_SYSTEM_BAR_PROPS,
-        TRANS_ID_UPDATE_WINDOW_STATUS,
-        TRANS_ID_UPDATE_WINDOW_VISIBILITY,
-        TRANS_ID_UPDATE_CAMERA_FLOAT,
-    };
 
     virtual void UpdateCameraFloatWindowStatus(uint32_t accessTokenId, bool isShowing) = 0;
 };

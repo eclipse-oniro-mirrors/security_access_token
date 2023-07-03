@@ -16,7 +16,6 @@
 #ifndef ON_PERMISSION_USED_RECORD_CALLBACK_STUB_H
 #define ON_PERMISSION_USED_RECORD_CALLBACK_STUB_H
 
-
 #include "on_permission_used_record_callback.h"
 
 #include "iremote_stub.h"

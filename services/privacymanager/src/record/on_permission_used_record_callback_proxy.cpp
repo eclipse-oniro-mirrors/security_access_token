@@ -58,7 +58,7 @@ void OnPermissionUsedRecordCallbackProxy::OnQueried(ErrCode code, PermissionUsed
         return;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(OnPermissionUsedRecordCallback::ON_QUERIED), data, reply, option);
+        static_cast<uint32_t>(PrivacyPermissionRecordInterfaceCode::ON_QUERIED), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;

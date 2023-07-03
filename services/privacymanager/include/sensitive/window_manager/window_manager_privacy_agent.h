@@ -19,6 +19,7 @@
 #include "accesstoken_kit.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
+#include "privacy_window_service_ipc_interface_code.h"
 #include "window_manager_privacy_proxy.h"
 
 namespace OHOS {

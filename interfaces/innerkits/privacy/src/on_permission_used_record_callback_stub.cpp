@@ -40,7 +40,7 @@ int32_t OnPermissionUsedRecordCallbackStub::OnRemoteRequest(
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
-    if (msgCode == OnPermissionUsedRecordCallback::ON_QUERIED) {
+    if (msgCode == static_cast<int32_t>(PrivacyPermissionRecordInterfaceCode::ON_QUERIED)) {
         ErrCode errCode = data.ReadInt32();
         PermissionUsedResult result;
         if (errCode != NO_ERROR) {

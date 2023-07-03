@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include "window_manager_privacy_agent.h"
 #include "accesstoken_log.h"
 #include "permission_record_manager.h"
+#include "window_manager_privacy_agent.h"
 
 namespace OHOS {
 namespace Security {
@@ -34,9 +34,9 @@ int WindowManagerPrivacyAgent::OnRemoteRequest(uint32_t code, MessageParcel& dat
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, read desciptor error", __func__);
         return -1;
     }
-    IWindowManagerAgent::WindowManagerAgentMsg msgId = static_cast<IWindowManagerAgent::WindowManagerAgentMsg>(code);
+    PrivacyWindowServiceInterfaceCode msgId = static_cast<PrivacyWindowServiceInterfaceCode>(code);
     switch (msgId) {
-        case IWindowManagerAgent::WindowManagerAgentMsg::TRANS_ID_UPDATE_CAMERA_FLOAT: {
+        case PrivacyWindowServiceInterfaceCode::TRANS_ID_UPDATE_CAMERA_FLOAT: {
             uint32_t accessTokenId = data.ReadUint32();
             bool isShowing = data.ReadBool();
             UpdateCameraFloatWindowStatus(accessTokenId, isShowing);

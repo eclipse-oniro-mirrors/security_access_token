@@ -38,6 +38,7 @@
 #include "errors.h"
 #include "iremote_broker.h"
 #include "permission_used_result.h"
+#include "privacy_permission_record_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
@@ -59,11 +60,6 @@ public:
      * @param result PermissionUsedResult quote, as callback info
      */
     virtual void OnQueried(ErrCode code, PermissionUsedResult& result) = 0;
-
-    /** interface enum */
-    enum {
-        ON_QUERIED = 0,
-    };
 };
 } // namespace AccessToken
 } // namespace Security

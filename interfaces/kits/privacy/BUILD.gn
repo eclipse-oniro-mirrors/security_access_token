@@ -17,6 +17,7 @@ import("../../../access_token.gni")
 ohos_shared_library("libprivacymanager") {
   include_dirs = [
     "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/frameworks/privacy/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/interfaces/kits/common/include",

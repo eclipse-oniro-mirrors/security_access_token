@@ -41,7 +41,7 @@ int CameraServiceCallbackStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_INFO(LABEL, "CameraServiceCallbackStub: ReadInterfaceToken failed");
         return -1;
     }
-    CameraMuteServiceCallbackRequestCode msgId = static_cast<CameraMuteServiceCallbackRequestCode>(code);
+    PrivacyCameraMuteServiceInterfaceCode msgId = static_cast<PrivacyCameraMuteServiceInterfaceCode>(code);
     switch (msgId) {
         case CAMERA_CALLBACK_MUTE_MODE: {
             bool mute = data.ReadBool();

@@ -61,7 +61,7 @@ int AbilityManagerPrivacyProxy::StartAbility(const AAFwk::Want &want, const sptr
     }
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(IAbilityManager::AbilityManagerMessage::START_ABILITY_ADD_CALLER), data, reply, option);
+        static_cast<uint32_t>(PrivacyAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER), data, reply, option);
     if (error != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Send request error: %{public}d", error);
         return error;
