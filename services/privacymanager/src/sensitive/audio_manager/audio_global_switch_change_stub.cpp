@@ -41,7 +41,7 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub: ReadInterfaceToken failed");
         return -1;
     }
-    AudioRingerModeUpdateListenerMsg msgId = static_cast<AudioRingerModeUpdateListenerMsg>(code);
+    PrivacyAudioRingerInterfaceCode msgId = static_cast<PrivacyAudioRingerInterfaceCode>(code);
     switch (msgId) {
         case ON_MIC_STATE_UPDATED: {
             MicStateChangeEvent micStateChangeEvent = {};

@@ -39,7 +39,7 @@ int32_t PermActiveStatusChangeCallbackStub::OnRemoteRequest(
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
-    if (msgCode == IPermActiveStatusCallback::PERM_ACTIVE_STATUS_CHANGE) {
+    if (msgCode == static_cast<int32_t>(PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE)) {
         sptr<ActiveChangeResponseParcel> resultSptr = data.ReadParcelable<ActiveChangeResponseParcel>();
         if (resultSptr == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");

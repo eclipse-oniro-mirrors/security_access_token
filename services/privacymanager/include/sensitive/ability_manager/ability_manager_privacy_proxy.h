@@ -17,6 +17,8 @@
 #define OHOS_ABILITY_MANAGER_PRIVACY_PROXY_H
 
 #include <iremote_proxy.h>
+
+#include "privacy_am_service_ipc_interface_code.h"
 #include "want.h"
 
 namespace OHOS {
@@ -26,10 +28,6 @@ const int DEFAULT_INVAL_VALUE = -1;
 class IAbilityManager : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.aafwk.AbilityManager")
-
-    enum class AbilityManagerMessage : uint32_t {
-        START_ABILITY_ADD_CALLER = 1005,
-    };
 
     virtual int StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
         int requestCode = DEFAULT_INVAL_VALUE, int32_t userId = DEFAULT_INVAL_VALUE) = 0;

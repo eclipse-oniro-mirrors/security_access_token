@@ -137,11 +137,11 @@ void SensitiveManagerServiceTest::TearDown()
 HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level1)
 {
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE),
-        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MICROPHONE_MUTE)); // 15
+        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MICROPHONE_MUTE)); // 15
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE),
-        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::IS_MICROPHONE_MUTE)); // 17
+        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::IS_MICROPHONE_MUTE)); // 17
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK),
-        static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK)); // 59
+        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK)); // 59
 }
 #endif
 
@@ -181,11 +181,11 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyTest001, TestSize.Level
 HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyCode001, TestSize.Level1)
 {
     ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_SET_MUTE_CALLBACK),
-        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_SET_MUTE_CALLBACK)); // 2
+        static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK)); // 2
     ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_MUTE_CAMERA),
-        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_MUTE_CAMERA)); // 11
+        static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA)); // 11
     ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
-        static_cast<uint32_t>(CameraServiceRequestCode::CAMERA_SERVICE_IS_CAMERA_MUTED)); // 12
+        static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED)); // 12
 }
 #endif
 
@@ -268,7 +268,7 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
 HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
 {
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAbilityManager::START_ABILITY_ADD_CALLER),
-        static_cast<uint32_t>(IAbilityManager::AbilityManagerMessage::START_ABILITY_ADD_CALLER)); // 1005
+        static_cast<uint32_t>(PrivacyAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER)); // 1005
 }
 #endif
 
@@ -362,7 +362,7 @@ HWTEST_F(SensitiveManagerServiceTest, OnRemoteRequest002, TestSize.Level1)
     ASSERT_EQ(true, data.WriteBool(isShowing));
     // descriptor flase + msgId = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        IWindowManagerAgent::WindowManagerAgentMsg::TRANS_ID_UPDATE_CAMERA_FLOAT), data, reply, option));
+        PrivacyWindowServiceInterfaceCode::TRANS_ID_UPDATE_CAMERA_FLOAT), data, reply, option));
 }
 
 /**
@@ -514,7 +514,7 @@ HWTEST_F(SensitiveManagerServiceTest, OnRemoteRequest007, TestSize.Level1)
     ASSERT_EQ(true, data.WriteBool(muteMode));
     // msgId = 0
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        CameraMuteServiceCallbackRequestCode::CAMERA_CALLBACK_MUTE_MODE), data, reply, option));
+        PrivacyCameraMuteServiceInterfaceCode::CAMERA_CALLBACK_MUTE_MODE), data, reply, option));
 }
 } // namespace AccessToken
 } // namespace Security

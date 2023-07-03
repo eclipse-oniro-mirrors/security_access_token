@@ -36,6 +36,7 @@
 #define I_TOKEN_CALLBACK_H
 
 #include <iremote_broker.h>
+#include "accesstoken_grant_result_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

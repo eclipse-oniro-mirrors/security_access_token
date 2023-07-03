@@ -18,6 +18,8 @@
 
 #include <iremote_proxy.h>
 
+#include "privacy_audio_service_ipc_interface_code.h"
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
@@ -30,11 +32,6 @@ public:
     virtual ~IStandardAudioRoutingManagerListener() override = default;
     virtual void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) = 0;
 
-    enum AudioRingerModeUpdateListenerMsg {
-        ON_ERROR = 0,
-        ON_MIC_STATE_UPDATED,
-    };
-
     DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioRoutingManagerListener");
 };
 
@@ -45,12 +42,6 @@ public:
     virtual bool IsMicrophoneMute() = 0;
     virtual int32_t SetMicrophoneMute(bool isMute) = 0;
     virtual int32_t SetMicStateChangeCallback(const int32_t clientId, const sptr<IRemoteObject> &object) = 0;
-
-    enum AudioPolicyCommand {
-        SET_MICROPHONE_MUTE = 15,
-        IS_MICROPHONE_MUTE = 17,
-        SET_MIC_STATE_CHANGE_CALLBACK = 59,
-    };
 };
 
 class AudioManagerPrivacyProxy : public IRemoteProxy<IAudioPolicy> {

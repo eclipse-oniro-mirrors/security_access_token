@@ -55,7 +55,7 @@ void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChange
         return;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IPermissionStateCallback::PERMISSION_STATE_CHANGE), data, reply, option);
+        static_cast<uint32_t>(AccesstokenStateChangeInterfaceCode::PERMISSION_STATE_CHANGE), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;

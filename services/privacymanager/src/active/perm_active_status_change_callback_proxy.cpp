@@ -54,7 +54,7 @@ void PermActiveStatusChangeCallbackProxy::ActiveStatusChangeCallback(ActiveChang
         return;
     }
     int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(IPermActiveStatusCallback::PERM_ACTIVE_STATUS_CHANGE), data, reply, option);
+        static_cast<uint32_t>(PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE), data, reply, option);
     if (requestResult != NO_ERROR) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
         return;

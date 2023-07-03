@@ -40,7 +40,7 @@ int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
-    if (msgCode == IPermissionStateCallback::PERMISSION_STATE_CHANGE) {
+    if (msgCode == static_cast<int32_t>(AccesstokenStateChangeInterfaceCode::PERMISSION_STATE_CHANGE)) {
         PermStateChangeInfo result;
         sptr<PermissionStateChangeInfoParcel> resultSptr = data.ReadParcelable<PermissionStateChangeInfoParcel>();
         if (resultSptr == nullptr) {

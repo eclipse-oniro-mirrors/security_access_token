@@ -2030,7 +2030,8 @@ HWTEST_F(AccessTokenKitExtensionTest, OnRemoteRequest001, TestSize.Level1)
 
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-    ASSERT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(IPermissionStateCallback::PERMISSION_STATE_CHANGE),
+    ASSERT_NE(0,
+        callback.OnRemoteRequest(static_cast<uint32_t>(AccesstokenStateChangeInterfaceCode::PERMISSION_STATE_CHANGE),
         data, reply, option)); // descriptor false
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPermissionStateCallback::GetDescriptor()));

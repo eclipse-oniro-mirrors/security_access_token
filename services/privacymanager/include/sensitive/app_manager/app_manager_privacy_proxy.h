@@ -17,8 +17,10 @@
 #define OHOS_APP_MANAGER_PRIVACY_PROXY_H
 
 #include <iremote_proxy.h>
+
 #include "app_state_data.h"
 #include "process_data.h"
+#include "privacy_am_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {

@@ -33,7 +33,7 @@ bool AudioManagerPrivacyProxy::IsMicrophoneMute()
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return false;
     }
-    int32_t error = Remote()->SendRequest(IAudioPolicy::AudioPolicyCommand::IS_MICROPHONE_MUTE, data, reply, option);
+    int32_t error = Remote()->SendRequest(PrivacyAudioPolicyInterfaceCode::IS_MICROPHONE_MUTE, data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "IsMicrophoneMute failed, error: %{public}d", error);
         return false;
@@ -51,7 +51,7 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
         return ERROR;
     }
     data.WriteBool(isMute);
-    int32_t error = Remote()->SendRequest(IAudioPolicy::AudioPolicyCommand::SET_MICROPHONE_MUTE, data, reply, option);
+    int32_t error = Remote()->SendRequest(PrivacyAudioPolicyInterfaceCode::SET_MICROPHONE_MUTE, data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "set microphoneMute failed, error: %d", error);
         return error;
@@ -71,7 +71,7 @@ int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t client
     data.WriteInt32(clientId);
     (void)data.WriteRemoteObject(object);
     int error = Remote()->SendRequest(
-        IAudioPolicy::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
+        PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback failed, error: %{public}d", error);
         return error;
