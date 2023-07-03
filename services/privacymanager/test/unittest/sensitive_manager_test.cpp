@@ -28,7 +28,7 @@
 #include "audio_manager_privacy_client.h"
 #include "audio_manager_privacy_proxy.h"
 #ifdef AUDIO_FRAMEWORK_ENABLE
-#include "audio_policy_types.h"
+#include "audio_policy_ipc_interface_code.h"
 #endif
 #include "camera_manager_privacy_client.h"
 #include "camera_manager_privacy_proxy.h"
@@ -136,11 +136,11 @@ void SensitiveManagerServiceTest::TearDown()
  */
 HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level1)
 {
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::SET_MICROPHONE_MUTE),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE),
         static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MICROPHONE_MUTE)); // 15
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::IS_MICROPHONE_MUTE),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE),
         static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::IS_MICROPHONE_MUTE)); // 17
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK),
         static_cast<uint32_t>(IAudioPolicy::AudioPolicyCommand::SET_MIC_STATE_CHANGE_CALLBACK)); // 59
 }
 #endif
