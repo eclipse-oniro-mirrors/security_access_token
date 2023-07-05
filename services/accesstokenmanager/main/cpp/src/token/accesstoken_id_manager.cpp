@@ -89,6 +89,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpTy
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
     innerId.res = 0;
+    innerId.renderFlag = 0;
     innerId.dlpFlag = (dlpType == 0) ? 0 : 1;
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
     AccessTokenID tokenId = *reinterpret_cast<AccessTokenID *>(&innerId);
