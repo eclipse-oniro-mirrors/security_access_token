@@ -24,6 +24,7 @@ namespace AccessToken {
 class TokenIdKit {
 public:
     static bool IsSystemAppByFullTokenID(uint64_t tokenId);
+    static uint64_t GetRenderTokenID(uint64_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security

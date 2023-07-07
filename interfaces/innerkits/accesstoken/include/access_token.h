@@ -64,8 +64,10 @@ enum AccessTokenKitRet {
  */
 typedef struct {
     unsigned int tokenUniqueID : 20;
-    /** reserved, default 000000 */
-    unsigned int res : 6;
+    /** reserved, default 00000 */
+    unsigned int res : 5;
+    /** renderflag, default 0 */
+    unsigned int renderFlag : 1;
     unsigned int dlpFlag : 1;
     /**
      * token type, for details about the valid values,
