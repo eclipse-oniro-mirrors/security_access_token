@@ -34,7 +34,7 @@
 #include "camera_manager_privacy_proxy.h"
 #include "camera_service_callback_stub.h"
 #ifdef CAMERA_FRAMEWORK_ENABLE
-#include "remote_request_code.h"
+#include "camera_service_ipc_interface_code.h "
 #endif
 #include "token_setproc.h"
 #include "window_manager_privacy_agent.h"
@@ -180,11 +180,11 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyTest001, TestSize.Level
  */
 HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyCode001, TestSize.Level1)
 {
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_SET_MUTE_CALLBACK),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK),
         static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_SET_MUTE_CALLBACK)); // 2
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_MUTE_CAMERA),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA),
         static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_MUTE_CAMERA)); // 11
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceRequestCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::CameraStandard::CameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED),
         static_cast<uint32_t>(PrivacyCameraServiceInterfaceCode::CAMERA_SERVICE_IS_CAMERA_MUTED)); // 12
 }
 #endif
