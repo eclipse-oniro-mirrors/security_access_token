@@ -34,7 +34,7 @@
 #include "camera_manager_privacy_proxy.h"
 #include "camera_service_callback_stub.h"
 #ifdef CAMERA_FRAMEWORK_ENABLE
-#include "camera_service_ipc_interface_code.h "
+#include "camera_service_ipc_interface_code.h"
 #endif
 #include "token_setproc.h"
 #include "window_manager_privacy_agent.h"
