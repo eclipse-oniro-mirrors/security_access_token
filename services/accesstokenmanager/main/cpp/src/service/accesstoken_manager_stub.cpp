@@ -650,6 +650,7 @@ bool AccessTokenManagerStub::IsSystemAppCalling() const
     return TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 void AccessTokenManagerStub::SetTokenSyncFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
@@ -669,6 +670,7 @@ void AccessTokenManagerStub::SetTokenSyncFuncInMap()
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
         &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
 }
+#endif
 
 void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 {
