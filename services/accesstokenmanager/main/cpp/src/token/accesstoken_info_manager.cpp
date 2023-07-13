@@ -205,6 +205,11 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     if (idRemoved != INVALID_TOKENID) {
         RemoveHapTokenInfo(idRemoved);
     }
+
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP", HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
+        "INSTINDEX", info->GetInstIndex());
+
     return RET_SUCCESS;
 }
 
@@ -356,6 +361,10 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
 #endif
+
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "DEL_HAP", HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
+        "INSTINDEX", info->GetInstIndex());
 
     return RET_SUCCESS;
 }

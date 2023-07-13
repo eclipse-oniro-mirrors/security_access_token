@@ -40,3 +40,17 @@ PERMISSION_SYNC:
   CODE: {type: INT32, desc: error code}
   REMOTE_ID: {type: STRING, desc: remote id}
   REASON: {type: STRING, desc: error reason}
+
+ADD_HAP:
+  __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: add a hap to device}
+  TOKENID: {type: UINT32, desc: token id}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+
+DEL_HAP:
+  __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: delete a hap from device}
+  TOKENID: {type: UINT32, desc: tokenID}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
