@@ -1141,7 +1141,7 @@ static void StartGrantExtension(sptr<IRemoteObject>& remoteObject, const std::ve
     want.SetParam(CALLBACK_KEY, remoteObject);
 
     int32_t err = context->StartAbility(want, requestCode);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "End calling StartExtension. ret=%{public}d", err);
+    ACCESSTOKEN_LOG_INFO(LABEL, "End calling StartExtension. ret=%{public}d", err);
 }
 
 bool NapiAtManager::IsDynamicRequest(

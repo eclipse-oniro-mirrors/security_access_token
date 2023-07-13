@@ -904,7 +904,7 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
     if (!reply.ReadString(dumpInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }
 } // namespace AccessToken
 } // namespace Security
