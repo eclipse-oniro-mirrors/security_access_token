@@ -23,7 +23,10 @@ if (is_standard_system) {
   ohos_shared_library("libaccesstoken_sdk") {
     subsystem_name = "security"
     part_name = "access_token"
-    innerapi_tags = [ "platformsdk" ]
+    innerapi_tags = [
+      "platformsdk",
+      "sasdk",
+    ]
     if (!use_clang_coverage) {
       version_script = "libaccesstoken_sdk.map"
     }
@@ -79,7 +82,10 @@ if (is_standard_system) {
 if (is_standard_system) {
   ohos_shared_library("libtokenid_sdk") {
     subsystem_name = "security"
-    innerapi_tags = [ "platformsdk" ]
+    innerapi_tags = [
+      "platformsdk",
+      "sasdk",
+    ]
     part_name = "access_token"
 
     output_name = "libtokenid_sdk"
