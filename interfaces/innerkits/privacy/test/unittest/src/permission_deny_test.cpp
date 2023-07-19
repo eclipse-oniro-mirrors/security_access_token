@@ -25,6 +25,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static uint32_t g_selfTokenId = 0;
+static uint64_t g_FullTokenId = 0;
 static uint32_t g_testTokenId = 0;
 
 static HapPolicyParams g_PolicyPrams = {
@@ -54,22 +55,17 @@ void PermDenyTest::TearDownTestCase()
 
 void PermDenyTest::SetUp()
 {
-    AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+    AccessTokenIDEx tokenIDEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
 
-    g_testTokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
-                                                  g_InfoParms.bundleName,
-                                                  g_InfoParms.instIndex);
-    AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
+    g_FullTokenId = tokenIDEx.tokenIDEx;
+    g_testTokenId = tokenIDEx.tokenIdExStruct.tokenID;
+    EXPECT_EQ(0, SetSelfTokenID(g_FullTokenId));
 }
 
 void PermDenyTest::TearDown()
 {
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms.userID,
-                                                          g_InfoParms.bundleName,
-                                                          g_InfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
+    AccessTokenKit::DeleteToken(g_testTokenId);
 }
 
 /**
@@ -181,10 +177,7 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(permList);
 
-    AccessTokenIDEx tokenIDEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.camera", 0);
-
     // register success with no permission
-    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // register success with permission
@@ -192,7 +185,7 @@ HWTEST_F(PermDenyTest, RegisterAndUnregister001, TestSize.Level1)
     ASSERT_EQ(NO_ERROR, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister fail with no permission
-    EXPECT_EQ(0, SetSelfTokenID(tokenIDEx.tokenIDEx));
+    EXPECT_EQ(0, SetSelfTokenID(g_FullTokenId));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::UnRegisterPermActiveStatusCallback(callbackPtr));
 
     // unregister success with permission

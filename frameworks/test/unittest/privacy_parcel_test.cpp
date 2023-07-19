@@ -78,7 +78,7 @@ BundleUsedRecord g_bundleUsedRecord1 = {
     .tokenId = 100,
     .isRemote = false,
     .deviceId = "you guess",
-    .bundleName = "com.ohos.camera",
+    .bundleName = "com.ohos.test",
 };
 
 BundleUsedRecord g_bundleUsedRecord2 = {
