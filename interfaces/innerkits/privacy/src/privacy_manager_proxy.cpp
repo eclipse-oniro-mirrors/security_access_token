@@ -287,7 +287,7 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhance)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -296,7 +296,7 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
-    if (!data.WriteParcelable(&enhanceParcel)) {
+    if (!data.WriteParcelable(&enhance)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write parcel.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }

@@ -307,10 +307,9 @@ int32_t PrivacyManagerClient::RecoverSecCompEnhance(std::vector<SecCompEnhanceDa
     if (res != RET_SUCCESS) {
         return res;
     }
-
-    for (const auto& parcel : parcelList) {
-        enhanceList.emplace_back(parcel.enhanceData);
-    }
+    
+    std::transform(parcelList.begin(), parcelList.end(), std::back_inserter(enhanceList),
+        [](SecCompEnhanceDataParcel pair) { return pair.enhanceData; });
     return RET_SUCCESS;
 }
 #endif
