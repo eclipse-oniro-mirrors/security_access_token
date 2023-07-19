@@ -1973,7 +1973,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Insert001, TestSize.Level1)
 {
     PermissionDef info = {
         .permissionName = "ohos.permission.CAMERA",
-        .bundleName = "com.ohos.camera",
+        .bundleName = "com.ohos.test",
         .grantMode = 0,
         .availableLevel = ATokenAplEnum::APL_NORMAL,
         .provisionEnable = false,
@@ -2727,7 +2727,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermissionFlag002, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
-        "com.ohos.camera", INST_INDEX);
+        "com.ohos.permissionmanager", INST_INDEX);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.DUMP";

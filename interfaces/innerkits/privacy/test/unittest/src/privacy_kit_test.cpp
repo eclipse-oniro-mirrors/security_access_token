@@ -120,7 +120,7 @@ static BundleUsedRecord g_bundleUsedRecord = {
     .tokenId = 100,
     .isRemote = false,
     .deviceId = "you guess",
-    .bundleName = "com.ohos.camera",
+    .bundleName = "com.ohos.test",
 };
 
 static HapInfoParams g_normalInfoParms = {
