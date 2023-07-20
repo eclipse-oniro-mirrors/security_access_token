@@ -321,8 +321,8 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
             permState.state = SETTING_OPER;
             return;
         }
-        auto iter = std::find(g_notDisplayedPerms.begin(), g_notDisplayedPerms.end(), permState.permissionName);
-        if (iter != g_notDisplayedPerms.end()) {
+        auto iter2 = std::find(g_notDisplayedPerms.begin(), g_notDisplayedPerms.end(), permState.permissionName);
+        if (iter2 != g_notDisplayedPerms.end()) {
             permState.state = INVALID_OPER;
         }
     }

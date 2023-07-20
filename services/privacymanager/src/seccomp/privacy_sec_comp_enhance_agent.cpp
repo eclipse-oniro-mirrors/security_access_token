@@ -83,11 +83,10 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
         return PrivacyError::ERR_CALLBACK_REGIST_REDIRECT;
     }
     int pid = IPCSkeleton::GetCallingPid();
-    for (const auto& e : secCompEnhanceData_) {
-        if (e.pid == pid) {
+    if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
+        [pid](const auto& e) { return e.pid == pid; })) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "register sec comp enhance exist, pid %{public}d.", pid);
             return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
-        }
     }
     SecCompEnhanceData enhance;
     enhance.callback = enhanceData.callback;
