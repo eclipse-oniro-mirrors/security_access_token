@@ -1604,3 +1604,64 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId, permissionName));
     ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
 }
+
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+/**
+ * @tc.name: StartUsingPermission008
+ * @tc.desc: PrivacyKit:: function test register enhance data
+ * @tc.type: FUNC
+ * @tc.require: issueI7MXZ
+ */
+HWTEST_F(PrivacyKitTest, RegisterSecCompEnhance001, TestSize.Level1)
+{
+    SecCompEnhanceData data;
+    data.callback = nullptr;
+    data.pid = 1;
+    data.challenge = 0;
+    ASSERT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, PrivacyKit::RegisterSecCompEnhance(data));
+
+    // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    data.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterSecCompEnhance(data));
+}
+
+/**
+ * @tc.name: DepositSecCompEnhance001
+ * @tc.desc: PrivacyKit:: function test Deposit and Recover
+ * @tc.type: FUNC
+ * @tc.require: issueI7MXZ
+ */
+HWTEST_F(PrivacyKitTest, DepositSecCompEnhance001, TestSize.Level1)
+{
+    AccessTokenID secCompId = AccessTokenKit::GetNativeTokenId("security_component_service");
+    EXPECT_EQ(0, SetSelfTokenID(secCompId));
+
+    SecCompEnhanceData data;
+    data.callback = nullptr;
+    data.pid = 1;
+    data.challenge = 0;
+
+    SecCompEnhanceData data1;
+    // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    data1.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
+    data1.pid = 2;
+    data1.challenge = 0;
+
+    std::vector<SecCompEnhanceData> enhanceList;
+    enhanceList.emplace_back(data);
+    enhanceList.emplace_back(data1);
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::DepositSecCompEnhance(enhanceList));
+
+    std::vector<SecCompEnhanceData> res;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RecoverSecCompEnhance(res));
+
+    bool isPidExist = std::any_of(res.begin(), res.end(), [](const SecCompEnhanceData & data) {
+        return data.pid == 2;
+    });
+    ASSERT_TRUE(isPidExist);
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+}
+#endif
