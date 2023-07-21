@@ -2178,6 +2178,37 @@ HWTEST_F(AccessTokenKitExtensionTest, IsSystemAppByFullTokenIDTest002, TestSize.
     res = TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
     ASSERT_EQ(true, res);
 }
+
+/**
+ * @tc.name: GetRenderTokenIDTest001
+ * @tc.desc: TokenIdKit::GetRenderTokenID function test
+ * @tc.type: FUNC
+ * @tc.require: issueI7MOA1
+ */
+HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest001, TestSize.Level1)
+{
+    uint64_t validTokenID = GetSelfTokenID();
+    uint64_t retTokenId = validTokenID;
+
+    retTokenId = TokenIdKit::GetRenderTokenID(validTokenID);
+    ASSERT_NE(retTokenId, validTokenID);
+    ASSERT_NE(retTokenId, 0);
+}
+
+/**
+ * @tc.name: GetRenderTokenIDTest002
+ * @tc.desc: TokenIdKit::GetRenderTokenID function test
+ * @tc.type: FUNC
+ * @tc.require: issueI7MOA1
+ */
+HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest002, TestSize.Level1)
+{
+    uint64_t invalidTokenID = 0;
+    uint64_t retTokenId = 1;    /* 1, for testing purposes */
+
+    retTokenId = TokenIdKit::GetRenderTokenID(invalidTokenID);
+    ASSERT_EQ(invalidTokenID, retTokenId);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
