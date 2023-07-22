@@ -119,17 +119,22 @@ private:
     sptr<IRemoteObject> cameraCallback_ = nullptr;
 
     // microphone
+    std::mutex micMuteMutex_;
     sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
     // camera
+    std::mutex camMuteMutex_;
     sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
+
+    // appState
+    std::mutex appStateMutex_;
+    sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
 
     // camera float window
     AccessTokenID floatWindowTokenId_ = 0;
     bool camFloatWindowShowing_ = false;
-
+    std::mutex floatWinMutex_;
     sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
-    sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
