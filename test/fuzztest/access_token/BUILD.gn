@@ -37,6 +37,7 @@ group("fuzztest") {
     "getpermissionflags_fuzzer:GetPermissionFlagsFuzzTest",
     "getpermissionusedrecords_fuzzer:GetPermissionUsedRecordsFuzzTest",
     "getremotenativetokenid_fuzzer:GetRemoteNativeTokenIDFuzzTest",
+    "getrendertokenid_fuzzer:GetRenderTokenIdFuzzTest",
     "getreqpermissions_fuzzer:GetReqPermissionsFuzzTest",
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
