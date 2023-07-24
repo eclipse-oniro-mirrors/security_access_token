@@ -1522,31 +1522,35 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
         item->subscriber->GetScope(scopeInfo);
         
         bool hasPermIntersection = false;
-        for (const auto& PermItem : targetPermList) {
-            auto iter = std::find(scopeInfo.permList.begin(), scopeInfo.permList.end(), PermItem);
-            if (iter != scopeInfo.permList.end()) {
-                hasPermIntersection = true;
-                    break;
-            }
-        }
         // Special cases:
         // 1.Have registered full, and then register some
         // 2.Have registered some, then register full
         if (scopeInfo.permList.empty() || targetPermList.empty()) {
             hasPermIntersection = true;
         }
+        for (const auto& PermItem : targetPermList) {
+            if (hasPermIntersection) {
+                break;
+            }
+            auto iter = std::find(scopeInfo.permList.begin(), scopeInfo.permList.end(), PermItem);
+            if (iter != scopeInfo.permList.end()) {
+                hasPermIntersection = true;
+            }
+        }
         
         bool hasTokenIdIntersection = false;
+        
+        if (scopeInfo.tokenIDs.empty() || targetTokenIDs.empty()) {
+            hasTokenIdIntersection = true;
+        }
         for (const auto& tokenItem : targetTokenIDs) {
+            if (hasTokenIdIntersection) {
+                break;
+            }
             auto iter = std::find(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end(), tokenItem);
             if (iter != scopeInfo.tokenIDs.end()) {
                 hasTokenIdIntersection = true;
-                break;
             }
-        }
-
-        if (scopeInfo.tokenIDs.empty() || targetTokenIDs.empty()) {
-            hasPermIntersection = true;
         }
 
         if (hasTokenIdIntersection && hasPermIntersection &&
@@ -1567,7 +1571,8 @@ bool NapiAtManager::CompareCallbackRef(const napi_env env, napi_ref subscriberRe
     NAPI_CALL_BASE(env,
         napi_get_reference_value(env, unsubscriberRef, &unsubscriberCallback), false);
     bool result = false;
-    napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result);
+    NAPI_CALL_BASE(env,
+        napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result), false);
     return result;
 }
 
@@ -1579,12 +1584,10 @@ void NapiAtManager::DeleteRegisterFromVector(const PermStateChangeScope& scopeIn
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
     auto item = g_permStateChangeRegisters.begin();
     while (item != g_permStateChangeRegisters.end()) {
-        if (!CompareCallbackRef(env, (*item)->callbackRef, subscriberRef)) {
-            continue;
-        }
         PermStateChangeScope stateChangeScope;
         (*item)->subscriber->GetScope(stateChangeScope);
-        if (stateChangeScope.tokenIDs == targetTokenIDs && stateChangeScope.permList == targetPermList) {
+        if ((stateChangeScope.tokenIDs == targetTokenIDs) && (stateChangeScope.permList == targetPermList) &&
+            CompareCallbackRef(env, (*item)->callbackRef, subscriberRef)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscribers in vector, delete");
             delete *item;
             *item = nullptr;
