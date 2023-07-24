@@ -788,72 +788,105 @@ bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
 
 bool PermissionRecordManager::Register()
 {
-    if (micMuteCallback_ == nullptr) {
-        micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
+    // microphone mute
+    {
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
         if (micMuteCallback_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register micMuteCallback failed.");
-            return false;
+            micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
+            if (micMuteCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register micMuteCallback failed.");
+                return false;
+            }
+            AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
         }
-        AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
     }
-    if (camMuteCallback_ == nullptr) {
-        camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
+
+    // camera mute
+    {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
         if (camMuteCallback_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register camMuteCallback failed.");
-            return false;
+            camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
+            if (camMuteCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register camMuteCallback failed.");
+                return false;
+            }
+            CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
         }
-        CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
     }
-    if (appStateCallback_ == nullptr) {
-        appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
+
+    // app state change callback register
+    {
+        std::lock_guard<std::mutex> lock(appStateMutex_);
         if (appStateCallback_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
-            return false;
+            appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
+            if (appStateCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
+                return false;
+            }
+            AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
         }
-        AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
     }
-    if (floatWindowCallback_ == nullptr) {
-        floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
+
+    // float window status change callback register
+    {
+        std::lock_guard<std::mutex> lock(floatWinMutex_);
         if (floatWindowCallback_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register floatWindowCallback failed.");
-            return false;
+            floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
+            if (floatWindowCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register floatWindowCallback failed.");
+                return false;
+            }
+            WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
+                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
         }
-        WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
-            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
     }
+
     return true;
 }
 
 void PermissionRecordManager::Unregister()
 {
-    if (appStateCallback_ != nullptr) {
-        AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
-        appStateCallback_= nullptr;
+    // app state change callback unregister
+    {
+        std::lock_guard<std::mutex> lock(appStateMutex_);
+        if (appStateCallback_ != nullptr) {
+            AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+            appStateCallback_= nullptr;
+        }
     }
-    if (floatWindowCallback_ == nullptr) {
-        WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
-            WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
-        floatWindowCallback_ = nullptr;
+
+    // float window status change callback unregister
+    {
+        std::lock_guard<std::mutex> lock(floatWinMutex_);
+        if (floatWindowCallback_ != nullptr) {
+            WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
+                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
+            floatWindowCallback_ = nullptr;
+        }
     }
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 {
+    std::lock_guard<std::mutex> lock(appStateMutex_);
     appStateCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
+    std::lock_guard<std::mutex> lock(micMuteMutex_);
     micMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
+    std::lock_guard<std::mutex> lock(camMuteMutex_);
     camMuteCallback_ = nullptr;
 }
 
 void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
 {
+    std::lock_guard<std::mutex> lock(floatWinMutex_);
     floatWindowCallback_ = nullptr;
 }
 
