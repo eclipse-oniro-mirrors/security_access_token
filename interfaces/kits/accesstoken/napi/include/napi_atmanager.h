@@ -177,12 +177,15 @@ private:
     static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
-    static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
+    static bool IsExistRegister(const napi_env env, const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
+    static bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
-    static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo);
-    static void DeleteRegisterInVector(const PermStateChangeScope& scopeInfo);
+    static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo,
+        std::vector<RegisterPermStateChangeInfo*>& batchPermStateChangeRegisters, const napi_env env);
+    static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, const napi_env env,
+        napi_ref subscriberRef);
     static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
