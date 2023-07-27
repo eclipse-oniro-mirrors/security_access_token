@@ -31,6 +31,7 @@ PERMISSION_CHECK_EVENT:
   CODE: {type: INT32, desc: event code}
   CALLER_TOKENID: {type: UINT32, desc: caller token id}
   PERMISSION_NAME: {type: STRING, desc: permission name}
+  FLAG: {type: INT32, desc: permission flag}
   PERMISSION_GRANT_TYPE: {type: INT32, desc: grant type}
   PID_INFO: {type: INT32, desc: access token service pid}
   REASON: {type: STRING, desc: check report reason}
