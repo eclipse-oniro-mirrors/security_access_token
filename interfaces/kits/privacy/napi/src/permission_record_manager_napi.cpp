@@ -743,6 +743,20 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     return true;
 }
 
+static bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef)
+{
+    napi_value subscriberCallback;
+    NAPI_CALL_BASE(env,
+        napi_get_reference_value(env, subscriberRef, &subscriberCallback), false);
+    napi_value unsubscriberCallback;
+    NAPI_CALL_BASE(env,
+        napi_get_reference_value(env, unsubscriberRef, &unsubscriberCallback), false);
+    bool result = false;
+    NAPI_CALL_BASE(env,
+        napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result), false);
+    return result;
+}
+
 static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeContext)
 {
     std::vector<std::string> targetPermList;
@@ -751,7 +765,24 @@ static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeConte
     for (const auto& item : g_permActiveChangeSubscribers) {
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
-        if (permList == targetPermList) {
+        bool hasPermIntersection = false;
+        // Special cases:
+        // 1.Have registered full, and then register some
+        // 2.Have registered some, then register full
+        if (permList.empty() || targetPermList.empty()) {
+            hasPermIntersection = true;
+        }
+        for (const auto& PermItem : targetPermList) {
+            if (hasPermIntersection) {
+                break;
+            }
+            auto iter = std::find(permList.begin(), permList.end(), PermItem);
+            if (iter != permList.end()) {
+                hasPermIntersection = true;
+            }
+        }
+        if (hasPermIntersection &&
+            CompareCallbackRef(permActiveChangeContext->env, item->callbackRef, permActiveChangeContext->callbackRef)) {
             return true;
         }
     }
@@ -767,7 +798,9 @@ static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeCont
     while (item != g_permActiveChangeSubscribers.end()) {
         std::vector<std::string> permList;
         (*item)->subscriber->GetPermList(permList);
-        if (permList == targetPermList) {
+        if ((permList == targetPermList) &&
+            CompareCallbackRef(permActiveChangeContext->env, (*item)->callbackRef,
+            permActiveChangeContext->callbackRef)) {
             delete *item;
             *item = nullptr;
             g_permActiveChangeSubscribers.erase(item);
@@ -778,18 +811,33 @@ static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeCont
     }
 }
 
-static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext)
+static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext,
+    std::vector<RegisterPermActiveChangeContext*>& batchPermActiveChangeSubscribers)
 {
     std::vector<std::string> targetPermList = unregisterPermActiveChangeContext->permList;
     std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
+    bool callbackEqual;
+    napi_ref callbackRef = unregisterPermActiveChangeContext->callbackRef;
     for (const auto& item : g_permActiveChangeSubscribers) {
         std::vector<std::string> permList;
         item->subscriber->GetPermList(permList);
-        if (permList == targetPermList) {
-            // targetCallback != nullptr, unregister the subscriber with same permList and callback
-            unregisterPermActiveChangeContext->subscriber = item->subscriber;
-            return true;
+        // targetCallback == nullptr, Unsubscribe from all callbacks under the same permList
+        // targetCallback != nullptr, unregister the subscriber with same permList and callback
+        if (callbackRef == nullptr) {
+            callbackEqual = true;
+        } else {
+            callbackEqual = CompareCallbackRef(unregisterPermActiveChangeContext->env, item->callbackRef, callbackRef);
         }
+
+        if ((permList == targetPermList) && callbackEqual) {
+            batchPermActiveChangeSubscribers.emplace_back(item);
+            if (callbackRef != nullptr) {
+                return true;
+            }
+        }
+    }
+    if (!batchPermActiveChangeSubscribers.empty()) {
+        return true;
     }
     return false;
 }
@@ -844,20 +892,23 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     if (!ParseInputToUnregister(env, cbInfo, *unregisterPermActiveChangeContext)) {
         return nullptr;
     }
-    if (!FindAndGetSubscriber(unregisterPermActiveChangeContext)) {
+    std::vector<RegisterPermActiveChangeContext*> batchPermActiveChangeSubscribers;
+    if (!FindAndGetSubscriber(unregisterPermActiveChangeContext, batchPermActiveChangeSubscribers)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unsubscribe failed. The current subscriber does not exist");
         std::string errMsg = GetErrorMessage(JsErrorCode::JS_ERROR_PARAM_INVALID);
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(unregisterPermActiveChangeContext->subscriber);
-    if (result == RET_SUCCESS) {
-        DeleteRegisterInVector(unregisterPermActiveChangeContext);
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
-        int32_t jsCode = GetJsErrorCode(result);
-        std::string errMsg = GetErrorMessage(jsCode);
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
+    for (const auto& item : batchPermActiveChangeSubscribers) {
+        int32_t result = PrivacyKit::UnRegisterPermActiveStatusCallback(item->subscriber);
+        if (result == RET_SUCCESS) {
+            DeleteRegisterInVector(item);
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterPermActiveChangeCompleted failed");
+            int32_t jsCode = GetJsErrorCode(result);
+            std::string errMsg = GetErrorMessage(jsCode);
+            NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
+        }
     }
     return nullptr;
 }

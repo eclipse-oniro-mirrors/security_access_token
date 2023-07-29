@@ -1520,7 +1520,7 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
     for (const auto& item : g_permStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
-        
+
         bool hasPermIntersection = false;
         // Special cases:
         // 1.Have registered full, and then register some
@@ -1537,9 +1537,9 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
                 hasPermIntersection = true;
             }
         }
-        
+
         bool hasTokenIdIntersection = false;
-        
+
         if (scopeInfo.tokenIDs.empty() || targetTokenIDs.empty()) {
             hasTokenIdIntersection = true;
         }
