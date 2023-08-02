@@ -1562,20 +1562,6 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
     return false;
 }
 
-bool NapiAtManager::CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef)
-{
-    napi_value subscriberCallback;
-    NAPI_CALL_BASE(env,
-        napi_get_reference_value(env, subscriberRef, &subscriberCallback), false);
-    napi_value unsubscriberCallback;
-    NAPI_CALL_BASE(env,
-        napi_get_reference_value(env, unsubscriberRef, &unsubscriberCallback), false);
-    bool result = false;
-    NAPI_CALL_BASE(env,
-        napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result), false);
-    return result;
-}
-
 void NapiAtManager::DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, const napi_env env,
     napi_ref subscriberRef)
 {
