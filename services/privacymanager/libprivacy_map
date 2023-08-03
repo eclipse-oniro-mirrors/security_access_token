@@ -77,6 +77,7 @@
         "vtable for OHOS::Security::AccessToken::AudioRoutingManagerListenerStub";
         "OHOS::Security::AccessToken::ActiveStatusCallbackManager::GetInstance()";
         "OHOS::Security::AccessToken::ActiveStatusCallbackManager::AddCallback(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, OHOS::sptr<OHOS::IRemoteObject> const&)";
+        "VTT for OHOS::Security::AccessToken::PermActiveStatusCallbackDeathRecipient";
         "vtable for OHOS::Security::AccessToken::PermActiveStatusCallbackDeathRecipient";
         "OHOS::Security::AccessToken::ActiveStatusCallbackManager::RemoveCallback(OHOS::sptr<OHOS::IRemoteObject> const&)";
         "VTT for OHOS::Security::AccessToken::AudioManagerPrivacyProxy";
