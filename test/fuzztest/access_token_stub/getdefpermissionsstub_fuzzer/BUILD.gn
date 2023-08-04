@@ -59,7 +59,6 @@ ohos_fuzztest("GetDefPermissionsStubFuzzTest") {
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/interfaces/innerkits/tokensync/src",
     "${access_token_path}/services/common/database/include",
-    "//third_party/json/include",
     "//third_party/sqlite/include/",
   ]
 

@@ -50,7 +50,6 @@ ohos_fuzztest("RegisterPermActiveStatusCallbackStubFuzzTest") {
     "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/window_manager/",
     "${access_token_path}/services/common/database/include",
-    "//third_party/json/include",
     "//third_party/sqlite/include/",
   ]
 
