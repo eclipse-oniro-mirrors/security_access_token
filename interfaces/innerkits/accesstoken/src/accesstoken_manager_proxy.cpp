@@ -649,6 +649,7 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     return result;
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
 {
     MessageParcel data;
@@ -665,6 +666,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;
 }
+#endif
 
 AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& processName)
 {

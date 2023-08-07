@@ -443,6 +443,7 @@ void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParce
     reply.WriteInt32(result);
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsPrivilegedCalling()) {
@@ -453,6 +454,7 @@ void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, Mes
     int32_t result = this->ReloadNativeTokenInfo();
     reply.WriteInt32(result);
 }
+#endif
 
 void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply)
 {
@@ -692,8 +694,10 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::GetHapTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN)] =
         &AccessTokenManagerStub::UpdateHapTokenInner;
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
         &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
+#endif
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID)] =
         &AccessTokenManagerStub::GetNativeTokenIdInner;
 }

@@ -73,6 +73,11 @@ if (is_standard_system) {
       "-DHILOG_ENABLE",
       "-DDEBUG_API_PERFORMANCE",
     ]
+
+    if (build_variant == "user") {
+      cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+    }
+
     if (token_sync_enable == true) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
     }

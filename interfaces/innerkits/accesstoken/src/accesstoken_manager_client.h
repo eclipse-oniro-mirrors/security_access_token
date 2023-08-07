@@ -63,7 +63,9 @@ public:
         bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes);
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo();
+#endif
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(
         const std::shared_ptr<PermStateChangeCallbackCustomize>& customizedCb);
