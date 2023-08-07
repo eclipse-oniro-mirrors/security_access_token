@@ -178,7 +178,6 @@ private:
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static napi_value RegisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);
     static bool IsExistRegister(const napi_env env, const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
-    static bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef);
     static bool ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static napi_value UnregisterPermStateChangeCallback(napi_env env, napi_callback_info cbInfo);

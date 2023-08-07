@@ -22,6 +22,21 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonNapi"};
 } // namespace
 
+
+bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef)
+{
+    napi_value subscriberCallback;
+    NAPI_CALL_BASE(env,
+        napi_get_reference_value(env, subscriberRef, &subscriberCallback), false);
+    napi_value unsubscriberCallback;
+    NAPI_CALL_BASE(env,
+        napi_get_reference_value(env, unsubscriberRef, &unsubscriberCallback), false);
+    bool result = false;
+    NAPI_CALL_BASE(env,
+        napi_strict_equals(env, subscriberCallback, unsubscriberCallback, &result), false);
+    return result;
+}
+
 bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetype& type)
 {
     napi_valuetype valuetype = napi_undefined;
