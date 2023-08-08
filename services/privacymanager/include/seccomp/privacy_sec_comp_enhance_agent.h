@@ -42,6 +42,7 @@ public:
     int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
     int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
     void RemoveSecCompEnhance(int pid);
+    void OnAppMgrRemoteDiedHandle();
 
 private:
     PrivacySecCompEnhanceAgent();
