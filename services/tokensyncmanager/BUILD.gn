@@ -49,7 +49,6 @@ ohos_shared_library("token_sync_manager_service") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "//third_party/json/include",
   ]
 
   sources = [

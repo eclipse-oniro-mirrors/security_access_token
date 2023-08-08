@@ -55,7 +55,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "../../../include/device",
     "../../../include/protocol",
     "../../mock/include",
-    "//third_party/json/include",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",

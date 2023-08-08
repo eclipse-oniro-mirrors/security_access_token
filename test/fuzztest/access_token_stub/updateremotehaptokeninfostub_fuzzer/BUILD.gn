@@ -43,7 +43,6 @@ ohos_fuzztest("UpdateRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "//third_party/json/include",
   ]
 
   sources += [

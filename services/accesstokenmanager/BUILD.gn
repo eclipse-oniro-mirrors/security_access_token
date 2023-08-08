@@ -42,7 +42,6 @@ if (is_standard_system) {
       "main/cpp/include/token",
       "main/cpp/include/permission",
       "main/cpp/include/database",
-      "//third_party/json/include",
       "//third_party/sqlite/include/",
     ]
 
