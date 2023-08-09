@@ -59,7 +59,6 @@ ohos_fuzztest("IsAllowedUsingPermissionStubFuzzTest") {
     "${access_token_path}/services/privacymanager/src/active/perm_active_status_change_callback_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/active/state_change_callback_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/common/constant.cpp",
-    "${access_token_path}/services/privacymanager/src/common/memory_guard.cpp",
     "${access_token_path}/services/privacymanager/src/common/privacy_field_const.cpp",
     "${access_token_path}/services/privacymanager/src/common/time_util.cpp",
     "${access_token_path}/services/privacymanager/src/database/data_translator.cpp",
