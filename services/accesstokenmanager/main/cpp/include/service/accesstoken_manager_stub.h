@@ -54,7 +54,9 @@ private:
     void GetTokenTypeInner(MessageParcel& data, MessageParcel& reply);
     void RegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+#endif
     void GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply);
 
 #ifdef TOKEN_SYNC_ENABLE

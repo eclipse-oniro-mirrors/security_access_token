@@ -333,10 +333,12 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, infoParcel.nativeTokenInfoParams);
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
     return NativeTokenReceptor::GetInstance().Init();
 }
+#endif
 
 AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& processName)
 {

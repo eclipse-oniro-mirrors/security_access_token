@@ -364,6 +364,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     return res;
 }
 
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
 {
     auto proxy = GetProxy();
@@ -373,6 +374,7 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
     }
     return proxy->ReloadNativeTokenInfo();
 }
+#endif
 
 AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& processName)
 {

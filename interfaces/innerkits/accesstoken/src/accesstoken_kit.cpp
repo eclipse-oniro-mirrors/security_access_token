@@ -353,7 +353,11 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
 
 int32_t AccessTokenKit::ReloadNativeTokenInfo()
 {
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     return AccessTokenManagerClient::GetInstance().ReloadNativeTokenInfo();
+#else
+    return 0;
+#endif
 }
 
 AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
