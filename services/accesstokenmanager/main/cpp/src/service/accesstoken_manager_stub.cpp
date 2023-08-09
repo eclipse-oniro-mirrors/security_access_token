@@ -20,6 +20,7 @@
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "ipc_skeleton.h"
+#include "memory_guard.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
 #ifdef HICOLLIE_ENABLE
@@ -378,6 +379,8 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
+    MemoryGuard guard;
+
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
