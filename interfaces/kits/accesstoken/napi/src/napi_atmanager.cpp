@@ -196,7 +196,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     registerPermStateChangeWorker->subscriber = this;
     work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
     NAPI_CALL_RETURN_VOID(env_,
-        uv_queue_work(loop, work, [](uv_work_t* work) {}, UvQueueWorkPermStateChanged));
+        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkPermStateChanged, uv_qos_default));
     uvWorkPtr.release();
     workPtr.release();
 }
@@ -274,7 +274,7 @@ void PermStateChangeContext::DeleteNapiRef()
 
     work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
     NAPI_CALL_RETURN_VOID(env,
-        uv_queue_work(loop, work, [](uv_work_t* work) {}, UvQueueWorkDeleteRef));
+        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkDeleteRef, uv_qos_default));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteNapiRef");
     uvWorkPtr.release();
     workPtr.release();
@@ -448,7 +448,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
         env, nullptr, resources,
         VerifyAccessTokenExecute, VerifyAccessTokenComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "VerifyAccessToken end.");
     context.release();
@@ -512,7 +512,7 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
         env, nullptr, resource,
         CheckAccessTokenExecute, CheckAccessTokenComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckAccessToken end.");
     context.release();
@@ -733,7 +733,7 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
 
     NAPI_CALL(env, napi_create_async_work(env, nullptr, resource, GetVersionExecute, GetVersionComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     context.release();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetVersion end.");
@@ -793,7 +793,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
         GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
 
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission end.");
     context.release();
@@ -878,7 +878,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
         RevokeUserGrantedPermissionExecute, RevokeUserGrantedPermissionComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
 
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RevokeUserGrantedPermission end.");
     context.release();
     return result;
@@ -927,7 +927,8 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
     napi_create_async_work( // define work
         env, nullptr, resource, GetPermissionFlagsExecute, GetPermissionFlagsComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
-    napi_queue_async_work(env, asyncContext->work); // add async work handle to the napi queue and wait for result
+    // add async work handle to the napi queue and wait for result
+    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionFlags end.");
     context.release();
@@ -1044,7 +1045,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
 {
     (void)status;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uv_queue_work input work is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "uv_queue_work_with_qos input work is nullptr");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
@@ -1122,7 +1123,7 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     work->data = reinterpret_cast<void *>(retCB);
     NAPI_CALL_RETURN_VOID(asyncContext->env,
-        uv_queue_work(loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker));
+        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_default));
 
     uvWorkPtr.release();
     callbackPtr.release();
@@ -1263,7 +1264,7 @@ napi_value NapiAtManager::RequestPermissionsFromUser(napi_env env, napi_callback
         env, nullptr, resource, RequestPermissionsFromUserExecute, RequestPermissionsFromUserComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
 
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->work));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionsFromUser end.");
     callbackPtr.release();

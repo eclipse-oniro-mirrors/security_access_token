@@ -468,7 +468,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
         AddPermissionUsedRecordComplete,
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
     return result;
 }
@@ -530,7 +530,7 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
         StartUsingPermissionComplete,
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
     return result;
 }
@@ -593,7 +593,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
         StopUsingPermissionComplete,
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
     return result;
 }
@@ -656,7 +656,7 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
         GetPermissionUsedRecordsComplete,
         reinterpret_cast<void *>(asyncContext),
         &(asyncContext->asyncWork)));
-    NAPI_CALL(env, napi_queue_async_work(env, asyncContext->asyncWork));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
     callbackPtr.release();
     return result;
 }
