@@ -61,6 +61,13 @@ PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
     }
 }
 
+void PrivacySecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnAppMgrRemoteDiedHandle.");
+    std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+    secCompEnhanceData_.clear();
+}
+
 void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);

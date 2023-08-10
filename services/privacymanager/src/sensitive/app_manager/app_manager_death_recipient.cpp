@@ -17,6 +17,9 @@
 #include "accesstoken_log.h"
 #include "app_manager_privacy_client.h"
 #include "permission_record_manager.h"
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+#include "privacy_sec_comp_enhance_agent.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -32,6 +35,9 @@ void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
     AppManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
     PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
+#endif
 }
 }  // namespace AccessToken
 }  // namespace Security
