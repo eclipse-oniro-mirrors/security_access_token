@@ -68,7 +68,9 @@ public:
     virtual int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     virtual int32_t ReloadNativeTokenInfo() = 0;
+#endif
     virtual AccessTokenID GetNativeTokenId(const std::string& processName) = 0;
 
 #ifdef TOKEN_SYNC_ENABLE
