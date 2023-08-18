@@ -129,6 +129,7 @@
         "virtual thunk to OHOS::Security::AccessToken::CameraServiceCallbackStub::~CameraServiceCallbackStub()";
         "OHOS::Security::AccessToken::PrivacyManagerStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, int)";
+        "OHOS::Security::AccessToken::PrivacyManagerService::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, int, bool)";
         "OHOS::Security::AccessToken::PermissionRecordManager::RemovePermissionUsedRecords(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::UpdateRecords(int, OHOS::Security::AccessToken::PermissionUsedRecord const&, OHOS::Security::AccessToken::PermissionUsedRecord&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::RemoveRecordFromStartList(OHOS::Security::AccessToken::PermissionRecord const&)";
