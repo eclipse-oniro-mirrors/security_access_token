@@ -239,8 +239,8 @@ public:
     TestPrivacyManagerStub() = default;
     virtual ~TestPrivacyManagerStub() = default;
 
-    int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
+    int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName, int32_t successCount,
+        int32_t failCount, bool asyncMode = false)
     {
         return SUCCESS;
     }

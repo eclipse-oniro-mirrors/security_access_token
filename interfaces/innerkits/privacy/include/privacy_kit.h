@@ -63,8 +63,8 @@ public:
      * @param failCount fail success count
      * @return error code, see privacy_error.h
      */
-    static int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    static int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, bool asyncMode = false);
     /**
      * @brief Input tokenID start using input permission.
      * @param tokenID token id

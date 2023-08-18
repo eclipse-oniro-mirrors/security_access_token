@@ -39,8 +39,8 @@ public:
     void OnStart() override;
     void OnStop() override;
 
-    int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount) override;
+    int32_t AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, bool asyncMode = false) override;
     int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
     int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) override;

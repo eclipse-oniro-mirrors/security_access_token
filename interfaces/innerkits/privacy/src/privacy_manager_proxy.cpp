@@ -39,7 +39,7 @@ PrivacyManagerProxy::~PrivacyManagerProxy()
 {}
 
 int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-    int32_t successCount, int32_t failCount)
+    int32_t successCount, int32_t failCount, bool asyncMode)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
@@ -61,6 +61,25 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
     }
 
     MessageParcel reply;
+
+    if (asyncMode) {
+        MessageOption option(MessageOption::TF_ASYNC);
+        sptr<IRemoteObject> remote = Remote();
+        if (remote == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+            return PrivacyError::ERR_SERVICE_ABNORMAL;
+        }
+
+        int32_t result = remote->SendRequest(static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD),
+            data, reply, option);
+        if (result != NO_ERROR) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest fail, result: %{public}d", result);
+            return PrivacyError::ERR_SERVICE_ABNORMAL;
+        }
+
+        return NO_ERROR;
+    }
+
     if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
