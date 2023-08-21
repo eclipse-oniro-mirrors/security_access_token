@@ -267,7 +267,7 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
  */
 HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
 {
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAbilityManager::START_ABILITY_ADD_CALLER),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AbilityManagerInterfaceCode::START_ABILITY_ADD_CALLER),
         static_cast<uint32_t>(PrivacyAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER)); // 1005
 }
 #endif
