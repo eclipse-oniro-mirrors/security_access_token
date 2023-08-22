@@ -529,21 +529,6 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
 
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA,
         "ohos.permission.CAMERA", 1, 0));
-}
-
-/**
- * @tc.name: AddPermissionUsedRecord009
- * @tc.desc: AddPermissionUsedRecord async mode true.
- * @tc.type: FUNC
- * @tc.require: issueI66BH3
- */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_normalInfoParms, g_policyPramsA);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-
     ASSERT_EQ(0, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0, true));
 }
 

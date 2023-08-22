@@ -51,7 +51,7 @@ public:
 #endif
 
 private:
-    bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply);
+    bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode = false);
     static inline BrokerDelegator<PrivacyManagerProxy> delegator_;
 };
 } // namespace AccessToken

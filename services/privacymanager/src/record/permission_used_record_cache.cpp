@@ -245,8 +245,7 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
 }
 
 void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permissionList,
-    const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-    std::vector<GenericValues>& findRecordsValues)
+    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues)
 {
     std::set<int32_t> opCodeList;
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
@@ -277,16 +276,14 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    GetFromPersistQueueAndDatabase(opCodeList, andConditionValues,
-        orConditionValues, findRecordsValues);
+    GetFromPersistQueueAndDatabase(opCodeList, andConditionValues, findRecordsValues);
     if (countPersistPendingNode != 0) {
         AddToPersistQueue(persistPendingBufferHead);
     }
 }
 
 void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
-    const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-    std::vector<GenericValues>& findRecordsValues)
+    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues)
 {
     AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
@@ -307,8 +304,8 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
             }
         }
     }
-    if (!PermissionRecordRepository::GetInstance().FindRecordValues(
-        andConditionValues, orConditionValues, findRecordsValues)) { // find records from database
+    if (!PermissionRecordRepository::GetInstance().FindRecordValues(opCodeList, andConditionValues,
+        findRecordsValues)) { // find records from database
         ACCESSTOKEN_LOG_ERROR(LABEL, "find records from database failed");
     }
 }
