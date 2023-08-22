@@ -72,7 +72,10 @@ if (is_standard_system && ability_base_enable == true) {
     ]
 
     if (audio_framework_enable) {
-      cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
+      cflags_cc += [
+        "-DHILOG_ENABLE",
+        "-DFEATURE_DTMF_TONE",
+      ]
       external_deps += [ "audio_framework:audio_client" ]
     }
 

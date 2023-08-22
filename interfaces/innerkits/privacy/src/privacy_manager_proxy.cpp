@@ -62,25 +62,7 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
 
     MessageParcel reply;
 
-    if (asyncMode) {
-        MessageOption option(MessageOption::TF_ASYNC);
-        sptr<IRemoteObject> remote = Remote();
-        if (remote == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-            return PrivacyError::ERR_SERVICE_ABNORMAL;
-        }
-
-        int32_t result = remote->SendRequest(static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD),
-            data, reply, option);
-        if (result != NO_ERROR) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest fail, result: %{public}d", result);
-            return PrivacyError::ERR_SERVICE_ABNORMAL;
-        }
-
-        return NO_ERROR;
-    }
-
-    if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply, asyncMode)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -388,9 +370,15 @@ int32_t PrivacyManagerProxy::RecoverSecCompEnhance(std::vector<SecCompEnhanceDat
 #endif
 
 bool PrivacyManagerProxy::SendRequest(
-    PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply)
+    PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode)
 {
-    MessageOption option(MessageOption::TF_SYNC);
+    int flag = 0;
+    if (asyncMode) {
+        flag = static_cast<int>(MessageOption::TF_ASYNC);
+    } else {
+        flag = static_cast<int>(MessageOption::TF_SYNC);
+    }
+    MessageOption option(flag);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");

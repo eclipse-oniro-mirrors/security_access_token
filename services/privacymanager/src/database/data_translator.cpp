@@ -23,7 +23,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
-    GenericValues& andGenericValues, GenericValues& orGenericValues)
+    GenericValues& andGenericValues)
 {
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;
@@ -48,14 +48,6 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
         andGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, end);
     }
 
-    for (const auto& perm : request.permissionList) {
-        int32_t opCode;
-        if (Constant::TransferPermissionToOpcode(perm, opCode)) {
-            orGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
-        } else {
-            orGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_INVALID);
-        }
-    }
     return Constant::SUCCESS;
 }
 

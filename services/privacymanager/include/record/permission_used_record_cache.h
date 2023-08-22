@@ -40,11 +40,9 @@ public:
     int32_t RemoveRecords(const AccessTokenID tokenId);
     void RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId);
     void GetRecords(const std::vector<std::string>& permissionList,
-        const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues);
+        const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues);
     void GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
-        const GenericValues& andConditionValues, const GenericValues& orConditionValues,
-        std::vector<GenericValues>& findRecordsValues);
+        const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
         const GenericValues& andConditionValues, const PermissionRecord& record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);

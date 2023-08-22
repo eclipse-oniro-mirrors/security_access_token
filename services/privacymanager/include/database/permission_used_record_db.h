@@ -16,6 +16,8 @@
 #ifndef PERMISSION_USED_RECORD_DB_H
 #define PERMISSION_USED_RECORD_DB_H
 
+#include <set>
+
 #include "generic_values.h"
 #include "sqlite_helper.h"
 
@@ -42,8 +44,8 @@ public:
 
     int32_t Add(DataType type, const std::vector<GenericValues>& values);
     int32_t Remove(DataType type, const GenericValues& conditions);
-    int32_t FindByConditions(DataType type, const GenericValues& andConditions,
-        const GenericValues& orConditions, std::vector<GenericValues>& results);
+    int32_t FindByConditions(DataType type, const std::set<int32_t>& opCodeList, const GenericValues& andConditions,
+        std::vector<GenericValues>& results);
     void Count(DataType type, GenericValues& result);
     int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
     int32_t DeleteExcessiveRecords(DataType type, uint32_t excessiveSize);
@@ -64,8 +66,8 @@ private:
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
         DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
-    std::string CreateSelectByConditionPrepareSqlCmd(DataType type,
-        const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const;
+    std::string CreateSelectByConditionPrepareSqlCmd(DataType type, const std::set<int32_t>& opCodeList,
+        const std::vector<std::string>& andColumns) const;
     std::string CreateUpdatePrepareSqlCmd(DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateCountPrepareSqlCmd(DataType type) const;
