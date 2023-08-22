@@ -32,23 +32,15 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(TOKENID)) {
-            return false;
-        }
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         int userID = static_cast<int>(size);
         std::string bundleName(reinterpret_cast<const char*>(data), size);
         int instIndex = static_cast<int>(size);
-        if (!datas.WriteInt32(userID)) {
-            return false;
-        }
-        if (!datas.WriteString(bundleName)) {
-            return false;
-        }
-        if (!datas.WriteInt32(instIndex)) {
+
+        MessageParcel sendData;
+        sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+        if (!sendData.WriteUint32(tokenId) || !sendData.WriteInt32(userID) ||
+            !sendData.WriteString(bundleName) || !sendData.WriteInt32(instIndex)) {
             return false;
         }
 
@@ -57,7 +49,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, sendData, reply, option);
 
         return true;
     }

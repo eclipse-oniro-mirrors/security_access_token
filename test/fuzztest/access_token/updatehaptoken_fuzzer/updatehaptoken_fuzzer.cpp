@@ -37,23 +37,22 @@ namespace OHOS {
         };
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        PermissionDef TestPermDef = {
-            .permissionName = testName,
-            .bundleName = testName,
-            .grantMode = 1,
-            .availableLevel = APL_NORMAL,
-            .label = testName,
-            .labelId = 1,
-            .description = testName,
-            .descriptionId = 1
-        };
-        PermissionStateFull TestState = {
-            .permissionName = testName,
-            .isGeneral = true,
-            .resDeviceID = {testName},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1},
-        };
+        PermissionDef TestPermDef;
+        TestPermDef.permissionName = testName;
+        TestPermDef.bundleName = testName;
+        TestPermDef.grantMode = 1;
+        TestPermDef.availableLevel = APL_NORMAL;
+        TestPermDef.label = testName;
+        TestPermDef.labelId = 1;
+        TestPermDef.description = testName;
+        TestPermDef.descriptionId = 1;
+
+        PermissionStateFull TestState;
+        TestState.permissionName = testName;
+        TestState.isGeneral = true;
+        TestState.resDeviceID = {testName};
+        TestState.grantStatus = {PermissionState::PERMISSION_GRANTED};
+        TestState.grantFlags = {1};
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,

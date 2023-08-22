@@ -72,17 +72,8 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return PERMISSION_DENIED;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return PERMISSION_DENIED;
+    if (!SendRequest(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN, data, reply)) {
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -139,12 +130,12 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     if (result != RET_SUCCESS) {
         return result;
     }
-    uint32_t size = reply.ReadUint32();
-    if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+    uint32_t defPermSize = reply.ReadUint32();
+    if (defPermSize > MAX_PERMISSION_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", defPermSize);
         return ERR_OVERSIZE;
     }
-    for (uint32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < defPermSize; i++) {
         sptr<PermissionDefParcel> permissionDef = reply.ReadParcelable<PermissionDefParcel>();
         if (permissionDef != nullptr) {
             permList.emplace_back(*permissionDef);
@@ -177,12 +168,12 @@ int AccessTokenManagerProxy::GetReqPermissions(
     if (result != RET_SUCCESS) {
         return result;
     }
-    uint32_t size = reply.ReadUint32();
-    if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+    uint32_t reqPermSize = reply.ReadUint32();
+    if (reqPermSize > MAX_PERMISSION_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", reqPermSize);
         return ERR_OVERSIZE;
     }
-    for (uint32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < reqPermSize; i++) {
         sptr<PermissionStateFullParcel> permissionReq = reply.ReadParcelable<PermissionStateFullParcel>();
         if (permissionReq != nullptr) {
             reqPermList.emplace_back(*permissionReq);
@@ -193,19 +184,19 @@ int AccessTokenManagerProxy::GetReqPermissions(
 
 int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
 {
-    MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
+    MessageParcel sendData;
+    sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!sendData.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(permissionName)) {
+    if (!sendData.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_FLAG, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_FLAG, sendData, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -262,23 +253,23 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
 
 int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
 {
-    MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
+    MessageParcel inData;
+    inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!inData.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(permissionName)) {
+    if (!inData.WriteString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(flag)) {
+    if (!inData.WriteInt32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GRANT_PERMISSION, data, reply)) {
+    if (!SendRequest(AccessTokenInterfaceCode::GRANT_PERMISSION, inData, reply)) {
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
@@ -354,13 +345,13 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
         return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
 
-    int32_t result;
-    if (!reply.ReadInt32(result)) {
+    int32_t ret;
+    if (!reply.ReadInt32(ret)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
-    return result;
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", ret);
+    return ret;
 }
 
 int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback)
@@ -394,31 +385,18 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel)
 {
     MessageParcel data;
-    AccessTokenIDEx res;
+    AccessTokenIDEx res = { 0 };
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteParcelable(&hapInfo)) {
-        res.tokenIDEx = 0;
         return res;
     }
     if (!data.WriteParcelable(&policyParcel)) {
-        res.tokenIDEx = 0;
         return res;
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        res.tokenIDEx = 0;
-        return res;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_TOKEN_HAP), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        res.tokenIDEx = 0;
+    if (!SendRequest(AccessTokenInterfaceCode::ALLOC_TOKEN_HAP, data, reply)) {
         return res;
     }
 
@@ -510,16 +488,7 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
         return tokenIdEx;
     }
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return tokenIdEx;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+    if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID, data, reply)) {
         return tokenIdEx;
     }
 
@@ -543,17 +512,8 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
         return 0;
     }
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return 0;
-    }
-    int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return 0;
+    if (!SendRequest(AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID, data, reply)) {
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     AccessTokenID result = reply.ReadUint32();
@@ -681,17 +641,8 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
         return INVALID_TOKENID;
     }
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return INVALID_TOKENID;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
-        return INVALID_TOKENID;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID, data, reply)) {
+        return ERR_SA_WORK_ABNORMAL;
     }
     AccessTokenID result;
     if (!reply.ReadUint32(result)) {
@@ -845,17 +796,8 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return 0;
-    }
-    int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
-        AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
-        return 0;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN, data, reply)) {
+        return ERR_SA_WORK_ABNORMAL;
     }
 
     AccessTokenID result = reply.ReadUint32();
@@ -891,16 +833,7 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
         return;
     }
     MessageParcel reply;
-    MessageOption option;
-    sptr<IRemoteObject> remote = Remote();
-    if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
-        return;
-    }
-    int32_t requestResult = remote->SendRequest(
-        static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO), data, reply, option);
-    if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+    if (!SendRequest(AccessTokenInterfaceCode::DUMP_TOKENINFO, data, reply)) {
         return;
     }
     if (!reply.ReadString(dumpInfo)) {

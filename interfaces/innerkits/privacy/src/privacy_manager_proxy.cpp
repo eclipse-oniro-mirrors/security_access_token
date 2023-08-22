@@ -41,28 +41,27 @@ PrivacyManagerProxy::~PrivacyManagerProxy()
 int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
-    MessageParcel data;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+    MessageParcel addData;
+    addData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+    if (!addData.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
+    if (!addData.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(successCount)) {
+    if (!addData.WriteInt32(successCount)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(successCount)");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(failCount)) {
+    if (!addData.WriteInt32(failCount)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(failCount)");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-
-    if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, data, reply, asyncMode)) {
+    if (!SendRequest(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD, addData, reply, asyncMode)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -71,19 +70,19 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, cons
 
 int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    MessageParcel data;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+    MessageParcel startData;
+    startData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+    if (!startData.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
+    if (!startData.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    if (!SendRequest(PrivacyInterfaceCode::START_USING_PERMISSION, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::START_USING_PERMISSION, startData, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
@@ -96,11 +95,11 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteRemoteObject(callback)) {
@@ -121,19 +120,19 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
 
 int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    MessageParcel data;
-    data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!data.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenID);
+    MessageParcel stopData;
+    stopData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
+    if (!stopData.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(permissionName)");
+    if (!stopData.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
-    if (!SendRequest(PrivacyInterfaceCode::STOP_USING_PERMISSION, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::STOP_USING_PERMISSION, stopData, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 

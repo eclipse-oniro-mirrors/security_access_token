@@ -32,15 +32,12 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char *>(data), size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(TOKENID)) {
-            return false;
-        }
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteUint32(tokenId) || !datas.WriteString(testName)) {
             return false;
         }
 

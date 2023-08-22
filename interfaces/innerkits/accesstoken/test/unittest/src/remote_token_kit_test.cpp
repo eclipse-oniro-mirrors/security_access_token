@@ -30,26 +30,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "RemoteTokenKitTest"};
 
 static const std::string TEST_BUNDLE_NAME = "ohos";
-static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
-static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
-static const std::string TEST_PERMISSION_NAME_GAMMA = "ohos.permission.GAMMA";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static const int TEST_USER_ID = 0;
-
-PermissionStateFull g_grantPermissionReq = {
-    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-PermissionStateFull g_revokePermissionReq = {
-    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
