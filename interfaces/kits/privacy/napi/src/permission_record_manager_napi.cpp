@@ -769,7 +769,7 @@ static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeConte
                 hasPermIntersection = true;
             }
         }
-        if (hasPermIntersection && CompareCallbackRef(permActiveChangeContext->env, 
+        if (hasPermIntersection && CompareCallbackRef(permActiveChangeContext->env,
             item->callbackRef, permActiveChangeContext->callbackRef, item->threadId_)) {
             return true;
         }

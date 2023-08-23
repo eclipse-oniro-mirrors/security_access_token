@@ -49,7 +49,8 @@ enum PermissionStateChangeType {
 static thread_local napi_ref g_atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
 static int32_t curRequestCode_ = 0;
-class RegisterPermStateChangeScopePtr : public PermStateChangeCallbackCustomize {
+class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
+    public PermStateChangeCallbackCustomize {
 public:
     explicit RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo);
     ~RegisterPermStateChangeScopePtr() override;
@@ -57,6 +58,7 @@ public:
     void SetEnv(const napi_env& env);
     void SetCallbackRef(const napi_ref& ref);
     void SetValid(bool valid);
+    void DeleteNapiRef();
 private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
@@ -68,7 +70,7 @@ struct RegisterPermStateChangeWorker {
     napi_env env = nullptr;
     napi_ref ref = nullptr;
     PermStateChangeInfo result;
-    RegisterPermStateChangeScopePtr* subscriber = nullptr;
+    std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
 };
 
 struct PermStateChangeContext {
@@ -80,7 +82,6 @@ struct PermStateChangeContext {
     AccessTokenKit* accessTokenKit = nullptr;
     std::thread::id threadId_;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
-    void DeleteNapiRef();
 };
 
 typedef PermStateChangeContext RegisterPermStateChangeInfo;

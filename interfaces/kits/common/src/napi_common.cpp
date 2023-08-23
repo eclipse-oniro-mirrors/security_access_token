@@ -26,12 +26,9 @@ bool IsCurrentThread(std::thread::id threadId)
 {
     std::thread::id currentThread = std::this_thread::get_id();
     if (threadId != currentThread) {
-        unsigned int t = *(unsigned int*)&currentThread;
-        unsigned int historyTID = *(unsigned int*)&threadId;
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_ref can not be compared,different threadId,(wuliushuan currentThread = %{public}d, threadId = %{public}d)", t, historyTID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_ref can not be compared,different threadId");
         return false;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "wuliushuan threadId equal");
     return true;
 }
 bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef, std::thread::id threadId)

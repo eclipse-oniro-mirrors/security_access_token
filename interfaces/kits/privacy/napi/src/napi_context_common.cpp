@@ -39,9 +39,7 @@ PrivacyAsyncWorkData::~PrivacyAsyncWorkData()
 }
 
 PermActiveChangeContext::~PermActiveChangeContext()
-{
-
-}
+{}
 
 PermActiveStatusPtr::PermActiveStatusPtr(const std::vector<std::string>& permList)
     : PermActiveStatusCustomizedCbk(permList)
