@@ -28,7 +28,7 @@ HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test1",
     .apiVersion = DEFAULT_API_VERSION
 };
 HapPolicyParams g_infoManagerTestPolicyPrams = {

@@ -17,7 +17,6 @@
 #include <thread>
 
 #include "accesstoken_kit.h"
-#include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
 #include "softbus_bus_center.h"
@@ -27,9 +26,6 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SecurityComponentGrantTest"};
-
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PKG_NAME = "com.softbus.test";
 static const std::string TEST_PERMISSION = "ohos.permission.DISTRIBUTED_DATASYNC";
@@ -39,7 +35,7 @@ static const int TEST_USER_ID = 0;
 PermissionStateFull g_infoManagerTestState1 = {
     .permissionName = TEST_PERMISSION,
     .isGeneral = true,
-    .resDeviceID = {"local"},
+    .resDeviceID = {"local5"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
     .grantFlags = {0},
 };
@@ -48,23 +44,23 @@ HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest"
+    .appIDDesc = "test5"
 };
 
 HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
-    .domain = "test.domain",
+    .domain = "test.domain5",
     .permList = {},
     .permStateList = {g_infoManagerTestState1}
 };
 
 void NativeTokenGet()
 {
-    uint64_t tokenId;
+    uint64_t fullTokenId;
     const char **perms = new const char *[4];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
     perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // 2 means the index.
+    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
     perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3 means the index.
 
     NativeTokenInfoParams infoInstance = {
@@ -78,8 +74,8 @@ void NativeTokenGet()
     };
 
     infoInstance.processName = "TestCase";
-    tokenId = GetAccessTokenId(&infoInstance);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    fullTokenId = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(0, SetSelfTokenID(fullTokenId));
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 }
@@ -106,7 +102,6 @@ void SecurityComponentGrantTest::TearDownTestCase()
 void SecurityComponentGrantTest::SetUp()
 {
     selfTokenId_ = GetSelfTokenID();
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void SecurityComponentGrantTest::TearDown()
@@ -436,10 +431,10 @@ public:
 
     virtual void PermStateChangeCallback(PermStateChangeInfo& result)
     {
-        ready_ = true;
+        ready2_ = true;
     }
 
-    bool ready_ = false;
+    bool ready2_ = false;
 };
 
 /**
@@ -450,11 +445,11 @@ public:
  */
 HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Level1)
 {
-    PermStateChangeScope scopeInfo;
-    scopeInfo.permList = {TEST_PERMISSION};
-    scopeInfo.tokenIDs = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    callbackPtr->ready_ = false;
+    PermStateChangeScope scopeInfo9;
+    scopeInfo9.permList = {TEST_PERMISSION};
+    scopeInfo9.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo9);
+    callbackPtr->ready2_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -465,24 +460,24 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
-    callbackPtr->ready_ = false;
+    ASSERT_EQ(callbackPtr->ready2_, true);
+    callbackPtr->ready2_ = false;
 
     // user grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, false);
+    ASSERT_EQ(callbackPtr->ready2_, false);
 
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
-    callbackPtr->ready_ = false;
+    ASSERT_EQ(callbackPtr->ready2_, true);
+    callbackPtr->ready2_ = false;
 
     // security component revoke repeat
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_NE(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, false);
+    ASSERT_EQ(callbackPtr->ready2_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -499,11 +494,11 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Lev
  */
 HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Level1)
 {
-    PermStateChangeScope scopeInfo;
-    scopeInfo.permList = {TEST_PERMISSION};
-    scopeInfo.tokenIDs = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    callbackPtr->ready_ = false;
+    PermStateChangeScope scopeInfo10;
+    scopeInfo10.permList = {TEST_PERMISSION};
+    scopeInfo10.tokenIDs = {};
+    auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo10);
+    callbackPtr->ready2_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -514,19 +509,19 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
-    callbackPtr->ready_ = false;
+    ASSERT_EQ(callbackPtr->ready2_, true);
+    callbackPtr->ready2_ = false;
 
     // user revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
-    callbackPtr->ready_ = false;
+    ASSERT_EQ(callbackPtr->ready2_, true);
+    callbackPtr->ready2_ = false;
 
     // security component revoke
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_NE(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, false);
+    ASSERT_EQ(callbackPtr->ready2_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -547,7 +542,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     scopeInfo.permList = {TEST_PERMISSION_NOT_REQUESTED};
     scopeInfo.tokenIDs = {};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    callbackPtr->ready_ = false;
+    callbackPtr->ready2_ = false;
 
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -558,8 +553,8 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     // security component grant a not requested permission
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
-    callbackPtr->ready_ = false;
+    ASSERT_EQ(callbackPtr->ready2_, true);
+    callbackPtr->ready2_ = false;
 
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED);
     ASSERT_EQ(status, PERMISSION_GRANTED);
@@ -567,7 +562,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    ASSERT_EQ(callbackPtr->ready_, true);
+    ASSERT_EQ(callbackPtr->ready2_, true);
 
     status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED);
     ASSERT_EQ(status, PERMISSION_DENIED);
