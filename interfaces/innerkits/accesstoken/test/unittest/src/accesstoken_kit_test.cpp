@@ -24,7 +24,6 @@
 #include "permission_state_change_info_parcel.h"
 #include "softbus_bus_center.h"
 #include "string_ex.h"
-#include "tokenid_kit.h"
 #include "token_setproc.h"
 #define private public
 #include "accesstoken_manager_client.h"
@@ -43,14 +42,14 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
-    .resDeviceID = {"device"},
+    .resDeviceID = {"device3"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 PermissionStateFull g_revokePermissionReq = {
     .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
-    .resDeviceID = {"device"},
+    .resDeviceID = {"device3"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
@@ -58,7 +57,7 @@ PermissionStateFull g_revokePermissionReq = {
 PermissionStateFull g_getPermissionReq = {
     .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
-    .resDeviceID = {"device"},
+    .resDeviceID = {"device3"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
@@ -68,7 +67,7 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .bundleName = "accesstoken_test",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,
-    .label = "label",
+    .label = "label3",
     .labelId = 1,
     .description = "open the door",
     .descriptionId = 1
@@ -79,7 +78,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
     .bundleName = "accesstoken_test",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,
-    .label = "label",
+    .label = "label3",
     .labelId = 1,
     .description = "break the door",
     .descriptionId = 1
@@ -88,7 +87,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
 PermissionStateFull g_infoManagerTestState1 = {
     .permissionName = "ohos.permission.test1",
     .isGeneral = true,
-    .resDeviceID = {"local"},
+    .resDeviceID = {"local3"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
@@ -105,13 +104,13 @@ HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test3",
     .apiVersion = DEFAULT_API_VERSION
 };
 
 HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
-    .domain = "test.domain",
+    .domain = "test.domain3",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
@@ -120,13 +119,13 @@ HapInfoParams g_infoManagerTestInfoParmsBak = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test3",
     .apiVersion = DEFAULT_API_VERSION
 };
 
 HapPolicyParams g_infoManagerTestPolicyPramsBak = {
     .apl = APL_NORMAL,
-    .domain = "test.domain",
+    .domain = "test.domain3",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
@@ -135,7 +134,7 @@ HapInfoParams g_infoManagerTestNormalInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test3",
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = false
 };
@@ -144,7 +143,7 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test3",
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = true
 };
@@ -152,12 +151,12 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
 
 void NativeTokenGet()
 {
-    uint64_t tokenId;
+    uint64_t tokenID;
     const char **perms = new const char *[4];
     perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
     perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
     perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
@@ -170,8 +169,8 @@ void NativeTokenGet()
     };
 
     infoInstance.processName = "TestCase";
-    tokenId = GetAccessTokenId(&infoInstance);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    tokenID = GetAccessTokenId(&infoInstance);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 }
@@ -209,29 +208,29 @@ void TestPreparePermStateList(HapPolicyParams &policy)
     PermissionStateFull permStatAlpha = {
         .permissionName = TEST_PERMISSION_NAME_ALPHA,
         .isGeneral = true,
-        .resDeviceID = {"device"},
+        .resDeviceID = {"device3"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
         .grantFlags = {PermissionFlag::PERMISSION_USER_SET}
     };
     PermissionStateFull permStatBeta = {
         .permissionName = TEST_PERMISSION_NAME_BETA,
         .isGeneral = true,
-        .resDeviceID = {"device"},
+        .resDeviceID = {"device3"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
         .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
     };
+
     PermissionStateFull permTestState1 = {
         .permissionName = "ohos.permission.testPermDef1",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
         .grantFlags = {0},
     };
-
     PermissionStateFull permTestState2 = {
         .permissionName = "ohos.permission.testPermDef2",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
         .grantFlags = {1}
     };
@@ -239,7 +238,7 @@ void TestPreparePermStateList(HapPolicyParams &policy)
     PermissionStateFull permTestState3 = {
         .permissionName = "ohos.permission.testPermDef3",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_DENIED},
         .grantFlags = {2}
     };
@@ -247,7 +246,7 @@ void TestPreparePermStateList(HapPolicyParams &policy)
     PermissionStateFull permTestState4 = {
         .permissionName = "ohos.permission.testPermDef4",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local3"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
         .grantFlags = {1}
     };
@@ -262,14 +261,6 @@ void TestPreparePermStateList(HapPolicyParams &policy)
 
 void TestPreparePermDefList(HapPolicyParams &policy)
 {
-    PermissionDef permissionDefAlpha;
-    permissionDefAlpha.permissionName = TEST_PERMISSION_NAME_ALPHA;
-    permissionDefAlpha.bundleName = TEST_BUNDLE_NAME;
-    permissionDefAlpha.grantMode = GrantMode::USER_GRANT;
-    permissionDefAlpha.availableLevel = APL_NORMAL;
-    permissionDefAlpha.provisionEnable = false;
-    permissionDefAlpha.distributedSceneEnable = false;
-
     PermissionDef permissionDefBeta;
     permissionDefBeta.permissionName = TEST_PERMISSION_NAME_BETA;
     permissionDefBeta.bundleName = TEST_BUNDLE_NAME;
@@ -278,13 +269,13 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     permissionDefBeta.provisionEnable = false;
     permissionDefBeta.distributedSceneEnable = false;
 
-    PermissionDef testPermDef1;
-    testPermDef1.permissionName = "ohos.permission.testPermDef1";
-    testPermDef1.bundleName = TEST_BUNDLE_NAME;
-    testPermDef1.grantMode = GrantMode::USER_GRANT;
-    testPermDef1.availableLevel = APL_NORMAL;
-    testPermDef1.provisionEnable = false;
-    testPermDef1.distributedSceneEnable = false;
+    PermissionDef permissionDefAlpha;
+    permissionDefAlpha.permissionName = TEST_PERMISSION_NAME_ALPHA;
+    permissionDefAlpha.bundleName = TEST_BUNDLE_NAME;
+    permissionDefAlpha.grantMode = GrantMode::USER_GRANT;
+    permissionDefAlpha.availableLevel = APL_NORMAL;
+    permissionDefAlpha.provisionEnable = false;
+    permissionDefAlpha.distributedSceneEnable = false;
 
     PermissionDef testPermDef2;
     testPermDef2.permissionName = "ohos.permission.testPermDef2";
@@ -294,13 +285,13 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef2.provisionEnable = false;
     testPermDef2.distributedSceneEnable = false;
 
-    PermissionDef testPermDef3;
-    testPermDef3.permissionName = "ohos.permission.testPermDef3";
-    testPermDef3.bundleName = TEST_BUNDLE_NAME;
-    testPermDef3.grantMode = GrantMode::USER_GRANT;
-    testPermDef3.availableLevel = APL_NORMAL;
-    testPermDef3.provisionEnable = false;
-    testPermDef3.distributedSceneEnable = false;
+    PermissionDef testPermDef1;
+    testPermDef1.permissionName = "ohos.permission.testPermDef1";
+    testPermDef1.bundleName = TEST_BUNDLE_NAME;
+    testPermDef1.grantMode = GrantMode::USER_GRANT;
+    testPermDef1.availableLevel = APL_NORMAL;
+    testPermDef1.provisionEnable = false;
+    testPermDef1.distributedSceneEnable = false;
 
     PermissionDef testPermDef4;
     testPermDef4.permissionName = "ohos.permission.testPermDef4";
@@ -310,19 +301,27 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef4.provisionEnable = false;
     testPermDef4.distributedSceneEnable = false;
 
-    policy.permList.emplace_back(permissionDefAlpha);
+    PermissionDef testPermDef3;
+    testPermDef3.permissionName = "ohos.permission.testPermDef3";
+    testPermDef3.bundleName = TEST_BUNDLE_NAME;
+    testPermDef3.grantMode = GrantMode::USER_GRANT;
+    testPermDef3.availableLevel = APL_NORMAL;
+    testPermDef3.provisionEnable = false;
+    testPermDef3.distributedSceneEnable = false;
+
     policy.permList.emplace_back(permissionDefBeta);
-    policy.permList.emplace_back(testPermDef1);
+    policy.permList.emplace_back(permissionDefAlpha);
     policy.permList.emplace_back(testPermDef2);
-    policy.permList.emplace_back(testPermDef3);
+    policy.permList.emplace_back(testPermDef1);
     policy.permList.emplace_back(testPermDef4);
+    policy.permList.emplace_back(testPermDef3);
 }
 
 void AccessTokenKitTest::SetUp()
 {
     selfTokenId_ = GetSelfTokenID();
-    g_infoManagerTestInfoParms = g_infoManagerTestInfoParmsBak;
     g_infoManagerTestPolicyPrams = g_infoManagerTestPolicyPramsBak;
+    g_infoManagerTestInfoParms = g_infoManagerTestInfoParmsBak;
     HapInfoParams info = {
         .userID = TEST_USER_ID,
         .bundleName = TEST_BUNDLE_NAME,
@@ -433,7 +432,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission002, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermission003, TestSize.Level0)
 {
-    for (int i = 0; i < CYCLE_TIMES; i++) {
+    for (int j = 0; j < CYCLE_TIMES; j++) {
         PermissionDef permDefResultAlpha;
         int32_t ret = AccessTokenKit::GetDefPermission(TEST_PERMISSION_NAME_ALPHA, permDefResultAlpha);
         ASSERT_EQ(RET_SUCCESS, ret);
@@ -490,16 +489,16 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions002, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetDefPermissions003, TestSize.Level1)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenID tokenId = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    AccessTokenKit::DeleteToken(tokenId);
 
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(TEST_TOKENID_INVALID, permDefList);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     std::vector<PermissionDef> permDefListRes;
-    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefListRes);
+    ret = AccessTokenKit::GetDefPermissions(tokenId, permDefListRes);
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
     ASSERT_EQ(static_cast<uint32_t>(0), permDefListRes.size());
 }
@@ -533,13 +532,13 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
     std::vector<PermissionStateFull> permStatList;
-    int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
+    ASSERT_EQ(RET_SUCCESS, res);
     ASSERT_EQ(static_cast<uint32_t>(5), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
-    ASSERT_EQ(ret, permStatList[0].grantStatus[0]);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
+    ASSERT_EQ(res, permStatList[0].grantStatus[0]);
 }
 
 /**
@@ -1010,18 +1009,18 @@ HWTEST_F(AccessTokenKitTest, GrantPermission006, TestSize.Level0)
  */
 HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level0)
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
+    AccessTokenID tokenId = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    int ret = AccessTokenKit::RevokePermission(tokenId, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
+    ret = AccessTokenKit::VerifyAccessToken(tokenId, TEST_PERMISSION_NAME_ALPHA);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
-    ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
+    ret = AccessTokenKit::RevokePermission(tokenId, TEST_PERMISSION_NAME_BETA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
+    ret = AccessTokenKit::VerifyAccessToken(tokenId, TEST_PERMISSION_NAME_ALPHA);
     ASSERT_EQ(PERMISSION_DENIED, ret);
 }
 
@@ -2144,7 +2143,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
         .bundleName = "dlp_test1",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
-        .appIDDesc = "testtesttesttest",
+        .appIDDesc = "test3",
         .apiVersion = DEFAULT_API_VERSION
     };
     HapInfoParams infoManagerTestInfoParms2 = {
@@ -2152,7 +2151,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
         .bundleName = "dlp_test2",
         .instIndex = 1,
         .dlpType = DLP_READ,
-        .appIDDesc = "testtesttesttest",
+        .appIDDesc = "test3",
         .apiVersion = DEFAULT_API_VERSION
     };
     HapInfoParams infoManagerTestInfoParms3 = {
@@ -2160,7 +2159,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken018, TestSize.Level1)
         .bundleName = "dlp_test3",
         .instIndex = 2,
         .dlpType = DLP_FULL_CONTROL,
-        .appIDDesc = "testtesttesttest",
+        .appIDDesc = "test3",
         .apiVersion = DEFAULT_API_VERSION
     };
     GetDlpFlagTest(infoManagerTestInfoParms1, infoManagerTestPolicyPrams, DLP_COMMON);
@@ -2188,7 +2187,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
         .bundleName = "accesstoken_test",
         .instIndex = 4,
         .dlpType = INVALID_DLP_TYPE,
-        .appIDDesc = "testtesttesttest",
+        .appIDDesc = "test3",
         .apiVersion = DEFAULT_API_VERSION
     };
 
@@ -2277,7 +2276,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    ASSERT_EQ(hapTokenInfoRes.appID, "testtesttesttest");
+    ASSERT_EQ(hapTokenInfoRes.appID, "test3");
 
     ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -2452,7 +2451,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
 {
     int ret;
-    std::string backup;
+    std::string backUp;
     const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     DeleteTestToken();
 
@@ -2466,12 +2465,12 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].permissionName;
+    backUp = g_infoManagerTestPolicyPrams.permList[0].permissionName;
     g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.test3";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backup;
+    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUp;
 
     GTEST_LOG_(INFO) << "permissionName :" << g_infoManagerTestPolicyPrams.permList[0].permissionName;
 
@@ -2508,7 +2507,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
     /* check permission define before update */
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
     ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult.permissionName);
-    ASSERT_EQ("label", permDefResult.label);
+    ASSERT_EQ("label3", permDefResult.label);
     ASSERT_EQ(1, permDefResult.grantMode);
     ASSERT_EQ(RET_SUCCESS, ret);
 
