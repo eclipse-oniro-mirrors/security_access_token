@@ -699,6 +699,7 @@ static bool ParseInputToRegister(const napi_env env, const napi_callback_info cb
     registerPermActiveChangeContext.subscriber = std::make_shared<PermActiveStatusPtr>(permList);
     registerPermActiveChangeContext.subscriber->SetEnv(env);
     registerPermActiveChangeContext.subscriber->SetCallbackRef(callback);
+    registerPermActiveChangeContext.threadId_ = std::this_thread::get_id();
     return true;
 }
 
@@ -740,6 +741,7 @@ static bool ParseInputToUnregister(const napi_env env, const napi_callback_info 
     unregisterPermActiveChangeContext.callbackRef = callback;
     unregisterPermActiveChangeContext.type = type;
     unregisterPermActiveChangeContext.permList = permList;
+    unregisterPermActiveChangeContext.threadId_ = std::this_thread::get_id();
     return true;
 }
 
@@ -767,8 +769,8 @@ static bool IsExistRegister(const PermActiveChangeContext* permActiveChangeConte
                 hasPermIntersection = true;
             }
         }
-        if (hasPermIntersection &&
-            CompareCallbackRef(permActiveChangeContext->env, item->callbackRef, permActiveChangeContext->callbackRef)) {
+        if (hasPermIntersection && CompareCallbackRef(permActiveChangeContext->env, 
+            item->callbackRef, permActiveChangeContext->callbackRef, item->threadId_)) {
             return true;
         }
     }
@@ -784,9 +786,8 @@ static void DeleteRegisterInVector(PermActiveChangeContext* permActiveChangeCont
     while (item != g_permActiveChangeSubscribers.end()) {
         std::vector<std::string> permList;
         (*item)->subscriber->GetPermList(permList);
-        if ((permList == targetPermList) &&
-            CompareCallbackRef(permActiveChangeContext->env, (*item)->callbackRef,
-            permActiveChangeContext->callbackRef)) {
+        if ((permList == targetPermList) && CompareCallbackRef(permActiveChangeContext->env, (*item)->callbackRef,
+            permActiveChangeContext->callbackRef, (*item)->threadId_)) {
             delete *item;
             *item = nullptr;
             g_permActiveChangeSubscribers.erase(item);
@@ -810,9 +811,11 @@ static bool FindAndGetSubscriber(UnregisterPermActiveChangeContext* unregisterPe
         // targetCallback == nullptr, Unsubscribe from all callbacks under the same permList
         // targetCallback != nullptr, unregister the subscriber with same permList and callback
         if (callbackRef == nullptr) {
-            callbackEqual = true;
+            // batch delete currentThread callback
+            callbackEqual = IsCurrentThread(item->threadId_);
         } else {
-            callbackEqual = CompareCallbackRef(unregisterPermActiveChangeContext->env, item->callbackRef, callbackRef);
+            callbackEqual = CompareCallbackRef(
+                unregisterPermActiveChangeContext->env, item->callbackRef, callbackRef, item->threadId_);
         }
 
         if ((permList == targetPermList) && callbackEqual) {

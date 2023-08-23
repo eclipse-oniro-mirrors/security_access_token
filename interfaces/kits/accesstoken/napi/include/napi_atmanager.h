@@ -20,6 +20,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <uv.h>
+#include <thread>
 
 #include "ability.h"
 #include "ability_context.h"
@@ -77,6 +78,7 @@ struct PermStateChangeContext {
     int32_t errCode = RET_FAILED;
     std::string permStateChangeType;
     AccessTokenKit* accessTokenKit = nullptr;
+    std::thread::id threadId_;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
     void DeleteNapiRef();
 };

@@ -15,6 +15,7 @@
 #ifndef  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
 #define  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
 
+#include <memory>
 #include <uv.h>
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
@@ -37,13 +38,15 @@ struct PrivacyAsyncWorkData {
     napi_ref        callbackRef = nullptr;
 };
 
-class PermActiveStatusPtr : public PermActiveStatusCustomizedCbk {
+class PermActiveStatusPtr : public std::enable_shared_from_this<PermActiveStatusPtr>,
+    public PermActiveStatusCustomizedCbk {
 public:
     explicit PermActiveStatusPtr(const std::vector<std::string>& permList);
     ~PermActiveStatusPtr() override;
     void ActiveStatusChangeCallback(ActiveChangeResponse& result) override;
     void SetEnv(const napi_env& env);
     void SetCallbackRef(const napi_ref& ref);
+    void DeleteNapiRef();
 private:
     napi_env env_ = nullptr;
     napi_ref ref_ = nullptr;
@@ -53,7 +56,7 @@ struct PermActiveStatusWorker {
     napi_env env = nullptr;
     napi_ref ref = nullptr;
     ActiveChangeResponse result;
-    PermActiveStatusPtr* subscriber = nullptr; // this
+    std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr; // this
 };
 
 struct PermActiveChangeContext {
@@ -63,6 +66,7 @@ struct PermActiveChangeContext {
     napi_ref callbackRef = nullptr;
     std::string type;
     std::shared_ptr<PermActiveStatusPtr> subscriber = nullptr;
+    std::thread::id threadId_;
 };
 
 void UvQueueWorkActiveStatusChange(uv_work_t* work, int status);

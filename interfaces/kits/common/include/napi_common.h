@@ -19,6 +19,7 @@
 #include "access_token.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include <thread>
 
 namespace OHOS {
 namespace Security {
@@ -27,7 +28,8 @@ constexpr int32_t ASYNC_CALL_BACK_VALUES_NUM = 2;
 constexpr int32_t ASYNC_CALL_BACK_PARAM_ERROR = 0;
 constexpr int32_t ASYNC_CALL_BACK_PARAM_DATA = 1;
 
-bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef);
+bool IsCurrentThread(std::thread::id threadId);
+bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef, std::thread::id threadId);
 bool ParseBool(const napi_env& env, const napi_value& value, bool& result);
 bool ParseInt32(const napi_env& env, const napi_value& value, int32_t& result);
 bool ParseInt64(const napi_env& env, const napi_value& value, int64_t& result);
