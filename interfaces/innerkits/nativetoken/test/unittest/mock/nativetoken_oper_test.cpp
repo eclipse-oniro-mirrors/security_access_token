@@ -219,21 +219,21 @@ HWTEST_F(TokenOperTest, UpdateItemcontent004, TestSize.Level1)
         R"({"processName":"process5","APL":3,"version":1,"tokenId":678065606,"tokenAttr":0,)"\
         R"("dcaps":["AT_CAP","ST_CAP"], "permissions":[], "nativeAcls":[]}])";
 
-    cJSON* jsonRoot = cJSON_Parse(stringJson1.c_str());
-    EXPECT_EQ(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    cJSON* json = cJSON_Parse(stringJson1.c_str());
+    EXPECT_EQ(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
     // perms update failed
     tokenNode.permsNum = 1;
-    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
     // perms update failed
     tokenNode.aclsNum = 1;
     tokenNode.perms[0] = static_cast<char *>(malloc(sizeof(char) * MAX_PERM_LEN));
     EXPECT_NE(tokenNode.perms[0], nullptr);
     (void)strcpy_s(tokenNode.perms[0], MAX_PERM_LEN, "x");
-    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, jsonRoot), 0);
+    EXPECT_NE(UpdateGoalItemFromRecord(&tokenNode, json), 0);
 
-    cJSON_Delete(jsonRoot);
+    cJSON_Delete(json);
     free(tokenNode.dcaps[0]);
     free(tokenNode.perms[0]);
 }
@@ -376,19 +376,19 @@ HWTEST_F(TokenOperTest, GetNativeTokenFromJson001, TestSize.Level1)
 
 static int32_t Start(const char *processName)
 {
-    const char **dcaps = new (std::nothrow) const char *[2];
-    if (dcaps == nullptr) {
+    const char **dcapList = new (std::nothrow) const char *[2];
+    if (dcapList == nullptr) {
         return 0;
     }
-    dcaps[0] = "AT_CAP";
-    dcaps[1] = "ST_CAP";
+    dcapList[0] = "AT_CAP";
+    dcapList[1] = "ST_CAP";
     uint64_t tokenId;
-    const char **perms = new (std::nothrow) const char *[2];
-    if (perms == nullptr) {
+    const char **permList = new (std::nothrow) const char *[2];
+    if (permList == nullptr) {
         return 0;
     }
-    perms[0] = "ohos.permission.test1";
-    perms[1] = "ohos.permission.test2";
+    permList[0] = "ohos.permission.test1";
+    permList[1] = "ohos.permission.test2";
     const char **acls = new (std::nothrow) const char *[1];
     if (acls == nullptr) {
         return 0;
@@ -398,15 +398,15 @@ static int32_t Start(const char *processName)
         .dcapsNum = 2,
         .permsNum = 2,
         .aclsNum = 1,
-        .dcaps = dcaps,
-        .perms = perms,
+        .dcaps = dcapList,
+        .perms = permList,
         .acls = acls,
         .processName = processName,
         .aplStr = "system_basic",
     };
     tokenId = GetAccessTokenId(&infoInstance);
-    delete[] dcaps;
-    delete[] perms;
+    delete[] dcapList;
+    delete[] permList;
     delete[] acls;
     return tokenId;
 }

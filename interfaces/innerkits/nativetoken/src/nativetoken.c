@@ -591,19 +591,19 @@ static uint32_t UpdateTokenInfoInList(NativeTokenList *tokenNode,
 static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
 {
     cJSON *record = NULL;
-    char *fileBuff = NULL;
+    char *fileBuffer = NULL;
     uint32_t ret;
 
-    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuff) != ATRET_SUCCESS) {
+    if (GetFileBuff(TOKEN_ID_CFG_FILE_PATH, &fileBuffer) != ATRET_SUCCESS) {
         return ATRET_FAILED;
     }
 
-    if (fileBuff == NULL) {
+    if (fileBuffer == NULL) {
         record = cJSON_CreateArray();
     } else {
-        record = cJSON_Parse(fileBuff);
-        free(fileBuff);
-        fileBuff = NULL;
+        record = cJSON_Parse(fileBuffer);
+        free(fileBuffer);
+        fileBuffer = NULL;
     }
 
     if (record == NULL) {
