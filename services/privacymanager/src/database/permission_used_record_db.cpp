@@ -79,20 +79,20 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     auto statement = Prepare(prepareSql);
     BeginTransaction();
-    bool isExecuteSuccessfully = true;
+    bool isAddSuccessfully = true;
     for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
-        for (const auto& columnName : columnNames) {
-            statement.Bind(columnName, value.Get(columnName));
+        for (const auto& name : columnNames) {
+            statement.Bind(name, value.Get(name));
         }
         int32_t ret = statement.Step();
         if (ret != Statement::State::DONE) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", SpitError().c_str());
-            isExecuteSuccessfully = false;
+            isAddSuccessfully = false;
         }
         statement.Reset();
     }
-    if (!isExecuteSuccessfully) {
+    if (!isAddSuccessfully) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
         RollbackTransaction();
         return FAILURE;
@@ -212,8 +212,8 @@ std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) con
     }
     std::string sql = "insert into " + it->second.tableName_ + " values(";
     int32_t i = 1;
-    for (const auto& columnName : it->second.tableColumnNames_) {
-        sql.append(":" + columnName);
+    for (const auto& name : it->second.tableColumnNames_) {
+        sql.append(":" + name);
         if (i < static_cast<int32_t>(it->second.tableColumnNames_.size())) {
             sql.append(",");
         }
@@ -231,9 +231,9 @@ std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
         return std::string();
     }
     std::string sql = "delete from " + it->second.tableName_ + " where 1 = 1";
-    for (const auto& columnName : columnNames) {
+    for (const auto& name : columnNames) {
         sql.append(" and ");
-        sql.append(columnName + "=:" + columnName);
+        sql.append(name + "=:" + name);
     }
     return sql;
 }
@@ -252,8 +252,8 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
 
     std::string sql = "update " + it->second.tableName_ + " set ";
     int32_t i = 1;
-    for (const auto& columnName : modifyColumns) {
-        sql.append(columnName + "=:" + columnName);
+    for (const auto& name : modifyColumns) {
+        sql.append(name + "=:" + name);
         if (i < static_cast<int32_t>(modifyColumns.size())) {
             sql.append(",");
         }

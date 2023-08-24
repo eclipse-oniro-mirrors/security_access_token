@@ -43,9 +43,9 @@ void OnPermissionUsedRecordCallbackProxy::OnQueried(ErrCode code, PermissionUsed
         return;
     }
 
-    PermissionUsedResultParcel resultParcel;
-    resultParcel.result = result;
-    if (!data.WriteParcelable(&resultParcel)) {
+    PermissionUsedResultParcel usedResultParcel;
+    usedResultParcel.result = result;
+    if (!data.WriteParcelable(&usedResultParcel)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(result)");
         return;
     }
