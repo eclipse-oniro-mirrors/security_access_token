@@ -426,13 +426,13 @@ void AccessTokenManagerStub::RegisterPermStateChangeCallbackInner(MessageParcel&
 
 void AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
-    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingToken) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
         return;
     }
-    if (VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingToken);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }

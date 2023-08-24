@@ -703,14 +703,14 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
 {
-    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
-    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+    AtManagerAsyncContext* context = reinterpret_cast<AtManagerAsyncContext*>(data);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {context};
     napi_value result = GetNapiNull(env);
 
-    if (asyncContext->deferred != nullptr) {
-        ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+    if (context->deferred != nullptr) {
+        ReturnPromiseResult(env, context->result, context->deferred, result);
     } else {
-        ReturnCallbackResult(env, asyncContext->result, asyncContext->callbackRef, result);
+        ReturnCallbackResult(env, context->result, context->callbackRef, result);
     }
 }
 
@@ -766,21 +766,21 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission begin.");
 
-    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
-    if (asyncContext == nullptr) {
+    auto* context = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
+    if (context == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
         return nullptr;
     }
 
-    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    if (!ParseInputGrantOrRevokePermission(env, info, *asyncContext)) {
+    std::unique_ptr<AtManagerAsyncContext> contextPtr {context};
+    if (!ParseInputGrantOrRevokePermission(env, info, *context)) {
         return nullptr;
     }
 
     napi_value result = nullptr;
 
-    if (asyncContext->callbackRef == nullptr) {
-        NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+    if (context->callbackRef == nullptr) {
+        NAPI_CALL(env, napi_create_promise(env, &(context->deferred), &result));
     } else {
         NAPI_CALL(env, napi_get_undefined(env, &result));
     }
@@ -791,12 +791,12 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
     NAPI_CALL(env, napi_create_async_work(
         env, nullptr, resource,
         GrantUserGrantedPermissionExecute, GrantUserGrantedPermissionComplete,
-        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+        reinterpret_cast<void *>(context), &(context->work)));
 
-    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, context->work, napi_qos_default));
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GrantUserGrantedPermission end.");
-    context.release();
+    contextPtr.release();
     return result;
 }
 

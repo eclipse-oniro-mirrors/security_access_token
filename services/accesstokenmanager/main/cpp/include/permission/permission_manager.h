@@ -57,6 +57,8 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+        bool isGranted, int flag);
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
