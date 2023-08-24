@@ -159,7 +159,12 @@ RegisterPermStateChangeScopePtr::RegisterPermStateChangeScopePtr(const PermState
 {}
 
 RegisterPermStateChangeScopePtr::~RegisterPermStateChangeScopePtr()
-{}
+{
+    if (ref_ == nullptr) {
+        return;
+    }
+    DeleteNapiRef();
+}
 
 void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInfo& result)
 {
@@ -193,7 +198,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     ACCESSTOKEN_LOG_DEBUG(LABEL,
         "result permStateChangeType = %{public}d, tokenID = %{public}d, permissionName = %{public}s",
         result.permStateChangeType, result.tokenID, result.permissionName.c_str());
-    registerPermStateChangeWorker->subscriber = this;
+    registerPermStateChangeWorker->subscriber = shared_from_this();
     work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
     NAPI_CALL_RETURN_VOID(env_,
         uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkPermStateChanged, uv_qos_default));
@@ -218,12 +223,7 @@ void RegisterPermStateChangeScopePtr::SetValid(bool valid)
 }
 
 PermStateChangeContext::~PermStateChangeContext()
-{
-    if (callbackRef == nullptr) {
-        return;
-    }
-    DeleteNapiRef();
-}
+{}
 
 void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
 {
@@ -247,10 +247,10 @@ void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkDeleteRef end");
 }
 
-void PermStateChangeContext::DeleteNapiRef()
+void RegisterPermStateChangeScopePtr::DeleteNapiRef()
 {
     uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(env, napi_get_uv_event_loop(env, &loop));
+    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
         return;
@@ -269,11 +269,11 @@ void PermStateChangeContext::DeleteNapiRef()
         return;
     }
     std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeWorker};
-    registerPermStateChangeWorker->env = env;
-    registerPermStateChangeWorker->ref = callbackRef;
+    registerPermStateChangeWorker->env = env_;
+    registerPermStateChangeWorker->ref = ref_;
 
     work->data = reinterpret_cast<void *>(registerPermStateChangeWorker);
-    NAPI_CALL_RETURN_VOID(env,
+    NAPI_CALL_RETURN_VOID(env_,
         uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, UvQueueWorkDeleteRef, uv_qos_default));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DeleteNapiRef");
     uvWorkPtr.release();
@@ -1304,6 +1304,7 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
     registerPermStateChangeInfo.subscriber->SetEnv(env);
     registerPermStateChangeInfo.subscriber->SetCallbackRef(callback);
+    registerPermStateChangeInfo.threadId_ = std::this_thread::get_id();
     std::shared_ptr<RegisterPermStateChangeScopePtr> *subscriber =
         new (std::nothrow) std::shared_ptr<RegisterPermStateChangeScopePtr>(
             registerPermStateChangeInfo.subscriber);
@@ -1447,6 +1448,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     unregisterPermStateChangeInfo.callbackRef = callback;
     unregisterPermStateChangeInfo.permStateChangeType = type;
     unregisterPermStateChangeInfo.scopeInfo = scopeInfo;
+    unregisterPermStateChangeInfo.threadId_ = std::this_thread::get_id();
     return true;
 }
 
@@ -1493,7 +1495,13 @@ bool NapiAtManager::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* 
     std::vector<std::string> targetPermList = unregisterPermStateChangeInfo->scopeInfo.permList;
     for (const auto& item : g_permStateChangeRegisters) {
         if (unregisterPermStateChangeInfo->callbackRef != nullptr) {
-            if (!CompareCallbackRef(env, item->callbackRef, unregisterPermStateChangeInfo->callbackRef)) {
+            if (!CompareCallbackRef(env, item->callbackRef, unregisterPermStateChangeInfo->callbackRef,
+                item->threadId_)) {
+                continue;
+            }
+        } else {
+            // batch delete currentThread callback
+            if (!IsCurrentThread(item->threadId_)) {
                 continue;
             }
         }
@@ -1518,6 +1526,7 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
     std::vector<AccessTokenID> targetTokenIDs = targetScopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = targetScopeInfo.permList;
     std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
+    
     for (const auto& item : g_permStateChangeRegisters) {
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
@@ -1555,7 +1564,7 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
         }
 
         if (hasTokenIdIntersection && hasPermIntersection &&
-            CompareCallbackRef(env, item->callbackRef, registerPermStateChangeInfo->callbackRef)) {
+            CompareCallbackRef(env, item->callbackRef, registerPermStateChangeInfo->callbackRef, item->threadId_)) {
             return true;
         }
     }
@@ -1574,7 +1583,7 @@ void NapiAtManager::DeleteRegisterFromVector(const PermStateChangeScope& scopeIn
         PermStateChangeScope stateChangeScope;
         (*item)->subscriber->GetScope(stateChangeScope);
         if ((stateChangeScope.tokenIDs == targetTokenIDs) && (stateChangeScope.permList == targetPermList) &&
-            CompareCallbackRef(env, (*item)->callbackRef, subscriberRef)) {
+            CompareCallbackRef(env, (*item)->callbackRef, subscriberRef, (*item)->threadId_)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscribers in vector, delete");
             delete *item;
             *item = nullptr;
