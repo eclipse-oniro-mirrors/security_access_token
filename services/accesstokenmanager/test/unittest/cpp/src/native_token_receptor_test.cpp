@@ -116,43 +116,43 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
     NativeTokenReceptor& receptor = NativeTokenReceptor::GetInstance();
 
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([{"processName":"", }])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([{"processName":"process6"}, {}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([{"processName":""}, {"":"", ""}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":3, "version":new}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}]})";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"(["NativeToken":])";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 
     testStr = R"([)";
     receptor.ParserNativeRawData(testStr, tokenInfos);
-    ASSERT_EQ(0, tokenInfos.size());
+    ASSERT_EQ(static_cast<uint32_t>(0), tokenInfos.size());
 }
 
 namespace OHOS {
@@ -712,7 +712,7 @@ HWTEST_F(NativeTokenReceptorTest, init001, TestSize.Level1)
         .aplStr = "system_core",
     };
     uint64_t tokenId = ::GetAccessTokenId(&infoInstance);
-    ASSERT_NE(tokenId, 0);
+    ASSERT_NE(tokenId, INVALID_TOKENID);
 
     NativeTokenReceptor::GetInstance().Init();
     NativeTokenInfo findInfo;

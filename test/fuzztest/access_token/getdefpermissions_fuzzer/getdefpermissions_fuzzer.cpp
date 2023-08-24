@@ -31,9 +31,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::vector<PermissionDef> permDefList;
-        int32_t result = AccessTokenKit::GetDefPermissions(TOKENID, permDefList);
+        int32_t result = AccessTokenKit::GetDefPermissions(tokenId, permDefList);
  
         return result == RET_SUCCESS;
     }

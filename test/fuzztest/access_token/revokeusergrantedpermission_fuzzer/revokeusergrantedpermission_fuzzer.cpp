@@ -31,9 +31,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        int32_t result = AccessTokenKit::RevokePermission(TOKENID, testName, 0);
+        int32_t result = AccessTokenKit::RevokePermission(tokenId, testName, 0);
 
         return result == RET_SUCCESS;
     }

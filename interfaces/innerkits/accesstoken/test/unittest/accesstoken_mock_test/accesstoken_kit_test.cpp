@@ -28,7 +28,7 @@ HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test1",
     .apiVersion = DEFAULT_API_VERSION
 };
 HapPolicyParams g_infoManagerTestPolicyPrams = {
@@ -355,7 +355,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId001, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_EQ(0, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
 #ifdef TOKEN_SYNC_ENABLE

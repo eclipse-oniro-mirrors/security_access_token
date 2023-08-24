@@ -31,7 +31,7 @@ namespace OHOS {
 
         int num = static_cast<int>(size);
         char ver = static_cast<char>(size);
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
         HapTokenInfo HapTokenInfotest = {
             .ver = ver,
@@ -41,10 +41,10 @@ namespace OHOS {
             .dlpType = num,
             .appID = testName,
             .deviceID = testName,
-            .tokenID = TOKENID,
-            .tokenAttr = TOKENID,
+            .tokenID = tokenId,
+            .tokenAttr = tokenId,
         };
-        int32_t result = AccessTokenKit::GetHapTokenInfo(TOKENID, HapTokenInfotest);
+        int32_t result = AccessTokenKit::GetHapTokenInfo(tokenId, HapTokenInfotest);
 
         return result == RET_SUCCESS;
     }

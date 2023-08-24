@@ -31,8 +31,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-        int32_t result = AccessTokenKit::ClearUserGrantedPermissionState(TOKENID);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        int32_t result = AccessTokenKit::ClearUserGrantedPermissionState(tokenId);
 
         return result == RET_SUCCESS;
     }

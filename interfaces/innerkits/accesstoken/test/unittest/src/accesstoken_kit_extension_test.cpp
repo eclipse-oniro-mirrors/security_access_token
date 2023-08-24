@@ -46,27 +46,38 @@ static const int TEST_USER_ID = 0;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitExtensionTest"};
 
-PermissionStateFull g_grantPermissionReq = {
-    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+PermissionStateFull g_getPermissionReq = {
+    .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-PermissionStateFull g_revokePermissionReq = {
-    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device"},
+    .resDeviceID = {"device2"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 
-PermissionStateFull g_getPermissionReq = {
-    .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+PermissionStateFull g_revokePermissionReq = {
+    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
     .isGeneral = true,
-    .resDeviceID = {"device"},
+    .resDeviceID = {"device2"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+
+PermissionStateFull g_grantPermissionReq = {
+    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
+    .isGeneral = true,
+    .resDeviceID = {"device2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+};
+PermissionDef g_infoManagerTestPermDef2 = {
+    .permissionName = "ohos.permission.test2",
+    .bundleName = "accesstoken_test",
+    .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .label = "label2",
+    .labelId = 1,
+    .description = "break the door",
+    .descriptionId = 1
 };
 
 PermissionDef g_infoManagerTestPermDef1 = {
@@ -74,29 +85,10 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .bundleName = "accesstoken_test",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,
-    .label = "label",
+    .label = "label2",
     .labelId = 1,
     .description = "open the door",
     .descriptionId = 1
-};
-
-PermissionDef g_infoManagerTestPermDef2 = {
-    .permissionName = "ohos.permission.test2",
-    .bundleName = "accesstoken_test",
-    .grantMode = 1,
-    .availableLevel = APL_NORMAL,
-    .label = "label",
-    .labelId = 1,
-    .description = "break the door",
-    .descriptionId = 1
-};
-
-PermissionStateFull g_infoManagerTestState1 = {
-    .permissionName = "ohos.permission.test1",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {1}
 };
 
 PermissionStateFull g_infoManagerTestState2 = {
@@ -107,17 +99,25 @@ PermissionStateFull g_infoManagerTestState2 = {
     .grantFlags = {1, 2}
 };
 
+PermissionStateFull g_infoManagerTestState1 = {
+    .permissionName = "ohos.permission.test1",
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
 HapInfoParams g_infoManagerTestInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test2",
     .apiVersion = DEFAULT_API_VERSION
 };
 
 HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
-    .domain = "test.domain",
+    .domain = "test.domain2",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
@@ -126,13 +126,13 @@ HapInfoParams g_infoManagerTestInfoParmsBak = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test2",
     .apiVersion = DEFAULT_API_VERSION
 };
 
 HapPolicyParams g_infoManagerTestPolicyPramsBak = {
     .apl = APL_NORMAL,
-    .domain = "test.domain",
+    .domain = "test.domain2",
     .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
@@ -141,7 +141,7 @@ HapInfoParams g_locationTestInfo = {
     .userID = TEST_USER_ID,
     .bundleName = "accesstoken_location_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest"
+    .appIDDesc = "test2"
 };
 
 PermissionDef g_locationTestDefVague = {
@@ -240,7 +240,7 @@ HapInfoParams g_infoManagerTestNormalInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test2",
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = false
 };
@@ -249,7 +249,7 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
     .instIndex = 0,
-    .appIDDesc = "testtesttesttest",
+    .appIDDesc = "test2",
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = true
 };
@@ -283,24 +283,24 @@ void GetNativeToken()
 
 void AccessTokenKitExtensionTest::SetUpTestCase()
 {
-    // make test case clean
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+    // clean up test cases
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName,
         g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenKit::DeleteToken(tokenId);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
         g_infoManagerTestNormalInfoParms.bundleName,
         g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenKit::DeleteToken(tokenId);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
         g_infoManagerTestSystemInfoParms.bundleName,
         g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenKit::DeleteToken(tokenId);
 
-    tokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
+    tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenKit::DeleteToken(tokenId);
 
     GetNativeToken();
 }
@@ -454,17 +454,17 @@ void AccessTokenKitExtensionTest::SetUp()
 
 void AccessTokenKitExtensionTest::TearDown()
 {
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
-    AccessTokenKit::DeleteToken(tokenID);
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
+    AccessTokenID tokenId = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    AccessTokenKit::DeleteToken(tokenId);
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestNormalInfoParms.userID,
                                             g_infoManagerTestNormalInfoParms.bundleName,
                                             g_infoManagerTestNormalInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenKit::DeleteToken(tokenId);
 
-    tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestSystemInfoParms.userID,
                                             g_infoManagerTestSystemInfoParms.bundleName,
                                             g_infoManagerTestSystemInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
+    AccessTokenKit::DeleteToken(tokenId);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
@@ -611,18 +611,18 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState002, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague2 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
+    std::vector<PermissionListState> permsList2;
+    permsList2.emplace_back(permVague2);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList2.size());
+    ASSERT_EQ(DYNAMIC_OPER, permsList2[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -648,18 +648,18 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState003, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague3 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
+    std::vector<PermissionListState> permsList3;
+    permsList3.emplace_back(permVague3);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList3);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList3.size());
+    ASSERT_EQ(SETTING_OPER, permsList3[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -685,18 +685,18 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague4 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
+    std::vector<PermissionListState> permsList4;
+    permsList4.emplace_back(permVague4);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList4);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
-    ASSERT_EQ(PASS_OPER, permsList[0].state);
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList4.size());
+    ASSERT_EQ(PASS_OPER, permsList4[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -722,18 +722,18 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState005, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permAccurate = {
+    std::vector<PermissionListState> permsList5;
+    PermissionListState permAccurate5 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permAccurate);
+    permsList5.emplace_back(permAccurate5);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList5);
     ASSERT_EQ(INVALID_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
-    ASSERT_EQ(INVALID_OPER, permsList[0].state);
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList5.size());
+    ASSERT_EQ(INVALID_OPER, permsList5[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -761,24 +761,24 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState006, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague6 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate6 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
+    
+    std::vector<PermissionListState> permsList6;
+    permsList6.emplace_back(permVague6);
+    permsList6.emplace_back(permAccurate6);
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList6);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList6.size());
+    ASSERT_EQ(DYNAMIC_OPER, permsList6[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList6[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -806,24 +806,24 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState007, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague7 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate7 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
+    std::vector<PermissionListState> permsList7;
+    permsList7.emplace_back(permVague7);
+    permsList7.emplace_back(permAccurate7);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList7);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
-    ASSERT_EQ(PASS_OPER, permsList[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList7.size());
+    ASSERT_EQ(PASS_OPER, permsList7[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList7[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -851,24 +851,24 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState008, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague8 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate8 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
+    std::vector<PermissionListState> permsList8;
+    permsList8.emplace_back(permVague8);
+    permsList8.emplace_back(permAccurate8);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList8);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
-    ASSERT_EQ(SETTING_OPER, permsList[0].state);
-    ASSERT_EQ(SETTING_OPER, permsList[1].state);
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList8.size());
+    ASSERT_EQ(SETTING_OPER, permsList8[0].state);
+    ASSERT_EQ(SETTING_OPER, permsList8[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -896,24 +896,24 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState009, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague9 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate9 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
+    std::vector<PermissionListState> permsList9;
+    permsList9.emplace_back(permVague9);
+    permsList9.emplace_back(permAccurate9);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList9);
     ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
-    ASSERT_EQ(PASS_OPER, permsList[0].state);
-    ASSERT_EQ(PASS_OPER, permsList[1].state);
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList9.size());
+    ASSERT_EQ(PASS_OPER, permsList9[0].state);
+    ASSERT_EQ(PASS_OPER, permsList9[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -945,36 +945,36 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState010, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague10 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate10 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
-    PermissionListState permSystem = {
+    PermissionListState permSystem10 = {
         .permissionName = "ohos.permission.locationtest1",
         .state = -1,
     };
-    PermissionListState permUser = {
+    PermissionListState permUser10 = {
         .permissionName = "ohos.permission.locationtest2",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
-    permsList.emplace_back(permSystem);
-    permsList.emplace_back(permUser);
+    std::vector<PermissionListState> permsList10;
+    permsList10.emplace_back(permVague10);
+    permsList10.emplace_back(permAccurate10);
+    permsList10.emplace_back(permSystem10);
+    permsList10.emplace_back(permUser10);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList10);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(4), permsList.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
-    ASSERT_EQ(PASS_OPER, permsList[2].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[3].state);
+    ASSERT_EQ(static_cast<uint32_t>(4), permsList10.size());
+    ASSERT_EQ(DYNAMIC_OPER, permsList10[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList10[1].state);
+    ASSERT_EQ(PASS_OPER, permsList10[2].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList10[3].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -1000,18 +1000,18 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState011, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate11 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permAccurate);
+    std::vector<PermissionListState> permsList11;
+    permsList11.emplace_back(permAccurate11);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList11);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList[0].state);
+    ASSERT_EQ(static_cast<uint32_t>(1), permsList11.size());
+    ASSERT_EQ(DYNAMIC_OPER, permsList11[0].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -1039,24 +1039,24 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState012, TestSize.Level
     ASSERT_NE(INVALID_TOKENID, tokenID);
     ASSERT_EQ(0, SetSelfTokenID(tokenID));
 
-    PermissionListState permVague = {
+    PermissionListState permVague12 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
         .state = -1,
     };
-    PermissionListState permAccurate = {
+    PermissionListState permAccurate12 = {
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
 
-    std::vector<PermissionListState> permsList;
-    permsList.emplace_back(permVague);
-    permsList.emplace_back(permAccurate);
+    std::vector<PermissionListState> permsList12;
+    permsList12.emplace_back(permVague12);
+    permsList12.emplace_back(permAccurate12);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList12);
     ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList.size());
-    ASSERT_EQ(INVALID_OPER, permsList[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList[1].state);
+    ASSERT_EQ(static_cast<uint32_t>(2), permsList12.size());
+    ASSERT_EQ(INVALID_OPER, permsList12[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList12[1].state);
 
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
@@ -1093,13 +1093,13 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState014, TestSize.Level
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("hdcd");
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
-    std::vector<PermissionListState> permsList;
+    std::vector<PermissionListState> permsList14;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
         .state = 0
     };
-    permsList.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    permsList14.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList14));
 }
 
 /**
@@ -1113,13 +1113,13 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState015, TestSize.Level
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
-    std::vector<PermissionListState> permsList;
+    std::vector<PermissionListState> permsList15;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
         .state = 0
     };
-    permsList.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    permsList15.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList15));
 }
 
 /**
@@ -1211,18 +1211,18 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback001, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams1 = {
         .apl = APL_NORMAL,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA}
     };
 
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams1);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
@@ -1287,26 +1287,26 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback002, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_GRANTED},
         .grantFlags = {1}
     };
     static PermissionStateFull infoManagerTestStateB = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_GRANTED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams2 = {
         .apl = APL_SYSTEM_BASIC,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams2);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -1344,26 +1344,26 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback003, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
     static PermissionStateFull infoManagerTestStateB = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams3 = {
         .apl = APL_SYSTEM_CORE,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams3);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -1411,26 +1411,26 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback004, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_GRANTED},
         .grantFlags = {1},
     };
     static PermissionStateFull infoManagerTestStateB = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_GRANTED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams4 = {
         .apl = APL_NORMAL,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams4);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -1466,26 +1466,26 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback005, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
     static PermissionStateFull infoManagerTestStateB = {
         .permissionName = "ohos.permission.GET_BUNDLE_INFO",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_GRANTED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams5 = {
         .apl = APL_NORMAL,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA, infoManagerTestStateB}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams5);
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
@@ -1534,22 +1534,22 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback006, TestSi
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
 
-    static PermissionStateFull infoManagerTestStateA = {
+    static PermissionStateFull infoManagerTestState = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams6 = {
         .apl = APL_SYSTEM_BASIC,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
-        .permStateList = {infoManagerTestStateA}
+        .permStateList = {infoManagerTestState}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams6);
 
     scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
     scopeInfo.permList = {"ohos.permission.INVALID", "ohos.permission.CAMERA"};
@@ -1609,7 +1609,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback008, TestSi
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
     callbackPtr->ready_ = false;
 
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams8 = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
@@ -1617,20 +1617,20 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback008, TestSi
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams8);
 
     for (int32_t i = 1; i <= 1025; i++) { // 1025 is a invalid size
         scopeInfo.tokenIDs.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
         if (i == 1025) { // 1025 is a invalid size
-            auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-            int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+            auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
+            int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1);
             ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
             break;
         }
-        auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
+        auto callbackPtr1 = std::make_shared<CbCustomizeTest>(scopeInfo);
+        int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr1);
         ASSERT_EQ(RET_SUCCESS, res);
-        res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr1);
         ASSERT_EQ(RET_SUCCESS, res);
     }
 
@@ -1748,19 +1748,19 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback013, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams13 = {
         .apl = APL_SYSTEM_BASIC,
-        .domain = "test.domain",
+        .domain = "test.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams13);
 
     scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
     scopeInfo.permList = {"ohos.permission.CAMERA"};
@@ -1803,19 +1803,19 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback014, TestSi
     static PermissionStateFull infoManagerTestStateA = {
         .permissionName = "ohos.permission.READ_MEDIA",
         .isGeneral = true,
-        .resDeviceID = {"local"},
+        .resDeviceID = {"local2"},
         .grantStatus = {PERMISSION_DENIED},
         .grantFlags = {1}
     };
-    static HapPolicyParams infoManagerTestPolicyPrams = {
+    static HapPolicyParams infoManagerTestPolicyPrams14 = {
         .apl = APL_SYSTEM_BASIC,
-        .domain = "testA.domain",
+        .domain = "testA.domain2",
         .permList = {},
         .permStateList = {infoManagerTestStateA}
     };
 
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams14);
 
     scopeInfo.tokenIDs = {tokenIdEx.tokenIdExStruct.tokenID};
     scopeInfo.permList = {"ohos.permission.READ_MEDIA"};
@@ -2192,7 +2192,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest001, TestSize.Level1)
 
     retTokenId = TokenIdKit::GetRenderTokenID(validTokenID);
     ASSERT_NE(retTokenId, validTokenID);
-    ASSERT_NE(retTokenId, 0);
+    ASSERT_NE(retTokenId, INVALID_TOKENID);
 }
 
 /**

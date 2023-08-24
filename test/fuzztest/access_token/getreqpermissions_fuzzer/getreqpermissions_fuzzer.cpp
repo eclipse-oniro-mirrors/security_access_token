@@ -30,9 +30,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::vector<PermissionStateFull> permStatSystemList;
-        int32_t result = AccessTokenKit::GetReqPermissions(TOKENID, permStatSystemList, true);
+        int32_t result = AccessTokenKit::GetReqPermissions(tokenId, permStatSystemList, true);
 
         return result == RET_SUCCESS;
     }

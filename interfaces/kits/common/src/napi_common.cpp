@@ -22,9 +22,20 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CommonNapi"};
 } // namespace
 
-
-bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef)
+bool IsCurrentThread(std::thread::id threadId)
 {
+    std::thread::id currentThread = std::this_thread::get_id();
+    if (threadId != currentThread) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_ref can not be compared,different threadId");
+        return false;
+    }
+    return true;
+}
+bool CompareCallbackRef(const napi_env env, napi_ref subscriberRef, napi_ref unsubscriberRef, std::thread::id threadId)
+{
+    if (!IsCurrentThread(threadId)) {
+        return false;
+    }
     napi_value subscriberCallback;
     NAPI_CALL_BASE(env,
         napi_get_reference_value(env, subscriberRef, &subscriberCallback), false);

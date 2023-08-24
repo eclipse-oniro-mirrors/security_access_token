@@ -29,8 +29,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-        ATokenType = AccessTokenKit::GetTokenType(TOKENID);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        ATokenType = AccessTokenKit::GetTokenType(tokenId);
 
         return true;
     }

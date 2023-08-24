@@ -37,27 +37,27 @@ namespace OHOS {
         };
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        PermissionDef TestPermDef;
-        TestPermDef.permissionName = testName;
-        TestPermDef.bundleName = testName;
-        TestPermDef.grantMode = 1;
-        TestPermDef.availableLevel = APL_NORMAL;
-        TestPermDef.label = testName;
-        TestPermDef.labelId = 1;
-        TestPermDef.description = testName;
-        TestPermDef.descriptionId = 1;
+        PermissionDef testPermDef;
+        testPermDef.permissionName = testName;
+        testPermDef.bundleName = testName;
+        testPermDef.grantMode = 1;
+        testPermDef.availableLevel = APL_NORMAL;
+        testPermDef.label = testName;
+        testPermDef.labelId = 1;
+        testPermDef.description = testName;
+        testPermDef.descriptionId = 1;
 
-        PermissionStateFull TestState;
-        TestState.permissionName = testName;
-        TestState.isGeneral = true;
-        TestState.resDeviceID = {testName};
-        TestState.grantStatus = {PermissionState::PERMISSION_GRANTED};
-        TestState.grantFlags = {1};
+        PermissionStateFull testState;
+        testState.permissionName = testName;
+        testState.isGeneral = true;
+        testState.resDeviceID = {testName};
+        testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
+        testState.grantFlags = {1};
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
-            .permList = {TestPermDef},
-            .permStateList = {TestState}
+            .permList = {testPermDef},
+            .permStateList = {testState}
         };
         constexpr int32_t DEFAULT_API_VERSION = 8;
         int32_t result = AccessTokenKit::UpdateHapToken(

@@ -33,14 +33,14 @@ namespace OHOS {
         }
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         
         MessageParcel datas;
         datas.WriteInterfaceToken(ITokenSyncManager::GetDescriptor());
         if (!datas.WriteString(testName)) {
             return false;
         }
-        if (!datas.WriteUint32(TOKENID)) {
+        if (!datas.WriteUint32(tokenId)) {
             return false;
         }
        
