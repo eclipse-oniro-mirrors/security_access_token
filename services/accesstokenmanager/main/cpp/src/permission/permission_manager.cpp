@@ -424,11 +424,9 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     return RET_SUCCESS;
 }
 
-int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, int flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
-        __func__, tokenID, permissionName.c_str(), flag);
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -442,7 +440,15 @@ int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::str
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return UpdateTokenPermissionState(tokenID, permissionName, true, flag);
+    return UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag);
+}
+
+int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
+        __func__, tokenID, permissionName.c_str(), flag);
+    return CheckAndUpdatePermission(tokenID, permissionName, true, flag);
 }
 
 int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
@@ -450,20 +456,7 @@ int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::st
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
-    }
-    if (!PermissionValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    return UpdateTokenPermissionState(tokenID, permissionName, false, flag);
+    return CheckAndUpdatePermission(tokenID, permissionName, false, flag);
 }
 
 void PermissionManager::ScopeToString(
