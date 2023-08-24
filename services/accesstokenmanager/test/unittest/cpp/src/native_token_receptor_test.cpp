@@ -118,40 +118,41 @@ HWTEST_F(NativeTokenReceptorTest, ParserNativeRawData002, TestSize.Level1)
     receptor.ParserNativeRawData(testStr, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([{"processName":"", }])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr1 = R"([{"processName":"", }])";
+    receptor.ParserNativeRawData(testStr1, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([{"processName":"process6"}, {}])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr2 = R"([{"processName":"process6"}, {}])";
+    receptor.ParserNativeRawData(testStr2, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([{"processName":""}, {"":"", ""}])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr3 = R"([{"processName":""}, {"":"", ""}])";
+    receptor.ParserNativeRawData(testStr3, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":3, "version":new}])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr4 = R"([{"processName":"process6", "tokenId":685266937, "APL":3, "version":new}])";
+    receptor.ParserNativeRawData(testStr4, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr5 = R"([{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
+    receptor.ParserNativeRawData(testStr5, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}]})";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr6 =
+        R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}]})";
+    receptor.ParserNativeRawData(testStr6, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr7 = R"({"NativeToken":[{"processName":"process6", "tokenId":685266937, "APL":7, "version":1}])";
+    receptor.ParserNativeRawData(testStr7, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"(["NativeToken":])";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr8 = R"(["NativeToken":])";
+    receptor.ParserNativeRawData(testStr8, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 
-    testStr = R"([)";
-    receptor.ParserNativeRawData(testStr, tokenInfos);
+    std::string testStr9 = R"([)";
+    receptor.ParserNativeRawData(testStr9, tokenInfos);
     ASSERT_EQ(0, tokenInfos.size());
 }
 
@@ -266,7 +267,7 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     NativeTokenInfo info = {
         .apl = APL_NORMAL,
         .ver = 1,
-        .processName = "native_token_test0",
+        .processName = "ProcessNativeTokenInfos001",
         .dcap =  {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
         .tokenAttr = 0
@@ -331,7 +332,7 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     // test process one
     NativeTokenInfo info = {.apl = APL_NORMAL,
         .ver = 1,
-        .processName = "native_token_test0",
+        .processName = "CheckNativeDCap001",
         .dcap = {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
         .tokenAttr = 0};
@@ -380,7 +381,7 @@ HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
     // test process one
     NativeTokenInfo info = {.apl = APL_NORMAL,
         .ver = 1,
-        .processName = "native_token_test0",
+        .processName = "GetAllNativeTokenInfo001",
         .dcap = {"AT_CAP", "ST_CAP"},
         .tokenID = 0x28100000,
         .tokenAttr = 0};
@@ -391,7 +392,7 @@ HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
     AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
     ASSERT_EQ(!nativeVec.empty(), true);
-    AccessTokenID resultTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("native_token_test0");
+    AccessTokenID resultTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("GetAllNativeTokenInfo001");
     ASSERT_EQ(resultTokenId, info.tokenID);
 
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
