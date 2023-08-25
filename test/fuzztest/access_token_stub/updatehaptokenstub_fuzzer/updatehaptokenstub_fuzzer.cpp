@@ -32,9 +32,9 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        PermissionDef TestPermDef = {.permissionName = testName,
+        PermissionDef testPermDef = {.permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
@@ -42,21 +42,21 @@ namespace OHOS {
             .labelId = 1,
             .description = testName,
             .descriptionId = 1};
-        PermissionStateFull TestState = {.permissionName = testName,
+        PermissionStateFull testState = {.permissionName = testName,
             .isGeneral = true,
             .resDeviceID = {testName},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .grantFlags = {1}};
         HapPolicyParams policy = {.apl = APL_NORMAL,
             .domain = testName,
-            .permList = {TestPermDef},
-            .permStateList = {TestState}};
+            .permList = {testPermDef},
+            .permStateList = {testState}};
         int32_t apiVersion = 8;
         HapPolicyParcel hapPolicyParcel;
         hapPolicyParcel.hapPolicyParameter = policy;
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(TOKENID)) {
+        if (!datas.WriteUint32(tokenId)) {
             return false;
         }
         if (!datas.WriteBool(false)) {

@@ -355,7 +355,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId001, TestSize.Level1)
 {
     std::string processName = "hdcd";
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_EQ(0, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 }
 
 #ifdef TOKEN_SYNC_ENABLE

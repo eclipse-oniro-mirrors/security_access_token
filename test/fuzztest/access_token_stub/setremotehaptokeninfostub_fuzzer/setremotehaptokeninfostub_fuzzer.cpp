@@ -36,7 +36,7 @@ namespace OHOS {
         }
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         HapTokenInfo baseInfo = {
             .apl = APL_NORMAL,
             .ver = 1,
@@ -45,7 +45,7 @@ namespace OHOS {
             .instIndex = 1,
             .appID = testName,
             .deviceID = testName,
-            .tokenID = TOKENID,
+            .tokenID = tokenId,
             .tokenAttr = 0
         };
         PermissionStateFull infoManagerTestState = {

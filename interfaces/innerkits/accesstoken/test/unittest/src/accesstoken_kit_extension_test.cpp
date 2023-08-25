@@ -2192,7 +2192,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest001, TestSize.Level1)
 
     retTokenId = TokenIdKit::GetRenderTokenID(validTokenID);
     ASSERT_NE(retTokenId, validTokenID);
-    ASSERT_NE(retTokenId, 0);
+    ASSERT_NE(retTokenId, INVALID_TOKENID);
 }
 
 /**

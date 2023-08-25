@@ -51,12 +51,12 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char *>(data), size);
 
         PermStateChangeScope scopeInfo;
         scopeInfo.permList = { testName };
-        scopeInfo.tokenIDs = { TOKENID };
+        scopeInfo.tokenIDs = { tokenId };
         auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
 
         PermStateChangeScopeParcel scopeParcel;

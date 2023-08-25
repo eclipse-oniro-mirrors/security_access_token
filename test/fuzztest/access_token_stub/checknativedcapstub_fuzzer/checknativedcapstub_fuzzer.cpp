@@ -32,21 +32,17 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        std::string dcap(reinterpret_cast<const char*>(data), size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(TOKENID)) {
-            return false;
-        }
-        std::string dcap(reinterpret_cast<const char*>(data), size);
-        if (!datas.WriteString(dcap)) {
+        if (!datas.WriteUint32(tokenId) || !datas.WriteString(dcap)) {
             return false;
         }
 
         uint32_t code = static_cast<uint32_t>(
             AccessTokenInterfaceCode::CHECK_NATIVE_DCAP);
-
         MessageParcel reply;
         MessageOption option;
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);

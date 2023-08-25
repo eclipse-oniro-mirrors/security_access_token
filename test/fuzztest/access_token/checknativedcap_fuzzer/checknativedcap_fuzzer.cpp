@@ -32,9 +32,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        result = AccessTokenKit::CheckNativeDCap(TOKENID, testName);
+        result = AccessTokenKit::CheckNativeDCap(tokenId, testName);
 
         return result == RET_SUCCESS;
     }

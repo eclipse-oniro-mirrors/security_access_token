@@ -34,13 +34,13 @@ namespace OHOS {
         }
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         NativeTokenInfoForSync native = {
             .baseInfo.apl = APL_NORMAL,
             .baseInfo.ver = 1,
             .baseInfo.processName = testName,
             .baseInfo.dcap = {testName, testName},
-            .baseInfo.tokenID = TOKENID,
+            .baseInfo.tokenID = tokenId,
             .baseInfo.tokenAttr = 0,
             .baseInfo.nativeAcls = {testName},
         };

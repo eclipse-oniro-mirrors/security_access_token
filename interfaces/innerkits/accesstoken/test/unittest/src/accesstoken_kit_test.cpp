@@ -1702,12 +1702,12 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken003, TestSize.Level1)
     g_infoManagerTestInfoParms.bundleName = invalidBundleName;
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
     tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
-    ASSERT_EQ(0, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
     ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
@@ -1730,12 +1730,12 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken004, TestSize.Level1)
     g_infoManagerTestPolicyPrams.apl = (ATokenAplEnum)5;
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
     tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
-    ASSERT_EQ(0, tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
     g_infoManagerTestPolicyPrams.apl = typeBackUp;
@@ -1961,7 +1961,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken011, TestSize.Level1)
     backup = g_infoManagerTestInfoParms.appIDDesc;
     g_infoManagerTestInfoParms.appIDDesc = invalidAppIDDesc;
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -1979,7 +1979,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken012, TestSize.Level1)
     backup = g_infoManagerTestInfoParms.bundleName;
     g_infoManagerTestInfoParms.bundleName = "";
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
     g_infoManagerTestInfoParms.bundleName = backup;
 }
 
@@ -1997,7 +1997,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken013, TestSize.Level1)
     backup = g_infoManagerTestInfoParms.appIDDesc;
     g_infoManagerTestInfoParms.appIDDesc = "";
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -2192,7 +2192,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
     };
 
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
-    ASSERT_EQ(0, tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 }
 
 /**

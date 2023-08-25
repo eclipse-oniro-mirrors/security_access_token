@@ -252,11 +252,11 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel001, TestSize.Level1)
     hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
-    hapTokenInfo.bundleName = "bundle";
+    hapTokenInfo.bundleName = "bundle1";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "111";
+    hapTokenInfo.appID = "test1";
     hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
@@ -267,6 +267,34 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel001, TestSize.Level1)
     EXPECT_EQ(true, hapTokenInfoSync.Marshalling(parcel));
     std::shared_ptr<HapTokenInfoForSyncParcel> readedData(HapTokenInfoForSyncParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
+}
+
+static void WriteParcelable(
+    Parcel& out, const Parcelable& baseInfoParcel, uint32_t size)
+{
+    out.WriteParcelable(&baseInfoParcel);
+    std::vector<PermissionStateFull> permStateList;
+    for (uint32_t i = 0; i < size; i++) {
+        permStateList.emplace_back(g_permStatBeta);
+    }
+    uint32_t permStateListSize = permStateList.size();
+    out.WriteUint32(permStateListSize);
+    for (uint32_t i = 0; i < permStateListSize; i++) {
+        PermissionStateFullParcel permStateParcel;
+        permStateParcel.permStatFull = permStateList[i];
+        out.WriteParcelable(&permStateParcel);
+    }
+
+    out.WriteParcelable(&baseInfoParcel);
+    permStateList.emplace_back(g_permStatBeta);
+
+    permStateListSize = permStateList.size();
+    out.WriteUint32(permStateListSize);
+    for (uint32_t i = 0; i < permStateListSize; i++) {
+        PermissionStateFullParcel permStateParcel;
+        permStateParcel.permStatFull = permStateList[i];
+        out.WriteParcelable(&permStateParcel);
+    }
 }
 
 /**
@@ -283,11 +311,11 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     hapTokenInfo.apl = ATokenAplEnum::APL_NORMAL;
     hapTokenInfo.ver = 0;
     hapTokenInfo.userID = 2;
-    hapTokenInfo.bundleName = "bundle";
+    hapTokenInfo.bundleName = "bundle2";
     hapTokenInfo.apiVersion = 8;
     hapTokenInfo.instIndex = 0;
     hapTokenInfo.dlpType = 0;
-    hapTokenInfo.appID = "111";
+    hapTokenInfo.appID = "test2";
     hapTokenInfo.deviceID = "0";
     hapTokenInfo.tokenID = 0x53100000;
     hapTokenInfo.tokenAttr = 0;
@@ -295,35 +323,13 @@ HWTEST_F(AccessTokenParcelTest, HapTokenInfoForSyncParcel002, TestSize.Level1)
     Parcel out;
     HapTokenInfoParcel baseInfoParcel;
     baseInfoParcel.hapTokenInfoParams = hapTokenInfo;
-    out.WriteParcelable(&baseInfoParcel);
-
-    std::vector<PermissionStateFull> permStateList;
-    for (uint32_t i = 0; i < MAX_PERMLIST_SIZE; i++) {
-        permStateList.emplace_back(g_permStatBeta);
-    }
-    uint32_t permStateListSize = permStateList.size();
-    out.WriteUint32(permStateListSize);
-    for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
-        out.WriteParcelable(&permStateParcel);
-    }
+    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE);
 
     std::shared_ptr<HapTokenInfoForSyncParcel> readedData(HapTokenInfoForSyncParcel::Unmarshalling(out));
     EXPECT_NE(nullptr, readedData);
 
     Parcel out1;
-    out1.WriteParcelable(&baseInfoParcel);
-    permStateList.emplace_back(g_permStatBeta);
-
-    permStateListSize = permStateList.size();
-    out1.WriteUint32(permStateListSize);
-    for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
-        out1.WriteParcelable(&permStateParcel);
-    }
-
+    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
     std::shared_ptr<HapTokenInfoForSyncParcel> readedData1(HapTokenInfoForSyncParcel::Unmarshalling(out1));
     EXPECT_EQ(true, readedData1 == nullptr);
 }
@@ -341,7 +347,7 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoForSyncParcel001, TestSize.Level1
     NativeTokenInfo baseInfo;
     baseInfo.apl = APL_NORMAL,
     baseInfo.ver = 1,
-    baseInfo.processName = "native_token_test0",
+    baseInfo.processName = "native_token_test1",
     baseInfo.tokenID = 0x28100000, // 0x28100000 tokenid
     baseInfo.tokenAttr = 0,
     baseInfo.dcap =  {"AT_CAP", "ST_CAP"};
@@ -350,35 +356,13 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoForSyncParcel001, TestSize.Level1
     Parcel out;
     NativeTokenInfoParcel baseInfoParcel;
     baseInfoParcel.nativeTokenInfoParams = baseInfo;
-    out.WriteParcelable(&baseInfoParcel);
-
-    std::vector<PermissionStateFull> permStateList;
-    for (uint32_t i = 0; i < MAX_PERMLIST_SIZE; i++) {
-        permStateList.emplace_back(g_permStatBeta);
-    }
-    uint32_t permStateListSize = permStateList.size();
-    out.WriteUint32(permStateListSize);
-    for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
-        out.WriteParcelable(&permStateParcel);
-    }
+    WriteParcelable(out, baseInfoParcel, MAX_PERMLIST_SIZE);
 
     std::shared_ptr<NativeTokenInfoForSyncParcel> readedData(NativeTokenInfoForSyncParcel::Unmarshalling(out));
     EXPECT_NE(nullptr, readedData);
 
     Parcel outInvalid;
-    outInvalid.WriteParcelable(&baseInfoParcel);
-    permStateList.emplace_back(g_permStatBeta);
-
-    permStateListSize = permStateList.size();
-    outInvalid.WriteUint32(permStateListSize);
-    for (uint32_t i = 0; i < permStateListSize; i++) {
-        PermissionStateFullParcel permStateParcel;
-        permStateParcel.permStatFull = permStateList[i];
-        outInvalid.WriteParcelable(&permStateParcel);
-    }
-
+    WriteParcelable(outInvalid, baseInfoParcel, MAX_PERMLIST_SIZE + 1);
     std::shared_ptr<NativeTokenInfoForSyncParcel> readedData1(NativeTokenInfoForSyncParcel::Unmarshalling(outInvalid));
     EXPECT_EQ(true, readedData1 == nullptr);
 }
@@ -396,7 +380,7 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoForSyncParcel002, TestSize.Level1
     NativeTokenInfo baseInfo;
     baseInfo.apl = APL_NORMAL,
     baseInfo.ver = 1,
-    baseInfo.processName = "native_token_test0",
+    baseInfo.processName = "native_token_test2",
     baseInfo.tokenID = 0x28100000, // 0x28100000 tokenid
     baseInfo.tokenAttr = 0,
     baseInfo.dcap =  {"AT_CAP", "ST_CAP"};

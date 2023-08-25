@@ -34,23 +34,22 @@ namespace OHOS {
         }
 
         std::string testName(reinterpret_cast<const char*>(data), size);
-        PermissionDef TestPermDef = {
-            .permissionName = testName,
-            .bundleName = testName,
-            .grantMode = 1,
-            .availableLevel = APL_NORMAL,
-            .label = testName,
-            .labelId = 1,
-            .description = testName,
-            .descriptionId = 1
-        };
-        PermissionStateFull TestState = {
-            .permissionName = testName,
-            .isGeneral = true,
-            .resDeviceID = {testName},
-            .grantStatus = {PermissionState::PERMISSION_GRANTED},
-            .grantFlags = {1},
-        };
+        PermissionDef testPermDef;
+        testPermDef.permissionName = testName;
+        testPermDef.bundleName = testName;
+        testPermDef.grantMode = 1;
+        testPermDef.availableLevel = APL_NORMAL;
+        testPermDef.label = testName;
+        testPermDef.labelId = 1;
+        testPermDef.description = testName;
+        testPermDef.descriptionId = 1;
+
+        PermissionStateFull testState;
+        testState.permissionName = testName;
+        testState.isGeneral = true;
+        testState.resDeviceID = {testName};
+        testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
+        testState.grantFlags = {1};
         HapInfoParams TestInfoParms = {
             .userID = 1,
             .bundleName = testName,
@@ -60,8 +59,8 @@ namespace OHOS {
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
-            .permList = {TestPermDef},
-            .permStateList = {TestState}
+            .permList = {testPermDef},
+            .permStateList = {testState}
         };
 
         tokenIdEx = AccessTokenKit::AllocHapToken(TestInfoParms, TestPolicyPrams);

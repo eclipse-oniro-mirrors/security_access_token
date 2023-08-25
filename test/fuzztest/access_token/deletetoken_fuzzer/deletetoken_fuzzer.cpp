@@ -32,8 +32,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-        result = AccessTokenKit::DeleteToken(TOKENID);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        result = AccessTokenKit::DeleteToken(tokenId);
 
         return result == RET_SUCCESS;
     }

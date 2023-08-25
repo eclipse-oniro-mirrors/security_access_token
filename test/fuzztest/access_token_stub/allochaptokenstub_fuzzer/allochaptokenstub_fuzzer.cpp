@@ -35,7 +35,7 @@ namespace OHOS {
 
         std::string testName(reinterpret_cast<const char *>(data), size);
 
-        PermissionDef TestPermDef = {
+        PermissionDef testPermDef = {
             .permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
@@ -59,7 +59,7 @@ namespace OHOS {
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
-            .permList = {TestPermDef},
+            .permList = {testPermDef},
             .permStateList = {TestState}};
 
         HapInfoParcel hapInfoParcel;

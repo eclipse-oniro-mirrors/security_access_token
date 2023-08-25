@@ -33,9 +33,9 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         NativeTokenInfo NativeTokenInfotest;
-        result = AccessTokenKit::GetNativeTokenInfo(TOKENID, NativeTokenInfotest);
+        result = AccessTokenKit::GetNativeTokenInfo(tokenId, NativeTokenInfotest);
 
         return result == RET_SUCCESS;
     }

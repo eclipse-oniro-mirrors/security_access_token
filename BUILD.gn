@@ -40,3 +40,14 @@ group("accesstoken_build_module_test") {
     ]
   }
 }
+
+group("accesstoken_build_fuzz_test") {
+  testonly = true
+  deps = []
+  if (is_standard_system) {
+    deps += [
+      "test/fuzztest/access_token:fuzztest",
+      "test/fuzztest/access_token_stub:fuzztest",
+    ]
+  }
+}

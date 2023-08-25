@@ -50,9 +50,9 @@ namespace OHOS {
 
         PermStateChangeScope scopeInfo;
         std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         scopeInfo.permList = { testName };
-        scopeInfo.tokenIDs = { TOKENID };
+        scopeInfo.tokenIDs = { tokenId };
         auto callbackPtr = std::make_shared<CbCustomizeTest2>(scopeInfo);
         int32_t result = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
 

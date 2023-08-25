@@ -28,8 +28,8 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-        int32_t result = AccessTokenKit::GetTokenTypeFlag(TOKENID);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        int32_t result = AccessTokenKit::GetTokenTypeFlag(tokenId);
 
         return result == RET_SUCCESS;
     }

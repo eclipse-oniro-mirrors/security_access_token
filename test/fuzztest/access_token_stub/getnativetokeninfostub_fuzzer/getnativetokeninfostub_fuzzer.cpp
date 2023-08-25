@@ -32,11 +32,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID TOKENID = static_cast<AccessTokenID>(size);
-
-        MessageParcel datas;
-        datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteUint32(TOKENID)) {
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        MessageParcel inData;
+        inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+        if (!inData.WriteUint32(tokenId)) {
             return false;
         }
 
@@ -45,7 +44,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, inData, reply, option);
 
         return true;
     }
