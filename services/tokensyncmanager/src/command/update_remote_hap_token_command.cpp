@@ -46,7 +46,7 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
-    if (jsonObject.find("HapTokenInfos") != jsonObject.end()) {
+    if ((jsonObject.find("HapTokenInfos") != jsonObject.end()) && (jsonObject.at("HapTokenInfos").is_object())) {
         nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfos").get<nlohmann::json>();
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, updateTokenInfo_);
     }
