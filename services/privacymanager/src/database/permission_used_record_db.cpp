@@ -329,18 +329,18 @@ std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataT
     sql.append(" in (select ");
     sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
     sql.append(" from " + it->second.tableName_ + " where 1 = 1");
-    for (const auto& andColName : andColumns) {
-        if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
+    for (const auto& name : andColumns) {
+        if (name == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
             sql.append(" and ");
             sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
-            sql.append(" >=:" + andColName);
-        } else if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_END) {
+            sql.append(" >=:" + name);
+        } else if (name == PrivacyFiledConst::FIELD_TIMESTAMP_END) {
             sql.append(" and ");
             sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
-            sql.append(" <=:" + andColName);
+            sql.append(" <=:" + name);
         } else {
             sql.append(" and ");
-            sql.append(andColName + "=:" + andColName);
+            sql.append(name + "=:" + name);
         }
     }
     sql.append(" )");

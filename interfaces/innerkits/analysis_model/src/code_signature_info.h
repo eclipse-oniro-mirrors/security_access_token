@@ -55,6 +55,7 @@ typedef enum  OperErrorCode {
     INVALID_POINT_LENGTH = 5507,
     MODEL_INIT_NOT_COMPLETED = 5508,
     SHORT_OF_MEMORY = 5509,
+    RISK_APP_NUM_EXCEEDED = 5510,
 } OperErrorCode;
 
 typedef enum DataChangeTypeCode {

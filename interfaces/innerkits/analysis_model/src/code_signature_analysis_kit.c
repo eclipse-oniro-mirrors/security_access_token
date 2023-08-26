@@ -24,6 +24,7 @@ RetListener g_retListener = NULL;
 AppRiskInfo *g_modelDataHead = NULL;
 uint32_t g_riskAppCount = 0;
 pthread_mutex_t g_modelVisitLock;
+#define MAX_RISK_APP_COUNT (1024 * 100)
 
 static AppRiskInfo *FindExistingNode(uint32_t tokenId)
 {
@@ -59,10 +60,14 @@ static int32_t IsRiskStatusChanged(AppRiskInfo *node)
 
     int32_t isChanged = (node->status.policy != policy) ? STATUS_CHANGED : STATUS_NOT_CHANGED;
     if ((node->status.policy == NO_SECURITY_RISK) && (policy != NO_SECURITY_RISK)) {
-        g_riskAppCount--;
+        if (g_riskAppCount > 0) {
+            g_riskAppCount--;
+        }
         MODEL_LOG_INFO("[%s]:g_riskAppCount reduced.", __func__);
     } else if ((node->status.policy != NO_SECURITY_RISK) && (policy == NO_SECURITY_RISK)) {
-        g_riskAppCount++;
+        if (g_riskAppCount < MAX_RISK_APP_COUNT) {
+            g_riskAppCount++;
+        }
         MODEL_LOG_INFO("[%s]:g_riskAppCount added.", __func__);
     }
     return isChanged;
@@ -170,6 +175,9 @@ static int32_t UpdateInfoInCurrNode(const CodeSignatureReportedInfo *report, App
         return res;
     }
     res = IsRiskStatusChanged(node);
+    if (g_riskAppCount >= MAX_RISK_APP_COUNT) {
+        return RISK_APP_NUM_EXCEEDED;
+    }
     if (res == STATUS_NOT_CHANGED) {
         return OPER_SUCCESS;
     }
