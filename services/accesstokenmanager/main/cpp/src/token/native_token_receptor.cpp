@@ -45,7 +45,7 @@ int32_t NativeReqPermsGet(
     const nlohmann::json& j, std::vector<PermissionStateFull>& permStateList)
 {
     std::vector<std::string> permReqList;
-    if (j.find(JSON_PERMS) == j.end()) {
+    if (j.find(JSON_PERMS) == j.end() || (!j.at(JSON_PERMS).is_array())) {
         return RET_FAILED;
     }
     permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
@@ -113,7 +113,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     
     native.apl = static_cast<ATokenAplEnum>(aplNum);
     
-    if (j.find(JSON_VERSION) == j.end()) {
+    if (j.find(JSON_VERSION) == j.end() || (!j.at(JSON_VERSION).is_number())) {
         return;
     }
     native.ver = (uint8_t)j.at(JSON_VERSION).get<int>();
@@ -134,7 +134,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (j.find(JSON_DCAPS) == j.end()) {
+    if (j.find(JSON_DCAPS) == j.end() || (!j.at(JSON_DCAPS).is_array())) {
         return;
     }
     native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
@@ -142,7 +142,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (j.find(JSON_ACLS) == j.end()) {
+    if (j.find(JSON_ACLS) == j.end() || (!j.at(JSON_DCAPS).is_array())) {
         return;
     }
     native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();

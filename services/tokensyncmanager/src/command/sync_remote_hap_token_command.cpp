@@ -65,11 +65,11 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
-    if (jsonObject.find("requestTokenId") != jsonObject.end() && jsonObject.at("requestTokenId").is_number()) {
+    if ((jsonObject.find("requestTokenId") != jsonObject.end()) && (jsonObject.at("requestTokenId").is_number())) {
         jsonObject.at("requestTokenId").get_to(requestTokenId_);
     }
 
-    if (jsonObject.find("HapTokenInfo") != jsonObject.end()) {
+    if ((jsonObject.find("HapTokenInfo") != jsonObject.end()) && (jsonObject.at("HapTokenInfo").is_object())) {
         nlohmann::json hapTokenJson = jsonObject.at("HapTokenInfo").get<nlohmann::json>();
         BaseRemoteCommand::FromHapTokenInfoJson(hapTokenJson, hapTokenInfo_);
     }
