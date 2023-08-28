@@ -92,8 +92,8 @@ void PrivacyManagerService::OnStop()
 #endif
 }
 
-int32_t PrivacyManagerService::AddPermissionUsedRecord(
-    AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount)
+int32_t PrivacyManagerService::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t successCount, int32_t failCount, bool asyncMode)
 {
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
         tokenId, permissionName, successCount, failCount);

@@ -16,6 +16,7 @@
 #ifndef PERMISSION_RECORD_REPOSITORY_H
 #define PERMISSION_RECORD_REPOSITORY_H
 
+#include <set>
 #include <vector>
 #include "generic_values.h"
 
@@ -30,8 +31,8 @@ public:
     static PermissionRecordRepository& GetInstance();
 
     bool AddRecordValues(const std::vector<GenericValues>& recordValues);
-    bool FindRecordValues(const GenericValues& andConditionValues,
-        const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues);
+    bool FindRecordValues(const std::set<int32_t>& opCodeList, const GenericValues& andConditionValues,
+        std::vector<GenericValues>& recordValues);
     bool RemoveRecordValues(const GenericValues& conditionValues);
     bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
     void CountRecordValues(GenericValues& resultValues);

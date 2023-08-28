@@ -47,15 +47,15 @@ PrivacyManagerClient::PrivacyManagerClient()
 PrivacyManagerClient::~PrivacyManagerClient()
 {}
 
-int32_t PrivacyManagerClient::AddPermissionUsedRecord(
-    AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount)
+int32_t PrivacyManagerClient::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t successCount, int32_t failCount, bool asyncMode)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount);
+    return proxy->AddPermissionUsedRecord(tokenID, permissionName, successCount, failCount, asyncMode);
 }
 
 int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)

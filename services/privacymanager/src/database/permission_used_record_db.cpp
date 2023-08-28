@@ -115,20 +115,16 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const GenericValues& andConditions,
-    const GenericValues& orConditions, std::vector<GenericValues>& results)
+int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList,
+    const GenericValues& andConditions, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
-    std::vector<std::string> orColumns = orConditions.GetAllKeys();
-    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, andColumns, orColumns);
+    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, opCodeList, andColumns);
     auto statement = Prepare(prepareSql);
 
     for (const auto& columnName : andColumns) {
         statement.Bind(columnName, andConditions.Get(columnName));
-    }
-    for (const auto& columnName : orColumns) {
-        statement.Bind(columnName, orConditions.Get(columnName));
     }
 
     while (statement.Step() == Statement::State::ROW) {
@@ -275,7 +271,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
 }
 
 std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataType type,
-    const std::vector<std::string>& andColumns, const std::vector<std::string>& orColumns) const
+    const std::set<int32_t>& opCodeList, const std::vector<std::string>& andColumns) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -297,12 +293,12 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
             sql.append(andColName + "=:" + andColName);
         }
     }
-    if (!orColumns.empty()) {
+    if (!opCodeList.empty()) {
         sql.append(" and (");
-        for (const auto& orColName : orColumns) {
-            if (orColName.find(PrivacyFiledConst::FIELD_OP_CODE) != std::string::npos) {
+        for (const auto& opCode : opCodeList) {
+            if (opCode != Constant::OP_INVALID) {
                 sql.append(PrivacyFiledConst::FIELD_OP_CODE);
-                sql.append(+ " =:" + orColName);
+                sql.append(+ " = " + std::to_string(opCode));
                 sql.append(" or ");
             }
         }

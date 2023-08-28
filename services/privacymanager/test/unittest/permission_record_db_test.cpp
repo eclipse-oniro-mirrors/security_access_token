@@ -180,10 +180,10 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd005, TestSize.Level1)
 HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSize.Level1)
 {
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
+    std::set<int32_t> opCodeList;
     std::vector<std::string> andColumns;
-    std::vector<std::string> orColumns;
-    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, andColumns,
-        orColumns));
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
+        andColumns));
 }
 
 /*
@@ -195,12 +195,12 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSi
 HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSize.Level1)
 {
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::set<int32_t> opCodeList;
+    opCodeList.insert(static_cast<int32_t>(Constant::OP_LOCATION));
     std::vector<std::string> andColumns;
     andColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN);
-    std::vector<std::string> orColumns;
-    orColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
-    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, andColumns,
-        orColumns));
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
+        andColumns));
 }
 
 /*
@@ -300,36 +300,35 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level
 {
     PermissionUsedRequest request;
     GenericValues andGenericValues;
-    GenericValues orGenericValues;
 
     request.beginTimeMillis = -1;
     // begin < 0
     ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 
     request.beginTimeMillis = 10;
     request.endTimeMillis = -1;
     // begin > 0 + end < 0
     ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 
     request.endTimeMillis = 1;
     // begin > 0 + end > 0 + begin > end
     ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 
     request.beginTimeMillis = 10; // begin != 0
     request.endTimeMillis = 20; // end != 0
     request.flag = static_cast<PermissionUsageFlag>(2);
     // begin > 0 + end > 0 + begin < end + flag = 2
     ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_DETAIL;
     request.permissionList.emplace_back("ohos.com.CAMERA");
     // begin > 0 + end > 0 + begin < end + flag = 1 + TransferPermissionToOpcode true
     ASSERT_EQ(Constant::SUCCESS,
-        DataTranslator::TranslationIntoGenericValues(request, andGenericValues, orGenericValues));
+        DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 }
 
 /*
@@ -446,6 +445,7 @@ HWTEST_F(PermissionRecordDBTest, Add003, TestSize.Level1)
 HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level1)
 {
     GenericValues value;
+    std::set<int32_t> opCodeList;
     value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
     value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
@@ -463,20 +463,20 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level1)
     std::vector<GenericValues> results;
 
     GenericValues andConditions; // no column
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions, orConditions, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions, results));
 
     GenericValues andConditions1; // field timestamp
     andConditions1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 0);
 
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions1, orConditions, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions1, results));
 
     GenericValues andConditions2; // field access_duration
     andConditions2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 0);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions2, orConditions, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions2, results));
 
     GenericValues andConditions3; // field not timestamp or access_duration
     andConditions3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, andConditions3, orConditions, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions3, results));
 
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
 }

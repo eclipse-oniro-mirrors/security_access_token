@@ -22,7 +22,7 @@
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_TOKEN_ID";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_TIMESTAMP";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_STATUS";
-        "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&) const";
+        "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::set<int, std::__h::less<int>, std::__h::allocator<int>> const&, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&) const";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateCountPrepareSqlCmd(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType) const";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&) const";
@@ -30,7 +30,7 @@
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, unsigned int) const";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreateGetDistinctValue(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>) const";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::CreatePermissionRecordTable() const";
-        "OHOS::Security::AccessToken::DataTranslator::TranslationIntoGenericValues(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::Security::AccessToken::GenericValues&, OHOS::Security::AccessToken::GenericValues&)";
+        "OHOS::Security::AccessToken::DataTranslator::TranslationIntoGenericValues(OHOS::Security::AccessToken::PermissionUsedRequest const&, OHOS::Security::AccessToken::GenericValues&)";
         "OHOS::Security::AccessToken::DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::PermissionUsedRecord&)";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_OP_CODE";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_FLAG";
@@ -38,7 +38,7 @@
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_ACCESS_COUNT";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::Remove(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&)";
         "OHOS::Security::AccessToken::PrivacyFiledConst::FIELD_ACCESS_DURATION";
-        "OHOS::Security::AccessToken::PermissionUsedRecordDb::FindByConditions(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, OHOS::Security::AccessToken::GenericValues const&, OHOS::Security::AccessToken::GenericValues const&, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues>>&)";
+        "OHOS::Security::AccessToken::PermissionUsedRecordDb::FindByConditions(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::set<int, std::__h::less<int>, std::__h::allocator<int>> const&, OHOS::Security::AccessToken::GenericValues const&, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues>>&)";
         "OHOS::Security::AccessToken::PermissionUsedRecordDb::GetDistinctValue(OHOS::Security::AccessToken::PermissionUsedRecordDb::DataType, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::GenericValues, std::__h::allocator<OHOS::Security::AccessToken::GenericValues>>&)";
         "OHOS::Security::AccessToken::PermissionRecordManager::Register()";
         "OHOS::Security::AccessToken::PermissionRecordManager::RegisterPermActiveStatusCallback(std::__h::vector<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>, std::__h::allocator<std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>>> const&, OHOS::sptr<OHOS::IRemoteObject> const&)";
@@ -91,7 +91,7 @@
         "vtable for OHOS::Security::AccessToken::WindowManagerPrivacyProxy";
         "OHOS::Security::AccessToken::PrivacyManagerService::PrivacyManagerService()";
         "OHOS::Security::AccessToken::PrivacyManagerService::Dump(int, std::__h::vector<std::__h::basic_string<char16_t, std::__h::char_traits<char16_t>, std::__h::allocator<char16_t>>, std::__h::allocator<std::__h::basic_string<char16_t, std::__h::char_traits<char16_t>, std::__h::allocator<char16_t>>>> const&)";
-        "OHOS::Security::AccessToken::PrivacyManagerService::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, int)";
+        "OHOS::Security::AccessToken::PrivacyManagerService::AddPermissionUsedRecord(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, int, int, bool)";
         "OHOS::Security::AccessToken::PrivacyManagerService::IsAllowedUsingPermission(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::PrivacyManagerService::~PrivacyManagerService()";
         "OHOS::Security::AccessToken::AudioManagerPrivacyClient::SetMicStateChangeCallback(OHOS::sptr<OHOS::Security::AccessToken::AudioRoutingManagerListenerStub> const&)";

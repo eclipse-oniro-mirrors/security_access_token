@@ -51,11 +51,11 @@ bool PermissionRecordRepository::AddRecordValues(const std::vector<GenericValues
     return true;
 }
 
-bool PermissionRecordRepository::FindRecordValues(const GenericValues& andConditionValues,
-    const GenericValues& orConditionValues, std::vector<GenericValues>& recordValues)
+bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList,
+    const GenericValues& andConditionValues, std::vector<GenericValues>& recordValues)
 {
     if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,
-        andConditionValues, orConditionValues, recordValues) != PermissionUsedRecordDb::SUCCESS) {
+        opCodeList, andConditionValues, recordValues) != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table find fail");
         return false;
     }
