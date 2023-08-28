@@ -110,9 +110,9 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     if (!GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
         return;
     }
-    
+
     native.apl = static_cast<ATokenAplEnum>(aplNum);
-    
+
     if (j.find(JSON_VERSION) == j.end() || (!j.at(JSON_VERSION).is_number())) {
         return;
     }
@@ -124,7 +124,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     if (!GetUnsignIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
         return;
     }
-    
+
     ATokenTypeEnum type = AccessTokenIDManager::GetTokenIdTypeEnum(native.tokenID);
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         return;
