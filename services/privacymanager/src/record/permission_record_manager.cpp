@@ -193,7 +193,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
 {
     GenericValues andConditionValues;
     GenericValues orConditionValues;
-    if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues, orConditionValues)
+    if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues)
         != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "query time or flag is invalid");
         return false;
@@ -211,7 +211,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         std::vector<GenericValues> findRecordsValues;
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
-            andConditionValues, orConditionValues, findRecordsValues); // find records from cache and database
+            andConditionValues, findRecordsValues); // find records from cache and database
         andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {

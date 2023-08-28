@@ -40,8 +40,8 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
-    virtual int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenID, const std::string& permissionName, int32_t successCount, int32_t failCount) = 0;
+    virtual int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
+        int32_t successCount, int32_t failCount, bool asyncMode = false) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) = 0;

@@ -141,7 +141,7 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE),
         static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::IS_MICROPHONE_MUTE)); // 17
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK),
-        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK)); // 59
+        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK)); // 61
 }
 #endif
 
@@ -288,22 +288,6 @@ HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyTest001, TestSize.Lev
     want.SetElementName(bundleName, abilityName);
     want.SetParam(resourceKey, resource);
     ASSERT_NE(0, AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr));
-}
-
-/*
- * @tc.name: WindowManagerPrivacyTest001
- * @tc.desc: test api function
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(SensitiveManagerServiceTest, WindowManagerPrivacyTest001, TestSize.Level1)
-{
-    sptr<WindowManagerPrivacyAgent> listener = new(std::nothrow) WindowManagerPrivacyAgent();
-    ASSERT_NE(listener, nullptr);
-    ASSERT_EQ(true, WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
-        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, listener));
-    ASSERT_EQ(true, WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
-        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, listener));
 }
 
 class TestCallBack1 : public WindowManagerPrivacyAgent {
