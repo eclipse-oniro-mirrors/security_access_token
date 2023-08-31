@@ -36,7 +36,7 @@ bool PermissionStateFullParcel::Marshalling(Parcel& out) const
 
     RETURN_IF_FALSE(out.WriteUint32(this->permStatFull.grantFlags.size()));
     for (auto grantFlag : this->permStatFull.grantFlags) {
-        RETURN_IF_FALSE(out.WriteInt32(grantFlag));
+        RETURN_IF_FALSE(out.WriteUint32(grantFlag));
     }
     return true;
 }
@@ -73,8 +73,8 @@ PermissionStateFullParcel* PermissionStateFullParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint32(grantFlagSize), permissionStateParcel);
     RELEASE_IF_FALSE(grantFlagSize <= MAX_DEVICE_ID_SIZE, permissionStateParcel);
     for (uint32_t i = 0; i < grantFlagSize; i++) {
-        int flag;
-        RELEASE_IF_FALSE(in.ReadInt32(flag), permissionStateParcel);
+        uint32_t flag;
+        RELEASE_IF_FALSE(in.ReadUint32(flag), permissionStateParcel);
         permissionStateParcel->permStatFull.grantFlags.emplace_back(flag);
     }
     return permissionStateParcel;

@@ -48,10 +48,10 @@ public:
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
-    int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList);
-    int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
-    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     int DeleteToken(AccessTokenID tokenID);

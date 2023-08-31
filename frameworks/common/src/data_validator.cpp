@@ -74,10 +74,10 @@ bool DataValidator::IsDcapValid(const std::string& dcap)
     return !dcap.empty() && (dcap.length() <= MAX_DCAP_LENGTH);
 }
 
-bool DataValidator::IsPermissionFlagValid(int flag)
+bool DataValidator::IsPermissionFlagValid(uint32_t flag)
 {
     uint32_t unmaskedFlag =
-        static_cast<uint32_t>(flag) & (~PermissionFlag::PERMISSION_GRANTED_BY_POLICY);
+        flag & (~PermissionFlag::PERMISSION_GRANTED_BY_POLICY);
     return unmaskedFlag == PermissionFlag::PERMISSION_DEFAULT_FLAG ||
         unmaskedFlag == PermissionFlag::PERMISSION_USER_SET ||
         unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||

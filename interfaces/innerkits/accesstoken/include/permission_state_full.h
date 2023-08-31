@@ -64,7 +64,7 @@ public:
      * permission grant flag list, for details about the valid values,
      * see the definition of PermissionFlag in the access_token.h file.
      */
-    std::vector<int> grantFlags;
+    std::vector<uint32_t> grantFlags;
 };
 } // namespace AccessToken
 } // namespace Security

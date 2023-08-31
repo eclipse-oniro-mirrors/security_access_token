@@ -263,7 +263,7 @@ int AccessTokenKit::GetReqPermissions(
     return AccessTokenManagerClient::GetInstance().GetReqPermissions(tokenID, reqPermList, isSystemGrant);
 }
 
-int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
         tokenID, permissionName.c_str());
@@ -278,7 +278,7 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
-int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
         tokenID, permissionName.c_str(), flag);
@@ -297,7 +297,7 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
     return AccessTokenManagerClient::GetInstance().GrantPermission(tokenID, permissionName, flag);
 }
 
-int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s, flag=%{public}d",
         tokenID, permissionName.c_str(), flag);

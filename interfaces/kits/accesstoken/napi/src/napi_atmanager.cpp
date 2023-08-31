@@ -645,7 +645,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
     }
 
     // 2: the third parameter of argv
-    if (!ParseInt32(env, argv[2], asyncContext.flag)) {
+    if (!ParseUint32(env, argv[2], asyncContext.flag)) {
         errMsg = GetParamErrorMsg("flag", "number");
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);

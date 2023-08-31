@@ -330,7 +330,7 @@ void PermissionManager::GetSelfPermissionState(std::vector<PermissionStateFull> 
     return;
 }
 
-int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, permissionName: %{public}s",
         __func__, tokenID, permissionName.c_str());
@@ -372,7 +372,7 @@ void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t 
     }
 }
 int32_t PermissionManager::UpdateTokenPermissionState(
-    AccessTokenID tokenID, const std::string& permissionName, bool isGranted, int flag)
+    AccessTokenID tokenID, const std::string& permissionName, bool isGranted, uint32_t flag)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -401,7 +401,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
 #endif
     int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permissionName);
-    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, static_cast<uint32_t>(flag));
+    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -415,7 +415,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
             "CALLER_TOKENID", tokenID, "PERMISSION_NAME", permissionName, "FLAG", flag,
             "PERMISSION_GRANT_TYPE", changeType);
         grantEvent_.AddEvent(tokenID, permissionName, infoPtr->permUpdateTimestamp_);
-        ParamUpdate(permissionName, static_cast<uint32_t>(flag), false);
+        ParamUpdate(permissionName, flag, false);
     }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -425,7 +425,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 }
 
 int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
-    bool isGranted, int flag)
+    bool isGranted, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
@@ -443,7 +443,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     return UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag);
 }
 
-int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
@@ -451,7 +451,7 @@ int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::str
     return CheckAndUpdatePermission(tokenID, permissionName, true, flag);
 }
 
-int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL,
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",

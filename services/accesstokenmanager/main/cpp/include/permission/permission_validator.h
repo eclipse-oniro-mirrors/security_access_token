@@ -27,7 +27,7 @@ public:
     ~PermissionValidator() {}
 
     static bool IsPermissionNameValid(const std::string& permissionName);
-    static bool IsPermissionFlagValid(int flag);
+    static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
     static bool IsPermissionStateValid(const PermissionStateFull& permState);
     static void FilterInvalidPermissionDef(

@@ -33,7 +33,7 @@ namespace OHOS {
         }
 
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        int32_t flag;
+        uint32_t flag;
         std::string testName(reinterpret_cast<const char*>(data), size);
         result = AccessTokenKit::GetPermissionFlag(tokenId, testName, flag);
 

@@ -104,7 +104,8 @@ int AccessTokenManagerClient::GetReqPermissions(
     return result;
 }
 
-int AccessTokenManagerClient::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int AccessTokenManagerClient::GetPermissionFlag(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -144,7 +145,7 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
     return result;
 }
 
-int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -154,7 +155,7 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
     return proxy->GrantPermission(tokenID, permissionName, flag);
 }
 
-int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {

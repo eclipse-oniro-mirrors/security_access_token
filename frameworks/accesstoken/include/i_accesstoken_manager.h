@@ -49,11 +49,11 @@ public:
     virtual int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) = 0;
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
-    virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag) = 0;
+    virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
     virtual PermissionOper GetSelfPermissionsState(
         std::vector<PermissionListStateParcel>& permListParcel) = 0;
-    virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
-    virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag) = 0;
+    virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
+    virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;
     virtual AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) = 0;
     virtual int DeleteToken(AccessTokenID tokenID) = 0;
