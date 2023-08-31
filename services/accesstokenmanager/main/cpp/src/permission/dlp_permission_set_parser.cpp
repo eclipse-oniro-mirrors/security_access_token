@@ -68,7 +68,7 @@ int32_t DlpPermissionSetParser::ParserDlpPermsRawData(const std::string& dlpPerm
         return RET_FAILED;
     }
 
-    if ((jsonRes.find("dlpPermissions") != jsonRes.end()) && (jsonRes.at("dlpPermissions").is_object())) {
+    if ((jsonRes.find("dlpPermissions") != jsonRes.end()) && (jsonRes.at("dlpPermissions").is_array())) {
         nlohmann::json dlpPermTokenJson = jsonRes.at("dlpPermissions").get<nlohmann::json>();
         dlpPerms = dlpPermTokenJson.get<std::vector<PermissionDlpMode>>();
     }
