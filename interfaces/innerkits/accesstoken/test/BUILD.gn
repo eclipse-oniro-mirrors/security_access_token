@@ -58,6 +58,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
   }
+  if (dlp_permission_enable == true) {
+    cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]
+    sources += [ "unittest/src/share_permission_with_sandbox_test.cpp" ]
+  }
 }
 
 ohos_unittest("accesstoken_mock_test") {

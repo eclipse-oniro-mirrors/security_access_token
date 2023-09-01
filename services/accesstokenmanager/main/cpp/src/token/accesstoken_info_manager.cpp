@@ -254,6 +254,17 @@ std::shared_ptr<HapTokenInfoInner> AccessTokenInfoManager::GetHapTokenInfoInner(
     return nullptr;
 }
 
+int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    auto iter = hapTokenInfoMap_.find(id);
+    if ((iter != hapTokenInfoMap_.end()) && (iter->second != nullptr)) {
+        return iter->second->GetDlpType();
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u is invalid.", id);
+    return DLP_FULL_BUTT;
+}
+
 bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
@@ -1080,6 +1091,33 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
         if (iter->second != nullptr) {
             iter->second->ToString(dumpInfo);
             dumpInfo.append("\n");
+        }
+    }
+}
+
+void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+
+    std::string bundleName;
+    int32_t userID;
+    auto infoIter = hapTokenInfoMap_.find(tokenId);
+    if (infoIter == hapTokenInfoMap_.end()) {
+        return;
+    }
+    if (infoIter->second == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
+        return;
+    }
+    bundleName = infoIter->second->GetBundleName();
+    userID = infoIter->second->GetUserID();
+
+    for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); ++iter) {
+        if (iter->second != nullptr) {
+            if ((bundleName == iter->second->GetBundleName()) && (userID == iter->second->GetUserID()) &&
+                (tokenId != iter->second->GetTokenID())) {
+                tokenIdList.emplace_back(iter->second->GetTokenID());
+            }
         }
     }
 }

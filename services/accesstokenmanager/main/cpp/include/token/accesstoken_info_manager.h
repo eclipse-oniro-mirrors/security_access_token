@@ -56,6 +56,8 @@ public:
     void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
+    void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
+    int32_t GetHapTokenDlpType(AccessTokenID id);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */

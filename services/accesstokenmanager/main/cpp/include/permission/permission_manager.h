@@ -62,8 +62,8 @@ public:
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
-    void GetSelfPermissionState(
-        std::vector<PermissionStateFull> permsList, PermissionListState &permState, int32_t apiVersion);
+    void GetSelfPermissionState(const std::vector<PermissionStateFull>& permsList,
+        PermissionListState& permState, int32_t apiVersion);
     int32_t AddPermStateChangeCallback(
         const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
@@ -75,6 +75,9 @@ public:
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
+    void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
+        bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
+    int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
     PermissionManager();
 
 protected:
@@ -91,7 +94,8 @@ private:
         const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
     void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
-
+    void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
+        const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
     PermissionGrantEvent grantEvent_;
     static PermissionManager* implInstance_;
     static std::recursive_mutex mutex_;

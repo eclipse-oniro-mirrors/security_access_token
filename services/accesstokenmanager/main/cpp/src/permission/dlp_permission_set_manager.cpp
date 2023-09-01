@@ -69,37 +69,45 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
     return dlpPermissionModeMap_[permissionName];
 }
 
-int32_t DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t dlpType,
+int32_t DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
     std::vector<PermissionStateFull>& permStateList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d", dlpType);
-    for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d", hapDlpType);
+    for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
         if (iter->grantStatus[0] == PERMISSION_DENIED) {
             continue;
         }
-        int32_t dlpMode = GetPermDlpMode(iter->permissionName);
-        bool res = IsPermStateNeedUpdate(dlpType, dlpMode);
-        if (res) {
+        int32_t permissionDlpMode = GetPermDlpMode(iter->permissionName);
+        bool res = IsPermDlpModeAvailableToDlpHap(hapDlpType, permissionDlpMode);
+        if (!res) {
             iter->grantStatus[0] = PERMISSION_DENIED;
         }
     }
     return RET_SUCCESS;
 }
 
-bool DlpPermissionSetManager::IsPermStateNeedUpdate(int32_t dlpType, int32_t dlpMode)
+bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,
+    const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d dlpMode %{public}d", dlpType, dlpMode);
+    int32_t permissionDlpMode = GetPermDlpMode(permissionName);
+    return IsPermDlpModeAvailableToDlpHap(hapDlpType, permissionDlpMode);
+}
+
+bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
+
     /* permission is available to all dlp hap */
-    if (dlpMode == DLP_PERM_ALL) {
-        return false;
+    if ((hapDlpType == DLP_COMMON) || (permDlpMode == DLP_PERM_ALL)) {
+        return true;
     }
 
     /* permission is available to full control */
-    if (dlpMode == DLP_PERM_FULL_CONTROL && dlpType == DLP_FULL_CONTROL) {
-        return false;
+    if (permDlpMode == DLP_PERM_FULL_CONTROL && hapDlpType == DLP_FULL_CONTROL) {
+        return true;
     }
     /* permission is available to none */
-    return true;
+    return false;
 }
 } // namespace AccessToken
 } // namespace Security
