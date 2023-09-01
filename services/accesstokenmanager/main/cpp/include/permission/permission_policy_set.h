@@ -54,8 +54,8 @@ public:
     void GetPermissionStateList(std::vector<PermissionStateFull>& stateList);
     void ResetUserGrantPermissionStatus(void);
     void ClearSecCompGrantedPerm(void);
-    static int32_t GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag);
-    static int32_t GetFlagWroteToDb(int32_t grantFlag);
+    static uint32_t GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag);
+    static uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void GetResetPermissionListToNotify(
         std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList);
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);

@@ -134,7 +134,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Lev
     ASSERT_EQ(status, PERMISSION_DENIED);
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t flag;
+    uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_NE(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -173,7 +173,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_GRANTED);
-    int32_t flag;
+    uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -210,7 +210,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_GRANTED);
-    int32_t flag;
+    uint32_t flag;
     AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
@@ -247,7 +247,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_DENIED);
 
-    int32_t flag;
+    uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -282,7 +282,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Lev
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     // user grant
-    int32_t flag;
+    uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_NE(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -318,7 +318,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
     int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
-    int32_t flag;
+    uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_NE(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);

@@ -213,14 +213,15 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     return PASS_OPER;
 }
 
-int AccessTokenManagerService::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int AccessTokenManagerService::GetPermissionFlag(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
-int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
@@ -229,7 +230,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
     return ret;
 }
 
-int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);

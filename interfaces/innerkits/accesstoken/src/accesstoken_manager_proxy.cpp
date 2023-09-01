@@ -182,7 +182,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     return result;
 }
 
-int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag)
+int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
     MessageParcel sendData;
     sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -205,7 +205,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     if (result != RET_SUCCESS) {
         return result;
     }
-    flag = reply.ReadInt32();
+    flag = reply.ReadUint32();
     return result;
 }
 
@@ -251,7 +251,7 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
     return result;
 }
 
-int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     MessageParcel inData;
     inData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -263,7 +263,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!inData.WriteInt32(flag)) {
+    if (!inData.WriteUint32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
@@ -278,7 +278,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     return result;
 }
 
-int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag)
+int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -290,7 +290,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(flag)) {
+    if (!data.WriteUint32(flag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write flag");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }

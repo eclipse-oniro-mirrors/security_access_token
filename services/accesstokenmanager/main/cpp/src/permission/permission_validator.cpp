@@ -33,7 +33,7 @@ bool PermissionValidator::IsGrantStatusValid(int grantStaus)
     return grantStaus == PermissionState::PERMISSION_GRANTED || grantStaus == PermissionState::PERMISSION_DENIED;
 }
 
-bool PermissionValidator::IsPermissionFlagValid(int flag)
+bool PermissionValidator::IsPermissionFlagValid(uint32_t flag)
 {
     return DataValidator::IsPermissionFlagValid(flag);
 }

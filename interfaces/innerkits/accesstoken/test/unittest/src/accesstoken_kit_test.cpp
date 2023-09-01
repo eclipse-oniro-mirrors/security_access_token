@@ -650,7 +650,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    int32_t flag;
+    uint32_t flag;
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -667,7 +667,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag002, TestSize.Level1)
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    int32_t flag;
+    uint32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_GAMMA, flag);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
@@ -697,7 +697,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int32_t flag;
+    uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         int32_t ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
         ASSERT_EQ(RET_SUCCESS, ret);
@@ -723,7 +723,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag004, TestSize.Level0)
 
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
 
-    int32_t flag;
+    uint32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
 }
@@ -746,7 +746,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
     int ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    int32_t flag;
+    uint32_t flag;
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -931,7 +931,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int32_t flag;
+    uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         int32_t ret = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
         ASSERT_EQ(RET_SUCCESS, ret);
@@ -1064,7 +1064,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission003, TestSize.Level0)
 {
     AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     ASSERT_NE(INVALID_TOKENID, tokenID);
-    int32_t flag;
+    uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         int32_t ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
         ASSERT_EQ(RET_SUCCESS, ret);
@@ -2684,7 +2684,7 @@ HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
 
 void ConcurrencyTask(unsigned int tokenID)
 {
-    int32_t flag;
+    uint32_t flag;
     for (int i = 0; i < CYCLE_TIMES; i++) {
         AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
         AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);

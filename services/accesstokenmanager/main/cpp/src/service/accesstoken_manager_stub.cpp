@@ -197,13 +197,13 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
-    int32_t flag;
+    uint32_t flag;
     int result = this->GetPermissionFlag(tokenID, permissionName, flag);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
         return;
     }
-    reply.WriteInt32(flag);
+    reply.WriteUint32(flag);
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -215,7 +215,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int flag = data.ReadInt32();
+    int flag = data.ReadUint32();
     if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
@@ -238,7 +238,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int flag = data.ReadInt32();
+    int flag = data.ReadUint32();
     if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",

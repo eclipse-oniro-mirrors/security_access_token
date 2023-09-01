@@ -1154,7 +1154,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionFlag006, TestSize.Level1)
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_POLICY_FIXED);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    int32_t flag;
+    uint32_t flag;
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(PERMISSION_POLICY_FIXED, flag);
     ASSERT_EQ(RET_SUCCESS, ret);

@@ -79,7 +79,8 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
     outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_IS_GENERAL, inPermissionState.isGeneral ? 1 : 0);
     outGenericValues.Put(TokenFiledConst::FIELD_GRANT_STATE, inPermissionState.grantStatus[grantIndex]);
-    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, inPermissionState.grantFlags[grantIndex]);
+    int32_t grantFlags = static_cast<int32_t>(inPermissionState.grantFlags[grantIndex]);
+    outGenericValues.Put(TokenFiledConst::FIELD_GRANT_FLAG, grantFlags);
     return RET_SUCCESS;
 }
 

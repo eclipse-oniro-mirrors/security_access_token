@@ -1304,11 +1304,11 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
     std::string permissionName;
     std::string deviceID = "dev-001";
     int grantState = PermissionState::PERMISSION_DENIED;
-    int grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
+    uint32_t grantFlag = PermissionFlag::PERMISSION_DEFAULT_FLAG;
 
     std::vector<std::string> resDeviceID;
     std::vector<int> grantStates;
-    std::vector<int> grantFlags;
+    std::vector<uint32_t> grantFlags;
 
     resDeviceID.emplace_back(deviceID);
     grantStates.emplace_back(grantState);

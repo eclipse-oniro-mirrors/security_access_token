@@ -784,7 +784,7 @@ HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level1)
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
-    int32_t invalidFlag = -1;
+    uint32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
@@ -803,7 +803,7 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
-    int32_t invalidFlag = -1;
+    uint32_t invalidFlag = -1;
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
@@ -1078,7 +1078,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag001, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName;
-    int flag = 0;
+    uint32_t flag = 0;
 
     // permissionName invalid
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionFlag(tokenID,
@@ -1126,7 +1126,7 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(infoParms, policyPrams, tokenIdEx);
     ASSERT_EQ(RET_SUCCESS, ret);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    int32_t flag;
+    uint32_t flag;
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST,
         PermissionManager::GetInstance().GetPermissionFlag(tokenId, "ohos.permission.LOCATION", flag));
 

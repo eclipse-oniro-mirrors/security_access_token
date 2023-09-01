@@ -43,7 +43,7 @@ public:
     static bool IsLabelValid(const std::string& label);
 
     static bool IsDescValid(const std::string& desc);
-    static bool IsPermissionFlagValid(int flag);
+    static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsDcapValid(const std::string& dcap);
     static bool IsTokenIDValid(AccessTokenID id);
     static bool IsDlpTypeValid(int dlpType);

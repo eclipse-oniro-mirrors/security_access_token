@@ -77,7 +77,7 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
     permStateList_ = permStateFilterList;
 }
 
-int32_t PermissionPolicySet::GetFlagWroteToDb(int32_t grantFlag)
+uint32_t PermissionPolicySet::GetFlagWroteToDb(uint32_t grantFlag)
 {
     return GetFlagWithoutSpecifiedElement(grantFlag, PERMISSION_COMPONENT_SET);
 }
@@ -105,7 +105,7 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::RestorePermissionPolic
 void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
     PermissionStateFull& state)
 {
-    int flag = GetFlagWroteToDb(state.grantFlags[0]);
+    uint32_t flag = GetFlagWroteToDb(state.grantFlags[0]);
     state.grantFlags[0] = flag;
 
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
@@ -164,12 +164,10 @@ static bool IsPermGrantedBySecComp(int32_t flag)
     return uFlag & PERMISSION_COMPONENT_SET;
 }
 
-int32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(int32_t fullFlag, int32_t removedFlag)
+uint32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag)
 {
-    uint32_t uFullFlag = static_cast<uint32_t>(fullFlag);
-    uint32_t uRemovedFlag = static_cast<uint32_t>(removedFlag);
-    uint32_t unmaskedFlag = (uFullFlag) & (~uRemovedFlag);
-    return static_cast<int32_t>(unmaskedFlag);
+    uint32_t unmaskedFlag = (fullFlag) & (~removedFlag);
+    return unmaskedFlag;
 }
 
 int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
@@ -281,10 +279,10 @@ void PermissionPolicySet::SetPermissionFlag(const std::string& permissionName, u
     for (auto& perm : permStateList_) {
         if (perm.permissionName == permissionName) {
             if (perm.isGeneral) {
-                uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
+                uint32_t oldFlag = perm.grantFlags[0];
                 uint32_t newFlag =
                     needToAdd ? (oldFlag | flag) : (oldFlag & (~PERMISSION_COMPONENT_SET));
-                perm.grantFlags[0] = static_cast<int32_t>(newFlag);
+                perm.grantFlags[0] = newFlag;
                 return;
             }
         }

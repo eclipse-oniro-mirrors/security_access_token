@@ -95,7 +95,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
 
     AccessTokenID tokenId = 0;
     std::string permissionName;
-    int32_t flag = 0;
+    uint32_t flag = 0;
     int32_t result = AT_PERM_OPERA_FAIL;
     int32_t errorCode = 0;
 };

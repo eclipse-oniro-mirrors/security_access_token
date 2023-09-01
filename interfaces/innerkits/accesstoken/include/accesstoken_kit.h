@@ -199,7 +199,7 @@ public:
      * @param flag the permission grant flag, as query result
      * @return error code, see access_token_error.h
      */
-    static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, int& flag);
+    static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     /**
      * @brief Get requsted permission grant result.
      * @param permList PermissionListState list quote, as input and query result
@@ -213,7 +213,7 @@ public:
      * @param flag the permission grant flag
      * @return error code, see access_token_error.h
      */
-    static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     /**
      * @brief Revoke input permission to input tokenID with input flag.
      * @param tokenID token id
@@ -221,7 +221,7 @@ public:
      * @param flag the permission grant flag
      * @return error code, see access_token_error.h
      */
-    static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag);
+    static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     /**
      * @brief Clear all user granted permissions state in input tokenID.
      * @param tokenID token id

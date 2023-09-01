@@ -194,7 +194,7 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    int32_t flag;
+    uint32_t flag;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionFlag(tokenId, permission, flag));
 }
 
