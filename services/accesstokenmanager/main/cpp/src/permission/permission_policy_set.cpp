@@ -400,6 +400,20 @@ void PermissionPolicySet::GetResetPermissionListToNotify(
     }
 }
 
+void PermissionPolicySet::GetGrantedPermissionList(std::vector<std::string>& permissionList)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& perm : permStateList_) {
+        if (perm.isGeneral && (perm.grantStatus[0] == PERMISSION_GRANTED)) {
+            permissionList.emplace_back(perm.permissionName);
+        }
+    }
+
+    for (const auto& permission : secCompGrantedPermList_) {
+        permissionList.emplace_back(permission);
+    }
+}
+
 void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);

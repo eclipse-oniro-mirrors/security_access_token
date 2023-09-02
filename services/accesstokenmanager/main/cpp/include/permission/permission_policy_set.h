@@ -59,6 +59,7 @@ public:
     void GetResetPermissionListToNotify(
         std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList);
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
+    void GetGrantedPermissionList(std::vector<std::string>& permissionList);
 
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
