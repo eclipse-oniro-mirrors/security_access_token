@@ -154,7 +154,6 @@ void SharePermissionTest::SetUp()
 
 void SharePermissionTest::TearDown()
 {
-
 }
 
 static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)
