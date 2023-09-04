@@ -306,7 +306,7 @@ static bool IsPermissionRestrictedByRules(const std::string& permission)
     // Specified dlp permissions are limited to specified dlp type hap.
     AccessTokenID callingTokenId = IPCSkeleton::GetCallingTokenID();
     int32_t dlpType = AccessTokenInfoManager::GetInstance().GetHapTokenDlpType(callingTokenId);
-    if ((dlpType != DLP_COMMON) && 
+    if ((dlpType != DLP_COMMON) &&
         !DlpPermissionSetManager::GetInstance().IsPermissionAvailableToDlpHap(dlpType, permission)) {
         ACCESSTOKEN_LOG_WARN(LABEL,
             "callingTokenId is not allowed to grant dlp permission: %{public}s!", permission.c_str());
