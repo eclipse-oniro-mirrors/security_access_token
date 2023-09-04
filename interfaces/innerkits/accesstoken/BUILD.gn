@@ -24,6 +24,7 @@ if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
     innerapi_tags = [
+      "chipsetsdk",
       "platformsdk",
       "sasdk",
     ]
