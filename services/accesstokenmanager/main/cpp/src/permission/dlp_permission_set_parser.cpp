@@ -35,7 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 // nlohmann json need the function named from_json to parse
 void from_json(const nlohmann::json& j, PermissionDlpMode& p)
 {
-    if (j.find("name") == j.end()) {
+    if (j.find("name") == j.end() || (!j.at("name").is_string())) {
         return;
     }
     p.permissionName = j.at("name").get<std::string>();
@@ -43,7 +43,7 @@ void from_json(const nlohmann::json& j, PermissionDlpMode& p)
         return;
     }
 
-    if (j.find("dlpGrantRange") == j.end()) {
+    if (j.find("dlpGrantRange") == j.end() || (!j.at("dlpGrantRange").is_string())) {
         return;
     }
     std::string dlpModeStr = j.at("dlpGrantRange").get<std::string>();
@@ -68,7 +68,7 @@ int32_t DlpPermissionSetParser::ParserDlpPermsRawData(const std::string& dlpPerm
         return RET_FAILED;
     }
 
-    if (jsonRes.find("dlpPermissions") != jsonRes.end()) {
+    if ((jsonRes.find("dlpPermissions") != jsonRes.end()) && (j.at("dlpPermissions").is_object())) {
         nlohmann::json dlpPermTokenJson = jsonRes.at("dlpPermissions").get<nlohmann::json>();
         dlpPerms = dlpPermTokenJson.get<std::vector<PermissionDlpMode>>();
     }
