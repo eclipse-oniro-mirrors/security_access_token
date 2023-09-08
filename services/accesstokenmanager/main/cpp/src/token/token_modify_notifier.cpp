@@ -29,9 +29,22 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenModifyNotifier"};
 }
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false), curTaskNum_(0) {}
+#else
 TokenModifyNotifier::TokenModifyNotifier() : hasInited_(false), notifyTokenWorker_("TokenModify") {}
+#endif
 
-TokenModifyNotifier::~TokenModifyNotifier() {}
+TokenModifyNotifier::~TokenModifyNotifier()
+{
+    if (!hasInited_) {
+        return;
+    }
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
+    this->notifyTokenWorker_.Stop();
+#endif
+    this->hasInited_ = false;
+}
 
 void TokenModifyNotifier::AddHapTokenObservation(AccessTokenID tokenID)
 {
@@ -75,7 +88,9 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
     if (!instance.hasInited_) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance.initLock_);
         if (!instance.hasInited_) {
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
             instance.notifyTokenWorker_.Start(1);
+#endif
             instance.hasInited_ = true;
         }
     }
@@ -102,8 +117,40 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
 }
+
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+int32_t TokenModifyNotifier::GetCurTaskNum()
+{
+    return curTaskNum_.load();
+}
+
+void TokenModifyNotifier::AddCurTaskNum()
+{
+    curTaskNum_++;
+}
+
+void TokenModifyNotifier::ReduceCurTaskNum()
+{
+    curTaskNum_--;
+}
+#endif
+
 void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    if (GetCurTaskNum() > 1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task!");
+        return;
+    }
+
+    std::string taskName = "TokenModify";
+    auto tokenModify = []() {
+        TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
+        AccessTokenInfoManager::GetInstance().ReduceCurTaskNum();
+    };
+    AddCurTaskNum();
+    ffrt::submit(tokenModify, {}, {}, ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
+#else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, " has notify task!");
         return;
@@ -112,6 +159,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
     notifyTokenWorker_.AddTask([]() {
         TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
     });
+#endif
 }
 } // namespace AccessToken
 } // namespace Security

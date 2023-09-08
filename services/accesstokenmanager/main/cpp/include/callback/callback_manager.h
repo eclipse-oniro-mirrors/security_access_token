@@ -21,6 +21,9 @@
 
 #include "access_token.h"
 #include "accesstoken_log.h"
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+#include "ffrt.h"
+#endif
 #include "i_permission_state_callback.h"
 #include "permission_state_change_info.h"
 #include "permission_state_change_callback_proxy.h"
@@ -56,7 +59,15 @@ public:
     void ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType);
 
 private:
+    void ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID, const std::string& permName,
+        int32_t changeType);
+    void GetCallbackObjectList(AccessTokenID tokenID, const std::string& permName,
+        std::vector<sptr<IRemoteObject>>& list);
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    ffrt::mutex mutex_;
+#else
     std::mutex mutex_;
+#endif
     std::vector<CallbackRecord> callbackInfoList_;
     sptr<IRemoteObject::DeathRecipient> callbackDeathRecipient_;
 };

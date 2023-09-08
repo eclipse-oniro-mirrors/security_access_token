@@ -29,6 +29,9 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+#include "ffrt.h"
+#endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
 #include "permission_definition_cache.h"
@@ -50,14 +53,20 @@ static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
 }
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+AccessTokenInfoManager::AccessTokenInfoManager() : curTaskNum_(0), hasInited_(false) {}
+#else
 AccessTokenInfoManager::AccessTokenInfoManager() : tokenDataWorker_("TokenStore"), hasInited_(false) {}
+#endif
 
 AccessTokenInfoManager::~AccessTokenInfoManager()
 {
     if (!hasInited_) {
         return;
     }
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
     this->tokenDataWorker_.Stop();
+#endif
     this->hasInited_ = false;
 }
 
@@ -71,7 +80,9 @@ void AccessTokenInfoManager::Init()
     ACCESSTOKEN_LOG_INFO(LABEL, "init begin!");
     InitHapTokenInfos();
     InitNativeTokenInfos();
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
     this->tokenDataWorker_.Start(1);
+#endif
     hasInited_ = true;
     ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
 }
@@ -1015,8 +1026,42 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
     PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
 }
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+int32_t AccessTokenInfoManager::GetCurTaskNum()
+{
+    return curTaskNum_.load();
+}
+
+void AccessTokenInfoManager::AddCurTaskNum()
+{
+    curTaskNum_++;
+}
+
+void AccessTokenInfoManager::ReduceCurTaskNum()
+{
+    curTaskNum_--;
+}
+#endif
+
 void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
 {
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    if (GetCurTaskNum() > 1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "has refresh task!");
+        return;
+    }
+
+    std::string taskName = "TokenStore";
+    auto tokenStore = []() {
+        AccessTokenInfoManager::GetInstance().StoreAllTokenInfo();
+
+        // Sleep for one second to avoid frequent refresh of the database.
+        ffrt::this_task::sleep_for(std::chrono::seconds(1));
+        AccessTokenInfoManager::GetInstance().ReduceCurTaskNum();
+    };
+    AddCurTaskNum();
+    ffrt::submit(tokenStore, {}, {}, ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
+#else
     if (tokenDataWorker_.GetCurTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, "has refresh task!");
         return;
@@ -1028,6 +1073,7 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
         // Sleep for one second to avoid frequent refresh of the database.
         std::this_thread::sleep_for(std::chrono::seconds(1));
     });
+#endif
 }
 void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id)
 {
