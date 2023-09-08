@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 #define ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <vector>
@@ -24,7 +25,9 @@
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
 #include "thread_pool.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -75,6 +78,12 @@ public:
     std::string GetUdidByNodeId(const std::string &nodeId);
 #endif
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    int32_t GetCurTaskNum();
+    void AddCurTaskNum();
+    void ReduceCurTaskNum();
+#endif
+
 private:
     AccessTokenInfoManager();
     DISALLOW_COPY_AND_MOVE(AccessTokenInfoManager);
@@ -92,7 +101,11 @@ private:
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    std::atomic_int32_t curTaskNum_;
+#else
     OHOS::ThreadPool tokenDataWorker_;
+#endif
     bool hasInited_;
 
     OHOS::Utils::RWLock hapTokenInfoLock_;

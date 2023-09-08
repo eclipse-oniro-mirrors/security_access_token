@@ -16,13 +16,16 @@
 #ifndef TOKEN_MODIFY_NOTIFIER_H
 #define TOKEN_MODIFY_NOTIFIER_H
 
+#include <atomic>
 #include <set>
 #include <vector>
 
 #include "access_token.h"
 #include "nocopyable.h"
 #include "rwlock.h"
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
 #include "thread_pool.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -37,6 +40,12 @@ public:
     void NotifyTokenChangedIfNeed();
     void NotifyTokenSyncTask();
 
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    int32_t GetCurTaskNum();
+    void AddCurTaskNum();
+    void ReduceCurTaskNum();
+#endif
+
 private:
     TokenModifyNotifier();
     DISALLOW_COPY_AND_MOVE(TokenModifyNotifier);
@@ -44,7 +53,11 @@ private:
     bool hasInited_;
     OHOS::Utils::RWLock initLock_;
     OHOS::Utils::RWLock Notifylock_;
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+    std::atomic_int32_t curTaskNum_;
+#else
     OHOS::ThreadPool notifyTokenWorker_;
+#endif
     std::set<AccessTokenID> observationSet_;
     std::vector<AccessTokenID> deleteTokenList_;
     std::vector<AccessTokenID> modifiedTokenList_;
