@@ -34,7 +34,9 @@
 #include "permission_used_result.h"
 #include "rwlock.h"
 #include "thread_pool.h"
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_agent.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -67,11 +69,14 @@ public:
     void NotifyMicChange(bool switchStatus);
     void NotifyCameraChange(bool switchStatus);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
+
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
+    void OnWindowMgrRemoteDiedHandle();
+#endif
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
-    void OnWindowMgrRemoteDiedHandle();
 
 private:
     PermissionRecordManager();
@@ -104,7 +109,9 @@ private:
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
     void SetCameraCallback(sptr<IRemoteObject>);
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool IsFlowWindowShow(AccessTokenID tokenId);
+#endif
     int32_t GetAppStatus(AccessTokenID tokenId);
 
     bool Register();
@@ -131,10 +138,12 @@ private:
     sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
 
     // camera float window
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     AccessTokenID floatWindowTokenId_ = 0;
     bool camFloatWindowShowing_ = false;
     std::mutex floatWinMutex_;
     sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

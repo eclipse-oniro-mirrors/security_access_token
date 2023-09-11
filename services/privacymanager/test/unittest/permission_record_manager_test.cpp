@@ -308,8 +308,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     };
     CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
     PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
-
+#endif
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
@@ -337,8 +338,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
         .opCode = Constant::OP_MICROPHONE,
     };
     PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
-
+#endif
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
@@ -365,8 +367,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
         .opCode = Constant::OP_CAMERA,
     };
     PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
-
+#endif
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
 
     PermissionRecord record;
@@ -393,8 +396,9 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
         .opCode = Constant::OP_CAMERA,
     };
     PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
-
+#endif
     PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
 
     PermissionRecord record;

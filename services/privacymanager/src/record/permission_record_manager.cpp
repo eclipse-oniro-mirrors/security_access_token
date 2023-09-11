@@ -15,9 +15,7 @@
 
 #include "permission_record_manager.h"
 
-#include <algorithm>
 #include <cinttypes>
-#include <numeric>
 
 #include "ability_manager_privacy_client.h"
 #include "accesstoken_kit.h"
@@ -30,16 +28,15 @@
 #include "constant_common.h"
 #include "data_translator.h"
 #include "i_state_change_callback.h"
-#include "iservice_registry.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
-#include "state_change_callback_proxy.h"
-#include "system_ability_definition.h"
 #include "time_util.h"
 #include "want.h"
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_client.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -362,7 +359,10 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, A
             }
 
             // app use camera background without float window
-            bool isShow = IsFlowWindowShow(tokenId);
+            bool isShow = true;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+            isShow = IsFlowWindowShow(tokenId);
+#endif
             if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
                 camPermList.emplace_back(perm);
@@ -598,21 +598,6 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }
 
-/*
- * when camera float window is not show, notice camera service to use StopUsingPermission
- */
-void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing)
-{
-    camFloatWindowShowing_ = isShowing;
-    floatWindowTokenId_ = tokenId;
-    if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) && !isShowing) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-        ExecuteCameraCallbackAsync(tokenId);
-    } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is show!");
-    }
-}
-
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
@@ -726,9 +711,12 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
-    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+    }
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    if (permissionName == CAMERA_PERMISSION_NAME) {
         return IsFlowWindowShow(tokenId);
     }
+#endif
     return false;
 }
 
@@ -780,11 +768,6 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
     return status;
 }
 
-bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
-{
-    return floatWindowTokenId_ == tokenId && camFloatWindowShowing_;
-}
-
 bool PermissionRecordManager::Register()
 {
     // microphone mute
@@ -826,6 +809,7 @@ bool PermissionRecordManager::Register()
         }
     }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register
     {
         std::lock_guard<std::mutex> lock(floatWinMutex_);
@@ -839,7 +823,7 @@ bool PermissionRecordManager::Register()
                 WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
         }
     }
-
+#endif
     return true;
 }
 
@@ -854,6 +838,7 @@ void PermissionRecordManager::Unregister()
         }
     }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback unregister
     {
         std::lock_guard<std::mutex> lock(floatWinMutex_);
@@ -863,6 +848,7 @@ void PermissionRecordManager::Unregister()
             floatWindowCallback_ = nullptr;
         }
     }
+#endif
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
@@ -883,11 +869,33 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
     camMuteCallback_ = nullptr;
 }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+/*
+ * when camera float window is not show, notice camera service to use StopUsingPermission
+ */
+void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing)
+{
+    camFloatWindowShowing_ = isShowing;
+    floatWindowTokenId_ = tokenId;
+    if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) && !isShowing) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
+        ExecuteCameraCallbackAsync(tokenId);
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is show!");
+    }
+}
+
 void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(floatWinMutex_);
     floatWindowCallback_ = nullptr;
 }
+
+bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
+{
+    return floatWindowTokenId_ == tokenId && camFloatWindowShowing_;
+}
+#endif
 
 void PermissionRecordManager::Init()
 {

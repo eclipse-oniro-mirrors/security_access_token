@@ -48,7 +48,6 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
     "${access_token_path}/services/privacymanager/include/sensitive/app_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
-    "${access_token_path}/services/privacymanager/include/sensitive/window_manager/",
     "${access_token_path}/services/common/database/include",
     "//third_party/sqlite/include/",
   ]
@@ -85,10 +84,6 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_service_callback_stub.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_agent.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_client.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_death_recipient.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
   ]
@@ -98,6 +93,7 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
       defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
+
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   deps = [
@@ -119,4 +115,15 @@ ohos_fuzztest("GetPermissionUsedRecordsAsyncStubFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (access_token_camera_float_window_enable) {
+    cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
+    include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/window_manager" ]
+    sources += [
+    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_agent.cpp",
+    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_client.cpp",
+    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_death_recipient.cpp",
+    "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
+    ]
+  }
 }

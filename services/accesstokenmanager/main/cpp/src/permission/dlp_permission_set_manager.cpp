@@ -14,11 +14,7 @@
  */
 #include "dlp_permission_set_manager.h"
 
-#include <fcntl.h>
 #include <memory>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "access_token.h"
 #include "accesstoken_log.h"
