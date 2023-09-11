@@ -16,7 +16,6 @@
 #ifndef ACCESSTOKEN_DLP_PERMISSION_SET_MANAGER_H
 #define ACCESSTOKEN_DLP_PERMISSION_SET_MANAGER_H
 
-#include <map>
 #include <vector>
 
 #include "nocopyable.h"

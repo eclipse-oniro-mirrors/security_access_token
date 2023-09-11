@@ -18,7 +18,10 @@
     "hisysevent_config": [
       "//base/security/access_token/hisysevent.yaml"
     ],
-    "features": [ "access_token_feature_coverage = false" ],
+    "features": [
+      "access_token_feature_coverage = false",
+      "access_token_camera_float_window_enable"
+    ],
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",
     "ram": "5000KB",

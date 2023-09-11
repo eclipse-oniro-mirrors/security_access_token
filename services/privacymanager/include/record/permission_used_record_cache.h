@@ -16,11 +16,10 @@
 #ifndef PERMISSION_USED_RECORD_CACHE_H
 #define PERMISSION_USED_RECORD_CACHE_H
 
-#include <map>
 #include <string>
 #include <set>
 #include <vector>
-#include "accesstoken_kit.h"
+#include "access_token.h"
 #include "nocopyable.h"
 #include "permission_record.h"
 #include "permission_record_node.h"

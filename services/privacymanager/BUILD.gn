@@ -49,7 +49,6 @@ if (is_standard_system && ability_base_enable == true) {
       "include/sensitive/app_manager/",
       "include/sensitive/audio_manager/",
       "include/sensitive/camera_manager/",
-      "include/sensitive/window_manager/",
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
@@ -90,10 +89,6 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
       "src/sensitive/camera_manager/camera_service_callback_stub.cpp",
-      "src/sensitive/window_manager/window_manager_privacy_agent.cpp",
-      "src/sensitive/window_manager/window_manager_privacy_client.cpp",
-      "src/sensitive/window_manager/window_manager_privacy_death_recipient.cpp",
-      "src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]
@@ -134,6 +129,17 @@ if (is_standard_system && ability_base_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
       include_dirs += [ "include/seccomp" ]
       sources += [ "src/seccomp/privacy_sec_comp_enhance_agent.cpp" ]
+    }
+
+    if (access_token_camera_float_window_enable) {
+      cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
+      include_dirs += [ "include/sensitive/window_manager/" ]
+      sources += [
+        "src/sensitive/window_manager/window_manager_privacy_agent.cpp",
+        "src/sensitive/window_manager/window_manager_privacy_client.cpp",
+        "src/sensitive/window_manager/window_manager_privacy_death_recipient.cpp",
+        "src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
+      ]
     }
   }
 }

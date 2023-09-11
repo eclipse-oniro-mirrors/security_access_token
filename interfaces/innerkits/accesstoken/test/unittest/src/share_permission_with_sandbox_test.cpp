@@ -492,7 +492,6 @@ HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
  */
 HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
 {
-    int32_t ret;
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
     AccessTokenID tokenFullControl = AllocHapTokenId(g_infoParmsFullControl, g_policyParams);
     AccessTokenID tokenFullRead = AllocHapTokenId(g_infoParmsReadOnly, g_policyParams);
@@ -522,7 +521,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
     EXPECT_EQ(permsList[1].state, INVALID_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
-    ret = AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_ALL, PERMISSION_USER_FIXED);
+    AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_ALL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
     AccessTokenKit::GetSelfPermissionsState(permsList);
@@ -532,7 +531,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
-    ret = AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
+    AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
     AccessTokenKit::GetSelfPermissionsState(permsList);
