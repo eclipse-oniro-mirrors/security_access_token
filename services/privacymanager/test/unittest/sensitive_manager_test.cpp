@@ -37,11 +37,14 @@
 #include "camera_service_ipc_interface_code.h"
 #endif
 #include "token_setproc.h"
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_agent.h"
 #define private public
 #include "window_manager_privacy_client.h"
 #undef private
 #include "window_manager_privacy_proxy.h"
+#endif
+
 using namespace testing::ext;
 
 namespace OHOS {
@@ -290,6 +293,7 @@ HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyTest001, TestSize.Lev
     ASSERT_NE(0, AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr));
 }
 
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
 class TestCallBack1 : public WindowManagerPrivacyAgent {
 public:
     TestCallBack1() = default;
@@ -366,6 +370,7 @@ HWTEST_F(SensitiveManagerServiceTest, GetProxy001, TestSize.Level1)
 
     WindowManagerPrivacyClient::GetInstance().proxy_ = proxy; // recovery
 }
+#endif
 
 class TestCallBack2 : public ApplicationStateObserverStub {
 public:
