@@ -103,6 +103,7 @@ private:
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::atomic_int32_t curTaskNum_;
+    std::shared_ptr<ffrt::queue> ffrtTaskQueue_ = std::make_shared<ffrt::queue>("TokenStore");
 #else
     OHOS::ThreadPool tokenDataWorker_;
 #endif

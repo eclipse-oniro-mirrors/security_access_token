@@ -1051,7 +1051,6 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
         return;
     }
 
-    std::string taskName = "TokenStore";
     auto tokenStore = []() {
         AccessTokenInfoManager::GetInstance().StoreAllTokenInfo();
 
@@ -1060,7 +1059,7 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
         AccessTokenInfoManager::GetInstance().ReduceCurTaskNum();
     };
     AddCurTaskNum();
-    ffrt::submit(tokenStore, {}, {}, ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
+    ffrtTaskQueue_->submit(tokenStore, ffrt::task_attr().qos(ffrt::qos_default));
 #else
     if (tokenDataWorker_.GetCurTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, "has refresh task!");

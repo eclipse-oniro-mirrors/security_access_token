@@ -99,7 +99,7 @@ if (!defined(global_parts_info) ||
 
 if (!defined(global_parts_info) ||
     defined(global_parts_info.resourceschedule_ffrt)) {
-  resourceschedule_ffrt_enable = false
+  resourceschedule_ffrt_enable = true
 } else {
   resourceschedule_ffrt_enable = false
 }
