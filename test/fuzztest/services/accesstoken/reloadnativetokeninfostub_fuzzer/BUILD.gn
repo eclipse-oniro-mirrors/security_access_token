@@ -15,8 +15,6 @@ import("//build/config/features.gni")
 import("//build/test.gni")
 import("../../../../../access_token.gni")
 
-module_output_path = "access_token/services/accessoken"
-
 ohos_fuzztest("ReloadNativeTokenInfoStubFuzzTest") {
   module_out_path = module_output_path
   fuzz_config_file = "."
