@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("../../../../../access_token.gni")
 
 ohos_fuzztest("RegisterPermActiveStatusCallbackStubFuzzTest") {
-  module_out_path = module_output_path
+  module_out_path = module_output_path_service_privacy
   fuzz_config_file = "."
 
   sources = [ "registerpermactivestatuscallbackstub_fuzzer.cpp" ]

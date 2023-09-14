@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("../../../../../access_token.gni")
 
 ohos_fuzztest("GetHapDlpFlagFuzzTest") {
-  module_out_path = module_output_path
+  module_out_path = module_output_path_interface_access_token
   fuzz_config_file = "."
   include_dirs =
       [ "${access_token_path}/interfaces/innerkits/accesstoken/include" ]
