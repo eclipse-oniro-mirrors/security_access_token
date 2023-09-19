@@ -25,7 +25,7 @@ bool ProcessData::Marshalling(Parcel &parcel) const
         parcel.WriteBool(isKeepAlive) && parcel.WriteBool(isFocused) && parcel.WriteInt32(requestProcCode) &&
         parcel.WriteInt32(processChangeReason) && parcel.WriteString(processName) &&
         parcel.WriteInt32(static_cast<int32_t>(processType)) && parcel.WriteInt32(extensionType) &&
-        parcel.WriteInt32(renderUid));
+        parcel.WriteInt32(renderUid) && parcel.WriteUint32(accessTokenId));
 }
 
 bool ProcessData::ReadFromParcel(Parcel &parcel)
@@ -43,6 +43,7 @@ bool ProcessData::ReadFromParcel(Parcel &parcel)
     processType = static_cast<ProcessType>(parcel.ReadInt32());
     extensionType = parcel.ReadInt32();
     renderUid = parcel.ReadInt32();
+    accessTokenId = parcel.ReadUint32();
     return true;
 }
 
