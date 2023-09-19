@@ -100,6 +100,15 @@ typedef enum TypeATokenAplEnum {
 } ATokenAplEnum;
 
 /**
+ * @brief AvailableType
+ */
+typedef enum TypeATokenAvailableTypeEnum {
+    INVALID = 0,
+    NORMAL = 1,
+    MDM,
+} ATokenAvailableTypeEnum;
+
+/**
  * @brief Token id full definition
  */
 typedef union {

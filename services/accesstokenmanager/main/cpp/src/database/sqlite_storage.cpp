@@ -79,7 +79,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
         TokenFiledConst::FIELD_AVAILABLE_LEVEL, TokenFiledConst::FIELD_PROVISION_ENABLE,
         TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE, TokenFiledConst::FIELD_LABEL,
         TokenFiledConst::FIELD_LABEL_ID, TokenFiledConst::FIELD_DESCRIPTION,
-        TokenFiledConst::FIELD_DESCRIPTION_ID
+        TokenFiledConst::FIELD_DESCRIPTION_ID, TokenFiledConst::FIELD_AVAILABLE_TYPE
     };
 
     SqliteTable permissionStateTable;
@@ -376,6 +376,8 @@ int SqliteStorage::CreatePermissionDefinitionTable() const
         .append(TokenFiledConst::FIELD_DESCRIPTION)
         .append(TEXT_STR)
         .append(TokenFiledConst::FIELD_DESCRIPTION_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AVAILABLE_TYPE)
         .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_TOKEN_ID)

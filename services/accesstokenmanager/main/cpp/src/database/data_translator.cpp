@@ -43,6 +43,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissi
     outGenericValues.Put(TokenFiledConst::FIELD_LABEL_ID, inPermissionDef.labelId);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION, inPermissionDef.description);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
+    outGenericValues.Put(TokenFiledConst::FIELD_AVAILABLE_TYPE, inPermissionDef.availableType);
     return RET_SUCCESS;
 }
 

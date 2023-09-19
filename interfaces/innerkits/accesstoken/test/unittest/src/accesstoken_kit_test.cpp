@@ -1760,6 +1760,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
 
     g_infoManagerTestPolicyPrams.permList[0].bundleName = "invalid_bundleName";
     g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp01";
+    g_infoManagerTestPolicyPrams.permList[0].availableType = MDM;
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
 
@@ -1767,6 +1768,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permDefResultBeta.availableType, MDM);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
     g_infoManagerTestPolicyPrams.permList[0].bundleName  = backUp;

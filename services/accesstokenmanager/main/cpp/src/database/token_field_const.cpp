@@ -33,6 +33,7 @@ const std::string TokenFiledConst::FIELD_NATIVE_ACLS = "native_acls";
 const std::string TokenFiledConst::FIELD_PERMISSION_NAME = "permission_name";
 const std::string TokenFiledConst::FIELD_GRANT_MODE = "grant_mode";
 const std::string TokenFiledConst::FIELD_AVAILABLE_LEVEL = "available_level";
+const std::string TokenFiledConst::FIELD_AVAILABLE_TYPE = "available_type";
 const std::string TokenFiledConst::FIELD_PROVISION_ENABLE = "provision_enable";
 const std::string TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE = "distributed_scene_enable";
 const std::string TokenFiledConst::FIELD_LABEL = "label";
