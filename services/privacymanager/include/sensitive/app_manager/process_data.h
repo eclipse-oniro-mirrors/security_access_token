@@ -76,6 +76,7 @@ struct ProcessData : public Parcelable {
     std::string processName;
     ProcessType processType = ProcessType::NORMAL;
     int32_t extensionType;
+    uint32_t accessTokenId = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security
