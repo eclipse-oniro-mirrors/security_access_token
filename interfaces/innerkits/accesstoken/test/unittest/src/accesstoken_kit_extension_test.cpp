@@ -69,16 +69,6 @@ PermissionStateFull g_grantPermissionReq = {
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
-PermissionDef g_infoManagerTestPermDef2 = {
-    .permissionName = "ohos.permission.test2",
-    .bundleName = "accesstoken_test",
-    .grantMode = 1,
-    .availableLevel = APL_NORMAL,
-    .label = "label2",
-    .labelId = 1,
-    .description = "break the door",
-    .descriptionId = 1
-};
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
@@ -91,6 +81,36 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .descriptionId = 1
 };
 
+PermissionDef g_infoManagerTestPermDef2 = {
+    .permissionName = "ohos.permission.test2",
+    .bundleName = "accesstoken_test",
+    .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .label = "label2",
+    .labelId = 1,
+    .description = "break the door",
+    .descriptionId = 1
+};
+
+PermissionDef g_infoManagerTestPermDef3 = {
+    .permissionName = "ohos.permission.GET_BUNDLE_INFO",
+    .bundleName = "accesstoken_test3",
+    .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .label = "label3",
+    .labelId = 1,
+    .description = "break the door",
+    .descriptionId = 1
+};
+
+PermissionStateFull g_infoManagerTestState1 = {
+    .permissionName = "ohos.permission.test1",
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_GRANTED},
+    .grantFlags = {1}
+};
+
 PermissionStateFull g_infoManagerTestState2 = {
     .permissionName = "ohos.permission.test2",
     .isGeneral = false,
@@ -99,10 +119,10 @@ PermissionStateFull g_infoManagerTestState2 = {
     .grantFlags = {1, 2}
 };
 
-PermissionStateFull g_infoManagerTestState1 = {
-    .permissionName = "ohos.permission.test1",
+PermissionStateFull g_infoManagerTestState3 = {
+    .permissionName = "ohos.permission.GET_BUNDLE_INFO",
     .isGeneral = true,
-    .resDeviceID = {"local2"},
+    .resDeviceID = {"local3"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
@@ -2112,8 +2132,23 @@ HWTEST_F(AccessTokenKitExtensionTest, AllocHapToken020, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitExtensionTest, VerifyAccessToken005, TestSize.Level1)
 {
-    std::string bundleName = "com.ohos.permissionmanager";
-    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(100, bundleName, 0); // tokenId for pm app
+    HapInfoParams info = {
+        .userID = TEST_USER_ID,
+        .bundleName = "accesstoken_test3",
+        .instIndex = 0,
+        .appIDDesc = "test3",
+        .apiVersion = DEFAULT_API_VERSION
+    };
+
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permList = {g_infoManagerTestPermDef3},
+        .permStateList = {g_infoManagerTestState3}
+    };
+
+    AccessTokenKit::AllocHapToken(info, policy);
+    AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "accesstoken_test3", 0);
     ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
     std::string permissionName;
@@ -2128,6 +2163,7 @@ HWTEST_F(AccessTokenKitExtensionTest, VerifyAccessToken005, TestSize.Level1)
     // ret = PERMISSION_GRANTED + firstTokenID != 0
     ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
         callerTokenID, firstTokenID, permissionName));
+    AccessTokenKit::DeleteToken(callerTokenID);
 
     callerTokenID = 0;
     // ret = PERMISSION_DENIED

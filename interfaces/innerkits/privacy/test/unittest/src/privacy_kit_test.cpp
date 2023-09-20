@@ -38,43 +38,22 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 
-static PermissionStateFull g_grantPermissionReq = {
-    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-static HapPolicyParams g_policyPramsA = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.A",
-};
-
-static HapInfoParams g_infoParmsA = {
-    .userID = 1,
-    .bundleName = "ohos.privacy_test.bundleA",
-    .instIndex = 0,
-    .appIDDesc = "privacy_test.bundleA"
-};
-
-static HapPolicyParams g_policyPramsB = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.B",
-};
-
-static HapInfoParams g_infoParmsB = {
-    .userID = 1,
-    .bundleName = "ohos.privacy_test.bundleB",
-    .instIndex = 0,
-    .appIDDesc = "privacy_test.bundleB"
-};
-
 static PermissionStateFull g_infoManagerTestStateA = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
     .resDeviceID = {"local"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
+};
+static HapPolicyParams g_policyPramsA = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.A",
+};
+static HapInfoParams g_infoParmsA = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleA",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleA"
 };
 
 static PermissionStateFull g_infoManagerTestStateB = {
@@ -84,13 +63,48 @@ static PermissionStateFull g_infoManagerTestStateB = {
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
+static HapPolicyParams g_policyPramsB = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.B",
+};
+static HapInfoParams g_infoParmsB = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleB",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleB"
+};
+
+static PermissionDef g_infoManagerTestPermDefC = {
+    .permissionName = "ohos.permission.PERMISSION_USED_STATS",
+    .bundleName = "ohos.privacy_test.bundleC",
+    .grantMode = 1,
+    .availableLevel = APL_NORMAL,
+    .label = "labelC",
+    .labelId = 1,
+    .description = "break the door",
+    .descriptionId = 1
+};
 static PermissionStateFull g_infoManagerTestStateC = {
     .permissionName = "ohos.permission.PERMISSION_USED_STATS",
     .isGeneral = true,
-    .resDeviceID = {"local"},
+    .resDeviceID = {"localC"},
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
+static HapInfoParams g_infoParmsC = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleC",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleC",
+    .isSystemApp = true,
+};
+static HapPolicyParams g_policyPramsC = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain.C",
+    .permList = {g_infoManagerTestPermDefC},
+    .permStateList = {g_infoManagerTestStateC}
+};
+
 static HapPolicyParams g_policyPramsE = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
@@ -103,6 +117,7 @@ static HapInfoParams g_infoParmsE = {
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleE"
 };
+
 static UsedRecordDetail g_usedRecordDetail = {
     .status = 2,
     .timestamp = 2L,
@@ -131,7 +146,6 @@ static HapInfoParams g_normalInfoParms = {
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = false
 };
-
 static HapInfoParams g_systemInfoParms = {
     .userID = 1,
     .bundleName = "accesstoken_test",
@@ -144,8 +158,8 @@ static HapInfoParams g_systemInfoParms = {
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_tokenIdA = 0;
 static AccessTokenID g_tokenIdB = 0;
+static AccessTokenIDEx g_tokenIdC = {0};
 static AccessTokenID g_tokenIdE = 0;
-
 
 static void DeleteTestToken()
 {
@@ -157,6 +171,11 @@ static void DeleteTestToken()
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID,
                                             g_infoParmsB.bundleName,
                                             g_infoParmsB.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsC.userID,
+                                            g_infoParmsC.bundleName,
+                                            g_infoParmsC.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID,
@@ -189,14 +208,13 @@ void PrivacyKitTest::SetUp()
 {
     AccessTokenKit::AllocHapToken(g_infoParmsA, g_policyPramsA);
     AccessTokenKit::AllocHapToken(g_infoParmsB, g_policyPramsB);
+    AccessTokenKit::AllocHapToken(g_infoParmsC, g_policyPramsC);
     AccessTokenKit::AllocHapToken(g_infoParmsE, g_policyPramsE);
 
     g_tokenIdA = AccessTokenKit::GetHapTokenID(g_infoParmsA.userID, g_infoParmsA.bundleName, g_infoParmsA.instIndex);
     g_tokenIdB = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID, g_infoParmsB.bundleName, g_infoParmsB.instIndex);
+    g_tokenIdC = AccessTokenKit::GetHapTokenIDEx(g_infoParmsC.userID, g_infoParmsC.bundleName, g_infoParmsC.instIndex);
     g_tokenIdE = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID, g_infoParmsE.bundleName, g_infoParmsE.instIndex);
-
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0); // 100 is userID
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 }
 
 void PrivacyKitTest::TearDown()
@@ -266,8 +284,8 @@ static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
                                                                     g_InfoParmsTmp.instIndex);
         g_TokenId_List.push_back(g_TokenId_Tmp);
     }
-    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(100, "com.ohos.permissionmanager", 0);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    EXPECT_EQ(0, SetSelfTokenID(g_tokenIdC.tokenIDEx));
 }
 
 static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
@@ -279,8 +297,8 @@ static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
                                                                     g_InfoParms_List[i].instIndex);
         AccessTokenKit::DeleteToken(g_TokenId_Tmp);
     }
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.permissionmanager", 0);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+
+    EXPECT_EQ(0, SetSelfTokenID(g_tokenIdC.tokenIDEx));
 }
 
 /**
