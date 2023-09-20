@@ -1874,13 +1874,14 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
     // version != 1 + type dismatch
     ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
 
-    AccessTokenIDEx tokenIdEx =AccessTokenInfoManager::GetInstance().GetHapTokenID(
-        USER_ID, "com.ohos.permissionmanager", INST_INDEX);
-    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx));
 
     // register repeat
-    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(
+        tokenIdEx.tokenIdExStruct.tokenID, type));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
