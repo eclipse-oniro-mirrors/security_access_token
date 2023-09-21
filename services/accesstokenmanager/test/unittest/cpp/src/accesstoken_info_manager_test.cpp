@@ -1098,11 +1098,25 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx =
-        AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.photos", INST_INDEX);
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "accesstoken_info_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "accesstoken_info_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    std::shared_ptr<HapTokenInfoInner> info = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(infoPtr));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**

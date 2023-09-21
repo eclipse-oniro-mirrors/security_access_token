@@ -1145,17 +1145,29 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
-        "com.ohos.permissionmanager", INST_INDEX);
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
     std::string permissionName = "ohos.permission.DUMP";
     bool isGranted = false;
     int flag = 0;
-
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
         permissionName, isGranted, flag));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
