@@ -38,7 +38,7 @@ namespace Security {
 namespace AccessToken {
 constexpr const char* VAGUE_LOCATION_PERMISSION_NAME = "ohos.permission.APPROXIMATELY_LOCATION";
 constexpr const char* ACCURATE_LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
-const uint32_t ELEMENT_NOT_FOUND = -1;
+constexpr const char* BACKGROUND_LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION_IN_BACKGROUND";
 const int32_t ACCURATE_LOCATION_API_VERSION = 9;
 
 class PermissionManager {
@@ -68,10 +68,8 @@ public:
         const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
     bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
-    bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, uint32_t& vagueIndex,
-        uint32_t& accurateIndex);
-    bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList, int32_t apiVersion,
-        std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
+    bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
@@ -90,10 +88,19 @@ private:
         AccessTokenID tokenID, const std::string& permissionName, bool isGranted, uint32_t flag);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);
+    bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
+        uint32_t& vagueIndex, uint32_t& accurateIndex, uint32_t& backIndex);
+    bool GetResByVaguePermission(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion, bool hasVaguePermission, uint32_t index);
+    bool LocationHandleWithoutVague(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion, uint32_t accurateIndex, uint32_t backIndex);
     bool GetPermissionStatusAndFlag(const std::string& permissionName,
         const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag);
-    void AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
-        std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex);
+    void GetStateByStatusAndFlag(int32_t status, uint32_t flag, uint32_t index, int32_t& state);
+    void SetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList, uint32_t index, int32_t state);
+    bool LocationHandleWithVague(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, uint32_t vagueIndex, uint32_t accurateIndex, uint32_t backIndex);
+
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
     PermissionGrantEvent grantEvent_;

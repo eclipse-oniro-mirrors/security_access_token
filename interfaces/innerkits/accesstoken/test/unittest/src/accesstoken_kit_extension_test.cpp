@@ -38,7 +38,6 @@ namespace AccessToken {
 namespace {
 static const int MAX_PERMISSION_SIZE = 1000;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-static constexpr int32_t VAGUE_LOCATION_API_VERSION = 9;
 static const std::string TEST_BUNDLE_NAME = "ohos";
 static const std::string TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 static const std::string TEST_PERMISSION_NAME_BETA = "ohos.permission.BETA";
@@ -613,482 +612,11 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState001, TestSize.Level
 
 /**
  * @tc.name: GetSelfPermissionsState002
- * @tc.desc: only vague location permission
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState002, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague2 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList2;
-    permsList2.emplace_back(permVague2);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList2.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList2[0].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState003
- * @tc.desc: only vague location permission after refuse
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState003, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague3 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList3;
-    permsList3.emplace_back(permVague3);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList3);
-    ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList3.size());
-    ASSERT_EQ(SETTING_OPER, permsList3[0].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState004
- * @tc.desc: only vague location permission after accept
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague4 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList4;
-    permsList4.emplace_back(permVague4);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList4);
-    ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList4.size());
-    ASSERT_EQ(PASS_OPER, permsList4[0].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState005
- * @tc.desc: only accurate location permission
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState005, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    std::vector<PermissionListState> permsList5;
-    PermissionListState permAccurate5 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    permsList5.emplace_back(permAccurate5);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList5);
-    ASSERT_EQ(INVALID_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList5.size());
-    ASSERT_EQ(INVALID_OPER, permsList5[0].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState006
- * @tc.desc: all location permissions
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState006, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague6 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate6 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-    
-    std::vector<PermissionListState> permsList6;
-    permsList6.emplace_back(permVague6);
-    permsList6.emplace_back(permAccurate6);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList6);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList6.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList6[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList6[1].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState007
- * @tc.desc: all location permissions after accept vague location permission
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState007, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague7 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate7 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList7;
-    permsList7.emplace_back(permVague7);
-    permsList7.emplace_back(permAccurate7);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList7);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList7.size());
-    ASSERT_EQ(PASS_OPER, permsList7[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList7[1].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState008
- * @tc.desc: all location permissions after refuse vague location permission
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState008, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague12); // {-1,2}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague8 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate8 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList8;
-    permsList8.emplace_back(permVague8);
-    permsList8.emplace_back(permAccurate8);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList8);
-    ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList8.size());
-    ASSERT_EQ(SETTING_OPER, permsList8[0].state);
-    ASSERT_EQ(SETTING_OPER, permsList8[1].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState009
- * @tc.desc: all location permissions after accept all location permissions
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState009, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague02); // {0,2}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate02); // {0,2}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague9 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate9 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList9;
-    permsList9.emplace_back(permVague9);
-    permsList9.emplace_back(permAccurate9);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList9);
-    ASSERT_EQ(PASS_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList9.size());
-    ASSERT_EQ(PASS_OPER, permsList9[0].state);
-    ASSERT_EQ(PASS_OPER, permsList9[1].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState010
- * @tc.desc: all location permissions whith other permissions
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState010, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-    permissionDefs.emplace_back(g_locationTestDefSystemGrant);
-    permissionDefs.emplace_back(g_locationTestDefUserGrant);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-    permissionStateFulls.emplace_back(g_locationTestStateSystemGrant); // {0,4}
-    permissionStateFulls.emplace_back(g_locationTestStateUserGrant); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, VAGUE_LOCATION_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague10 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate10 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-    PermissionListState permSystem10 = {
-        .permissionName = "ohos.permission.locationtest1",
-        .state = -1,
-    };
-    PermissionListState permUser10 = {
-        .permissionName = "ohos.permission.locationtest2",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList10;
-    permsList10.emplace_back(permVague10);
-    permsList10.emplace_back(permAccurate10);
-    permsList10.emplace_back(permSystem10);
-    permsList10.emplace_back(permUser10);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList10);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(4), permsList10.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList10[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList10[1].state);
-    ASSERT_EQ(PASS_OPER, permsList10[2].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList10[3].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState011
- * @tc.desc: only accurate location permission whith api8
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState011, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, DEFAULT_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permAccurate11 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList11;
-    permsList11.emplace_back(permAccurate11);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList11);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permsList11.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList11[0].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState012
- * @tc.desc: all location permissions with api8
- * @tc.type: FUNC
- * @tc.require: issueI5NOQI
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState012, TestSize.Level1)
-{
-    std::vector<PermissionDef> permissionDefs;
-    permissionDefs.emplace_back(g_locationTestDefVague);
-    permissionDefs.emplace_back(g_locationTestDefAccurate);
-
-    std::vector<PermissionStateFull> permissionStateFulls;
-    permissionStateFulls.emplace_back(g_locationTestStateVague10); // {-1,0}
-    permissionStateFulls.emplace_back(g_locationTestStateAccurate10); // {-1,0}
-
-    AllocHapToken(permissionDefs, permissionStateFulls, DEFAULT_API_VERSION);
-
-    AccessTokenID tokenID = GetAccessTokenID(TEST_USER_ID, "accesstoken_location_test", 0);
-    ASSERT_NE(INVALID_TOKENID, tokenID);
-    ASSERT_EQ(0, SetSelfTokenID(tokenID));
-
-    PermissionListState permVague12 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
-    };
-    PermissionListState permAccurate12 = {
-        .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
-    };
-
-    std::vector<PermissionListState> permsList12;
-    permsList12.emplace_back(permVague12);
-    permsList12.emplace_back(permAccurate12);
-
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList12);
-    ASSERT_EQ(DYNAMIC_OPER, ret);
-    ASSERT_EQ(static_cast<uint32_t>(2), permsList12.size());
-    ASSERT_EQ(INVALID_OPER, permsList12[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList12[1].state);
-
-    AccessTokenKit::DeleteToken(tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
-}
-
-/**
- * @tc.name: GetSelfPermissionsState013
  * @tc.desc: permission list is empty or oversize
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState013, TestSize.Level1)
+HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState002, TestSize.Level1)
 {
     std::vector<PermissionListState> permsList;
     ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
@@ -1104,42 +632,42 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState013, TestSize.Level
 }
 
 /**
- * @tc.name: GetSelfPermissionsState014
+ * @tc.name: GetSelfPermissionsState003
  * @tc.desc: test token id is native
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState014, TestSize.Level1)
+HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState003, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("hdcd");
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
-    std::vector<PermissionListState> permsList14;
+    std::vector<PermissionListState> permsList3;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
         .state = 0
     };
-    permsList14.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList14));
+    permsList3.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList3));
 }
 
 /**
- * @tc.name: GetSelfPermissionsState015
+ * @tc.name: GetSelfPermissionsState004
  * @tc.desc: test noexist token id
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState015, TestSize.Level1)
+HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level1)
 {
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
-    std::vector<PermissionListState> permsList15;
+    std::vector<PermissionListState> permsList4;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
         .state = 0
     };
-    permsList15.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList15));
+    permsList4.emplace_back(tmp);
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList4));
 }
 
 /**
