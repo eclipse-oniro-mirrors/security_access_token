@@ -139,30 +139,6 @@ static PermissionStateFull g_permState2 = {
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 
-static PermissionStateFull g_permState3 = {
-    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
-};
-
-static PermissionStateFull g_permState4 = {
-    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_USER_FIXED}
-};
-
-static PermissionStateFull g_permState5 = {
-    .permissionName = "ohos.permission.LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
 static PermissionStateFull g_permState6 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -1228,49 +1204,6 @@ HWTEST_F(PermissionManagerTest, GetPermissionStatusAndFlag001, TestSize.Level1)
     // permissionName not in permsList
     ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
         permsList, status, flag));
-}
-
-/**
- * @tc.name: AllLocationPermissionHandle001
- * @tc.desc: PermissionManager::AllLocationPermissionHandle function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, AllLocationPermissionHandle001, TestSize.Level1)
-{
-    PermissionListState permsState1 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION"
-    };
-    PermissionListState permsState2 = {
-        .permissionName = "ohos.permission.LOCATION"
-    };
-
-    PermissionListStateParcel parcel1;
-    parcel1.permsState = permsState1;
-    PermissionListStateParcel parcel2;
-    parcel2.permsState = permsState2;
-
-    std::vector<PermissionListStateParcel> reqPermList;
-    reqPermList.emplace_back(parcel1);
-    reqPermList.emplace_back(parcel2);
-    std::vector<PermissionStateFull> permsList1;
-    permsList1.emplace_back(g_permState3);
-    permsList1.emplace_back(g_permState5);
-    uint32_t vagueIndex = 0;
-    uint32_t accurateIndex = 1;
-
-    // vagueFlag == PERMISSION_DEFAULT_FLAG
-    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList1, vagueIndex, accurateIndex);
-    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[0].permsState.state);
-    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[1].permsState.state);
-
-    std::vector<PermissionStateFull> permsList2;
-    permsList2.emplace_back(g_permState4);
-    permsList2.emplace_back(g_permState5);
-    // vagueFlag == PERMISSION_DEFAULT_FLAG + accurateFlag == PERMISSION_SYSTEM_FIXED
-    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList2, vagueIndex, accurateIndex);
-    ASSERT_EQ(static_cast<int>(PermissionOper::PASS_OPER), reqPermList[0].permsState.state);
-    ASSERT_EQ(static_cast<int>(PermissionOper::INVALID_OPER), reqPermList[1].permsState.state);
 }
 
 /**

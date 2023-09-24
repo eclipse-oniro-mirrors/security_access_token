@@ -56,6 +56,7 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.READ_CALL_LOG",
     "ohos.permission.WRITE_CALL_LOG"
 };
+const uint32_t ELEMENT_NOT_FOUND = -1;
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -598,35 +599,6 @@ bool PermissionManager::GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& a
     return true;
 }
 
-bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
-    uint32_t& vagueIndex, uint32_t& accurateIndex)
-{
-    int index = 0;
-    bool hasFound = false;
-
-    for (const auto& perm : reqPermList) {
-        if (perm.permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) {
-            vagueIndex = index;
-            hasFound = true;
-        } else if (perm.permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) {
-            accurateIndex = index;
-            hasFound = true;
-        }
-
-        index++;
-
-        if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
-            break;
-        }
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "vague location permission index is %{public}d, accurate location permission index is %{public}d!",
-        vagueIndex, accurateIndex);
-
-    return hasFound;
-}
-
 bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
@@ -639,6 +611,76 @@ bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
         return false;
     }
     return true;
+}
+
+bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
+    uint32_t& vagueIndex, uint32_t& accurateIndex, uint32_t& backIndex)
+{
+    int index = 0;
+    bool hasFound = false;
+
+    for (const auto& perm : reqPermList) {
+        if (perm.permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) {
+            vagueIndex = index;
+            hasFound = true;
+        } else if (perm.permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) {
+            accurateIndex = index;
+            hasFound = true;
+        } else if (perm.permsState.permissionName == BACKGROUND_LOCATION_PERMISSION_NAME) {
+            backIndex = index;
+            hasFound = true;
+        }
+
+        index++;
+
+        if ((vagueIndex != ELEMENT_NOT_FOUND) &&
+            (accurateIndex != ELEMENT_NOT_FOUND) &&
+            (backIndex != ELEMENT_NOT_FOUND)) {
+            break;
+        }
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "vague index is %{public}d, accurate index is %{public}d, background index is %{public}d!",
+        vagueIndex, accurateIndex, backIndex);
+
+    return hasFound;
+}
+
+bool PermissionManager::GetResByVaguePermission(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, bool hasVaguePermission, uint32_t index)
+{
+    if (index == ELEMENT_NOT_FOUND) {
+        return false;
+    }
+
+    if (hasVaguePermission) {
+        // get the state to return if the calling hap has vague location permission
+        GetSelfPermissionState(permsList, reqPermList[index].permsState, apiVersion);
+        return (static_cast<PermissionOper>(reqPermList[index].permsState.state) == DYNAMIC_OPER);
+    } else {
+        // refuse directly with invalid oper
+        reqPermList[index].permsState.state = INVALID_OPER;
+        ACCESSTOKEN_LOG_WARN(LABEL,
+            "operate invaild, accurate or background location permission base on vague location permission");
+        return false;
+    }
+}
+
+// return: whether location permission need pop-up window or not
+bool PermissionManager::LocationHandleWithoutVague(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, uint32_t accurateIndex, uint32_t backIndex)
+{
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    // token type has ensured to be a hap when get the apiVersion
+    bool hasPermission = PERMISSION_GRANTED == VerifyHapAccessToken(callingTokenID, VAGUE_LOCATION_PERMISSION_NAME);
+    bool accurateRes = GetResByVaguePermission(reqPermList, permsList, apiVersion, hasPermission, accurateIndex);
+    bool backRes = GetResByVaguePermission(reqPermList, permsList, apiVersion, hasPermission, backIndex);
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "accurate state is %{public}d, background state is %{public}d.",
+        reqPermList[accurateIndex].permsState.state, reqPermList[backIndex].permsState.state);
+
+    return (accurateRes || backRes);
 }
 
 bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permissionName,
@@ -664,8 +706,40 @@ bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permission
     return false;
 }
 
-void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListStateParcel>& reqPermList,
-    std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex)
+void PermissionManager::GetStateByStatusAndFlag(int32_t status, uint32_t flag, uint32_t index, int32_t& state)
+{
+    if (index == ELEMENT_NOT_FOUND) {
+        return;
+    }
+
+    if (status == PERMISSION_DENIED) {
+        // status -1 means permission has been refused or not set
+        if ((flag == PERMISSION_DEFAULT_FLAG) || ((flag & PERMISSION_USER_SET) != 0)) {
+            // flag 0 or 1 means permission has not been operated or valid only once
+            state = DYNAMIC_OPER;
+        } else if ((flag & PERMISSION_USER_FIXED) != 0) {
+            // flag 2 means vague location has been operated, only can be changed by settings
+            state = SETTING_OPER;
+        }
+    } else if (status == PERMISSION_GRANTED) {
+        // status 0 means permission has been granted
+        state = PASS_OPER;
+    }
+}
+
+void PermissionManager::SetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList, uint32_t index,
+    int32_t state)
+{
+    if (index == ELEMENT_NOT_FOUND) {
+        return;
+    }
+
+    reqPermList[index].permsState.state = state;
+}
+
+// return: whether location permission need pop-up window or not
+bool PermissionManager::LocationHandleWithVague(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, uint32_t vagueIndex, uint32_t accurateIndex, uint32_t backIndex)
 {
     int32_t vagueStatus = PERMISSION_DENIED;
     uint32_t vagueFlag = PERMISSION_DEFAULT_FLAG;
@@ -673,68 +747,81 @@ void PermissionManager::AllLocationPermissionHandle(std::vector<PermissionListSt
     int32_t accurateStatus = PERMISSION_DENIED;
     uint32_t accurateFlag = PERMISSION_DEFAULT_FLAG;
     int32_t accurateState = INVALID_OPER;
+    int32_t backStatus = PERMISSION_DENIED;
+    uint32_t backFlag = PERMISSION_DEFAULT_FLAG;
+    int32_t backState = INVALID_OPER;
 
-    if (!GetPermissionStatusAndFlag(VAGUE_LOCATION_PERMISSION_NAME, permsList, vagueStatus, vagueFlag) ||
-        !GetPermissionStatusAndFlag(ACCURATE_LOCATION_PERMISSION_NAME, permsList, accurateStatus, accurateFlag)) {
-        return;
+    bool vagueRes = GetPermissionStatusAndFlag(VAGUE_LOCATION_PERMISSION_NAME, permsList, vagueStatus, vagueFlag);
+    bool accurateRes = GetPermissionStatusAndFlag(ACCURATE_LOCATION_PERMISSION_NAME, permsList, accurateStatus,
+        accurateFlag);
+    bool backRes = GetPermissionStatusAndFlag(BACKGROUND_LOCATION_PERMISSION_NAME, permsList, backStatus, backFlag);
+    // need vague && (accurate || back)
+    if (!vagueRes || (!accurateRes && !backRes)) {
+        return false;
     }
 
-    // vague location status -1 means vague location permission has been refused
+    // vague location status -1 means vague location permission has been refused or not set
     if (vagueStatus == PERMISSION_DENIED) {
         if ((vagueFlag == PERMISSION_DEFAULT_FLAG) || ((vagueFlag & PERMISSION_USER_SET) != 0)) {
             // vague location flag 0 or 1 means permission has not been operated or valid only once
             vagueState = DYNAMIC_OPER;
-            accurateState = DYNAMIC_OPER;
+            accurateState = accurateIndex != ELEMENT_NOT_FOUND ? DYNAMIC_OPER : INVALID_OPER;
+            backState = backIndex != ELEMENT_NOT_FOUND ? DYNAMIC_OPER : INVALID_OPER;
         } else if ((vagueFlag & PERMISSION_USER_FIXED) != 0) {
             // vague location flag 2 means vague location has been operated, only can be changed by settings
-            // so that accurate location is no need to operate
+            // so that accurate or background location is no need to operate
             vagueState = SETTING_OPER;
-            accurateState = SETTING_OPER;
+            accurateState = accurateIndex != ELEMENT_NOT_FOUND ? SETTING_OPER : INVALID_OPER;
+            backState = backIndex != ELEMENT_NOT_FOUND ? SETTING_OPER : INVALID_OPER;
         }
     } else if (vagueStatus == PERMISSION_GRANTED) {
-        // vague location status 0 means vague location permission has been accepted
+        // vague location status 0 means vague location permission has been granted
         // now flag 1 is not in use so return PASS_OPER, otherwise should judge by flag
         vagueState = PASS_OPER;
-
-        if (accurateStatus == PERMISSION_DENIED) {
-            if ((accurateFlag == PERMISSION_DEFAULT_FLAG) || ((accurateFlag & PERMISSION_USER_SET) != 0)) {
-                accurateState = DYNAMIC_OPER;
-            } else if ((accurateFlag & PERMISSION_USER_FIXED) != 0) {
-                accurateState = SETTING_OPER;
-            }
-        } else if (accurateStatus == PERMISSION_GRANTED) {
-            accurateState = PASS_OPER;
-        }
+        GetStateByStatusAndFlag(accurateStatus, accurateFlag, accurateIndex, accurateState);
+        GetStateByStatusAndFlag(backStatus, backFlag, backIndex, backState);
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "vague location permission state is %{public}d, accurate location permission state is %{public}d",
-        vagueState, accurateState);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "vague state is %{public}d, accurate state is %{public}d, background state is %{public}d",
+        vagueState, accurateState, backState);
 
-    reqPermList[vagueIndex].permsState.state = vagueState;
-    reqPermList[accurateIndex].permsState.state = accurateState;
+    SetLocationPermissionState(reqPermList, vagueIndex, vagueState);
+    SetLocationPermissionState(reqPermList, accurateIndex, accurateState);
+    SetLocationPermissionState(reqPermList, backIndex, backState);
+
+    return ((static_cast<PermissionOper>(vagueState) == DYNAMIC_OPER) ||
+            (static_cast<PermissionOper>(accurateState) == DYNAMIC_OPER) ||
+            (static_cast<PermissionOper>(backState) == DYNAMIC_OPER));
 }
 
 bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
-    int32_t apiVersion, std::vector<PermissionStateFull> permsList, uint32_t vagueIndex, uint32_t accurateIndex)
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
 {
-    if ((vagueIndex != ELEMENT_NOT_FOUND) && (accurateIndex == ELEMENT_NOT_FOUND)) {
-        // only vague location permission
-        GetSelfPermissionState(permsList, reqPermList[vagueIndex].permsState, apiVersion);
-        return (static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER);
-    }
+    bool needRes = false;
+    uint32_t vagueIndex = ELEMENT_NOT_FOUND;
+    uint32_t accurateIndex = ELEMENT_NOT_FOUND;
+    uint32_t backIndex = ELEMENT_NOT_FOUND;
 
-    if ((vagueIndex == ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
-        // only accurate location permission refuse directly
-        ACCESSTOKEN_LOG_ERROR(LABEL, "operate invaild, accurate location permission base on vague location permission");
-        reqPermList[accurateIndex].permsState.state = INVALID_OPER;
+    if (!GetLocationPermissionIndex(reqPermList, vagueIndex, accurateIndex, backIndex)) {
         return false;
     }
 
-    // all location permissions
-    AllLocationPermissionHandle(reqPermList, permsList, vagueIndex, accurateIndex);
-    return ((static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER) ||
-        (static_cast<PermissionOper>(reqPermList[accurateIndex].permsState.state) == DYNAMIC_OPER));
+    if (vagueIndex == ELEMENT_NOT_FOUND) {
+        // permission handle without vague location
+        needRes = LocationHandleWithoutVague(reqPermList, permsList, apiVersion, accurateIndex, backIndex);
+    } else {
+        if ((accurateIndex == ELEMENT_NOT_FOUND) && (backIndex == ELEMENT_NOT_FOUND)) {
+            // only vague location permission
+            GetSelfPermissionState(permsList, reqPermList[vagueIndex].permsState, apiVersion);
+            needRes = (static_cast<PermissionOper>(reqPermList[vagueIndex].permsState.state) == DYNAMIC_OPER);
+        } else {
+            // with foreground or background permission
+            needRes = LocationHandleWithVague(reqPermList, permsList, vagueIndex, accurateIndex, backIndex);
+        }
+    }
+
+    return needRes;
 }
 
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
