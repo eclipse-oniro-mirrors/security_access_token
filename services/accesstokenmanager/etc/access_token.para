@@ -13,3 +13,4 @@
 
 
 accesstoken.permission.change = 0
+accesstoken.permission.init = 0

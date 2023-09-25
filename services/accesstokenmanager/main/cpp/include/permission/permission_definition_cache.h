@@ -48,13 +48,15 @@ public:
 
     bool HasDefinition(const std::string& permissionName);
 
-    bool IsPermissionDefEmpty();
+    bool IsHapPermissionDefEmpty();
 
     void StorePermissionDef(std::vector<GenericValues>& valueList);
 
     void GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList, AccessTokenID tokenId);
 
     int32_t RestorePermDefInfo(std::vector<GenericValues>& permDefRes);
+
+    bool HasHapPermissionDefinitionForHap(const std::string& permissionName);
 
 private:
     PermissionDefinitionCache();
@@ -68,6 +70,8 @@ private:
      * value: the object of PermissionDefData.
      */
     std::map<std::string, PermissionDefData> permissionDefinitionMap_;
+
+    bool hasHapPermissionDefinition_ = false;
 
     OHOS::Utils::RWLock cacheLock_;
 };

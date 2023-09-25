@@ -23,6 +23,7 @@
 #include "iservice_registry.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info.h"
+#include "parameter.h"
 #include "permission_state_change_callback.h"
 
 namespace OHOS {
@@ -32,6 +33,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenManagerClient"
 };
+static constexpr int32_t VALUE_MAX_LEN = 32;
+static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 } // namespace
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
@@ -50,11 +53,20 @@ AccessTokenManagerClient::~AccessTokenManagerClient()
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+    if (proxy != nullptr) {
+        return proxy->VerifyAccessToken(tokenID, permissionName);
+    }
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0 || static_cast<uint64_t>(std::atoll(value)) != 0) {
         return PERMISSION_DENIED;
     }
-    return proxy->VerifyAccessToken(tokenID, permissionName);
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
+    if (static_cast<ATokenTypeEnum>(idInner->type) == TOKEN_NATIVE) {
+        return PERMISSION_GRANTED;
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+    return PERMISSION_DENIED;
 }
 
 int AccessTokenManagerClient::GetDefPermission(

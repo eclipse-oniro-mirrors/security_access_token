@@ -72,6 +72,14 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
     permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(id, permStateList);
 }
 
+HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
+    const HapTokenInfoForSync& info) : isRemote_(true)
+{
+    permUpdateTimestamp_ = 0;
+    tokenInfoBasic_ = info.baseInfo;
+    permPolicySet_ = PermissionPolicySet::BuildPolicySetWithoutDefCheck(id, info.permStateList);
+}
+
 HapTokenInfoInner::~HapTokenInfoInner()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL,

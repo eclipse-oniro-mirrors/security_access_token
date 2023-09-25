@@ -1,0 +1,37 @@
+{
+    "definePermissions": [
+        {
+            "name": "ohos.permission.NICER",
+            "grantMode": "system_grant",
+            "since": 9,
+            "deprecated": "",
+            "availableLevel": "system_basic",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "label": "$string:ohos_lab_answer_call",
+            "description": "$string:ohos_desc_answer_call"
+        },
+        {
+            "name": "ohos.permission.NICE",
+            "grantMode": "system_grant",
+            "since": 9,
+            "deprecated": "",
+            "availableLevel": "system_basic",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "label": "$string:ohos_lab_answer_call",
+            "description": "$string:ohos_desc_answer_call"
+        },
+        {
+            "name": "ohos.permission.NICERR",
+            "grantMode": "user_grant",
+            "since": 9,
+            "deprecated": "",
+            "availableLevel": "system_basic",
+            "provisionEnable": true,
+            "distributedSceneEnable": false,
+            "label": "$string:ohos_lab_answer_call",
+            "description": "$string:ohos_desc_answer_call"
+        }
+    ]
+}

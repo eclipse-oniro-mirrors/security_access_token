@@ -18,6 +18,7 @@ group("param_files") {
   deps = [
     ":access_token.para",
     ":access_token.para.dac",
+    ":permission_definition_config",
   ]
 }
 
@@ -34,4 +35,11 @@ ohos_prebuilt_etc("access_token.para.dac") {
   module_install_dir = "etc/param"
   part_name = "access_token"
   subsystem_name = "security"
+}
+
+ohos_prebuilt_etc("permission_definition_config") {
+  source = "permission_definitions.json"
+  part_name = "access_token"
+  subsystem_name = "security"
+  relative_install_dir = "etc/access_token"
 }

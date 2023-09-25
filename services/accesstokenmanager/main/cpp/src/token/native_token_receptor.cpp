@@ -22,6 +22,7 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
 #include "data_validator.h"
+#include "json_parser.h"
 #include "native_token_receptor.h"
 #include "securec.h"
 
@@ -69,45 +70,18 @@ int32_t NativeReqPermsGet(
     return RET_SUCCESS;
 }
 
-static bool GetStringFromJson(const nlohmann::json& j, const std::string& tag, std::string& out)
-{
-    if (j.find(tag) != j.end() && j.at(tag).is_string()) {
-        out = j.at(tag).get<std::string>();
-        return true;
-    }
-    return false;
-}
-
-static bool GetIntFromJson(const nlohmann::json& j, const std::string& tag, int& out)
-{
-    if (j.find(tag) != j.end() && j.at(tag).is_number()) {
-        out = j.at(tag).get<int>();
-        return true;
-    }
-    return false;
-}
-
-static bool GetUnsignIntFromJson(const nlohmann::json& j, const std::string& tag, unsigned int& out)
-{
-    if (j.find(tag) != j.end() && j.at(tag).is_number()) {
-        out = j.at(tag).get<unsigned int>();
-        return true;
-    }
-    return false;
-}
-
 // nlohmann json need the function named from_json to parse NativeTokenInfo
 void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p)
 {
     NativeTokenInfo native;
 
-    if (!GetStringFromJson(j, JSON_PROCESS_NAME, native.processName) ||
+    if (!JsonParser::GetStringFromJson(j, JSON_PROCESS_NAME, native.processName) ||
         !DataValidator::IsProcessNameValid(native.processName)) {
         return;
     }
 
     int aplNum = 0;
-    if (!GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
+    if (!JsonParser::GetIntFromJson(j, JSON_APL, aplNum) || !DataValidator::IsAplNumValid(aplNum)) {
         return;
     }
 
@@ -121,7 +95,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
+    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
         return;
     }
 
@@ -130,7 +104,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
         return;
     }
 
-    if (!GetUnsignIntFromJson(j, JSON_TOKEN_ATTR, native.tokenAttr)) {
+    if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ATTR, native.tokenAttr)) {
         return;
     }
 
@@ -175,50 +149,10 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
     return RET_SUCCESS;
 }
 
-int NativeTokenReceptor::ReadCfgFile(std::string& nativeRawData)
-{
-    int32_t fd = open(NATIVE_TOKEN_CONFIG_FILE.c_str(), O_RDONLY);
-    if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
-        return RET_FAILED;
-    }
-    struct stat statBuffer;
-
-    if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed.");
-        close(fd);
-        return RET_FAILED;
-    }
-
-    if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is invalid.");
-        close(fd);
-        return RET_FAILED;
-    }
-    if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is too large.");
-        close(fd);
-        return RET_FAILED;
-    }
-    nativeRawData.reserve(statBuffer.st_size);
-
-    char buff[BUFFER_SIZE] = { 0 };
-    ssize_t readLen = 0;
-    while ((readLen = read(fd, buff, BUFFER_SIZE)) > 0) {
-        nativeRawData.append(buff, readLen);
-    }
-    close(fd);
-
-    if (readLen == 0) {
-        return RET_SUCCESS;
-    }
-    return RET_FAILED;
-}
-
 int NativeTokenReceptor::Init()
 {
     std::string nativeRawData;
-    int ret = ReadCfgFile(nativeRawData);
+    int ret = JsonParser::ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
         return RET_FAILED;

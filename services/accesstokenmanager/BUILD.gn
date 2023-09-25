@@ -60,6 +60,7 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_manager.cpp",
       "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
+      "main/cpp/src/permission/system_permission_definition_parser.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
       "main/cpp/src/service/accesstoken_manager_stub.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
