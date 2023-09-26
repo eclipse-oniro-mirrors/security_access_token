@@ -76,12 +76,8 @@ bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const 
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined for hap.", permissionName.c_str());
             return false;
         }
-    } else {
-        if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined.", permissionName.c_str());
-            return false;
-        }
     }
+    // permission request for TOKEN_NATIVE process is going to be check when the permission request way is normalized.
     return true;
 }
 

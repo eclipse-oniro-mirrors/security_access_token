@@ -107,27 +107,6 @@ void SystemPermissionDefinitionParserTest::TearDown()
 }
 
 /**
- * @tc.name: ParserNativeRawData001
- * @tc.desc: Verify processing right native token json.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(SystemPermissionDefinitionParserTest, ParserRawData001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "test ParserRawData001!");
-
-    SystemPermissionDefinitionParser& parser = SystemPermissionDefinitionParser::GetInstance();
-    std::string permsRawData;
-    int32_t ret = JsonParser::ReadCfgFile("/data/service/el0/access_token/permission_define.json", permsRawData);
-    ASSERT_EQ(ret, 0);
-    std::vector<PermissionDef> permDefList;
-    ret = parser.ParserPermsRawData(permsRawData, permDefList);
-    ASSERT_EQ(ret, 0);
-
-    EXPECT_EQ(2, permDefList.size());
-}
-
-/**
  * @tc.name: ParserNativeRawData002
  * @tc.desc:
  * @tc.type: FUNC

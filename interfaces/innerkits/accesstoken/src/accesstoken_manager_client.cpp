@@ -58,11 +58,13 @@ int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std
     }
     char value[VALUE_MAX_LEN] = {0};
     int32_t ret = GetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, "", value, VALUE_MAX_LEN - 1);
-    if (ret < 0 || static_cast<uint64_t>(std::atoll(value)) != 0) {
+    if ((ret < 0) || (static_cast<uint64_t>(std::atoll(value)) != 0)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "at service has been started.");
         return PERMISSION_DENIED;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
     if (static_cast<ATokenTypeEnum>(idInner->type) == TOKEN_NATIVE) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "at service has not been started.");
         return PERMISSION_GRANTED;
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
