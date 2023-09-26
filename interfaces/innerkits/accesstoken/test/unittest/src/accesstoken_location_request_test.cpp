@@ -163,41 +163,6 @@ void AllocHapToken(std::vector<PermissionStateFull>& permissionStateFulls, int32
     ASSERT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 }
 
-// GetSelfPermissionsState001:vague + api9
-// GetSelfPermissionsState002:vague after refuse + api9
-// GetSelfPermissionsState003:vague after accept + api9
-// GetSelfPermissionsState004:accurate + api9
-// GetSelfPermissionsState005:accurate + granted vague + api9
-// GetSelfPermissionsState006:back + api9
-// GetSelfPermissionsState007:back + granted vague + api9
-// GetSelfPermissionsState008:vague + accurate + api9
-// GetSelfPermissionsState009:vague + accurate after accept vague location permission + api9
-// GetSelfPermissionsState010:vague + accurate after refuse vague location permission + api9
-// GetSelfPermissionsState011:vague + accurate after accept all + api9
-// GetSelfPermissionsState012:vague + back + api9
-// GetSelfPermissionsState013:vague + back after accept vague location permission + api9
-// GetSelfPermissionsState014:vague + back after refuse vague location permission + api9
-// GetSelfPermissionsState015:vague + back after accept all + api9
-// GetSelfPermissionsState016:accurate + back + api9
-// GetSelfPermissionsState017:accurate + back + granted vague + api9
-// GetSelfPermissionsState018:vague + accurate + back + api9
-// GetSelfPermissionsState019:vague + accurate + back after accept vague location permission + api9
-// GetSelfPermissionsState020:vague + accurate + back after accept vague + accurate + api9
-// GetSelfPermissionsState021:vague + accurate + back after accept vague + back + api9
-// GetSelfPermissionsState022:vague + accurate + back after accept all + api9
-// GetSelfPermissionsState023:vague + accurate + back after refuse vague location permission + api9
-// GetSelfPermissionsState024:vague + accurate + back after refuse vague + accurate + api9
-// GetSelfPermissionsState025:vague + accurate + back after refuse vague + back + api9
-// GetSelfPermissionsState026:vague + accurate + back after refuse all + api9
-// GetSelfPermissionsState027:vague + accurate + back + other permissions + api9
-// GetSelfPermissionsState028:vague + api8
-// GetSelfPermissionsState029:accurate + api8
-// GetSelfPermissionsState030:back + api8
-// GetSelfPermissionsState031:vague + accurate + api8
-// GetSelfPermissionsState032:vague + back + api8
-// GetSelfPermissionsState033:accurate + back + api8
-// GetSelfPermissionsState034:vague + accurate + back + api8
-
 /**
  * @tc.name: GetSelfPermissionsState001
  * @tc.desc: only vague location permission
@@ -411,7 +376,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Le
         .permissionName = "ohos.permission.LOCATION",
         .state = -1,
     };
-    
+
     std::vector<PermissionListState> permsList8;
     permsList8.emplace_back(permVague8);
     permsList8.emplace_back(permAccurate8);
@@ -547,7 +512,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
         .state = -1,
     };
-    
+
     std::vector<PermissionListState> permsList12;
     permsList12.emplace_back(permVague12);
     permsList12.emplace_back(permBack12);
