@@ -677,8 +677,12 @@ bool PermissionManager::LocationHandleWithoutVague(std::vector<PermissionListSta
     bool accurateRes = GetResByVaguePermission(reqPermList, permsList, apiVersion, hasPermission, accurateIndex);
     bool backRes = GetResByVaguePermission(reqPermList, permsList, apiVersion, hasPermission, backIndex);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "accurate state is %{public}d, background state is %{public}d.",
-        reqPermList[accurateIndex].permsState.state, reqPermList[backIndex].permsState.state);
+    if (accurateIndex != ELEMENT_NOT_FOUND) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "accurate state is %{public}d.", reqPermList[accurateIndex].permsState.state);
+    }
+    if (backIndex != ELEMENT_NOT_FOUND) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "background state is %{public}d.", reqPermList[backIndex].permsState.state);
+    }
 
     return (accurateRes || backRes);
 }
