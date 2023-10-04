@@ -22,6 +22,7 @@ namespace AccessToken {
 bool UsedRecordDetailParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteInt32(this->detail.status));
+    RETURN_IF_FALSE(out.WriteInt32(this->detail.lockscreenStatus));
     RETURN_IF_FALSE(out.WriteInt64(this->detail.timestamp));
     RETURN_IF_FALSE(out.WriteInt64(this->detail.accessDuration));
     return true;
@@ -35,6 +36,7 @@ UsedRecordDetailParcel* UsedRecordDetailParcel::Unmarshalling(Parcel& in)
     }
 
     RELEASE_IF_FALSE(in.ReadInt32(detailRecordParcel->detail.status), detailRecordParcel);
+    RELEASE_IF_FALSE(in.ReadInt32(detailRecordParcel->detail.lockscreenStatus), detailRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(detailRecordParcel->detail.timestamp), detailRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(detailRecordParcel->detail.accessDuration), detailRecordParcel);
     return detailRecordParcel;

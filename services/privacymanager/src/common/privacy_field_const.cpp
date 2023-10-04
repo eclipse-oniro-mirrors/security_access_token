@@ -29,6 +29,8 @@ const std::string PrivacyFiledConst::FIELD_REJECT_COUNT = "reject_count";
 const std::string PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN = "timestamp_begin";
 const std::string PrivacyFiledConst::FIELD_TIMESTAMP_END = "timestamp_end";
 const std::string PrivacyFiledConst::FIELD_FLAG = "flag";
+
+const std::string PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS = "lockscreenStatus";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -62,6 +62,7 @@ private:
     OHOS::Utils::RWLock rwLock_;
 
     int32_t CreatePermissionRecordTable() const;
+    int32_t InsertLockscreenStatusColumn() const;
 
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
@@ -80,7 +81,7 @@ private:
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
     inline static const std::string DATABASE_NAME = "permission_used_record.db";
     inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 1;
+    static const int32_t DATABASE_VERSION = 2;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -69,6 +69,7 @@ public:
     void NotifyMicChange(bool switchStatus);
     void NotifyCameraChange(bool switchStatus);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
+    void NotifyLockscreenStatusChange(LockscreenStatusChangeType lockscreenStatus);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
@@ -95,6 +96,7 @@ private:
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     void FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status);
+    void GenerateRecordsWhenScreenStatusChanged(LockscreenStatusChangeType lockscreenStatus);
     void RemoveRecordFromStartList(const PermissionRecord& record);
     void UpdateRecord(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
@@ -136,6 +138,9 @@ private:
     // appState
     std::mutex appStateMutex_;
     sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
+
+    // lockscreenState
+    std::mutex lockscreenStateMutex_;
 
     // camera float window
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE

@@ -15,7 +15,9 @@
 
 #include "permission_record_manager.h"
 
+#include <algorithm>
 #include <cinttypes>
+#include <numeric>
 
 #include "ability_manager_privacy_client.h"
 #include "accesstoken_kit.h"
@@ -28,10 +30,16 @@
 #include "constant_common.h"
 #include "data_translator.h"
 #include "i_state_change_callback.h"
+#include "iservice_registry.h"
+#include "lockscreen_status_observer.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
+#include "refbase.h"
+#include "screenlock_manager.h"
+#include "state_change_callback_proxy.h"
+#include "system_ability_definition.h"
 #include "time_util.h"
 #include "want.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -75,8 +83,8 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, timestamp: %{public}" PRId64,
-        record.tokenId, record.opCode, record.status, record.timestamp);
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, lockscreenStatus: %{public}d, timestamp: %{public}" PRId64,
+        record.tokenId, record.opCode, record.status, record.lockscreenStatus, record.timestamp);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
@@ -348,6 +356,12 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    int32_t lockscreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
+        ? LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
+    if (lockscreenStatus == LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockscreenStatus);
+        return;
+    }
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
@@ -376,6 +390,7 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, A
 
             // update status to input, accessDuration to 0 and timestamp to now in cache
             it->status = status;
+            it->lockscreenStatus = lockscreenStatus;
             it->accessDuration = 0;
             it->timestamp = curStamp;
             ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
@@ -399,6 +414,44 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status %{public}d", tokenId, status);
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
     FindRecordsToUpdateAndExecuted(tokenId, status);
+}
+
+void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockscreenStatusChangeType lockscreenStatus)
+{
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        std::string perm;
+        Constant::TransferOpcodeToPermission(it->opCode, perm);
+        if (!GetGlobalSwitchStatus(perm)) {
+            continue;
+        }
+        int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+        // update accessDuration and store in databases
+        it->accessDuration = curStamp - it->timestamp;
+        /**
+         * In screen lock and screen unlock scenarios, do not modify the status of the front-end and back-end of
+         *  startRecordList_. The logic of changing the screen lock status is not processed. Therefore,
+         *  permission access records are not generated repeatedly.
+         */
+        int32_t tempStatus = it->status;
+        if (lockscreenStatus == LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK) {
+            it->status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND;
+        }
+        AddRecord(*it);
+
+        // update lockscreenStatus to input, accessDuration to 0 and timestamp to now in cache
+        it->status = tempStatus;
+        it->lockscreenStatus = lockscreenStatus;
+        it->accessDuration = 0;
+        it->timestamp = curStamp;
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "get target permission %{public}s.", perm.c_str());
+    }
+}
+
+void PermissionRecordManager::NotifyLockscreenStatusChange(LockscreenStatusChangeType lockscreenStatus)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "lockscreenStatus %{public}d", lockscreenStatus);
+    GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
@@ -809,6 +862,12 @@ bool PermissionRecordManager::Register()
         }
     }
 
+    // screen status change callback register
+    {
+        std::lock_guard<std::mutex> lock(lockscreenStateMutex_);
+        LockscreenObserver::RegisterEvent();
+    }
+
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register
     {
@@ -836,6 +895,12 @@ void PermissionRecordManager::Unregister()
             AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
             appStateCallback_= nullptr;
         }
+    }
+
+    // screen state change callback unregister
+    {
+        std::lock_guard<std::mutex> lock(lockscreenStateMutex_);
+        LockscreenObserver::UnRegisterEvent();
     }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE

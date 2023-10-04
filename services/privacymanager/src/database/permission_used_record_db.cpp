@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "privacy_field_const.h"
+#include "active_change_response_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,6 +29,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const std::string FIELD_COUNT_NUMBER = "count";
 static const std::string INTEGER_STR = " integer not null,";
+static const int32_t DATABASES_VERSION_INSERT_LOCKSCREEN_STATUS = 2;
 
 }
 
@@ -51,6 +53,9 @@ void PermissionUsedRecordDb::OnCreate()
 void PermissionUsedRecordDb::OnUpdate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    if (DATABASE_VERSION == DATABASES_VERSION_INSERT_LOCKSCREEN_STATUS) {
+        InsertLockscreenStatusColumn();
+    }
 }
 
 PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
@@ -64,7 +69,8 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
         PrivacyFiledConst::FIELD_TIMESTAMP,
         PrivacyFiledConst::FIELD_ACCESS_DURATION,
         PrivacyFiledConst::FIELD_ACCESS_COUNT,
-        PrivacyFiledConst::FIELD_REJECT_COUNT
+        PrivacyFiledConst::FIELD_REJECT_COUNT,
+        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
     };
 
     dataTypeToSqlTable_ = {
@@ -399,6 +405,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(" integer not null,")
         .append(PrivacyFiledConst::FIELD_REJECT_COUNT)
         .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
+        .append(" integer not null,")
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -409,6 +417,31 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
         .append("))");
     return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::InsertLockscreenStatusColumn() const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string checkSql = "SELECT 1 FROM" + it->second.tableName_ + " WHERE " + PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
+        + "=" + std::to_string(LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    int32_t checkResult = ExecuteSql(checkSql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    if (checkResult != -1) {
+        return SUCCESS;
+    }
+
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
+        .append(" integer default ")
+        .append(std::to_string(LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK));
+    int32_t insertResult = ExecuteSql(sql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    return insertResult;
 }
 } // namespace AccessToken
 } // namespace Security

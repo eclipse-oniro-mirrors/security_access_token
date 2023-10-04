@@ -14,6 +14,7 @@
  */
 
 #include "permission_record.h"
+#include "active_change_response_info.h"
 #include "privacy_field_const.h"
 
 namespace OHOS {
@@ -28,6 +29,7 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
     values.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, record.accessDuration);
     values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
     values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
+    values.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, record.lockscreenStatus);
 }
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
@@ -39,6 +41,9 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     record.accessDuration = values.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
     record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
+    int32_t lockscreenStatus = values.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    record.lockscreenStatus = lockscreenStatus == VariantValue::DEFAULT_VALUE ?
+        LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK : lockscreenStatus;
 }
 } // namespace AccessToken
 } // namespace Security

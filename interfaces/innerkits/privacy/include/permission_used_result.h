@@ -52,6 +52,12 @@ struct UsedRecordDetail {
      * the active_change_response_info.h file.
      */
     int32_t status = 0;
+    /**
+     * permission lockscreen state, for details about the valid values,
+     * see the definition of ActiveChangeType in
+     * the active_change_response_info.h file.
+     */
+    int32_t lockscreenStatus = 1;
     /** permission active state change timestamp */
     int64_t timestamp = 0L;
     /** permission active state remain times */
