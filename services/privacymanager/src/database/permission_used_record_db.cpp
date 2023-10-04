@@ -426,7 +426,7 @@ int32_t PermissionUsedRecordDb::InsertLockscreenStatusColumn() const
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
     }
-    std::string checkSql = "SELECT 1 FROM" + it->second.tableName_ + " WHERE " + PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
+    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " + PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
         + "=" + std::to_string(LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
     int32_t checkResult = ExecuteSql(checkSql);
     ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
