@@ -26,16 +26,17 @@ public:
     PermissionValidator() {}
     ~PermissionValidator() {}
 
+    static bool IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName);
     static bool IsPermissionNameValid(const std::string& permissionName);
     static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
     static bool IsPermissionStateValid(const PermissionStateFull& permState);
     static void FilterInvalidPermissionDef(
         const std::vector<PermissionDef>& permList, std::vector<PermissionDef>& result);
-    static void FilterInvalidPermissionState(
+    static void FilterInvalidPermissionState(ATokenTypeEnum tokenType, bool doPermAvailableCheck,
         const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result);
     static bool IsGrantModeValid(int grantMode);
-    static bool IsGrantStatusValid(int grantStaus);
+    static bool IsGrantStatusValid(int grantStatus);
 private:
     static void DeduplicateResDevID(const PermissionStateFull& permState, PermissionStateFull& result);
 };

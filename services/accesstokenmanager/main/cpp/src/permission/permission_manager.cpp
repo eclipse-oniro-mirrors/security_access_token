@@ -171,17 +171,15 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
 
     NativeTokenInfo info;
     tokenInfoPtr->TranslateToNativeTokenInfo(info);
-    if (PermissionDefinitionCache::GetInstance().IsPermissionDefEmpty()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "permission definition set has not been installed!");
-        if (info.apl >= APL_SYSTEM_BASIC) {
-            return PERMISSION_GRANTED;
-        }
-        ACCESSTOKEN_LOG_INFO(LABEL, "native process apl is %{public}d!", info.apl);
-        return PERMISSION_DENIED;
-    }
     if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
+        if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "permission definition set has not been installed!");
+            if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_NATIVE) {
+                return PERMISSION_GRANTED;
+            }
+            return PERMISSION_DENIED;
+        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet =
@@ -226,6 +224,7 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
+    // all permissions can be obtained.
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "no definition for permission: %{public}s!", permissionName.c_str());
@@ -272,11 +271,11 @@ int PermissionManager::GetReqPermissions(
     return RET_SUCCESS;
 }
 
-static bool IsPermissionRequestedInCfg(const std::vector<PermissionStateFull>& permsList,
+static bool IsPermissionRequestedInHap(const std::vector<PermissionStateFull>& permsList,
     const std::string &permission, int32_t& status, uint32_t& flag)
 {
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permission)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "no definition for permission: %{public}s!", permission.c_str());
+    if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permission)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "no definition for hap permission: %{public}s!", permission.c_str());
         return false;
     }
     auto iter = std::find_if(permsList.begin(), permsList.end(), [permission](const PermissionStateFull& perm) {
@@ -329,7 +328,7 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         permState.state = INVALID_OPER;
         return;
     }
-    if (!IsPermissionRequestedInCfg(permsList, permState.permissionName, goalGrantStatus, goalGrantFlag)) {
+    if (!IsPermissionRequestedInHap(permsList, permState.permissionName, goalGrantStatus, goalGrantFlag)) {
         permState.state = INVALID_OPER;
         return;
     }
@@ -690,11 +689,14 @@ bool PermissionManager::LocationHandleWithoutVague(std::vector<PermissionListSta
 bool PermissionManager::GetPermissionStatusAndFlag(const std::string& permissionName,
     const std::vector<PermissionStateFull>& permsList, int32_t& status, uint32_t& flag)
 {
-    if (!IsPermissionVaild(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permission %{public}s", permissionName.c_str());
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "invalid permissionName %{public}s", permissionName.c_str());
         return false;
     }
-
+    if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "permission %{public}s has no hap definition ", permissionName.c_str());
+        return false;
+    }
     auto iter = std::find_if(permsList.begin(), permsList.end(), [permissionName](const PermissionStateFull& perm) {
         return permissionName == perm.permissionName;
     });

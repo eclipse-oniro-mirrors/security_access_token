@@ -30,11 +30,13 @@ ohos_shared_library("accesstoken_common_cxx") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "include",
     "//third_party/mbedtls/include",
+    "//third_party/json/include",
   ]
 
   sources = [
     "src/constant_common.cpp",
     "src/data_validator.cpp",
+    "src/json_parser.cpp",
     "src/random_mbedtls.cpp",
   ]
 

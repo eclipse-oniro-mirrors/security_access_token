@@ -12,3 +12,4 @@
 # limitations under the License.
 
 accesstoken.permission.change="access_token:access_token:0774"
+accesstoken.permission.init="access_token:access_token:0774"
