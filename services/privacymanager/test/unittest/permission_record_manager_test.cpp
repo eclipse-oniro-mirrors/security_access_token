@@ -407,12 +407,12 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
 }
 
 /*
- * @tc.name: LockscreenStatusListener001
- * @tc.desc: register and startusing permissions then use NotifyLockscreenStatusChange
+ * @tc.name: LockScreenStatusListener001
+ * @tc.desc: register and startusing permissions then use NotifyLockScreenStatusChange
  * @tc.type: FUNC
  * @tc.require: issueI5SZHG
  */
-HWTEST_F(PermissionRecordManagerTest, LockscreenStatusListener001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, LockScreenStatusListener001, TestSize.Level1)
 {
     AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -430,14 +430,14 @@ HWTEST_F(PermissionRecordManagerTest, LockscreenStatusListener001, TestSize.Leve
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
 
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_LOCKED);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_LOCKED);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_LOCKED);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(PERM_ACTIVE_IN_LOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
 }
 
 /*
@@ -454,7 +454,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
 
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 
-    LockscreenStatusChangeType lockscreenStatus = PERM_ACTIVE_IN_LOCKED;
+    LockScreenStatusChangeType lockScreenStatus = PERM_ACTIVE_IN_LOCKED;
 
     PermissionRecord record1 = {
         .tokenId = tokenId,
@@ -465,8 +465,8 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(lockscreenStatus);
+    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(lockScreenStatus);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
@@ -485,7 +485,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    LockscreenStatusChangeType lockscreenStatus = PERM_ACTIVE_IN_LOCKED;
+    LockScreenStatusChangeType lockScreenStatus = PERM_ACTIVE_IN_LOCKED;
 
     PermissionRecord record1 = {
         .tokenId = tokenId,
@@ -495,8 +495,8 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(lockscreenStatus);
+    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(lockScreenStatus);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
@@ -514,7 +514,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    LockscreenStatusChangeType lockscreenStatus = PERM_ACTIVE_IN_LOCKED;
+    LockScreenStatusChangeType lockScreenStatus = PERM_ACTIVE_IN_LOCKED;
 
     PermissionRecord record1 = {
         .tokenId = tokenId,
@@ -524,7 +524,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
+    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
@@ -543,7 +543,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    LockscreenStatusChangeType lockscreenStatus = PERM_ACTIVE_IN_LOCKED;
+    LockScreenStatusChangeType lockScreenStatus = PERM_ACTIVE_IN_LOCKED;
 
     PermissionRecord record1 = {
         .tokenId = tokenId,
@@ -553,7 +553,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 #endif
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
+    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);

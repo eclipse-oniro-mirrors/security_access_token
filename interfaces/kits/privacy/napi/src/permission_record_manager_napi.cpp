@@ -209,9 +209,9 @@ static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRe
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.status, &nStatus));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "status", nStatus));
 
-    napi_value nLockscreenStatus;
-    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.lockscreenStatus, &nLockscreenStatus));
-    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lockscreenStatus", nLockscreenStatus));
+    napi_value nLockScreenStatus;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.lockScreenStatus, &nLockScreenStatus));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "lockScreenStatus", nLockScreenStatus));
 
     napi_value nTimestamp;
     NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, detailRecord.timestamp, &nTimestamp));

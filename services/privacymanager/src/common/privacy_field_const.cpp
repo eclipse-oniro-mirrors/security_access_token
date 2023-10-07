@@ -30,7 +30,7 @@ const std::string PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN = "timestamp_begin";
 const std::string PrivacyFiledConst::FIELD_TIMESTAMP_END = "timestamp_end";
 const std::string PrivacyFiledConst::FIELD_FLAG = "flag";
 
-const std::string PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS = "lockscreenStatus";
+const std::string PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS = "lockScreenStatus";
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

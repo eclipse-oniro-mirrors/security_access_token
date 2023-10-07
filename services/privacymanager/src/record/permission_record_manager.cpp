@@ -83,8 +83,8 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, lockscreenStatus: %{public}d, timestamp: %{public}" PRId64,
-        record.tokenId, record.opCode, record.status, record.lockscreenStatus, record.timestamp);
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, lockScreenStatus: %{public}d, timestamp: %{public}" PRId64,
+        record.tokenId, record.opCode, record.status, record.lockScreenStatus, record.timestamp);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
@@ -106,9 +106,9 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     } else {
         record.status = GetAppStatus(tokenId);
     }
-    int32_t lockscreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
-        ? LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
-    record.lockscreenStatus = lockscreenStatus;
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
+        ? LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
+    record.lockScreenStatus = lockScreenStatus;
     record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;
@@ -359,10 +359,10 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    int32_t lockscreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
-        ? LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
-    if (lockscreenStatus == LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockscreenStatus);
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
+        ? LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
+    if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockScreenStatus);
         return;
     }
     std::vector<std::string> permList;
@@ -393,7 +393,7 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, A
 
             // update status to input, accessDuration to 0 and timestamp to now in cache
             it->status = status;
-            it->lockscreenStatus = lockscreenStatus;
+            it->lockScreenStatus = lockScreenStatus;
             it->accessDuration = 0;
             it->timestamp = curStamp;
             ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
@@ -419,7 +419,7 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
     FindRecordsToUpdateAndExecuted(tokenId, status);
 }
 
-void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockscreenStatusChangeType lockscreenStatus)
+void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenStatusChangeType lockScreenStatus)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
@@ -437,24 +437,24 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockscreenS
          *  permission access records are not generated repeatedly.
          */
         int32_t tempStatus = it->status;
-        if (lockscreenStatus == LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK) {
+        if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK) {
             it->status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND;
         }
         AddRecord(*it);
 
-        // update lockscreenStatus to input, accessDuration to 0 and timestamp to now in cache
+        // update lockScreenStatus to input, accessDuration to 0 and timestamp to now in cache
         it->status = tempStatus;
-        it->lockscreenStatus = lockscreenStatus;
+        it->lockScreenStatus = lockScreenStatus;
         it->accessDuration = 0;
         it->timestamp = curStamp;
         ACCESSTOKEN_LOG_DEBUG(LABEL, "get target permission %{public}s.", perm.c_str());
     }
 }
 
-void PermissionRecordManager::NotifyLockscreenStatusChange(LockscreenStatusChangeType lockscreenStatus)
+void PermissionRecordManager::NotifyLockScreenStatusChange(LockScreenStatusChangeType lockScreenStatus)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "lockscreenStatus %{public}d", lockscreenStatus);
-    GenerateRecordsWhenScreenStatusChanged(lockscreenStatus);
+    ACCESSTOKEN_LOG_INFO(LABEL, "lockScreenStatus %{public}d", lockScreenStatus);
+    GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
 }
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
@@ -867,7 +867,7 @@ bool PermissionRecordManager::Register()
 
     // screen status change callback register
     {
-        std::lock_guard<std::mutex> lock(lockscreenStateMutex_);
+        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::RegisterEvent();
     }
 
@@ -902,7 +902,7 @@ void PermissionRecordManager::Unregister()
 
     // screen state change callback unregister
     {
-        std::lock_guard<std::mutex> lock(lockscreenStateMutex_);
+        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::UnRegisterEvent();
     }
 

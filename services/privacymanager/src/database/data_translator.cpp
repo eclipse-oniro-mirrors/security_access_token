@@ -81,9 +81,9 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
 
     UsedRecordDetail detail;
     detail.status = inGenericValues.GetInt(PrivacyFiledConst::FIELD_STATUS);
-    int32_t lockscreenStatus = inGenericValues.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
-    detail.lockscreenStatus = lockscreenStatus == VariantValue::DEFAULT_VALUE ?
-        LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK : lockscreenStatus;
+    int32_t lockScreenStatus = inGenericValues.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    detail.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK : lockScreenStatus;
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;
         detail.accessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);

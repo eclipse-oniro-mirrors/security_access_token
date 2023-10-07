@@ -62,7 +62,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
             } else if (curFindMergePos->record.tokenId == record.tokenId &&
                 record.opCode == curFindMergePos->record.opCode &&
                 record.status == curFindMergePos->record.status &&
-                record.lockscreenStatus == curFindMergePos->record.lockscreenStatus &&
+                record.lockScreenStatus == curFindMergePos->record.lockScreenStatus &&
                 (record.timestamp - curFindMergePos->record.timestamp) <= Constant::PRECISE) {
                 MergeRecord(mergedRecord, curFindMergePos);
             } else {

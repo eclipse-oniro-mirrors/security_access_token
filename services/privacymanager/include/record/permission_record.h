@@ -29,7 +29,7 @@ struct PermissionRecord {
     int64_t accessDuration = 0L;
     int32_t accessCount = 0;
     int32_t rejectCount = 0;
-    int32_t lockscreenStatus = 1;
+    int32_t lockScreenStatus = 1;
 
     PermissionRecord() = default;
 

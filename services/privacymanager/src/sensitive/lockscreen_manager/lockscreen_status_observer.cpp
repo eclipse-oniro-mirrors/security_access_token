@@ -32,12 +32,12 @@ namespace Security {
 namespace AccessToken {
 namespace {
     static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-        LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockscreenStatusObserver"
+        LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
     };
 }
-static std::map<std::string, LockscreenStatusChangeType> g_actionMap = {
-    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED, LockscreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK},
-    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED, LockscreenStatusChangeType::PERM_ACTIVE_IN_LOCKED},
+static std::map<std::string, LockScreenStatusChangeType> g_actionMap = {
+    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK},
+    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED},
 };
 
 static bool isRegistered = false;
@@ -89,7 +89,7 @@ void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "OnReceiveEvent action:%{public}d", g_actionMap[action]);
-    PermissionRecordManager::GetInstance().NotifyLockscreenStatusChange(g_actionMap[action]);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(g_actionMap[action]);
 }
 } // namespace AccessToken
 } // namespace Security

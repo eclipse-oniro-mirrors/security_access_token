@@ -62,7 +62,7 @@ private:
     OHOS::Utils::RWLock rwLock_;
 
     int32_t CreatePermissionRecordTable() const;
-    int32_t InsertLockscreenStatusColumn() const;
+    int32_t InsertLockScreenStatusColumn() const;
 
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
