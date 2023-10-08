@@ -28,10 +28,11 @@
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
-#include "permission_manager.h"
 #include "data_storage.h"
-#include "token_field_const.h"
+#include "permission_definition_cache.h"
+#include "permission_manager.h"
 #include "permission_state_full.h"
+#include "token_field_const.h"
 #define private public
 #include "nativetoken_kit.h"
 #include "native_token_receptor.h"
@@ -51,6 +52,23 @@ void NativeTokenReceptorTest::SetUpTestCase()
     for (unsigned int i = 0x28100000; i <= 0x28100007; i++) {
         AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(i);
     }
+    PermissionDef infoManagerPermDef = {
+        .permissionName = "ohos.permission.DISCOVER_BLUETOOTH",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "CAMERA",
+        .descriptionId = 1
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.MANAGE_USER_IDM";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.ACCELEROMETER";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
 }
 
 void NativeTokenReceptorTest::TearDownTestCase()

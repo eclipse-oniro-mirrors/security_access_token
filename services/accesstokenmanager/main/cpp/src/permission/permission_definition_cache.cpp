@@ -25,6 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const int32_t EXTENSION_PERMISSION_ID = 0;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionCache"
 };
@@ -53,6 +54,9 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
     }
     permissionDefinitionMap_[info.permissionName].permDef = info;
     permissionDefinitionMap_[info.permissionName].tokenId = tokenId;
+    if (!hasHapPermissionDefinition_ && (tokenId != EXTENSION_PERMISSION_ID)) {
+        hasHapPermissionDefinition_ = true;
+    }
     return true;
 }
 
@@ -117,10 +121,20 @@ bool PermissionDefinitionCache::HasDefinition(const std::string& permissionName)
     return permissionDefinitionMap_.count(permissionName) == 1;
 }
 
-bool PermissionDefinitionCache::IsPermissionDefEmpty()
+bool PermissionDefinitionCache::HasHapPermissionDefinitionForHap(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    return permissionDefinitionMap_.empty();
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if ((it != permissionDefinitionMap_.end()) && (it->second.tokenId != EXTENSION_PERMISSION_ID)) {
+        return true;
+    }
+    return false;
+}
+
+bool PermissionDefinitionCache::IsHapPermissionDefEmpty()
+{
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    return !hasHapPermissionDefinition_;
 }
 
 void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& valueList)

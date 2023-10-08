@@ -61,7 +61,7 @@ void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChange
         return;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "SendRequest success");
+    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequest success");
 }
 } // namespace AccessToken
 } // namespace Security

@@ -17,6 +17,7 @@
 
 #include <algorithm>
 
+#include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "data_storage.h"
@@ -41,8 +42,20 @@ PermissionPolicySet::~PermissionPolicySet()
 std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicySet(
     AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
 {
+    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
-    PermissionValidator::FilterInvalidPermissionState(permStateList, policySet->permStateList_);
+    PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, policySet->permStateList_);
+    policySet->tokenId_ = tokenId;
+
+    return policySet;
+}
+
+std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPolicySetWithoutDefCheck(
+    AccessTokenID tokenId, const std::vector<PermissionStateFull>& permStateList)
+{
+    std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
+    PermissionValidator::FilterInvalidPermissionState(
+        TOKEN_TYPE_BUTT, false, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
 
     return policySet;
@@ -60,7 +73,7 @@ void PermissionPolicySet::UpdatePermStateFull(const PermissionStateFull& permOld
 void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permStateList)
 {
     std::vector<PermissionStateFull> permStateFilterList;
-    PermissionValidator::FilterInvalidPermissionState(permStateList, permStateFilterList);
+    PermissionValidator::FilterInvalidPermissionState(TOKEN_HAP, true, permStateList, permStateFilterList);
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
 

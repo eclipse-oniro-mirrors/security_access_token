@@ -37,6 +37,8 @@ public:
 
     static std::shared_ptr<PermissionPolicySet> BuildPermissionPolicySet(AccessTokenID tokenId,
         const std::vector<PermissionStateFull>& permStateList);
+    static std::shared_ptr<PermissionPolicySet> BuildPolicySetWithoutDefCheck(AccessTokenID tokenId,
+        const std::vector<PermissionStateFull>& permStateList);
     static std::shared_ptr<PermissionPolicySet> RestorePermissionPolicy(AccessTokenID tokenId,
         const std::vector<GenericValues>& permStateRes);
     void StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList);

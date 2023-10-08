@@ -85,6 +85,7 @@ public:
 
 private:
     bool Initialize() const;
+    void AccessTokenServiceParamSet() const;
 
     ServiceRunningState state_;
 };

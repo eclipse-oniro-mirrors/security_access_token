@@ -225,7 +225,8 @@ static PermissionDef g_infoManagerPermDef4 = {
 }
 
 void PermissionManagerTest::SetUpTestCase()
-{}
+{
+}
 
 void PermissionManagerTest::TearDownTestCase()
 {
@@ -233,7 +234,25 @@ void PermissionManagerTest::TearDownTestCase()
 }
 
 void PermissionManagerTest::SetUp()
-{}
+{
+    PermissionDef infoManagerPermDef = {
+        .permissionName = "ohos.permission.CAMERA",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "CAMERA",
+        .descriptionId = 1
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.APPROXIMATELY_LOCATION";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.LOCATION";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+}
 
 void PermissionManagerTest::TearDown()
 {}
@@ -761,7 +780,7 @@ HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     uint32_t invalidFlag = -1;
-    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.CAMERA", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
@@ -780,7 +799,7 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     uint32_t invalidFlag = -1;
-    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.CAMERA", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
@@ -792,8 +811,8 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::string permissionName = "ohos.permission.INVALID";
+    AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
+    std::string permissionName = "ohos.permission.INVALID_AA";
 
     PermissionManager::GetInstance().RemoveDefPermissions(tokenId); // tokenInfo is null
 
@@ -805,24 +824,21 @@ HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
     std::map<std::string,
         PermissionDefData> permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_.clear();
+    bool hasHapPermissionDefinition_ = PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_;
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = false;
 
     // apl default normal, remote default false
     std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
     ASSERT_NE(nullptr, native);
-    ASSERT_EQ(ATokenAplEnum::APL_NORMAL, native->tokenInfoBasic_.apl);
-    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // normal apl
 
-    // permission definition set has not been installed + apl < APL_SYSTEM_BASIC
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
-    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
-
+    ASSERT_EQ(PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty(), true);
     native->tokenInfoBasic_.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // basic apl
     // permission definition set has not been installed + apl >= APL_SYSTEM_BASIC
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = permissionDefinitionMap; // recovery
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = hasHapPermissionDefinition_;
 
     // not remote + no definition
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
@@ -981,7 +997,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
     std::vector<PermissionStateFull> permsList1;
     permsList1.emplace_back(g_permState1);
     PermissionListState permState1;
-    permState1.permissionName = "ohos.permission.TEST";
+    permState1.permissionName = "ohos.permission.GetSelfPermissionStateTest";
     int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
 
     // permissionName no definition
@@ -1163,23 +1179,6 @@ HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
     tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     // get token info err
     ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
-}
-
-/**
- * @tc.name: IsPermissionVaild001
- * @tc.desc: PermissionManager::IsPermissionVaild function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
-{
-    std::string permissionName;
-
-    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName)); // permissionName empty
-
-    permissionName = "ohos.permission.TEST";
-    // permissionName no definition
-    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
 }
 
 /**

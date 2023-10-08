@@ -142,6 +142,7 @@ void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, 
                 resInfo.permissionName = permName;
                 resInfo.tokenID = tokenID;
                 callback->PermStateChangeCallback(resInfo);
+                ACCESSTOKEN_LOG_INFO(LABEL, "callback execute end");
             }
         };
         ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
