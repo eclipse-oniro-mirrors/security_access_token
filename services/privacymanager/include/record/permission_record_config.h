@@ -13,26 +13,21 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_TOKEN_FRAMEWORK_COMMON_INCLUDE_JSON_PARSER_H
-#define ACCESS_TOKEN_FRAMEWORK_COMMON_INCLUDE_JSON_PARSER_H
+#ifndef INTERFACES_INNER_KITS_ACCESSTOKEN_PERMISSION_RECORD_CONFIG_H
+#define INTERFACES_INNER_KITS_ACCESSTOKEN_PERMISSION_RECORD_CONFIG_H
 
 #include <string>
-
-#include "nlohmann/json.hpp"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class JsonParser final {
+class PermissionRecordConfig final {
 public:
-static bool GetStringFromJson(const nlohmann::json& j, const std::string& tag, std::string& out);
-static bool GetIntFromJson(const nlohmann::json& j, const std::string& tag, int& out);
-static bool GetUnsignedIntFromJson(const nlohmann::json& j, const std::string& tag, unsigned int& out);
-static bool GetBoolFromJson(const nlohmann::json& j, const std::string& tag, bool& out);
-static int32_t ReadCfgFile(const std::string& file, std::string& rawData);
-static bool IsDirExsit(const std::string& file);
+    int32_t sizeMaxImum;
+    int32_t agingTime;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif  // ACCESS_TOKEN_FRAMEWORK_COMMON_INCLUDE_JSON_PARSER_H
+
+#endif // INTERFACES_INNER_KITS_ACCESSTOKEN_PERMISSION_RECORD_CONFIG_H
