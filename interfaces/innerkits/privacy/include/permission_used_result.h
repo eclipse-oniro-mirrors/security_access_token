@@ -56,6 +56,8 @@ struct UsedRecordDetail {
     int64_t timestamp = 0L;
     /** permission active state remain times */
     int64_t accessDuration = 0L;
+    /** The value of successCount or failCount passed in to addPermissionUsedRecord */
+    int32_t count = 0;
 };
 
 /**

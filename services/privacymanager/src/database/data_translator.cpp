@@ -54,6 +54,8 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
 int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const GenericValues& inGenericValues,
     PermissionUsedRecord& permissionRecord)
 {
+    int32_t accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
+    int32_t rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
     std::string permission;
     int32_t opCode = inGenericValues.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     if (!Constant::TransferOpcodeToPermission(opCode, permission)) {
@@ -63,14 +65,14 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
     int64_t timestamp = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     permissionRecord.permissionName = permission;
 
-    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT) != 0) {
-        permissionRecord.accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
+    if (accessCount != 0) {
+        permissionRecord.accessCount = accessCount;
         permissionRecord.lastAccessTime = timestamp;
         permissionRecord.lastAccessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
     }
 
-    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT) != 0) {
-        permissionRecord.rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
+    if (rejectCount != 0) {
+        permissionRecord.rejectCount = rejectCount;
         permissionRecord.lastRejectTime = timestamp;
     }
 
@@ -83,10 +85,12 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;
         detail.accessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
+        detail.count = accessCount;
         permissionRecord.accessRecords.emplace_back(detail);
     }
     if (permissionRecord.lastRejectTime > 0) {
         detail.timestamp = permissionRecord.lastRejectTime;
+        detail.count = rejectCount;
         permissionRecord.rejectRecords.emplace_back(detail);
     }
     return Constant::SUCCESS;

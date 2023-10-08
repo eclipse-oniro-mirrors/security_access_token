@@ -551,6 +551,49 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord008, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AddPermissionUsedRecord009
+ * @tc.desc: query permission record detail count.
+ * @tc.type: FUNC
+ * @tc.require: issueI5P4IU
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
+{
+    int32_t permRecordSize = 0;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
+    permRecordSize++;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.WRITE_CONTACTS", 0, 2));
+    permRecordSize++;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.LOCATION", 3, 3));
+    permRecordSize++;
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(permRecordSize, static_cast<int32_t>(result.bundleRecords[0].permissionRecords.size()));
+    for (int32_t i = 0; i < permRecordSize; i++) {
+        if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.CAMERA") {
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[i].accessRecords[0].count);
+        } else if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.WRITE_CONTACTS") {
+            ASSERT_EQ(static_cast<uint32_t>(0), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(2, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
+        } else if (result.bundleRecords[0].permissionRecords[i].permissionName == "ohos.permission.LOCATION") {
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].accessRecords.size());
+            ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords[i].rejectRecords.size());
+            ASSERT_EQ(3, result.bundleRecords[0].permissionRecords[i].accessRecords[0].count);
+            ASSERT_EQ(3, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
+        }
+    }
+}
+
+/**
  * @tc.name: RemovePermissionUsedRecords001
  * @tc.desc: cannot RemovePermissionUsedRecords with illegal tokenId and deviceID.
  * @tc.type: FUNC
