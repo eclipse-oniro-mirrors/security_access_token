@@ -393,7 +393,7 @@ HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level1)
     value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
     value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
 
     GenericValues value2;
     value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
@@ -401,7 +401,7 @@ HWTEST_F(PermissionRecordDBTest, Add001, TestSize.Level1)
     value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
     value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -426,7 +426,7 @@ HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level1)
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
 
     GenericValues value2;
     value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
@@ -436,7 +436,7 @@ HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level1)
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -540,7 +540,7 @@ HWTEST_F(PermissionRecordDBTest, GetDistinctValue002, TestSize.Level1)
     value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
     value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
     value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;

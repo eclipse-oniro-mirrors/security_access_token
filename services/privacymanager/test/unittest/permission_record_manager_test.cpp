@@ -430,10 +430,10 @@ HWTEST_F(PermissionRecordManagerTest, LockScreenStatusListener001, TestSize.Leve
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
     PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
 
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCK);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCKED);
+    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_UNLOCKED);
     PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
     PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);
     PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(PERM_ACTIVE_IN_LOCKED);

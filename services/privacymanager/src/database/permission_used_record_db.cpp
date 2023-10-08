@@ -426,8 +426,8 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
     }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " + PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
-        + "=" + std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK);
+    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
+        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" + std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     int32_t checkResult = ExecuteSql(checkSql);
     ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
     if (checkResult != -1) {
@@ -438,7 +438,7 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
     sql.append(it->second.tableName_ + " add column ")
         .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
         .append(" integer default ")
-        .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK));
+        .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
     int32_t insertResult = ExecuteSql(sql);
     ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
     return insertResult;

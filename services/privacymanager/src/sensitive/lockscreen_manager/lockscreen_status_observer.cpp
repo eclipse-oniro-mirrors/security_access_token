@@ -31,26 +31,25 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-    static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-        LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
-    };
-}
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
+};
 static std::map<std::string, LockScreenStatusChangeType> g_actionMap = {
-    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK},
+    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED},
     {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED},
 };
-
-static bool isRegistered = false;
+static bool g_isRegistered = false;
+}
 
 void LockscreenObserver::RegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "RegisterEvent start");
-    if (isRegistered) {
+    if (g_isRegistered) {
         return;
     }
 
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
-    for (auto &actionPair : g_actionMap) {
+    for (const auto &actionPair : g_actionMap) {
         skill->AddEvent(actionPair.first);
     }
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
@@ -60,14 +59,14 @@ void LockscreenObserver::RegisterEvent()
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterEvent result is err");
         return;
     }
-    isRegistered = true;
+    g_isRegistered = true;
 }
 
 void LockscreenObserver::UnRegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UnregisterEvent start");
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
-    for (auto &actionPair : g_actionMap) {
+    for (const auto &actionPair : g_actionMap) {
         skill->AddEvent(actionPair.first);
     }
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
@@ -77,7 +76,7 @@ void LockscreenObserver::UnRegisterEvent()
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterEvent result is err");
         return;
     }
-    isRegistered = false;
+    g_isRegistered = false;
 }
 
 void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)

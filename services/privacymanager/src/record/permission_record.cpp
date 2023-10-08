@@ -43,7 +43,7 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
     int32_t lockScreenStatus = values.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
     record.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
-        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK : lockScreenStatus;
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
 }
 } // namespace AccessToken
 } // namespace Security

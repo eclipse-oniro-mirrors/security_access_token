@@ -16,6 +16,7 @@
 #ifndef PERMISSION_RECORD_H
 #define PERMISSION_RECORD_H
 
+#include "active_change_response_info.h"
 #include "generic_values.h"
 
 namespace OHOS {
@@ -29,7 +30,7 @@ struct PermissionRecord {
     int64_t accessDuration = 0L;
     int32_t accessCount = 0;
     int32_t rejectCount = 0;
-    int32_t lockScreenStatus = 1;
+    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
     PermissionRecord() = default;
 

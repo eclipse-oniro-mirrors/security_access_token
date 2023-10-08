@@ -106,8 +106,8 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     } else {
         record.status = GetAppStatus(tokenId);
     }
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
-        ? LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     record.lockScreenStatus = lockScreenStatus;
     record.tokenId = tokenId;
     record.accessCount = successCount;
@@ -359,8 +359,8 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()
-        ? LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK;
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
         ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockScreenStatus);
         return;
@@ -428,8 +428,12 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenS
         if (!GetGlobalSwitchStatus(perm)) {
             continue;
         }
-        int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+        if ((perm == CAMERA_PERMISSION_NAME) && (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED)) {
+            continue;
+        }
+        
         // update accessDuration and store in databases
+        int64_t curStamp = TimeUtil::GetCurrentTimestamp();
         it->accessDuration = curStamp - it->timestamp;
         /**
          * In screen lock and screen unlock scenarios, do not modify the status of the front-end and back-end of
@@ -437,7 +441,7 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenS
          *  permission access records are not generated repeatedly.
          */
         int32_t tempStatus = it->status;
-        if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCK) {
+        if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED) {
             it->status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND;
         }
         AddRecord(*it);

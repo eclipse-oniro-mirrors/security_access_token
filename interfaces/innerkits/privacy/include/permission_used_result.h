@@ -38,6 +38,7 @@
 #include <string>
 #include <vector>
 #include "access_token.h"
+#include "active_change_response_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -57,7 +58,7 @@ struct UsedRecordDetail {
      * see the definition of ActiveChangeType in
      * the active_change_response_info.h file.
      */
-    int32_t lockScreenStatus = 1;
+    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     /** permission active state change timestamp */
     int64_t timestamp = 0L;
     /** permission active state remain times */
