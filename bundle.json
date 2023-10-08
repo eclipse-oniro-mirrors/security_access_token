@@ -30,6 +30,7 @@
         "ability_base",
         "ability_runtime",
         "c_utils",
+        "config_policy",
         "device_manager",
         "dsoftbus",
         "eventhandler",

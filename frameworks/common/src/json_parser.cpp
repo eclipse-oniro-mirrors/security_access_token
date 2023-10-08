@@ -108,6 +108,27 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
     }
     return RET_FAILED;
 }
+
+bool JsonParser::IsDirExsit(const std::string& file)
+{
+    if (file.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "file path is empty");
+        return false;
+    }
+
+    struct stat buf;
+    if (stat(file.c_str(), &buf) != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get file attributes failed, errno %{public}d.", errno);
+        return false;
+    }
+
+    if (!S_ISDIR(buf.st_mode)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "file mode is not directory.");
+        return false;
+    }
+
+    return true;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -110,6 +110,13 @@ if (!defined(global_parts_info) ||
   resourceschedule_ffrt_enable = false
 }
 
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.customization_config_policy)) {
+  customization_config_policy_enable = true
+} else {
+  customization_config_policy_enable = false
+}
+
 declare_args() {
   access_token_camera_float_window_enable = true
 }

@@ -24,6 +24,10 @@
 #include "app_manager_privacy_client.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "config_policy_utils.h"
+#include "json_parser.h"
+#endif
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -52,6 +56,13 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 static const std::string PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
+static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
+static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
+static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
+static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
+#endif
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -897,6 +908,104 @@ bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
 }
 #endif
 
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+void PermissionRecordManager::GetConfigFilePathList(std::vector<std::string>& pathList)
+{
+    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
+    if (dirs != nullptr) {
+        for (const auto& path : dirs->paths) {
+            if (path == nullptr) {
+                continue;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
+            pathList.emplace_back(path);
+        }
+
+        FreeCfgDirList(dirs); // free
+    }
+}
+
+// nlohmann json need the function named from_json to parse
+void from_json(const nlohmann::json& j, PermissionRecordConfig& p)
+{
+    if (!JsonParser::GetIntFromJson(j, RECORD_SIZE_MAXIMUM_KEY, p.sizeMaxImum)) {
+        return;
+    }
+
+    if (!JsonParser::GetIntFromJson(j, RECORD_AGING_TIME_KEY, p.agingTime)) {
+        return;
+    }
+}
+
+bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
+{
+    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
+    if (jsonRes.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
+        return false;
+    }
+
+    if ((jsonRes.find("privacy") != jsonRes.end()) && (jsonRes.at("privacy").is_object())) {
+        PermissionRecordConfig p = jsonRes.at("privacy").get<nlohmann::json>();
+        recordSizeMaximum_ = p.sizeMaxImum;
+        recordAgingTime_ = p.agingTime;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+#endif
+
+void PermissionRecordManager::SetDefaultConfigValue()
+{
+    recordSizeMaximum_ = DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM;
+    recordAgingTime_ = DEFAULT_PERMISSION_USED_RECORD_AGING_TIME;
+}
+
+void PermissionRecordManager::GetConfigValue()
+{
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    std::vector<std::string> pathList;
+    GetConfigFilePathList(pathList);
+
+    for (const auto& path : pathList) {
+        if (!JsonParser::IsDirExsit(path)) {
+            continue;
+        }
+
+        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
+        std::string fileContent;
+        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
+        if (res != Constant::SUCCESS) {
+            continue;
+        }
+
+        if (GetConfigValueFromFile(fileContent)) {
+            break; // once get the config value, break the loop
+        }
+    }
+#endif
+    // when config file list empty or can not get two value from config file, set default value
+    if ((recordSizeMaximum_ == 0) || (recordAgingTime_ == 0)) {
+        SetDefaultConfigValue();
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "recordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
+        recordSizeMaximum_, recordAgingTime_);
+}
+
+int32_t PermissionRecordManager::GetRecordSizeMaxImum()
+{
+    return recordSizeMaximum_;
+}
+
+int32_t PermissionRecordManager::GetRecordAgingTime()
+{
+    return recordAgingTime_;
+}
+
 void PermissionRecordManager::Init()
 {
     if (hasInited_) {
@@ -905,6 +1014,8 @@ void PermissionRecordManager::Init()
     ACCESSTOKEN_LOG_INFO(LABEL, "init");
     deleteTaskWorker_.Start(1);
     hasInited_ = true;
+
+    GetConfigValue();
 }
 } // namespace AccessToken
 } // namespace Security
