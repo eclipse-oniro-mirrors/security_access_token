@@ -91,7 +91,7 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& perm
     size_t grantFlagSize = permState.grantFlags.size();
     if ((grantStatSize != resDevIdSize) || (grantFlagSize != resDevIdSize)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "list size is invalid, grantStatSize %{public}u, grantFlagSize %{public}u, resDevIdSize %{public}u.",
+            "list size is invalid, grantStatSize %{public}zu, grantFlagSize %{public}zu, resDevIdSize %{public}zu.",
             grantStatSize, grantFlagSize, resDevIdSize);
         return false;
     }
