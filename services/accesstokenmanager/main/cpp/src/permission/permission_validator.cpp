@@ -17,20 +17,25 @@
 #include <set>
 
 #include "access_token.h"
+#include "accesstoken_log.h"
 #include "data_validator.h"
 #include "permission_definition_cache.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionValidator"};
+}
+
 bool PermissionValidator::IsGrantModeValid(int grantMode)
 {
     return grantMode == GrantMode::SYSTEM_GRANT || grantMode == GrantMode::USER_GRANT;
 }
 
-bool PermissionValidator::IsGrantStatusValid(int grantStaus)
+bool PermissionValidator::IsGrantStatusValid(int grantStatus)
 {
-    return grantStaus == PermissionState::PERMISSION_GRANTED || grantStaus == PermissionState::PERMISSION_DENIED;
+    return grantStatus == PermissionState::PERMISSION_GRANTED || grantStatus == PermissionState::PERMISSION_DENIED;
 }
 
 bool PermissionValidator::IsPermissionFlagValid(uint32_t flag)
@@ -63,22 +68,37 @@ bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
     return DataValidator::IsAplNumValid(permDef.availableLevel);
 }
 
+bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenType is %{public}d.", tokenType);
+    if (tokenType == TOKEN_HAP) {
+        if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined for hap.", permissionName.c_str());
+            return false;
+        }
+    }
+    // permission request for TOKEN_NATIVE process is going to be check when the permission request way is normalized.
+    return true;
+}
+
 bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& permState)
 {
     if (!DataValidator::IsPermissionNameValid(permState.permissionName)) {
         return false;
     }
-
     size_t resDevIdSize = permState.resDeviceID.size();
     size_t grantStatSize = permState.grantStatus.size();
     size_t grantFlagSize = permState.grantFlags.size();
     if ((grantStatSize != resDevIdSize) || (grantFlagSize != resDevIdSize)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "list size is invalid, grantStatSize %{public}zu, grantFlagSize %{public}zu, resDevIdSize %{public}zu.",
+            grantStatSize, grantFlagSize, resDevIdSize);
         return false;
     }
-
     for (uint32_t i = 0; i < resDevIdSize; i++) {
         if (!IsGrantStatusValid(permState.grantStatus[i]) ||
             !IsPermissionFlagValid(permState.grantFlags[i])) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus or grantFlags is invalid");
             return false;
         }
     }
@@ -118,7 +138,7 @@ void PermissionValidator::DeduplicateResDevID(const PermissionStateFull& permSta
     result.isGeneral = permState.isGeneral;
 }
 
-void PermissionValidator::FilterInvalidPermissionState(
+void PermissionValidator::FilterInvalidPermissionState(ATokenTypeEnum tokenType, bool doPermAvailableCheck,
     const std::vector<PermissionStateFull>& permList, std::vector<PermissionStateFull>& result)
 {
     std::set<std::string> permStateSet;
@@ -126,6 +146,9 @@ void PermissionValidator::FilterInvalidPermissionState(
         std::string permName = it->permissionName;
         PermissionStateFull res;
         if (!IsPermissionStateValid(*it) || permStateSet.count(permName) != 0) {
+            continue;
+        }
+        if (doPermAvailableCheck && !IsPermissionAvailable(tokenType, permName)) {
             continue;
         }
         DeduplicateResDevID(*it, res);

@@ -227,11 +227,11 @@ HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyTest001, TestSize.Leve
  */
 HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyCode001, TestSize.Level1)
 {
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::REGISTER_APPLICATION_STATE_OBSERVER),
         static_cast<uint32_t>(IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER)); // 12
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::UNREGISTER_APPLICATION_STATE_OBSERVER),
         static_cast<uint32_t>(IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER)); // 13
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::IAppMgr::Message::GET_FOREGROUND_APPLICATIONS),
+    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::GET_FOREGROUND_APPLICATIONS),
         static_cast<uint32_t>(IAppMgr::Message::GET_FOREGROUND_APPLICATIONS)); // 14
 }
 #endif

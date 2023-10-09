@@ -30,7 +30,7 @@ using namespace OHOS;
 using namespace OHOS::Security::AccessToken;
 
 namespace {
-int32_t tokenId = 0;
+uint32_t g_tokenId = 0;
 
 static const std::string BENCHMARK_TEST_PERMISSION_NAME_ALPHA = "ohos.permission.ALPHA";
 PermissionDef PERMISSIONDEF = {
@@ -63,7 +63,7 @@ BENCHMARK_F(NapiAtmanagerTest, VerifyAccessTokenTestCase001)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest VerifyAccessTokenTestCase001 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::VerifyAccessToken(tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), -1);
+        EXPECT_EQ(AccessTokenKit::VerifyAccessToken(g_tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA), -1);
     }
 }
 
@@ -82,7 +82,7 @@ BENCHMARK_F(NapiAtmanagerTest, GetPermissionFlagsTestCase002)(
     GTEST_LOG_(INFO) << "NapiAtmanagerTest GetPermissionFlagsTestCase002 start!";
     for (auto _ : st) {
         uint32_t flag;
-        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, flag),
+        EXPECT_EQ(AccessTokenKit::GetPermissionFlag(g_tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, flag),
             AccessTokenError::ERR_PARAM_INVALID);
     }
 }
@@ -120,7 +120,7 @@ BENCHMARK_F(NapiAtmanagerTest, RevokeUserGrantedPermissionTestCase004)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest RevokeUserGrantedPermissionTestCase004 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::RevokePermission(tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
+        EXPECT_EQ(AccessTokenKit::RevokePermission(g_tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
             AccessTokenError::ERR_PARAM_INVALID);
     }
 }
@@ -139,7 +139,7 @@ BENCHMARK_F(NapiAtmanagerTest, GrantPermissionTestCase005)(
 {
     GTEST_LOG_(INFO) << "NapiAtmanagerTest GrantPermissionTestCase005 start!";
     for (auto _ : st) {
-        EXPECT_EQ(AccessTokenKit::GrantPermission(tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
+        EXPECT_EQ(AccessTokenKit::GrantPermission(g_tokenId, BENCHMARK_TEST_PERMISSION_NAME_ALPHA, 0),
             AccessTokenError::ERR_PARAM_INVALID);
     }
 }

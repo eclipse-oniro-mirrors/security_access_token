@@ -120,6 +120,24 @@ void AccessTokenInfoManagerTest::SetUp()
 {
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
+    PermissionDef infoManagerPermDefA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefA, 1);
+    PermissionDef infoManagerPermDefB = {
+        .permissionName = "ohos.permission.LOCATION",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefB, 1);
 }
 
 void AccessTokenInfoManagerTest::TearDown()
@@ -1098,11 +1116,25 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenInfo002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx =
-        AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID, "com.ohos.photos", INST_INDEX);
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "accesstoken_info_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "accesstoken_info_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    std::shared_ptr<HapTokenInfoInner> info = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(info));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().AddHapTokenInfo(infoPtr));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
@@ -1369,6 +1401,7 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
  */
 HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
 {
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001";
     PermissionStateFull permState = {
         .permissionName = "ohos.permission.TEST",
         .isGeneral = false,
@@ -1376,14 +1409,15 @@ HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
         .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
         .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
     };
-
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_1";
     ASSERT_EQ(static_cast<uint32_t>(2), permState.resDeviceID.size());
 
     std::vector<PermissionStateFull> permList;
     permList.emplace_back(permState);
     std::vector<PermissionStateFull> result;
-
-    PermissionValidator::FilterInvalidPermissionState(permList, result); // resDevId.count != 0
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_2";
+    PermissionValidator::FilterInvalidPermissionState(TOKEN_NATIVE, false, permList, result); // resDevId.count != 0
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_3";
     ASSERT_EQ(static_cast<uint32_t>(1), result[0].resDeviceID.size());
 }
 
@@ -1519,6 +1553,18 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissionStatus001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 {
+    PermissionDef def = {
+        .permissionName = "ohos.permission.TEST",
+        .bundleName = "QueryPermissionFlag001",
+        .grantMode = 1,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "description",
+        .descriptionId = 1
+    };
     PermissionStateFull perm = {
         .permissionName = "ohos.permission.TEST",
         .isGeneral = false,
@@ -1527,7 +1573,8 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
         .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
     };
 
-    AccessTokenID tokenId = 456; // 456 is random input
+    AccessTokenID tokenId = 0x280bc140; // 0x280bc140 is random native
+    PermissionDefinitionCache::GetInstance().Insert(def, tokenId);
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(perm);
 
@@ -1874,13 +1921,14 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenId001, TestSize.Level1)
     // version != 1 + type dismatch
     ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
 
-    AccessTokenIDEx tokenIdEx =AccessTokenInfoManager::GetInstance().GetHapTokenID(
-        USER_ID, "com.ohos.permissionmanager", INST_INDEX);
-    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx));
 
     // register repeat
-    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, type));
+    ASSERT_NE(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(
+        tokenIdEx.tokenIdExStruct.tokenID, type));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**

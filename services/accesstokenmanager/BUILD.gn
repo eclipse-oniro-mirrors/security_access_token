@@ -21,6 +21,13 @@ ohos_prebuilt_etc("access_token.rc") {
   part_name = "access_token"
 }
 
+ohos_prebuilt_etc("permission_definition_config") {
+  source = "permission_definitions.json"
+  part_name = "access_token"
+  subsystem_name = "security"
+  relative_install_dir = "access_token"
+}
+
 if (is_standard_system) {
   ohos_shared_library("accesstoken_manager_service") {
     subsystem_name = "security"
@@ -60,6 +67,7 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_manager.cpp",
       "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
+      "main/cpp/src/permission/system_permission_definition_parser.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
       "main/cpp/src/service/accesstoken_manager_stub.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
@@ -92,6 +100,7 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
+      "${access_token_path}/services/accesstokenmanager:permission_definition_config",
       "${access_token_path}/services/common/database:accesstoken_database_cxx",
     ]
 

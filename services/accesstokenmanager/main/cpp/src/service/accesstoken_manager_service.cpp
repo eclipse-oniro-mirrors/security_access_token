@@ -37,11 +37,13 @@
 #include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
+#include "parameter.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "privacy_kit.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
+#include "system_permission_definition_parser.h"
 
 namespace OHOS {
 namespace Security {
@@ -50,6 +52,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
 };
+static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int TWO_ARGS = 2;
 }
 
@@ -177,22 +180,19 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
         return INVALID_OPER;
     }
 
-    uint32_t vagueIndex = ELEMENT_NOT_FOUND;
-    uint32_t accurateIndex = ELEMENT_NOT_FOUND;
-
+    // api9 location permission handle here
     if (apiVersion >= ACCURATE_LOCATION_API_VERSION) {
-        if (PermissionManager::GetInstance().GetLocationPermissionIndex(reqPermList, vagueIndex, accurateIndex)) {
-            needRes = PermissionManager::GetInstance().LocationPermissionSpecialHandle(reqPermList, apiVersion,
-                permsList, vagueIndex, accurateIndex); // api9 location permission handle here
-        }
+        needRes = PermissionManager::GetInstance().LocationPermissionSpecialHandle(reqPermList, permsList, apiVersion);
     }
 
     uint32_t size = reqPermList.size();
     for (uint32_t i = 0; i < size; i++) {
+        // api9 location permission special handle above
         if (((reqPermList[i].permsState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) ||
-            (reqPermList[i].permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME)) &&
+            (reqPermList[i].permsState.permissionName == ACCURATE_LOCATION_PERMISSION_NAME) ||
+            (reqPermList[i].permsState.permissionName == BACKGROUND_LOCATION_PERMISSION_NAME)) &&
             (apiVersion >= ACCURATE_LOCATION_API_VERSION)) {
-            continue; // api9 location permission special handle above
+            continue;
         }
 
         PermissionManager::GetInstance().GetSelfPermissionState(permsList, reqPermList[i].permsState, apiVersion);
@@ -204,11 +204,6 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     }
     if (needRes) {
         return DYNAMIC_OPER;
-    } else {
-        if ((vagueIndex == ELEMENT_NOT_FOUND) && (accurateIndex != ELEMENT_NOT_FOUND)) {
-            // only accurate location permission without other DYNAMIC_OPER state return INVALID_OPER
-            return INVALID_OPER;
-        }
     }
     return PASS_OPER;
 }
@@ -457,6 +452,14 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
     return ERR_OK;
 }
 
+void AccessTokenManagerService::AccessTokenServiceParamSet() const
+{
+    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(1).c_str());
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY failed %{public}d", res);
+    }
+}
+
 bool AccessTokenManagerService::Initialize() const
 {
     AccessTokenInfoManager::GetInstance().Init();
@@ -467,6 +470,8 @@ bool AccessTokenManagerService::Initialize() const
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
         "PID_INFO", getpid());
+    SystemPermissionDefinitionParser::GetInstance().Init();
+    AccessTokenServiceParamSet();
     return true;
 }
 } // namespace AccessToken

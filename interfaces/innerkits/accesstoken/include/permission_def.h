@@ -55,7 +55,7 @@ public:
     /** permission name */
     std::string permissionName;
     /** bundle name */
-    std::string bundleName;
+    std::string bundleName = "";
     /**
      * grant mode, for details about the valid values,
      * see the definition of GrantMode in the access_token.h file.
@@ -69,10 +69,10 @@ public:
      * indicates whether the distributed scene can use this permission or not
      */
     bool distributedSceneEnable;
-    std::string label;
-    int labelId;
-    std::string description;
-    int descriptionId;
+    std::string label = "";
+    int labelId = 0;
+    std::string description = "";
+    int descriptionId = 0;
     ATokenAvailableTypeEnum availableType;
 };
 

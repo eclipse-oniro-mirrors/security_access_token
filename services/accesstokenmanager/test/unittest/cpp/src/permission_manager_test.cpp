@@ -139,30 +139,6 @@ static PermissionStateFull g_permState2 = {
     .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
 };
 
-static PermissionStateFull g_permState3 = {
-    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
-};
-
-static PermissionStateFull g_permState4 = {
-    .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_USER_FIXED}
-};
-
-static PermissionStateFull g_permState5 = {
-    .permissionName = "ohos.permission.LOCATION",
-    .isGeneral = true,
-    .resDeviceID = {"dev-001"},
-    .grantStatus = {PermissionState::PERMISSION_DENIED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
 static PermissionStateFull g_permState6 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -249,7 +225,8 @@ static PermissionDef g_infoManagerPermDef4 = {
 }
 
 void PermissionManagerTest::SetUpTestCase()
-{}
+{
+}
 
 void PermissionManagerTest::TearDownTestCase()
 {
@@ -257,7 +234,25 @@ void PermissionManagerTest::TearDownTestCase()
 }
 
 void PermissionManagerTest::SetUp()
-{}
+{
+    PermissionDef infoManagerPermDef = {
+        .permissionName = "ohos.permission.CAMERA",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "CAMERA",
+        .descriptionId = 1
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.APPROXIMATELY_LOCATION";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.LOCATION";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+}
 
 void PermissionManagerTest::TearDown()
 {}
@@ -785,7 +780,7 @@ HWTEST_F(PermissionManagerTest, GrantPermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     uint32_t invalidFlag = -1;
-    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ret = PermissionManager::GetInstance().GrantPermission(tokenID, "ohos.permission.CAMERA", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
@@ -804,7 +799,7 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
     ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.perm", PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, ret);
     uint32_t invalidFlag = -1;
-    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.READ_CALENDAR", invalidFlag);
+    ret = PermissionManager::GetInstance().RevokePermission(tokenID, "ohos.permission.CAMERA", invalidFlag);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 }
 
@@ -816,8 +811,8 @@ HWTEST_F(PermissionManagerTest, RevokePermission001, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 123; // 123 is random input
-    std::string permissionName = "ohos.permission.INVALID";
+    AccessTokenID tokenId = 0x280bc142; // 0x280bc142 is random input
+    std::string permissionName = "ohos.permission.INVALID_AA";
 
     PermissionManager::GetInstance().RemoveDefPermissions(tokenId); // tokenInfo is null
 
@@ -829,24 +824,21 @@ HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
     std::map<std::string,
         PermissionDefData> permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_.clear();
+    bool hasHapPermissionDefinition_ = PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_;
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = false;
 
     // apl default normal, remote default false
     std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
     ASSERT_NE(nullptr, native);
-    ASSERT_EQ(ATokenAplEnum::APL_NORMAL, native->tokenInfoBasic_.apl);
-    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // normal apl
 
-    // permission definition set has not been installed + apl < APL_SYSTEM_BASIC
-    ASSERT_EQ(PermissionState::PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
-    AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(tokenId);
-
+    ASSERT_EQ(PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty(), true);
     native->tokenInfoBasic_.apl = ATokenAplEnum::APL_SYSTEM_BASIC;
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[tokenId] = native; // basic apl
     // permission definition set has not been installed + apl >= APL_SYSTEM_BASIC
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = permissionDefinitionMap; // recovery
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = hasHapPermissionDefinition_;
 
     // not remote + no definition
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
@@ -1005,7 +997,7 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState001, TestSize.Level1)
     std::vector<PermissionStateFull> permsList1;
     permsList1.emplace_back(g_permState1);
     PermissionListState permState1;
-    permState1.permissionName = "ohos.permission.TEST";
+    permState1.permissionName = "ohos.permission.GetSelfPermissionStateTest";
     int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
 
     // permissionName no definition
@@ -1145,17 +1137,29 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(USER_ID,
-        "com.ohos.permissionmanager", INST_INDEX);
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
     std::string permissionName = "ohos.permission.DUMP";
     bool isGranted = false;
     int flag = 0;
-
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
         permissionName, isGranted, flag));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
 
 /**
@@ -1175,23 +1179,6 @@ HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
     tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     // get token info err
     ASSERT_EQ(false, PermissionManager::GetInstance().GetApiVersionByTokenId(tokenId, apiVersion));
-}
-
-/**
- * @tc.name: IsPermissionVaild001
- * @tc.desc: PermissionManager::IsPermissionVaild function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
-{
-    std::string permissionName;
-
-    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName)); // permissionName empty
-
-    permissionName = "ohos.permission.TEST";
-    // permissionName no definition
-    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
 }
 
 /**
@@ -1216,49 +1203,6 @@ HWTEST_F(PermissionManagerTest, GetPermissionStatusAndFlag001, TestSize.Level1)
     // permissionName not in permsList
     ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
         permsList, status, flag));
-}
-
-/**
- * @tc.name: AllLocationPermissionHandle001
- * @tc.desc: PermissionManager::AllLocationPermissionHandle function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, AllLocationPermissionHandle001, TestSize.Level1)
-{
-    PermissionListState permsState1 = {
-        .permissionName = "ohos.permission.APPROXIMATELY_LOCATION"
-    };
-    PermissionListState permsState2 = {
-        .permissionName = "ohos.permission.LOCATION"
-    };
-
-    PermissionListStateParcel parcel1;
-    parcel1.permsState = permsState1;
-    PermissionListStateParcel parcel2;
-    parcel2.permsState = permsState2;
-
-    std::vector<PermissionListStateParcel> reqPermList;
-    reqPermList.emplace_back(parcel1);
-    reqPermList.emplace_back(parcel2);
-    std::vector<PermissionStateFull> permsList1;
-    permsList1.emplace_back(g_permState3);
-    permsList1.emplace_back(g_permState5);
-    uint32_t vagueIndex = 0;
-    uint32_t accurateIndex = 1;
-
-    // vagueFlag == PERMISSION_DEFAULT_FLAG
-    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList1, vagueIndex, accurateIndex);
-    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[0].permsState.state);
-    ASSERT_EQ(static_cast<int>(PermissionOper::DYNAMIC_OPER), reqPermList[1].permsState.state);
-
-    std::vector<PermissionStateFull> permsList2;
-    permsList2.emplace_back(g_permState4);
-    permsList2.emplace_back(g_permState5);
-    // vagueFlag == PERMISSION_DEFAULT_FLAG + accurateFlag == PERMISSION_SYSTEM_FIXED
-    PermissionManager::GetInstance().AllLocationPermissionHandle(reqPermList, permsList2, vagueIndex, accurateIndex);
-    ASSERT_EQ(static_cast<int>(PermissionOper::PASS_OPER), reqPermList[0].permsState.state);
-    ASSERT_EQ(static_cast<int>(PermissionOper::INVALID_OPER), reqPermList[1].permsState.state);
 }
 
 /**

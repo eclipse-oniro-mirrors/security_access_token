@@ -37,6 +37,10 @@
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_agent.h"
 #endif
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "nlohmann/json.hpp"
+#include "permission_record_config.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -77,6 +81,8 @@ public:
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
+    int32_t GetRecordSizeMaxImum();
+    int32_t GetRecordAgingTime();
 
 private:
     PermissionRecordManager();
@@ -116,6 +122,14 @@ private:
 
     bool Register();
     void Unregister();
+
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    void GetConfigFilePathList(std::vector<std::string> &pathList);
+    void from_json(const nlohmann::json& j, PermissionRecordConfig& p);
+    bool GetConfigValueFromFile(std::string& fileContent);
+#endif
+    void SetDefaultConfigValue();
+    void GetConfigValue();
 private:
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
@@ -144,6 +158,10 @@ private:
     std::mutex floatWinMutex_;
     sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
 #endif
+
+    // record config
+    int32_t recordSizeMaximum_ = 0;
+    int32_t recordAgingTime_ = 0;
 };
 } // namespace AccessToken
 } // namespace Security

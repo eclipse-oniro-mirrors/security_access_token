@@ -453,6 +453,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
         return RET_FAILED;
     }
+    PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
 #ifdef SUPPORT_SANDBOX_APP
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     if (info.dlpType != DLP_COMMON) {
@@ -463,6 +464,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         if (res != RET_SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+            PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
             return RET_FAILED;
         }
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
@@ -476,9 +478,9 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+        PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
         return RET_FAILED;
     }
-    PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
     ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
@@ -709,7 +711,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     }
 
     std::shared_ptr<PermissionPolicySet> newPermPolicySet =
-        PermissionPolicySet::BuildPermissionPolicySet(mapID, hapSync.permStateList);
+        PermissionPolicySet::BuildPolicySetWithoutDefCheck(mapID, hapSync.permStateList);
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
@@ -721,8 +723,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
 
 int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync)
 {
-    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(mapID,
-        hapSync.baseInfo, hapSync.permStateList);
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(mapID, hapSync);
     hap->SetRemote(true);
 
     int ret = AddHapTokenInfo(hap);
