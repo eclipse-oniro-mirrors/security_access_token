@@ -37,11 +37,13 @@
 #include "ipc_skeleton.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
+#include "parameter.h"
 #include "permission_list_state.h"
 #include "permission_manager.h"
 #include "privacy_kit.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
+#include "system_permission_definition_parser.h"
 
 namespace OHOS {
 namespace Security {
@@ -50,6 +52,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMServ"
 };
+static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int TWO_ARGS = 2;
 }
 
@@ -449,6 +452,14 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
     return ERR_OK;
 }
 
+void AccessTokenManagerService::AccessTokenServiceParamSet() const
+{
+    int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(1).c_str());
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY failed %{public}d", res);
+    }
+}
+
 bool AccessTokenManagerService::Initialize() const
 {
     AccessTokenInfoManager::GetInstance().Init();
@@ -459,6 +470,8 @@ bool AccessTokenManagerService::Initialize() const
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
         "PID_INFO", getpid());
+    SystemPermissionDefinitionParser::GetInstance().Init();
+    AccessTokenServiceParamSet();
     return true;
 }
 } // namespace AccessToken

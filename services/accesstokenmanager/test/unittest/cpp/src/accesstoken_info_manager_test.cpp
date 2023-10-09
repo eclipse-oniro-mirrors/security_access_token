@@ -120,6 +120,24 @@ void AccessTokenInfoManagerTest::SetUp()
 {
     atManagerService_ = DelayedSingleton<AccessTokenManagerService>::GetInstance();
     EXPECT_NE(nullptr, atManagerService_);
+    PermissionDef infoManagerPermDefA = {
+        .permissionName = "ohos.permission.CAMERA",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefA, 1);
+    PermissionDef infoManagerPermDefB = {
+        .permissionName = "ohos.permission.LOCATION",
+        .bundleName = "accesstoken_test",
+        .grantMode = USER_GRANT,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+    };
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDefB, 1);
 }
 
 void AccessTokenInfoManagerTest::TearDown()
@@ -1383,6 +1401,7 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
  */
 HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
 {
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001";
     PermissionStateFull permState = {
         .permissionName = "ohos.permission.TEST",
         .isGeneral = false,
@@ -1390,14 +1409,15 @@ HWTEST_F(AccessTokenInfoManagerTest, DeduplicateResDevID001, TestSize.Level1)
         .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
         .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
     };
-
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_1";
     ASSERT_EQ(static_cast<uint32_t>(2), permState.resDeviceID.size());
 
     std::vector<PermissionStateFull> permList;
     permList.emplace_back(permState);
     std::vector<PermissionStateFull> result;
-
-    PermissionValidator::FilterInvalidPermissionState(permList, result); // resDevId.count != 0
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_2";
+    PermissionValidator::FilterInvalidPermissionState(TOKEN_NATIVE, false, permList, result); // resDevId.count != 0
+    GTEST_LOG_(INFO) << "DeduplicateResDevID001_3";
     ASSERT_EQ(static_cast<uint32_t>(1), result[0].resDeviceID.size());
 }
 
@@ -1533,6 +1553,18 @@ HWTEST_F(AccessTokenInfoManagerTest, VerifyPermissionStatus001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
 {
+    PermissionDef def = {
+        .permissionName = "ohos.permission.TEST",
+        .bundleName = "QueryPermissionFlag001",
+        .grantMode = 1,
+        .availableLevel = APL_NORMAL,
+        .provisionEnable = false,
+        .distributedSceneEnable = false,
+        .label = "label",
+        .labelId = 1,
+        .description = "description",
+        .descriptionId = 1
+    };
     PermissionStateFull perm = {
         .permissionName = "ohos.permission.TEST",
         .isGeneral = false,
@@ -1541,7 +1573,8 @@ HWTEST_F(AccessTokenInfoManagerTest, QueryPermissionFlag001, TestSize.Level1)
         .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
     };
 
-    AccessTokenID tokenId = 456; // 456 is random input
+    AccessTokenID tokenId = 0x280bc140; // 0x280bc140 is random native
+    PermissionDefinitionCache::GetInstance().Insert(def, tokenId);
     std::vector<PermissionStateFull> permStateList;
     permStateList.emplace_back(perm);
 

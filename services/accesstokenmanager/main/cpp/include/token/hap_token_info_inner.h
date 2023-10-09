@@ -36,6 +36,7 @@ public:
     HapTokenInfoInner(AccessTokenID id, const HapInfoParams& info, const HapPolicyParams& policy);
     HapTokenInfoInner(AccessTokenID id, const HapTokenInfo &info,
         const std::vector<PermissionStateFull>& permStateList);
+    HapTokenInfoInner(AccessTokenID id, const HapTokenInfoForSync& info);
     virtual ~HapTokenInfoInner();
 
     void Update(const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy, bool isSystemApp);
