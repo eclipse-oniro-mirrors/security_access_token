@@ -110,12 +110,12 @@ if (is_standard_system && ability_base_enable == true) {
     external_deps = [
       "ability_base:want",
       "c_utils:utils",
+      "common_event_service:cesfwk_innerkits",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
-      "common_event_service:cesfwk_innerkits",
     ]
     if (theme_screenlock_mgr_enable) {
       cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
