@@ -105,10 +105,11 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
         record.status = PERM_INACTIVE;
     } else {
         record.status = GetAppStatus(tokenId);
+        int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+            LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+        record.lockScreenStatus = lockScreenStatus;
     }
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
-        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    record.lockScreenStatus = lockScreenStatus;
+    
     record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;

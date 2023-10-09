@@ -109,8 +109,11 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
       "common_event_service:cesfwk_innerkits",
-      "screenlock_mgr:screenlock_client",
     ]
+    if (theme_screenlock_mgr_enable) {
+      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
+      external_deps += [ "screenlock_mgr:screenlock_client" ]
+    }
 
     if (audio_framework_enable) {
       cflags_cc += [

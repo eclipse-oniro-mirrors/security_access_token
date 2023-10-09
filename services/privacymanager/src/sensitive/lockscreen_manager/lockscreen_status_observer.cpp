@@ -14,14 +14,11 @@
  */
 #include "lockscreen_status_observer.h"
 
-#include <map>
-#include <string>
-
 #include <unistd.h>
 #include "accesstoken_log.h"
 
-#include "common_event_subscribe_info.h"
 #include "common_event_manager.h"
+#include "common_event_subscribe_info.h"
 #include "common_event_support.h"
 #include "permission_record_manager.h"
 
@@ -34,10 +31,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
 };
-static std::map<std::string, LockScreenStatusChangeType> g_actionMap = {
-    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED},
-    {EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED},
-};
+
 static bool g_isRegistered = false;
 }
 
@@ -49,9 +43,8 @@ void LockscreenObserver::RegisterEvent()
     }
 
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
-    for (const auto &actionPair : g_actionMap) {
-        skill->AddEvent(actionPair.first);
-    }
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
     auto hub = std::make_shared<LockscreenObserver>(*info);
     const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(hub);
@@ -66,9 +59,8 @@ void LockscreenObserver::UnRegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UnregisterEvent start");
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
-    for (const auto &actionPair : g_actionMap) {
-        skill->AddEvent(actionPair.first);
-    }
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
     auto hub = std::make_shared<LockscreenObserver>(*info);
     const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(hub);
@@ -83,12 +75,15 @@ void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)
 {
     const auto want = event.GetWant();
     const auto action = want.GetAction();
-    if (g_actionMap.find(action) == g_actionMap.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no event found");
-        return;
+    if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "receive unlocked event");
+        PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "receive locked event");
+        PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnReceiveEvent action:%{public}d", g_actionMap[action]);
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(g_actionMap[action]);
 }
 } // namespace AccessToken
 } // namespace Security

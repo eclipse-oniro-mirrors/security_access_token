@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#include "permission_record.h"
 #include "active_change_response_info.h"
+#include "permission_record.h"
 #include "privacy_field_const.h"
 
 namespace OHOS {

@@ -49,7 +49,7 @@ if (is_standard_system && ability_base_enable == true) {
       "include/sensitive/app_manager/",
       "include/sensitive/audio_manager/",
       "include/sensitive/camera_manager/",
-      "include/sensitive/lockscreen_manager",
+      "include/sensitive/lockscreen_manager/",
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
@@ -116,8 +116,12 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
       "common_event_service:cesfwk_innerkits",
-      "screenlock_mgr:screenlock_client",
     ]
+    if (theme_screenlock_mgr_enable) {
+      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
+      external_deps += [ "screenlock_mgr:screenlock_client" ]
+    }
+
     if (!use_clang_coverage) {
       shlib_type = "sa"
     }
