@@ -33,6 +33,7 @@ void ToString::DetailUsedRecordToString(
         infos.append(R"(                  "status": ")" + std::to_string(detail.status) + R"(")" + ",\n");
         infos.append(R"(                  "timestamp": ")" + std::to_string(detail.timestamp) + R"(")" + ",\n");
         infos.append(R"(                  "duration": )" + std::to_string(detail.accessDuration) + ",\n");
+        infos.append(R"(                  "count": )" + std::to_string(detail.count) + ",\n");
         infos.append("              },");
         infos.append("\n");
     }

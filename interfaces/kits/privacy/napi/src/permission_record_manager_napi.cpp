@@ -216,6 +216,10 @@ static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRe
     napi_value nAccessDuration;
     NAPI_CALL_RETURN_VOID(env, napi_create_int64(env, detailRecord.accessDuration, &nAccessDuration));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "accessDuration", nAccessDuration));
+
+    napi_value nCount;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.count, &nCount));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "count", nCount));
 }
 
 static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const PermissionUsedRecord& permissionRecord)

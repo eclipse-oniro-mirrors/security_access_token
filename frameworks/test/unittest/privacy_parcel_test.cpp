@@ -36,24 +36,28 @@ UsedRecordDetail g_accessRecord1 = {
     .status = 0,
     .timestamp = 0L,
     .accessDuration = 0L,
+    .count = 0,
 };
 
 UsedRecordDetail g_accessRecord2 = {
     .status = 1,
     .timestamp = 1L,
     .accessDuration = 1L,
+    .count = 0,
 };
 
 UsedRecordDetail g_rejectRecord1 = {
     .status = 2,
     .timestamp = 2L,
     .accessDuration = 2L,
+    .count = 0,
 };
 
 UsedRecordDetail g_rejectRecord2 = {
     .status = 3,
     .timestamp = 3L,
     .accessDuration = 3L,
+    .count = 0,
 };
 
 PermissionUsedRecord g_permissionRecord1 = {
@@ -213,6 +217,8 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
             readedData->permissionRecord.accessRecords[i].timestamp);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].accessDuration,
             readedData->permissionRecord.accessRecords[i].accessDuration);
+        EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].count,
+            readedData->permissionRecord.accessRecords[i].count);
     }
 
     for (uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.rejectRecords.size(); i++) {
@@ -222,6 +228,8 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
             readedData->permissionRecord.rejectRecords[i].timestamp);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].accessDuration,
             readedData->permissionRecord.rejectRecords[i].accessDuration);
+        EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].count,
+            readedData->permissionRecord.rejectRecords[i].count);
     }
 }
 
@@ -313,6 +321,7 @@ HWTEST_F(PrivacyParcelTest, UsedRecordDetailParcel001, TestSize.Level1)
         .status = 0,
         .timestamp = 0L,
         .accessDuration = 0L,
+        .count = 0,
     };
 
     Parcel parcel;
@@ -324,6 +333,7 @@ HWTEST_F(PrivacyParcelTest, UsedRecordDetailParcel001, TestSize.Level1)
     EXPECT_EQ(usedRecordDetailParcel.detail.status, readedData->detail.status);
     EXPECT_EQ(usedRecordDetailParcel.detail.timestamp, readedData->detail.timestamp);
     EXPECT_EQ(usedRecordDetailParcel.detail.accessDuration, readedData->detail.accessDuration);
+    EXPECT_EQ(usedRecordDetailParcel.detail.count, readedData->detail.count);
 }
 
 void BundleUsedRecordData(Parcel& out, uint32_t size)
