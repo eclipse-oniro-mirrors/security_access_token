@@ -376,8 +376,9 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+    lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
         ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockScreenStatus);
