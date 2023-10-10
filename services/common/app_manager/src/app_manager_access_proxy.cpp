@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
-#include "app_manager_privacy_proxy.h"
+#include "app_manager_access_proxy.h"
 #include "accesstoken_log.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppManagerPrivacyProxy"};
+constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
 constexpr int32_t CYCLE_LIMIT = 1000;
 }
 
-int32_t AppManagerPrivacyProxy::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
+int32_t AppManagerAccessProxy::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
     const std::vector<std::string>& bundleNameList)
 {
     MessageParcel data;
@@ -52,7 +52,7 @@ int32_t AppManagerPrivacyProxy::RegisterApplicationStateObserver(const sptr<IApp
     return reply.ReadInt32();
 }
 
-int32_t AppManagerPrivacyProxy::UnregisterApplicationStateObserver(
+int32_t AppManagerAccessProxy::UnregisterApplicationStateObserver(
     const sptr<IApplicationStateObserver>& observer)
 {
     MessageParcel data;
@@ -75,7 +75,7 @@ int32_t AppManagerPrivacyProxy::UnregisterApplicationStateObserver(
     return reply.ReadInt32();
 }
 
-int32_t AppManagerPrivacyProxy::GetForegroundApplications(std::vector<AppStateData>& list)
+int32_t AppManagerAccessProxy::GetForegroundApplications(std::vector<AppStateData>& list)
 {
     MessageParcel data;
     MessageParcel reply;

@@ -1,0 +1,75 @@
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../access_token.gni")
+
+ohos_shared_library("accesstoken_service_common") {
+  subsystem_name = "security"
+  part_name = "access_token"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "app_manager/include",
+    "database/include",
+    "handler/include",
+  ]
+
+  sources = [
+    "app_manager/src/app_manager_access_client.cpp",
+    "app_manager/src/app_manager_access_proxy.cpp",
+    "app_manager/src/app_manager_death_recipient.cpp",
+    "app_manager/src/app_state_data.cpp",
+    "app_manager/src/app_status_change_callback.cpp",
+    "app_manager/src/process_data.cpp",
+    "database/src/generic_values.cpp",
+    "database/src/memory_guard.cpp",
+    "database/src/sqlite_helper.cpp",
+    "database/src/statement.cpp",
+    "database/src/variant_value.cpp",
+    "handler/src/access_event_handler.cpp",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  deps = [ "//third_party/sqlite:sqlite" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "eventhandler:libeventhandler",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+  if (ability_base_enable == true) {
+    include_dirs += [ "ability_manager/include" ]
+
+    sources += [
+      "ability_manager/src/ability_manager_access_client.cpp",
+      "ability_manager/src/ability_manager_access_death_recipient.cpp",
+      "ability_manager/src/ability_manager_access_proxy.cpp",
+    ]
+
+    external_deps += [ "ability_base:want" ]
+  }
+
+  if (use_musl) {
+    if (use_jemalloc && use_jemalloc_dfx_intf) {
+      cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
+    }
+  }
+}

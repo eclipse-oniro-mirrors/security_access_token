@@ -19,12 +19,12 @@
 #include <string>
 
 #include "event_handler.h"
+#include "access_event_handler.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "singleton.h"
 #include "system_ability.h"
-#include "token_sync_event_handler.h"
 #include "token_sync_manager_stub.h"
 
 namespace OHOS {
@@ -39,8 +39,8 @@ public:
     void OnStart() override;
     void OnStop() override;
 
-    std::shared_ptr<TokenSyncEventHandler> GetSendEventHandler() const;
-    std::shared_ptr<TokenSyncEventHandler> GetRecvEventHandler() const;
+    std::shared_ptr<AccessEventHandler> GetSendEventHandler() const;
+    std::shared_ptr<AccessEventHandler> GetRecvEventHandler() const;
     int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
     int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
@@ -50,8 +50,8 @@ private:
 
     std::shared_ptr<AppExecFwk::EventRunner> sendRunner_;
     std::shared_ptr<AppExecFwk::EventRunner> recvRunner_;
-    std::shared_ptr<TokenSyncEventHandler> sendHandler_;
-    std::shared_ptr<TokenSyncEventHandler> recvHandler_;
+    std::shared_ptr<AccessEventHandler> sendHandler_;
+    std::shared_ptr<AccessEventHandler> recvHandler_;
     ServiceRunningState state_;
 };
 } // namespace AccessToken

@@ -18,7 +18,7 @@
 
 #include "constant_common.h"
 #include "device_info_manager.h"
-#include "token_sync_event_handler.h"
+#include "access_event_handler.h"
 #include "token_sync_manager_service.h"
 #include "singleton.h"
 #include "soft_bus_manager.h"
@@ -84,7 +84,7 @@ void SoftBusChannel::CloseConnection()
         return;
     }
 
-    std::shared_ptr<TokenSyncEventHandler> handler =
+    std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
@@ -112,7 +112,7 @@ void SoftBusChannel::CloseConnection()
 
 void SoftBusChannel::Release()
 {
-    std::shared_ptr<TokenSyncEventHandler> handler =
+    std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
@@ -226,7 +226,7 @@ void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes,
             HandleRequest(session, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
         });
 
-        std::shared_ptr<TokenSyncEventHandler> handler =
+        std::shared_ptr<AccessEventHandler> handler =
             DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRecvEventHandler();
         if (handler == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");

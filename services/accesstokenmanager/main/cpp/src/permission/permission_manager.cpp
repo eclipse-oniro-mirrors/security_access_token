@@ -25,6 +25,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "app_manager_access_client.h"
 #include "callback_manager.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
@@ -44,6 +45,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
+static constexpr int32_t ROOT_UID = 0;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
@@ -90,8 +92,7 @@ PermissionManager::PermissionManager()
 }
 
 PermissionManager::~PermissionManager()
-{
-}
+{}
 
 void PermissionManager::ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList)
 {
@@ -430,7 +431,17 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
         return AccessTokenError::ERR_PERMISSION_OPERATE_FAILED;
     }
-
+    if (flag == PERMISSION_ALLOW_THIS_TIME) {
+        if (isGranted) {
+            if (!GrantTempPermission(tokenID, permissionName)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
+                    tokenID, permissionName.c_str());
+                return ERR_PERMISSION_OPERATE_FAILED;
+            }
+        } else {
+            TempPermissionObserver::GetInstance().DeletePermFromPermMap(tokenID, permissionName);
+        }
+    }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
@@ -460,7 +471,40 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
-    return RET_SUCCESS;
+    return ret;
+}
+
+bool PermissionManager::GrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    HapTokenInfo tokenInfo;
+    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenID);
+        return false;
+    }
+    bool isForeground = false;
+    std::vector<AppStateData> foreGroundAppList;
+    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
+
+    if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
+        [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
+        isForeground = true;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "get app state permissionName:%{public}s, isForeground:%{public}d",
+        permissionName.c_str(), isForeground);
+    bool userEnable = true;
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    int callingUid = IPCSkeleton::GetCallingUid();
+    if (callingUid == ROOT_UID) {
+        userEnable = false;
+    }
+#endif 
+    if ((!userEnable) || (isForeground)) {
+        TempPermissionObserver::GetInstance().RegisterApplicationCallback();
+        TempPermissionObserver::GetInstance().RegisterAppManagerDeathCallback();
+        TempPermissionObserver::GetInstance().AddPermToPermMap(tokenID, permissionName);
+        return true;
+    }
+    return false;
 }
 
 int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,

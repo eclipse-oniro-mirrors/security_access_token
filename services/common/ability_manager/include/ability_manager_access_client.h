@@ -13,42 +13,42 @@
  * limitations under the License.
  */
 
-#ifndef ABILITY_MANAGER_PRIVACY_CLIENT_H
-#define ABILITY_MANAGER_PRIVACY_CLIENT_H
+#ifndef ABILITY_MANAGER_ACCESS_CLIENT_H
+#define ABILITY_MANAGER_ACCESS_CLIENT_H
 
 #include <mutex>
 #include <string>
 
-#include "ability_manager_privacy_death_recipient.h"
-#include "ability_manager_privacy_proxy.h"
+#include "ability_manager_access_death_recipient.h"
+#include "ability_manager_access_proxy.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AbilityManagerPrivacyClient final {
+class AbilityManagerAccessClient final {
 public:
-    static AbilityManagerPrivacyClient& GetInstance();
+    static AbilityManagerAccessClient& GetInstance();
 
-    virtual ~AbilityManagerPrivacyClient();
+    virtual ~AbilityManagerAccessClient();
 
     int StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
         int requestCode = DEFAULT_INVAL_VALUE, int32_t userId = DEFAULT_INVAL_VALUE);
     void OnRemoteDiedHandle();
 
 private:
-    AbilityManagerPrivacyClient();
-    DISALLOW_COPY_AND_MOVE(AbilityManagerPrivacyClient);
+    AbilityManagerAccessClient();
+    DISALLOW_COPY_AND_MOVE(AbilityManagerAccessClient);
 
     void InitProxy();
     sptr<IAbilityManager> GetProxy();
 
-    sptr<AbilityManagerPrivacyDeathRecipient> serviceDeathObserver_ = nullptr;
+    sptr<AbilityManagerAccessDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
     sptr<IAbilityManager> proxy_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ABILITY_MANAGER_PRIVACY_CLIENT_H
+#endif // ABILITY_MANAGER_ACCESS_CLIENT_H
 

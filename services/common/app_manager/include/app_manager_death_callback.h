@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,23 +13,24 @@
  * limitations under the License.
  */
 
+#ifndef ACCESS_APP_MANAGER_DEATH_CALLBACK_H
+#define ACCESS_APP_MANAGER_DEATH_CALLBACK_H
 
-#ifndef ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-#define ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-
-#include "iremote_object.h"
+#include <vector>
+#include "app_manager_access_proxy.h"
+#include "iremote_stub.h"
+#include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AbilityManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
+class AppManagerDeathCallback {
 public:
-    AbilityManagerPrivacyDeathRecipient() {}
-    virtual ~AbilityManagerPrivacyDeathRecipient() override = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+    AppManagerDeathCallback() {};
+    virtual ~AppManagerDeathCallback() = default;
+    virtual void NotifyAppManagerDeath() {};
 };
-}  // namespace AccessToken
+} // namespace AccessToken
 } // namespace Security
-}  // namespace OHOS
-#endif  // ABILITY_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-
+} // namespace OHOS
+#endif // ACCESS_APP_MANAGER_DEATH_CALLBACK_H

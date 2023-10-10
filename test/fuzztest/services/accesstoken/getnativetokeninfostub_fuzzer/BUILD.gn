@@ -56,7 +56,9 @@ ohos_fuzztest("GetNativeTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/interfaces/innerkits/tokensync/src",
+    "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
+    "${access_token_path}/services/common/handler/include",
     "//third_party/sqlite/include/",
   ]
 
@@ -78,6 +80,7 @@ ohos_fuzztest("GetNativeTokenInfoStubFuzzTest") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_policy_set.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/system_permission_definition_parser.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_service.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/service/accesstoken_manager_stub.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_id_manager.cpp",
@@ -103,13 +106,14 @@ ohos_fuzztest("GetNativeTokenInfoStubFuzzTest") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
     "${access_token_path}/services/accesstokenmanager:access_token.rc",
-    "${access_token_path}/services/common/database:accesstoken_database_cxx",
+    "${access_token_path}/services/common:accesstoken_service_common",
   ]
 
   deps += [ "${access_token_path}/services/accesstokenmanager/etc:param_files" ]
 
   external_deps += [
     "dsoftbus:softbus_client",
+    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",

@@ -14,11 +14,11 @@
  */
 
 #include "remote_command_executor.h"
+#include "access_event_handler.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "singleton.h"
 #include "soft_bus_channel.h"
-#include "token_sync_event_handler.h"
 #include "token_sync_manager_service.h"
 
 namespace OHOS {
@@ -211,7 +211,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
     running_ = true;
     const std::function<void()> runner = std::bind(&RemoteCommandExecutor::ProcessBufferedCommands, this, true);
 
-    std::shared_ptr<TokenSyncEventHandler> handler =
+    std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");

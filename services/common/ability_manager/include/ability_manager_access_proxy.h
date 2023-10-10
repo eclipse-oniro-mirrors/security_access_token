@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_ABILITY_MANAGER_PRIVACY_PROXY_H
-#define OHOS_ABILITY_MANAGER_PRIVACY_PROXY_H
+#ifndef OHOS_ABILITY_MANAGER_ACCESS_PROXY_H
+#define OHOS_ABILITY_MANAGER_ACCESS_PROXY_H
 
 #include <iremote_proxy.h>
 
-#include "privacy_am_service_ipc_interface_code.h"
+#include "service_ipc_interface_code.h"
 #include "want.h"
 
 namespace OHOS {
@@ -33,18 +33,18 @@ public:
         int requestCode = DEFAULT_INVAL_VALUE, int32_t userId = DEFAULT_INVAL_VALUE) = 0;
 };
 
-class AbilityManagerPrivacyProxy : public IRemoteProxy<IAbilityManager> {
+class AbilityManagerAccessProxy : public IRemoteProxy<IAbilityManager> {
 public:
-    explicit AbilityManagerPrivacyProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAbilityManager>(impl) {};
+    explicit AbilityManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAbilityManager>(impl) {};
 
-    ~AbilityManagerPrivacyProxy() {};
+    ~AbilityManagerAccessProxy() {};
     int StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
         int requestCode = DEFAULT_INVAL_VALUE, int32_t userId = DEFAULT_INVAL_VALUE) override;
 
 private:
-    static inline BrokerDelegator<AbilityManagerPrivacyProxy> delegator_;
+    static inline BrokerDelegator<AbilityManagerAccessProxy> delegator_;
 };
 }
 }
 }
-#endif // OHOS_ABILITY_MANAGER_PRIVACY_PROXY_H
+#endif // OHOS_ABILITY_MANAGER_ACCESS_PROXY_H

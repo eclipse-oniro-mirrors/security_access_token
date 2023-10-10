@@ -17,11 +17,11 @@
 
 #include <cinttypes>
 
-#include "ability_manager_privacy_client.h"
+#include "ability_manager_access_client.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
-#include "app_manager_privacy_client.h"
+#include "app_manager_access_client.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
@@ -80,6 +80,29 @@ PermissionRecordManager::~PermissionRecordManager()
     deleteTaskWorker_.Stop();
     hasInited_ = false;
     Unregister();
+}
+
+void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData &appStateData)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
+        appStateData.accessTokenId, appStateData.state);
+
+    uint32_t tokenId = appStateData.accessTokenId;
+
+    ActiveChangeType status = PERM_INACTIVE;
+    if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
+        status = PERM_ACTIVE_IN_FOREGROUND;
+    } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
+        status = PERM_ACTIVE_IN_BACKGROUND;
+    }
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+}
+
+void PrivacyAppManagerDeathCallback::NotifyAppManagerDeath()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionRecordManager AppManagerDeath called");
+
+    PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
 void PermissionRecordManager::AddRecord(const PermissionRecord& record)
@@ -537,7 +560,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(PERMISSION_MANAGER_BUNDLE_NAME, PERMISSION_MANAGER_DIALOG_ABILITY);
     want.SetParam(RESOURCE_KEY, resource);
-    ErrCode err = AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr);
+    ErrCode err = AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
@@ -547,6 +570,8 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry, tokenId=0x%{public}x, permissionName=%{public}s",
+        tokenId, permissionName.c_str());
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
@@ -612,6 +637,8 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry, tokenId=0x%{public}x, permissionName=%{public}s",
+        tokenId, permissionName.c_str());
     if (permissionName != CAMERA_PERMISSION_NAME) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ERR_PARAM_INVALID is null.");
         return PrivacyError::ERR_PARAM_INVALID;
@@ -650,6 +677,8 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 
 int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry, tokenId=0x%{public}x, permissionName=%{public}s",
+        tokenId, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
@@ -685,6 +714,7 @@ void PermissionRecordManager::PermListToString(const std::vector<std::string>& p
 int32_t PermissionRecordManager::PermissionListFilter(
     const std::vector<std::string>& listSrc, std::vector<std::string>& listRes)
 {
+    // filter legal permissions
     PermissionDef permissionDef;
     std::set<std::string> permSet;
     for (const auto& permissionName : listSrc) {
@@ -769,12 +799,10 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
     }
     status = PERM_ACTIVE_IN_BACKGROUND;
     std::vector<AppStateData> foreGroundAppList;
-    AppManagerPrivacyClient::GetInstance().GetForegroundApplications(foreGroundAppList);
+    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
         [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
         status = PERM_ACTIVE_IN_FOREGROUND;
-        std::vector<AppStateData> foreGroundAppList;
-        AppManagerPrivacyClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     }
     return status;
 }
@@ -807,16 +835,12 @@ bool PermissionRecordManager::Register()
         }
     }
 
-    // app state change callback register
+    // app manager death callback register
     {
-        std::lock_guard<std::mutex> lock(appStateMutex_);
-        if (appStateCallback_ == nullptr) {
-            appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
-            if (appStateCallback_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
-                return false;
-            }
-            AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+        std::lock_guard<std::mutex> lock(appManagerDeathMutex_);
+        if (appManagerDeathCallback_ == nullptr) {
+            appManagerDeathCallback_ = std::make_shared<PrivacyAppManagerDeathCallback>();
+            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
         }
     }
 
@@ -835,7 +859,23 @@ bool PermissionRecordManager::Register()
         }
     }
 #endif
-    return true;
+    // app state change callback register
+    return RegisterApplicationStateObserver();
+}
+
+bool PermissionRecordManager::RegisterApplicationStateObserver()
+{
+    std::lock_guard<std::mutex> lock(appStateMutex_);
+    int32_t ret = Constant::SUCCESS;
+    if (appStateCallback_ == nullptr) {
+        appStateCallback_ = new(std::nothrow) PrivacyAppStateObserver();
+        if (appStateCallback_ == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
+            return false;
+        }
+        ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+    }
+    return ret == Constant::SUCCESS;
 }
 
 void PermissionRecordManager::Unregister()
@@ -844,7 +884,7 @@ void PermissionRecordManager::Unregister()
     {
         std::lock_guard<std::mutex> lock(appStateMutex_);
         if (appStateCallback_ != nullptr) {
-            AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+            AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
             appStateCallback_= nullptr;
         }
     }

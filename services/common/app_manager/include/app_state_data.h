@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_PRIVACY_APP_STATE_DATA_H
-#define OHOS_PRIVACY_APP_STATE_DATA_H
+#ifndef ACCESS_APP_STATE_DATA_H
+#define ACCESS_APP_STATE_DATA_H
 
 #include <sys/types.h>
 
@@ -51,4 +51,4 @@ struct AppStateData : public Parcelable {
 }  // namespace Security
 }  // namespace OHOS
 
-#endif  // OHOS_PRIVACY_APP_STATE_DATA_H
+#endif  // ACCESS_APP_STATE_DATA_H

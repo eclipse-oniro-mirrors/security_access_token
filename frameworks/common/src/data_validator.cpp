@@ -83,7 +83,8 @@ bool DataValidator::IsPermissionFlagValid(uint32_t flag)
         unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_COMPONENT_SET ||
-        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED;
+        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED ||
+        unmaskedFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME;
 }
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)

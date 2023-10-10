@@ -12,24 +12,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ability_manager_privacy_death_recipient.h"
-#include "accesstoken_log.h"
-#include "ability_manager_privacy_client.h"
+
+#ifndef ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
+#define ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
+
+#include "iremote_object.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AbilityManagerPrivacyDeathRecipient"};
-} // namespace
-
-void AbilityManagerPrivacyDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AbilityManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-}
+class AppMgrDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    AppMgrDeathRecipient() {}
+    virtual ~AppMgrDeathRecipient() override = default;
+    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
+};
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
+#endif  // ACCESS_APP_MANAGER_DEATH_RECIPIENT_H
 

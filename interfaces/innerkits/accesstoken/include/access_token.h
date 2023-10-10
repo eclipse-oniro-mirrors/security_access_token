@@ -168,6 +168,10 @@ typedef enum TypePermissionFlag {
      * permission is fixed by policy and the permission cannot be granted or revoked by user
      */
     PERMISSION_POLICY_FIXED = 1 << 5,
+    /*
+     * permission is only allowed during the current lifecycle foreground period
+     */
+    PERMISSION_ALLOW_THIS_TIME = 1 << 6,
 } PermissionFlag;
 
 /**

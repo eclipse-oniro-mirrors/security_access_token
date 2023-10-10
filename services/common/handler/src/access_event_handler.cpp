@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "token_sync_event_handler.h"
+#include "access_event_handler.h"
 
 #include "accesstoken_log.h"
 
@@ -22,30 +22,30 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncEventHandler"};
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessEventHandler"};
 }
-TokenSyncEventHandler::TokenSyncEventHandler(
+AccessEventHandler::AccessEventHandler(
     const std::shared_ptr<AppExecFwk::EventRunner>& runner)
     : AppExecFwk::EventHandler(runner)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "enter");
 }
-TokenSyncEventHandler::~TokenSyncEventHandler() = default;
+AccessEventHandler::~AccessEventHandler() = default;
 
-bool TokenSyncEventHandler::ProxyPostTask(const Callback &callback, int64_t delayTime)
+bool AccessEventHandler::ProxyPostTask(const Callback &callback, int64_t delayTime)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PostTask without name");
     return AppExecFwk::EventHandler::PostTask(callback, delayTime);
 }
 
-bool TokenSyncEventHandler::ProxyPostTask(
+bool AccessEventHandler::ProxyPostTask(
     const Callback &callback, const std::string &name, int64_t delayTime)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PostTask with name");
     return AppExecFwk::EventHandler::PostTask(callback, name, delayTime);
 }
 
-void TokenSyncEventHandler::ProxyRemoveTask(const std::string &name)
+void AccessEventHandler::ProxyRemoveTask(const std::string &name)
 {
     AppExecFwk::EventHandler::RemoveTask(name);
 }

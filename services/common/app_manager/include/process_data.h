@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_PRIVACY_PROCESS_DATA_H
-#define OHOS_PRIVACY_PROCESS_DATA_H
+#ifndef ACCESS_PROCESS_DATA_H
+#define ACCESS_PROCESS_DATA_H
 
 #include <sys/types.h>
 
@@ -81,4 +81,4 @@ struct ProcessData : public Parcelable {
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif  // OHOS_PRIVACY_PROCESS_DATA_H
+#endif  // ACCESS_PROCESS_DATA_H
