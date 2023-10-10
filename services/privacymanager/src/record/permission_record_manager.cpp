@@ -842,10 +842,26 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
     return status;
 }
 
-void PermissionRecordManager::RegisterLockScreenStatusListener()
+bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
 {
-    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-    LockscreenObserver::RegisterEvent();
+    // app state change callback register
+    {
+        std::lock_guard<std::mutex> lock(appStateMutex_);
+        if (appStateCallback_ == nullptr) {
+            appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
+            if (appStateCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
+                return false;
+            }
+            AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
+        LockscreenObserver::RegisterEvent();
+    }
+    return true;
 }
 
 bool PermissionRecordManager::Register()
@@ -875,20 +891,10 @@ bool PermissionRecordManager::Register()
             CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
         }
     }
-
-    // app state change callback register
-    {
-        std::lock_guard<std::mutex> lock(appStateMutex_);
-        if (appStateCallback_ == nullptr) {
-            appStateCallback_ = new(std::nothrow) ApplicationStateObserverStub();
-            if (appStateCallback_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
-                return false;
-            }
-            AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
-        }
+    bool registerResult = RegisterAppStatusAndLockScreenStatusListener();
+    if (!registerResult) {
+        return false;
     }
-    RegisterLockScreenStatusListener();
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register
     {
