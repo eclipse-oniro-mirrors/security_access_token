@@ -888,9 +888,7 @@ bool PermissionRecordManager::Register()
             AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
         }
     }
-
     RegisterLockScreenStatusListener();
-
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register
     {
