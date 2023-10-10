@@ -30,6 +30,7 @@
         "ability_base",
         "ability_runtime",
         "c_utils",
+        "common_event_service",
         "config_policy",
         "device_manager",
         "dsoftbus",
@@ -45,6 +46,7 @@
         "power_manager",
         "safwk",
         "samgr",
+        "screenlock_mgr",
         "selinux_adapter"
       ],
       "third_party": [

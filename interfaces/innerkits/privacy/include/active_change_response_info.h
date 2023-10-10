@@ -53,6 +53,14 @@ enum ActiveChangeType {
 };
 
 /**
+ * @brief Permission lockscreen state values
+ */
+enum LockScreenStatusChangeType {
+    PERM_ACTIVE_IN_UNLOCKED = 1,
+    PERM_ACTIVE_IN_LOCKED = 2,
+};
+
+/**
  * @brief Permission active state change response struct
  */
 struct ActiveChangeResponse {

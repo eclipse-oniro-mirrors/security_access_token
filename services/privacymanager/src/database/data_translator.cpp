@@ -15,6 +15,7 @@
 
 #include "data_translator.h"
 
+#include "active_change_response_info.h"
 #include "constant.h"
 #include "privacy_field_const.h"
 #include "time_util.h"
@@ -82,6 +83,9 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
 
     UsedRecordDetail detail;
     detail.status = inGenericValues.GetInt(PrivacyFiledConst::FIELD_STATUS);
+    int32_t lockScreenStatus = inGenericValues.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    detail.lockScreenStatus = lockScreenStatus == VariantValue::DEFAULT_VALUE ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED : lockScreenStatus;
     if (permissionRecord.lastAccessTime > 0) {
         detail.timestamp = permissionRecord.lastAccessTime;
         detail.accessDuration = inGenericValues.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);

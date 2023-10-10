@@ -36,6 +36,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/sensitive/app_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/lockscreen_manager",
       "//third_party/googletest/include",
       "//third_party/sqlite/include",
     ]
@@ -72,6 +73,7 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "../../src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
       "../../src/sensitive/camera_manager/camera_service_callback_stub.cpp",
+      "../../src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp",
       "../../src/service/privacy_manager_service.cpp",
       "../../src/service/privacy_manager_stub.cpp",
       "permission_record_db_test.cpp",
@@ -101,12 +103,17 @@ if (is_standard_system && ability_base_enable == true) {
       "access_token:libaccesstoken_sdk",
       "audio_framework:audio_client",
       "c_utils:utils",
+      "common_event_service:cesfwk_innerkits",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+    if (theme_screenlock_mgr_enable) {
+      cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
+      external_deps += [ "screenlock_mgr:screenlock_client" ]
+    }
 
     if (audio_framework_enable) {
       cflags_cc += [
