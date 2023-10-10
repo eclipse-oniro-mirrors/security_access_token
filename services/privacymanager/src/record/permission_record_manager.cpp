@@ -41,7 +41,9 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
 #include "screenlock_manager.h"
+#endif
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
@@ -117,9 +119,11 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
         record.status = PERM_INACTIVE;
     } else {
         record.status = GetAppStatus(tokenId);
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
         int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
             LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
         record.lockScreenStatus = lockScreenStatus;
+#endif
     }
     
     record.tokenId = tokenId;
@@ -372,12 +376,14 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
     int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
         LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
         ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockScreenStatus);
         return;
     }
+#endif
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
@@ -857,10 +863,13 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
         }
     }
 
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
+    // lockscreen status change call back register
     {
         std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::RegisterEvent();
     }
+#endif
     return true;
 }
 
@@ -924,11 +933,13 @@ void PermissionRecordManager::Unregister()
         }
     }
 
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
     // screen state change callback unregister
     {
         std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::UnRegisterEvent();
     }
+#endif
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback unregister
