@@ -26,8 +26,7 @@ namespace AccessToken {
 
 class LockscreenObserver : public OHOS::EventFwk::CommonEventSubscriber {
 public:
-    LockscreenObserver(const OHOS::EventFwk::CommonEventSubscribeInfo& info)
-    : CommonEventSubscriber(info)
+    LockscreenObserver(const OHOS::EventFwk::CommonEventSubscribeInfo& info) : CommonEventSubscriber(info)
     {}
 
     ~LockscreenObserver() override = default;

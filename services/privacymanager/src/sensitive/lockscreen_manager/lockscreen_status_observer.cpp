@@ -77,10 +77,12 @@ void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)
     const auto action = want.GetAction();
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "receive unlocked event");
-        PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+        PermissionRecordManager::GetInstance()
+            .NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "receive locked event");
-        PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+        PermissionRecordManager::GetInstance()
+            .NotifyLockScreenStatusChange(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }

@@ -94,7 +94,8 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, lockScreenStatus: %{public}d, timestamp: %{public}" PRId64,
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, \
+lockScreenStatus: %{public}d, timestamp: %{public}" PRId64,
         record.tokenId, record.opCode, record.status, record.lockScreenStatus, record.timestamp);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
@@ -440,7 +441,8 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenS
         if (!GetGlobalSwitchStatus(perm)) {
             continue;
         }
-        if ((perm == CAMERA_PERMISSION_NAME) && (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED)) {
+        if ((perm == CAMERA_PERMISSION_NAME) &&
+            (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED)) {
             continue;
         }
         
@@ -840,6 +842,12 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
     return status;
 }
 
+void PermissionRecordManager::RegisterLockScreenStatusListener()
+{
+    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
+    LockscreenObserver::RegisterEvent();
+}
+
 bool PermissionRecordManager::Register()
 {
     // microphone mute
@@ -881,11 +889,7 @@ bool PermissionRecordManager::Register()
         }
     }
 
-    // screen status change callback register
-    {
-        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-        LockscreenObserver::RegisterEvent();
-    }
+    RegisterLockScreenStatusListener();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register

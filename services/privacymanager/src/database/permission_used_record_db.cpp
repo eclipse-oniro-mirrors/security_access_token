@@ -427,7 +427,8 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         return FAILURE;
     }
     std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" + std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" +
+        std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     int32_t checkResult = ExecuteSql(checkSql);
     ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
     if (checkResult != -1) {

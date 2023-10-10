@@ -122,6 +122,7 @@ private:
 #endif
     int32_t GetAppStatus(AccessTokenID tokenId);
 
+    void RegisterLockScreenStatusListener();
     bool Register();
     void Unregister();
 
