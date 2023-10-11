@@ -117,6 +117,13 @@ if (!defined(global_parts_info) ||
   customization_config_policy_enable = false
 }
 
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.theme_screenlock_mgr)) {
+  theme_screenlock_mgr_enable = true
+} else {
+  theme_screenlock_mgr_enable = false
+}
+
 declare_args() {
   access_token_camera_float_window_enable = true
 }

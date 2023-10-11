@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@
 #include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
+#include "permission_manager.h"
 
 namespace OHOS {
 namespace Security {
@@ -58,32 +59,28 @@ public:
     TempPermissionObserver();
     virtual ~TempPermissionObserver();
 
-    void RegisterApplicationCallback();
-    void RegisterAppManagerDeathCallback();
     void OnAppMgrRemoteDiedHandle();
 
-    void AddPermToPermMap(AccessTokenID tokenID, const std::string& permissionName);
-    void DeletePermFromPermMap(AccessTokenID tokenID, const std::string& permissionName);
+    void AddTempPermTokenToList(AccessTokenID tokenID, const std::string& permissionName);
+    void DeleteTempPermFromList(AccessTokenID tokenID, const std::string& permissionName);
     void RevokeAllTempPermission(AccessTokenID tokenID);
+    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& PermissionStateFullList);
     
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
     bool CancleTaskOfPermissionRevoking(const std::string& taskName);
+    void RegisterCallback();
 
 private:
-    static std::recursive_mutex mutex_;
-    static TempPermissionObserver* implInstance_;
-
     std::shared_ptr<AccessEventHandler> eventHandler_;
 
-    std::mutex processPermMutex_;
-    std::map<AccessTokenID, std::vector<std::string>> processPermMap_;
+    std::mutex tempPermissionMutex_;
+    std::vector<AccessTokenID> tempPermTokenList_;
+
     // appState
-    std::mutex appStateMutex_;
     sptr<PermissionAppStateObserver> appStateCallback_ = nullptr;
 
     // app manager death
-    std::mutex appManagerDeathMutex_;
     std::shared_ptr<PermissionAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     DISALLOW_COPY_AND_MOVE(TempPermissionObserver);
 };

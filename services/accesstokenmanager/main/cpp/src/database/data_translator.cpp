@@ -108,6 +108,17 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
     }
     outPermissionState.resDeviceID.push_back(devID);
 
+    int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
+    if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "grantFlag is wrong");
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
+            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
+            "ERROR_REASON", "permission grant flag error");
+        return RET_FAILED;
+    }
+    
+    outPermissionState.grantFlags.push_back(grantFlag);
+
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus is wrong");
@@ -116,17 +127,11 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
             "ERROR_REASON", "permission grant status error");
         return RET_FAILED;
     }
+    if (grantFlag == PERMISSION_ALLOW_THIS_TIME) {
+        grantStatus = PERMISSION_DENIED;
+    }
     outPermissionState.grantStatus.push_back(grantStatus);
 
-    int grantFlag = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
-    if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "grantFlag is wrong");
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
-            "ERROR_REASON", "permission grant flag error");
-        return RET_FAILED;
-    }
-    outPermissionState.grantFlags.push_back(grantFlag);
     return RET_SUCCESS;
 }
 } // namespace AccessToken

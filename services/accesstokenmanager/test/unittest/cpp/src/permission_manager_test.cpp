@@ -1291,7 +1291,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     GTEST_LOG_(INFO) << "add a hap token";
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    TempPermissionObserver::GetInstance().RegisterApplicationCallback();
+    TempPermissionObserver::GetInstance().RegisterCallback();
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
     EXPECT_EQ(PERMISSION_GRANTED,

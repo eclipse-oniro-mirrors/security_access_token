@@ -80,7 +80,7 @@ public:
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
-    bool GrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
 
 protected:
     static void RegisterImpl(PermissionManager* implInstance);

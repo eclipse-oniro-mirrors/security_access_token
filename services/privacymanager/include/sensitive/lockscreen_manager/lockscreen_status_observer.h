@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,31 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_RECORD_H
-#define PERMISSION_RECORD_H
+#ifndef ACCESS_TOKEN_LOCKSCREEN_STATUS_OBSERVER_H
+#define ACCESS_TOKEN_LOCKSCREEN_STATUS_OBSERVER_H
 
 #include "active_change_response_info.h"
-#include "generic_values.h"
+#include "common_event_manager.h"
+#include "common_event_support.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct PermissionRecord {
-    uint32_t tokenId = 0;
-    int32_t opCode = 0;
-    int32_t status = 0;
-    int64_t timestamp = 0L;
-    int64_t accessDuration = 0L;
-    int32_t accessCount = 0;
-    int32_t rejectCount = 0;
-    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
-    PermissionRecord() = default;
+class LockscreenObserver : public OHOS::EventFwk::CommonEventSubscriber {
+public:
+    LockscreenObserver(const OHOS::EventFwk::CommonEventSubscribeInfo& info) : CommonEventSubscriber(info)
+    {}
 
-    static void TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values);
-    static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
+    ~LockscreenObserver() override = default;
+
+    static void RegisterEvent();
+
+    static void UnRegisterEvent();
+
+    void OnReceiveEvent(const OHOS::EventFwk::CommonEventData& event) override;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_RECORD_H
+#endif // ACCESS_TOKEN_LOCKSCREEN_STATUS_PBSERVER_H

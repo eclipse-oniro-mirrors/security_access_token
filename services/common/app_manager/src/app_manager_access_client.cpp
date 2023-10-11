@@ -118,7 +118,7 @@ void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManag
 void AppManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    for (int i = 0; i < appManagerDeathCallbackList_.size(); i++) {
+    for (size_t i = 0; i < appManagerDeathCallbackList_.size(); i++) {
         appManagerDeathCallbackList_[i]->NotifyAppManagerDeath();
     }
 

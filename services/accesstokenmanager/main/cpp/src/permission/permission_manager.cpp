@@ -433,13 +433,11 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
     if (flag == PERMISSION_ALLOW_THIS_TIME) {
         if (isGranted) {
-            if (!GrantTempPermission(tokenID, permissionName)) {
+            if (!IsAllowGrantTempPermission(tokenID, permissionName)) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
                     tokenID, permissionName.c_str());
                 return ERR_PERMISSION_OPERATE_FAILED;
             }
-        } else {
-            TempPermissionObserver::GetInstance().DeletePermFromPermMap(tokenID, permissionName);
         }
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
@@ -471,10 +469,10 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
-    return ret;
+    return RET_SUCCESS;
 }
 
-bool PermissionManager::GrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
+bool PermissionManager::IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     HapTokenInfo tokenInfo;
     if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
@@ -497,11 +495,9 @@ bool PermissionManager::GrantTempPermission(AccessTokenID tokenID, const std::st
     if (callingUid == ROOT_UID) {
         userEnable = false;
     }
-#endif 
+#endif
     if ((!userEnable) || (isForeground)) {
-        TempPermissionObserver::GetInstance().RegisterApplicationCallback();
-        TempPermissionObserver::GetInstance().RegisterAppManagerDeathCallback();
-        TempPermissionObserver::GetInstance().AddPermToPermMap(tokenID, permissionName);
+        TempPermissionObserver::GetInstance().AddTempPermTokenToList(tokenID, permissionName);
         return true;
     }
     return false;
