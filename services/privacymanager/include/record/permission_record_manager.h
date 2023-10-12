@@ -95,7 +95,7 @@ private:
         int32_t successCount, int32_t failCount, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
-    int32_t DeletePermissionRecord(int64_t days);
+    int32_t DeletePermissionRecord(int32_t days);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
     void GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);

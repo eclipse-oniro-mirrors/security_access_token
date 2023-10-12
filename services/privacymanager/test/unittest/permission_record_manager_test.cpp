@@ -21,13 +21,18 @@
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
+#include "data_translator.h"
 #include "permission_record.h"
 #define private public
 #include "active_status_callback_manager.h"
 #include "permission_record_manager.h"
+#include "permission_record_repository.h"
+#include "permission_used_record_cache.h"
+#include "permission_used_record_db.h"
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
+#include "privacy_field_const.h"
 #include "privacy_kit.h"
 #include "state_change_callback.h"
 #include "time_util.h"
@@ -46,6 +51,7 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
+static constexpr int32_t MAX_DETAIL_NUM = 500;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -128,6 +134,13 @@ static PermissionRecord g_recordB2 = {
     .accessCount = 1,
     .rejectCount = 0,
     .lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED
+};
+
+static PermissionRecord g_record = {
+    .tokenId = 123,
+    .opCode = static_cast<int32_t>(Constant::OpCode::OP_READ_CALENDAR),
+    .status = static_cast<int32_t>(ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND),
+    .lockScreenStatus = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED),
 };
 }
 class PermissionRecordManagerTest : public testing::Test {
@@ -1326,6 +1339,244 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: RecordMergeCheck001
+ * @tc.desc: PermissionUsedRecordCache::RecordMergeCheck function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck001, TestSize.Level1)
+{
+    AccessTokenID tokenID1 = 123; // random input
+    AccessTokenID tokenID2 = 124; // random input
+    int32_t opCode1 = static_cast<int32_t>(Constant::OpCode::OP_READ_CALENDAR);
+    int32_t opCode2 = static_cast<int32_t>(Constant::OpCode::OP_WRITE_CALENDAR);
+    int32_t status1 = static_cast<int32_t>(ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    int32_t status2 = static_cast<int32_t>(ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
+    int32_t lockScreenStatus1 = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    int32_t lockScreenStatus2 = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+
+    int64_t timestamp1 = TimeUtil::GetCurrentTimestamp();
+    PermissionRecord record1 = {
+        .timestamp = timestamp1,
+    };
+    int64_t timestamp2 = timestamp1 + 61 * 1000; // more than 1 min
+    PermissionRecord record2 = {
+        .timestamp = timestamp2,
+    };
+
+    // not in the same minute
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.timestamp = timestamp1; // set the same timestamp to make sure the same minute
+    record1.tokenId = tokenID1;
+    record2.tokenId = tokenID2;
+    // same minute + different tokenID
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.tokenId = tokenID1;
+    record1.opCode = opCode1;
+    record2.opCode = opCode2;
+    // same minute + same tokenID + different opcode
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.opCode = opCode1;
+    record1.status = status1;
+    record2.status = status2;
+    // same minute + same tokenID + same opcode + different status
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.status = status1;
+    record1.lockScreenStatus = lockScreenStatus1;
+    record2.lockScreenStatus = lockScreenStatus2;
+    // same minute + same tokenID + same opcode + same status + different lockScreenStatus
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+}
+
+/*
+ * @tc.name: RecordMergeCheck002
+ * @tc.desc: PermissionUsedRecordCache::RecordMergeCheck function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck002, TestSize.Level1)
+{
+    int32_t accessCount1 = 10; // random input
+    int32_t accessCount2 = 0;
+    int32_t accessCount3 = 9; // random input, diff from accessCount1
+    int32_t rejectCount1 = 11; // random input
+    int32_t rejectCount2 = 0;
+    int32_t rejectCount3 = 8; // random input, diff from accessCount1
+
+    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+
+    // same minute + same tokenID + same opcode + same status + same lockScreenStatus
+    PermissionRecord record1 = g_record;
+    record1.timestamp = timestamp;
+    PermissionRecord record2 = g_record;
+    record2.timestamp = timestamp;
+
+    record1.accessCount = accessCount1;
+    record2.accessCount = accessCount2;
+    // different accessCount type
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record1.accessCount = accessCount2;
+    record2.accessCount = accessCount1;
+    // different accessCount type
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.accessCount = accessCount2;
+    record1.rejectCount = rejectCount1;
+    record2.rejectCount = rejectCount2;
+    // different rejectCount type
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record1.rejectCount = rejectCount2;
+    record2.rejectCount = rejectCount1;
+    // different rejectCount type
+    ASSERT_EQ(false, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record2.rejectCount = rejectCount2;
+    // same accessCount type + same rejectCount type
+    ASSERT_EQ(true, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record1.accessCount = accessCount1;
+    record2.accessCount = accessCount3;
+    record1.rejectCount = rejectCount2;
+    record2.rejectCount = rejectCount2;
+    // same accessCount type + same rejectCount type
+    ASSERT_EQ(true, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record1.accessCount = accessCount2;
+    record2.accessCount = accessCount2;
+    record1.rejectCount = rejectCount1;
+    record2.rejectCount = rejectCount3;
+    // same accessCount type + same rejectCount type
+    ASSERT_EQ(true, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+
+    record1.accessCount = accessCount1;
+    record2.accessCount = accessCount3;
+    record1.rejectCount = rejectCount1;
+    record2.rejectCount = rejectCount3;
+    // same accessCount type + same rejectCount type
+    ASSERT_EQ(true, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+}
+
+/*
+ * @tc.name: GetRecords001
+ * @tc.desc: PermissionUsedRecordCache::GetRecords function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    g_record.tokenId = tokenId;
+    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(g_record);
+    std::vector<std::string> permissionList;
+    GenericValues andConditionValues;
+    std::vector<GenericValues> findRecordsValues;
+    PermissionUsedRecordCache::GetInstance().GetRecords(permissionList, andConditionValues, findRecordsValues, 0);
+    ASSERT_EQ(static_cast<size_t>(0), findRecordsValues.size());
+}
+
+/*
+ * @tc.name: GetRecords002
+ * @tc.desc: PermissionUsedRecordCache::GetRecords function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level1)
+{
+    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId1);
+    g_record.tokenId = tokenId1;
+    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(g_record);
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> lock1(PermissionUsedRecordCache::GetInstance().cacheLock1_);
+        PermissionUsedRecordCache::GetInstance().recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
+        Utils::UniqueWriteGuard<Utils::RWLock> lock2(PermissionUsedRecordCache::GetInstance().cacheLock2_);
+        PermissionUsedRecordCache::GetInstance().persistPendingBufferQueue_.emplace_back(
+            PermissionUsedRecordCache::GetInstance().recordBufferHead_);
+    }
+    PermissionUsedRecordCache::GetInstance().PersistPendingRecords(); // store the data in cache to database immediately
+
+    std::vector<std::string> permissionList;
+    GenericValues andConditionValues;
+    std::vector<GenericValues> findRecordsValues;
+    PermissionUsedRecordCache::GetInstance().GetRecords(permissionList, andConditionValues, findRecordsValues, 10);
+    ASSERT_NE(static_cast<size_t>(0), findRecordsValues.size());
+}
+
+void AddRecord(int32_t num, std::vector<GenericValues>& values)
+{
+    for (int32_t i = 0; i < num; i++) {
+        GenericValues value;
+        value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, i);
+        value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+        value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
+        value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, i);
+        value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, i);
+        value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+        value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+        value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+        values.emplace_back(value);
+    }
+
+    ASSERT_EQ(static_cast<size_t>(num), values.size());
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    sleep(1); // wait record store in database
+}
+
+/**
+ * @tc.name: GetRecords003
+ * @tc.desc: test query record return max count 500.
+ * @tc.type: FUNC
+ * @tc.require: issueI5P4IU
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
+{
+    std::vector<GenericValues> values;
+    int32_t num = MAX_DETAIL_NUM + 1;
+    AddRecord(num, values);
+
+    PermissionUsedRequest request;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_DETAIL;
+
+    GenericValues andConditionValues;
+    std::vector<GenericValues> findRecordsValues;
+    PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList, andConditionValues, findRecordsValues,
+        MAX_DETAIL_NUM);
+    EXPECT_EQ(static_cast<size_t>(MAX_DETAIL_NUM), findRecordsValues.size());
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    for (const auto& value : values) {
+        ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
+    }
+}
+
+/*
+ * @tc.name: GetFromPersistQueueAndDatabase001
+ * @tc.desc: PermissionUsedRecordCache::GetFromPersistQueueAndDatabase function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetFromPersistQueueAndDatabase001, TestSize.Level1)
+{
+    const std::set<int32_t> opCodeList;
+    const GenericValues andConditionValues;
+    std::vector<GenericValues> findRecordsValues;
+    PermissionUsedRecordCache::GetInstance().GetFromPersistQueueAndDatabase(
+        opCodeList, andConditionValues, findRecordsValues, 0);
+    ASSERT_EQ(static_cast<size_t>(0), findRecordsValues.size());
 }
 } // namespace AccessToken
 } // namespace Security

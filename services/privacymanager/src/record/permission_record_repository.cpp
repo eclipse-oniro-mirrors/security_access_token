@@ -52,10 +52,10 @@ bool PermissionRecordRepository::AddRecordValues(const std::vector<GenericValues
 }
 
 bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList, 
-    const GenericValues& andConditionValues, std::vector<GenericValues>& recordValues)
+    const GenericValues& andConditionValues, std::vector<GenericValues>& recordValues, int32_t databaseQueryCount)
 {
     if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,
-        opCodeList, andConditionValues, recordValues) != PermissionUsedRecordDb::SUCCESS) {
+        opCodeList, andConditionValues, recordValues, databaseQueryCount) != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table find fail");
         return false;
     }
@@ -66,7 +66,7 @@ bool PermissionRecordRepository::RemoveRecordValues(const GenericValues& conditi
 {
     if (PermissionUsedRecordDb::GetInstance().Remove(PermissionUsedRecordDb::PERMISSION_RECORD, conditionValues)
         != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table remove fail");
         return false;
     }
     return true;
