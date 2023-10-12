@@ -32,7 +32,7 @@ public:
 
     bool AddRecordValues(const std::vector<GenericValues>& recordValues);
     bool FindRecordValues(const std::set<int32_t>& opCodeList, const GenericValues& andConditionValues,
-        std::vector<GenericValues>& recordValues);
+        std::vector<GenericValues>& recordValues, int32_t databaseQueryCount);
     bool RemoveRecordValues(const GenericValues& conditionValues);
     bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
     void CountRecordValues(GenericValues& resultValues);

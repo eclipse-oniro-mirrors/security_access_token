@@ -122,11 +122,12 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
 }
 
 int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList, 
-    const GenericValues& andConditions, std::vector<GenericValues>& results)
+    const GenericValues& andConditions, std::vector<GenericValues>& results, int32_t databaseQueryCount)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
-    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, opCodeList, andColumns);
+    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, opCodeList, andColumns, databaseQueryCount);
+
     auto statement = Prepare(prepareSql);
 
     for (const auto& columnName : andColumns) {
@@ -277,7 +278,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
 }
 
 std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataType type,
-    const std::set<int32_t>& opCodeList, const std::vector<std::string>& andColumns) const
+    const std::set<int32_t>& opCodeList, const std::vector<std::string>& andColumns, int32_t databaseQueryCount) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -310,6 +311,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
         }
         sql.append("0)");
     }
+    sql.append(" limit " + std::to_string(databaseQueryCount));
     return sql;
 }
 

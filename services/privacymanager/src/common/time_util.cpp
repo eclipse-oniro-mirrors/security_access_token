@@ -26,6 +26,19 @@ int64_t TimeUtil::GetCurrentTimestamp()
     );
     return ms.count();
 }
+
+bool TimeUtil::IsTimeStampsSameMinute(int64_t timeStamp1, int64_t timeStamp2)
+{
+    struct tm t1 = {0};
+    time_t time1 = static_cast<time_t>(timeStamp1 / 1000);
+    // localtime is not thread safe, localtime_r first param unit is second, timestamp unit is ms, so divided by 1000
+    localtime_r(&time1, &t1);
+    struct tm t2 = {0};
+    time_t time2 = static_cast<time_t>(timeStamp2 / 1000);
+    localtime_r(&time2, &t2);
+
+    return t1.tm_min == t2.tm_min;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

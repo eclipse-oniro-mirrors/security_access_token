@@ -73,6 +73,9 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 #endif
+static const int32_t MAX_RECORD_NUM = 500;
+const static int32_t MAX_DETAIL_RECORD = 10;
+const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -235,7 +238,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         std::vector<GenericValues> findRecordsValues;
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
-            andConditionValues, findRecordsValues); // find records from cache and database
+            andConditionValues, findRecordsValues, MAX_RECORD_NUM); // find records from cache and database
         andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
@@ -313,10 +316,10 @@ void PermissionRecordManager::UpdateRecords(
     if (flag == 0) {
         return;
     }
-    if (inBundleRecord.lastAccessTime > 0 && outBundleRecord.accessRecords.size() < Constant::MAX_DETAIL_RECORD) {
+    if (inBundleRecord.lastAccessTime > 0 && outBundleRecord.accessRecords.size() < MAX_DETAIL_RECORD) {
         outBundleRecord.accessRecords.emplace_back(inBundleRecord.accessRecords[0]);
     }
-    if (inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < Constant::MAX_DETAIL_RECORD) {
+    if (inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < MAX_DETAIL_RECORD) {
         outBundleRecord.rejectRecords.emplace_back(inBundleRecord.rejectRecords[0]);
     }
 }
@@ -330,25 +333,26 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 
     auto deleteRecordsTask = [this]() {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "DeletePermissionRecord task called");
-        DeletePermissionRecord(Constant::RECORD_DELETE_TIME);
+        DeletePermissionRecord(recordAgingTime_);
     };
     deleteTaskWorker_.AddTask(deleteRecordsTask);
 }
 
-int32_t PermissionRecordManager::DeletePermissionRecord(int64_t days)
+int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
+    int64_t interval = days * 86400 * MILLISECONDS; // 86400 = 24 * 60 * 60, total seconds of one day
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
     PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
     int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);
-    if (total > Constant::MAX_TOTAL_RECORD) {
-        uint32_t excessiveSize = total - Constant::MAX_TOTAL_RECORD;
+    if (total > recordSizeMaximum_) {
+        uint32_t excessiveSize = total - recordSizeMaximum_;
         if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {
             return Constant::FAILURE;
         }
     }
     GenericValues andConditionValues;
-    int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - days;
+    int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - interval;
     andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
     if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
         return Constant::FAILURE;

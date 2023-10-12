@@ -68,13 +68,6 @@ public:
         SUCCESS = 0,
     };
 
-    const static int32_t MAX_TOTAL_RECORD = 10000;
-    const static int32_t MAX_DETAIL_RECORD = 10;
-    const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
-    const static int64_t RECORD_DELETE_TIME = 30 * 86400 * MILLISECONDS;
-    const static int64_t PRECISE = 60 * MILLISECONDS;
-    const static int64_t LATEST_RECORD_TIME = 7 * 86400 * MILLISECONDS;
-
     const static std::map<std::string, int32_t> PERMISSION_OPCODE_MAP;
 public:
     static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);

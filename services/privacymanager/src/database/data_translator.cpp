@@ -23,6 +23,9 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static const int64_t LATEST_RECORD_TIME = 7 * 86400 * 1000;
+}
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
     GenericValues& andGenericValues)
 {
@@ -37,7 +40,7 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     }
 
     if (begin == 0 && end == 0) {
-        int64_t beginTime = TimeUtil::GetCurrentTimestamp() - Constant::LATEST_RECORD_TIME;
+        int64_t beginTime = TimeUtil::GetCurrentTimestamp() - LATEST_RECORD_TIME;
         begin = (beginTime < 0) ? 0 : beginTime;
         end = TimeUtil::GetCurrentTimestamp();
     }

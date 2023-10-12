@@ -38,10 +38,10 @@ public:
     int32_t PersistPendingRecords();
     int32_t RemoveRecords(const AccessTokenID tokenId);
     void RemoveFromPersistQueueAndDatabase(const AccessTokenID tokenId);
-    void GetRecords(const std::vector<std::string>& permissionList,
-        const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues);
-    void GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
-        const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues);
+    void GetRecords(const std::vector<std::string>& permissionList, const GenericValues& andConditionValues,
+        std::vector<GenericValues>& findRecordsValues, int32_t cache1QueryCount);
+    void GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList, const GenericValues& andConditionValues,
+        std::vector<GenericValues>& findRecordsValues, int32_t cache2QueryCount);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
         const GenericValues& andConditionValues, const PermissionRecord& record);
     void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);
@@ -58,6 +58,8 @@ public:
 #endif
 
 private:
+    bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2);
+
     int32_t readableSize_ = 0;
     std::shared_ptr<PermissionUsedRecordNode> recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;

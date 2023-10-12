@@ -15,6 +15,8 @@
 
 #include "privacy_kit_test.h"
 
+#include <chrono>
+
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "on_permission_used_record_callback_stub.h"
@@ -301,6 +303,24 @@ static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
     EXPECT_EQ(0, SetSelfTokenID(g_tokenIdC.tokenIDEx));
 }
 
+void SleepUtilMinuteEnd()
+{
+    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()
+    );
+
+    int64_t timestamp_ms = ms.count();
+    time_t timestamp_s = static_cast<time_t>(timestamp_ms / 1000);
+    struct tm t = {0};
+    // localtime is not thread safe, localtime_r first param unit is second, timestamp unit is ms, so divided by 1000
+    localtime_r(&timestamp_s, &t);
+    uint32_t sleepSeconds = static_cast<uint32_t>(60 - t.tm_sec);
+
+    GTEST_LOG_(INFO) << "current time is " << timestamp_ms << ", " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec;
+    GTEST_LOG_(INFO) << "need to sleep " << sleepSeconds << " seconds";
+    sleep(sleepSeconds);
+}
+
 /**
  * @tc.name: AddPermissionUsedRecord001
  * @tc.desc: cannot AddPermissionUsedRecord with illegal tokenId and permission.
@@ -458,6 +478,7 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
 {
+    SleepUtilMinuteEnd();
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
@@ -476,10 +497,8 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     CheckPermissionUsedResult(request, result, 1, 4, 0);
 
     sleep(61);
+
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
-
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
@@ -591,6 +610,30 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord009, TestSize.Level1)
             ASSERT_EQ(3, result.bundleRecords[0].permissionRecords[i].rejectRecords[0].count);
         }
     }
+}
+
+/**
+ * @tc.name: AddPermissionUsedRecord010
+ * @tc.desc: test record cross minute not merge.
+ * @tc.type: FUNC
+ * @tc.require: issueI5P4IU
+ */
+HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord010, TestSize.Level1)
+{
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
+    SleepUtilMinuteEnd();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdA, "ohos.permission.CAMERA", 1, 0));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), g_infoParmsA.bundleName, permissionList, request);
+    request.flag = FLAG_PERMISSION_USAGE_DETAIL;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
 }
 
 /**

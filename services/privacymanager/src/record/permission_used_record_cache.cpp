@@ -40,6 +40,36 @@ PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
     return instance;
 }
 
+bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2)
+{
+    // timestamp in the same minute
+    if (!TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
+        return false;
+    }
+
+    // the same tokenID + opCode + status + lockScreenStatus
+    if ((record1.tokenId != record2.tokenId) ||
+        (record1.opCode != record2.opCode) ||
+        (record1.status != record2.status) ||
+        (record1.lockScreenStatus != record2.lockScreenStatus)) {
+        return false;
+    }
+
+    // both success
+    if (((record1.accessCount > 0) && (record2.accessCount == 0)) ||
+        ((record1.accessCount == 0) && (record2.accessCount > 0))) {
+        return false;
+    }
+
+    // both failure
+    if (((record1.rejectCount > 0) && (record2.rejectCount == 0)) ||
+        ((record1.rejectCount == 0) && (record2.rejectCount > 0))) {
+        return false;
+    }
+
+    return true;
+}
+
 void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record)
 {
     if (nextPersistTimestamp_ == 0) {
@@ -59,11 +89,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
             if ((record.timestamp - curFindMergePos->record.timestamp) >= INTERVAL) {
                 persistPendingBufferEnd = curFindMergePos;
                 break;
-            } else if (curFindMergePos->record.tokenId == record.tokenId &&
-                record.opCode == curFindMergePos->record.opCode &&
-                record.status == curFindMergePos->record.status &&
-                record.lockScreenStatus == curFindMergePos->record.lockScreenStatus &&
-                (record.timestamp - curFindMergePos->record.timestamp) <= Constant::PRECISE) {
+            } else if (RecordMergeCheck(curFindMergePos->record, record)) {
                 MergeRecord(mergedRecord, curFindMergePos);
             } else {
                 remainCount++;
@@ -246,7 +272,7 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
 }
 
 void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permissionList,
-    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues)
+    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues, int32_t cache1QueryCount)
 {
     std::set<int32_t> opCodeList;
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
@@ -260,11 +286,15 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
         curFindPos = recordBufferHead_->next;
         persistPendingBufferHead = recordBufferHead_;
         while (curFindPos != nullptr) {
+            if (cache1QueryCount == 0) {
+                break;
+            }
             auto next = curFindPos->next;
             if (RecordCompare(tokenId, opCodeList, andConditionValues, curFindPos->record)) {
                 GenericValues recordValues;
                 PermissionRecord::TranslationIntoGenericValues(curFindPos->record, recordValues);
                 findRecordsValues.emplace_back(recordValues);
+                cache1QueryCount--;
             }
             if (TimeUtil::GetCurrentTimestamp() - curFindPos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindPos;
@@ -277,36 +307,44 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
     }
-    GetFromPersistQueueAndDatabase(opCodeList, andConditionValues, findRecordsValues);
+    if (cache1QueryCount > 0) {
+        GetFromPersistQueueAndDatabase(opCodeList, andConditionValues, findRecordsValues, cache1QueryCount);
+    }
     if (countPersistPendingNode != 0) {
         AddToPersistQueue(persistPendingBufferHead);
     }
 }
 
 void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
-    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues)
+    const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues, int32_t cache2QueryCount)
 {
     AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     {
         Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
-        if (!persistPendingBufferQueue_.empty()) {
-            for (const auto& persistHead : persistPendingBufferQueue_) {
-                curFindPos = persistHead->next;
-                while (curFindPos != nullptr) {
-                    auto next = curFindPos->next;
-                    if (RecordCompare(tokenId, opCodeList, andConditionValues, curFindPos->record)) {
-                        GenericValues recordValues;
-                        PermissionRecord::TranslationIntoGenericValues(curFindPos->record, recordValues);
-                        findRecordsValues.emplace_back(recordValues);
+        for (const auto& persistHead : persistPendingBufferQueue_) {
+            curFindPos = persistHead->next;
+            while (curFindPos != nullptr) {
+                auto next = curFindPos->next;
+                if (RecordCompare(tokenId, opCodeList, andConditionValues, curFindPos->record)) {
+                    GenericValues recordValues;
+                    PermissionRecord::TranslationIntoGenericValues(curFindPos->record, recordValues);
+                    if (cache2QueryCount == 0) {
+                        break;
                     }
-                    curFindPos = next;
+                    findRecordsValues.emplace_back(recordValues);
+                    cache2QueryCount--;
                 }
+                curFindPos = next;
+            }
+            if (cache2QueryCount == 0) {
+                return;
             }
         }
     }
+
     if (!PermissionRecordRepository::GetInstance().FindRecordValues(opCodeList, andConditionValues,
-        findRecordsValues)) { // find records from database
+        findRecordsValues, cache2QueryCount)) { // find records from database
         ACCESSTOKEN_LOG_ERROR(LABEL, "find records from database failed");
     }
 }
