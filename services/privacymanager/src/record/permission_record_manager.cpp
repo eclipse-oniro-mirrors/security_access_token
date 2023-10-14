@@ -403,15 +403,6 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
 void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-    lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
-        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "current lockscreen status is : %{public}d", lockScreenStatus);
-        return;
-    }
-#endif
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
@@ -436,6 +427,12 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, A
             int64_t curStamp = TimeUtil::GetCurrentTimestamp();
             // update accessDuration and store in database
             it->accessDuration = curStamp - it->timestamp;
+            int32_t lockScreenStatus = it->lockScreenStatus;
+            if (it->status == PERM_ACTIVE_IN_FOREGROUND && lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
+                ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
+                it->status = PERM_ACTIVE_IN_BACKGROUND;
+                it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
+            }
             AddRecord(*it);
 
             // update status to input, accessDuration to 0 and timestamp to now in cache
@@ -483,14 +480,12 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenS
         // update accessDuration and store in databases
         int64_t curStamp = TimeUtil::GetCurrentTimestamp();
         it->accessDuration = curStamp - it->timestamp;
-        /**
-         * In screen lock and screen unlock scenarios, do not modify the status of the front-end and back-end of
-         *  startRecordList_. The logic of changing the screen lock status is not processed. Therefore,
-         *  permission access records are not generated repeatedly.
-         */
+
         int32_t tempStatus = it->status;
-        if (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED) {
-            it->status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND;
+        if (tempStatus == PERM_ACTIVE_IN_FOREGROUND && it->lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
+            it->status = PERM_ACTIVE_IN_BACKGROUND;
+            it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
         }
         AddRecord(*it);
 

@@ -39,6 +39,7 @@ void LockscreenObserver::RegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "RegisterEvent start");
     if (g_isRegistered) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "status observer already registered");
         return;
     }
 
