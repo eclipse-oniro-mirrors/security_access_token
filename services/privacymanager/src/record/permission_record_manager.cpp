@@ -402,7 +402,7 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, A
             it->accessDuration = curStamp - it->timestamp;
             int32_t lockScreenStatus = it->lockScreenStatus;
             if (it->status == PERM_ACTIVE_IN_FOREGROUND && lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert background & unlocked");
+                ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
                 it->status = PERM_ACTIVE_IN_BACKGROUND;
                 it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
             }
@@ -456,10 +456,10 @@ void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenS
 
         int32_t tempStatus = it->status;
         if (tempStatus == PERM_ACTIVE_IN_FOREGROUND && it->lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert background & unlocked");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
             it->status = PERM_ACTIVE_IN_BACKGROUND;
             it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
-        } 
+        }
         AddRecord(*it);
 
         // update lockScreenStatus to input, accessDuration to 0 and timestamp to now in cache
