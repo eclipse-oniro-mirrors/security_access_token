@@ -48,7 +48,7 @@ ohos_unittest("libdatabase_test") {
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
-    "${access_token_path}/services/common/database:accesstoken_database_cxx",
+    "${access_token_path}/services/common:accesstoken_service_common",
     "//third_party/sqlite:sqlite",
   ]
 

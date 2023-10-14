@@ -13,34 +13,48 @@
  * limitations under the License.
  */
 
-#ifndef APP_MANAGER_PRIVACY_CLIENT_H
-#define APP_MANAGER_PRIVACY_CLIENT_H
+#ifndef ACCESS_APP_MANAGER_ACCESS_CLIENT_H
+#define ACCESS_APP_MANAGER_ACCESS_CLIENT_H
 
 #include <mutex>
 #include <string>
 
 #include "app_status_change_callback.h"
+#include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
-#include "app_manager_privacy_proxy.h"
+#include "app_manager_access_proxy.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AppManagerPrivacyClient final {
+class AppMgrDeathRecipientObserver : public IRemoteBroker {
 public:
-    static AppManagerPrivacyClient& GetInstance();
-    virtual ~AppManagerPrivacyClient();
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.appexecfwk.IApplicationStateObserver");
+
+    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) = 0;
+    virtual void OnProcessDied(const ProcessData &processData) = 0;
+
+    enum class Message {
+        TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
+        TRANSACT_ON_PROCESS_DIED = 5,
+    };
+};
+
+class AppManagerAccessClient final {
+public:
+    static AppManagerAccessClient& GetInstance();
+    virtual ~AppManagerAccessClient();
 
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t GetForegroundApplications(std::vector<AppStateData>& list);
-
+    void RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback);
     void OnRemoteDiedHandle();
 
 private:
-    AppManagerPrivacyClient();
-    DISALLOW_COPY_AND_MOVE(AppManagerPrivacyClient);
+    AppManagerAccessClient();
+    DISALLOW_COPY_AND_MOVE(AppManagerAccessClient);
 
     void InitProxy();
     sptr<IAppMgr> GetProxy();
@@ -48,9 +62,10 @@ private:
     sptr<AppMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
     sptr<IAppMgr> proxy_ = nullptr;
+    std::vector<std::shared_ptr<AppManagerDeathCallback>> appManagerDeathCallbackList_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // APP_MANAGER_PRIVACY_CLIENT_H
+#endif // ACCESS_APP_MANAGER_ACCESS_CLIENT_H
 

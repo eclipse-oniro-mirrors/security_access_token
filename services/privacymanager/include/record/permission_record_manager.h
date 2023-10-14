@@ -22,6 +22,7 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
 #include "audio_global_switch_change_stub.h"
@@ -45,6 +46,23 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+class PrivacyAppStateObserver : public ApplicationStateObserverStub {
+public:
+    PrivacyAppStateObserver() = default;
+    ~PrivacyAppStateObserver() = default;
+
+    void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    DISALLOW_COPY_AND_MOVE(PrivacyAppStateObserver);
+};
+
+class PrivacyAppManagerDeathCallback : public AppManagerDeathCallback {
+public:
+    PrivacyAppManagerDeathCallback() = default;
+    ~PrivacyAppManagerDeathCallback() = default;
+
+    void NotifyAppManagerDeath() override;
+    DISALLOW_COPY_AND_MOVE(PrivacyAppManagerDeathCallback);
+};
 
 class PermissionRecordManager final {
 public:
@@ -124,6 +142,7 @@ private:
 
     bool RegisterAppStatusAndLockScreenStatusListener();
     bool Register();
+    bool RegisterApplicationStateObserver();
     void Unregister();
 
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
@@ -152,7 +171,11 @@ private:
 
     // appState
     std::mutex appStateMutex_;
-    sptr<ApplicationStateObserverStub> appStateCallback_ = nullptr;
+    sptr<PrivacyAppStateObserver> appStateCallback_ = nullptr;
+
+    // app manager death
+    std::mutex appManagerDeathMutex_;
+    std::shared_ptr<PrivacyAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
 
     // lockScreenState
     std::mutex lockScreenStateMutex_;

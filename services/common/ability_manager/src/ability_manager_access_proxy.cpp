@@ -13,18 +13,18 @@
  * limitations under the License.
  */
 
-#include "ability_manager_privacy_proxy.h"
+#include "ability_manager_access_proxy.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
-#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-    constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AbilityManagerPrivacyProxy"};
+    constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AbilityManagerAccessProxy"};
 }
 
-int AbilityManagerPrivacyProxy::StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
+int AbilityManagerAccessProxy::StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
     int requestCode, int32_t userId)
 {
     MessageParcel data;
@@ -33,35 +33,35 @@ int AbilityManagerPrivacyProxy::StartAbility(const AAFwk::Want &want, const sptr
 
     if (!data.WriteInterfaceToken(GetDescriptor())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     if (!data.WriteParcelable(&want)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "want write failed.");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (callerToken) {
         if (!data.WriteBool(true) || !data.WriteRemoteObject(callerToken)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "callerToken and flag write failed.");
-            return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+            return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
         }
     } else {
         if (!data.WriteBool(false)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "flag write failed.");
-            return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+            return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
         }
     }
     if (!data.WriteInt32(userId)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "userId write failed.");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(requestCode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "requestCode write failed.");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
     int error = Remote()->SendRequest(
-        static_cast<uint32_t>(PrivacyAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER), data, reply, option);
+        static_cast<uint32_t>(AccessAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER), data, reply, option);
     if (error != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Send request error: %{public}d", error);
         return error;

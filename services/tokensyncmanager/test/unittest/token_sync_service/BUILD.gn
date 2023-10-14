@@ -20,7 +20,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
   module_out_path = part_name + "/" + part_name
 
   sources = [
-    #"../../../src/common/constant.cpp",
     "../../../src/command/base_remote_command.cpp",
     "../../../src/command/delete_remote_token_command.cpp",
     "../../../src/command/sync_remote_hap_token_command.cpp",
@@ -35,14 +34,11 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "../../../src/remote/soft_bus_device_connection_listener.cpp",
     "../../../src/remote/soft_bus_manager.cpp",
     "../../../src/remote/soft_bus_session_listener.cpp",
-    "../../../src/service/token_sync_event_handler.cpp",
     "../../../src/service/token_sync_manager_service.cpp",
     "../../../src/service/token_sync_manager_stub.cpp",
     "../../mock/src/constant_mock.cpp",
     "../../mock/src/soft_bus_center_mock.cpp",
     "../../mock/src/soft_bus_session_mock.cpp",
-
-    #"../../mock/src/mock_parameter.c",
     "token_sync_service_test.cpp",
   ]
 
@@ -61,7 +57,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/services/common/handler/include",
   ]
 
   deps = [
@@ -69,6 +65,7 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/services/common:accesstoken_service_common",
     "//third_party/zlib:libz",
   ]
 

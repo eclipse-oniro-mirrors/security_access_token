@@ -29,6 +29,7 @@
 #include "permission_list_state_parcel.h"
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
+#include "temp_permission_observer.h"
 
 #include "rwlock.h"
 #include "nocopyable.h"
@@ -44,8 +45,11 @@ const int32_t ACCURATE_LOCATION_API_VERSION = 9;
 class PermissionManager {
 public:
     static PermissionManager& GetInstance();
+    PermissionManager();
     virtual ~PermissionManager();
 
+    void RegisterApplicationCallback();
+    void RegisterAppManagerDeathCallback();
     void AddDefPermissions(const std::vector<PermissionDef>& permList, AccessTokenID tokenId,
         bool updateFlag);
     void RemoveDefPermissions(AccessTokenID tokenID);
@@ -76,7 +80,7 @@ public:
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
-    PermissionManager();
+    bool IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
 
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
@@ -100,12 +104,12 @@ private:
     void SetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList, uint32_t index, int32_t state);
     bool LocationHandleWithVague(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull>& permsList, uint32_t vagueIndex, uint32_t accurateIndex, uint32_t backIndex);
-
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
+
     PermissionGrantEvent grantEvent_;
-    static PermissionManager* implInstance_;
     static std::recursive_mutex mutex_;
+    static PermissionManager* implInstance_;
 
     OHOS::Utils::RWLock permParamSetLock_;
     uint64_t paramValue_ = 0;

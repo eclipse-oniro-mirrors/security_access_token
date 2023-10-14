@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ability_manager_privacy_client.h"
+#include "ability_manager_access_client.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "iservice_registry.h"
-#include "privacy_error.h"
 #include "system_ability_definition.h"
 
 namespace OHOS {
@@ -23,36 +23,36 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AbilityManagerPrivacyClient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AbilityManagerAccessClient"
 };
 } // namespace
 
-AbilityManagerPrivacyClient& AbilityManagerPrivacyClient::GetInstance()
+AbilityManagerAccessClient& AbilityManagerAccessClient::GetInstance()
 {
-    static AbilityManagerPrivacyClient instance;
+    static AbilityManagerAccessClient instance;
     return instance;
 }
 
-AbilityManagerPrivacyClient::AbilityManagerPrivacyClient()
+AbilityManagerAccessClient::AbilityManagerAccessClient()
 {}
 
-AbilityManagerPrivacyClient::~AbilityManagerPrivacyClient()
+AbilityManagerAccessClient::~AbilityManagerAccessClient()
 {}
 
-int32_t AbilityManagerPrivacyClient::StartAbility(
+int32_t AbilityManagerAccessClient::StartAbility(
     const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int requestCode, int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return PrivacyError::ERR_SERVICE_ABNORMAL;
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Start ability %{public}s, userId:%{public}d",
         want.GetElement().GetAbilityName().c_str(), userId);
     return proxy->StartAbility(want, callerToken, userId, requestCode);
 }
 
-void AbilityManagerPrivacyClient::InitProxy()
+void AbilityManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
@@ -65,9 +65,9 @@ void AbilityManagerPrivacyClient::InitProxy()
         return;
     }
 
-    auto deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new AbilityManagerPrivacyDeathRecipient());
+    auto deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new AbilityManagerAccessDeathRecipient());
     if (deathRecipient_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create AbilityManagerPrivacyDeathRecipient failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create AbilityManagerAccessDeathRecipient failed");
         return;
     }
 
@@ -86,13 +86,13 @@ void AbilityManagerPrivacyClient::InitProxy()
     }
 }
 
-void AbilityManagerPrivacyClient::OnRemoteDiedHandle()
+void AbilityManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     proxy_ = nullptr;
 }
 
-sptr<IAbilityManager> AbilityManagerPrivacyClient::GetProxy()
+sptr<IAbilityManager> AbilityManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {

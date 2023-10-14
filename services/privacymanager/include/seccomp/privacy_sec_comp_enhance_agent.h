@@ -17,6 +17,7 @@
 
 #include <mutex>
 #include <vector>
+#include "app_manager_death_callback.h"
 #include "app_status_change_callback.h"
 #include "nocopyable.h"
 #include "sec_comp_enhance_data.h"
@@ -31,6 +32,15 @@ public:
 
     void OnProcessDied(const ProcessData &processData) override;
     DISALLOW_COPY_AND_MOVE(PrivacyAppUsingSecCompStateObserver);
+};
+
+class PrivacySecCompAppManagerDeathCallback : public AppManagerDeathCallback {
+public:
+    PrivacySecCompAppManagerDeathCallback() = default;
+    ~PrivacySecCompAppManagerDeathCallback() = default;
+
+    void NotifyAppManagerDeath() override;
+    DISALLOW_COPY_AND_MOVE(PrivacySecCompAppManagerDeathCallback);
 };
 
 class PrivacySecCompEnhanceAgent final {
@@ -50,6 +60,7 @@ private:
 
 private:
     sptr<PrivacyAppUsingSecCompStateObserver> observer_ = nullptr;
+    std::shared_ptr<PrivacySecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
     bool isRecoverd = false;

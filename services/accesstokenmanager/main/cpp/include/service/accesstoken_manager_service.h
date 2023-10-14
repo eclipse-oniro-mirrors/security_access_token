@@ -20,12 +20,13 @@
 #include <vector>
 
 #include "accesstoken_manager_stub.h"
+#include "access_event_handler.h"
+#include "access_token.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "singleton.h"
 #include "system_ability.h"
 #include "hap_token_info.h"
-#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -84,9 +85,11 @@ public:
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
-    bool Initialize() const;
+    bool Initialize();
     void AccessTokenServiceParamSet() const;
 
+    std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
+    std::shared_ptr<AccessEventHandler> eventHandler_;
     ServiceRunningState state_;
 };
 } // namespace AccessToken

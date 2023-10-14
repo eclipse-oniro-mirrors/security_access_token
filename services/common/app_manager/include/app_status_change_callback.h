@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 
-#ifndef PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
-#define PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
+#ifndef ACCESS_APP_STATUS_CHANGE_CALLBACK_H
+#define ACCESS_APP_STATUS_CHANGE_CALLBACK_H
 
 #include <vector>
-#include "app_manager_privacy_proxy.h"
+#include "app_manager_access_proxy.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
 
@@ -32,7 +32,7 @@ public:
     virtual int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
-    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
+    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override {};
     virtual void OnProcessDied(const ProcessData &processData) override {};
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
@@ -42,4 +42,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PRIVACY_APP_STATUS_CHANGE_CALLBACK_H
+#endif // ACCESS_APP_STATUS_CHANGE_CALLBACK_H

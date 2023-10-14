@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_SYNC_EVENT_HANDLER_H
-#define TOKEN_SYNC_EVENT_HANDLER_H
+#ifndef ACCESS_EVENT_HANDLER_H
+#define ACCESS_EVENT_HANDLER_H
 
 #include <memory>
 
@@ -24,10 +24,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class TokenSyncEventHandler : public AppExecFwk::EventHandler {
+class AccessEventHandler : public AppExecFwk::EventHandler {
 public:
-    explicit TokenSyncEventHandler(const std::shared_ptr<AppExecFwk::EventRunner>& runner);
-    virtual ~TokenSyncEventHandler() override;
+    explicit AccessEventHandler(const std::shared_ptr<AppExecFwk::EventRunner>& runner);
+    virtual ~AccessEventHandler() override;
 
     bool ProxyPostTask(const Callback &callback, int64_t delayTime);
 
@@ -40,4 +40,4 @@ private:
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-#endif  // TOKEN_SYNC_EVENT_HANDLER_H
+#endif  // ACCESS_EVENT_HANDLER_H

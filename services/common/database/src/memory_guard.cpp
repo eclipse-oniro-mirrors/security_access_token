@@ -23,7 +23,7 @@ namespace AccessToken {
 namespace {
 #ifdef CONFIG_USE_JEMALLOC_DFX_INTF
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "MemoryGuard"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "MemoryGuard"
 };
 #endif
 }

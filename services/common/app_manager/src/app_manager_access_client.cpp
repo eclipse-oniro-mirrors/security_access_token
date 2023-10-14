@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "app_manager_privacy_client.h"
+#include "app_manager_access_client.h"
 #include <unistd.h>
 
 #include "accesstoken_log.h"
@@ -24,24 +24,25 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppManagerPrivacyClient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
 };
 } // namespace
 
-AppManagerPrivacyClient& AppManagerPrivacyClient::GetInstance()
+AppManagerAccessClient& AppManagerAccessClient::GetInstance()
 {
-    static AppManagerPrivacyClient instance;
+    static AppManagerAccessClient instance;
     return instance;
 }
 
-AppManagerPrivacyClient::AppManagerPrivacyClient()
+AppManagerAccessClient::AppManagerAccessClient()
 {}
 
-AppManagerPrivacyClient::~AppManagerPrivacyClient()
+AppManagerAccessClient::~AppManagerAccessClient()
 {}
 
-int32_t AppManagerPrivacyClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
+int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     if (observer == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: callback is nullptr");
         return -1;
@@ -55,7 +56,7 @@ int32_t AppManagerPrivacyClient::RegisterApplicationStateObserver(const sptr<IAp
     return proxy->RegisterApplicationStateObserver(observer, bundleNameList);
 }
 
-int32_t AppManagerPrivacyClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
+int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
 {
     if (observer == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: callback is nullptr");
@@ -69,7 +70,7 @@ int32_t AppManagerPrivacyClient::UnregisterApplicationStateObserver(const sptr<I
     return proxy->UnregisterApplicationStateObserver(observer);
 }
 
-int32_t AppManagerPrivacyClient::GetForegroundApplications(std::vector<AppStateData>& list)
+int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateData>& list)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -79,7 +80,7 @@ int32_t AppManagerPrivacyClient::GetForegroundApplications(std::vector<AppStateD
     return proxy->GetForegroundApplications(list);
 }
 
-void AppManagerPrivacyClient::InitProxy()
+void AppManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
@@ -89,7 +90,7 @@ void AppManagerPrivacyClient::InitProxy()
     auto appManagerSa = sam->GetSystemAbility(APP_MGR_SERVICE_ID);
     if (appManagerSa == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
-            AUDIO_POLICY_SERVICE_ID);
+            APP_MGR_SERVICE_ID);
         return;
     }
 
@@ -104,13 +105,31 @@ void AppManagerPrivacyClient::InitProxy()
     }
 }
 
-void AppManagerPrivacyClient::OnRemoteDiedHandle()
+void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: callback is nullptr");
+        return;
+    }
+    appManagerDeathCallbackList_.emplace_back(callback);
+}
+
+void AppManagerAccessClient::OnRemoteDiedHandle()
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    for (size_t i = 0; i < appManagerDeathCallbackList_.size(); i++) {
+        appManagerDeathCallbackList_[i]->NotifyAppManagerDeath();
+    }
+
     proxy_ = nullptr;
 }
 
-sptr<IAppMgr> AppManagerPrivacyClient::GetProxy()
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
+#endif
+
+sptr<IAppMgr> AppManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {

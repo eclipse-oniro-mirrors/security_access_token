@@ -29,7 +29,6 @@ namespace AccessToken {
 namespace {
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
-static constexpr uint32_t PERMISSION_FLAG = 2;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
 static const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:";
 static const std::string TOOLS_NAME = "atm";
@@ -247,9 +246,9 @@ int32_t AtmCommand::ModifyPermission(const OptType& type, AccessTokenID tokenId,
 
     int32_t result = 0;
     if (type == PERM_GRANT) {
-        result = AccessTokenKit::GrantPermission(tokenId, permissionName, PERMISSION_FLAG);
+        result = AccessTokenKit::GrantPermission(tokenId, permissionName, PERMISSION_USER_FIXED);
     } else if (type == PERM_REVOKE) {
-        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_FLAG);
+        result = AccessTokenKit::RevokePermission(tokenId, permissionName, PERMISSION_USER_FIXED);
     } else {
         return ERR_INVALID_VALUE;
     }

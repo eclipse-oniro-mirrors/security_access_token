@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_APP_MANAGER_PRIVACY_PROXY_H
-#define OHOS_APP_MANAGER_PRIVACY_PROXY_H
+#ifndef ACCESS_APP_MANAGER_ACCESS_PROXY_H
+#define ACCESS_APP_MANAGER_ACCESS_PROXY_H
 
 #include <iremote_proxy.h>
 
 #include "app_state_data.h"
 #include "process_data.h"
-#include "privacy_am_service_ipc_interface_code.h"
+#include "service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,20 +54,20 @@ public:
     };
 };
 
-class AppManagerPrivacyProxy : public IRemoteProxy<IAppMgr> {
+class AppManagerAccessProxy : public IRemoteProxy<IAppMgr> {
 public:
-    explicit AppManagerPrivacyProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAppMgr>(impl) {};
+    explicit AppManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAppMgr>(impl) {};
 
-    virtual ~AppManagerPrivacyProxy() = default;
+    virtual ~AppManagerAccessProxy() = default;
 
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
         const std::vector<std::string> &bundleNameList = {}) override;
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer) override;
     int32_t GetForegroundApplications(std::vector<AppStateData>& list) override;
 private:
-    static inline BrokerDelegator<AppManagerPrivacyProxy> delegator_;
+    static inline BrokerDelegator<AppManagerAccessProxy> delegator_;
 };
-}
-}
-}
-#endif // OHOS_APP_MANAGER_PRIVACY_PROXY_H
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // ACCESS_APP_MANAGER_ACCESS_PROXY_H

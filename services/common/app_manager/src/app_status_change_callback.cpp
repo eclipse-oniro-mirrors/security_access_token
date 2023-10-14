@@ -15,14 +15,13 @@
 
 #include "app_status_change_callback.h"
 #include "accesstoken_log.h"
-#include "permission_record_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ApplicationStateObserverStub"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ApplicationStateObserverStub"
 };
 }
 
@@ -82,22 +81,6 @@ int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, M
 
     OnProcessDied(*processData);
     return NO_ERROR;
-}
-
-void ApplicationStateObserverStub::OnForegroundApplicationChanged(const AppStateData& appStateData)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
-        appStateData.accessTokenId, appStateData.state);
-
-    uint32_t tokenId = appStateData.accessTokenId;
-
-    ActiveChangeType status = PERM_INACTIVE;
-    if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
-        status = PERM_ACTIVE_IN_FOREGROUND;
-    } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
-        status = PERM_ACTIVE_IN_BACKGROUND;
-    }
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 }
 } // namespace AccessToken
 } // namespace Security

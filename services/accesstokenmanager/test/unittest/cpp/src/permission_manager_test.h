@@ -17,7 +17,10 @@
 #define PERMISSION_MANAGER_TEST_H
 
 #include <gtest/gtest.h>
+#define private public
 #include "accesstoken_manager_service.h"
+#include "permission_manager.h"
+#undef private
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +34,9 @@ public:
     void SetUp();
 
     void TearDown();
+
+    sptr<AccessTokenManagerService> accessTokenService_ = nullptr;
+    std::shared_ptr<PermissionAppStateObserver> observer_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

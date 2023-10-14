@@ -25,7 +25,6 @@
 #define private public
 #include "accesstoken_info_manager.h"
 #include "permission_definition_cache.h"
-#include "permission_manager.h"
 #undef private
 #include "permission_state_change_callback_stub.h"
 
@@ -235,6 +234,19 @@ void PermissionManagerTest::TearDownTestCase()
 
 void PermissionManagerTest::SetUp()
 {
+    if (accessTokenService_ != nullptr) {
+        return;
+    }
+    AccessTokenManagerService* ptr = new (std::nothrow) AccessTokenManagerService();
+    accessTokenService_ = sptr<AccessTokenManagerService>(ptr);
+    ASSERT_NE(nullptr, accessTokenService_);
+
+    if (observer_ != nullptr) {
+        return;
+    }
+
+    observer_ = std::make_shared<PermissionAppStateObserver>();
+    ASSERT_NE(nullptr, observer_);
     PermissionDef infoManagerPermDef = {
         .permissionName = "ohos.permission.CAMERA",
         .bundleName = "accesstoken_test",
@@ -255,7 +267,10 @@ void PermissionManagerTest::SetUp()
 }
 
 void PermissionManagerTest::TearDown()
-{}
+{
+    accessTokenService_ = nullptr;
+    observer_ = nullptr;
+}
 
 #ifdef SUPPORT_SANDBOX_APP
 static void PrepareJsonData1()
@@ -574,7 +589,6 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
     ASSERT_EQ(PERMISSION_DENIED, ret);
     ret = PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MICROPHONE");
     ASSERT_EQ(PERMISSION_GRANTED, ret);
-
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -1243,6 +1257,246 @@ HWTEST_F(PermissionManagerTest, ClearUserGrantedPermissionState001, TestSize.Lev
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+}
+
+/**
+ * @tc.name: GrantTempPermission001
+ * @tc.desc: Test grant temp permission revoke permission after switching to background
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
+    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain001",
+        .permList = { g_infoManagerPermDef1 },
+        .permStateList = { g_infoManagerTestStateA }
+    };
+    static HapInfoParams infoManagerTestInfoParms = {
+        .bundleName = "GrantTempPermission001",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "GrantTempPermission001"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    TempPermissionObserver::GetInstance().RegisterCallback();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.accessTokenId = tokenID;
+
+    observer_->OnForegroundApplicationChanged(appStateData);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    sleep(11);
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission002
+ * @tc.desc: Test grant temp permission switching to background and to foreground again
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
+    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain002",
+        .permList = { g_infoManagerPermDef1 },
+        .permStateList = { g_infoManagerTestStateA }
+    };
+    static HapInfoParams infoManagerTestInfoParms = {
+        .bundleName = "GrantTempPermission002",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "GrantTempPermission002"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.accessTokenId = tokenID;
+
+    observer_->OnForegroundApplicationChanged(appStateData);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    observer_->OnForegroundApplicationChanged(appStateData);
+    sleep(11);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission003
+ * @tc.desc: Test grant temp permission process died
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
+    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain002",
+        .permList = { g_infoManagerPermDef1 },
+        .permStateList = { g_infoManagerTestStateA }
+    };
+    static HapInfoParams infoManagerTestInfoParms = {
+        .bundleName = "GrantTempPermission002",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "GrantTempPermission002"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    ProcessData processData;
+    processData.accessTokenId = tokenID;
+
+    observer_->OnProcessDied(processData);
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission004
+ * @tc.desc: Test grant & revoke temp permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
+    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain002",
+        .permList = { g_infoManagerPermDef1 },
+        .permStateList = { g_infoManagerTestStateA }
+    };
+    static HapInfoParams infoManagerTestInfoParms = {
+        .bundleName = "GrantTempPermission002",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "GrantTempPermission002"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().RevokePermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission005
+ * @tc.desc: Test grant temp permission not root
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    g_infoManagerTestStateA.permissionName = "ohos.permission.MEDIA_LOCATION";
+    g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    static HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain002",
+        .permList = { g_infoManagerPermDef1 },
+        .permStateList = { g_infoManagerTestStateA }
+    };
+    static HapInfoParams infoManagerTestInfoParms = {
+        .bundleName = "GrantTempPermission002",
+        .userID = 1,
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "GrantTempPermission002"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        infoManagerTestInfoParms, infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "add a hap token";
+
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
+    setuid(100);
+    EXPECT_EQ(ERR_PERMISSION_OPERATE_FAILED, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
 }
 } // namespace AccessToken
 } // namespace Security

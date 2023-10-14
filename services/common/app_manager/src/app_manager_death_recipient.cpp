@@ -15,29 +15,21 @@
 #include "app_manager_death_recipient.h"
 
 #include "accesstoken_log.h"
-#include "app_manager_privacy_client.h"
-#include "permission_record_manager.h"
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-#include "privacy_sec_comp_enhance_agent.h"
-#endif
+#include "app_manager_access_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AppMgrDeathRecipient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppMgrDeathRecipient"
 };
 } // namespace
 
 void AppMgrDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called", __func__);
-    AppManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
-#endif
+    AppManagerAccessClient::GetInstance().OnRemoteDiedHandle();
 }
 }  // namespace AccessToken
 }  // namespace Security

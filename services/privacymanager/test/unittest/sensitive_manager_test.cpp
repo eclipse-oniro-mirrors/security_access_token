@@ -15,11 +15,11 @@
 
 #include <gtest/gtest.h>
 
-#include "ability_manager_privacy_client.h"
-#include "ability_manager_privacy_proxy.h"
+#include "ability_manager_access_client.h"
+#include "ability_manager_access_proxy.h"
 #include "accesstoken_kit.h"
-#include "app_manager_privacy_client.h"
-#include "app_manager_privacy_proxy.h"
+#include "app_manager_access_client.h"
+#include "app_manager_access_proxy.h"
 #ifdef ABILITY_RUNTIME_ENABLE
 #include "ability_manager_interface.h"
 #include "app_mgr_interface.h"
@@ -251,14 +251,14 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
 
     sptr<ApplicationStateObserverStub> listener = new(std::nothrow) ApplicationStateObserverStub();
     ASSERT_NE(listener, nullptr);
-    ASSERT_NE(0, AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(nullptr));
-    ASSERT_EQ(0, AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(listener));
+    ASSERT_NE(0, AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(nullptr));
+    ASSERT_EQ(0, AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(listener));
 
     std::vector<AppStateData> list;
-    ASSERT_EQ(0, AppManagerPrivacyClient::GetInstance().GetForegroundApplications(list));
+    ASSERT_EQ(0, AppManagerAccessClient::GetInstance().GetForegroundApplications(list));
 
-    ASSERT_NE(0, AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(nullptr));
-    ASSERT_EQ(0, AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(listener));
+    ASSERT_NE(0, AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(nullptr));
+    ASSERT_EQ(0, AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(listener));
 }
 
 #ifdef ABILITY_RUNTIME_ENABLE
@@ -271,7 +271,7 @@ HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyTest001, TestSize.Level1)
 HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
 {
     ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AbilityManagerInterfaceCode::START_ABILITY_ADD_CALLER),
-        static_cast<uint32_t>(PrivacyAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER)); // 1005
+        static_cast<uint32_t>(AccessAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER)); // 1005
 }
 #endif
 
@@ -290,7 +290,7 @@ HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyTest001, TestSize.Lev
     AAFwk::Want want;
     want.SetElementName(bundleName, abilityName);
     want.SetParam(resourceKey, resource);
-    ASSERT_NE(0, AbilityManagerPrivacyClient::GetInstance().StartAbility(want, nullptr));
+    ASSERT_NE(0, AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr));
 }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
