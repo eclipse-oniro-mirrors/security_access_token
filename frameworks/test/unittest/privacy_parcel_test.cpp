@@ -34,6 +34,7 @@ namespace AccessToken {
 namespace {
 UsedRecordDetail g_accessRecord1 = {
     .status = 0,
+    .lockScreenStatus = 1,
     .timestamp = 0L,
     .accessDuration = 0L,
     .count = 0,
@@ -41,6 +42,7 @@ UsedRecordDetail g_accessRecord1 = {
 
 UsedRecordDetail g_accessRecord2 = {
     .status = 1,
+    .lockScreenStatus = 1,
     .timestamp = 1L,
     .accessDuration = 1L,
     .count = 0,
@@ -48,6 +50,7 @@ UsedRecordDetail g_accessRecord2 = {
 
 UsedRecordDetail g_rejectRecord1 = {
     .status = 2,
+    .lockScreenStatus = 2,
     .timestamp = 2L,
     .accessDuration = 2L,
     .count = 0,
@@ -55,6 +58,7 @@ UsedRecordDetail g_rejectRecord1 = {
 
 UsedRecordDetail g_rejectRecord2 = {
     .status = 3,
+    .lockScreenStatus = 2,
     .timestamp = 3L,
     .accessDuration = 3L,
     .count = 0,
@@ -213,6 +217,8 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
     for (uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.accessRecords.size(); i++) {
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].status,
             readedData->permissionRecord.accessRecords[i].status);
+        EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].lockScreenStatus,
+            readedData->permissionRecord.accessRecords[i].lockScreenStatus);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].timestamp,
             readedData->permissionRecord.accessRecords[i].timestamp);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.accessRecords[i].accessDuration,
@@ -224,6 +230,8 @@ HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel001, TestSize.Level1)
     for (uint32_t i = 0; i < permissionUsedRecordParcel.permissionRecord.rejectRecords.size(); i++) {
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].status,
             readedData->permissionRecord.rejectRecords[i].status);
+        EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].lockScreenStatus,
+            readedData->permissionRecord.rejectRecords[i].lockScreenStatus);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].timestamp,
             readedData->permissionRecord.rejectRecords[i].timestamp);
         EXPECT_EQ(permissionUsedRecordParcel.permissionRecord.rejectRecords[i].accessDuration,
@@ -331,6 +339,7 @@ HWTEST_F(PrivacyParcelTest, UsedRecordDetailParcel001, TestSize.Level1)
     EXPECT_EQ(true, readedData != nullptr);
 
     EXPECT_EQ(usedRecordDetailParcel.detail.status, readedData->detail.status);
+    EXPECT_EQ(usedRecordDetailParcel.detail.lockScreenStatus, readedData->detail.lockScreenStatus);
     EXPECT_EQ(usedRecordDetailParcel.detail.timestamp, readedData->detail.timestamp);
     EXPECT_EQ(usedRecordDetailParcel.detail.accessDuration, readedData->detail.accessDuration);
     EXPECT_EQ(usedRecordDetailParcel.detail.count, readedData->detail.count);
