@@ -65,6 +65,9 @@ bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
     if (!IsGrantModeValid(permDef.grantMode)) {
         return false;
     }
+    if (!DataValidator::IsAvailableTypeValid(permDef.availableType)) {
+        return false;
+    }
     return DataValidator::IsAplNumValid(permDef.availableLevel);
 }
 

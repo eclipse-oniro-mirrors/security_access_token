@@ -59,6 +59,11 @@ bool DataValidator::IsAplNumValid(const int apl)
     return (apl == APL_NORMAL || apl == APL_SYSTEM_BASIC || apl == APL_SYSTEM_CORE);
 }
 
+bool DataValidator::IsAvailableTypeValid(const int availableType)
+{
+    return (availableType == NORMAL || availableType == MDM);
+}
+
 bool DataValidator::IsProcessNameValid(const std::string& processName)
 {
     return !processName.empty() && (processName.length() <= MAX_LENGTH);
