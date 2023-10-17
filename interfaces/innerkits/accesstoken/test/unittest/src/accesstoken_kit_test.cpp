@@ -2198,6 +2198,62 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
 }
 
 /**
+ * @tc.name: AvailableType001
+ * @tc.desc: get permission availableType
+ * @tc.type: FUNC
+ * @tc.require:issue I82QGU
+ */
+HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
+{
+    PermissionDef permDefResultBeta1;
+    int ret = AccessTokenKit::GetDefPermission(
+        "ohos.permission.GRANT_SENSITIVE_PERMISSIONS", permDefResultBeta1);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permDefResultBeta1.availableType, NORMAL);
+
+    PermissionDef permDefResultBeta2;
+    ret = AccessTokenKit::GetDefPermission(
+        "ohos.permission.ENTERPRISE_GET_DEVICE_INFO", permDefResultBeta2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permDefResultBeta2.availableType, MDM);
+
+    HapInfoParams InfoParms = g_infoManagerTestInfoParms;
+    InfoParms.bundleName = "wls_bundleName";
+    AccessTokenIDEx tokenIdEx = {0};
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {permDefResultBeta1},
+        .permStateList = {g_grantPermissionReq}
+    };
+    tokenIdEx = AccessTokenKit::AllocHapToken(InfoParms, infoManagerTestPolicyPrams);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+
+    std::vector<PermissionDef> permDefList;
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(1, "wls_bundleName", 0);
+    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(static_cast<uint32_t>(1), permDefList.size());
+    
+    infoManagerTestPolicyPrams.permList.emplace_back(permDefResultBeta2);
+    PermissionStateFull infoManagerTestState2 = {
+        .permissionName = "ohos.permission.ENTERPRISE_GET_DEVICE_INFO",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+    infoManagerTestPolicyPrams.permStateList.emplace_back(infoManagerTestState2);
+    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false, "appIDDesc", DEFAULT_API_VERSION, infoManagerTestPolicyPrams);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    std::vector<PermissionDef> permDefList2;
+    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(static_cast<uint32_t>(2), permDefList.size());
+}
+
+/**
  * @tc.name: UpdateHapToken001
  * @tc.desc: alloc a tokenId successfully, update it successfully and verify it.
  * @tc.type: FUNC
