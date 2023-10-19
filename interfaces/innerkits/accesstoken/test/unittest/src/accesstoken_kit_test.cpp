@@ -2255,7 +2255,8 @@ HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
     };
     
     infoManagerTestPolicyPrams.permStateList.emplace_back(infoManagerTestState2);
-    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false, "appIDDesc", DEFAULT_API_VERSION, infoManagerTestPolicyPrams);
+    ret = AccessTokenKit::UpdateHapToken(
+        tokenIdEx, false, "appIDDesc", DEFAULT_API_VERSION, infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
 
     std::vector<PermissionDef> permDefList2;

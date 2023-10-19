@@ -40,6 +40,7 @@ namespace OHOS {
             .bundleName = testName,
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
+            .availableType = NORMAL,
             .label = testName,
             .labelId = 1,
             .description = testName,
