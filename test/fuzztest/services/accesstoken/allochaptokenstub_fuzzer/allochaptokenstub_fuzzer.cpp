@@ -27,15 +27,9 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool AllocHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    void ConstructPermissionDef(std::string testName, PermissionDef &testPermDef)
     {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        std::string testName(reinterpret_cast<const char *>(data), size);
-
-        PermissionDef testPermDef = {
+        testPermDef = {
             .permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
@@ -45,6 +39,18 @@ namespace OHOS {
             .labelId = 1,
             .description = testName,
             .descriptionId = 1};
+    }
+    
+    bool AllocHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    {
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+
+        std::string testName(reinterpret_cast<const char *>(data), size);
+
+        PermissionDef testPermDef;
+        ConstructPermissionDef(testName, testPermDef);
         PermissionStateFull TestState = {
             .permissionName = testName,
             .isGeneral = true,
