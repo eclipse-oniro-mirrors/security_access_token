@@ -58,7 +58,7 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.labelId), permissionDefParcel);
     permissionDefParcel->permissionDef.description = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.descriptionId), permissionDefParcel);
-    int availableType;
+    int32_t availableType;
     RELEASE_IF_FALSE(in.ReadInt32(availableType), permissionDefParcel);
     permissionDefParcel->permissionDef.availableType = ATokenAvailableTypeEnum(availableType);
     return permissionDefParcel;

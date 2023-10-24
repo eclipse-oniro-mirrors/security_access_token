@@ -18,7 +18,6 @@
 #include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_log.h"
-#include "data_validator.h"
 #include "generic_values.h"
 #include "token_field_const.h"
 
@@ -92,9 +91,6 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     info = it->second.permDef;
-    if (!DataValidator::IsAvailableTypeValid(info.availableType)) {
-        info.availableType = NORMAL;
-    }
     return RET_SUCCESS;
 }
 
@@ -161,9 +157,6 @@ void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<Permissio
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         if (tokenId == it->second.tokenId) {
-            if (!DataValidator::IsAvailableTypeValid(it->second.permDef.availableType)) {
-                it->second.permDef.availableType = NORMAL;
-            }
             permList.emplace_back(it->second.permDef);
         }
         ++it;

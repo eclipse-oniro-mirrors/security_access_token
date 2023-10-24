@@ -1379,7 +1379,6 @@ HWTEST_F(AccessTokenInfoManagerTest, FilterInvalidPermissionDef001, TestSize.Lev
         .label = "buzhidao",
         .labelId = 100, // 100 is random input
         .description = "buzhidao",
-        .availableType = NORMAL,
         .descriptionId = 100 // 100 is random input
     };
 

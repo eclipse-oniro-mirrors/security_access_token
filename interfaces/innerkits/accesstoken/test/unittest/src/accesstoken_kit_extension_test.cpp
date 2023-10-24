@@ -384,7 +384,7 @@ void PreparePermStateList(HapPolicyParams &policy)
     policy.permStateList.emplace_back(permTestState4);
 }
 
-void FillPermDefList(HapPolicyParams &policy)
+void PreparePermDefList(HapPolicyParams &policy)
 {
     PermissionDef permissionDefAlpha;
     permissionDefAlpha.permissionName = TEST_PERMISSION_NAME_ALPHA;
@@ -393,7 +393,6 @@ void FillPermDefList(HapPolicyParams &policy)
     permissionDefAlpha.availableLevel = APL_NORMAL;
     permissionDefAlpha.provisionEnable = false;
     permissionDefAlpha.distributedSceneEnable = false;
-    permissionDefAlpha.availableType = NORMAL;
 
     PermissionDef permissionDefBeta;
     permissionDefBeta.permissionName = TEST_PERMISSION_NAME_BETA;
@@ -402,15 +401,7 @@ void FillPermDefList(HapPolicyParams &policy)
     permissionDefBeta.availableLevel = APL_NORMAL;
     permissionDefBeta.provisionEnable = false;
     permissionDefBeta.distributedSceneEnable = false;
-    permissionDefBeta.availableType = NORMAL;
 
-    policy.permList.emplace_back(permissionDefAlpha);
-    policy.permList.emplace_back(permissionDefBeta);
-}
-
-void PreparePermDefList(HapPolicyParams &policy)
-{
-    FillPermDefList(policy);
     PermissionDef testPermDef1;
     testPermDef1.permissionName = "ohos.permission.testPermDef1";
     testPermDef1.bundleName = TEST_BUNDLE_NAME;
@@ -418,7 +409,6 @@ void PreparePermDefList(HapPolicyParams &policy)
     testPermDef1.availableLevel = APL_NORMAL;
     testPermDef1.provisionEnable = false;
     testPermDef1.distributedSceneEnable = false;
-    testPermDef1.availableType = NORMAL;
 
     PermissionDef testPermDef2;
     testPermDef2.permissionName = "ohos.permission.testPermDef2";
@@ -427,7 +417,6 @@ void PreparePermDefList(HapPolicyParams &policy)
     testPermDef2.availableLevel = APL_NORMAL;
     testPermDef2.provisionEnable = false;
     testPermDef2.distributedSceneEnable = false;
-    testPermDef2.availableType = NORMAL;
 
     PermissionDef testPermDef3;
     testPermDef3.permissionName = "ohos.permission.testPermDef3";
@@ -436,7 +425,6 @@ void PreparePermDefList(HapPolicyParams &policy)
     testPermDef3.availableLevel = APL_NORMAL;
     testPermDef3.provisionEnable = false;
     testPermDef3.distributedSceneEnable = false;
-    testPermDef3.availableType = NORMAL;
 
     PermissionDef testPermDef4;
     testPermDef4.permissionName = "ohos.permission.testPermDef4";
@@ -445,8 +433,9 @@ void PreparePermDefList(HapPolicyParams &policy)
     testPermDef4.availableLevel = APL_NORMAL;
     testPermDef4.provisionEnable = false;
     testPermDef4.distributedSceneEnable = false;
-    testPermDef4.availableType = NORMAL;
 
+    policy.permList.emplace_back(permissionDefAlpha);
+    policy.permList.emplace_back(permissionDefBeta);
     policy.permList.emplace_back(testPermDef1);
     policy.permList.emplace_back(testPermDef2);
     policy.permList.emplace_back(testPermDef3);

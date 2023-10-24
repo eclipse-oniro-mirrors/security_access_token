@@ -57,7 +57,6 @@ void NativeTokenReceptorTest::SetUpTestCase()
         .bundleName = "accesstoken_test",
         .grantMode = USER_GRANT,
         .availableLevel = APL_NORMAL,
-        .availableType = NORMAL,
         .provisionEnable = false,
         .distributedSceneEnable = false,
         .label = "label",

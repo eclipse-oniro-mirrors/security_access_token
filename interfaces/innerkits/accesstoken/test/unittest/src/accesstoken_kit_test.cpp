@@ -70,7 +70,6 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .label = "label3",
     .labelId = 1,
     .description = "open the door",
-    .availableType = NORMAL,
     .descriptionId = 1
 };
 
@@ -82,7 +81,6 @@ PermissionDef g_infoManagerTestPermDef2 = {
     .label = "label3",
     .labelId = 1,
     .description = "break the door",
-    .availableType = NORMAL,
     .descriptionId = 1
 };
 
@@ -261,7 +259,7 @@ void TestPreparePermStateList(HapPolicyParams &policy)
     policy.permStateList.emplace_back(permTestState4);
 }
 
-void TestFillPermDefList(HapPolicyParams &policy)
+void TestPreparePermDefList(HapPolicyParams &policy)
 {
     PermissionDef permissionDefBeta;
     permissionDefBeta.permissionName = TEST_PERMISSION_NAME_BETA;
@@ -270,7 +268,6 @@ void TestFillPermDefList(HapPolicyParams &policy)
     permissionDefBeta.availableLevel = APL_NORMAL;
     permissionDefBeta.provisionEnable = false;
     permissionDefBeta.distributedSceneEnable = false;
-    permissionDefBeta.availableType = NORMAL;
 
     PermissionDef permissionDefAlpha;
     permissionDefAlpha.permissionName = TEST_PERMISSION_NAME_ALPHA;
@@ -279,15 +276,7 @@ void TestFillPermDefList(HapPolicyParams &policy)
     permissionDefAlpha.availableLevel = APL_NORMAL;
     permissionDefAlpha.provisionEnable = false;
     permissionDefAlpha.distributedSceneEnable = false;
-    permissionDefAlpha.availableType = NORMAL;
 
-    policy.permList.emplace_back(permissionDefBeta);
-    policy.permList.emplace_back(permissionDefAlpha);
-}
-
-void TestPreparePermDefList(HapPolicyParams &policy)
-{
-    TestFillPermDefList(policy);
     PermissionDef testPermDef2;
     testPermDef2.permissionName = "ohos.permission.testPermDef2";
     testPermDef2.bundleName = TEST_BUNDLE_NAME;
@@ -295,7 +284,6 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef2.availableLevel = APL_NORMAL;
     testPermDef2.provisionEnable = false;
     testPermDef2.distributedSceneEnable = false;
-    testPermDef2.availableType = NORMAL;
 
     PermissionDef testPermDef1;
     testPermDef1.permissionName = "ohos.permission.testPermDef1";
@@ -304,7 +292,6 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef1.availableLevel = APL_NORMAL;
     testPermDef1.provisionEnable = false;
     testPermDef1.distributedSceneEnable = false;
-    testPermDef1.availableType = NORMAL;
 
     PermissionDef testPermDef4;
     testPermDef4.permissionName = "ohos.permission.testPermDef4";
@@ -313,7 +300,6 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef4.availableLevel = APL_NORMAL;
     testPermDef4.provisionEnable = false;
     testPermDef4.distributedSceneEnable = false;
-    testPermDef4.availableType = NORMAL;
 
     PermissionDef testPermDef3;
     testPermDef3.permissionName = "ohos.permission.testPermDef3";
@@ -322,8 +308,9 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     testPermDef3.availableLevel = APL_NORMAL;
     testPermDef3.provisionEnable = false;
     testPermDef3.distributedSceneEnable = false;
-    testPermDef3.availableType = NORMAL;
 
+    policy.permList.emplace_back(permissionDefBeta);
+    policy.permList.emplace_back(permissionDefAlpha);
     policy.permList.emplace_back(testPermDef2);
     policy.permList.emplace_back(testPermDef1);
     policy.permList.emplace_back(testPermDef4);
@@ -2218,58 +2205,15 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
 {
-    PermissionDef permDefResultBeta1 = g_infoManagerTestPermDef1;
-    permDefResultBeta1.permissionName = "ohos.permission.wuliushuan";
-    permDefResultBeta1.bundleName = "wls_bundleName";
-    permDefResultBeta1.availableType = NORMAL;
-    PermissionStateFull grantPermissionReq = g_grantPermissionReq;
-    grantPermissionReq.permissionName = "ohos.permission.wuliushuan";
+    // test MDM permission
+    PermissionDef permDef1;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.ENTERPRISE_GET_DEVICE_INFO", permDef1));
+    ASSERT_EQ(permDef1.availableType, MDM);
 
-    PermissionDef permDefResultBeta2;
-    int ret = AccessTokenKit::GetDefPermission(
-        "ohos.permission.ENTERPRISE_GET_DEVICE_INFO", permDefResultBeta2);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(permDefResultBeta2.availableType, MDM);
-
-    HapInfoParams InfoParms = g_infoManagerTestInfoParms;
-    InfoParms.bundleName = "wls_bundleName";
-    AccessTokenIDEx tokenIdEx = {0};
-    HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-        .permList = {permDefResultBeta1},
-        .permStateList = {grantPermissionReq}
-    };
-    tokenIdEx = AccessTokenKit::AllocHapToken(InfoParms, infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
-
-    std::vector<PermissionDef> permDefList;
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(1, "wls_bundleName", 0);
-    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permDefList.size());
-    ASSERT_EQ(permDefList[0].availableType, NORMAL);
-    
-    infoManagerTestPolicyPrams.permList.emplace_back(permDefResultBeta2);
-    PermissionStateFull infoManagerTestState2 = {
-        .permissionName = "ohos.permission.ENTERPRISE_GET_DEVICE_INFO",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-    
-    infoManagerTestPolicyPrams.permStateList.emplace_back(infoManagerTestState2);
-    ret = AccessTokenKit::UpdateHapToken(
-        tokenIdEx, false, "appIDDesc", DEFAULT_API_VERSION, infoManagerTestPolicyPrams);
-    ASSERT_EQ(RET_SUCCESS, ret);
-
-    std::vector<PermissionDef> permDefList2;
-    ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList2);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(1), permDefList.size());
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    // test NORMAL permission(default)
+    PermissionDef permDef2;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef2));
+    ASSERT_EQ(permDef2.availableType, NORMAL);
 }
 
 /**
