@@ -73,6 +73,7 @@ public:
     int labelId = 0;
     std::string description = "";
     int descriptionId = 0;
+    ATokenAvailableTypeEnum availableType = NORMAL;
 };
 
 /**

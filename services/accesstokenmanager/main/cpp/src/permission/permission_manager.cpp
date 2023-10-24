@@ -962,6 +962,7 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
     infos.append(R"(, "labelId": )" + std::to_string(inPermissionDef.labelId));
     infos.append(R"(, "description": ")" + inPermissionDef.description + R"(")");
     infos.append(R"(, "descriptionId": )" + std::to_string(inPermissionDef.descriptionId));
+    infos.append(R"(, "availableType": )" + std::to_string(inPermissionDef.availableType));
     infos.append("}");
     return infos;
 }

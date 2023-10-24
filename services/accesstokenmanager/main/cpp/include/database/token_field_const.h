@@ -39,6 +39,7 @@ public:
     const static std::string FIELD_PERMISSION_NAME;
     const static std::string FIELD_GRANT_MODE;
     const static std::string FIELD_AVAILABLE_LEVEL;
+    const static std::string FIELD_AVAILABLE_TYPE;
     const static std::string FIELD_PROVISION_ENABLE;
     const static std::string FIELD_DISTRIBUTED_SCENE_ENABLE;
     const static std::string FIELD_LABEL;

@@ -1760,6 +1760,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
 
     g_infoManagerTestPolicyPrams.permList[0].bundleName = "invalid_bundleName";
     g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp01";
+    g_infoManagerTestPolicyPrams.permList[0].availableType = MDM;
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
 
@@ -1767,6 +1768,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
     int ret = AccessTokenKit::GetDefPermission(
         g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(permDefResultBeta.availableType, MDM);
     ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
     g_infoManagerTestPolicyPrams.permList[0].bundleName  = backUp;
@@ -2193,6 +2195,25 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
 
     tokenIdEx = AccessTokenKit::AllocHapToken(infoManagerTestInfoParms1, infoManagerTestPolicyPrams);
     ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
+ * @tc.name: AvailableType001
+ * @tc.desc: get permission availableType
+ * @tc.type: FUNC
+ * @tc.require:issue I82QGU
+ */
+HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
+{
+    // test MDM permission
+    PermissionDef permDef1;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.ENTERPRISE_GET_DEVICE_INFO", permDef1));
+    ASSERT_EQ(permDef1.availableType, MDM);
+
+    // test NORMAL permission(default)
+    PermissionDef permDef2;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef2));
+    ASSERT_EQ(permDef2.availableType, NORMAL);
 }
 
 /**

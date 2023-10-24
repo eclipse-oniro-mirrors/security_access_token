@@ -49,6 +49,7 @@ void SqliteStorage::OnCreate()
 void SqliteStorage::OnUpdate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
+    AddAvailableTypeColumn();
 }
 
 SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
@@ -79,7 +80,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
         TokenFiledConst::FIELD_AVAILABLE_LEVEL, TokenFiledConst::FIELD_PROVISION_ENABLE,
         TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE, TokenFiledConst::FIELD_LABEL,
         TokenFiledConst::FIELD_LABEL_ID, TokenFiledConst::FIELD_DESCRIPTION,
-        TokenFiledConst::FIELD_DESCRIPTION_ID
+        TokenFiledConst::FIELD_DESCRIPTION_ID, TokenFiledConst::FIELD_AVAILABLE_TYPE
     };
 
     SqliteTable permissionStateTable;
@@ -377,12 +378,40 @@ int SqliteStorage::CreatePermissionDefinitionTable() const
         .append(TEXT_STR)
         .append(TokenFiledConst::FIELD_DESCRIPTION_ID)
         .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_AVAILABLE_TYPE)
+        .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_TOKEN_ID)
         .append(",")
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append("))");
     return ExecuteSql(sql);
+}
+
+int32_t SqliteStorage::AddAvailableTypeColumn() const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_DEF);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
+        TokenFiledConst::FIELD_AVAILABLE_TYPE + "=" +
+        std::to_string(ATokenAvailableTypeEnum::MDM);
+    int32_t checkResult = ExecuteSql(checkSql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    if (checkResult != -1) {
+        return SUCCESS;
+    }
+
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(TokenFiledConst::FIELD_AVAILABLE_TYPE)
+        .append(" integer default ")
+        .append(std::to_string(ATokenAvailableTypeEnum::NORMAL));
+    int32_t insertResult = ExecuteSql(sql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    return insertResult;
 }
 
 int SqliteStorage::CreatePermissionStateTable() const

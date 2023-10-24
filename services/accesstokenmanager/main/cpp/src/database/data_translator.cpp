@@ -43,6 +43,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionDef& inPermissi
     outGenericValues.Put(TokenFiledConst::FIELD_LABEL_ID, inPermissionDef.labelId);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION, inPermissionDef.description);
     outGenericValues.Put(TokenFiledConst::FIELD_DESCRIPTION_ID, inPermissionDef.descriptionId);
+    outGenericValues.Put(TokenFiledConst::FIELD_AVAILABLE_TYPE, inPermissionDef.availableType);
     return RET_SUCCESS;
 }
 
@@ -64,6 +65,8 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     outPermissionDef.labelId = inGenericValues.GetInt(TokenFiledConst::FIELD_LABEL_ID);
     outPermissionDef.description = inGenericValues.GetString(TokenFiledConst::FIELD_DESCRIPTION);
     outPermissionDef.descriptionId = inGenericValues.GetInt(TokenFiledConst::FIELD_DESCRIPTION_ID);
+    int availableType = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_TYPE);
+    outPermissionDef.availableType = static_cast<ATokenAvailableTypeEnum>(availableType);
     return RET_SUCCESS;
 }
 
