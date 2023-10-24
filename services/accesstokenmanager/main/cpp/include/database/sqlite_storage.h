@@ -54,12 +54,6 @@ public:
     void OnUpdate() override;
 
 private:
-    SqliteStorage();
-    DISALLOW_COPY_AND_MOVE(SqliteStorage);
-
-    std::map<DataType, SqliteTable> dataTypeToSqlTable_;
-    OHOS::Utils::RWLock rwLock_;
-
     int CreateHapTokenInfoTable() const;
     int CreateNativeTokenInfoTable() const;
     int CreatePermissionDefinitionTable() const;
@@ -72,8 +66,13 @@ private:
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
     int32_t AddAvailableTypeColumn() const;
+    int32_t AddPermiDialogCapColumn() const;
 
-private:
+    SqliteStorage();
+    DISALLOW_COPY_AND_MOVE(SqliteStorage);
+
+    std::map<DataType, SqliteTable> dataTypeToSqlTable_;
+    OHOS::Utils::RWLock rwLock_;
     inline static const std::string HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
     inline static const std::string NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
     inline static const std::string PERMISSION_DEF_TABLE = "permission_definition_table";

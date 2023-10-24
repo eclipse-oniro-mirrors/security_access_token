@@ -26,6 +26,7 @@ const std::string TokenFiledConst::FIELD_APP_ID = "app_id";
 const std::string TokenFiledConst::FIELD_DEVICE_ID = "device_id";
 const std::string TokenFiledConst::FIELD_APL = "apl";
 const std::string TokenFiledConst::FIELD_TOKEN_VERSION = "token_version";
+const std::string TokenFiledConst::FIELD_FORBID_PERM_DIALOG = "perm_dialog_cap_state";
 const std::string TokenFiledConst::FIELD_TOKEN_ATTR = "token_attr";
 const std::string TokenFiledConst::FIELD_PROCESS_NAME = "process_name";
 const std::string TokenFiledConst::FIELD_DCAP = "dcap";

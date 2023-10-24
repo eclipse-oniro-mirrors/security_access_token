@@ -282,7 +282,7 @@ bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
     return ((hapTokenInfoMap_.count(id) != 0) || (nativeTokenInfoMap_.count(id) != 0));
 }
 
-int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& infoParcel)
+int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& info)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -290,7 +290,7 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
             LABEL, "token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
-    infoPtr->TranslateToHapTokenInfo(infoParcel);
+    infoPtr->TranslateToHapTokenInfo(info);
     return RET_SUCCESS;
 }
 
@@ -1166,6 +1166,41 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
             }
         }
     }
+}
+
+int32_t AccessTokenInfoManager::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable)
+{
+    std::string HapUniqueKey = GetHapUniqueStr(hapBaseInfo.userID, hapBaseInfo.bundleName, hapBaseInfo.instIndex);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    auto iter = hapTokenIdMap_.find(HapUniqueKey);
+    if (iter == hapTokenIdMap_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find HapUniqueKey");
+        return ERR_TOKENID_NOT_EXIST;
+    }
+    AccessTokenID tokenId = iter->second;
+    auto infoIter = hapTokenInfoMap_.find(tokenId);
+    if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
+        return ERR_TOKENID_NOT_EXIST;
+    }
+    infoIter->second->SetPermDialogForbidden(enable);
+    RefreshTokenInfoIfNeeded();
+    return RET_SUCCESS;
+}
+
+bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
+{
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invaid tokenid(0)");
+        return true;
+    }
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    auto infoIter = hapTokenInfoMap_.find(tokenID);
+    if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId is not exist in map");
+        return true;
+    }
+    return infoIter->second->IsPermDialogForbidden();
 }
 } // namespace AccessToken
 } // namespace Security

@@ -841,6 +841,28 @@ void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& 
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }
+
+int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    if (!data.WriteParcelable(&hapBaseInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write hapBaseInfo failed");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteBool(enable)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "write enable failed");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY, data, reply)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read replay failed");
+        return ERR_SA_WORK_ABNORMAL;
+    }
+    return reply.ReadInt32();
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

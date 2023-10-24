@@ -125,6 +125,7 @@ void HapTokenInfoInner::TranslationIntoGenericValues(GenericValues& outGenericVa
     outGenericValues.Put(TokenFiledConst::FIELD_APL, tokenInfoBasic_.apl);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, tokenInfoBasic_.ver);
     outGenericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, static_cast<int32_t>(tokenInfoBasic_.tokenAttr));
+    outGenericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, isPermDialogForbidden_);
 }
 
 int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericValues)
@@ -176,6 +177,7 @@ int HapTokenInfoInner::RestoreHapTokenBasicInfo(const GenericValues& inGenericVa
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.tokenAttr = (uint32_t)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_ATTR);
+    isPermDialogForbidden_ = inGenericValues.GetInt(TokenFiledConst::FIELD_FORBID_PERM_DIALOG);
     return RET_SUCCESS;
 }
 
@@ -266,6 +268,16 @@ bool HapTokenInfoInner::IsRemote() const
 void HapTokenInfoInner::SetRemote(bool isRemote)
 {
     isRemote_ = isRemote;
+}
+
+bool HapTokenInfoInner::IsPermDialogForbidden() const
+{
+    return isPermDialogForbidden_;
+}
+
+void HapTokenInfoInner::SetPermDialogForbidden(bool isForbidden)
+{
+    isPermDialogForbidden_ = isForbidden;
 }
 
 void HapTokenInfoInner::ToString(std::string& info) const

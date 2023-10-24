@@ -161,7 +161,11 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     std::vector<PermissionListStateParcel>& reqPermList)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-
+    bool isPermDialogForbidden = AccessTokenInfoManager::GetInstance().GetPermDialogCap(callingTokenID);
+    if (isPermDialogForbidden) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d is under control", callingTokenID);
+        return FORBIDDEN_OPER;
+    }
     int32_t apiVersion = 0;
     if (!PermissionManager::GetInstance().GetApiVersionByTokenId(callingTokenID, apiVersion)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get api version error");
@@ -418,6 +422,11 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
 
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
+}
+
+int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
+{
+    return AccessTokenInfoManager::GetInstance().SetPermDialogCap(hapBaseInfoParcel.hapBaseInfo, enable);
 }
 
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)

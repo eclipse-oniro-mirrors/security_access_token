@@ -76,6 +76,8 @@ public:
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
     std::string GetUdidByNodeId(const std::string &nodeId);
+    int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
+    bool GetPermDialogCap(AccessTokenID tokenID);
 #endif
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE

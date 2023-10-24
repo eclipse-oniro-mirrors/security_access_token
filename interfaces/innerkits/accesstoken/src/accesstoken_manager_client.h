@@ -23,6 +23,7 @@
 
 #include "access_token.h"
 #include "accesstoken_death_recipient.h"
+#include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info.h"
@@ -85,6 +86,7 @@ public:
 
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
     void OnRemoteDiedHandle();
+    int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
 
 private:
     AccessTokenManagerClient();

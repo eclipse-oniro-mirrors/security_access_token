@@ -32,6 +32,7 @@ public:
     const static std::string FIELD_DEVICE_ID;
     const static std::string FIELD_APL;
     const static std::string FIELD_TOKEN_VERSION;
+    const static std::string FIELD_FORBID_PERM_DIALOG;
     const static std::string FIELD_TOKEN_ATTR;
     const static std::string FIELD_PROCESS_NAME;
     const static std::string FIELD_DCAP;

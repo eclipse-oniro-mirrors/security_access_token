@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,30 +37,11 @@ namespace AccessToken {
 namespace {
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitTest"};
-
-PermissionStateFull g_grantPermissionReq = {
-    .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-PermissionStateFull g_revokePermissionReq = {
-    .permissionName = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
-
-PermissionStateFull g_getPermissionReq = {
-    .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
-    .isGeneral = true,
-    .resDeviceID = {"device3"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
-};
+static const int32_t INDEX_ZERO = 0;
+static const int32_t INDEX_ONE = 1;
+static const int32_t INDEX_TWO = 2;
+static const int32_t INDEX_THREE = 3;
+static const int32_t INDEX_FOUR = 4;
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
@@ -70,7 +51,8 @@ PermissionDef g_infoManagerTestPermDef1 = {
     .label = "label3",
     .labelId = 1,
     .description = "open the door",
-    .descriptionId = 1
+    .descriptionId = 1,
+    .availableType = MDM
 };
 
 PermissionDef g_infoManagerTestPermDef2 = {
@@ -81,7 +63,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
     .label = "label3",
     .labelId = 1,
     .description = "break the door",
-    .descriptionId = 1
+    .descriptionId = 1,
 };
 
 PermissionStateFull g_infoManagerTestState1 = {
@@ -115,20 +97,8 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
     .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
 };
 
-HapInfoParams g_infoManagerTestInfoParmsBak = {
-    .userID = 1,
-    .bundleName = "accesstoken_test",
-    .instIndex = 0,
-    .appIDDesc = "test3",
-    .apiVersion = DEFAULT_API_VERSION
-};
-
-HapPolicyParams g_infoManagerTestPolicyPramsBak = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain3",
-    .permList = {g_infoManagerTestPermDef1, g_infoManagerTestPermDef2},
-    .permStateList = {g_infoManagerTestState1, g_infoManagerTestState2}
-};
+HapInfoParams g_infoManagerTestInfoParmsBak = g_infoManagerTestInfoParms;
+HapPolicyParams g_infoManagerTestPolicyPramsBak = g_infoManagerTestPolicyPrams;
 
 HapInfoParams g_infoManagerTestNormalInfoParms = {
     .userID = 1,
@@ -152,15 +122,16 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
 void NativeTokenGet()
 {
     uint64_t tokenID;
-    const char **perms = new const char *[4];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
-    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
-    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+    const char **perms = new const char *[5];
+    perms[INDEX_ZERO] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[INDEX_ONE] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+    perms[INDEX_TWO] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+    perms[INDEX_THREE] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    perms[INDEX_FOUR] = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
-        .permsNum = 4,
+        .permsNum = 5,
         .aclsNum = 0,
         .dcaps = nullptr,
         .perms = perms,
@@ -220,43 +191,8 @@ void TestPreparePermStateList(HapPolicyParams &policy)
         .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
     };
 
-    PermissionStateFull permTestState1 = {
-        .permissionName = "ohos.permission.testPermDef1",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED},
-        .grantFlags = {0},
-    };
-    PermissionStateFull permTestState2 = {
-        .permissionName = "ohos.permission.testPermDef2",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED},
-        .grantFlags = {1}
-    };
-
-    PermissionStateFull permTestState3 = {
-        .permissionName = "ohos.permission.testPermDef3",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_DENIED},
-        .grantFlags = {2}
-    };
-
-    PermissionStateFull permTestState4 = {
-        .permissionName = "ohos.permission.testPermDef4",
-        .isGeneral = true,
-        .resDeviceID = {"local3"},
-        .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {1}
-    };
-
     policy.permStateList.emplace_back(permStatAlpha);
     policy.permStateList.emplace_back(permStatBeta);
-    policy.permStateList.emplace_back(permTestState1);
-    policy.permStateList.emplace_back(permTestState2);
-    policy.permStateList.emplace_back(permTestState3);
-    policy.permStateList.emplace_back(permTestState4);
 }
 
 void TestPreparePermDefList(HapPolicyParams &policy)
@@ -277,44 +213,8 @@ void TestPreparePermDefList(HapPolicyParams &policy)
     permissionDefAlpha.provisionEnable = false;
     permissionDefAlpha.distributedSceneEnable = false;
 
-    PermissionDef testPermDef2;
-    testPermDef2.permissionName = "ohos.permission.testPermDef2";
-    testPermDef2.bundleName = TEST_BUNDLE_NAME;
-    testPermDef2.grantMode = GrantMode::USER_GRANT;
-    testPermDef2.availableLevel = APL_NORMAL;
-    testPermDef2.provisionEnable = false;
-    testPermDef2.distributedSceneEnable = false;
-
-    PermissionDef testPermDef1;
-    testPermDef1.permissionName = "ohos.permission.testPermDef1";
-    testPermDef1.bundleName = TEST_BUNDLE_NAME;
-    testPermDef1.grantMode = GrantMode::USER_GRANT;
-    testPermDef1.availableLevel = APL_NORMAL;
-    testPermDef1.provisionEnable = false;
-    testPermDef1.distributedSceneEnable = false;
-
-    PermissionDef testPermDef4;
-    testPermDef4.permissionName = "ohos.permission.testPermDef4";
-    testPermDef4.bundleName = TEST_BUNDLE_NAME;
-    testPermDef4.grantMode = GrantMode::USER_GRANT;
-    testPermDef4.availableLevel = APL_NORMAL;
-    testPermDef4.provisionEnable = false;
-    testPermDef4.distributedSceneEnable = false;
-
-    PermissionDef testPermDef3;
-    testPermDef3.permissionName = "ohos.permission.testPermDef3";
-    testPermDef3.bundleName = TEST_BUNDLE_NAME;
-    testPermDef3.grantMode = GrantMode::USER_GRANT;
-    testPermDef3.availableLevel = APL_NORMAL;
-    testPermDef3.provisionEnable = false;
-    testPermDef3.distributedSceneEnable = false;
-
     policy.permList.emplace_back(permissionDefBeta);
     policy.permList.emplace_back(permissionDefAlpha);
-    policy.permList.emplace_back(testPermDef2);
-    policy.permList.emplace_back(testPermDef1);
-    policy.permList.emplace_back(testPermDef4);
-    policy.permList.emplace_back(testPermDef3);
 }
 
 void AccessTokenKitTest::SetUp()
@@ -336,14 +236,12 @@ void AccessTokenKitTest::SetUp()
     };
     TestPreparePermDefList(policy);
     TestPreparePermStateList(policy);
-    policy.permStateList.emplace_back(g_grantPermissionReq);
-    policy.permStateList.emplace_back(g_revokePermissionReq);
+
     AccessTokenKit::AllocHapToken(info, policy);
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }
 
 void AccessTokenKitTest::TearDown()
@@ -360,6 +258,8 @@ void AccessTokenKitTest::TearDown()
                                             g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
+
+    DeleteTestToken();
 }
 
 unsigned int AccessTokenKitTest::GetAccessTokenID(int userID, std::string bundleName, int instIndex)
@@ -378,11 +278,12 @@ void AccessTokenKitTest::DeleteTestToken() const
     }
 }
 
-void AccessTokenKitTest::AllocTestToken() const
+AccessTokenID AccessTokenKitTest::AllocTestToken(
+    const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy) const
 {
     AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    tokenIdEx = AccessTokenKit::AllocHapToken(hapInfo, hapPolicy);
+    return tokenIdEx.tokenIdExStruct.tokenID;
 }
 
 /**
@@ -453,7 +354,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
     std::vector<PermissionDef> permDefList;
     int ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(6), permDefList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permDefList.size());
 }
 
 /**
@@ -517,7 +418,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions004, TestSize.Level0)
         std::vector<PermissionDef> permDefList;
         int32_t ret = AccessTokenKit::GetDefPermissions(tokenID, permDefList);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(static_cast<uint32_t>(6), permDefList.size());
+        ASSERT_EQ(static_cast<uint32_t>(2), permDefList.size());
     }
 }
 
@@ -534,7 +435,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int res = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
     ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(static_cast<uint32_t>(5), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
@@ -554,7 +455,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions002, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     int ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, true);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(static_cast<uint32_t>(3), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
     ASSERT_EQ(TEST_PERMISSION_NAME_BETA, permStatList[0].permissionName);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_BETA);
@@ -632,7 +533,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions005, TestSize.Level0)
         std::vector<PermissionStateFull> permStatList;
         int32_t ret = AccessTokenKit::GetReqPermissions(tokenID, permStatList, false);
         ASSERT_EQ(RET_SUCCESS, ret);
-        ASSERT_EQ(static_cast<uint32_t>(5), permStatList.size());
+        ASSERT_EQ(static_cast<uint32_t>(1), permStatList.size());
         ASSERT_EQ(TEST_PERMISSION_NAME_ALPHA, permStatList[0].permissionName);
     }
 }
@@ -726,6 +627,8 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag004, TestSize.Level0)
     uint32_t flag;
     int ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -750,6 +653,8 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
     ret = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION_NAME_ALPHA, flag);
     ASSERT_EQ(PERMISSION_USER_FIXED, flag);
     ASSERT_EQ(RET_SUCCESS, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -999,11 +904,13 @@ HWTEST_F(AccessTokenKitTest, GrantPermission006, TestSize.Level0)
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
     ASSERT_EQ(PERMISSION_GRANTED, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
  * @tc.name: RevokePermission001
- * @tc.desc: Revoke permission that has ohos.permission.GRANT_SENSITIVE_PERMISSIONS
+ * @tc.desc: Revoke permission that has ohos.permission.REVOKE_SENSITIVE_PERMISSIONS
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -1110,6 +1017,8 @@ HWTEST_F(AccessTokenKitTest, RevokePermission005, TestSize.Level0)
     ASSERT_NE(INVALID_TOKENID, tokenID);
     int ret = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NAME_ALPHA, PERMISSION_USER_FIXED);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1138,6 +1047,8 @@ HWTEST_F(AccessTokenKitTest, RevokePermission006, TestSize.Level0)
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_ALPHA);
     ASSERT_EQ(PERMISSION_DENIED, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1262,10 +1173,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
  */
 HWTEST_F(AccessTokenKitTest, GetTokenType001, TestSize.Level0)
 {
-    AllocTestToken();
-    AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                                             g_infoManagerTestInfoParms.bundleName,
-                                             g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     int ret = AccessTokenKit::GetTokenType(tokenID);
     ASSERT_EQ(TOKEN_HAP, ret);
     DeleteTestToken();
@@ -1391,27 +1299,17 @@ HWTEST_F(AccessTokenKitTest, DeleteToken003, TestSize.Level1)
 
 /**
  * @tc.name: DeleteToken004
- * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delte it again.
+ * @tc.desc: alloc a tokenId successfully, delete it successfully the first time and fail to delete it again.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(AccessTokenKitTest, DeleteToken004, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    GTEST_LOG_(INFO) << "tokenIdEx.tokenIdExStruct.tokenID :" << tokenIdEx.tokenIdExStruct.tokenID;
-    AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                                             g_infoManagerTestInfoParms.bundleName,
-                                             g_infoManagerTestInfoParms.instIndex);
-
-    int ret = AccessTokenKit::DeleteToken(tokenID);
-    GTEST_LOG_(INFO) << "g_infoManagerTestInfoParms.userID :" << g_infoManagerTestInfoParms.userID;
-    GTEST_LOG_(INFO) << "g_infoManagerTestInfoParms.bundleName :" << g_infoManagerTestInfoParms.bundleName.c_str();
-    GTEST_LOG_(INFO) << "g_infoManagerTestInfoParms.instIndex :" << g_infoManagerTestInfoParms.instIndex;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_NE(RET_SUCCESS, ret);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1634,17 +1532,10 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenId004, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken001, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    GTEST_LOG_(INFO) << "tokenIdEx.tokenIdExStruct.tokenID :" << tokenIdEx.tokenIdExStruct.tokenID;
-    AccessTokenID tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                                             g_infoManagerTestInfoParms.bundleName,
-                                             g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
-    int ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_NE(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -1656,32 +1547,15 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
-    int ret;
-
-    tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                               g_infoManagerTestInfoParms.bundleName,
-                               g_infoManagerTestInfoParms.instIndex);
-
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    GTEST_LOG_(INFO) << "DeleteToken ret:" << ret;
-    GTEST_LOG_(INFO) << "tokenID :" << tokenID;
-
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    GTEST_LOG_(INFO) << "tokenIdEx.tokenIdExStruct.tokenID :" << tokenIdEx.tokenIdExStruct.tokenID;
-
-    tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                               g_infoManagerTestInfoParms.bundleName,
-                               g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_NE(tokenID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID1 = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID1);
+    ASSERT_NE(tokenID, tokenID1);
     ASSERT_NE(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID1));
 }
 
 /**
@@ -1693,25 +1567,24 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken002, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, AllocHapToken003, TestSize.Level1)
 {
     std::string invalidBundleName (INVALID_BUNDLENAME_LEN, 'x');
-    AccessTokenIDEx tokenIdEx = {0};
-    int ret;
-    AccessTokenID tokenID;
+    std::string bundle = g_infoManagerTestInfoParms.bundleName;
 
     DeleteTestToken();
     GTEST_LOG_(INFO) << "get hap token info:" << invalidBundleName.length();
-    g_infoManagerTestInfoParms.bundleName = invalidBundleName;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    g_infoManagerTestInfoParms.bundleName = invalidBundleName;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 
     tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteToken(tokenID));
 
-    g_infoManagerTestInfoParms.bundleName = "accesstoken_test";
+    g_infoManagerTestInfoParms.bundleName = bundle;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1722,23 +1595,22 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken003, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken004, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
     ATokenAplEnum typeBackUp = g_infoManagerTestPolicyPrams.apl;
     DeleteTestToken();
 
     g_infoManagerTestPolicyPrams.apl = (ATokenAplEnum)5;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
 
     tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
                                g_infoManagerTestInfoParms.bundleName,
                                g_infoManagerTestInfoParms.instIndex);
     ASSERT_EQ(INVALID_TOKENID, tokenID);
-    int ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::DeleteToken(tokenID));
     g_infoManagerTestPolicyPrams.apl = typeBackUp;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1749,30 +1621,30 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken004, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    std::string backUp;
-    std::string backUpPermission;
-    std::string bundleNameBackUp = g_infoManagerTestPermDef1.bundleName;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName;
+    std::string bundleNameBackUp = g_infoManagerTestPolicyPrams.permList[INDEX_ONE].bundleName;
+    ATokenAvailableTypeEnum typeBakup = g_infoManagerTestPolicyPrams.permList[INDEX_ONE].availableType;
     DeleteTestToken();
 
-    backUp = g_infoManagerTestPolicyPrams.permList[0].bundleName;
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].bundleName = "invalid_bundleName";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName = "ohos.permission.testtmp01";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].availableType = MDM;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = "invalid_bundleName";
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp01";
-    g_infoManagerTestPolicyPrams.permList[0].availableType = MDM;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
-
-    PermissionDef permDefResultBeta;
+    PermissionDef permDefResult;
     int ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ASSERT_EQ(permDefResultBeta.availableType, MDM);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+    ASSERT_EQ(permDefResult.availableType, MDM);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].bundleName  = backUp;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].bundleName  = bundleNameBackUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ONE].availableType = typeBakup;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1783,22 +1655,23 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken005, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken006, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    std::string backUp;
+    std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     DeleteTestToken();
 
     const std::string invalidPermissionName (INVALID_PERMNAME_LEN, 'x');
-    backUp = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = invalidPermissionName;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = invalidPermissionName;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(invalidPermissionName, permDefResultBeta);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].permissionName  = backUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName  = backUp;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1809,28 +1682,28 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken006, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken007, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    std::string backUp;
-    std::string backUpPermission;
+    std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     DeleteTestToken();
 
     const std::string invalidBundleName (INVALID_BUNDLENAME_LEN, 'x');
-    backUp = g_infoManagerTestPolicyPrams.permList[0].bundleName;
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
 
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp02";
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = invalidBundleName;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp02";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName = invalidBundleName;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResultBeta);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].bundleName  = backUp;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName  = backUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1841,27 +1714,27 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken007, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken008, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    std::string backUp;
-    std::string backUpPermission;
+    std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     DeleteTestToken();
 
     const std::string invalidLabel (INVALID_LABEL_LEN, 'x');
-    backUp = g_infoManagerTestPolicyPrams.permList[0].label;
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp03";
-    g_infoManagerTestPolicyPrams.permList[0].label = invalidLabel;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp03";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = invalidLabel;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResultBeta);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].label  = backUp;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label  = backUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 /**
@@ -1872,30 +1745,29 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken008, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken009, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    std::string backUp;
-    std::string backUpPermission;
+    std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     DeleteTestToken();
 
     const std::string invalidDescription (INVALID_DESCRIPTION_LEN, 'x');
-    backUp = g_infoManagerTestPolicyPrams.permList[0].description;
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
 
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp04";
-    g_infoManagerTestPolicyPrams.permList[0].description = invalidDescription;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp04";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = invalidDescription;
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
 
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResultBeta);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
     ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
 
-    g_infoManagerTestPolicyPrams.permList[0].description  = backUp;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description  = backUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 static bool ExistInVector(vector<unsigned int> array, unsigned int value)
@@ -1917,8 +1789,6 @@ static bool ExistInVector(vector<unsigned int> array, unsigned int value)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
 {
-    AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
     int ret;
     bool exist = false;
     int allocFlag = 0;
@@ -1927,10 +1797,7 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
     DeleteTestToken();
     vector<unsigned int> obj;
     for (int i = 0; i < CYCLE_TIMES; i++) {
-        tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-        tokenID = GetAccessTokenID(g_infoManagerTestInfoParms.userID,
-                                   g_infoManagerTestInfoParms.bundleName,
-                                   g_infoManagerTestInfoParms.instIndex);
+        AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
         exist = ExistInVector(obj, tokenID);
         if (exist) {
@@ -1956,14 +1823,13 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken010, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, AllocHapToken011, TestSize.Level1)
 {
     std::string invalidAppIDDesc (INVALID_APPIDDESC_LEN, 'x');
-    std::string backup;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestInfoParms.appIDDesc;
 
     DeleteTestToken();
-    backup = g_infoManagerTestInfoParms.appIDDesc;
+
     g_infoManagerTestInfoParms.appIDDesc = invalidAppIDDesc;
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -1975,13 +1841,11 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken011, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken012, TestSize.Level1)
 {
-    std::string backup;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestInfoParms.bundleName;
 
-    backup = g_infoManagerTestInfoParms.bundleName;
     g_infoManagerTestInfoParms.bundleName = "";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.bundleName = backup;
 }
 
@@ -1993,13 +1857,11 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken012, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken013, TestSize.Level1)
 {
-    std::string backup;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestInfoParms.appIDDesc;
 
-    backup = g_infoManagerTestInfoParms.appIDDesc;
     g_infoManagerTestInfoParms.appIDDesc = "";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_EQ(INVALID_TOKENID, tokenID);
     g_infoManagerTestInfoParms.appIDDesc = backup;
 }
 
@@ -2011,16 +1873,15 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken013, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken014, TestSize.Level1)
 {
-    std::string backup;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "";
+    AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     PermissionDef permDefResultBeta;
-    int ret = AccessTokenKit::GetDefPermission("", permDefResultBeta);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backup;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetDefPermission("", permDefResultBeta));
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backup;
+
+    DeleteTestToken();
 }
 
 /**
@@ -2031,24 +1892,24 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken014, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken015, TestSize.Level1)
 {
-    std::string backup;
-    std::string backUpPermission;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].bundleName;
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = "";
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp05";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp05";
+    AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
     PermissionDef permDefResultBeta;
     int ret = AccessTokenKit::GetDefPermission(
-        g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResultBeta);
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResultBeta);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[1].permissionName, permDefResultBeta);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ONE].permissionName, permDefResultBeta);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 /**
@@ -2059,21 +1920,21 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken015, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken016, TestSize.Level1)
 {
-    std::string backup;
-    std::string backUpPermission;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].label;
-    g_infoManagerTestPolicyPrams.permList[0].label = "";
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp06";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp06";
+    AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
     PermissionDef permDefResult;
-    int ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    int ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(ret, RET_SUCCESS);
-    g_infoManagerTestPolicyPrams.permList[0].label = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 /**
@@ -2084,21 +1945,21 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken016, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AllocHapToken017, TestSize.Level1)
 {
-    std::string backUpPermission;
-    std::string backup;
-    AccessTokenIDEx tokenIdEx = {0};
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
+    std::string backupDec = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description;
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].description;
-    g_infoManagerTestPolicyPrams.permList[0].description = "";
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp07";
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp07";
+    AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
     PermissionDef permDefResult;
-    int ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    int ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(ret, RET_SUCCESS);
-    g_infoManagerTestPolicyPrams.permList[0].description = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = backupDec;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
+
+    DeleteTestToken();
 }
 
 void AccessTokenKitTest::GetDlpFlagTest(HapInfoParams info, HapPolicyParams policy, int flag)
@@ -2205,15 +2066,22 @@ HWTEST_F(AccessTokenKitTest, AllocHapToken019, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
 {
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
+
     // test MDM permission
+    std::string permission = g_infoManagerTestPermDef1.permissionName;
+    ATokenAvailableTypeEnum type = g_infoManagerTestPermDef1.availableType;
     PermissionDef permDef1;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.ENTERPRISE_GET_DEVICE_INFO", permDef1));
-    ASSERT_EQ(permDef1.availableType, MDM);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission(permission, permDef1));
+    ASSERT_EQ(permDef1.availableType, type);
 
     // test NORMAL permission(default)
+    permission = g_infoManagerTestPermDef2.permissionName;
+    type = g_infoManagerTestPermDef2.availableType;
     PermissionDef permDef2;
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission("ohos.permission.CAMERA", permDef2));
-    ASSERT_EQ(permDef2.availableType, NORMAL);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetDefPermission(permission, permDef2));
+    ASSERT_EQ(permDef2.availableType, type);
 }
 
 /**
@@ -2224,33 +2092,30 @@ HWTEST_F(AccessTokenKitTest, AvailableType001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
 {
-    int userID = g_infoManagerTestInfoParms.userID;
-    const std::string bundleName = g_infoManagerTestInfoParms.bundleName;
-    int instIndex = g_infoManagerTestInfoParms.instIndex;
-
-    const std::string appIDDesc = "housework app";
+    ATokenAplEnum apl = g_infoManagerTestPolicyPrams.apl;
 
     DeleteTestToken();
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
     GTEST_LOG_(INFO) << "tokenID :" << tokenIdEx.tokenIdExStruct.tokenID;
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
     g_infoManagerTestPolicyPrams.apl = APL_SYSTEM_BASIC;
+    const std::string appIDDesc = "housework app";
 
     int ret = AccessTokenKit::UpdateHapToken(
         tokenIdEx, false, appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(0, ret);
 
     HapTokenInfo hapTokenInfoRes;
-    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, "housework app");
+    ASSERT_EQ(hapTokenInfoRes.appID, appIDDesc);
     ASSERT_EQ(hapTokenInfoRes.apl, APL_SYSTEM_BASIC);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    g_infoManagerTestPolicyPrams.apl = apl;
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2278,29 +2143,23 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken002, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
 {
-    int userID = g_infoManagerTestInfoParms.userID;
-    const std::string bundleName = g_infoManagerTestInfoParms.bundleName;
-    int instIndex = g_infoManagerTestInfoParms.instIndex;
-
     const std::string appIDDesc (INVALID_APPIDDESC_LEN, 'x');
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     int ret = AccessTokenKit::UpdateHapToken(
         tokenIdEx, false, appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     HapTokenInfo hapTokenInfoRes;
-    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.appID, "test3");
+    ASSERT_EQ(hapTokenInfoRes.appID, g_infoManagerTestInfoParms.appIDDesc);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2311,31 +2170,26 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken003, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 {
-    int userID = g_infoManagerTestInfoParms.userID;
-    const std::string bundleName = g_infoManagerTestInfoParms.bundleName;
-    int instIndex = g_infoManagerTestInfoParms.instIndex;
-
     const std::string appIDDesc = "housework app";
+    ATokenAplEnum apl = g_infoManagerTestPolicyPrams.apl;
 
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(userID, bundleName, instIndex);
+    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     g_infoManagerTestPolicyPrams.apl = (ATokenAplEnum)5;
-
     int ret = AccessTokenKit::UpdateHapToken(
         tokenIdEx, false, appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 
     HapTokenInfo hapTokenInfoRes;
-    ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes));
 
-    ASSERT_EQ(hapTokenInfoRes.apl, APL_NORMAL);
+    ASSERT_EQ(hapTokenInfoRes.apl, apl);
+    g_infoManagerTestPolicyPrams.apl = apl;
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2346,7 +2200,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
 {
-    std::string backUpPermission;
+    std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     PermissionDef permDefResult;
 
@@ -2355,51 +2209,51 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    std::string backup = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "";
+    std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "";
     int ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backup;
 
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp11";
-    backup = g_infoManagerTestPolicyPrams.permList[0].bundleName;
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp11";
+    backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName = "";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
-    g_infoManagerTestPolicyPrams.permList[0].bundleName = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].bundleName = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp12";
-    backup = g_infoManagerTestPolicyPrams.permList[0].label;
-    g_infoManagerTestPolicyPrams.permList[0].label = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp12";
+    backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = "";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].label = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
-    backUpPermission = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.testtmp13";
-    backup = g_infoManagerTestPolicyPrams.permList[0].description;
-    g_infoManagerTestPolicyPrams.permList[0].description = "";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.testtmp13";
+    backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = "";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].description = backup;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUpPermission;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = backup;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2472,7 +2326,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
 {
     int ret;
-    std::string backUp;
     const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     DeleteTestToken();
 
@@ -2486,14 +2339,14 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_NOT_EXIST, ret);
 
-    backUp = g_infoManagerTestPolicyPrams.permList[0].permissionName;
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = "ohos.permission.test3";
+    std::string backUp = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "ohos.permission.test3";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].permissionName = backUp;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUp;
 
-    GTEST_LOG_(INFO) << "permissionName :" << g_infoManagerTestPolicyPrams.permList[0].permissionName;
+    GTEST_LOG_(INFO) << "permissionName :" << g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
 
     ret = AccessTokenKit::GetDefPermission("ohos.permission.test3", permDefResult);
     if (ret != RET_SUCCESS) {
@@ -2503,8 +2356,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_EQ("ohos.permission.test3", permDefResult.permissionName);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 /**
  * @tc.name: UpdateHapToken008
@@ -2515,8 +2367,9 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken007, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
 {
     int ret;
-    std::string backup;
     const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
+    int backupMode = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].grantMode;
+    std::string backupLable = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label;
     DeleteTestToken();
 
     AccessTokenIDEx tokenIdEx = {0};
@@ -2526,30 +2379,30 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken008, TestSize.Level1)
 
     PermissionDef permDefResult;
     /* check permission define before update */
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
-    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult.permissionName);
-    ASSERT_EQ("label3", permDefResult.label);
-    ASSERT_EQ(1, permDefResult.grantMode);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult.permissionName);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label, permDefResult.label);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].grantMode, permDefResult.grantMode);
 
-    backup = g_infoManagerTestPolicyPrams.permList[0].label;
-    g_infoManagerTestPolicyPrams.permList[0].grantMode = 0;
-    g_infoManagerTestPolicyPrams.permList[0].label = "updated label";
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].grantMode = 0;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = "updated label";
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false,
         appIDDesc, DEFAULT_API_VERSION, g_infoManagerTestPolicyPrams);
     ASSERT_EQ(RET_SUCCESS, ret);
-    g_infoManagerTestPolicyPrams.permList[0].label = backup;
-    g_infoManagerTestPolicyPrams.permList[0].grantMode = 1;
 
     /* check permission define after update */
-    ret = AccessTokenKit::GetDefPermission(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult);
-    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[0].permissionName, permDefResult.permissionName);
-    ASSERT_EQ("updated label", permDefResult.label);
-    ASSERT_EQ(0, permDefResult.grantMode);
+    ret = AccessTokenKit::GetDefPermission(
+        g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult);
     ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName, permDefResult.permissionName);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label, permDefResult.label);
+    ASSERT_EQ(g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].grantMode, permDefResult.grantMode);
 
-    ret = AccessTokenKit::DeleteToken(tokenID);
-    ASSERT_EQ(RET_SUCCESS, ret);
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].label = backupLable;
+    g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].grantMode = backupMode;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2564,20 +2417,8 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken009, TestSize.Level1)
     std::vector<PermissionDef> permDefList;
     const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     PermissionDef infoManagerTestPermDef = g_infoManagerTestPermDef1;
-    PermissionStateFull infoManagerTestState = {
-        .permissionName = "ohos.permission.test1",
-        .isGeneral = true,
-        .resDeviceID = {"local"},
-        .grantStatus = {3},
-        .grantFlags = {PermissionState::PERMISSION_DENIED}
-    };
-
-    HapPolicyParams infoManagerTestPolicyPrams = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain",
-        .permList = {infoManagerTestPermDef},
-        .permStateList = {infoManagerTestState}
-    };
+    PermissionStateFull infoManagerTestState = g_infoManagerTestState1;
+    std::string permisson = infoManagerTestState.permissionName;
 
     DeleteTestToken();
     AccessTokenIDEx tokenIdEx = {0};
@@ -2585,16 +2426,21 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken009, TestSize.Level1)
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     GTEST_LOG_(INFO) << "tokenID :" << tokenID;
 
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.test1");
-    ASSERT_EQ(ret, g_infoManagerTestState1.grantStatus[0]);
+    ASSERT_EQ(AccessTokenKit::VerifyAccessToken(tokenID, permisson), infoManagerTestState.grantStatus[0]);
 
+    infoManagerTestState.grantStatus[0] = PermissionState::PERMISSION_DENIED;
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain",
+        .permList = {infoManagerTestPermDef},
+        .permStateList = {infoManagerTestState}
+    };
     ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false, appIDDesc, DEFAULT_API_VERSION, infoManagerTestPolicyPrams);
-
-    ret = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.test1");
-    ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
-
-    ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
+
+    ASSERT_NE(AccessTokenKit::VerifyAccessToken(tokenID, permisson), PermissionState::PERMISSION_DENIED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2623,6 +2469,8 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken010, TestSize.Level1)
     
     ret = AccessTokenKit::GetHapTokenInfo(tokenID, hapTokenInfoRes);
     ASSERT_EQ(apiVersion, hapTokenInfoRes.apiVersion);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 
 /**
@@ -2685,9 +2533,8 @@ static void *ThreadTestFunc02(void *args)
 HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
 {
     int ret;
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenID);
     pthread_t tid[2];
     (void)pthread_create(&tid[0], nullptr, &ThreadTestFunc01, nullptr);
     (void)pthread_create(&tid[1], nullptr, &ThreadTestFunc01, nullptr);
@@ -2699,7 +2546,7 @@ HWTEST_F(AccessTokenKitTest, Mulitpulthread001, TestSize.Level1)
     (void)pthread_join(tid[0], nullptr);
     (void)pthread_join(tid[1], nullptr);
 
-    ret = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
+    ret = AccessTokenKit::DeleteToken(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 }
 
@@ -2822,6 +2669,61 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
     AccessTokenID tokenID = tokenId01 & 0xffffffff;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     ASSERT_EQ(ret, TOKEN_NATIVE);
+}
+
+/**
+ * @tc.name: SetPermDialogCap001
+ * @tc.desc: Set permission dialog capability with noexist app.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, SetPermDialogCap001, TestSize.Level1)
+{
+    HapBaseInfo hapBaseInfo = {
+        .userID = 111, // 111: user id
+        .bundleName = "noexist bundle",
+        .instIndex = 0,
+    };
+
+    HapTokenInfo hapInfo;
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+}
+
+/**
+ * @tc.name: SetPermDialogCap002
+ * @tc.desc: Set permission dialog capability, and get set permissionState.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, SetPermDialogCap002, TestSize.Level1)
+{
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    HapBaseInfo hapBaseInfo = {
+        .userID = g_infoManagerTestInfoParms.userID,
+        .bundleName = g_infoManagerTestInfoParms.bundleName,
+        .instIndex = g_infoManagerTestInfoParms.instIndex,
+    };
+
+    std::vector<PermissionListState> permsList;
+    PermissionListState tmp = {
+        .permissionName = g_infoManagerTestPolicyPrams.permStateList[0].permissionName,
+        .state = 0
+    };
+    permsList.emplace_back(tmp);
+
+    // test dialog is forbiddedn
+    ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+    SetSelfTokenID(tokenID);
+    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    SetSelfTokenID(selfTokenId_);
+
+    // test dialog is not forbiddedn
+    ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
+    SetSelfTokenID(tokenID);
+    ASSERT_NE(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    SetSelfTokenID(selfTokenId_);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
 } // namespace AccessToken
 } // namespace Security

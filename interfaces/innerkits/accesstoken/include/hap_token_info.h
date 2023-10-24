@@ -56,7 +56,7 @@ class HapInfoParams final {
 public:
     int userID;
     std::string bundleName;
-    /** instcance index */
+    /** instance index */
     int instIndex;
     /**
      * dlp type, for details about the valid values,
@@ -100,7 +100,7 @@ public:
     std::string bundleName;
     /** which version of the SDK is used to develop this hap */
     int32_t apiVersion;
-    /** instcance index */
+    /** instance index */
     int instIndex;
     /**
      * dlp type, for details about the valid values,
@@ -124,6 +124,18 @@ public:
     /** permission state list */
     std::vector<PermissionStateFull> permStateList;
 };
+
+/**
+ * @brief Declares hap base token info class
+ */
+class HapBaseInfo final {
+public:
+    int32_t userID;
+    std::string bundleName = "";
+    /** instance index */
+    int32_t instIndex = 0;
+};
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

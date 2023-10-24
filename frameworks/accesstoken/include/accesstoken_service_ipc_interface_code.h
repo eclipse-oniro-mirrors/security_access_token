@@ -54,6 +54,7 @@ enum class AccessTokenInterfaceCode {
     UNREGISTER_PERM_STATE_CHANGE_CALLBACK,
     RELOAD_NATIVE_TOKEN_INFO,
     GET_NATIVE_TOKEN_ID,
+    SET_PERM_DIALOG_CAPABILITY,
 };
 } // namespace AccessToken
 } // namespace Security
