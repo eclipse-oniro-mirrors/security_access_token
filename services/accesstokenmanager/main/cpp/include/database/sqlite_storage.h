@@ -16,6 +16,7 @@
 #ifndef SQLITE_STORAGE_H
 #define SQLITE_STORAGE_H
 
+#include "access_token.h"
 #include "data_storage.h"
 #include "nocopyable.h"
 #include "rwlock.h"
@@ -70,6 +71,7 @@ private:
     std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
+    int32_t AddAvailableTypeColumn() const;
 
 private:
     inline static const std::string HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
@@ -78,7 +80,7 @@ private:
     inline static const std::string PERMISSION_STATE_TABLE = "permission_state_table";
     inline static const std::string DATABASE_NAME = "access_token.db";
     inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int DATABASE_VERSION = 1;
+    static const int DATABASE_VERSION = 2;
 };
 } // namespace AccessToken
 } // namespace Security
