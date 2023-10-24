@@ -344,7 +344,7 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         }
 
         if ((goalGrantFlag == PERMISSION_DEFAULT_FLAG) || ((goalGrantFlag & PERMISSION_USER_SET) != 0) ||
-            ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0)) {
+            ((goalGrantFlag & PERMISSION_COMPONENT_SET) != 0) || ((goalGrantFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
             permState.state = DYNAMIC_OPER;
             return;
         }
@@ -760,7 +760,8 @@ void PermissionManager::GetStateByStatusAndFlag(int32_t status, uint32_t flag, u
 
     if (status == PERMISSION_DENIED) {
         // status -1 means permission has been refused or not set
-        if ((flag == PERMISSION_DEFAULT_FLAG) || ((flag & PERMISSION_USER_SET) != 0)) {
+        if ((flag == PERMISSION_DEFAULT_FLAG) || ((flag & PERMISSION_USER_SET) != 0) ||
+            ((flag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
             // flag 0 or 1 means permission has not been operated or valid only once
             state = DYNAMIC_OPER;
         } else if ((flag & PERMISSION_USER_FIXED) != 0) {
@@ -808,7 +809,8 @@ bool PermissionManager::LocationHandleWithVague(std::vector<PermissionListStateP
 
     // vague location status -1 means vague location permission has been refused or not set
     if (vagueStatus == PERMISSION_DENIED) {
-        if ((vagueFlag == PERMISSION_DEFAULT_FLAG) || ((vagueFlag & PERMISSION_USER_SET) != 0)) {
+        if ((vagueFlag == PERMISSION_DEFAULT_FLAG) || ((vagueFlag & PERMISSION_USER_SET) != 0) ||
+            ((vagueFlag & PERMISSION_ALLOW_THIS_TIME) != 0)) {
             // vague location flag 0 or 1 means permission has not been operated or valid only once
             vagueState = DYNAMIC_OPER;
             accurateState = accurateIndex != ELEMENT_NOT_FOUND ? DYNAMIC_OPER : INVALID_OPER;
