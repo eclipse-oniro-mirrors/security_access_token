@@ -54,7 +54,7 @@ public:
     void TearDown();
     unsigned int GetAccessTokenID(int userID, std::string bundleName, int instIndex);
     void DeleteTestToken() const;
-    void AllocTestToken() const;
+    AccessTokenID AllocTestToken(const HapInfoParams& hapInfo, const HapPolicyParams& hapPolicy) const;
     void GetDlpFlagTest(HapInfoParams info, HapPolicyParams policy, int flag);
 
     uint64_t selfTokenId_;

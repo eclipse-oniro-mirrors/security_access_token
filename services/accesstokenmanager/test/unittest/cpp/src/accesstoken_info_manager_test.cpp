@@ -2008,6 +2008,98 @@ HWTEST_F(AccessTokenInfoManagerTest, ClearAllSecCompGrantedPerm002, TestSize.Lev
     auto tokenInfoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
     ASSERT_EQ(tokenInfoPtr, nullptr);
 }
+
+/**
+ * @tc.name: SetPermDialogCap001
+ * @tc.desc: SetPermDialogCap with HapUniqueKey not exist
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap001, TestSize.Level1)
+{
+    HapBaseInfo baseInfo = {
+        .userID = USER_ID,
+        .bundleName = "com.ohos.test",
+        .instIndex = INST_INDEX,
+    };
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, AccessTokenInfoManager::GetInstance().SetPermDialogCap(baseInfo, true));
+}
+
+/**
+ * @tc.name: SetPermDialogCap002
+ * @tc.desc: SetPermDialogCap with abnormal branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, SetPermDialogCap002, TestSize.Level1)
+{
+    HapBaseInfo baseInfo = {
+        .userID = g_infoManagerTestInfoParms.userID,
+        .bundleName = g_infoManagerTestInfoParms.bundleName,
+        .instIndex = g_infoManagerTestInfoParms.instIndex,
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // SetPermDialogCap successfull
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermDialogCap(baseInfo, true));
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetPermDialogCap(baseInfo, false));
+    ASSERT_EQ(false, AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+
+    std::shared_ptr<HapTokenInfoInner> back = AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId];
+
+    // tokeninfo of hapTokenInfoMap_ is nullptr, return true(forbid)
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().SetPermDialogCap(baseInfo, true)); // info is null
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+
+    // token is not found in hapTokenInfoMap_, return true(forbid)
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
+    ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
+        AccessTokenInfoManager::GetInstance().SetPermDialogCap(baseInfo, true)); // info is null
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenId));
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = back;
+    
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: GetPermDialogCap001
+ * @tc.desc: GetPermDialogCap with abnormal branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level1)
+{
+    // invalid token
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(INVALID_TOKENID));
+
+    // nonexist token
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(123)); // 123: tokenid
+
+    // tokeninfo is nullptr
+    HapBaseInfo baseInfo = {
+        .userID = g_infoManagerTestInfoParms.userID,
+        .bundleName = g_infoManagerTestInfoParms.bundleName,
+        .instIndex = g_infoManagerTestInfoParms.instIndex,
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    std::shared_ptr<HapTokenInfoInner> back = AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId];
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = nullptr;
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().GetPermDialogCap(123)); // 123: tokenid
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = back;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

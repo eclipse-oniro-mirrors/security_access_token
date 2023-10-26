@@ -448,6 +448,18 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }
 #endif
+
+/**
+ * @tc.name: SetPermDialogCap001
+ * @tc.desc: SetPermDialogCap with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, SetPermDialogCap001, TestSize.Level1)
+{
+    HapBaseInfo hapBaseInfo;
+    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+}
 }  // namespace AccessToken
 }  // namespace Security
 }

@@ -29,8 +29,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const std::string FIELD_COUNT_NUMBER = "count";
 static const std::string INTEGER_STR = " integer not null,";
-static const int32_t DATABASES_VERSION_INSERT_LOCKSCREEN_STATUS = 2;
-
 }
 
 PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
@@ -53,9 +51,7 @@ void PermissionUsedRecordDb::OnCreate()
 void PermissionUsedRecordDb::OnUpdate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    if (DATABASE_VERSION == DATABASES_VERSION_INSERT_LOCKSCREEN_STATUS) {
-        InsertLockScreenStatusColumn();
-    }
+    InsertLockScreenStatusColumn();
 }
 
 PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)

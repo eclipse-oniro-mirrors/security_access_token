@@ -195,6 +195,8 @@ typedef enum TypePermissionOper {
     DYNAMIC_OPER = 1,
     /** invalid operation, something is wrong, see in md files */
     INVALID_OPER = 2,
+    /** operate is forbidden */
+    FORBIDDEN_OPER = 3,
 } PermissionOper;
 
 /**

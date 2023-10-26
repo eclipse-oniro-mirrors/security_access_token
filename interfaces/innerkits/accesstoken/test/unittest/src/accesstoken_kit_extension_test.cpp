@@ -272,6 +272,7 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
     .apiVersion = DEFAULT_API_VERSION,
     .isSystemApp = true
 };
+uint64_t g_selfShellTokenId;
 }
 
 void GetNativeToken()
@@ -302,6 +303,7 @@ void GetNativeToken()
 
 void AccessTokenKitExtensionTest::SetUpTestCase()
 {
+    g_selfShellTokenId = GetSelfTokenID();
     // clean up test cases
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
         g_infoManagerTestInfoParms.bundleName,
@@ -647,7 +649,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState003, TestSize.Level
         .state = 0
     };
     permsList3.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList3));
+    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList3));
 }
 
 /**
@@ -667,7 +669,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level
         .state = 0
     };
     permsList4.emplace_back(tmp);
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList4));
+    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList4));
 }
 
 /**
@@ -716,6 +718,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionFlag006, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitExtensionTest, DumpTokenInfo001, TestSize.Level1)
 {
+    SetSelfTokenID(g_selfShellTokenId);
     std::string info;
     AccessTokenKit::DumpTokenInfo(123, info);
     ASSERT_EQ("invalid tokenId", info);
