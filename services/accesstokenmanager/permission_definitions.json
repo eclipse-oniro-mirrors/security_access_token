@@ -1,4 +1,13 @@
 {
     "definePermissions": [
+        {
+            "name": "ohos.permission.MANAGE_HAP_TOKENID",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        }
     ]
 }
