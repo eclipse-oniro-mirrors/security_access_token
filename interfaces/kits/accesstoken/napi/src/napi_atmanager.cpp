@@ -694,11 +694,12 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
-
-        ACCESSTOKEN_LOG_DEBUG(LABEL,
-            "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
-            asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
+    } else {
+        asyncContext->result = JsErrorCode::JS_ERROR_PERMISSION_NOT_EXIST;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
+        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
 }
 
 void NapiAtManager::GrantUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
@@ -828,11 +829,12 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
-
-        ACCESSTOKEN_LOG_DEBUG(LABEL,
-            "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
-            asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
+    } else {
+        asyncContext->result = JsErrorCode::JS_ERROR_PERMISSION_NOT_EXIST;
     }
+    ACCESSTOKEN_LOG_DEBUG(LABEL,
+        "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
+        asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->flag, asyncContext->result);
 }
 
 void NapiAtManager::RevokeUserGrantedPermissionComplete(napi_env env, napi_status status, void *data)
