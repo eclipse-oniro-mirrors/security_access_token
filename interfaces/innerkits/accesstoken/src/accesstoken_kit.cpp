@@ -439,6 +439,11 @@ int32_t AccessTokenKit::GetVersion(void)
     }
     return DEFAULT_TOKEN_VERSION;
 }
+
+int32_t AccessTokenKit::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable)
+{
+    return AccessTokenManagerClient::GetInstance().SetPermDialogCap(hapBaseInfo, enable);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -22,6 +22,7 @@ namespace AccessToken {
 class TimeUtil {
 public:
     static int64_t GetCurrentTimestamp();
+    static bool IsTimeStampsSameMinute(int64_t timeStamp1, int64_t timeStamp2);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -264,6 +264,14 @@ public:
      */
     static AccessTokenID GetNativeTokenId(const std::string& processName);
 
+    /**
+     * @brief Set permission dialog capability
+     * @param hapBaseInfo base infomation of hap
+     * @param enable status of enable dialog
+     * @return error code, see access_token_error.h
+     */
+    static int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
+
 #ifdef TOKEN_SYNC_ENABLE
     /**
      * @brief Get remote hap token info by remote token id.

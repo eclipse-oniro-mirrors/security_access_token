@@ -15,10 +15,10 @@
 
 #include "remote_command_manager.h"
 #include <thread>
+#include "access_event_handler.h"
 #include "device_info_manager.h"
 #include "sync_remote_native_token_command.h"
 #include "remote_command_factory.h"
-#include "token_sync_event_handler.h"
 #include "token_sync_manager_service.h"
 #include "accesstoken_kit.h"
 #include "constant_common.h"
@@ -209,7 +209,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
         AccessTokenKit::DeleteRemoteDeviceTokens(uniqueDeviceId);
     });
 
-    std::shared_ptr<TokenSyncEventHandler> handler =
+    std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");

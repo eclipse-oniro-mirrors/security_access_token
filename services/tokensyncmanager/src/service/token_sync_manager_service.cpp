@@ -72,12 +72,12 @@ void TokenSyncManagerService::OnStop()
     SoftBusManager::GetInstance().Destroy();
 }
 
-std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetSendEventHandler() const
+std::shared_ptr<AccessEventHandler> TokenSyncManagerService::GetSendEventHandler() const
 {
     return sendHandler_;
 }
 
-std::shared_ptr<TokenSyncEventHandler> TokenSyncManagerService::GetRecvEventHandler() const
+std::shared_ptr<AccessEventHandler> TokenSyncManagerService::GetRecvEventHandler() const
 {
     return recvHandler_;
 }
@@ -175,14 +175,14 @@ bool TokenSyncManagerService::Initialize()
         return false;
     }
 
-    sendHandler_ = std::make_shared<TokenSyncEventHandler>(sendRunner_);
+    sendHandler_ = std::make_shared<AccessEventHandler>(sendRunner_);
     recvRunner_ = AppExecFwk::EventRunner::Create(true);
     if (!recvRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
         return false;
     }
 
-    recvHandler_ = std::make_shared<TokenSyncEventHandler>(recvRunner_);
+    recvHandler_ = std::make_shared<AccessEventHandler>(recvRunner_);
     SoftBusManager::GetInstance().Initialize();
     return true;
 }

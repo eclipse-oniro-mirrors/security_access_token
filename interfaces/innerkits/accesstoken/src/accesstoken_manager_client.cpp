@@ -558,6 +558,18 @@ sptr<IAccessTokenManager> AccessTokenManagerClient::GetProxy()
     }
     return proxy_;
 }
+
+int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+    }
+    HapBaseInfoParcel hapBaseInfoParcel;
+    hapBaseInfoParcel.hapBaseInfo = hapBaseInfo;
+    return proxy->SetPermDialogCap(hapBaseInfoParcel, enable);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

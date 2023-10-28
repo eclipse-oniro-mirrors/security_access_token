@@ -16,6 +16,7 @@
 #ifndef SQLITE_STORAGE_H
 #define SQLITE_STORAGE_H
 
+#include "access_token.h"
 #include "data_storage.h"
 #include "nocopyable.h"
 #include "rwlock.h"
@@ -53,12 +54,6 @@ public:
     void OnUpdate() override;
 
 private:
-    SqliteStorage();
-    DISALLOW_COPY_AND_MOVE(SqliteStorage);
-
-    std::map<DataType, SqliteTable> dataTypeToSqlTable_;
-    OHOS::Utils::RWLock rwLock_;
-
     int CreateHapTokenInfoTable() const;
     int CreateNativeTokenInfoTable() const;
     int CreatePermissionDefinitionTable() const;
@@ -70,15 +65,21 @@ private:
     std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
+    int32_t AddAvailableTypeColumn() const;
+    int32_t AddPermiDialogCapColumn() const;
 
-private:
+    SqliteStorage();
+    DISALLOW_COPY_AND_MOVE(SqliteStorage);
+
+    std::map<DataType, SqliteTable> dataTypeToSqlTable_;
+    OHOS::Utils::RWLock rwLock_;
     inline static const std::string HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
     inline static const std::string NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
     inline static const std::string PERMISSION_DEF_TABLE = "permission_definition_table";
     inline static const std::string PERMISSION_STATE_TABLE = "permission_state_table";
     inline static const std::string DATABASE_NAME = "access_token.db";
     inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int DATABASE_VERSION = 1;
+    static const int DATABASE_VERSION = 2;
 };
 } // namespace AccessToken
 } // namespace Security

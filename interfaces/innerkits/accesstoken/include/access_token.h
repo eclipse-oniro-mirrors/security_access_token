@@ -100,6 +100,15 @@ typedef enum TypeATokenAplEnum {
 } ATokenAplEnum;
 
 /**
+ * @brief AvailableType
+ */
+typedef enum TypeATokenAvailableTypeEnum {
+    INVALID = 0,
+    NORMAL = 1,
+    MDM,
+} ATokenAvailableTypeEnum;
+
+/**
  * @brief Token id full definition
  */
 typedef union {
@@ -168,6 +177,10 @@ typedef enum TypePermissionFlag {
      * permission is fixed by policy and the permission cannot be granted or revoked by user
      */
     PERMISSION_POLICY_FIXED = 1 << 5,
+    /*
+     * permission is only allowed during the current lifecycle foreground period
+     */
+    PERMISSION_ALLOW_THIS_TIME = 1 << 6,
 } PermissionFlag;
 
 /**
@@ -182,6 +195,8 @@ typedef enum TypePermissionOper {
     DYNAMIC_OPER = 1,
     /** invalid operation, something is wrong, see in md files */
     INVALID_OPER = 2,
+    /** operate is forbidden */
+    FORBIDDEN_OPER = 3,
 } PermissionOper;
 
 /**

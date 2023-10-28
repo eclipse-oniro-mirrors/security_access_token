@@ -33,6 +33,7 @@ bool PermissionDefParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.labelId));
     RETURN_IF_FALSE(out.WriteString(this->permissionDef.description));
     RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.descriptionId));
+    RETURN_IF_FALSE(out.WriteInt32(this->permissionDef.availableType));
     return true;
 }
 
@@ -57,6 +58,9 @@ PermissionDefParcel* PermissionDefParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.labelId), permissionDefParcel);
     permissionDefParcel->permissionDef.description = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(permissionDefParcel->permissionDef.descriptionId), permissionDefParcel);
+    int32_t availableType;
+    RELEASE_IF_FALSE(in.ReadInt32(availableType), permissionDefParcel);
+    permissionDefParcel->permissionDef.availableType = ATokenAvailableTypeEnum(availableType);
     return permissionDefParcel;
 }
 } // namespace AccessToken

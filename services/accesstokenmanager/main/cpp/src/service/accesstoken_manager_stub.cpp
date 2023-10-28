@@ -32,7 +32,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMStub"};
-const std::string MANAGE_HAP_TOKENID = "ohos.permission.MANAGE_HAP_TOKENID";
+const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
 #ifdef TOKEN_SYNC_ENABLE
@@ -41,6 +41,7 @@ static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 10; // 10s
 #endif // HICOLLIE_ENABLE
@@ -605,7 +606,7 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
 
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+    if (!IsShellProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
         reply.WriteString("");
         return;
@@ -621,6 +622,26 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
     }
 }
 
+void AccessTokenManagerStub::SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    sptr<HapBaseInfoParcel> hapBaseInfoParcel = data.ReadParcelable<HapBaseInfoParcel>();
+    if (hapBaseInfoParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read hapBaseInfoParcel fail");
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    bool enable = data.ReadBool();
+    int32_t res = this->SetPermDialogCap(*hapBaseInfoParcel, enable);
+    reply.WriteInt32(res);
+}
+
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
@@ -631,7 +652,7 @@ bool AccessTokenManagerStub::IsPrivilegedCalling() const
 bool AccessTokenManagerStub::IsFoundationCalling()
 {
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
-    int result = this->VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID);
+    int result = this->VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION);
     return PERMISSION_GRANTED == result;
 }
 
@@ -648,6 +669,12 @@ bool AccessTokenManagerStub::IsNativeProcessCalling()
 {
     AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
     return this->GetTokenType(tokenCaller) == TOKEN_NATIVE;
+}
+
+bool AccessTokenManagerStub::IsShellProcessCalling()
+{
+    AccessTokenID tokenCaller = IPCSkeleton::GetCallingTokenID();
+    return this->GetTokenType(tokenCaller) == TOKEN_SHELL;
 }
 
 bool AccessTokenManagerStub::IsSystemAppCalling() const
@@ -704,6 +731,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 #endif
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID)] =
         &AccessTokenManagerStub::GetNativeTokenIdInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY)] =
+        &AccessTokenManagerStub::SetPermDialogCapInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()

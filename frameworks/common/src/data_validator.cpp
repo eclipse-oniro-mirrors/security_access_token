@@ -59,6 +59,11 @@ bool DataValidator::IsAplNumValid(const int apl)
     return (apl == APL_NORMAL || apl == APL_SYSTEM_BASIC || apl == APL_SYSTEM_CORE);
 }
 
+bool DataValidator::IsAvailableTypeValid(const int availableType)
+{
+    return (availableType == NORMAL || availableType == MDM);
+}
+
 bool DataValidator::IsProcessNameValid(const std::string& processName)
 {
     return !processName.empty() && (processName.length() <= MAX_LENGTH);
@@ -83,7 +88,8 @@ bool DataValidator::IsPermissionFlagValid(uint32_t flag)
         unmaskedFlag == PermissionFlag::PERMISSION_USER_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_SYSTEM_FIXED ||
         unmaskedFlag == PermissionFlag::PERMISSION_COMPONENT_SET ||
-        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED;
+        unmaskedFlag == PermissionFlag::PERMISSION_POLICY_FIXED ||
+        unmaskedFlag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME;
 }
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)

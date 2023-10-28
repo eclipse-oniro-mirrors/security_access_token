@@ -161,7 +161,11 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
     std::vector<PermissionListStateParcel>& reqPermList)
 {
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-
+    bool isPermDialogForbidden = AccessTokenInfoManager::GetInstance().GetPermDialogCap(callingTokenID);
+    if (isPermDialogForbidden) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d is under control", callingTokenID);
+        return FORBIDDEN_OPER;
+    }
     int32_t apiVersion = 0;
     if (!PermissionManager::GetInstance().GetApiVersionByTokenId(callingTokenID, apiVersion)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get api version error");
@@ -279,7 +283,7 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
@@ -420,6 +424,11 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
 }
 
+int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
+{
+    return AccessTokenInfoManager::GetInstance().SetPermDialogCap(hapBaseInfoParcel.hapBaseInfo, enable);
+}
+
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
@@ -460,10 +469,19 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     }
 }
 
-bool AccessTokenManagerService::Initialize() const
+bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
+
+    eventRunner_ = AppExecFwk::EventRunner::Create(true);
+    if (!eventRunner_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
+        return false;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
+    TempPermissionObserver::GetInstance().InitEventHandler(eventHandler_);
+
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif

@@ -43,7 +43,9 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
+      "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/database/include",
+      "${access_token_path}/services/common/handler/include",
       "main/cpp/include/callback",
       "main/cpp/include/service",
       "main/cpp/include/token",
@@ -68,6 +70,7 @@ if (is_standard_system) {
       "main/cpp/src/permission/permission_policy_set.cpp",
       "main/cpp/src/permission/permission_validator.cpp",
       "main/cpp/src/permission/system_permission_definition_parser.cpp",
+      "main/cpp/src/permission/temp_permission_observer.cpp",
       "main/cpp/src/service/accesstoken_manager_service.cpp",
       "main/cpp/src/service/accesstoken_manager_stub.cpp",
       "main/cpp/src/token/accesstoken_id_manager.cpp",
@@ -76,7 +79,6 @@ if (is_standard_system) {
       "main/cpp/src/token/native_token_info_inner.cpp",
       "main/cpp/src/token/native_token_receptor.cpp",
     ]
-
     sources += access_token_impl_sources
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -101,7 +103,7 @@ if (is_standard_system) {
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
       "${access_token_path}/services/accesstokenmanager:permission_definition_config",
-      "${access_token_path}/services/common/database:accesstoken_database_cxx",
+      "${access_token_path}/services/common:accesstoken_service_common",
     ]
 
     deps += [ "etc:param_files" ]
@@ -109,6 +111,7 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "dsoftbus:softbus_client",
+      "eventhandler:libeventhandler",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "init:libbegetutil",

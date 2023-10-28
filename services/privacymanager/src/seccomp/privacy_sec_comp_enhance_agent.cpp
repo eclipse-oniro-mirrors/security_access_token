@@ -16,7 +16,7 @@
 
 #include "access_token.h"
 #include "accesstoken_log.h"
-#include "app_manager_privacy_client.h"
+#include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
 #include "privacy_error.h"
 
@@ -28,13 +28,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySecCompEnhanceAgent"
 };
 }
-
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnProcessDied die pid %{public}d", processData.pid);
 
     int pid = processData.pid;
     PrivacySecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(pid);
+}
+
+void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacySecComp AppManagerDeath called");
+
+    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
 PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
@@ -50,13 +56,16 @@ PrivacySecCompEnhanceAgent::PrivacySecCompEnhanceAgent()
         ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
         return;
     }
-    AppManagerPrivacyClient::GetInstance().RegisterApplicationStateObserver(observer_);
+    AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_);
+
+    appManagerDeathCallback_ = std::make_shared<PrivacySecCompAppManagerDeathCallback>();
+    AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
 }
 
 PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
 {
     if (observer_ != nullptr) {
-        AppManagerPrivacyClient::GetInstance().UnregisterApplicationStateObserver(observer_);
+        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
         observer_= nullptr;
     }
 }

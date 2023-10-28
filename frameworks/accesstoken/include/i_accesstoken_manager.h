@@ -21,6 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "errors.h"
+#include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
@@ -86,6 +87,7 @@ public:
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
 #endif
 
+    virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
     virtual void DumpTokenInfo(AccessTokenID tokenID, std::string& tokenInfo) = 0;
 };
 } // namespace AccessToken

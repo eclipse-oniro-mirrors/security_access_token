@@ -21,6 +21,7 @@
 
 #include "access_token.h"
 #include "hap_info_parcel.h"
+#include "hap_base_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
 #include "hap_token_info_for_sync_parcel.h"
@@ -79,6 +80,7 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
 #endif
 
+    int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
     void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
 
 private:

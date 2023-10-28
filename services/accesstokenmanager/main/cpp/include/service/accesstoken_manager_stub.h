@@ -72,12 +72,14 @@ private:
     void SetPermissionOpFuncInMap();
     void SetLocalTokenOpFuncInMap();
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
     bool IsFoundationCalling();
     bool IsSystemAppCalling() const;
+    bool IsShellProcessCalling();
     static const int32_t ROOT_UID = 0;
     static const int32_t ACCESSTOKEN_UID = 3020;
 

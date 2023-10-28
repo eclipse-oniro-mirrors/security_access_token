@@ -36,6 +36,8 @@ public:
 
     static bool IsAplNumValid(const int apl);
 
+    static bool IsAvailableTypeValid(const int availableType);
+
     static bool IsProcessNameValid(const std::string& processName);
 
     static bool IsDeviceIdValid(const std::string& deviceId);

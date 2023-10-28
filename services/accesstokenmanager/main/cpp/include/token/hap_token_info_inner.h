@@ -58,6 +58,8 @@ public:
     void ToString(std::string& info) const;
     bool IsRemote() const;
     void SetRemote(bool isRemote);
+    bool IsPermDialogForbidden() const;
+    void SetPermDialogForbidden(bool isForbidden);
 
     uint64_t permUpdateTimestamp_;
 private:
@@ -69,6 +71,8 @@ private:
 
     // true means sync from remote.
     bool isRemote_;
+    /** permission dialog is forbidden */
+    bool isPermDialogForbidden_ = false;
 
     std::shared_ptr<PermissionPolicySet> permPolicySet_;
 };

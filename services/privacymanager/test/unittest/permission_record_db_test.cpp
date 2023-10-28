@@ -183,7 +183,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSi
     std::set<int32_t> opCodeList;
     std::vector<std::string> andColumns;
     ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
-        andColumns));
+        andColumns, 10));
 }
 
 /*
@@ -202,7 +202,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSi
     std::vector<std::string> orColumns;
     orColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
-        andColumns));
+        andColumns, 10));
 }
 
 /*
@@ -488,26 +488,84 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions001, TestSize.Level1)
     std::vector<GenericValues> results;
 
     GenericValues andConditions; // no column
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions, results, 10));
 
     GenericValues andConditions1; // field timestamp
     andConditions1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 0);
 
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions1, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions1, results, 10));
 
     GenericValues andConditions2; // field access_duration
     andConditions2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 0);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions2, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions2, results, 10));
 
     GenericValues andConditions3; // field not timestamp or access_duration
     andConditions3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions3, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions3, results, 10));
 
     GenericValues andConditions4;
     andConditions4.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions4, results));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions4, results, 10));
 
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
+}
+
+/*
+ * @tc.name: FindByConditions002
+ * @tc.desc: PermissionUsedRecordDb::FindByConditions function test
+ * @tc.type: FUNC
+ * @tc.require: issueI5YL6H
+ */
+HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level1)
+{
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+
+    GenericValues value2;
+    value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 2); // random input
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+
+    GenericValues value3;
+    value3.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 3); // random input
+    value3.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    value3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value3.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value3.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value3.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value3.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value3.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    values.emplace_back(value3);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+
+    std::set<int32_t> opCodeList;
+    GenericValues andConditions;
+    std::vector<GenericValues> results;
+    andConditions.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
+    andConditions.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().FindByConditions(type, opCodeList, andConditions, results, 2));
+    ASSERT_EQ(static_cast<size_t>(2), results.size());
+
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value1));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value2));
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value3));
 }
 
 /*
