@@ -213,6 +213,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
     genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
@@ -265,6 +266,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     genericValues.Put(TokenFiledConst::FIELD_APL, ATokenAplEnum::APL_NORMAL);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, 0);
     genericValues.Put(TokenFiledConst::FIELD_TOKEN_ATTR, 0);
+    genericValues.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, "test_perm_dialog_cap_state");
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
