@@ -22,7 +22,8 @@ bool AppStateData::Marshalling(Parcel &parcel) const
 {
     return (parcel.WriteString(bundleName) && parcel.WriteInt32(uid) && parcel.WriteInt32(state)
         && parcel.WriteInt32(pid) && parcel.WriteInt32(accessTokenId) && parcel.WriteBool(isFocused)
-        && parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids));
+        && parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids)
+        && parcel.WriteString(callerBundleName));
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -39,6 +40,7 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     appStateData->isFocused = parcel.ReadBool();
     appStateData->extensionType = parcel.ReadInt32();
     parcel.ReadInt32Vector(&appStateData->renderPids);
+    appStateData->callerBundleName = parcel.ReadString();
     return appStateData;
 }
 }  // namespace AccessToken

@@ -46,6 +46,7 @@ struct AppStateData : public Parcelable {
     bool isFocused = false;
     int32_t extensionType = 255;
     std::vector<int32_t> renderPids;
+    std::string callerBundleName;
 };
 }  // namespace AccessToken
 }  // namespace Security
