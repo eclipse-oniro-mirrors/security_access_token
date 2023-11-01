@@ -34,7 +34,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 static bool g_isRegistered = false;
 
-static std::make_shared<LockscreenObserver> g_lockscreenObserver = nullptr;
+static std::shared_ptr<LockscreenObserver> g_lockscreenObserver = nullptr;
 }
 
 void LockscreenObserver::RegisterEvent()
