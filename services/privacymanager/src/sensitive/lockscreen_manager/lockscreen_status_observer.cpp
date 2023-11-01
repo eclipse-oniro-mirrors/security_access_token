@@ -33,6 +33,8 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 
 static bool g_isRegistered = false;
+
+static std::shared_ptr<LockscreenObserver> g_lockscreenObserver = nullptr;
 }
 
 void LockscreenObserver::RegisterEvent()
@@ -47,8 +49,8 @@ void LockscreenObserver::RegisterEvent()
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
-    auto hub = std::make_shared<LockscreenObserver>(*info);
-    const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(hub);
+    g_lockscreenObserver = std::make_shared<LockscreenObserver>(*info);
+    const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_lockscreenObserver);
     if (!result) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterEvent result is err");
         return;
@@ -59,12 +61,7 @@ void LockscreenObserver::RegisterEvent()
 void LockscreenObserver::UnRegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UnregisterEvent start");
-    auto skill = std::make_shared<EventFwk::MatchingSkills>();
-    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
-    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
-    auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
-    auto hub = std::make_shared<LockscreenObserver>(*info);
-    const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(hub);
+    const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(g_lockscreenObserver);
     if (!result) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterEvent result is err");
         return;
