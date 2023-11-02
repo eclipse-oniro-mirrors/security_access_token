@@ -77,7 +77,7 @@ private:
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
-    bool IsFoundationCalling() const;
+    bool IsFoundationCalling();
     bool IsSystemAppCalling() const;
     bool IsShellProcessCalling();
     static const int32_t ROOT_UID = 0;

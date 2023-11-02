@@ -32,7 +32,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMStub"};
-constexpr int32_t FOUNDATION_UID = 5523;
+const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
 #ifdef TOKEN_SYNC_ENABLE
@@ -649,10 +649,11 @@ bool AccessTokenManagerStub::IsPrivilegedCalling() const
     return callingUid == ROOT_UID;
 }
 
-bool AccessTokenManagerStub::IsFoundationCalling() const
+bool AccessTokenManagerStub::IsFoundationCalling()
 {
-    int32_t callingUid = IPCSkeleton::GetCallingUid();
-    return callingUid == FOUNDATION_UID;
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    int result = this->VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION);
+    return PERMISSION_GRANTED == result;
 }
 
 bool AccessTokenManagerStub::IsAccessTokenCalling()
