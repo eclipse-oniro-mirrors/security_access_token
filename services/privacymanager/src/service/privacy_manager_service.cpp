@@ -95,28 +95,35 @@ void PrivacyManagerService::OnStop()
 int32_t PrivacyManagerService::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d, \
+        failCount: %{public}d, asyncMode: %{public}d",
+        tokenId, permissionName.c_str(), successCount, failCount, asyncMode);
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
         tokenId, permissionName, successCount, failCount);
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
     return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName);
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
     return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, callback);
 }
 
 int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
     return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName);
 }
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, deviceID: %{public}s", tokenId, deviceID.c_str());
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
     return Constant::SUCCESS;
 }
@@ -124,6 +131,7 @@ int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d", request.request.tokenId);
     PermissionUsedResult permissionRecord;
     int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
     result.result = permissionRecord;
@@ -133,6 +141,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
@@ -145,6 +154,7 @@ int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "pid: %{public}d", enhanceParcel.enhanceData.pid);
     return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
 }
 
@@ -246,6 +256,7 @@ int32_t PrivacyManagerService::UnRegisterPermActiveStatusCallback(const sptr<IRe
 
 bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
 
