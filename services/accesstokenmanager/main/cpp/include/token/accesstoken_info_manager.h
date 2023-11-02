@@ -61,6 +61,8 @@ public:
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);
+    int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
+    bool GetPermDialogCap(AccessTokenID tokenID);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -76,8 +78,6 @@ public:
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
     std::string GetUdidByNodeId(const std::string &nodeId);
-    int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
-    bool GetPermDialogCap(AccessTokenID tokenID);
 #endif
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
