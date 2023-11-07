@@ -25,8 +25,8 @@ enum PrivacyCameraMuteServiceInterfaceCode {
 
 enum PrivacyCameraServiceInterfaceCode {
     CAMERA_SERVICE_SET_MUTE_CALLBACK = 2,
-    CAMERA_SERVICE_MUTE_CAMERA = 11,
-    CAMERA_SERVICE_IS_CAMERA_MUTED = 12,
+    CAMERA_SERVICE_MUTE_CAMERA = 12,
+    CAMERA_SERVICE_IS_CAMERA_MUTED = 13,
 };
 } // namespace AccessToken
 } // namespace Security
