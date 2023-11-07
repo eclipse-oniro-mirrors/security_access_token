@@ -77,7 +77,7 @@ int AccessTokenManagerClient::GetDefPermission(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     PermissionDefParcel permissionDefParcel;
     int result = proxy->GetDefPermission(permissionName, permissionDefParcel);
@@ -90,7 +90,7 @@ int AccessTokenManagerClient::GetDefPermissions(AccessTokenID tokenID, std::vect
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionDefParcel> parcelList;
     int result = proxy->GetDefPermissions(tokenID, parcelList);
@@ -107,7 +107,7 @@ int AccessTokenManagerClient::GetReqPermissions(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<PermissionStateFullParcel> parcelList;
     int result = proxy->GetReqPermissions(tokenID, parcelList, isSystemGrant);
@@ -124,7 +124,7 @@ int AccessTokenManagerClient::GetPermissionFlag(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GetPermissionFlag(tokenID, permissionName, flag);
 }
@@ -164,7 +164,7 @@ int AccessTokenManagerClient::GrantPermission(AccessTokenID tokenID, const std::
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GrantPermission(tokenID, permissionName, flag);
 }
@@ -174,7 +174,7 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->RevokePermission(tokenID, permissionName, flag);
 }
@@ -184,7 +184,7 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ClearUserGrantedPermissionState(tokenID);
 }
@@ -196,7 +196,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     std::lock_guard<std::mutex> lock(callbackMutex_);
     if (callbackMap_.size() == MAX_CALLBACK_MAP_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "the maximum number of callback has been reached");
-        return AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT;
+        return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
 
     auto goalCallback = callbackMap_.find(customizedCb);
@@ -207,7 +207,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
         callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
         if (!callback) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "memory allocation for callback failed!");
-            return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+            return AccessTokenError::ERR_SERVICE_ABNORMAL;
         }
     }
     return RET_SUCCESS;
@@ -229,7 +229,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     PermStateChangeScopeParcel scopeParcel;
@@ -253,7 +253,7 @@ int32_t AccessTokenManagerClient::UnRegisterPermStateChangeCallback(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     std::lock_guard<std::mutex> lock(callbackMutex_);
@@ -291,7 +291,7 @@ int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->DeleteToken(tokenID);
 }
@@ -311,7 +311,7 @@ int AccessTokenManagerClient::CheckNativeDCap(AccessTokenID tokenID, const std::
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->CheckNativeDCap(tokenID, dcap);
 }
@@ -345,7 +345,7 @@ int AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicyParameter = policy;
@@ -357,7 +357,7 @@ int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInf
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapTokenInfoParcel hapTokenInfoParcel;
     int res = proxy->GetHapTokenInfo(tokenID, hapTokenInfoParcel);
@@ -371,7 +371,7 @@ int AccessTokenManagerClient::GetNativeTokenInfo(AccessTokenID tokenID, NativeTo
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     NativeTokenInfoParcel nativeTokenInfoParcel;
     int res = proxy->GetNativeTokenInfo(tokenID, nativeTokenInfoParcel);
@@ -385,7 +385,7 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ReloadNativeTokenInfo();
 }
@@ -407,7 +407,7 @@ int AccessTokenManagerClient::GetHapTokenInfoFromRemote(AccessTokenID tokenID, H
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     HapTokenInfoForSyncParcel hapSyncParcel;
@@ -421,7 +421,7 @@ int AccessTokenManagerClient::GetAllNativeTokenInfo(std::vector<NativeTokenInfoF
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     std::vector<NativeTokenInfoForSyncParcel> parcelList;
@@ -439,7 +439,7 @@ int AccessTokenManagerClient::SetRemoteHapTokenInfo(const std::string& deviceID,
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     HapTokenInfoForSyncParcel hapSyncParcel;
@@ -455,7 +455,7 @@ int AccessTokenManagerClient::SetRemoteNativeTokenInfo(const std::string& device
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfoParcels;
     for (const auto& native : nativeTokenInfoList) {
@@ -473,7 +473,7 @@ int AccessTokenManagerClient::DeleteRemoteToken(const std::string& deviceID, Acc
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int res = proxy->DeleteRemoteToken(deviceID, tokenID);
@@ -497,7 +497,7 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int res = proxy->DeleteRemoteDeviceTokens(deviceID);
@@ -564,7 +564,7 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapBaseInfoParcel hapBaseInfoParcel;
     hapBaseInfoParcel.hapBaseInfo = hapBaseInfo;

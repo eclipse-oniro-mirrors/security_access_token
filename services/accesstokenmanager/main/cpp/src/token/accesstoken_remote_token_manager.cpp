@@ -135,7 +135,7 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
     if (!DataValidator::IsDeviceIdValid(deviceID) || !DataValidator::IsTokenIDValid(remoteID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s or token %{public}x is invalid.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
@@ -143,7 +143,7 @@ int AccessTokenRemoteTokenManager::RemoveDeviceMappingTokenID(const std::string&
         remoteDeviceMap_[deviceID].MappingTokenIDPairMap_.count(remoteID) < 1) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s has not mapping.",
             ConstantCommon::EncryptDevId(deviceID).c_str());
-        return RET_FAILED;
+        return ERR_TOKEN_MAP_FAILED;
     }
 
     AccessTokenID mapID = remoteDeviceMap_[deviceID].MappingTokenIDPairMap_[remoteID];

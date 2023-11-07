@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"

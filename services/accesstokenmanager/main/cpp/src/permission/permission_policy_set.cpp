@@ -319,7 +319,7 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& per
                 return RET_SUCCESS;
             } else {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Permission has been revoked by user.");
-                return RET_FAILED;
+                return ERR_PERMISSION_DENIED;
             }
         } else {
             /* revoke is called while the permission has been operated by user or system */

@@ -44,7 +44,6 @@ public:
 namespace OHOS {
     bool UnRegisterPermStateChangeCallbackFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -55,7 +54,7 @@ namespace OHOS {
         scopeInfos.permList = { testName };
         scopeInfos.tokenIDs = { tokenId };
         auto callbackPtr = std::make_shared<CbCustomizeTest1>(scopeInfos);
-        result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
+        int32_t result = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
 
         return result == RET_SUCCESS;
     }

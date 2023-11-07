@@ -15,6 +15,7 @@
 
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_validator.h"
 #include "random.h"
 
@@ -52,7 +53,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
     if (idInner->version != DEFAULT_TOKEN_VERSION || idInner->type != type) {
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
@@ -61,7 +62,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
         AccessTokenID tokenId = *it;
         AccessTokenIDInner *idInnerExist = reinterpret_cast<AccessTokenIDInner *>(&tokenId);
         if (idInnerExist->tokenUniqueID == idInner->tokenUniqueID) {
-            return RET_FAILED;
+            return ERR_TOKENID_HAS_EXISTED;
         }
     }
     tokenIdSet_.insert(id);

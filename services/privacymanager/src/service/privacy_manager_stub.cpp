@@ -31,7 +31,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerStub"
 };
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
-static const int32_t ERROR = -1;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
@@ -45,7 +44,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPrivacyManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return ERROR;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     switch (code) {
         case static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD):

@@ -55,7 +55,7 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IAccessTokenManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
 
 #ifdef HICOLLIE_ENABLE

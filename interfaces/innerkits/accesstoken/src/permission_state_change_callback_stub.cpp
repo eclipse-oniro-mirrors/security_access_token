@@ -16,6 +16,7 @@
 #include "permission_state_change_callback_stub.h"
 
 #include "access_token.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "permission_state_change_info_parcel.h"
 #include "string_ex.h"
@@ -36,7 +37,7 @@ int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPermissionStateCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return RET_FAILED;
+        return ERROR_IPC_REQUEST_FAIL;
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);
@@ -45,7 +46,7 @@ int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
         sptr<PermissionStateChangeInfoParcel> resultSptr = data.ReadParcelable<PermissionStateChangeInfoParcel>();
         if (resultSptr == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable fail");
-            return RET_FAILED;
+            return ERR_READ_PARCEL_FAILED;
         }
 
         PermStateChangeCallback(resultSptr->changeInfo);

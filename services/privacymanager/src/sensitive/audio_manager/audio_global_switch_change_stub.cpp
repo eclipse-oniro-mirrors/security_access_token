@@ -14,6 +14,7 @@
  */
 
 #include "audio_global_switch_change_stub.h"
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "permission_record_manager.h"
 
@@ -39,7 +40,7 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub: ReadInterfaceToken failed");
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     PrivacyAudioRingerInterfaceCode msgId = static_cast<PrivacyAudioRingerInterfaceCode>(code);
     switch (msgId) {

@@ -91,7 +91,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
     int32_t apiVersion = 9;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = 123;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, g_infoManagerTestPolicyPrams));
 }
 
@@ -104,7 +104,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteToken001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::DeleteToken(tokenId));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteToken(tokenId));
 }
 
 /**
@@ -129,7 +129,7 @@ HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     const std::string dcap = "AT_CAP";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::CheckNativeDCap(tokenId, dcap));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::CheckNativeDCap(tokenId, dcap));
 }
 
 /**
@@ -157,7 +157,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfo tokenInfo;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo));
 }
 
 /**
@@ -170,7 +170,7 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     NativeTokenInfo tokenInfo;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
 }
 
 /**
@@ -210,7 +210,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermission001, TestSize.Level1)
 {
     std::string permission = "ohos.permission.CAMERA";
     PermissionDef def;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetDefPermission(permission, def));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetDefPermission(permission, def));
 }
 
 /**
@@ -223,7 +223,7 @@ HWTEST_F(AccessTokenKitTest, GetDefPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionDef> permList;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetDefPermissions(tokenId, permList));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetDefPermissions(tokenId, permList));
 }
 
 /**
@@ -236,7 +236,7 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::vector<PermissionStateFull> permList;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetReqPermissions(tokenId, permList, false));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetReqPermissions(tokenId, permList, false));
 }
 
 /**
@@ -250,7 +250,7 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
     uint32_t flag;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetPermissionFlag(tokenId, permission, flag));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetPermissionFlag(tokenId, permission, flag));
 }
 
 /**
@@ -275,7 +275,7 @@ HWTEST_F(AccessTokenKitTest, GrantPermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::GrantPermission(tokenId, permission, PERMISSION_USER_FIXED));
 }
 
@@ -289,7 +289,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL,
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
         AccessTokenKit::RevokePermission(tokenId, permission, PERMISSION_USER_FIXED));
 }
 
@@ -302,7 +302,7 @@ HWTEST_F(AccessTokenKitTest, RevokePermission001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ClearUserGrantedPermissionState(tokenId));
 }
 
 class CbCustomizeTest : public PermStateChangeCallbackCustomize {
@@ -330,8 +330,8 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
     scopeInfo.permList = {"ohos.permission.CAMERA"};
     scopeInfo.tokenIDs = {};
     auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr));
 }
 
 /**
@@ -342,7 +342,7 @@ HWTEST_F(AccessTokenKitTest, RegisterPermStateChangeCallback001, TestSize.Level1
  */
 HWTEST_F(AccessTokenKitTest, ReloadNativeTokenInfo001, TestSize.Level1)
 {
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::ReloadNativeTokenInfo());
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::ReloadNativeTokenInfo());
 }
 
 /**
@@ -369,7 +369,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     HapTokenInfoForSync hapSync;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetHapTokenInfoFromRemote(tokenId, hapSync));
 }
 
 /**
@@ -381,7 +381,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
 {
     std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
 }
 
 /**
@@ -394,7 +394,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
 {
     std::string device = "device";
     HapTokenInfoForSync hapSync;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
 }
 
 /**
@@ -407,7 +407,7 @@ HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
 {
     std::string device = "device";
     std::vector<NativeTokenInfoForSync> nativeToken;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
 }
 
 /**
@@ -420,7 +420,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
 {
     std::string device = "device";
     AccessTokenID tokenId = 123;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::DeleteRemoteToken(device, tokenId));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteRemoteToken(device, tokenId));
 }
 
 /**
@@ -445,7 +445,7 @@ HWTEST_F(AccessTokenKitTest, GetRemoteNativeTokenID001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 {
     std::string device = "device";
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::DeleteRemoteDeviceTokens(device));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }
 #endif
 
@@ -458,7 +458,7 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, SetPermDialogCap001, TestSize.Level1)
 {
     HapBaseInfo hapBaseInfo;
-    ASSERT_EQ(AccessTokenError::ERR_SA_WORK_ABNORMAL, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
 }
 }  // namespace AccessToken
 }  // namespace Security

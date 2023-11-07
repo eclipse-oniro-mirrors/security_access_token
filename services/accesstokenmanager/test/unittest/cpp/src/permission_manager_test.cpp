@@ -1492,7 +1492,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     setuid(100);
-    EXPECT_EQ(ERR_PERMISSION_OPERATE_FAILED, PermissionManager::GetInstance().GrantPermission(tokenID,
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.MEDIA_LOCATION", PERMISSION_ALLOW_THIS_TIME));
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

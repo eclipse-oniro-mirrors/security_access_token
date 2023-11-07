@@ -38,6 +38,7 @@ if (is_standard_system) {
       "src",
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
     ]
 
     sources = [ "src/token_callback_stub.cpp" ]

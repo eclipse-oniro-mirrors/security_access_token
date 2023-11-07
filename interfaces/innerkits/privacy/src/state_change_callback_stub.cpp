@@ -16,6 +16,7 @@
 #include "state_change_callback_stub.h"
 
 #include "accesstoken_log.h"
+#include "privacy_error.h"
 #include "perm_active_response_parcel.h"
 #include "string_ex.h"
 
@@ -35,7 +36,7 @@ int32_t StateChangeCallbackStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IStateChangeCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return RET_FAILED;
+        return ERROR_IPC_REQUEST_FAIL;
     }
 
     int32_t msgCode = static_cast<int32_t>(code);

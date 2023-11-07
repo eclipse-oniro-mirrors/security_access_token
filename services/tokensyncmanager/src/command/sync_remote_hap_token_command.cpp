@@ -17,6 +17,7 @@
 
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "constant_common.h"
 #include "base_remote_command.h"
 

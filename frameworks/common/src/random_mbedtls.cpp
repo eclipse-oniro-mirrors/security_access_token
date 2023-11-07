@@ -14,6 +14,7 @@
  */
 
 #include "random_mbedtls.h"
+#include "access_token_error.h"
 #include "access_token.h"
 
 using OHOS::Security::AccessToken::RandomMbedtls;
@@ -35,7 +36,7 @@ extern "C" unsigned int GetRandomUint32()
 int RandomMbedtls::GenerateRandomArray(unsigned char *randStr, unsigned int len)
 {
     if (randStr == nullptr || len == 0) {
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     int ret;
 
@@ -45,14 +46,14 @@ int RandomMbedtls::GenerateRandomArray(unsigned char *randStr, unsigned int len)
         mbedtls_entropy_init(&entropy_);
         ret = mbedtls_ctr_drbg_seed(&ctrDrbg_, mbedtls_entropy_func, &entropy_, nullptr, 0);
         if (ret != 0) {
-            return RET_FAILED;
+            return ERR_FILE_OPERATE_FAILED;
         }
         initFlag_ = true;
     }
 
     ret = mbedtls_ctr_drbg_random(&ctrDrbg_, randStr, len);
     if (ret != 0) {
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
     return RET_SUCCESS;
 }

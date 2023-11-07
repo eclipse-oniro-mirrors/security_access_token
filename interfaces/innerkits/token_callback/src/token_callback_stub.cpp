@@ -15,6 +15,7 @@
 
 #include "token_callback_stub.h"
 
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "string_ex.h"
 
@@ -41,7 +42,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenCallback::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return FAILED;
+        return ERROR_IPC_REQUEST_FAIL;
     }
 
     int32_t msgCode =  static_cast<int32_t>(code);

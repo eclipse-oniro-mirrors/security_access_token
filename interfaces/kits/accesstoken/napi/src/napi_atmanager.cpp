@@ -77,10 +77,59 @@ static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manage
 static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
 #endif
 
+static int32_t GetJsErrorCode(uint32_t errCode)
+{
+    int32_t jsCode;
+    switch (errCode) {
+        case RET_SUCCESS:
+            jsCode = JS_OK;
+            break;
+        case ERR_PERMISSION_DENIED:
+            jsCode = JS_ERROR_PERMISSION_DENIED;
+            break;
+        case ERR_NOT_SYSTEM_APP:
+            jsCode = JS_ERROR_NOT_SYSTEM_APP;
+            break;
+        case ERR_PARAM_INVALID:
+            jsCode = JS_ERROR_PARAM_INVALID;
+            break;
+        case ERR_TOKENID_NOT_EXIST:
+            jsCode = JS_ERROR_TOKENID_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_NOT_EXIST:
+            jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_INTERFACE_NOT_USED_TOGETHER:
+            jsCode = JS_ERROR_NOT_USE_TOGETHER;
+            break;
+        case ERR_CALLBACKS_EXCEED_LIMITATION:
+            jsCode = JS_ERROR_REGISTERS_EXCEED_LIMITATION;
+            break;
+        case ERR_IDENTITY_CHECK_FAILED:
+            jsCode = JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED;
+            break;
+        case ERR_SERVICE_ABNORMAL:
+        case ERROR_IPC_REQUEST_FAIL:
+        case ERR_READ_PARCEL_FAILED:
+        case ERR_WRITE_PARCEL_FAILED:
+            jsCode = JS_ERROR_SERVICE_NOT_RUNNING;
+            break;
+        case ERR_MALLOC_FAILED:
+            jsCode = JS_ERROR_OUT_OF_MEMORY;
+            break;
+        default:
+            jsCode = JS_ERROR_INNER;
+            break;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    return jsCode;
+}
+
 static void ReturnPromiseResult(napi_env env, int32_t contextResult, napi_deferred deferred, napi_value result)
 {
     if (contextResult != RET_SUCCESS) {
-        napi_value businessError = GenerateBusinessError(env, contextResult, GetErrorMessage(contextResult));
+        int32_t jsCode = GetJsErrorCode(contextResult);
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
         NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, deferred, businessError));
     } else {
         NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, deferred, result));
@@ -91,7 +140,8 @@ static void ReturnCallbackResult(napi_env env, int32_t contextResult, napi_ref &
 {
     napi_value businessError = GetNapiNull(env);
     if (contextResult != RET_SUCCESS) {
-        businessError = GenerateBusinessError(env, contextResult, GetErrorMessage(contextResult));
+        int32_t jsCode = GetJsErrorCode(contextResult);
+        businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
     }
     napi_value results[ASYNC_CALL_BACK_VALUES_NUM] = { businessError, result };
 
@@ -1477,8 +1527,9 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     if (result != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterPermStateChangeCallback failed");
         registerPermStateChangeInfo->errCode = result;
-        std::string errMsg = GetErrorMessage(result);
-        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, result, errMsg)));
+        int32_t jsCode = GetJsErrorCode(result);
+        std::string errMsg = GetErrorMessage(jsCode);
+        NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
         return nullptr;
     }
     {
@@ -1575,8 +1626,9 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
             DeleteRegisterFromVector(scopeInfo, env, item->callbackRef);
         } else {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Batch UnregisterPermActiveChangeCompleted failed");
-            std::string errMsg = GetErrorMessage(result);
-            NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, result, errMsg)));
+            int32_t jsCode = GetJsErrorCode(result);
+            std::string errMsg = GetErrorMessage(jsCode);
+            NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, jsCode, errMsg)));
         }
     }
     return nullptr;

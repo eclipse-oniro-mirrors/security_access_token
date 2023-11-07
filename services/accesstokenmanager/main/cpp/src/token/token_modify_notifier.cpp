@@ -18,6 +18,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "token_sync_kit.h"

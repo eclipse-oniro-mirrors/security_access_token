@@ -73,7 +73,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -93,7 +93,7 @@ int AccessTokenManagerProxy::GetDefPermission(
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_DEF_PERMISSION, data, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -122,7 +122,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_DEF_PERMISSIONS, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -160,7 +160,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_REQ_PERMISSIONS, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -197,7 +197,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_FLAG, sendData, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -270,7 +270,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GRANT_PERMISSION, inData, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -297,7 +297,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::REVOKE_PERMISSION, data, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -316,7 +316,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -342,7 +342,7 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
     }
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t ret;
@@ -369,7 +369,7 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
     MessageParcel reply;
     if (!SendRequest(
         AccessTokenInterfaceCode::UNREGISTER_PERM_STATE_CHANGE_CALLBACK, data, reply)) {
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result;
@@ -418,7 +418,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::TOKEN_DELETE, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -438,7 +438,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_TOKEN_TYPE, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -461,7 +461,7 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
     }
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int result = reply.ReadInt32();
@@ -513,7 +513,7 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
     }
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     AccessTokenID result = reply.ReadUint32();
@@ -532,7 +532,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKENINFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -560,7 +560,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKENINFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -601,7 +601,7 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
     tokenIdEx.tokenIdExStruct.tokenAttr = reply.ReadUint32();
@@ -619,7 +619,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     }
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -642,7 +642,7 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
     }
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
     AccessTokenID result;
     if (!reply.ReadUint32(result)) {
@@ -665,7 +665,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -689,7 +689,7 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoFo
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -726,7 +726,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -753,7 +753,7 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -775,7 +775,7 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -797,7 +797,7 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     AccessTokenID result = reply.ReadUint32();
@@ -815,7 +815,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN, data, reply)) {
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
@@ -859,7 +859,7 @@ int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBa
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY, data, reply)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "read replay failed");
-        return ERR_SA_WORK_ABNORMAL;
+        return ERR_SERVICE_ABNORMAL;
     }
     return reply.ReadInt32();
 }

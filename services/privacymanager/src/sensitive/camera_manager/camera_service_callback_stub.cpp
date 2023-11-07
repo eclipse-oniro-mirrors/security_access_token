@@ -15,6 +15,7 @@
 
 #include "camera_service_callback_stub.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "permission_record_manager.h"
 
 namespace OHOS {
@@ -39,7 +40,7 @@ int CameraServiceCallbackStub::OnRemoteRequest(
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "CameraServiceCallbackStub: ReadInterfaceToken failed");
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     PrivacyCameraMuteServiceInterfaceCode msgId = static_cast<PrivacyCameraMuteServiceInterfaceCode>(code);
     switch (msgId) {
