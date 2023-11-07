@@ -1086,6 +1086,8 @@ bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
 
 void PermissionRecordManager::SetDefaultConfigValue()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
+
     recordSizeMaximum_ = DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM;
     recordAgingTime_ = DEFAULT_PERMISSION_USED_RECORD_AGING_TIME;
 }
