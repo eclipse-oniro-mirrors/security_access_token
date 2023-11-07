@@ -10,6 +10,15 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.REPORT_RESOURCE_SCHEDULE_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SEND_TASK_COMPLETE_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
