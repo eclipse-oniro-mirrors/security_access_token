@@ -400,49 +400,53 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
     return hasStarted;
 }
 
-void PermissionRecordManager::FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status)
-{
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
+    uint32_t tokenId, ActiveChangeType status)
+    {
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->tokenId == tokenId) && ((it->status) != status)) {
-            std::string perm;
-            Constant::TransferOpcodeToPermission(it->opCode, perm);
-            if (!GetGlobalSwitchStatus(perm)) {
-                continue;
-            }
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            if ((it->tokenId == tokenId) && ((it->status) != status)) {
+                std::string perm;
+                Constant::TransferOpcodeToPermission(it->opCode, perm);
+                if (!GetGlobalSwitchStatus(perm)) {
+                    continue;
+                }
 
-            // app use camera background without float window
-            bool isShow = true;
+                // app use camera background without float window
+                bool isShow = true;
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-            isShow = IsFlowWindowShow(tokenId);
+                isShow = IsFlowWindowShow(tokenId);
 #endif
-            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-                camPermList.emplace_back(perm);
-                continue;
-            }
-            permList.emplace_back(perm);
-            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
-            // update accessDuration and store in database
-            it->accessDuration = curStamp - it->timestamp;
-            int32_t lockScreenStatus = it->lockScreenStatus;
-            if (it->status == PERM_ACTIVE_IN_FOREGROUND && lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
-                it->status = PERM_ACTIVE_IN_BACKGROUND;
-                it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
-            }
-            AddRecord(*it);
+                if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
+                    ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
+                    camPermList.emplace_back(perm);
+                    continue;
+                }
+                permList.emplace_back(perm);
+                int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+                // update accessDuration and store in database
+                it->accessDuration = curStamp - it->timestamp;
+                int32_t lockScreenStatus = it->lockScreenStatus;
+                if (it->status == PERM_ACTIVE_IN_FOREGROUND && lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
+                    ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
+                    it->status = PERM_ACTIVE_IN_BACKGROUND;
+                    it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
+                }
+                AddRecord(*it);
 
-            // update status to input, accessDuration to 0 and timestamp to now in cache
-            it->status = status;
-            it->lockScreenStatus = lockScreenStatus;
-            it->accessDuration = 0;
-            it->timestamp = curStamp;
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get target permission %{public}s.", tokenId, perm.c_str());
+                // update status to input, accessDuration to 0 and timestamp to now in cache
+                it->status = status;
+                it->lockScreenStatus = lockScreenStatus;
+                it->accessDuration = 0;
+                it->timestamp = curStamp;
+                ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
+            }
         }
     }
+
     if (!camPermList.empty()) {
         ExecuteCameraCallbackAsync(tokenId);
     }
@@ -555,9 +559,9 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     bool isOpen = true;
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        isOpen = !AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+        isOpen = !isMicMute_;
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
-        isOpen = !CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+        isOpen = !isCameraMute_;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
@@ -595,6 +599,7 @@ void PermissionRecordManager::SavePermissionRecords(
 void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
+    isMicMute_ = switchStatus;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_MICROPHONE) {
             continue;
@@ -606,6 +611,7 @@ void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
+    isCameraMute_ = switchStatus;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_CAMERA) {
             continue;
@@ -1144,6 +1150,8 @@ void PermissionRecordManager::Init()
     hasInited_ = true;
 
     GetConfigValue();
+    isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
 }
 } // namespace AccessToken
 } // namespace Security

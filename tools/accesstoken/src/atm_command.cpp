@@ -18,7 +18,6 @@
 #include <getopt.h>
 #include <string>
 
-// #include "errors.h" // other module head file
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"

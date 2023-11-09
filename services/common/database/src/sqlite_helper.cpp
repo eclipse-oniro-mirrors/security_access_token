@@ -34,9 +34,13 @@ SqliteHelper::~SqliteHelper()
 void SqliteHelper::Open()
 {
     if (db_ != nullptr) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "db s already open");
         return;
     }
     if (dbName_.empty() || dbPath_.empty() || currentVersion_ < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "param invalid, dbName: %{public}s, "
+                              "dbPath: %{public}s, currentVersion: %{public}d",
+                              dbName_.c_str(), dbPath_.c_str(), currentVersion_);
         return;
     }
     std::string fileName = dbPath_ + dbName_;

@@ -202,7 +202,7 @@ int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(
     auto goalCallback = callbackMap_.find(customizedCb);
     if (goalCallback != callbackMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "already has the same callback");
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callback = new (std::nothrow) PermissionStateChangeCallback(customizedCb);
         if (!callback) {

@@ -100,6 +100,7 @@ static int32_t GetJsErrorCode(uint32_t errCode)
             jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
             break;
         case ERR_INTERFACE_NOT_USED_TOGETHER:
+        case ERR_CALLBACK_ALREADY_EXIST:
             jsCode = JS_ERROR_NOT_USE_TOGETHER;
             break;
         case ERR_CALLBACKS_EXCEED_LIMITATION:

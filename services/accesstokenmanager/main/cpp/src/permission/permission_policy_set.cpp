@@ -19,12 +19,12 @@
 
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_db.h"
 #include "access_token_error.h"
-#include "data_storage.h"
-#include "data_translator.h"
-#include "token_field_const.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
+#include "data_translator.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {

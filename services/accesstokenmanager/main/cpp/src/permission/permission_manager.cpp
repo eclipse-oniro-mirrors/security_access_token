@@ -931,7 +931,7 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     // update permission status with dlp permission rule.
     std::vector<PermissionStateFull> permListOfHap;
     permPolicySet->GetPermissionStateFulls(permListOfHap);
-    int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
+    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
         infoPtr->GetDlpType(), permListOfHap);
     permPolicySet->Update(permListOfHap);
 #endif

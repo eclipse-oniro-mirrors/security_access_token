@@ -27,14 +27,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool CheckNativeDCapFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        result = AccessTokenKit::CheckNativeDCap(tokenId, testName);
+        int32_t result = AccessTokenKit::CheckNativeDCap(tokenId, testName);
 
         return result == RET_SUCCESS;
     }

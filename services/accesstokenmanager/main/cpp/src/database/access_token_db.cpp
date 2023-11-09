@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "sqlite_storage.h"
+#include "access_token_db.h"
 
 #include "accesstoken_log.h"
 
@@ -21,23 +21,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SqliteStorage"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDb"};
 static const std::string INTEGER_STR = " integer not null,";
 static const std::string TEXT_STR = " text not null,";
 }
 
-SqliteStorage& SqliteStorage::GetInstance()
+AccessTokenDb& AccessTokenDb::GetInstance()
 {
-    static SqliteStorage instance;
+    static AccessTokenDb instance;
     return instance;
 }
 
-SqliteStorage::~SqliteStorage()
+AccessTokenDb::~AccessTokenDb()
 {
     Close();
 }
 
-void SqliteStorage::OnCreate()
+void AccessTokenDb::OnCreate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
     CreateHapTokenInfoTable();
@@ -46,14 +46,14 @@ void SqliteStorage::OnCreate()
     CreatePermissionStateTable();
 }
 
-void SqliteStorage::OnUpdate()
+void AccessTokenDb::OnUpdate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
     AddAvailableTypeColumn();
-    AddPermiDialogCapColumn();
+    AddPermDialogCapColumn();
 }
 
-SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
 {
     SqliteTable hapTokenInfoTable;
     hapTokenInfoTable.tableName_ = HAP_TOKEN_INFO_TABLE;
@@ -103,7 +103,7 @@ SqliteStorage::SqliteStorage() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     Open();
 }
 
-int SqliteStorage::Add(const DataType type, const std::vector<GenericValues>& values)
+int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& values)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
@@ -132,7 +132,7 @@ int SqliteStorage::Add(const DataType type, const std::vector<GenericValues>& va
     return SUCCESS;
 }
 
-int SqliteStorage::Remove(const DataType type, const GenericValues& conditions)
+int AccessTokenDb::Remove(const DataType type, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
@@ -145,7 +145,7 @@ int SqliteStorage::Remove(const DataType type, const GenericValues& conditions)
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int SqliteStorage::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
+int AccessTokenDb::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
@@ -162,7 +162,7 @@ int SqliteStorage::Modify(const DataType type, const GenericValues& modifyValues
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int SqliteStorage::Find(const DataType type, std::vector<GenericValues>& results)
+int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateSelectPrepareSqlCmd(type);
@@ -178,7 +178,7 @@ int SqliteStorage::Find(const DataType type, std::vector<GenericValues>& results
     return SUCCESS;
 }
 
-int SqliteStorage::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
+int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteSql = CreateDeletePrepareSqlCmd(type);
@@ -210,7 +210,7 @@ int SqliteStorage::RefreshAll(const DataType type, const std::vector<GenericValu
     return SUCCESS;
 }
 
-std::string SqliteStorage::CreateInsertPrepareSqlCmd(const DataType type) const
+std::string AccessTokenDb::CreateInsertPrepareSqlCmd(const DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -229,7 +229,7 @@ std::string SqliteStorage::CreateInsertPrepareSqlCmd(const DataType type) const
     return sql;
 }
 
-std::string SqliteStorage::CreateDeletePrepareSqlCmd(
+std::string AccessTokenDb::CreateDeletePrepareSqlCmd(
     const DataType type, const std::vector<std::string>& columnNames) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -244,7 +244,7 @@ std::string SqliteStorage::CreateDeletePrepareSqlCmd(
     return sql;
 }
 
-std::string SqliteStorage::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
+std::string AccessTokenDb::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
     const std::vector<std::string>& conditionColumns) const
 {
     if (modifyColumns.empty()) {
@@ -276,7 +276,7 @@ std::string SqliteStorage::CreateUpdatePrepareSqlCmd(const DataType type, const 
     return sql;
 }
 
-std::string SqliteStorage::CreateSelectPrepareSqlCmd(const DataType type) const
+std::string AccessTokenDb::CreateSelectPrepareSqlCmd(const DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
     if (it == dataTypeToSqlTable_.end()) {
@@ -286,7 +286,7 @@ std::string SqliteStorage::CreateSelectPrepareSqlCmd(const DataType type) const
     return sql;
 }
 
-int SqliteStorage::CreateHapTokenInfoTable() const
+int AccessTokenDb::CreateHapTokenInfoTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
     if (it == dataTypeToSqlTable_.end()) {
@@ -324,7 +324,7 @@ int SqliteStorage::CreateHapTokenInfoTable() const
     return ExecuteSql(sql);
 }
 
-int SqliteStorage::CreateNativeTokenInfoTable() const
+int AccessTokenDb::CreateNativeTokenInfoTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_NATIVE_INFO);
     if (it == dataTypeToSqlTable_.end()) {
@@ -352,7 +352,7 @@ int SqliteStorage::CreateNativeTokenInfoTable() const
     return ExecuteSql(sql);
 }
 
-int SqliteStorage::CreatePermissionDefinitionTable() const
+int AccessTokenDb::CreatePermissionDefinitionTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_DEF);
     if (it == dataTypeToSqlTable_.end()) {
@@ -392,7 +392,7 @@ int SqliteStorage::CreatePermissionDefinitionTable() const
     return ExecuteSql(sql);
 }
 
-int32_t SqliteStorage::AddAvailableTypeColumn() const
+int32_t AccessTokenDb::AddAvailableTypeColumn() const
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_DEF);
@@ -418,7 +418,7 @@ int32_t SqliteStorage::AddAvailableTypeColumn() const
     return insertResult;
 }
 
-int32_t SqliteStorage::AddPermiDialogCapColumn() const
+int32_t AccessTokenDb::AddPermDialogCapColumn() const
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
@@ -443,7 +443,7 @@ int32_t SqliteStorage::AddPermiDialogCapColumn() const
     return insertResult;
 }
 
-int SqliteStorage::CreatePermissionStateTable() const
+int AccessTokenDb::CreatePermissionStateTable() const
 {
     auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_STATE);
     if (it == dataTypeToSqlTable_.end()) {

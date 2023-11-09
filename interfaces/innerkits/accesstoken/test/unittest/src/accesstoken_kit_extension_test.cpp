@@ -1419,7 +1419,7 @@ HWTEST_F(AccessTokenKitExtensionTest, UnRegisterPermStateChangeCallback001, Test
     callbackPtr->ready_ = false;
 
     int32_t res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
 }
 
 /**
@@ -1439,11 +1439,11 @@ HWTEST_F(AccessTokenKitExtensionTest, UnRegisterPermStateChangeCallback002, Test
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    ASSERT_EQ(AccessTokenError::ERR_CALLBACK_ALREADY_EXIST, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    ASSERT_EQ(AccessTokenError::ERR_INTERFACE_NOT_USED_TOGETHER, res);
 }
 
 /**

@@ -29,8 +29,6 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #include "permission_manager.h"
-#include "data_storage.h"
-#include "token_field_const.h"
 #include "permission_state_full.h"
 #define private public
 #include "json_parser.h"
@@ -38,6 +36,8 @@
 #include "system_permission_definition_parser.h"
 #undef private
 #include "securec.h"
+#include "access_token_db.h"
+#include "token_field_const.h"
 
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;

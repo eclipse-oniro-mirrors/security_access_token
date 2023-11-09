@@ -18,11 +18,11 @@
 #include <string>
 #include "accesstoken_log.h"
 #include "access_token.h"
+#define private public
+#include "access_token_db.h"
+#undef private
 #include "data_translator.h"
 #include "permission_def.h"
-#define private public
-#include "sqlite_storage.h"
-#undef private
 #include "generic_values.h"
 #include "variant_value.h"
 
@@ -79,7 +79,7 @@ HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, RollbackTransaction001, TestSize.Level1)
 {
-    int32_t result = SqliteStorage::GetInstance().RollbackTransaction();
+    int32_t result = AccessTokenDb::GetInstance().RollbackTransaction();
     EXPECT_EQ(result, ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
 }
 
@@ -91,8 +91,8 @@ HWTEST_F(DatabaseTest, RollbackTransaction001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, RollbackTransaction002, TestSize.Level1)
 {
-    SqliteStorage::GetInstance().Close();
-    EXPECT_EQ(SqliteStorage::GetInstance().RollbackTransaction(), ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
+    AccessTokenDb::GetInstance().Close();
+    EXPECT_EQ(AccessTokenDb::GetInstance().RollbackTransaction(), ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
 }
 
 /**
@@ -104,7 +104,7 @@ HWTEST_F(DatabaseTest, RollbackTransaction002, TestSize.Level1)
 HWTEST_F(DatabaseTest, ExecuteSql001, TestSize.Level1)
 {
     std::string testSql = "test";
-    EXPECT_EQ(SqliteStorage::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
+    EXPECT_EQ(AccessTokenDb::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
 }
 
 /**
@@ -116,8 +116,8 @@ HWTEST_F(DatabaseTest, ExecuteSql001, TestSize.Level1)
 HWTEST_F(DatabaseTest, ExecuteSql002, TestSize.Level1)
 {
     std::string testSql = "test";
-    SqliteStorage::GetInstance().Close();
-    EXPECT_EQ(SqliteStorage::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
+    AccessTokenDb::GetInstance().Close();
+    EXPECT_EQ(AccessTokenDb::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
 }
 
 /**
@@ -128,8 +128,8 @@ HWTEST_F(DatabaseTest, ExecuteSql002, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, SpitError001, TestSize.Level1)
 {
-    SqliteStorage::GetInstance().Close();
-    std::string result = SqliteStorage::GetInstance().SpitError().c_str();
+    AccessTokenDb::GetInstance().Close();
+    std::string result = AccessTokenDb::GetInstance().SpitError().c_str();
     EXPECT_EQ(result.empty(), true);
 }
 
@@ -141,8 +141,8 @@ HWTEST_F(DatabaseTest, SpitError001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, SpitError002, TestSize.Level1)
 {
-    SqliteStorage::GetInstance().Open();
-    std::string result = SqliteStorage::GetInstance().SpitError().c_str();
+    AccessTokenDb::GetInstance().Open();
+    std::string result = AccessTokenDb::GetInstance().SpitError().c_str();
     EXPECT_EQ(result.length() > 0, true);
 }
 
@@ -178,12 +178,12 @@ HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level1)
 static void RemoveTestTokenHapInfo()
 {
     std::vector<GenericValues> hapInfoResults;
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
-            ASSERT_EQ(SqliteStorage::SUCCESS,
-                SqliteStorage::GetInstance().Remove(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValue));
+            ASSERT_EQ(AccessTokenDb::SUCCESS,
+                AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValue));
             break;
         }
     }
@@ -217,7 +217,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 end");
 }
 
@@ -238,7 +238,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 end");
 }
 
@@ -270,7 +270,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Add(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
 
     GenericValues modifyValues;
     modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
@@ -279,12 +279,12 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
     conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
-    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().Modify(DataStorage::ACCESSTOKEN_HAP_INFO,
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_HAP_INFO,
         modifyValues, conditions));
 
     bool modifySuccess = false;
     std::vector<GenericValues> hapInfoResults;
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
@@ -314,8 +314,8 @@ HWTEST_F(DatabaseTest, SqliteStorageRefreshAllTest001, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(SqliteStorage::FAILURE,
-        SqliteStorage::GetInstance().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(AccessTokenDb::FAILURE,
+        AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageRefreshAllTest001 end");
 }
 
@@ -328,8 +328,8 @@ HWTEST_F(DatabaseTest, SqliteStorageRefreshAllTest001, TestSize.Level1)
 HWTEST_F(DatabaseTest, SqliteStorageCreateInsertPrepareSqlCmd001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 begin");
-    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
-    ASSERT_EQ("", SqliteStorage::GetInstance().CreateInsertPrepareSqlCmd(type));
+    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
+    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateInsertPrepareSqlCmd(type));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 end");
 }
 
@@ -342,8 +342,8 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateInsertPrepareSqlCmd001, TestSize.Level
 HWTEST_F(DatabaseTest, SqliteStorageCreateDeletePrepareSqlCmd001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 begin");
-    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
-    ASSERT_EQ("", SqliteStorage::GetInstance().CreateDeletePrepareSqlCmd(type));
+    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
+    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateDeletePrepareSqlCmd(type));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 end");
 }
 
@@ -357,7 +357,7 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 begin");
 
-    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
+    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
 
     GenericValues conditions;
     conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
@@ -369,30 +369,30 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
     std::vector<std::string> conditionColumns = conditions.GetAllKeys();
 
-    ASSERT_EQ("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 end");
 }
 
 /**
  * @tc.name: SqliteStorageCreateUpdatePrepareSqlCmd002
- * @tc.desc: SqliteStorage::CreateUpdatePrepareSqlCmd function test
+ * @tc.desc: AccessTokenDb::CreateUpdatePrepareSqlCmd function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd002, TestSize.Level1)
 {
-    DataStorage::DataType type = DataStorage::DataType::ACCESSTOKEN_HAP_INFO;
+    AccessTokenDb::DataType type = AccessTokenDb::DataType::ACCESSTOKEN_HAP_INFO;
     std::vector<std::string> modifyColumns;
     std::vector<std::string> conditionColumns;
 
     // modifyColumns is empty
-    ASSERT_EQ("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
 
-    type = DataStorage::DataType::ACCESSTOKEN_HAP_INFO;
+    type = AccessTokenDb::DataType::ACCESSTOKEN_HAP_INFO;
     modifyColumns.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
     modifyColumns.emplace_back(TokenFiledConst::FIELD_USER_ID);
     // modifyColumns is not empty + modifyColumns.size > 1 + conditionColumns is empty
-    ASSERT_NE("", SqliteStorage::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
+    ASSERT_NE("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
 }
 
 /*
@@ -404,8 +404,8 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd002, TestSize.Level
 HWTEST_F(DatabaseTest, SqliteStorageCreateSelectPrepareSqlCmd001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 begin");
-    SqliteStorage::DataType type = static_cast<SqliteStorage::DataType>(100);
-    ASSERT_EQ("", SqliteStorage::GetInstance().CreateSelectPrepareSqlCmd(type));
+    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
+    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateSelectPrepareSqlCmd(type));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 end");
 }
 
@@ -418,28 +418,28 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateSelectPrepareSqlCmd001, TestSize.Level
 HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 begin");
-    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreateHapTokenInfoTable());
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreateHapTokenInfoTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 end");
 }
 
 /**
  * @tc.name: SqliteStorageCreateHapTokenInfoTable002
- * @tc.desc: SqliteStorage::CreateHapTokenInfoTable function test
+ * @tc.desc: AccessTokenDb::CreateHapTokenInfoTable function test
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable002, TestSize.Level1)
 {
-    std::map<DataStorage::DataType, SqliteStorage::SqliteTable> dataTypeToSqlTable;
-    dataTypeToSqlTable = SqliteStorage::GetInstance().dataTypeToSqlTable_; // backup
-    SqliteStorage::GetInstance().dataTypeToSqlTable_.clear();
+    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_; // backup
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
 
-    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreateHapTokenInfoTable());
-    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreateNativeTokenInfoTable());
-    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreatePermissionDefinitionTable());
-    ASSERT_EQ(SqliteStorage::FAILURE, SqliteStorage::GetInstance().CreatePermissionStateTable());
+    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreateHapTokenInfoTable());
+    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreateNativeTokenInfoTable());
+    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionDefinitionTable());
+    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionStateTable());
 
-    SqliteStorage::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 
 /*
@@ -451,7 +451,7 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable002, TestSize.Level1)
 HWTEST_F(DatabaseTest, SqliteStorageCreateNativeTokenInfoTable001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 begin");
-    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreateNativeTokenInfoTable());
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreateNativeTokenInfoTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 end");
 }
 
@@ -464,7 +464,7 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateNativeTokenInfoTable001, TestSize.Leve
 HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionDefinitionTable001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 begin");
-    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreatePermissionDefinitionTable());
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionDefinitionTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 end");
 }
 
@@ -477,7 +477,7 @@ HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionDefinitionTable001, TestSize
 HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionStateTable001, TestSize.Level1)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 begin");
-    ASSERT_EQ(SqliteStorage::SUCCESS, SqliteStorage::GetInstance().CreatePermissionStateTable());
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionStateTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 end");
 }
 

@@ -23,7 +23,6 @@
 #include "access_token_error.h"
 #include "callback_manager.h"
 #include "constant_common.h"
-#include "data_storage.h"
 #include "data_translator.h"
 #include "data_validator.h"
 #ifdef SUPPORT_SANDBOX_APP
@@ -37,6 +36,7 @@
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
+#include "access_token_db.h"
 #include "token_field_const.h"
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -93,9 +93,9 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     std::vector<GenericValues> permDefRes;
     std::vector<GenericValues> permStateRes;
 
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapTokenRes);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapTokenRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
 
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
@@ -136,8 +136,8 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
     std::vector<GenericValues> nativeTokenResults;
     std::vector<GenericValues> permStateRes;
 
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
@@ -461,6 +461,12 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         GetPolicyCopied(policy, policyNew);
         int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
             info.dlpType, policyNew.permStateList);
+        if (res != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
+            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
+            PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
+            return res;
+        }
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
     } else {
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
@@ -1014,10 +1020,10 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
 
     PermissionDefinitionCache::GetInstance().StorePermissionDef(permDefValues);
 
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValues);
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
-    int res = DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
+    int res = AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
     PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
 }
 

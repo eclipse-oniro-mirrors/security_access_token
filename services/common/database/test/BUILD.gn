@@ -33,9 +33,8 @@ ohos_unittest("libdatabase_test") {
 
   sources = [
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_storage.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/sqlite_storage.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
     "unittest/database_test.cpp",
