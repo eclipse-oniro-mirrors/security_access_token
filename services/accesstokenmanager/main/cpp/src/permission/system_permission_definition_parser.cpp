@@ -121,7 +121,7 @@ void from_json(const nlohmann::json& j, PermissionDefParseRet& result)
     return;
 }
 
-static bool CheckPermissionDefRules(PermissionDef& permDef)
+static bool CheckPermissionDefRules(const PermissionDef& permDef)
 {
     // Extension permission support system_grant permission only.
     if (permDef.grantMode != SYSTEM_GRANT) {
