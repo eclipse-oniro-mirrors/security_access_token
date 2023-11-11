@@ -23,7 +23,8 @@ bool AppStateData::Marshalling(Parcel &parcel) const
     return (parcel.WriteString(bundleName) && parcel.WriteInt32(uid) && parcel.WriteInt32(state)
         && parcel.WriteInt32(pid) && parcel.WriteInt32(accessTokenId) && parcel.WriteBool(isFocused)
         && parcel.WriteInt32(extensionType) && parcel.WriteInt32Vector(renderPids)
-        && parcel.WriteString(callerBundleName));
+        && parcel.WriteString(callerBundleName) && parcel.WriteBool(isSplitScreenMode)
+        && parcel.WriteBool(isFloatingWindowMode));
 }
 
 AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
@@ -41,6 +42,8 @@ AppStateData *AppStateData::Unmarshalling(Parcel &parcel)
     appStateData->extensionType = parcel.ReadInt32();
     parcel.ReadInt32Vector(&appStateData->renderPids);
     appStateData->callerBundleName = parcel.ReadString();
+    appStateData->isSplitScreenMode = parcel.ReadBool();
+    appStateData->isFloatingWindowMode = parcel.ReadBool();
     return appStateData;
 }
 }  // namespace AccessToken
