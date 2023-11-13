@@ -19,6 +19,7 @@
 
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_validator.h"
 #include "permission_validator.h"
 #include "token_field_const.h"
@@ -55,7 +56,7 @@ int DataTranslator::TranslationIntoPermissionDef(const GenericValues& inGenericV
     int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_AVAILABLE_LEVEL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Apl is wrong.");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     outPermissionDef.availableLevel = static_cast<ATokenAplEnum>(aplNum);
     outPermissionDef.provisionEnable = (inGenericValues.GetInt(TokenFiledConst::FIELD_PROVISION_ENABLE) == 1);
@@ -76,7 +77,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
     if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
         grantIndex >= inPermissionState.grantFlags.size()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "perm status grant size is wrong");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
     outGenericValues.Put(TokenFiledConst::FIELD_DEVICE_ID, inPermissionState.resDeviceID[grantIndex]);
@@ -98,7 +99,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     std::string devID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
@@ -107,7 +108,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission deviceId error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     outPermissionState.resDeviceID.push_back(devID);
 
@@ -117,7 +118,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant flag error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     
     outPermissionState.grantFlags.push_back(grantFlag);
@@ -128,7 +129,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant status error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     if (grantFlag == PERMISSION_ALLOW_THIS_TIME) {
         grantStatus = PERMISSION_DENIED;

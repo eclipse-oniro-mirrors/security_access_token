@@ -23,7 +23,6 @@
 #include "access_token_error.h"
 #include "callback_manager.h"
 #include "constant_common.h"
-#include "data_storage.h"
 #include "data_translator.h"
 #include "data_validator.h"
 #ifdef SUPPORT_SANDBOX_APP
@@ -37,6 +36,7 @@
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
+#include "access_token_db.h"
 #include "token_field_const.h"
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -93,9 +93,9 @@ void AccessTokenInfoManager::InitHapTokenInfos()
     std::vector<GenericValues> permDefRes;
     std::vector<GenericValues> permStateRes;
 
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_HAP_INFO, hapTokenRes);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapTokenRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
 
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
@@ -136,8 +136,8 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
     std::vector<GenericValues> nativeTokenResults;
     std::vector<GenericValues> permStateRes;
 
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
@@ -347,7 +347,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     if (type != TOKEN_HAP) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is not hap.", id);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> info;
     // make sure that RemoveDefPermissions is called outside of the lock to avoid deadlocks.
@@ -356,17 +356,17 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(id) == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "hap token %{public}u no exist.", id);
-            return RET_FAILED;
+            return ERR_TOKENID_NOT_EXIST;
         }
 
         info = hapTokenInfoMap_[id];
         if (info == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "hap token %{public}u is null.", id);
-            return RET_FAILED;
+            return ERR_TOKEN_INVALID;
         }
         if (info->IsRemote()) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "remote hap token %{public}u can not delete.", id);
-            return RET_FAILED;
+            return ERR_IDENTITY_CHECK_FAILED;
         }
         std::string HapUniqueKey = GetHapUniqueStr(info);
         auto iter = hapTokenIdMap_.find(HapUniqueKey);
@@ -397,20 +397,20 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     if ((type != TOKEN_NATIVE) && (type != TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is not hap.", id);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         if (nativeTokenInfoMap_.count(id) == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "native token %{public}u is null.", id);
-            return RET_FAILED;
+            return ERR_TOKENID_NOT_EXIST;
         }
 
         std::shared_ptr<NativeTokenInfoInner> info = nativeTokenInfoMap_[id];
         if (info->IsRemote()) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "remote native token %{public}u can not delete.", id);
-            return RET_FAILED;
+            return ERR_TOKEN_INVALID;
         }
         std::string processName = nativeTokenInfoMap_[id]->GetProcessName();
         if (nativeTokenIdMap_.count(processName) != 0) {
@@ -451,7 +451,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, info.dlpType);
     if (tokenId == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
-        return RET_FAILED;
+        return ERR_TOKENID_CREATE_FAILED;
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
 #ifdef SUPPORT_SANDBOX_APP
@@ -465,7 +465,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
             AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
             PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
-            return RET_FAILED;
+            return res;
         }
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
     } else {
@@ -479,7 +479,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s add token info failed", info.bundleName.c_str());
         AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
-        return RET_FAILED;
+        return ret;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
@@ -624,7 +624,7 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote hap token %{public}u can not update!", tokenID);
-        return RET_FAILED;
+        return ERR_IDENTITY_CHECK_FAILED;
     }
     if (isSystemApp) {
         tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
@@ -654,14 +654,14 @@ int AccessTokenInfoManager::GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoF
     if (infoPtr == nullptr || infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u is invalid.", tokenID);
-        return RET_FAILED;
+        return ERR_IDENTITY_CHECK_FAILED;
     }
     hapSync.baseInfo = infoPtr->GetHapInfoBasic();
     std::shared_ptr<PermissionPolicySet> permSetPtr = infoPtr->GetHapInfoPermissionPolicySet();
     if (permSetPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "token %{public}u permSet is invalid.", tokenID);
-        return RET_FAILED;
+        return ERR_TOKEN_INVALID;
     }
     permSetPtr->GetPermissionStateList(hapSync.permStateList);
     return RET_SUCCESS;
@@ -707,7 +707,7 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(mapID);
     if (infoPtr == nullptr || !infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u is null or not remote, can not update!", mapID);
-        return RET_FAILED;
+        return ERR_IDENTITY_CHECK_FAILED;
     }
 
     std::shared_ptr<PermissionPolicySet> newPermPolicySet =
@@ -729,7 +729,7 @@ int AccessTokenInfoManager::CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
     int ret = AddHapTokenInfo(hap);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "add local token failed.");
-        return RET_FAILED;
+        return ret;
     }
 
     return RET_SUCCESS;
@@ -770,7 +770,7 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
 {
     if (!IsRemoteHapTokenValid(deviceID, hapSync)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s parms invalid", ConstantCommon::EncryptDevId(deviceID).c_str());
-        return RET_FAILED;
+        return ERR_IDENTITY_CHECK_FAILED;
     }
 
     AccessTokenID remoteID = hapSync.baseInfo.tokenID;
@@ -788,18 +788,18 @@ int AccessTokenInfoManager::SetRemoteHapTokenInfo(const std::string& deviceID, H
     if (mapID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u map failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID);
-        return RET_FAILED;
+        return ERR_TOKEN_MAP_FAILED;
     }
 
     // update remote token mapping id
     hapSync.baseInfo.tokenID = mapID;
     hapSync.baseInfo.deviceID = deviceID;
-
-    if (CreateRemoteHapTokenInfo(mapID, hapSync) == RET_FAILED) {
+    int ret = CreateRemoteHapTokenInfo(mapID, hapSync);
+    if (ret != RET_SUCCESS) {
         AccessTokenRemoteTokenManager::GetInstance().RemoveDeviceMappingTokenID(deviceID, mapID);
         ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u failed.",
             ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
-        return RET_FAILED;
+        return ret;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "device %{public}s token %{public}u map to local token %{public}u success.",
         ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
@@ -873,7 +873,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
     if (mapID == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s tokenId %{public}u is not mapped",
             ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
-        return RET_FAILED;
+        return ERR_TOKEN_MAP_FAILED;
     }
 
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(mapID);
@@ -881,7 +881,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         if (hapTokenInfoMap_.count(mapID) == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "hap token %{public}u no exist.", mapID);
-            return RET_FAILED;
+            return ERR_TOKEN_INVALID;
         }
         hapTokenInfoMap_.erase(mapID);
     } else if ((type == TOKEN_NATIVE) || (type == TOKEN_SHELL)) {
@@ -889,7 +889,7 @@ int AccessTokenInfoManager::DeleteRemoteToken(const std::string& deviceID, Acces
         if (nativeTokenInfoMap_.count(mapID) == 0) {
             ACCESSTOKEN_LOG_ERROR(
                 LABEL, "native token %{public}u is null.", mapID);
-            return RET_FAILED;
+            return ERR_TOKEN_INVALID;
         }
         nativeTokenInfoMap_.erase(mapID);
     } else {
@@ -1020,10 +1020,10 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
 
     PermissionDefinitionCache::GetInstance().StorePermissionDef(permDefValues);
 
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_HAP_INFO, hapInfoValues);
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
-    DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
-    int res = DataStorage::GetRealDataStorage().RefreshAll(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
+    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
+    int res = AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
     PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
 }
 

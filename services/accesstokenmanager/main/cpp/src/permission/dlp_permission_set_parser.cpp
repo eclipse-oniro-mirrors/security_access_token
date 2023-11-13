@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "data_validator.h"
 #include "dlp_permission_set_manager.h"
@@ -65,7 +66,7 @@ int32_t DlpPermissionSetParser::ParserDlpPermsRawData(const std::string& dlpPerm
     nlohmann::json jsonRes = nlohmann::json::parse(dlpPermsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     if ((jsonRes.find("dlpPermissions") != jsonRes.end()) && (jsonRes.at("dlpPermissions").is_array())) {
@@ -81,25 +82,25 @@ int32_t DlpPermissionSetParser::ReadCfgFile(std::string& dlpPermsRawData)
     int32_t fd = open(CLONE_PERMISSION_CONFIG_FILE.c_str(), O_RDONLY);
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed errno %{public}d.", errno);
         close(fd);
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is 0.");
         close(fd);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_CLONE_PERMISSION_CONFIG_FILE_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is too large.");
         close(fd);
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     dlpPermsRawData.reserve(statBuffer.st_size);
 
@@ -113,7 +114,7 @@ int32_t DlpPermissionSetParser::ReadCfgFile(std::string& dlpPermsRawData)
     if (readLen == 0) {
         return RET_SUCCESS;
     }
-    return RET_FAILED;
+    return ERR_FILE_OPERATE_FAILED;
 }
 
 int32_t DlpPermissionSetParser::Init()
@@ -127,13 +128,13 @@ int32_t DlpPermissionSetParser::Init()
     int32_t ret = ReadCfgFile(dlpPermsRawData);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
-        return RET_FAILED;
+        return ret;
     }
     std::vector<PermissionDlpMode> dlpPerms;
     ret = ParserDlpPermsRawData(dlpPermsRawData, dlpPerms);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserDlpPermsRawData failed.");
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
     DlpPermissionSetManager::GetInstance().ProcessDlpPermInfos(dlpPerms);
 

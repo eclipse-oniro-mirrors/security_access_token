@@ -26,6 +26,7 @@
 #include "ability_context.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#include "access_token_error.h"
 #include "napi_common.h"
 #include "napi_error.h"
 #include "napi_context_common.h"
@@ -77,7 +78,7 @@ struct PermStateChangeContext {
     virtual ~PermStateChangeContext();
     napi_env env = nullptr;
     napi_ref callbackRef =  nullptr;
-    int32_t errCode = RET_FAILED;
+    int32_t errCode = RET_SUCCESS;
     std::string permStateChangeType;
     AccessTokenKit* accessTokenKit = nullptr;
     std::thread::id threadId_;

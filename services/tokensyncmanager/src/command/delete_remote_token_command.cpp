@@ -15,6 +15,7 @@
 
 #include "delete_remote_token_command.h"
 
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "base_remote_command.h"

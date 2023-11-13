@@ -45,7 +45,7 @@ int32_t AbilityManagerAccessClient::StartAbility(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return AccessTokenError::ERR_SA_WORK_ABNORMAL;
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Start ability %{public}s, userId:%{public}d",
         want.GetElement().GetAbilityName().c_str(), userId);

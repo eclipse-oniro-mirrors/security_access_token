@@ -22,6 +22,7 @@
 
 #include "accesstoken_log.h"
 #include "access_token.h"
+#include "access_token_error.h"
 #include "data_validator.h"
 #include "json_parser.h"
 #include "permission_def.h"
@@ -136,12 +137,12 @@ int32_t SystemPermissionDefinitionParser::ParserPermsRawData(const std::string& 
     nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     if ((jsonRes.find(DEFINE_PERMISSION) == jsonRes.end()) || (!jsonRes.at(DEFINE_PERMISSION).is_array())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is not array.");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     nlohmann::json JsonData = jsonRes.at(DEFINE_PERMISSION).get<nlohmann::json>();
     for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
@@ -169,13 +170,13 @@ int32_t SystemPermissionDefinitionParser::Init()
     int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
     std::vector<PermissionDef> permDefList;
     ret = ParserPermsRawData(permsRawData, permDefList);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserPermsRawData failed.");
-        return RET_FAILED;
+        return ret;
     }
     for (const auto& perm : permDefList) {
         PermissionDefinitionCache::GetInstance().Insert(perm, EXTENSION_PERMISSION_ID);

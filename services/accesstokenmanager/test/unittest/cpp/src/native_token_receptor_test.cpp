@@ -27,8 +27,8 @@
 
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
+#include "access_token_db.h"
 #include "access_token_error.h"
-#include "data_storage.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "permission_state_full.h"
@@ -310,9 +310,9 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
 
     // get sql data
     std::vector<GenericValues> nativeTokenResults;
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
     std::vector<GenericValues> permStateRes;
-    DataStorage::GetRealDataStorage().Find(DataStorage::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
     for (GenericValues nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId != info.tokenID) {

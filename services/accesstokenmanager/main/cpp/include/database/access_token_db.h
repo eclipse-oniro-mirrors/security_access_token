@@ -13,11 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef SQLITE_STORAGE_H
-#define SQLITE_STORAGE_H
+#ifndef ACCESS_TOKEN_DB_H
+#define ACCESS_TOKEN_DB_H
+
+#include <vector>
+#include <map>
 
 #include "access_token.h"
-#include "data_storage.h"
+#include "generic_values.h"
 #include "nocopyable.h"
 #include "rwlock.h"
 #include "sqlite_helper.h"
@@ -26,29 +29,34 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class SqliteStorage : public DataStorage, public SqliteHelper {
+class AccessTokenDb : public SqliteHelper {
 public:
     enum ExecuteResult { FAILURE = -1, SUCCESS };
-
     struct SqliteTable {
     public:
         std::string tableName_;
         std::vector<std::string> tableColumnNames_;
     };
+    enum DataType {
+        ACCESSTOKEN_HAP_INFO,
+        ACCESSTOKEN_NATIVE_INFO,
+        ACCESSTOKEN_PERMISSION_DEF,
+        ACCESSTOKEN_PERMISSION_STATE,
+    };
 
-    static SqliteStorage& GetInstance();
+    static AccessTokenDb& GetInstance();
 
-    ~SqliteStorage() override;
+    ~AccessTokenDb() override;
 
-    int Add(const DataType type, const std::vector<GenericValues>& values) override;
+    int Add(const DataType type, const std::vector<GenericValues>& values);
 
-    int Remove(const DataType type, const GenericValues& conditions) override;
+    int Remove(const DataType type, const GenericValues& conditions);
 
-    int Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions) override;
+    int Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
 
-    int Find(const DataType type, std::vector<GenericValues>& results) override;
+    int Find(const DataType type, std::vector<GenericValues>& results);
 
-    int RefreshAll(const DataType type, const std::vector<GenericValues>& values) override;
+    int RefreshAll(const DataType type, const std::vector<GenericValues>& values);
 
     void OnCreate() override;
     void OnUpdate() override;
@@ -66,10 +74,10 @@ private:
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
     int32_t AddAvailableTypeColumn() const;
-    int32_t AddPermiDialogCapColumn() const;
+    int32_t AddPermDialogCapColumn() const;
 
-    SqliteStorage();
-    DISALLOW_COPY_AND_MOVE(SqliteStorage);
+    AccessTokenDb();
+    DISALLOW_COPY_AND_MOVE(AccessTokenDb);
 
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
     OHOS::Utils::RWLock rwLock_;
@@ -85,4 +93,4 @@ private:
 } // namespace Security
 } // namespace OHOS
 
-#endif // SQLITE_STORAGE_H
+#endif // ACCESS_TOKEN_DB_H

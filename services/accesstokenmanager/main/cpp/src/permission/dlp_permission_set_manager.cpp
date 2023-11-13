@@ -18,6 +18,7 @@
 
 #include "access_token.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "data_validator.h"
 #include "securec.h"
 

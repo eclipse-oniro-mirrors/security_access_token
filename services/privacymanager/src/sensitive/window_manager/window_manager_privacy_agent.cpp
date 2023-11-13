@@ -14,6 +14,7 @@
  */
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "permission_record_manager.h"
 #include "window_manager_privacy_agent.h"
 
@@ -32,7 +33,7 @@ int WindowManagerPrivacyAgent::OnRemoteRequest(uint32_t code, MessageParcel& dat
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}u", __func__, code);
     if (data.ReadInterfaceToken() != IWindowManagerAgent::GetDescriptor()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, read desciptor error", __func__);
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     PrivacyWindowServiceInterfaceCode msgId = static_cast<PrivacyWindowServiceInterfaceCode>(code);
     switch (msgId) {

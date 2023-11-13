@@ -429,14 +429,14 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote token can not update");
-        return AccessTokenError::ERR_PERMISSION_OPERATE_FAILED;
+        return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
     }
     if (flag == PERMISSION_ALLOW_THIS_TIME) {
         if (isGranted) {
             if (!IsAllowGrantTempPermission(tokenID, permissionName)) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
                     tokenID, permissionName.c_str());
-                return ERR_PERMISSION_OPERATE_FAILED;
+                return ERR_IDENTITY_CHECK_FAILED;
             }
         }
     }
@@ -452,7 +452,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
             ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
                 tokenID, permissionName.c_str());
-            return AccessTokenError::ERR_PERMISSION_OPERATE_FAILED;
+            return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
 #endif
@@ -908,16 +908,16 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u is invalid.", tokenID);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "it is a remote hap token %{public}u!", tokenID);
-        return RET_FAILED;
+        return ERR_IDENTITY_CHECK_FAILED;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     std::vector<std::string> grantedPermListBefore;
     permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
@@ -931,11 +931,8 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     // update permission status with dlp permission rule.
     std::vector<PermissionStateFull> permListOfHap;
     permPolicySet->GetPermissionStateFulls(permListOfHap);
-    int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
+    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
         infoPtr->GetDlpType(), permListOfHap);
-    if (res != RET_SUCCESS) {
-        return RET_FAILED;
-    }
     permPolicySet->Update(permListOfHap);
 #endif
 

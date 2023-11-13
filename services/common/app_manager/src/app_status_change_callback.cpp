@@ -15,6 +15,7 @@
 
 #include "app_status_change_callback.h"
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -40,7 +41,7 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
 {
     if (data.ReadInterfaceToken() != GetDescriptor()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "ApplicationStateObserverStub: ReadInterfaceToken failed");
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
         case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED: {

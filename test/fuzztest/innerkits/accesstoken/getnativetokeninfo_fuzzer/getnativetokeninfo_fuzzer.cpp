@@ -28,14 +28,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetNativeTokenInfoFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         NativeTokenInfo NativeTokenInfotest;
-        result = AccessTokenKit::GetNativeTokenInfo(tokenId, NativeTokenInfotest);
+        int32_t result = AccessTokenKit::GetNativeTokenInfo(tokenId, NativeTokenInfotest);
 
         return result == RET_SUCCESS;
     }

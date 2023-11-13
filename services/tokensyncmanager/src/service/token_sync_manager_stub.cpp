@@ -16,6 +16,7 @@
 #include "token_sync_manager_stub.h"
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "ipc_skeleton.h"
 #include "native_token_info_for_sync_parcel.h"
@@ -36,7 +37,7 @@ int32_t TokenSyncManagerStub::OnRemoteRequest(
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenSyncManager::GetDescriptor()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
-        return -1;
+        return ERROR_IPC_REQUEST_FAIL;
     }
     switch (code) {
         case static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO):
@@ -73,7 +74,7 @@ void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, Messa
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
 
@@ -89,7 +90,7 @@ void TokenSyncManagerStub::DeleteRemoteHapTokenInfoInner(MessageParcel& data, Me
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
@@ -101,12 +102,12 @@ void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, Me
 {
     if (!IsRootCalling() && !IsNativeProcessCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, permission denied", __func__);
-        reply.WriteInt32(RET_FAILED);
+        reply.WriteInt32(ERR_IDENTITY_CHECK_FAILED);
         return;
     }
 
     sptr<HapTokenInfoForSyncParcel> tokenInfoParcelPtr = data.ReadParcelable<HapTokenInfoForSyncParcel>();
-    int result = RET_FAILED;
+    int result = RET_SUCCESS;
     if (tokenInfoParcelPtr != nullptr) {
         result = this->UpdateRemoteHapTokenInfo(tokenInfoParcelPtr->hapTokenInfoForSyncParams);
     }

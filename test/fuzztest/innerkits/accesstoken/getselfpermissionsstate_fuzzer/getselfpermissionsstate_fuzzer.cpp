@@ -27,7 +27,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetSelfPermissionsStateFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -39,7 +38,7 @@ namespace OHOS {
             .state = -1,
         };
         permsList1.emplace_back(perm1);
-        result = AccessTokenKit::GetSelfPermissionsState(permsList1);
+        int32_t result = AccessTokenKit::GetSelfPermissionsState(permsList1);
 
         return result == RET_SUCCESS;
     }

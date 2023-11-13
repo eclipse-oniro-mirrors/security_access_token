@@ -41,20 +41,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 
 static int32_t GetJsErrorCode(uint32_t errCode)
 {
-    int32_t jsCode = JS_OK;
+    int32_t jsCode;
     switch (errCode) {
-        case ERR_PARAM_INVALID:
-            jsCode = JS_ERROR_PARAM_INVALID;
+        case RET_SUCCESS:
+            jsCode = JS_OK;
+            break;
+        case ERR_PERMISSION_DENIED:
+            jsCode = JS_ERROR_PERMISSION_DENIED;
             break;
         case ERR_NOT_SYSTEM_APP:
             jsCode = JS_ERROR_NOT_SYSTEM_APP;
             break;
-        case ERR_SERVICE_ABNORMAL:
-        case ERR_READ_PARCEL_FAILED:
-        case ERR_WRITE_PARCEL_FAILED:
-        case ERR_IPC_PARCEL_FAILED:
-        case ERR_MALLOC_FAILED:
-            jsCode = JS_ERROR_SERVICE_NOT_RUNNING;
+        case ERR_PARAM_INVALID:
+            jsCode = JS_ERROR_PARAM_INVALID;
             break;
         case ERR_TOKENID_NOT_EXIST:
             jsCode = JS_ERROR_TOKENID_NOT_EXIST;
@@ -71,10 +70,20 @@ static int32_t GetJsErrorCode(uint32_t errCode)
         case ERR_CALLBACKS_EXCEED_LIMITATION:
             jsCode = JS_ERROR_REGISTERS_EXCEED_LIMITATION;
             break;
-        case ERR_PERMISSION_DENIED:
-            jsCode = JS_ERROR_PERMISSION_DENIED;
+        case ERR_IDENTITY_CHECK_FAILED:
+            jsCode = JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED;
+            break;
+        case ERR_SERVICE_ABNORMAL:
+        case ERROR_IPC_REQUEST_FAIL:
+        case ERR_READ_PARCEL_FAILED:
+        case ERR_WRITE_PARCEL_FAILED:
+            jsCode = JS_ERROR_SERVICE_NOT_RUNNING;
+            break;
+        case ERR_MALLOC_FAILED:
+            jsCode = JS_ERROR_OUT_OF_MEMORY;
             break;
         default:
+            jsCode = JS_ERROR_INNER;
             break;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);

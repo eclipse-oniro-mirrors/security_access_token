@@ -1206,7 +1206,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback009, TestSi
         if (i == 200) { // 200 is the max size
             auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
             int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-            ASSERT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
+            ASSERT_EQ(AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION, res);
             break;
         }
         auto callbackPtr = std::make_shared<CbCustomizeTest>(scopeInfo);
@@ -1439,7 +1439,7 @@ HWTEST_F(AccessTokenKitExtensionTest, UnRegisterPermStateChangeCallback002, Test
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, res);
+    ASSERT_EQ(AccessTokenError::ERR_CALLBACK_ALREADY_EXIST, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -1611,7 +1611,7 @@ HWTEST_F(AccessTokenKitExtensionTest, CreatePermStateChangeCallback001, TestSize
         int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
 
         if (i == 200) {
-            EXPECT_EQ(AccessTokenError::ERR_EXCEEDED_MAXNUM_REGISTRATION_LIMIT, res);
+            EXPECT_EQ(AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION, res);
             break;
         }
     }

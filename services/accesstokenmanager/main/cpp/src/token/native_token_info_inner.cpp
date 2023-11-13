@@ -15,6 +15,7 @@
 
 #include "native_token_info_inner.h"
 
+#include "access_token_error.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_log.h"
 #include "data_translator.h"
@@ -59,14 +60,14 @@ int NativeTokenInfoInner::Init(const TokenInfo& tokenInfo, const std::vector<std
     if (!DataValidator::IsProcessNameValid(tokenInfo.processName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u process name is null", tokenInfoBasic_.tokenID);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.processName = tokenInfo.processName;
     if (!DataValidator::IsAplNumValid(tokenInfo.apl)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "tokenID: %{public}u init failed, apl %{public}d is invalid",
             tokenInfoBasic_.tokenID, tokenInfo.apl);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(tokenInfo.apl);
     tokenInfoBasic_.dcap = dcap;
@@ -125,7 +126,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token processName error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     int aplNum = inGenericValues.GetInt(TokenFiledConst::FIELD_APL);
     if (!DataValidator::IsAplNumValid(aplNum)) {
@@ -135,7 +136,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token apl error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     tokenInfoBasic_.apl = static_cast<ATokenAplEnum>(aplNum);
     tokenInfoBasic_.ver = (char)inGenericValues.GetInt(TokenFiledConst::FIELD_TOKEN_VERSION);
@@ -146,7 +147,7 @@ int NativeTokenInfoInner::RestoreNativeTokenInfo(AccessTokenID tokenId, const Ge
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "native token version error");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
 
     SetDcaps(inGenericValues.GetString(TokenFiledConst::FIELD_DCAP));

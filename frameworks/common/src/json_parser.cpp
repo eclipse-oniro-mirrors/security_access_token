@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 #include "access_token.h"
 
 namespace OHOS {
@@ -74,25 +75,25 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
     int32_t fd = open(file.c_str(), O_RDONLY);
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed.");
         close(fd);
-        return RET_FAILED;
+        return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is invalid.");
         close(fd);
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is too large.");
         close(fd);
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     rawData.reserve(statBuffer.st_size);
 
@@ -106,7 +107,7 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
     if (readLen == 0) {
         return RET_SUCCESS;
     }
-    return RET_FAILED;
+    return ERR_FILE_OPERATE_FAILED;
 }
 
 bool JsonParser::IsDirExsit(const std::string& file)

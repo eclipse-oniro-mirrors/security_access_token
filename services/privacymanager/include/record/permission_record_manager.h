@@ -163,10 +163,12 @@ private:
 
     // microphone
     std::mutex micMuteMutex_;
+    bool isMicMute_ = false;
     sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
     // camera
     std::mutex camMuteMutex_;
+    bool isCameraMute_ = false;
     sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
 
     // appState

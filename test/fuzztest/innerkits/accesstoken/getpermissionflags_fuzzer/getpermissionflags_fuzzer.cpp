@@ -27,7 +27,6 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
     bool GetPermissionFlagsFuzzTest(const uint8_t* data, size_t size)
     {
-        int32_t result = RET_FAILED;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
@@ -35,7 +34,7 @@ namespace OHOS {
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         uint32_t flag;
         std::string testName(reinterpret_cast<const char*>(data), size);
-        result = AccessTokenKit::GetPermissionFlag(tokenId, testName, flag);
+        int32_t result = AccessTokenKit::GetPermissionFlag(tokenId, testName, flag);
 
         return result == RET_SUCCESS;
     }

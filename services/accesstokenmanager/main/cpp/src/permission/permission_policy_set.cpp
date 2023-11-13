@@ -19,12 +19,12 @@
 
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_db.h"
 #include "access_token_error.h"
-#include "data_storage.h"
-#include "data_translator.h"
-#include "token_field_const.h"
 #include "permission_definition_cache.h"
 #include "permission_validator.h"
+#include "data_translator.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -319,7 +319,7 @@ int32_t PermissionPolicySet::UpdateSecCompGrantedPermList(const std::string& per
                 return RET_SUCCESS;
             } else {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Permission has been revoked by user.");
-                return RET_FAILED;
+                return ERR_PERMISSION_DENIED;
             }
         } else {
             /* revoke is called while the permission has been operated by user or system */

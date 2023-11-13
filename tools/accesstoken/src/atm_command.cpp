@@ -18,7 +18,7 @@
 #include <getopt.h>
 #include <string>
 
-#include "errors.h" // other module head file
+#include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "privacy_kit.h"
 #include "to_string.h"
@@ -331,7 +331,7 @@ int32_t AtmCommand::RunAsCommonCommand()
         return HandleComplexCommand(SHORT_OPTIONS_PERM, LONG_OPTIONS_PERM, HELP_MSG_PERM);
     }
 
-    return RET_FAILED;
+    return ERR_PARAM_INVALID;
 }
 } // namespace AccessToken
 } // namespace Security

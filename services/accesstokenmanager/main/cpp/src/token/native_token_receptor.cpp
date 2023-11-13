@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "access_token_error.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
@@ -47,11 +48,11 @@ int32_t NativeReqPermsGet(
 {
     std::vector<std::string> permReqList;
     if (j.find(JSON_PERMS) == j.end() || (!j.at(JSON_PERMS).is_array())) {
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
-        return RET_FAILED;
+        return ERR_OVERSIZE;
     }
     std::set<std::string> permRes;
     for (const auto& permReq : permReqList) {
@@ -138,7 +139,7 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
     nlohmann::json jsonRes = nlohmann::json::parse(nativeRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return RET_FAILED;
+        return ERR_PARAM_INVALID;
     }
     for (auto it = jsonRes.begin(); it != jsonRes.end(); it++) {
         auto token = it->get<std::shared_ptr<NativeTokenInfoInner>>();
@@ -155,13 +156,13 @@ int NativeTokenReceptor::Init()
     int ret = JsonParser::ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
-        return RET_FAILED;
+        return ret;
     }
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
     ret = ParserNativeRawData(nativeRawData, tokenInfos);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserNativeRawData failed.");
-        return RET_FAILED;
+        return ret;
     }
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
