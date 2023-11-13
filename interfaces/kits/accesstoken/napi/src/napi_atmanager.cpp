@@ -50,8 +50,6 @@ std::mutex g_lockCache;
 std::map<std::string, PermissionStatusCache> g_cache;
 static PermissionParamCache g_paramCache;
 std::mutex g_lockForPermRequestCallbacks;
-static std::string g_grantbundlename;
-static std::string g_grantabilityname;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
@@ -71,11 +69,6 @@ const std::string PERMISSION_KEY = "ohos.user.grant.permission";
 const std::string STATE_KEY = "ohos.user.grant.permission.state";
 const std::string TOKEN_KEY = "ohos.ability.params.token";
 const std::string CALLBACK_KEY = "ohos.ability.params.callback";
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
-static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
-static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
-#endif
 
 static int32_t GetJsErrorCode(uint32_t errCode)
 {
@@ -1194,94 +1187,12 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     contextPtr.release();
 }
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static void GetValidConfigFilePathList(std::vector<std::string>& pathList)
-{
-    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
-    if (dirs != nullptr) {
-        for (const auto& path : dirs->paths) {
-            if ((path == nullptr) || (!JsonParser::IsDirExsit(path))) {
-                continue;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
-            pathList.emplace_back(path);
-        }
-
-        FreeCfgDirList(dirs); // free
-    }
-}
-
-// nlohmann json need the function named from_json to parse
-void from_json(const nlohmann::json& j, std::string& bundleName, std::string& abilityName)
-{}
-
-static bool GetConfigValueFromFile(std::string& fileContent)
-{
-    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
-    if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return false;
-    }
-
-    if (!JsonParser::GetStringFromJson(jsonRes, PERMISSION_MANAGER_BUNDLE_NAME_KEY, g_grantbundlename)) {
-        return false;
-    }
-
-    if (!JsonParser::GetStringFromJson(jsonRes, GRANT_ABILITY_NAME_KEY, g_grantabilityname)) {
-        return false;
-    }
-
-    return true;
-}
-#endif
-
-static void SetDefaultConfigValue()
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
-
-    g_grantbundlename = GRANT_ABILITY_BUNDLE_NAME;
-    g_grantabilityname = GRANT_ABILITY_ABILITY_NAME;
-}
-
-static void GetConfigValue()
-{
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    std::vector<std::string> pathList;
-    GetValidConfigFilePathList(pathList);
-
-    for (const auto& path : pathList) {
-        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
-        std::string fileContent;
-        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
-        if (res != 0) {
-            continue;
-        }
-
-        if (GetConfigValueFromFile(fileContent)) {
-            break; // once get the config value, break the loop
-        }
-    }
-#endif
-    // when config file list empty or can not get two value from config file, set default value
-    if ((g_grantbundlename.empty()) || (g_grantabilityname.empty())) {
-        SetDefaultConfigValue();
-    }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "g_grantbundlename is %{public}s, g_grantabilityname is %{public}s",
-        g_grantbundlename.c_str(), g_grantabilityname.c_str());
-}
-
 static void StartGrantExtension(sptr<IRemoteObject>& remoteObject, const std::vector<std::string>& permissions,
                                 const std::shared_ptr<AbilityRuntime::AbilityContext>& context,
                                 const std::vector<int32_t>& permissionsState, int32_t requestCode)
 {
-    if ((g_grantbundlename.empty()) || (g_grantabilityname.empty())) {
-        GetConfigValue();
-    }
-
     AAFwk::Want want;
-    want.SetElementName(g_grantbundlename, g_grantabilityname);
+    want.SetElementName(GRANT_ABILITY_BUNDLE_NAME, GRANT_ABILITY_ABILITY_NAME);
     want.SetParam(PERMISSION_KEY, permissions);
     want.SetParam(STATE_KEY, permissionsState);
     want.SetParam(TOKEN_KEY, context->GetToken());

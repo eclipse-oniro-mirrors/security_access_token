@@ -73,8 +73,7 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 #endif
-static const int32_t MAX_RECORD_NUM = 500;
-const static int32_t MAX_DETAIL_RECORD = 10;
+static const int32_t MAX_RECORD_NUM = 5000;
 const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
@@ -339,10 +338,10 @@ void PermissionRecordManager::UpdateRecords(
     if (flag == 0) {
         return;
     }
-    if (inBundleRecord.lastAccessTime > 0 && outBundleRecord.accessRecords.size() < MAX_DETAIL_RECORD) {
+    if (inBundleRecord.lastAccessTime > 0) {
         outBundleRecord.accessRecords.emplace_back(inBundleRecord.accessRecords[0]);
     }
-    if (inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < MAX_DETAIL_RECORD) {
+    if (inBundleRecord.lastRejectTime > 0) {
         outBundleRecord.rejectRecords.emplace_back(inBundleRecord.rejectRecords[0]);
     }
 }
