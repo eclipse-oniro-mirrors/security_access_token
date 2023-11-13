@@ -61,7 +61,7 @@ public:
     AccessTokenID GetNativeTokenId(const std::string& processName);
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);
-    int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
+    int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
 
 #ifdef TOKEN_SYNC_ENABLE

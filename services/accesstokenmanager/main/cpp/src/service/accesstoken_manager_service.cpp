@@ -243,6 +243,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+    AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }
@@ -427,7 +428,12 @@ void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string
 
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
 {
-    return AccessTokenInfoManager::GetInstance().SetPermDialogCap(hapBaseInfoParcel.hapBaseInfo, enable);
+    AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
+        hapBaseInfoParcel.hapBaseInfo.userID,
+        hapBaseInfoParcel.hapBaseInfo.bundleName,
+        hapBaseInfoParcel.hapBaseInfo.instIndex);
+
+    return AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenIdEx.tokenIdExStruct.tokenID, enable);
 }
 
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
