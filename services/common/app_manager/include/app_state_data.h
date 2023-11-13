@@ -47,6 +47,8 @@ struct AppStateData : public Parcelable {
     int32_t extensionType = 255;
     std::vector<int32_t> renderPids;
     std::string callerBundleName;
+    bool isSplitScreenMode = false;
+    bool isFloatingWindowMode = false;
 };
 }  // namespace AccessToken
 }  // namespace Security
