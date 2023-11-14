@@ -34,7 +34,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s,",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s,",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
         (successCount < 0 || failCount < 0)) {
@@ -47,7 +47,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::st
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -59,7 +59,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
     const std::shared_ptr<StateCustomizedCbk>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s, callback",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s, callback",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -70,7 +70,7 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
 
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
@@ -81,7 +81,7 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, tokenID=0x%{public}x, deviceID=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, deviceID=%{public}s",
         tokenID, ConstantCommon::EncryptDevId(deviceID).c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");

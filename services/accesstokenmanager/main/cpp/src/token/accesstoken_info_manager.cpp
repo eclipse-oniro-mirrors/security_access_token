@@ -1168,17 +1168,10 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
     }
 }
 
-int32_t AccessTokenInfoManager::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable)
+int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool enable)
 {
-    std::string HapUniqueKey = GetHapUniqueStr(hapBaseInfo.userID, hapBaseInfo.bundleName, hapBaseInfo.instIndex);
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    auto iter = hapTokenIdMap_.find(HapUniqueKey);
-    if (iter == hapTokenIdMap_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find HapUniqueKey");
-        return ERR_TOKENID_NOT_EXIST;
-    }
-    AccessTokenID tokenId = iter->second;
-    auto infoIter = hapTokenInfoMap_.find(tokenId);
+    auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
         return ERR_TOKENID_NOT_EXIST;

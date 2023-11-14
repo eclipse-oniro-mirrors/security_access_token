@@ -407,7 +407,7 @@ bool PrivacyManagerProxy::SendRequest(
 
     int32_t result = remote->SendRequest(static_cast<uint32_t>(code), data, reply, option);
     if (result != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest fail, result: %{public}d", result);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest(code=%{public}d) fail, result: %{public}d", code, result);
         return false;
     }
     return true;
