@@ -26,6 +26,15 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.GET_SUSPEND_STATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ]
 }
