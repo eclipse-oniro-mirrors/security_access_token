@@ -598,7 +598,7 @@ void PermissionRecordManager::SavePermissionRecords(
 void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
-    isMicMute_ = switchStatus;
+    isMicMute_ = !switchStatus;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_MICROPHONE) {
             continue;
@@ -610,7 +610,7 @@ void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
-    isCameraMute_ = switchStatus;
+    isCameraMute_ = !switchStatus;
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_CAMERA) {
             continue;
