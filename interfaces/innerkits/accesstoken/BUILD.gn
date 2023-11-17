@@ -23,6 +23,14 @@ if (is_standard_system) {
   ohos_shared_library("libaccesstoken_sdk") {
     subsystem_name = "security"
     part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      blocklist = "${access_token_path}/cfi_blocklist.txt"
+    }
+    branch_protector_ret = "pac_ret"
+
     innerapi_tags = [
       "chipsetsdk",
       "platformsdk",
@@ -89,11 +97,18 @@ if (is_standard_system) {
 if (is_standard_system) {
   ohos_shared_library("libtokenid_sdk") {
     subsystem_name = "security"
+    part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      blocklist = "${access_token_path}/cfi_blocklist.txt"
+    }
+    branch_protector_ret = "pac_ret"
     innerapi_tags = [
       "platformsdk",
       "sasdk",
     ]
-    part_name = "access_token"
 
     output_name = "libtokenid_sdk"
     public_configs = [ ":accesstoken" ]

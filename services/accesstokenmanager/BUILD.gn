@@ -32,6 +32,13 @@ if (is_standard_system) {
   ohos_shared_library("accesstoken_manager_service") {
     subsystem_name = "security"
     part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      blocklist = "${access_token_path}/cfi_blocklist.txt"
+    }
+    branch_protector_ret = "pac_ret"
     if (!use_clang_coverage) {
       version_script = "accesstoken_manager_service.map"
     }

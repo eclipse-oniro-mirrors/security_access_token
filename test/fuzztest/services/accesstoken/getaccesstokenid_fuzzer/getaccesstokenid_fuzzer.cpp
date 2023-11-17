@@ -30,19 +30,14 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-
-        const char **dcaps = new (std::nothrow) const char *[2];
-        dcaps[0] = "AT_CAP";
-        dcaps[1] = "ST_CAP";
-        int32_t dcapNum = 2;
         NativeTokenInfoParams infoInstance = {
             .permsNum = 0,
             .aclsNum = 0,
-            .dcaps = dcaps,
+            .dcaps = nullptr,
             .perms = nullptr,
             .aplStr = "system_core",
         };
-        infoInstance.dcapsNum = dcapNum;
+        infoInstance.dcapsNum = 0;
         infoInstance.processName = "GetAccessTokenIdFuzzTest";
         GetAccessTokenId(&infoInstance);
 
