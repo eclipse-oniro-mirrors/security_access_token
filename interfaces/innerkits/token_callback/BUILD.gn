@@ -23,6 +23,13 @@ if (is_standard_system) {
   ohos_shared_library("libtoken_callback_sdk") {
     subsystem_name = "security"
     part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+      blocklist = "${access_token_path}/cfi_blocklist.txt"
+    }
+    branch_protector_ret = "pac_ret"
     innerapi_tags = [ "platformsdk" ]
     if (!use_clang_coverage) {
       version_script = "libtoken_callback_sdk.map"

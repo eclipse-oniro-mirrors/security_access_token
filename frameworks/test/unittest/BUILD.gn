@@ -30,6 +30,13 @@ ohos_unittest("libaccesstoken_framework_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
 
   sources = [
     "accesstoken_parcel_test.cpp",
