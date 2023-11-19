@@ -61,6 +61,14 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.APP_TRACKING_CONSENT", Constant::OP_APP_TRACKING_CONSENT),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.GET_INSTALLED_BUNDLE_LIST", Constant::OP_GET_INSTALLED_BUNDLE_LIST),
+    std::map<std::string, int32_t>::value_type("ohos.permission.ACCESS_BLUETOOTH", Constant::OP_ACCESS_BLUETOOTH),
+    std::map<std::string, int32_t>::value_type("ohos.permission.READ_PASTEBOARD", Constant::OP_READ_PASTEBOARD),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY", Constant::OP_READ_WRITE_DOWNLOAD_DIRECTORY),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY", Constant::OP_READ_WRITE_DOCUMENTS_DIRECTORY),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.READ_WRITE_DESKTOP_DIRECTORY", Constant::OP_READ_WRITE_DESKTOP_DIRECTORY),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)
