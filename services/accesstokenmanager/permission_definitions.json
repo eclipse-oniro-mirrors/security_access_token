@@ -35,6 +35,33 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_APP_BOOT_INTERNAL",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.REGISTER_APP_DEBUG_LISTENER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ATTACH_APP_DEBUG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
