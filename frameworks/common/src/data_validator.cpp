@@ -14,7 +14,9 @@
  */
 
 #include "data_validator.h"
+
 #include "access_token.h"
+#include "permission_used_request.h"
 
 namespace OHOS {
 namespace Security {
@@ -100,6 +102,16 @@ bool DataValidator::IsTokenIDValid(AccessTokenID id)
 bool DataValidator::IsDlpTypeValid(int dlpType)
 {
     return ((dlpType == DLP_COMMON) || (dlpType == DLP_READ) || (dlpType == DLP_FULL_CONTROL));
+}
+
+bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
+{
+    return ((flag == FLAG_PERMISSION_USAGE_SUMMARY) ||
+            (flag == FLAG_PERMISSION_USAGE_DETAIL) ||
+            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED) ||
+            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED) ||
+            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND) ||
+            (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND));
 }
 } // namespace AccessToken
 } // namespace Security

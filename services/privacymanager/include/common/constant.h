@@ -73,6 +73,8 @@ public:
         SUCCESS = 0,
     };
 
+    const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
+    const static int64_t ONE_DAY_MILLISECONDS = 24 * 60 * 60 * MILLISECONDS; // 1s = 1000ms
     const static std::map<std::string, int32_t> PERMISSION_OPCODE_MAP;
 public:
     static bool TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode);

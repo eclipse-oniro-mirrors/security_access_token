@@ -339,8 +339,8 @@ HWTEST_F(PermissionRecordDBTest, TranslationIntoGenericValues001, TestSize.Level
 
     request.beginTimeMillis = 10; // begin != 0
     request.endTimeMillis = 20; // end != 0
-    request.flag = static_cast<PermissionUsageFlag>(2);
-    // begin > 0 + end > 0 + begin < end + flag = 2
+    request.flag = static_cast<PermissionUsageFlag>(9);
+    // begin > 0 + end > 0 + begin < end + flag = 9
     ASSERT_EQ(Constant::FAILURE,
         DataTranslator::TranslationIntoGenericValues(request, andGenericValues));
 

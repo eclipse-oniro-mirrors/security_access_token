@@ -468,6 +468,18 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord005, TestSize.Level1)
 
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
     CheckPermissionUsedResult(request, result, 2, 1, 1);
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+
+    request.flag = FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND;
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
 }
 
 /**

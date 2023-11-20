@@ -74,7 +74,6 @@ static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 #endif
 static const int32_t MAX_RECORD_NUM = 5000;
-const static int64_t MILLISECONDS = 1000; // 1s = 1000ms
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -255,13 +254,17 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         tokenIdList.emplace(request.tokenId);
     }
 
+    // sumarry don't limit querry data num, detail do
+    int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_RECORD_NUM : recordSizeMaximum_;
+
     Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
         andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         std::vector<GenericValues> findRecordsValues;
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
-            andConditionValues, findRecordsValues, MAX_RECORD_NUM); // find records from cache and database
+            andConditionValues, findRecordsValues, dataLimitNum); // find records from cache and database
         andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
+        dataLimitNum -= findRecordsValues.size();
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
             continue;
@@ -335,7 +338,7 @@ void PermissionRecordManager::UpdateRecords(
     outBundleRecord.lastRejectTime = (inBundleRecord.lastRejectTime > outBundleRecord.lastRejectTime) ?
         inBundleRecord.lastRejectTime : outBundleRecord.lastRejectTime;
 
-    if (flag == 0) {
+    if (flag != FLAG_PERMISSION_USAGE_DETAIL) {
         return;
     }
     if (inBundleRecord.lastAccessTime > 0) {
@@ -362,7 +365,7 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
-    int64_t interval = days * 86400 * MILLISECONDS; // 86400 = 24 * 60 * 60, total seconds of one day
+    int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
     PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
@@ -599,6 +602,7 @@ void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
     isMicMute_ = !switchStatus;
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_MICROPHONE) {
             continue;
@@ -611,6 +615,7 @@ void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
     isCameraMute_ = !switchStatus;
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_CAMERA) {
             continue;

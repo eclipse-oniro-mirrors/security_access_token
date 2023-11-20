@@ -97,7 +97,7 @@ static bool IsPermissionFlagValid(const PermissionUsedRequest& request)
     if ((begin < 0) || (end < 0) || (begin > end)) {
         return false;
     }
-    return ((request.flag == FLAG_PERMISSION_USAGE_SUMMARY) || (request.flag == FLAG_PERMISSION_USAGE_DETAIL));
+    return DataValidator::IsPermissionUsedFlagValid(request.flag);
 }
 
 int32_t PrivacyKit::GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result)

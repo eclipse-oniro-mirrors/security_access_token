@@ -52,6 +52,9 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t MAX_DETAIL_NUM = 500;
+static constexpr int64_t ONE_SECOND = 1000;
+static constexpr int64_t TWO_SECOND = 2000;
+static constexpr int64_t THREE_SECOND = 3000;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -1616,6 +1619,110 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
     for (const auto& value : values) {
         ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
     }
+}
+
+static void GeneratePermissionRecord(AccessTokenID tokenID)
+{
+    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+
+    GenericValues value1;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
+    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - THREE_SECOND);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    GenericValues value2;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - TWO_SECOND);
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    GenericValues value3;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    value3.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+    value3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
+    value3.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - ONE_SECOND);
+    value3.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value3.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value3.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value3.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    GenericValues value4;
+    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    value4.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+    value4.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value4.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp);
+    value4.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value4.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value4.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value4.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+
+    std::vector<GenericValues> values;
+    values.emplace_back(value1);
+    values.emplace_back(value2);
+    values.emplace_back(value3);
+    values.emplace_back(value4);
+
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
+    sleep(1); // wait record store in database
+}
+
+/**
+ * @tc.name: GetRecords004
+ * @tc.desc: test query record flag 2 | 3 | 4 | 5
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
+{
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+
+    GeneratePermissionRecord(tokenID);
+    PermissionRecordManager::GetInstance().SetDefaultConfigValue();
+
+    PermissionUsedRequest request;
+    request.tokenId = tokenID;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+
+    PermissionUsedResult result1;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result1));
+    EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords.size());
+    EXPECT_EQ(static_cast<int32_t>(tokenID), result1.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ(2, result1.bundleRecords[0].permissionRecords[0].accessCount);
+
+    PermissionUsedResult result2;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result2));
+    EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords.size());
+    EXPECT_EQ(static_cast<int32_t>(tokenID), result2.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ(2, result2.bundleRecords[0].permissionRecords[0].accessCount);
+
+    PermissionUsedResult result3;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result3));
+    EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords.size());
+    EXPECT_EQ(static_cast<int32_t>(tokenID), result3.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ(2, result3.bundleRecords[0].permissionRecords[0].accessCount);
+
+    PermissionUsedResult result4;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND;
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result4));
+    EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords.size());
+    EXPECT_EQ(static_cast<int32_t>(tokenID), result4.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords[0].permissionRecords.size());
+    EXPECT_EQ(2, result4.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
 /*

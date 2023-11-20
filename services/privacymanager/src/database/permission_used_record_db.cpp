@@ -282,6 +282,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
     }
 
     std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+
     for (const auto& andColName : andColumns) {
         if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
             sql.append(" and ");
