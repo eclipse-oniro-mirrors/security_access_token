@@ -17,6 +17,7 @@
 
 #include "active_change_response_info.h"
 #include "constant.h"
+#include "data_validator.h"
 #include "privacy_field_const.h"
 #include "time_util.h"
 
@@ -24,18 +25,15 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const int64_t LATEST_RECORD_TIME = 7 * 86400 * 1000;
+static const int64_t LATEST_RECORD_TIME = 7 * Constant::ONE_DAY_MILLISECONDS;
 }
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
     GenericValues& andGenericValues)
 {
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;
-    if ((begin < 0) || (end < 0) || (begin > end)) {
-        return Constant::FAILURE;
-    }
 
-    if (request.flag != FLAG_PERMISSION_USAGE_SUMMARY && request.flag != FLAG_PERMISSION_USAGE_DETAIL) {
+    if ((begin < 0) || (end < 0) || (begin > end)) {
         return Constant::FAILURE;
     }
 
@@ -50,6 +48,22 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     }
     if (end != 0) {
         andGenericValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, end);
+    }
+
+    PermissionUsageFlagEnum flag = request.flag;
+
+    if (!DataValidator::IsPermissionUsedFlagValid(flag)) {
+        return Constant::FAILURE;
+    }
+
+    if (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED) {
+        andGenericValues.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_LOCKED));
+    } else if (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED) {
+        andGenericValues.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_UNLOCKED));
+    } else if (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND) {
+        andGenericValues.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_BACKGROUND));
+    } else if (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND) {
+        andGenericValues.Put(PrivacyFiledConst::FIELD_STATUS, static_cast<int32_t>(PERM_ACTIVE_IN_FOREGROUND));
     }
 
     return Constant::SUCCESS;

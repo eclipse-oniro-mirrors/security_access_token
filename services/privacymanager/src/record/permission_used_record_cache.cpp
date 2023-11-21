@@ -413,18 +413,31 @@ bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const
     if (!opCodeList.empty() && opCodeList.find(record.opCode) == opCodeList.end()) {
         return false;
     }
-    // compare timestamp
+
     std::vector<std::string> andColumns = andConditionValues.GetAllKeys();
     if (!andColumns.empty()) {
         for (auto andColumn : andColumns) {
-            if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN &&
-                record.timestamp < andConditionValues.GetInt64(andColumn)) {
+            // compare begin timestamp
+            if ((andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) &&
+                (record.timestamp < andConditionValues.GetInt64(andColumn))) {
                 return false;
-            } else if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_END &&
-                record.timestamp > andConditionValues.GetInt64(andColumn)) {
+            } else if ((andColumn == PrivacyFiledConst::FIELD_TIMESTAMP_END) &&
+                (record.timestamp > andConditionValues.GetInt64(andColumn))) {
                 return false;
-            } else if (andColumn == PrivacyFiledConst::FIELD_TIMESTAMP &&
-                record.timestamp != andConditionValues.GetInt64(andColumn)) {
+            } else if ((andColumn == PrivacyFiledConst::FIELD_TIMESTAMP) &&
+                (record.timestamp != andConditionValues.GetInt64(andColumn))) {
+                return false;
+            }
+
+            // compare lockScreenStatus
+            if ((andColumn == PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS) &&
+                (record.lockScreenStatus != andConditionValues.GetInt(andColumn))) {
+                return false;
+            }
+
+            // compare app status
+            if ((andColumn == PrivacyFiledConst::FIELD_STATUS) &&
+                (record.status != andConditionValues.GetInt(andColumn))) {
                 return false;
             }
         }

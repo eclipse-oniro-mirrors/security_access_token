@@ -51,6 +51,14 @@ typedef enum PermissionUsageFlagEnum {
     FLAG_PERMISSION_USAGE_SUMMARY = 0,
     /** permission usage for detail */
     FLAG_PERMISSION_USAGE_DETAIL = 1,
+    /** permission usage for screen locked summary */
+    FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED = 2,
+    /** permission usage for screen unlocked summary */
+    FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED = 3,
+    /** permission usage for app in background summary */
+    FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND = 4,
+    /** permission usage for app in foreground summary */
+    FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND = 5,
 } PermissionUsageFlag;
 
 /**
