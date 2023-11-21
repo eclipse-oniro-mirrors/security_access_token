@@ -25,6 +25,10 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+#include "config_policy_utils.h"
+#include "json_parser.h"
+#endif
 #include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_parser.h"
@@ -55,6 +59,13 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
 constexpr int TWO_ARGS = 2;
+const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
+const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
+static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
+static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
+#endif
 }
 
 const bool REGISTER_RESULT =
@@ -158,9 +169,11 @@ int AccessTokenManagerService::GetReqPermissions(
     return ret;
 }
 
-PermissionOper AccessTokenManagerService::GetSelfPermissionsState(
-    std::vector<PermissionListStateParcel>& reqPermList)
+PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
+    PermissionGrantInfoParcel& infoParcel)
 {
+    infoParcel.info.grantBundleName = grantBundleName_;
+    infoParcel.info.grantAbilityName = grantAbilityName_;
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     bool isPermDialogForbidden = AccessTokenInfoManager::GetInstance().GetPermDialogCap(callingTokenID);
     if (isPermDialogForbidden) {
@@ -476,6 +489,86 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     }
 }
 
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+void AccessTokenManagerService::GetValidConfigFilePathList(std::vector<std::string>& pathList)
+{
+    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
+    if (dirs != nullptr) {
+        for (const auto& path : dirs->paths) {
+            if ((path == nullptr) || (!JsonParser::IsDirExsit(path))) {
+                continue;
+            }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
+            pathList.emplace_back(path);
+        }
+
+        FreeCfgDirList(dirs); // free
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "can't get valid cfg file path");
+    }
+}
+
+// nlohmann json need the function named from_json to parse
+void from_json(const nlohmann::json& j, std::string& bundleName, std::string& abilityName)
+{}
+
+bool AccessTokenManagerService::GetConfigGrantValueFromFile(std::string& fileContent)
+{
+    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
+    if (jsonRes.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
+        return false;
+    }
+
+    if (!JsonParser::GetStringFromJson(jsonRes, PERMISSION_MANAGER_BUNDLE_NAME_KEY, grantBundleName_)) {
+        return false;
+    }
+
+    if (!JsonParser::GetStringFromJson(jsonRes, GRANT_ABILITY_NAME_KEY, grantAbilityName_)) {
+        return false;
+    }
+
+    return true;
+}
+#endif
+
+void AccessTokenManagerService::SetDefaultConfigGrantValue()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
+
+    grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
+    grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+}
+
+void AccessTokenManagerService::GetConfigValue()
+{
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+    std::vector<std::string> pathList;
+    GetValidConfigFilePathList(pathList);
+
+    for (const auto& path : pathList) {
+        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
+        std::string fileContent;
+        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
+        if (res != ERR_OK) {
+            continue;
+        }
+
+        if (GetConfigGrantValueFromFile(fileContent)) {
+            break; // once get the config value, break the loop
+        }
+    }
+#endif
+    // when config file list empty or can not get two value from config file, set default value
+    if ((grantBundleName_.empty()) || (grantAbilityName_.empty())) {
+        SetDefaultConfigGrantValue();
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "grantBundleName_ is %{public}s, grantAbilityName_ is %{public}s",
+        grantBundleName_.c_str(), grantAbilityName_.c_str());
+}
+
 bool AccessTokenManagerService::Initialize()
 {
     AccessTokenInfoManager::GetInstance().Init();
@@ -497,6 +590,7 @@ bool AccessTokenManagerService::Initialize()
         "PID_INFO", getpid());
     SystemPermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
+    GetConfigValue();
     return true;
 }
 } // namespace AccessToken

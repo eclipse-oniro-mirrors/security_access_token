@@ -47,8 +47,8 @@ public:
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
-    PermissionOper GetSelfPermissionsState(
-        std::vector<PermissionListStateParcel>& reqPermList) override;
+    PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
+        PermissionGrantInfoParcel& infoParcel) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
@@ -86,12 +86,18 @@ public:
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:
+    void GetValidConfigFilePathList(std::vector<std::string>& pathList);
+    bool GetConfigGrantValueFromFile(std::string& fileContent);
+    void SetDefaultConfigGrantValue();
+    void GetConfigValue();
     bool Initialize();
     void AccessTokenServiceParamSet() const;
 
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
     ServiceRunningState state_;
+    std::string grantBundleName_;
+    std::string grantAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security

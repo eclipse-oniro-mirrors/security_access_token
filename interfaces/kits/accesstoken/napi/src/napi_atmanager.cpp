@@ -63,8 +63,6 @@ static constexpr int32_t MAX_LENGTH = 256;
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 
-const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
-const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const std::string PERMISSION_KEY = "ohos.user.grant.permission";
 const std::string STATE_KEY = "ohos.user.grant.permission.state";
 const std::string TOKEN_KEY = "ohos.ability.params.token";
@@ -1187,23 +1185,22 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     contextPtr.release();
 }
 
-static void StartGrantExtension(sptr<IRemoteObject>& remoteObject, const std::vector<std::string>& permissions,
-                                const std::shared_ptr<AbilityRuntime::AbilityContext>& context,
-                                const std::vector<int32_t>& permissionsState, int32_t requestCode)
+static void StartGrantExtension(sptr<IRemoteObject>& remoteObject, RequestAsyncContext* asyncContext,
+    int32_t requestCode)
 {
     AAFwk::Want want;
-    want.SetElementName(GRANT_ABILITY_BUNDLE_NAME, GRANT_ABILITY_ABILITY_NAME);
-    want.SetParam(PERMISSION_KEY, permissions);
-    want.SetParam(STATE_KEY, permissionsState);
-    want.SetParam(TOKEN_KEY, context->GetToken());
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
     want.SetParam(CALLBACK_KEY, remoteObject);
 
-    int32_t err = context->StartAbility(want, requestCode);
+    int32_t err = asyncContext->abilityContext->StartAbility(want, requestCode);
     ACCESSTOKEN_LOG_INFO(LABEL, "End calling StartExtension. ret=%{public}d", err);
 }
 
-bool NapiAtManager::IsDynamicRequest(
-    const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState)
+bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions,
+    std::vector<int32_t>& permissionsState, PermissionGrantInfo& info)
 {
     std::vector<PermissionListState> permList;
     for (const auto& permission : permissions) {
@@ -1216,7 +1213,7 @@ bool NapiAtManager::IsDynamicRequest(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu, permissions size: %{public}zu.",
         permList.size(), permissions.size());
 
-    auto ret = AccessTokenKit::GetSelfPermissionsState(permList);
+    auto ret = AccessTokenKit::GetSelfPermissionsState(permList, info);
 
     for (const auto& permState : permList) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "permissions: %{public}s. permissionsState: %{public}u",
@@ -1244,7 +1241,8 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         return;
     }
 
-    if (!IsDynamicRequest(asyncContext->permissionList, asyncContext->permissionsState)) {
+    if (!IsDynamicRequest(asyncContext->permissionList, asyncContext->permissionsState,
+        asyncContext->info)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
         asyncContext->needDynamicRequest = false;
         return;
@@ -1261,8 +1259,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         asyncContext->result = JsErrorCode::JS_ERROR_INNER;
         return;
     }
-    StartGrantExtension(remoteObject, asyncContext->permissionList, asyncContext->abilityContext,
-        asyncContext->permissionsState, curRequestCode_);
+    StartGrantExtension(remoteObject, asyncContext, curRequestCode_);
 }
 
 void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data)

@@ -16,6 +16,7 @@
 #include "accesstoken_kit_test.h"
 #include <thread>
 #include "access_token_error.h"
+#include "permission_grant_info.h"
 
 using namespace testing::ext;
 
@@ -262,7 +263,8 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag001, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
 {
     std::vector<PermissionListState> permList;
-    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permList));
+    PermissionGrantInfo info;
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permList, info));
 }
 
 /**

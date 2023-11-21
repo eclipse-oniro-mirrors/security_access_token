@@ -209,8 +209,8 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     return result;
 }
 
-PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
-    std::vector<PermissionListStateParcel>& permListParcel)
+PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
+    PermissionGrantInfoParcel& infoParcel)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -246,6 +246,13 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(
             permListParcel[i].permsState.state = permissionReq->permsState.state;
         }
     }
+
+    sptr<PermissionGrantInfoParcel> resultSptr = reply.ReadParcelable<PermissionGrantInfoParcel>();
+    if (resultSptr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read permission grant info parcel fail");
+        return INVALID_OPER;
+    }
+    infoParcel = *resultSptr;
 
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;

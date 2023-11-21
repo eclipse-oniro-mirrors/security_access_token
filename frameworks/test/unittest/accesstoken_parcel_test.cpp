@@ -26,6 +26,7 @@
 #include "native_token_info_parcel.h"
 #include "parcel.h"
 #include "parcel_utils.h"
+#include "permission_grant_info_parcel.h"
 #include "permission_state_change_scope_parcel.h"
 #include "permission_state_change_info_parcel.h"
 #include "permission_state_full.h"
@@ -571,6 +572,24 @@ HWTEST_F(AccessTokenParcelTest, NativeTokenInfoParcel004, TestSize.Level1)
 
     Parcel parcel;
     EXPECT_NE(true, nativeTokenInfoParcel.Marshalling(parcel));
+}
+
+/**
+ * @tc.name: PermissionGrantInfoParcel001
+ * @tc.desc: Test PermissionGrantInfo Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, PermissionGrantInfoParcel001, TestSize.Level1)
+{
+    PermissionGrantInfoParcel permissionGrantInfoParcel;
+    permissionGrantInfoParcel.info.grantBundleName = "com.ohos.permissionmanager";
+    permissionGrantInfoParcel.info.grantAbilityName = "com.ohos.permissionmanager.GrantAbility";
+
+    Parcel parcel;
+    EXPECT_EQ(true, permissionGrantInfoParcel.Marshalling(parcel));
+    std::shared_ptr<PermissionGrantInfoParcel> readedData(PermissionGrantInfoParcel::Unmarshalling(parcel));
+    EXPECT_NE(nullptr, readedData);
 }
 } // namespace AccessToken
 } // namespace Security

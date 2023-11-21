@@ -38,7 +38,8 @@ namespace OHOS {
             .state = -1,
         };
         permsList1.emplace_back(perm1);
-        int32_t result = AccessTokenKit::GetSelfPermissionsState(permsList1);
+        PermissionGrantInfo info;
+        int32_t result = AccessTokenKit::GetSelfPermissionsState(permsList1, info);
 
         return result == RET_SUCCESS;
     }

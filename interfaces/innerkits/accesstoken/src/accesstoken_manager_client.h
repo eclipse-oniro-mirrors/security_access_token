@@ -31,6 +31,7 @@
 #include "native_token_info.h"
 #include "nocopyable.h"
 #include "permission_def.h"
+#include "permission_grant_info.h"
 #include "permission_state_change_callback.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
@@ -50,7 +51,8 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
-    PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList);
+    PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
+        PermissionGrantInfo& info);
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);

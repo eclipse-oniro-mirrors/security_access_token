@@ -18,6 +18,7 @@
 
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
+#include "permission_grant_info.h"
 #include "nativetoken_kit.h"
 #include "softbus_bus_center.h"
 #include "token_setproc.h"
@@ -367,7 +368,8 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
     permList.emplace_back(perm1);
     // check to pop up
     EXPECT_EQ(0, SetSelfTokenID(tokenID));
-    result = AccessTokenKit::GetSelfPermissionsState(permList);
+    PermissionGrantInfo info;
+    result = AccessTokenKit::GetSelfPermissionsState(permList, info);
     ASSERT_EQ(result, DYNAMIC_OPER);
 
     // check not to pop up
@@ -375,7 +377,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
     AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
 
     EXPECT_EQ(0, SetSelfTokenID(tokenID));
-    result = AccessTokenKit::GetSelfPermissionsState(permList);
+    result = AccessTokenKit::GetSelfPermissionsState(permList, info);
     ASSERT_EQ(result, PASS_OPER);
 
     // security component revoke

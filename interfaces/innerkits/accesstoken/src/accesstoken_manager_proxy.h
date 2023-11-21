@@ -30,6 +30,7 @@
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
+#include "permission_grant_info_parcel.h"
 #include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
 
@@ -49,7 +50,8 @@ public:
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
-    PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel) override;
+    PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
+        PermissionGrantInfoParcel& infoParcel) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;

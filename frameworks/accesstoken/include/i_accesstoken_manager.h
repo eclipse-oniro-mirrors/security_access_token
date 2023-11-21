@@ -31,6 +31,7 @@
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
+#include "permission_grant_info_parcel.h"
 #include "permission_list_state_parcel.h"
 #include "permission_state_full_parcel.h"
 #include "permission_state_change_scope_parcel.h"
@@ -51,8 +52,8 @@ public:
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
-    virtual PermissionOper GetSelfPermissionsState(
-        std::vector<PermissionListStateParcel>& permListParcel) = 0;
+    virtual PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
+        PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;

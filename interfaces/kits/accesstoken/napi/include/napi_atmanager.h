@@ -32,6 +32,7 @@
 #include "napi_context_common.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
+#include "permission_grant_info.h"
 #include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
 
@@ -121,6 +122,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
+    PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
 };
 
@@ -196,7 +198,8 @@ private:
         const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext);
     static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);
     static void RequestPermissionsFromUserExecute(napi_env env, void* data);
-    static bool IsDynamicRequest(const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState);
+    static bool IsDynamicRequest(const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState,
+        PermissionGrantInfo& info);
 };
 }  // namespace AccessToken
 }  // namespace Security
