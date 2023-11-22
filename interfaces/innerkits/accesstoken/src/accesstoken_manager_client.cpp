@@ -24,6 +24,7 @@
 #include "native_token_info_for_sync_parcel.h"
 #include "native_token_info.h"
 #include "parameter.h"
+#include "permission_grant_info_parcel.h"
 #include "permission_state_change_callback.h"
 
 namespace OHOS {
@@ -129,7 +130,8 @@ int AccessTokenManagerClient::GetPermissionFlag(
     return proxy->GetPermissionFlag(tokenID, permissionName, flag);
 }
 
-PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList)
+PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<PermissionListState>& permList,
+    PermissionGrantInfo& info)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -150,12 +152,15 @@ PermissionOper AccessTokenManagerClient::GetSelfPermissionsState(std::vector<Per
         permParcel.permsState = perm;
         parcelList.emplace_back(permParcel);
     }
-    PermissionOper result = proxy->GetSelfPermissionsState(parcelList);
+    PermissionGrantInfoParcel infoParcel;
+    PermissionOper result = proxy->GetSelfPermissionsState(parcelList, infoParcel);
 
     for (uint32_t i = 0; i < len; i++) {
         PermissionListState perm = parcelList[i].permsState;
         permList[i].state = perm.state;
     }
+
+    info = infoParcel.info;
     return result;
 }
 

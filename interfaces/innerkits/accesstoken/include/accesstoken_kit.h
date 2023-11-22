@@ -48,6 +48,7 @@
 #include "native_token_info.h"
 #include "permission_def.h"
 #include "permission_list_state.h"
+#include "permission_grant_info.h"
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
@@ -205,7 +206,8 @@ public:
      * @param permList PermissionListState list quote, as input and query result
      * @return enum PermissionOper, see access_token.h
      */
-    static PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList);
+    static PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
+        PermissionGrantInfo& info);
     /**
      * @brief Grant input permission to input tokenID with input flag.
      * @param tokenID token id

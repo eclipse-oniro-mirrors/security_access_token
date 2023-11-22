@@ -18,6 +18,7 @@
 #include "accesstoken_kit.h"
 #include "hap_token_info.h"
 #include "permission_def.h"
+#include "permission_grant_info.h"
 #include "permission_list_state.h"
 #include "permission_state_full.h"
 #include "token_setproc.h"
@@ -184,7 +185,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Le
     std::vector<PermissionListState> permsList1;
     permsList1.emplace_back(permVague1);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList1);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList1, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList1.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList1[0].state);
@@ -211,7 +213,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Le
     std::vector<PermissionListState> permsList2;
     permsList2.emplace_back(permVague2);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList2);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList2, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList2.size());
     ASSERT_EQ(SETTING_OPER, permsList2[0].state);
@@ -238,7 +241,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Le
     std::vector<PermissionListState> permsList3;
     permsList3.emplace_back(permVague3);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList3);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList3, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList3.size());
     ASSERT_EQ(PASS_OPER, permsList3[0].state);
@@ -265,7 +269,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Le
 
     permsList4.emplace_back(permAccurate4);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList4);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList4, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList4.size());
     ASSERT_EQ(INVALID_OPER, permsList4[0].state);
@@ -293,7 +298,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Le
 
     permsList5.emplace_back(permAccurate5);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList5);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList5, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList5.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList5[0].state);
@@ -320,7 +326,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Le
 
     permsList6.emplace_back(permBack6);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList6);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList6, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList6.size());
     ASSERT_EQ(INVALID_OPER, permsList6[0].state);
@@ -348,7 +355,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Le
 
     permsList7.emplace_back(permBack7);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList7);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList7, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList7.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList7[0].state);
@@ -381,7 +389,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Le
     permsList8.emplace_back(permVague8);
     permsList8.emplace_back(permAccurate8);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList8);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList8, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList8.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList8[0].state);
@@ -415,7 +424,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Le
     permsList9.emplace_back(permVague9);
     permsList9.emplace_back(permAccurate9);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList9);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList9, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList9.size());
     ASSERT_EQ(PASS_OPER, permsList9[0].state);
@@ -449,7 +459,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Le
     permsList10.emplace_back(permVague10);
     permsList10.emplace_back(permAccurate10);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList10);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList10, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList10.size());
     ASSERT_EQ(SETTING_OPER, permsList10[0].state);
@@ -483,7 +494,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Le
     permsList11.emplace_back(permVague11);
     permsList11.emplace_back(permAccurate11);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList11);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList11, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList11.size());
     ASSERT_EQ(PASS_OPER, permsList11[0].state);
@@ -517,7 +529,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
     permsList12.emplace_back(permVague12);
     permsList12.emplace_back(permBack12);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList12);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList12, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList12.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList12[0].state);
@@ -551,7 +564,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Le
     permsList13.emplace_back(permVague13);
     permsList13.emplace_back(permBack13);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList13);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList13, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList13.size());
     ASSERT_EQ(PASS_OPER, permsList13[0].state);
@@ -585,7 +599,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Le
     permsList14.emplace_back(permVague14);
     permsList14.emplace_back(permBack14);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList14);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList14, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList14.size());
     ASSERT_EQ(SETTING_OPER, permsList14[0].state);
@@ -619,7 +634,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Le
     permsList15.emplace_back(permVague15);
     permsList15.emplace_back(permBack15);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList15);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList15, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList15.size());
     ASSERT_EQ(PASS_OPER, permsList15[0].state);
@@ -653,7 +669,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
     permsList16.emplace_back(permAccurate16);
     permsList16.emplace_back(permBack16);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList16);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList16, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList16.size());
     ASSERT_EQ(INVALID_OPER, permsList16[0].state);
@@ -688,7 +705,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
     permsList17.emplace_back(permAccurate17);
     permsList17.emplace_back(permBack17);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList17);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList17, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList17.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList17[0].state);
@@ -728,7 +746,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Le
     permsList18.emplace_back(permAccurate18);
     permsList18.emplace_back(permBack18);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList18);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList18, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList18.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList18[0].state);
@@ -769,7 +788,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Le
     permsList19.emplace_back(permAccurate19);
     permsList19.emplace_back(permBack19);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList19);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList19, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList19.size());
     ASSERT_EQ(PASS_OPER, permsList19[0].state);
@@ -810,7 +830,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Le
     permsList20.emplace_back(permAccurate20);
     permsList20.emplace_back(permBack20);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList20);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList20, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList20.size());
     ASSERT_EQ(PASS_OPER, permsList20[0].state);
@@ -851,7 +872,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Le
     permsList21.emplace_back(permAccurate21);
     permsList21.emplace_back(permBack21);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList21);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList21, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList21.size());
     ASSERT_EQ(PASS_OPER, permsList21[0].state);
@@ -892,7 +914,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Le
     permsList22.emplace_back(permAccurate22);
     permsList22.emplace_back(permBack22);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList22);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList22, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList22.size());
     ASSERT_EQ(PASS_OPER, permsList22[0].state);
@@ -933,7 +956,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Le
     permsList23.emplace_back(permAccurate23);
     permsList23.emplace_back(permBack23);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList23);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList23, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList23.size());
     ASSERT_EQ(SETTING_OPER, permsList23[0].state);
@@ -974,7 +998,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Le
     permsList24.emplace_back(permAccurate24);
     permsList24.emplace_back(permBack24);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList24);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList24, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList24.size());
     ASSERT_EQ(SETTING_OPER, permsList24[0].state);
@@ -1015,7 +1040,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Le
     permsList25.emplace_back(permAccurate25);
     permsList25.emplace_back(permBack25);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList25);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList25, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList25.size());
     ASSERT_EQ(SETTING_OPER, permsList25[0].state);
@@ -1056,7 +1082,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Le
     permsList26.emplace_back(permAccurate26);
     permsList26.emplace_back(permBack26);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList26);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList26, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList26.size());
     ASSERT_EQ(SETTING_OPER, permsList26[0].state);
@@ -1109,7 +1136,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Le
     permsList27.emplace_back(permSystem27);
     permsList27.emplace_back(permUser27);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList27);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList27, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(5), permsList27.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList27[0].state);
@@ -1140,7 +1168,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Le
     std::vector<PermissionListState> permsList28;
     permsList28.emplace_back(permVague28);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList28);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList28, info);
     ASSERT_EQ(PASS_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList28.size());
     ASSERT_EQ(INVALID_OPER, permsList28[0].state);
@@ -1167,7 +1196,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Le
     std::vector<PermissionListState> permsList29;
     permsList29.emplace_back(permAccurate29);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList29);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList29, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList29.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList29[0].state);
@@ -1194,7 +1224,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Le
     std::vector<PermissionListState> permsList30;
     permsList30.emplace_back(permBack30);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList30);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList30, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList30.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList30[0].state);
@@ -1227,7 +1258,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Le
     permsList31.emplace_back(permVague31);
     permsList31.emplace_back(permAccurate31);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList31);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList31, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList31.size());
     ASSERT_EQ(INVALID_OPER, permsList31[0].state);
@@ -1261,7 +1293,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Le
     permsList32.emplace_back(permVague32);
     permsList32.emplace_back(permBack32);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList32);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList32, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList32.size());
     ASSERT_EQ(INVALID_OPER, permsList32[0].state);
@@ -1295,7 +1328,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
     permsList33.emplace_back(permAccurate33);
     permsList33.emplace_back(permBack33);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList33);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList33, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList33.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
@@ -1335,7 +1369,8 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Le
     permsList34.emplace_back(permAccurate34);
     permsList34.emplace_back(permBack34);
 
-    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList34);
+    PermissionGrantInfo info;
+    PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList34, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(3), permsList34.size());
     ASSERT_EQ(INVALID_OPER, permsList34[0].state);

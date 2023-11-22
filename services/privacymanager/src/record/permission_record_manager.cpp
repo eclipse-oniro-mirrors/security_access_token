@@ -1059,6 +1059,8 @@ void PermissionRecordManager::GetConfigFilePathList(std::vector<std::string>& pa
         }
 
         FreeCfgDirList(dirs); // free
+    } else {
+        ACCESSTOKEN_LOG_INFO(LABEL, "can't get cfg file path");
     }
 }
 

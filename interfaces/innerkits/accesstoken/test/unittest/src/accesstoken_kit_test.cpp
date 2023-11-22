@@ -21,6 +21,7 @@
 #include "i_accesstoken_manager.h"
 #include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
+#include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
 #include "softbus_bus_center.h"
 #include "string_ex.h"
@@ -2714,13 +2715,14 @@ HWTEST_F(AccessTokenKitTest, SetPermDialogCap002, TestSize.Level1)
     // test dialog is forbiddedn
     ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
     SetSelfTokenID(tokenID);
-    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    PermissionGrantInfo info;
+    ASSERT_EQ(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
     SetSelfTokenID(selfTokenId_);
 
     // test dialog is not forbiddedn
     ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
     SetSelfTokenID(tokenID);
-    ASSERT_NE(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList));
+    ASSERT_NE(FORBIDDEN_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
     SetSelfTokenID(selfTokenId_);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));

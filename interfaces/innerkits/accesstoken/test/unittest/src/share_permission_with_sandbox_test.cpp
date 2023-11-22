@@ -394,7 +394,8 @@ HWTEST_F(SharePermissionTest, PermissionShareTest010, TestSize.Level1)
         .state = -1,
     };
     permsList.emplace_back(perm);
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionGrantInfo info;
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, INVALID_OPER);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
@@ -436,45 +437,46 @@ HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
     SetPermList(permsList);
 
     uint64_t tokenId = GetSelfTokenID();
+    PermissionGrantInfo info;
 
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, DYNAMIC_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, DYNAMIC_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     (void)AccessTokenKit::RevokePermission(tokenCommon, PERMISSION_ALL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     (void)AccessTokenKit::RevokePermission(tokenCommon, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, INVALID_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RevokePermission(tokenCommon, PERMISSION_NONE, PERMISSION_USER_FIXED));
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[2].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[2].state, INVALID_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[2].state, INVALID_OPER);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
@@ -511,33 +513,34 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
     uint64_t tokenId = GetSelfTokenID();
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    PermissionGrantInfo info;
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, DYNAMIC_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, DYNAMIC_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, INVALID_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_ALL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[0].state, SETTING_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
-    AccessTokenKit::GetSelfPermissionsState(permsList);
+    AccessTokenKit::GetSelfPermissionsState(permsList, info);
     EXPECT_EQ(permsList[1].state, SETTING_OPER);
     
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));

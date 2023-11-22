@@ -157,6 +157,13 @@ if (is_standard_system) {
       cflags_cc += [ "-DRESOURCESCHEDULE_FFRT_ENABLE" ]
     }
 
+    if (customization_config_policy_enable) {
+      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+      deps +=
+          [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
+    }
+
     if (!use_clang_coverage) {
       shlib_type = "sa"
     }

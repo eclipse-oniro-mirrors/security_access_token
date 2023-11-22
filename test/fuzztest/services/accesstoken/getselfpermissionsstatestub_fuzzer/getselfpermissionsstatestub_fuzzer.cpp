@@ -21,7 +21,6 @@
 #undef private
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
-#include "permission_def_parcel.h"
 
 using namespace std;
 using namespace OHOS;

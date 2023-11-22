@@ -171,7 +171,8 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
         }
     }
 
-    PermissionOper result = this->GetSelfPermissionsState(permList);
+    PermissionGrantInfoParcel infoParcel;
+    PermissionOper result = this->GetSelfPermissionsState(permList, infoParcel);
 
     reply.WriteInt32(result);
 
@@ -179,6 +180,7 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
     for (const auto& perm : permList) {
         reply.WriteParcelable(&perm);
     }
+    reply.WriteParcelable(&infoParcel);
 }
 
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)

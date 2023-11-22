@@ -194,10 +194,11 @@ int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& n
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
 }
 
-PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionListState>& permList)
+PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionListState>& permList,
+    PermissionGrantInfo& info)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "called, permList.size=%{public}zu.", permList.size());
-    return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList);
+    return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList, info);
 }
 
 int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
