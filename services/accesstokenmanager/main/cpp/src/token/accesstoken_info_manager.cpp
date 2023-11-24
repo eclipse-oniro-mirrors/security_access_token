@@ -16,6 +16,7 @@
 #include "accesstoken_info_manager.h"
 
 #include <securec.h>
+#include "access_token.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_log.h"
@@ -378,7 +379,7 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
 
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token %{public}u ok!", id);
-    RefreshTokenInfoIfNeeded();
+    RemoveHapTokenInfoFromDb(id);
     PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
@@ -484,7 +485,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
-    RefreshTokenInfoIfNeeded();
+    AddHapTokenInfoToDb(tokenId);
     return RET_SUCCESS;
 }
 
@@ -1001,7 +1002,8 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
         for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
             if (iter->second != nullptr) {
                 std::shared_ptr<HapTokenInfoInner>& hapInfo = iter->second;
-                hapInfo->StoreHapInfo(hapInfoValues, permStateValues);
+                hapInfo->StoreHapInfo(hapInfoValues);
+                hapInfo->StorePermissionPolicy(permStateValues);
                 if (hapInfo->permUpdateTimestamp_ > lastestUpdateStamp) {
                     lastestUpdateStamp = hapInfo->permUpdateTimestamp_;
                 }
@@ -1013,7 +1015,8 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
         Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
         for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
             if (iter->second != nullptr) {
-                iter->second->StoreNativeInfo(nativeTokenValues, permStateValues);
+                iter->second->StoreNativeInfo(nativeTokenValues);
+                iter->second->StorePermissionPolicy(permStateValues);
             }
         }
     }
@@ -1025,6 +1028,38 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
     AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
     int res = AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
     PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
+}
+
+int AccessTokenInfoManager::AddHapTokenInfoToDb(AccessTokenID tokenID)
+{
+    std::vector<GenericValues> hapInfoValues;
+    std::vector<GenericValues> permDefValues;
+    std::vector<GenericValues> permStateValues;
+
+    std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
+    if (hapInfo == nullptr) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+    hapInfo->StoreHapInfo(hapInfoValues);
+    hapInfo->StorePermissionPolicy(permStateValues);
+
+    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues);
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
+    return RET_SUCCESS;
+}
+
+int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(AccessTokenID tokenID)
+{
+    GenericValues values;
+    values.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values);
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, values);
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, values);
+    return RET_SUCCESS;
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -1075,6 +1110,7 @@ void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
     });
 #endif
 }
+
 void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id)
 {
     std::shared_ptr<PermissionPolicySet> policy = info->GetHapInfoPermissionPolicySet();

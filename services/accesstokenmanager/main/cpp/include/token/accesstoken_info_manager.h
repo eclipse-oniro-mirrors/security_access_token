@@ -99,6 +99,8 @@ private:
     bool TryUpdateExistNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     int AllocNativeToken(const std::shared_ptr<NativeTokenInfoInner>& infoPtr);
     void StoreAllTokenInfo();
+    int AddHapTokenInfoToDb(AccessTokenID tokenID);
+    int RemoveHapTokenInfoFromDb(AccessTokenID tokenID);
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);

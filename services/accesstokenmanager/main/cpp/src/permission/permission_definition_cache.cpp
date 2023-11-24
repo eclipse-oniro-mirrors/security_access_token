@@ -150,6 +150,21 @@ void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& v
     }
 }
 
+void PermissionDefinitionCache::StorePermissionDef(AccessTokenID tokenID, std::vector<GenericValues>& valueList)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    auto it = permissionDefinitionMap_.begin();
+    while (it != permissionDefinitionMap_.end()) {
+        if (tokenID == it->second.tokenId) {
+            GenericValues genericValues;
+            genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(it->second.tokenId));
+            DataTranslator::TranslationIntoGenericValues(it->second.permDef, genericValues);
+            valueList.emplace_back(genericValues);
+        }
+        ++it;
+    }
+}
+
 void PermissionDefinitionCache::GetDefPermissionsByTokenId(std::vector<PermissionDef>& permList,
     AccessTokenID tokenId)
 {

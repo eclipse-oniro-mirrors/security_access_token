@@ -46,8 +46,8 @@ public:
     int Init(const TokenInfo& tokenInfo, const std::vector<std::string>& dcap,
         const std::vector<std::string>& nativeAcls,
         const std::vector<PermissionStateFull>& permStateList);
-    void StoreNativeInfo(std::vector<GenericValues>& valueList,
-        std::vector<GenericValues>& permStateValues) const;
+    void StoreNativeInfo(std::vector<GenericValues>& valueList) const;
+    void StorePermissionPolicy(std::vector<GenericValues>& permStateValues) const;
     void TranslateToNativeTokenInfo(NativeTokenInfo& infoParcel) const;
     void SetDcaps(const std::string& dcapStr);
     void SetNativeAcls(const std::string& AclsStr);

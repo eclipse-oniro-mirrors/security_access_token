@@ -194,22 +194,25 @@ int HapTokenInfoInner::RestoreHapTokenInfo(AccessTokenID tokenId,
     return RET_SUCCESS;
 }
 
-void HapTokenInfoInner::StoreHapBasicInfo(std::vector<GenericValues>& valueList) const
-{
-    GenericValues genericValues;
-    TranslationIntoGenericValues(genericValues);
-    valueList.emplace_back(genericValues);
-}
-
-void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& hapInfoValues,
-    std::vector<GenericValues>& permStateValues) const
+void HapTokenInfoInner::StoreHapInfo(std::vector<GenericValues>& valueList) const
 {
     if (isRemote_) {
         ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
         return;
     }
-    StoreHapBasicInfo(hapInfoValues);
+    GenericValues genericValues;
+    TranslationIntoGenericValues(genericValues);
+    valueList.emplace_back(genericValues);
+}
+
+void HapTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permStateValues) const
+{
+    if (isRemote_) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
+        return;
+    }
     if (permPolicySet_ != nullptr) {
         permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
