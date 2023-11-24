@@ -85,6 +85,10 @@ ohos_shared_library("token_sync_manager_service") {
     "-DDEBUG_API_PERFORMANCE",
   ]
 
+  if (build_variant == "user") {
+    cflags_cc += [ "-DATM_BUILD_VARIANT_USER_ENABLE" ]
+  }
+
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [

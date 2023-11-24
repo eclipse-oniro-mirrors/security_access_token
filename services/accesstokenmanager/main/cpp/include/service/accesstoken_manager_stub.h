@@ -77,10 +77,11 @@ private:
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();
     bool IsNativeProcessCalling();
-    bool IsFoundationCalling();
     bool IsSystemAppCalling() const;
     bool IsShellProcessCalling();
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     static const int32_t ROOT_UID = 0;
+#endif
     static const int32_t ACCESSTOKEN_UID = 3020;
 
     AccessTokenID tokenSyncId_ = 0;
