@@ -27,7 +27,9 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerStub"};
-static const int32_t ROOT_UID = 0;
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    static const int32_t ROOT_UID = 0;
+#endif
 }
 
 int32_t TokenSyncManagerStub::OnRemoteRequest(
@@ -65,9 +67,13 @@ bool TokenSyncManagerStub::IsNativeProcessCalling() const
 
 bool TokenSyncManagerStub::IsRootCalling() const
 {
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int callingUid = IPCSkeleton::GetCallingUid();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Calling uid: %{public}d", callingUid);
     return callingUid == ROOT_UID;
+#else
+    return false;
+#endif
 }
 
 void TokenSyncManagerStub::GetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)

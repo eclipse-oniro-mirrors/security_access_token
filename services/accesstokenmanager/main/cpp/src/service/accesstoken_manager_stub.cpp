@@ -85,8 +85,10 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
 
 void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -170,7 +172,6 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
             permList.emplace_back(*permissionParcel);
         }
     }
-
     PermissionGrantInfoParcel infoParcel;
     PermissionOper result = this->GetSelfPermissionsState(permList, infoParcel);
 
@@ -219,7 +220,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadUint32();
-    if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
+    if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
@@ -242,7 +243,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
     int flag = data.ReadUint32();
-    if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
+    if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
@@ -258,7 +259,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
 void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (!IsPrivilegedCalling() && !IsFoundationCalling() &&
+    if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
             HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
@@ -275,8 +276,10 @@ void AccessTokenManagerStub::ClearUserGrantedPermissionStateInner(MessageParcel&
 void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenIDEx res = {0};
-    if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", tokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -341,8 +344,10 @@ void AccessTokenManagerStub::AllocLocalTokenIDInner(MessageParcel& data, Message
 
 void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply)
 {
-    if (!IsFoundationCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+    AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(callingTokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
@@ -647,15 +652,12 @@ void AccessTokenManagerStub::SetPermDialogCapInner(MessageParcel& data, MessageP
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t callingUid = IPCSkeleton::GetCallingUid();
     return callingUid == ROOT_UID;
-}
-
-bool AccessTokenManagerStub::IsFoundationCalling()
-{
-    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
-    int result = this->VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION);
-    return PERMISSION_GRANTED == result;
+#else
+    return false;
+#endif
 }
 
 bool AccessTokenManagerStub::IsAccessTokenCalling()
