@@ -1737,6 +1737,15 @@ HWTEST_F(PrivacyKitTest, RegisterSecCompEnhance001, TestSize.Level1)
     data.challenge = 0;
     ASSERT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, PrivacyKit::RegisterSecCompEnhance(data));
 
+    AccessTokenID secCompId = AccessTokenKit::GetNativeTokenId("security_component_service");
+    EXPECT_EQ(0, SetSelfTokenID(secCompId));
+
+    std::vector<SecCompEnhanceData> enhanceList;
+    enhanceList.emplace_back(data);
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::DepositSecCompEnhance(enhanceList));
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+
     // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     data.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
