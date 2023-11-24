@@ -250,7 +250,7 @@ int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Perm
 int PermissionManager::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, isSystemGrant: %{public}d",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s called, tokenID: %{public}u, isSystemGrant: %{public}d",
         __func__, tokenID, isSystemGrant);
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
