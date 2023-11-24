@@ -38,6 +38,8 @@ namespace {
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
+static bool g_hasHapPermissionDefinition;
 static PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "open the door",
     .bundleName = "accesstoken_test",
@@ -240,7 +242,8 @@ void PermissionManagerTest::SetUp()
     AccessTokenManagerService* ptr = new (std::nothrow) AccessTokenManagerService();
     accessTokenService_ = sptr<AccessTokenManagerService>(ptr);
     ASSERT_NE(nullptr, accessTokenService_);
-
+    g_permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
+    g_hasHapPermissionDefinition = PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_;
     if (observer_ != nullptr) {
         return;
     }
@@ -264,10 +267,20 @@ void PermissionManagerTest::SetUp()
     PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
     infoManagerPermDef.permissionName = "ohos.permission.LOCATION";
     PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.CAPTURE_SCREEN";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.CHANGE_ABILITY_ENABLED_STATE";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.CLEAN_APPLICATION_DATA";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
+    infoManagerPermDef.permissionName = "ohos.permission.COMMONEVENT_STICKY";
+    PermissionDefinitionCache::GetInstance().Insert(infoManagerPermDef, 1);
 }
 
 void PermissionManagerTest::TearDown()
 {
+    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = g_hasHapPermissionDefinition;
     accessTokenService_ = nullptr;
     observer_ = nullptr;
 }
@@ -835,10 +848,7 @@ HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
         PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
 
     // backup
-    std::map<std::string,
-        PermissionDefData> permissionDefinitionMap = PermissionDefinitionCache::GetInstance().permissionDefinitionMap_;
     PermissionDefinitionCache::GetInstance().permissionDefinitionMap_.clear();
-    bool hasHapPermissionDefinition_ = PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_;
     PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = false;
 
     // apl default normal, remote default false
@@ -851,8 +861,8 @@ HWTEST_F(PermissionManagerTest, VerifyNativeAccessToken001, TestSize.Level1)
     // permission definition set has not been installed + apl >= APL_SYSTEM_BASIC
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyNativeAccessToken(tokenId, permissionName));
-    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = permissionDefinitionMap; // recovery
-    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = hasHapPermissionDefinition_;
+    PermissionDefinitionCache::GetInstance().permissionDefinitionMap_ = g_permissionDefinitionMap; // recovery
+    PermissionDefinitionCache::GetInstance().hasHapPermissionDefinition_ = g_hasHapPermissionDefinition;
 
     // not remote + no definition
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,

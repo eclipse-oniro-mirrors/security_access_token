@@ -1871,7 +1871,8 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
 
     std::vector<GenericValues> hapInfoValues;
     std::vector<GenericValues> permStateValues;
-    hap->StoreHapInfo(hapInfoValues, permStateValues); // permPolicySet_ is null
+    hap->StoreHapInfo(hapInfoValues);
+    hap->StorePermissionPolicy(permStateValues); // permPolicySet_ is null
 
 
     tokenValue.Put(TokenFiledConst::FIELD_BUNDLE_NAME, bundleName);

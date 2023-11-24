@@ -70,6 +70,7 @@ enum AccessTokenError {
     ERR_WRITE_PARCEL_FAILED,
     ERR_CHECK_DCAP_FAIL,
     ERR_FILE_OPERATE_FAILED,
+    ERR_DATABASE_OPERATE_FAILED,
 };
 } // namespace AccessToken
 } // namespace Security

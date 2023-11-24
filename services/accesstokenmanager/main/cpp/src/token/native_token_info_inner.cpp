@@ -169,16 +169,25 @@ void NativeTokenInfoInner::TranslateToNativeTokenInfo(NativeTokenInfo& infoParce
     infoParcel.tokenAttr = tokenInfoBasic_.tokenAttr;
 }
 
-void NativeTokenInfoInner::StoreNativeInfo(std::vector<GenericValues>& valueList,
-    std::vector<GenericValues>& permStateValues) const
+void NativeTokenInfoInner::StoreNativeInfo(std::vector<GenericValues>& valueList) const
 {
     if (isRemote_) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
         return;
     }
     GenericValues genericValues;
     TranslationIntoGenericValues(genericValues);
     valueList.emplace_back(genericValues);
+}
 
+void NativeTokenInfoInner::StorePermissionPolicy(std::vector<GenericValues>& permStateValues) const
+{
+    if (isRemote_) {
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "token %{public}x is remote hap token, will not store", tokenInfoBasic_.tokenID);
+        return;
+    }
     if (permPolicySet_ != nullptr) {
         permPolicySet_->StorePermissionPolicySet(permStateValues);
     }
