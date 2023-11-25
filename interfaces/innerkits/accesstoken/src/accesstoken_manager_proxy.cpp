@@ -164,7 +164,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -500,7 +500,7 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
     }
 
     tokenIdEx.tokenIDEx = reply.ReadUint64();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}llu", tokenIdEx.tokenIDEx);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}llu", tokenIdEx.tokenIDEx);
     return tokenIdEx;
 }
 
@@ -543,7 +543,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -571,7 +571,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }

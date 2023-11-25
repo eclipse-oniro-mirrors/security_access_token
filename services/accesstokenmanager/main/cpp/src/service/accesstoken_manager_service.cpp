@@ -156,7 +156,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
 
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
@@ -217,7 +217,7 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<Pe
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "perm: 0x%{public}s, state: 0x%{public}d",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "perm: 0x%{public}s, state: 0x%{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
     if (needRes) {
@@ -312,7 +312,7 @@ int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std:
 AccessTokenIDEx AccessTokenManagerService::GetHapTokenID(
     int32_t userID, const std::string& bundleName, int32_t instIndex)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundle: %{public}s, instIndex: %{public}d",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, bundle: %{public}s, instIndex: %{public}d",
         userID, bundleName.c_str(), instIndex);
     return AccessTokenInfoManager::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
@@ -336,14 +336,14 @@ int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, infoParcel.nativeTokenInfoParams);
 }
