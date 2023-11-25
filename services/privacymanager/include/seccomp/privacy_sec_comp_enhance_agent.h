@@ -56,6 +56,7 @@ public:
 
 private:
     PrivacySecCompEnhanceAgent();
+    void InitAppObserver();
     DISALLOW_COPY_AND_MOVE(PrivacySecCompEnhanceAgent);
 
 private:
