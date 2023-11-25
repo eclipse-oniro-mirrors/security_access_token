@@ -656,7 +656,7 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
         ACCESSTOKEN_LOG_INFO(LABEL, "readInt32 failed, result: %{public}d", result);
         return INVALID_TOKENID;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
     return result;
 }
 
