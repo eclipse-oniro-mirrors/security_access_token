@@ -49,17 +49,24 @@ PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
     return instance;
 }
 
-PrivacySecCompEnhanceAgent::PrivacySecCompEnhanceAgent()
+void PrivacySecCompEnhanceAgent::InitAppObserver()
 {
+    if (observer_ != nullptr) {
+        return;
+    }
     observer_ = new (std::nothrow) PrivacyAppUsingSecCompStateObserver();
     if (observer_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
         return;
     }
     AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_);
-
     appManagerDeathCallback_ = std::make_shared<PrivacySecCompAppManagerDeathCallback>();
     AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+}
+
+PrivacySecCompEnhanceAgent::PrivacySecCompEnhanceAgent()
+{
+    InitAppObserver();
 }
 
 PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
@@ -75,6 +82,7 @@ void PrivacySecCompEnhanceAgent::OnAppMgrRemoteDiedHandle()
     ACCESSTOKEN_LOG_INFO(LABEL, "OnAppMgrRemoteDiedHandle.");
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     secCompEnhanceData_.clear();
+    observer_ = nullptr;
 }
 
 void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
@@ -94,6 +102,7 @@ void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
 int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+    InitAppObserver();
     if (isRecoverd) {
         ACCESSTOKEN_LOG_INFO(LABEL, "need register sec comp enhance redirect.");
         return PrivacyError::ERR_CALLBACK_REGIST_REDIRECT;
@@ -117,6 +126,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
 int32_t PrivacySecCompEnhanceAgent::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+    InitAppObserver();
     secCompEnhanceData_.assign(enhanceList.begin(), enhanceList.end());
     ACCESSTOKEN_LOG_INFO(LABEL, "Deposit sec comp enhance size %{public}u.", static_cast<uint32_t>(enhanceList.size()));
     isRecoverd = false;
@@ -126,6 +136,7 @@ int32_t PrivacySecCompEnhanceAgent::DepositSecCompEnhance(const std::vector<SecC
 int32_t PrivacySecCompEnhanceAgent::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+    InitAppObserver();
     ACCESSTOKEN_LOG_INFO(LABEL, "Recover sec comp enhance size %{public}u.",
         static_cast<uint32_t>(secCompEnhanceData_.size()));
     enhanceList.assign(secCompEnhanceData_.begin(), secCompEnhanceData_.end());
