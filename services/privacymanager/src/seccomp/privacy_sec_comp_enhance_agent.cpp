@@ -56,10 +56,14 @@ void PrivacySecCompEnhanceAgent::InitAppObserver()
     }
     observer_ = new (std::nothrow) PrivacyAppUsingSecCompStateObserver();
     if (observer_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new observer failed.");
         return;
     }
-    AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_);
+    if (AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_) != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "register observer failed.");
+        observer_ = nullptr;
+        return;
+    }
     appManagerDeathCallback_ = std::make_shared<PrivacySecCompAppManagerDeathCallback>();
     AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
 }
@@ -73,7 +77,7 @@ PrivacySecCompEnhanceAgent::~PrivacySecCompEnhanceAgent()
 {
     if (observer_ != nullptr) {
         AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(observer_);
-        observer_= nullptr;
+        observer_ = nullptr;
     }
 }
 
