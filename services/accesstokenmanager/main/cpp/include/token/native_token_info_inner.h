@@ -27,8 +27,8 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static const int MAX_DCAPS_NUM = 32;
-static const int MAX_REQ_PERM_NUM = 32;
+static const int MAX_DCAPS_NUM = 10 * 1024;
+static const int MAX_REQ_PERM_NUM = 10 * 1024;
 
 struct TokenInfo {
     AccessTokenID id;

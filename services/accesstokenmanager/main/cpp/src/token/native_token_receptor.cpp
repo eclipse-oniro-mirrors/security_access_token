@@ -48,10 +48,12 @@ int32_t NativeReqPermsGet(
 {
     std::vector<std::string> permReqList;
     if (j.find(JSON_PERMS) == j.end() || (!j.at(JSON_PERMS).is_array())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JSON_PERMS is invalid.");
         return ERR_PARAM_INVALID;
     }
     permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission num oversize.");
         return ERR_OVERSIZE;
     }
     std::set<std::string> permRes;
@@ -97,6 +99,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
 
     if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid.");
         return;
     }
 
@@ -114,6 +117,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
     native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
     if (native.dcap.size() > MAX_DCAPS_NUM) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "native dcap oversize.");
         return;
     }
 
@@ -122,6 +126,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
     native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
     if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission num oversize.");
         return;
     }
 
@@ -145,6 +150,8 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
         auto token = it->get<std::shared_ptr<NativeTokenInfoInner>>();
         if (token != nullptr) {
             tokenInfos.emplace_back(token);
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "token is invalid.");
         }
     }
     return RET_SUCCESS;
