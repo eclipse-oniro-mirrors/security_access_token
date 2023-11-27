@@ -99,7 +99,6 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
 
     if (!JsonParser::GetUnsignedIntFromJson(j, JSON_TOKEN_ID, native.tokenID) || (native.tokenID == 0)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid.");
         return;
     }
 
