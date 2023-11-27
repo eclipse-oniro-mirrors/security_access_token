@@ -205,6 +205,13 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
     napi_close_handle_scope(registerPermStateChangeData->env, scope);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UvQueueWorkPermStateChanged end");
 };
+
+static bool IsPermissionFlagValid(uint32_t flag)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permission flag is %{public}d", flag);
+    return (flag == PermissionFlag::PERMISSION_USER_SET) || (flag == PermissionFlag::PERMISSION_USER_FIXED) ||
+        (flag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME);
+};
 } // namespace
 
 RegisterPermStateChangeScopePtr::RegisterPermStateChangeScopePtr(const PermStateChangeScope& subscribeInfo)
@@ -743,6 +750,9 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
+    if (!IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+    }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
@@ -878,6 +888,9 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
+    if (!IsPermissionFlagValid(asyncContext->flag)) {
+        asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+    }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
