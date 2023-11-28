@@ -505,7 +505,7 @@ void AccessTokenManagerService::GetValidConfigFilePathList(std::vector<std::stri
 
         FreeCfgDirList(dirs); // free
     } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "can't get valid cfg file path");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "can't get valid cfg file path");
     }
 }
 

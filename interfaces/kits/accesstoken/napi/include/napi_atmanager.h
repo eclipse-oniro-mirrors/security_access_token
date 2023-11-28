@@ -35,6 +35,7 @@
 #include "permission_grant_info.h"
 #include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
+#include "ui_content.h"
 
 namespace OHOS {
 namespace Security {
@@ -115,7 +116,19 @@ struct PermissionParamCache {
 };
 
 struct RequestAsyncContext : public AtManagerAsyncWorkData {
-    explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env) {}
+    explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env)
+    {
+        this->env = env;
+    }
+
+    void ReleaseOrErrorHandle(int32_t code);
+    void OnRelease(int32_t releaseCode);
+    void OnResult(int32_t resultCode, const AAFwk::Want& result);
+    void OnReceive(const AAFwk::WantParams& receive);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>&);
+    void OnDestroy();
+
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
     int32_t result = AT_PERM_OPERA_SUCC;
@@ -124,6 +137,8 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     napi_value requestResult = nullptr;
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+    Ace::UIContent *UIContent = nullptr;
+    int32_t sessionId = 0;
 };
 
 struct ResultCallback {
