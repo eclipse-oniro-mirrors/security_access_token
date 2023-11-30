@@ -362,6 +362,7 @@ void BundleUsedRecordData(Parcel& out, uint32_t size)
         out.WriteParcelable(&permRecordParcel);
     }
 }
+
 /**
  * @tc.name: BundleUsedRecordParcel002
  * @tc.desc: Test BundleUsedRecordParcel Marshalling/Unmarshalling.
@@ -383,7 +384,7 @@ HWTEST_F(PrivacyParcelTest, BundleUsedRecordParcel002, TestSize.Level1)
 
 void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
 {
-    UsedRecordDetail detailIns = {0, 0L, 0L};
+    UsedRecordDetail detailIns = {0, 0, 0L, 0L, 0};
     EXPECT_EQ(true, out.WriteString("permissionName"));
     EXPECT_EQ(true, out.WriteInt32(1));
     EXPECT_EQ(true, out.WriteInt32(1));
@@ -395,14 +396,14 @@ void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
     for (uint32_t i = 0; i < accessSize; i++) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = detailIns;
-        out.WriteParcelable(&detailParcel);
+        EXPECT_EQ(true, out.WriteParcelable(&detailParcel));
     }
 
     EXPECT_EQ(true, out.WriteUint32(rejectSize));
     for (uint32_t i = 0; i < rejectSize; i++) {
         UsedRecordDetailParcel detailParcel;
         detailParcel.detail = detailIns;
-        out.WriteParcelable(&detailParcel);
+        EXPECT_EQ(true, out.WriteParcelable(&detailParcel));
     }
 }
 
@@ -415,17 +416,17 @@ void DataMarshalling(Parcel& out, uint32_t accessSize, uint32_t rejectSize)
 HWTEST_F(PrivacyParcelTest, PermissionUsedRecordParcel002, TestSize.Level1)
 {
     Parcel parcel;
-    DataMarshalling(parcel, MAX_ACCESS_RECORD_SIZE, MAX_ACCESS_RECORD_SIZE);
+    DataMarshalling(parcel, MAX_ACCESS_RECORD_SIZE / 2, MAX_ACCESS_RECORD_SIZE / 2);
     std::shared_ptr<PermissionUsedRecordParcel> readedData(PermissionUsedRecordParcel::Unmarshalling(parcel));
     EXPECT_EQ(true, readedData != nullptr);
 
     Parcel parcel1;
-    DataMarshalling(parcel1, MAX_ACCESS_RECORD_SIZE, MAX_ACCESS_RECORD_SIZE + 1);
+    DataMarshalling(parcel1, MAX_ACCESS_RECORD_SIZE / 2, MAX_ACCESS_RECORD_SIZE / 2 + 1);
     std::shared_ptr<PermissionUsedRecordParcel> readedData1(PermissionUsedRecordParcel::Unmarshalling(parcel1));
     EXPECT_EQ(true, readedData1 == nullptr);
 
     Parcel parcel2;
-    DataMarshalling(parcel2, MAX_ACCESS_RECORD_SIZE + 1, MAX_ACCESS_RECORD_SIZE);
+    DataMarshalling(parcel2, MAX_ACCESS_RECORD_SIZE / 2 + 1, MAX_ACCESS_RECORD_SIZE / 2);
     std::shared_ptr<PermissionUsedRecordParcel> readedData2(PermissionUsedRecordParcel::Unmarshalling(parcel2));
     EXPECT_EQ(true, readedData2 == nullptr);
 }

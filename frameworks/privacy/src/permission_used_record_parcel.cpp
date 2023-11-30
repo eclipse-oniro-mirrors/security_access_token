@@ -63,6 +63,7 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
     uint32_t accRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(accRecordSize), permissionRecordParcel);
     RELEASE_IF_FALSE(accRecordSize <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);
+
     for (uint32_t i = 0; i < accRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
@@ -72,6 +73,10 @@ PermissionUsedRecordParcel* PermissionUsedRecordParcel::Unmarshalling(Parcel& in
     uint32_t rejRecordSize = 0;
     RELEASE_IF_FALSE(in.ReadUint32(rejRecordSize), permissionRecordParcel);
     RELEASE_IF_FALSE(rejRecordSize <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);
+
+    uint32_t totalCount = accRecordSize + rejRecordSize;
+    RELEASE_IF_FALSE(totalCount <= MAX_ACCESS_RECORD_SIZE, permissionRecordParcel);
+
     for (uint32_t i = 0; i < rejRecordSize; i++) {
         sptr<UsedRecordDetailParcel> detailParcel = in.ReadParcelable<UsedRecordDetailParcel>();
         RELEASE_IF_FALSE(detailParcel != nullptr, permissionRecordParcel);
