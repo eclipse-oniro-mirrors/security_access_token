@@ -1206,30 +1206,6 @@ HWTEST_F(PermissionManagerTest, GetApiVersionByTokenId001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetPermissionStatusAndFlag001
- * @tc.desc: PermissionManager::GetPermissionStatusAndFlag function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, GetPermissionStatusAndFlag001, TestSize.Level1)
-{
-    std::string permissionName;
-    std::vector<PermissionStateFull> permsList;
-    permsList.emplace_back(g_permState2);
-    int32_t status = 0;
-    uint32_t flag = 0;
-
-    // permissionName empty
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
-        permsList, status, flag));
-
-    permissionName = "ohos.permission.LOCATION";
-    // permissionName not in permsList
-    ASSERT_EQ(false, PermissionManager::GetInstance().GetPermissionStatusAndFlag(permissionName,
-        permsList, status, flag));
-}
-
-/**
  * @tc.name: VerifyHapAccessToken001
  * @tc.desc: PermissionManager::VerifyHapAccessToken function test
  * @tc.type: FUNC

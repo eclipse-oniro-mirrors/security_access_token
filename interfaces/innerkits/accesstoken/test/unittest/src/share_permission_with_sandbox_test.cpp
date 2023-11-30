@@ -374,12 +374,12 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest002, TestSize.Lev
 }
 
 /**
- * @tc.name: SharePermissionTest010
+ * @tc.name: SharePermissionTest003
  * @tc.desc: .
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(SharePermissionTest, PermissionShareTest010, TestSize.Level1)
+HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level1)
 {
     uint64_t tokenId = GetSelfTokenID();
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);

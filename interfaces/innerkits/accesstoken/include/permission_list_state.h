@@ -54,7 +54,7 @@ public:
     std::string permissionName;
     /**
      * permission request state, for details about the valid values,
-     * see the definition of HapDlpType in the access_token.h file.
+     * see the definition of PermissionOper in the access_token.h file.
      */
     int state;
 };

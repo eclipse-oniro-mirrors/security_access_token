@@ -14,9 +14,9 @@
  */
 
 #include "accesstoken_log.h"
-#include "access_token_error.h"
 #include "permission_record_manager.h"
 #include "window_manager_privacy_agent.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {

@@ -14,9 +14,9 @@
  */
 
 #include "audio_global_switch_change_stub.h"
-#include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "permission_record_manager.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {
