@@ -1001,8 +1001,8 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
-static napi_value GetAbilityContextAndUIContent(const napi_env &env, const napi_value &value,
-    std::shared_ptr<AbilityRuntime::AbilityContext> &abilityContext, Ace::UIContent **UIContent)
+static napi_value GetAbilityContext(const napi_env &env, const napi_value &value,
+    std::shared_ptr<AbilityRuntime::AbilityContext> &abilityContext)
 {
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
@@ -1018,11 +1018,6 @@ static napi_value GetAbilityContextAndUIContent(const napi_env &env, const napi_
         abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
         if (abilityContext == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "get Stage model ability context failed");
-            return nullptr;
-        }
-        *UIContent = abilityContext->GetUIContent();
-        if (*UIContent == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
             return nullptr;
         }
         return WrapVoidToJS(env);
@@ -1049,8 +1044,7 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
     std::string errMsg;
 
     // argv[0] : context : AbilityContext
-    if (GetAbilityContextAndUIContent(env, argv[0], asyncContext.abilityContext,
-        &(asyncContext.UIContent)) == nullptr) {
+    if (GetAbilityContext(env, argv[0], asyncContext.abilityContext) == nullptr) {
         errMsg = GetParamErrorMsg("context", "Ability Context");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
@@ -1367,8 +1361,26 @@ void RequestAsyncContext::OnDestroy()
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
 }
 
-static void StartUIExtension(RequestAsyncContext* asyncContext)
+static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
+    Ace::UIContent **UIContent)
 {
+    *UIContent = abilityContext->GetUIContent();
+    if (*UIContent == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
+        return false;
+    }
+
+    return true;
+}
+
+static int32_t StartUIExtension(const napi_env& env, RequestAsyncContext* asyncContext)
+{
+    if (!GetUIContentFromContext(asyncContext->abilityContext, &(asyncContext->UIContent))) {
+        std::string errMsg = "can't get UIContent from context";
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), 0);
+    }
+
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -1389,8 +1401,7 @@ static void StartUIExtension(RequestAsyncContext* asyncContext)
     Ace::ModalUIExtensionConfig config;
     config.isProhibitBack = true;
 
-    asyncContext->sessionId = asyncContext->UIContent->CreateModalUIExtension(want, callbacks, config);
-    ACCESSTOKEN_LOG_INFO(LABEL, "sessionId is %{public}d.(0 means create component fail)", asyncContext->sessionId);
+    return asyncContext->UIContent->CreateModalUIExtension(want, callbacks, config);
 }
 
 void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
@@ -1427,7 +1438,12 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     if (asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
         StartServiceExtension(remoteObject, asyncContext, curRequestCode_);
     } else {
-        StartUIExtension(asyncContext);
+        asyncContext->sessionId = StartUIExtension(env, asyncContext);
+        if (asyncContext->sessionId == 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "create component failed, sessionId is 0");
+        } else {
+            ACCESSTOKEN_LOG_INFO(LABEL, "create component success, sessionId is %{public}d", asyncContext->sessionId);
+        }
     }
 }
 
