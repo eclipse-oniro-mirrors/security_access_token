@@ -1001,8 +1001,9 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
-static napi_value GetAbilityContext(const napi_env &env, const napi_value &value,
-    std::shared_ptr<AbilityRuntime::AbilityContext> &abilityContext)
+static napi_value GetContext(const napi_env &env, const napi_value &value,
+    std::shared_ptr<AbilityRuntime::AbilityContext> &abilityContext,
+    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext)
 {
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
@@ -1017,8 +1018,12 @@ static napi_value GetAbilityContext(const napi_env &env, const napi_value &value
         }
         abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
         if (abilityContext == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "get Stage model ability context failed");
-            return nullptr;
+            ACCESSTOKEN_LOG_WARN(LABEL, "convert to ability context failed");
+            uiExtensionContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+            if (uiExtensionContext == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "convert to ui extension context failed");
+                return nullptr;
+            }
         }
         return WrapVoidToJS(env);
     }
@@ -1044,8 +1049,8 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
     std::string errMsg;
 
     // argv[0] : context : AbilityContext
-    if (GetAbilityContext(env, argv[0], asyncContext.abilityContext) == nullptr) {
-        errMsg = GetParamErrorMsg("context", "Ability Context");
+    if (GetContext(env, argv[0], asyncContext.abilityContext, asyncContext.uiExtensionContext) == nullptr) {
+        errMsg = GetParamErrorMsg("context", "Context");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
@@ -1362,9 +1367,15 @@ void RequestAsyncContext::OnDestroy()
 }
 
 static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
-    Ace::UIContent **UIContent)
+    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext, Ace::UIContent **UIContent)
 {
-    *UIContent = abilityContext->GetUIContent();
+    if (abilityContext != nullptr) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from abilityContext");
+        *UIContent = abilityContext->GetUIContent();
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from uiExtensionContext");
+        *UIContent = uiExtensionContext->GetUIContent();
+    }
     if (*UIContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
         return false;
@@ -1375,7 +1386,8 @@ static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityConte
 
 static int32_t StartUIExtension(const napi_env& env, RequestAsyncContext* asyncContext)
 {
-    if (!GetUIContentFromContext(asyncContext->abilityContext, &(asyncContext->UIContent))) {
+    if (!GetUIContentFromContext(asyncContext->abilityContext,
+        asyncContext->uiExtensionContext, &(asyncContext->UIContent))) {
         std::string errMsg = "can't get UIContent from context";
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), 0);
@@ -1386,7 +1398,11 @@ static int32_t StartUIExtension(const napi_env& env, RequestAsyncContext* asyncC
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
-    want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
+    if (asyncContext->abilityContext != nullptr) {
+        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
+    } else {
+        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
+    }
 
     Ace::ModalUIExtensionCallbacks callbacks = {
         std::bind(&RequestAsyncContext::OnRelease, asyncContext, std::placeholders::_1),
@@ -1408,8 +1424,13 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
 
-    auto applicationInfo = asyncContext->abilityContext->GetApplicationInfo();
-    if (applicationInfo->accessTokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
+    AccessTokenID tokenID = 0;
+    if (asyncContext->abilityContext != nullptr) {
+        tokenID = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
+    } else {
+        tokenID = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+    }
+    if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
         asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
         return;

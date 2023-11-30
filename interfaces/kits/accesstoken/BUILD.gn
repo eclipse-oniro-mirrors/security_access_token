@@ -49,6 +49,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "ability_runtime:ability_context_native",
     "ability_runtime:abilitykit_native",
     "ability_runtime:napi_base_context",
+    "ability_runtime:ui_extension",
     "ace_engine:ace_uicontent",
     "c_utils:utils",
     "hilog:libhilog",
