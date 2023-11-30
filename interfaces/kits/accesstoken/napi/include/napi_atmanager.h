@@ -36,6 +36,7 @@
 #include "perm_state_change_callback_customize.h"
 #include "token_callback_stub.h"
 #include "ui_content.h"
+#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
@@ -137,6 +138,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     napi_value requestResult = nullptr;
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
+    std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     Ace::UIContent *UIContent = nullptr;
     int32_t sessionId = 0;
 };
