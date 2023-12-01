@@ -59,6 +59,8 @@ public:
 
 private:
     bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2);
+    void DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
+        std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode);
 
     int32_t readableSize_ = 0;
     std::shared_ptr<PermissionUsedRecordNode> recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
