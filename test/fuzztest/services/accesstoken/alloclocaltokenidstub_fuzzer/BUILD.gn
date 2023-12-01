@@ -44,6 +44,7 @@ ohos_fuzztest("AllocLocalTokenIDStubFuzzTest") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   include_dirs += [
@@ -60,6 +61,8 @@ ohos_fuzztest("AllocLocalTokenIDStubFuzzTest") {
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
     "//third_party/sqlite/include/",
+    "//third_party/sqlite:sqlite",
+    "//third_party/json/include/",
   ]
 
   include_dirs += access_token_impl_include_dirs
