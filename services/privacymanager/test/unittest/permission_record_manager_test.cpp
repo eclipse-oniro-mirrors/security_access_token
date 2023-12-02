@@ -1740,6 +1740,56 @@ HWTEST_F(PermissionRecordManagerTest, GetFromPersistQueueAndDatabase001, TestSiz
         opCodeList, andConditionValues, findRecordsValues, 0);
     ASSERT_EQ(static_cast<size_t>(0), findRecordsValues.size());
 }
+
+/*
+ * @tc.name: DeepCopyFromHead001
+ * @tc.desc: PermissionUsedRecordCache::DeepCopyFromHead function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DeepCopyFromHead001, TestSize.Level1)
+{
+    std::shared_ptr<PermissionUsedRecordNode> head = std::make_shared<PermissionUsedRecordNode>();
+    std::shared_ptr<PermissionUsedRecordNode> node1 = std::make_shared<PermissionUsedRecordNode>();
+    std::shared_ptr<PermissionUsedRecordNode> node2 = std::make_shared<PermissionUsedRecordNode>();
+    std::shared_ptr<PermissionUsedRecordNode> node3 = std::make_shared<PermissionUsedRecordNode>();
+    std::shared_ptr<PermissionUsedRecordNode> node4 = std::make_shared<PermissionUsedRecordNode>();
+
+    head->next = node1;
+
+    node1->pre.lock() = head;
+    node1->next = node2;
+    node1->record = g_recordA1;
+
+    node2->pre.lock() = node1;
+    node2->next = node3;
+    node2->record = g_recordA2;
+
+    node3->pre.lock() = node2;
+    node3->next = node4;
+    node3->record = g_recordB1;
+
+    node4->pre.lock() = node3;
+    node4->next = nullptr;
+    node4->record = g_recordB2;
+
+    ASSERT_EQ(head->next->record.opCode, g_recordA1.opCode);
+    ASSERT_EQ(head->next->next->record.opCode, g_recordA2.opCode);
+    ASSERT_EQ(head->next->next->next->record.opCode, g_recordB1.opCode);
+    ASSERT_EQ(head->next->next->next->next->record.opCode, g_recordB2.opCode);
+
+    std::shared_ptr<PermissionUsedRecordNode> copyHead = std::make_shared<PermissionUsedRecordNode>();
+    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(nullptr, copyHead);
+    ASSERT_EQ(copyHead->next, nullptr);
+
+    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(head, copyHead);
+
+    ASSERT_EQ(copyHead->record.opCode, head->record.opCode);
+    ASSERT_EQ(copyHead->next->record.opCode, g_recordA1.opCode);
+    ASSERT_EQ(copyHead->next->next->record.opCode, g_recordA2.opCode);
+    ASSERT_EQ(copyHead->next->next->next->record.opCode, g_recordB1.opCode);
+    ASSERT_EQ(copyHead->next->next->next->next->record.opCode, g_recordB2.opCode);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

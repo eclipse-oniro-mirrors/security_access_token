@@ -89,7 +89,6 @@ if (is_standard_system && ability_base_enable == true) {
       "src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
       "src/sensitive/camera_manager/camera_service_callback_stub.cpp",
-      "src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]
@@ -119,6 +118,8 @@ if (is_standard_system && ability_base_enable == true) {
     if (common_event_service_enable) {
       cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
       external_deps += [ "common_event_service:cesfwk_innerkits" ]
+      sources +=
+          [ "src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp" ]
     }
 
     if (theme_screenlock_mgr_enable) {

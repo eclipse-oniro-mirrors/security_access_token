@@ -522,7 +522,6 @@ void AccessTokenManagerClient::DumpTokenInfo(AccessTokenID tokenID, std::string&
 
 void AccessTokenManagerClient::InitProxy()
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
@@ -549,15 +548,14 @@ void AccessTokenManagerClient::InitProxy()
 
 void AccessTokenManagerClient::OnRemoteDiedHandle()
 {
-    {
-        std::lock_guard<std::mutex> lock(proxyMutex_);
-        proxy_ = nullptr;
-    }
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    proxy_ = nullptr;
     InitProxy();
 }
 
 sptr<IAccessTokenManager> AccessTokenManagerClient::GetProxy()
 {
+    std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         InitProxy();
     }

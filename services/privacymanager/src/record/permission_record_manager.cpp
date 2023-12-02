@@ -38,6 +38,7 @@
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "lockscreen_status_observer.h"
 #endif //COMMON_EVENT_SERVICE_ENABLE
+#include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
@@ -75,7 +76,6 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 #endif
-static const int32_t MAX_RECORD_NUM = 5000;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -257,7 +257,7 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
     }
 
     // sumarry don't limit querry data num, detail do
-    int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_RECORD_NUM : recordSizeMaximum_;
+    int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
 
     Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
@@ -1066,7 +1066,7 @@ void PermissionRecordManager::GetConfigFilePathList(std::vector<std::string>& pa
 
         FreeCfgDirList(dirs); // free
     } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "can't get cfg file path");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "can't get cfg file path");
     }
 }
 
