@@ -111,13 +111,16 @@ ohos_fuzztest("UnRegisterPermActiveStatusCallbackStubFuzzTest") {
     "ability_base:want",
     "audio_framework:audio_client",
     "c_utils:utils",
-    "common_event_service:cesfwk_innerkits",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+  if (common_event_service_enable) {
+    cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
+    external_deps += [ "common_event_service:cesfwk_innerkits" ]
+  }
   if (access_token_camera_float_window_enable) {
     cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
     include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/window_manager" ]

@@ -35,7 +35,9 @@
 #include "data_translator.h"
 #include "i_state_change_callback.h"
 #include "iservice_registry.h"
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "lockscreen_status_observer.h"
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
 #include "privacy_error.h"
@@ -899,10 +901,12 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
     }
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
     // lockscreen status change call back register
+#ifdef COMMON_EVENT_SERVICE_ENABLE
     {
         std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::RegisterEvent();
     }
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #endif
     return true;
 }
@@ -979,10 +983,12 @@ void PermissionRecordManager::Unregister()
 
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
     // screen state change callback unregister
+#ifdef COMMON_EVENT_SERVICE_ENABLE
     {
         std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
         LockscreenObserver::UnRegisterEvent();
     }
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #endif
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
