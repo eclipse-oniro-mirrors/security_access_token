@@ -182,7 +182,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState001, TestSize.Le
 
     PermissionListState permVague1 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList1;
@@ -213,7 +213,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState002, TestSize.Le
 
     PermissionListState permVague2 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList2;
@@ -244,7 +244,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState003, TestSize.Le
 
     PermissionListState permVague3 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList3;
@@ -276,7 +276,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Le
     std::vector<PermissionListState> permsList4;
     PermissionListState permAccurate4 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     permsList4.emplace_back(permAccurate4);
@@ -308,7 +308,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Le
     std::vector<PermissionListState> permsList5;
     PermissionListState permAccurate5 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     permsList5.emplace_back(permAccurate5);
@@ -339,7 +339,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState006, TestSize.Le
     std::vector<PermissionListState> permsList6;
     PermissionListState permBack6 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     permsList6.emplace_back(permBack6);
@@ -371,7 +371,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState007, TestSize.Le
     std::vector<PermissionListState> permsList7;
     PermissionListState permBack7 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     permsList7.emplace_back(permBack7);
@@ -402,11 +402,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState008, TestSize.Le
 
     PermissionListState permVague8 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate8 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList8;
@@ -440,11 +440,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState009, TestSize.Le
 
     PermissionListState permVague9 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate9 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList9;
@@ -478,11 +478,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState010, TestSize.Le
 
     PermissionListState permVague10 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate10 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList10;
@@ -516,11 +516,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState011, TestSize.Le
 
     PermissionListState permVague11 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate11 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList11;
@@ -554,11 +554,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
 
     PermissionListState permVague12 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack12 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList12;
@@ -602,11 +602,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState013, TestSize.Le
 
     PermissionListState permVague13 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack13 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList13;
@@ -649,11 +649,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState014, TestSize.Le
 
     PermissionListState permVague14 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack14 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList14;
@@ -696,11 +696,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState015, TestSize.Le
 
     PermissionListState permVague15 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack15 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList15;
@@ -743,11 +743,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
 
     PermissionListState permAccurate16 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack16 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList16;
@@ -792,11 +792,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
 
     PermissionListState permAccurate17 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack17 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList17;
@@ -841,15 +841,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState018, TestSize.Le
 
     PermissionListState permVague18 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate18 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack18 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList18;
@@ -898,15 +898,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState019, TestSize.Le
 
     PermissionListState permVague19 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate19 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack19 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList19;
@@ -955,15 +955,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState020, TestSize.Le
 
     PermissionListState permVague20 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate20 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack20 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList20;
@@ -1012,15 +1012,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState021, TestSize.Le
 
     PermissionListState permVague21 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate21 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack21 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList21;
@@ -1067,15 +1067,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState022, TestSize.Le
 
     PermissionListState permVague22 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate22 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack22 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList22;
@@ -1122,15 +1122,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState023, TestSize.Le
 
     PermissionListState permVague23 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate23 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack23 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList23;
@@ -1178,15 +1178,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState024, TestSize.Le
 
     PermissionListState permVague24 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate24 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack24 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList24;
@@ -1244,15 +1244,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState025, TestSize.Le
 
     PermissionListState permVague25 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate25 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack25 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList25;
@@ -1310,15 +1310,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState026, TestSize.Le
 
     PermissionListState permVague26 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate26 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack26 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList26;
@@ -1378,23 +1378,23 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState027, TestSize.Le
 
     PermissionListState permVague27 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate27 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack27 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permSystem27 = {
         .permissionName = "ohos.permission.UPDATE_SYSTEM",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permUser27 = {
         .permissionName = "ohos.permission.CAMERA",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList27;
@@ -1433,7 +1433,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState028, TestSize.Le
 
     PermissionListState permVague28 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList28;
@@ -1464,7 +1464,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState029, TestSize.Le
 
     PermissionListState permAccurate29 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList29;
@@ -1495,7 +1495,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState030, TestSize.Le
 
     PermissionListState permBack30 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList30;
@@ -1527,11 +1527,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState031, TestSize.Le
 
     PermissionListState permVague31 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate31 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList31;
@@ -1565,11 +1565,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState032, TestSize.Le
 
     PermissionListState permVague32 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack32 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList32;
@@ -1603,11 +1603,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
 
     PermissionListState permAccurate33 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack33 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList33;
@@ -1642,15 +1642,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState034, TestSize.Le
 
     PermissionListState permVague34 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate34 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack34 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList34;
@@ -1686,11 +1686,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState035, TestSize.Le
 
     PermissionListState permVague35 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack35 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList35;
@@ -1734,11 +1734,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState036, TestSize.Le
 
     PermissionListState permVague36 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack36 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList36;
@@ -1772,11 +1772,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState037, TestSize.Le
 
     PermissionListState permVague37 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack37 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList37;
@@ -1810,11 +1810,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState038, TestSize.Le
 
     PermissionListState permVague38 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack38 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList38;
@@ -1848,11 +1848,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Le
 
     PermissionListState permAccurate39 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack39 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList39;
@@ -1887,11 +1887,11 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Le
 
     PermissionListState permAccurate40 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack40 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList40;
@@ -1926,15 +1926,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState041, TestSize.Le
 
     PermissionListState permVague41 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate41 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack41 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList41;
@@ -1971,15 +1971,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState042, TestSize.Le
 
     PermissionListState permVague42 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate42 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack42 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList42;
@@ -2016,15 +2016,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState043, TestSize.Le
 
     PermissionListState permVague20 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate20 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack20 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList43;
@@ -2061,15 +2061,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState044, TestSize.Le
 
     PermissionListState permVague44 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate44 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack44 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList44;
@@ -2106,15 +2106,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState045, TestSize.Le
 
     PermissionListState permVague45 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate45 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack45 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList45;
@@ -2151,15 +2151,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState046, TestSize.Le
 
     PermissionListState permVague46 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate46 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack46 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList46;
@@ -2196,15 +2196,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState047, TestSize.Le
 
     PermissionListState permVague47 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate47 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack47 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList47;
@@ -2241,15 +2241,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState048, TestSize.Le
 
     PermissionListState permVague48 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate48 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack48 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList48;
@@ -2286,15 +2286,15 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState049, TestSize.Le
 
     PermissionListState permVague49 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate49 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack49 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList49;
@@ -2333,23 +2333,23 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState050, TestSize.Le
 
     PermissionListState permVague50 = {
         .permissionName = "ohos.permission.APPROXIMATELY_LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permAccurate50 = {
         .permissionName = "ohos.permission.LOCATION",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permBack50 = {
         .permissionName = "ohos.permission.LOCATION_IN_BACKGROUND",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permSystem50 = {
         .permissionName = "ohos.permission.UPDATE_SYSTEM",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permUser50 = {
         .permissionName = "ohos.permission.CAMERA",
-        .state = -1,
+        .state = SETTING_OPER,
     };
 
     std::vector<PermissionListState> permsList50;

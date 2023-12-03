@@ -524,19 +524,19 @@ void GetPermsList1(std::vector<PermissionListState> &permsList1)
 {
     PermissionListState perm1 = {
         .permissionName = "ohos.permission.testPermDef1",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState perm2 = {
         .permissionName = "ohos.permission.testPermDef2",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState perm3 = {
         .permissionName = "ohos.permission.testPermDef3",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState perm4 = {
         .permissionName = "ohos.permission.testPermDef4",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList1.emplace_back(perm1);
     permsList1.emplace_back(perm2);
@@ -548,11 +548,11 @@ void GetPermsList2(std::vector<PermissionListState> &permsList2)
 {
     PermissionListState perm3 = {
         .permissionName = "ohos.permission.testPermDef3",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState perm4 = {
         .permissionName = "ohos.permission.testPermDef4",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList2.emplace_back(perm3);
     permsList2.emplace_back(perm4);
@@ -586,7 +586,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState001, TestSize.Level
 
     PermissionListState perm5 = {
         .permissionName = "ohos.permission.testPermDef5",
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList1.emplace_back(perm5);
     ret = AccessTokenKit::GetSelfPermissionsState(permsList1, info);
@@ -629,7 +629,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState002, TestSize.Level
     for (uint32_t i = 0; i < MAX_PERMISSION_SIZE + 1; i++) {
         PermissionListState tmp = {
             .permissionName = "ohos.permission.CAMERA",
-            .state = 0
+            .state = PASS_OPER
         };
         permsList.emplace_back(tmp);
     }
@@ -649,7 +649,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState003, TestSize.Level
     std::vector<PermissionListState> permsList3;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
-        .state = 0
+        .state = PASS_OPER
     };
     permsList3.emplace_back(tmp);
     PermissionGrantInfo info;
@@ -670,7 +670,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level
     std::vector<PermissionListState> permsList4;
     PermissionListState tmp = {
         .permissionName = "ohos.permission.CAMERA",
-        .state = 0
+        .state = PASS_OPER
     };
     permsList4.emplace_back(tmp);
     PermissionGrantInfo info;

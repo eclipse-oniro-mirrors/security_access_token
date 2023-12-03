@@ -1216,7 +1216,7 @@ bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions
         ACCESSTOKEN_LOG_DEBUG(LABEL, "permission: %{public}s.", permission.c_str());
         PermissionListState permState;
         permState.permissionName = permission;
-        permState.state = -1;
+        permState.state = SETTING_OPER;
         permList.emplace_back(permState);
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu, permissions size: %{public}zu.",
