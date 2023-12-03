@@ -88,7 +88,7 @@ void PermissionUsedRecordCache::DeepCopyFromHead(const std::shared_ptr<Permissio
 
         std::shared_ptr<PermissionUsedRecordNode> tmpNode = std::make_shared<PermissionUsedRecordNode>();
         tmpNode->record = head->record;
-        tmpNode->pre.lock() = currentNode;
+        tmpNode->pre = currentNode;
         currentNode->next = tmpNode;
         currentNode = currentNode->next;
     }
