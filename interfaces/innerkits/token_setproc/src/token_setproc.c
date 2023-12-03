@@ -38,12 +38,12 @@ enum {
 
 #define PERM_GROUP_SIZE 32
 #define MAX_PERM_SIZE 64
-struct ioctl_add_perm_data {
+struct IoctlAddPermData {
     uint32_t token;
     uint32_t perm[MAX_PERM_SIZE];
 };
 
-struct ioctl_set_get_perm_data {
+struct IoctlSetGetPermData {
     uint32_t token;
     uint32_t opCode;
     bool isGranted;
@@ -58,13 +58,13 @@ struct ioctl_set_get_perm_data {
 #define    ACCESS_TOKENID_SET_FTOKENID \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_FTOKEN_ID, uint64_t)
 #define    ACCESS_TOKENID_ADD_PERMISSIONS \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, ADD_PERMISSIONS, struct ioctl_add_perm_data)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, ADD_PERMISSIONS, struct IoctlAddPermData)
 #define    ACCESS_TOKENID_REMOVE_PERMISSIONS \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, REMOVE_PERMISSIONS, uint32_t)
 #define    ACCESS_TOKENID_GET_PERMISSION \
-    _IOWR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, struct ioctl_set_get_perm_data)
+    _IOWR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, struct IoctlSetGetPermData)
 #define    ACCESS_TOKENID_SET_PERMISSION \
-    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, struct ioctl_set_get_perm_data)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, struct IoctlSetGetPermData)
 
 
 #define INVAL_TOKEN_ID    0x0
@@ -147,7 +147,7 @@ int32_t AddPermissionToKernel(uint32_t tokenID, uint32_t* opCodeList, int32_t* s
     if (opCodeList == NULL || statusList == NULL) {
         return ACCESS_TOKEN_PARAM_INVALID;
     }
-    struct ioctl_add_perm_data data;
+    struct IoctlAddPermData data;
     data.token = tokenID;
 
     for (uint32_t i = 0; i < size; ++i) {
@@ -193,7 +193,7 @@ int32_t RemovePermissionFromKernel(uint32_t tokenID)
 
 int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
 {
-    struct ioctl_set_get_perm_data data = {
+    struct IoctlSetGetPermData data = {
         .token = tokenID,
         .opCode = opCode,
         .isGranted = status,
@@ -215,7 +215,7 @@ int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
 
 bool GetPermissionFromKernel(uint32_t tokenID, int32_t opCode)
 {
-    struct ioctl_set_get_perm_data data = {
+    struct IoctlSetGetPermData data = {
         .token = tokenID,
         .opCode = opCode,
         .isGranted = false,
