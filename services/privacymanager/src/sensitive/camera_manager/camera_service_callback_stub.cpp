@@ -15,8 +15,8 @@
 
 #include "camera_service_callback_stub.h"
 #include "accesstoken_log.h"
-#include "access_token_error.h"
 #include "permission_record_manager.h"
+#include "privacy_error.h"
 
 namespace OHOS {
 namespace Security {

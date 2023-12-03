@@ -113,7 +113,7 @@ void TokenSyncManagerStub::UpdateRemoteHapTokenInfoInner(MessageParcel& data, Me
     }
 
     sptr<HapTokenInfoForSyncParcel> tokenInfoParcelPtr = data.ReadParcelable<HapTokenInfoForSyncParcel>();
-    int result = RET_SUCCESS;
+    int result = RET_FAILED;
     if (tokenInfoParcelPtr != nullptr) {
         result = this->UpdateRemoteHapTokenInfo(tokenInfoParcelPtr->hapTokenInfoForSyncParams);
     }
