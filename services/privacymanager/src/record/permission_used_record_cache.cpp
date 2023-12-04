@@ -407,7 +407,7 @@ void PermissionUsedRecordCache::ResetRecordBufferWhenAdd(const int32_t remainCou
         persistPendingBufferEnd = curRecordBufferPos_->pre.lock();
         persistPendingBufferEnd->next.reset(); //release the last node next
         recordBufferHead_ = tmpRecordBufferHead;
-        recordBufferHead_->next->pre.lock() = recordBufferHead_;
+        recordBufferHead_->next->pre = recordBufferHead_;
         return;
     }
     readableSize_ = remainCount;
@@ -416,7 +416,7 @@ void PermissionUsedRecordCache::ResetRecordBufferWhenAdd(const int32_t remainCou
     persistPendingBufferEnd->next.reset(); //release persistPendingBufferEnd->next
     recordBufferHead_ = tmpRecordBufferHead;
     // recordBufferHead_->next->pre equals to persistPendingBufferEnd, reset recordBufferHead_->next->pre
-    recordBufferHead_->next->pre.lock() = recordBufferHead_;
+    recordBufferHead_->next->pre = recordBufferHead_;
 }
 
 void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
@@ -435,7 +435,7 @@ void PermissionUsedRecordCache::ResetRecordBuffer(const int32_t remainCount,
         curRecordBufferPos_ = recordBufferHead_;
     } else {
         // recordBufferHead_->next->pre = persistPendingBufferEnd, reset recordBufferHead_->next->pre
-        recordBufferHead_->next->pre.lock() = recordBufferHead_;
+        recordBufferHead_->next->pre = recordBufferHead_;
     }
 }
 
@@ -525,7 +525,7 @@ void PermissionUsedRecordCache::AddRecordNode(const PermissionRecord& record)
 {
     std::shared_ptr<PermissionUsedRecordNode> tmpRecordNode = std::make_shared<PermissionUsedRecordNode>();
     tmpRecordNode->record = record;
-    tmpRecordNode->pre.lock() = curRecordBufferPos_;
+    tmpRecordNode->pre = curRecordBufferPos_;
     curRecordBufferPos_->next = tmpRecordNode;
     curRecordBufferPos_ = curRecordBufferPos_->next;
     readableSize_++;
@@ -539,7 +539,7 @@ void PermissionUsedRecordCache::DeleteRecordNode(std::shared_ptr<PermissionUsedR
     } else {
         std::shared_ptr<PermissionUsedRecordNode> next = deleteRecordNode->next;
         pre->next = next;
-        next->pre.lock() = pre;
+        next->pre = pre;
     }
 }
 } // namespace AccessToken
