@@ -316,7 +316,6 @@ int32_t PrivacyManagerClient::RecoverSecCompEnhance(std::vector<SecCompEnhanceDa
 
 void PrivacyManagerClient::InitProxy()
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (sam == nullptr) {
@@ -343,15 +342,14 @@ void PrivacyManagerClient::InitProxy()
 
 void PrivacyManagerClient::OnRemoteDiedHandle()
 {
-    {
-        std::lock_guard<std::mutex> lock(proxyMutex_);
-        proxy_ = nullptr;
-    }
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    proxy_ = nullptr;
     InitProxy();
 }
 
 sptr<IPrivacyManager> PrivacyManagerClient::GetProxy()
 {
+    std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
         InitProxy();
     }
