@@ -17,9 +17,11 @@
 #include <unistd.h>
 #include "accesstoken_log.h"
 
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "common_event_manager.h"
 #include "common_event_subscribe_info.h"
 #include "common_event_support.h"
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "permission_record_manager.h"
 
 #include "want.h"
@@ -27,6 +29,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
@@ -85,6 +88,7 @@ void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)
         ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }
 }
+#endif //COMMON_EVENT_SERVICE_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

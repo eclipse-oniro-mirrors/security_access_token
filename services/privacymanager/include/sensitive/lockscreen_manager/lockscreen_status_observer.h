@@ -17,13 +17,16 @@
 #define ACCESS_TOKEN_LOCKSCREEN_STATUS_OBSERVER_H
 
 #include "active_change_response_info.h"
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "common_event_manager.h"
 #include "common_event_support.h"
+#endif //COMMON_EVENT_SERVICE_ENABLE
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 class LockscreenObserver : public OHOS::EventFwk::CommonEventSubscriber {
 public:
     LockscreenObserver(const OHOS::EventFwk::CommonEventSubscribeInfo& info) : CommonEventSubscriber(info)
@@ -37,6 +40,7 @@ public:
 
     void OnReceiveEvent(const OHOS::EventFwk::CommonEventData& event) override;
 };
+#endif //COMMON_EVENT_SERVICE_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
