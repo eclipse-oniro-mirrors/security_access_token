@@ -2708,7 +2708,7 @@ HWTEST_F(AccessTokenKitTest, SetPermDialogCap002, TestSize.Level1)
     std::vector<PermissionListState> permsList;
     PermissionListState tmp = {
         .permissionName = g_infoManagerTestPolicyPrams.permStateList[0].permissionName,
-        .state = 0
+        .state = PASS_OPER
     };
     permsList.emplace_back(tmp);
 

@@ -197,6 +197,8 @@ typedef enum TypePermissionOper {
     INVALID_OPER = 2,
     /** operate is forbidden */
     FORBIDDEN_OPER = 3,
+    /** buttom of permission oper */
+    TYPE_BUTT,
 } PermissionOper;
 
 /**

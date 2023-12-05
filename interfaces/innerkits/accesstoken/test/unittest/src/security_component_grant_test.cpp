@@ -362,7 +362,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
     PermissionOper result;
     PermissionListState perm1 = {
         .permissionName = TEST_PERMISSION,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     std::vector<PermissionListState> permList;
     permList.emplace_back(perm1);

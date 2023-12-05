@@ -15,6 +15,8 @@
 
 #include "permission_list_state_parcel.h"
 #include "parcel_utils.h"
+#include <cstdint>
+#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
@@ -22,7 +24,7 @@ namespace AccessToken {
 bool PermissionListStateParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteString(this->permsState.permissionName));
-    RETURN_IF_FALSE(out.WriteInt32(this->permsState.state));
+    RETURN_IF_FALSE(out.WriteInt32(static_cast<int32_t>(this->permsState.state)));
     return true;
 }
 
@@ -34,7 +36,12 @@ PermissionListStateParcel* PermissionListStateParcel::Unmarshalling(Parcel& in)
     }
 
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->permsState.permissionName), permissionStateParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(permissionStateParcel->permsState.state), permissionStateParcel);
+    int32_t state;
+    RELEASE_IF_FALSE(in.ReadInt32(state), permissionStateParcel);
+    if (state > static_cast<int32_t>(TYPE_BUTT) || state < static_cast<int32_t>(SETTING_OPER)) {
+        return nullptr;
+    }
+    permissionStateParcel->permsState.state = static_cast<PermissionOper>(state);
 
     return permissionStateParcel;
 }

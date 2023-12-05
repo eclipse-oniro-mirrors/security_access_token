@@ -42,6 +42,7 @@
 
 #include <string>
 #include <vector>
+#include "access_token.h"
 
 namespace OHOS {
 namespace Security {
@@ -56,7 +57,7 @@ public:
      * permission request state, for details about the valid values,
      * see the definition of PermissionOper in the access_token.h file.
      */
-    int state;
+    PermissionOper state;
 };
 } // namespace AccessToken
 } // namespace Security

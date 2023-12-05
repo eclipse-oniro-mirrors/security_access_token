@@ -391,7 +391,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level1)
     std::vector<PermissionListState> permsList;
     PermissionListState perm = {
         .permissionName = PERMISSION_NOT_DISPLAYED,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList.emplace_back(perm);
     PermissionGrantInfo info;
@@ -406,15 +406,15 @@ static void SetPermList(std::vector<PermissionListState> &permsList)
 {
     PermissionListState permAll = {
         .permissionName = PERMISSION_ALL,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permFullControl = {
         .permissionName = PERMISSION_FULL_CONTROL,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permNone = {
         .permissionName = PERMISSION_NONE,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList.emplace_back(permAll);
     permsList.emplace_back(permFullControl);
@@ -501,11 +501,11 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
     std::vector<PermissionListState> permsList;
     PermissionListState permAll = {
         .permissionName = PERMISSION_ALL,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     PermissionListState permFullControl = {
         .permissionName = PERMISSION_FULL_CONTROL,
-        .state = -1,
+        .state = SETTING_OPER,
     };
     permsList.emplace_back(permAll);
     permsList.emplace_back(permFullControl);

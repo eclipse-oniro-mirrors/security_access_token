@@ -35,7 +35,7 @@ namespace OHOS {
         std::string testName(reinterpret_cast<const char*>(data), size);
         PermissionListState perm1 = {
             .permissionName = testName,
-            .state = -1,
+            .state = SETTING_OPER,
         };
         permsList1.emplace_back(perm1);
         PermissionGrantInfo info;
