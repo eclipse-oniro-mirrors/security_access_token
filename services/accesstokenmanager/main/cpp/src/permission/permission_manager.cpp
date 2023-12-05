@@ -706,8 +706,9 @@ bool PermissionManager::GetStateWithVaguePermission(std::vector<PermissionListSt
         // back state is SETTING_OPER when dynamic pop-up dialog appears and INVALID_OPER when it doesn't
         GetSelfPermissionState(permsList, reqPermList[locationIndex.backIndex].permsState, apiVersion);
         if (reqPermList[locationIndex.backIndex].permsState.state == DYNAMIC_OPER) {
-            if ((reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER) ||
-                (reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER)) {
+            if ((locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) &&
+                ((reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER) ||
+                (reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER))) {
                 reqPermList[locationIndex.backIndex].permsState.state = SETTING_OPER;
             } else {
                 reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
