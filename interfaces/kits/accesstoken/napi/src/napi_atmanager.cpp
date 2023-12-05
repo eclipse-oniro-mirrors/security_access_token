@@ -1468,7 +1468,8 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     }
 }
 
-void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data)
+void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status status,
+    void* data) __attribute__((no_sanitize("cfi")))
 {
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
     std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
