@@ -964,6 +964,10 @@ HWTEST_F(PermissionRecordManagerTest, GetGlobalSwitchStatus001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(MICROPHONE_PERMISSION_NAME));
@@ -1013,6 +1017,10 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -1031,6 +1039,10 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);

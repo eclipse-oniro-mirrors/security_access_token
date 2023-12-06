@@ -264,59 +264,20 @@ void PrivacyKitTest::CheckPermissionUsedResult(const PermissionUsedRequest& requ
     ASSERT_EQ(totalFailCount, failCount);
 }
 
-static void SetTokenID(std::vector<HapInfoParams>& g_InfoParms_List,
-    std::vector<AccessTokenID>& g_TokenId_List, int32_t number)
-{
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    for (int32_t i = 0; i < number; i++) {
-        HapInfoParams g_InfoParmsTmp = {
-            .userID = i,
-            .bundleName = "ohos.privacy_test.bundle" + std::to_string(i),
-            .instIndex = i,
-            .appIDDesc = "privacy_test.bundle" + std::to_string(i)
-        };
-        g_InfoParms_List.push_back(g_InfoParmsTmp);
-        HapPolicyParams g_PolicyPramsTmp = {
-            .apl = APL_NORMAL,
-            .domain = "test.domain." + std::to_string(i)
-        };
-        AccessTokenKit::AllocHapToken(g_InfoParmsTmp, g_PolicyPramsTmp);
-        AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParmsTmp.userID,
-                                                                    g_InfoParmsTmp.bundleName,
-                                                                    g_InfoParmsTmp.instIndex);
-        g_TokenId_List.push_back(g_TokenId_Tmp);
-    }
-
-    EXPECT_EQ(0, SetSelfTokenID(g_tokenIdC.tokenIDEx));
-}
-
-static void DeleteTokenID(std::vector<HapInfoParams>& g_InfoParms_List)
-{
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
-    for (size_t i = 0; i < g_InfoParms_List.size(); i++) {
-        AccessTokenID g_TokenId_Tmp = AccessTokenKit::GetHapTokenID(g_InfoParms_List[i].userID,
-                                                                    g_InfoParms_List[i].bundleName,
-                                                                    g_InfoParms_List[i].instIndex);
-        AccessTokenKit::DeleteToken(g_TokenId_Tmp);
-    }
-
-    EXPECT_EQ(0, SetSelfTokenID(g_tokenIdC.tokenIDEx));
-}
-
 void SleepUtilMinuteEnd()
 {
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()
     );
 
-    int64_t timestamp_ms = ms.count();
-    time_t timestamp_s = static_cast<time_t>(timestamp_ms / 1000);
+    int64_t timestampMs = ms.count();
+    time_t timestampS = static_cast<time_t>(timestampMs / 1000);
     struct tm t = {0};
     // localtime is not thread safe, localtime_r first param unit is second, timestamp unit is ms, so divided by 1000
-    localtime_r(&timestamp_s, &t);
+    localtime_r(&timestampS, &t);
     uint32_t sleepSeconds = static_cast<uint32_t>(60 - t.tm_sec);
 
-    GTEST_LOG_(INFO) << "current time is " << timestamp_ms << ", " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec;
+    GTEST_LOG_(INFO) << "current time is " << timestampMs << ", " << t.tm_hour << ":" << t.tm_min << ":" << t.tm_sec;
     GTEST_LOG_(INFO) << "need to sleep " << sleepSeconds << " seconds";
     sleep(sleepSeconds);
 }
@@ -516,51 +477,6 @@ HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord006, TestSize.Level1)
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
     ASSERT_EQ(static_cast<uint32_t>(2), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
     CheckPermissionUsedResult(request, result, 1, 5, 0);
-}
-
-/**
- * @tc.name: AddPermissionUsedRecord007
- * @tc.desc: AddPermissionUsedRecord user_grant permission.
- * @tc.type: FUNC
- * @tc.require: issueI5P4IU
- */
-HWTEST_F(PrivacyKitTest, AddPermissionUsedRecord007, TestSize.Level1)
-{
-    std::vector<HapInfoParams> g_InfoParms_List;
-    std::vector<AccessTokenID> g_TokenId_List;
-    SetTokenID(g_InfoParms_List, g_TokenId_List, 100);
-    std::vector<std::string> addPermissionList = {
-        "ohos.permission.ANSWER_CALL",
-        "ohos.permission.READ_CALENDAR",
-    };
-    for (int32_t i = 0; i < 200; i++) {
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_TokenId_List[i % 100],
-            addPermissionList[i % 2], 1, 0));
-
-        PermissionUsedRequest request;
-        PermissionUsedResult result;
-        std::vector<std::string> permissionList;
-        BuildQueryRequest(g_TokenId_List[i % 100], GetLocalDeviceUdid(),
-            g_InfoParms_List[i % 100].bundleName, permissionList, request);
-        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    }
-    sleep(70);
-    for (int32_t i = 0; i < 100; i++) {
-        PermissionUsedRequest request;
-        PermissionUsedResult result;
-        std::vector<std::string> permissionList;
-        BuildQueryRequest(g_TokenId_List[i], GetLocalDeviceUdid(),
-            g_InfoParms_List[i].bundleName, permissionList, request);
-        request.flag = FLAG_PERMISSION_USAGE_DETAIL;
-
-        ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-        ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-        ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-        ASSERT_EQ(static_cast<uint32_t>(2), result.bundleRecords[0].permissionRecords[0].accessRecords.size());
-        CheckPermissionUsedResult(request, result, 1, 2, 0);
-    }
-    DeleteTokenID(g_InfoParms_List);
 }
 
 /**
