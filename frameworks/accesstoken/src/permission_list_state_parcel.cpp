@@ -16,7 +16,6 @@
 #include "permission_list_state_parcel.h"
 #include "parcel_utils.h"
 #include <cstdint>
-#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
