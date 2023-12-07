@@ -42,6 +42,7 @@ ohos_fuzztest("GetRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "//third_party/json/include/",
   ]
 
   sources += [
@@ -84,6 +85,7 @@ ohos_fuzztest("GetRemoteHapTokenInfoStubFuzzTest") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   if (token_sync_enable == true) {

@@ -60,6 +60,7 @@ ohos_fuzztest("RegisterPermStateChangeCallbackStubFuzzTest") {
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
     "//third_party/sqlite/include/",
+    "//third_party/json/include/",
   ]
 
   include_dirs += access_token_impl_include_dirs
@@ -119,6 +120,7 @@ ohos_fuzztest("RegisterPermStateChangeCallbackStubFuzzTest") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   if (hicollie_enable == true) {

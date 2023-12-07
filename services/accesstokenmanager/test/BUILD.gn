@@ -69,6 +69,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "../main/cpp/include/token",
     "//third_party/googletest/include",
     "//third_party/sqlite/include/",
+    "//third_party/json/include/",
   ]
 
   sources = [
@@ -129,6 +130,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 }
 
