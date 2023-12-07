@@ -129,7 +129,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     bool isEmpty;
     std::vector<GenericValues> insertValues;
     {
-        Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
+        Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         isEmpty = persistPendingBufferQueue_.empty();
         persistIsRunning_ = true;
         nextPersistTimestamp_ = TimeUtil::GetCurrentTimestamp() + INTERVAL;
@@ -160,7 +160,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
         }
     }
     {
-        Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
+        Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         if (isEmpty) { // free persistPendingBufferQueue
             std::vector<std::shared_ptr<PermissionUsedRecordNode>> tmpPersistPendingBufferQueue;
             std::swap(tmpPersistPendingBufferQueue, persistPendingBufferQueue_);
@@ -278,7 +278,7 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
     AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     {
-        Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
+        Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
         if (!persistPendingBufferQueue_.empty()) {
             for (const auto& persistHead : persistPendingBufferQueue_) {
                 curFindPos = persistHead->next;
@@ -365,7 +365,7 @@ void PermissionUsedRecordCache::FindTokenIdList(std::set<AccessTokenID>& tokenId
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     {
         // find tokenIdList from recordBuffer
-        Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
+        Utils::UniqueReadGuard<Utils::RWLock> lock1(this->cacheLock1_);
         curFindPos = recordBufferHead_->next;
         while (curFindPos != nullptr) {
             auto next = curFindPos->next;
@@ -375,7 +375,7 @@ void PermissionUsedRecordCache::FindTokenIdList(std::set<AccessTokenID>& tokenId
     }
     {
         // find tokenIdList from BufferQueue
-        Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
+        Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
         if (!persistPendingBufferQueue_.empty()) {
             for (auto persistHead : persistPendingBufferQueue_) {
                 curFindPos = persistHead->next;
