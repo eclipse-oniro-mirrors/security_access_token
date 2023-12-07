@@ -74,7 +74,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
         std::string udid = GetUdidByNodeId(device.networkId);
         if (uuid.empty() || udid.empty()) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
-                uuid.c_str(), ConstantCommon::EncryptDevId(udid).c_str());
+                ConstantCommon::EncryptDevId(uuid).c_str(), ConstantCommon::EncryptDevId(udid).c_str());
             continue;
         }
 
@@ -224,7 +224,7 @@ int32_t SoftBusManager::OpenSession(const std::string &deviceId)
         return Constant::FAILURE;
     }
     std::string networkId = info.deviceId.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 
     // async open session, should waitting for OnSessionOpened event.
     int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), networkId.c_str(),
@@ -290,7 +290,8 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(uuid, DeviceIdType::UNIVERSALLY_UNIQUE_ID, info);
     if (!result) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s", uuid.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s",
+            ConstantCommon::EncryptDevId(uuid).c_str());
     } else {
         std::string dimUuid = info.deviceId.universallyUniqueId;
         if (uuid == dimUuid) {
@@ -344,7 +345,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
     std::string uuid(reinterpret_cast<char *>(info));
     delete[] info;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s",
-        ConstantCommon::EncryptDevId(nodeId).c_str(), uuid.c_str());
+        ConstantCommon::EncryptDevId(nodeId).c_str(), ConstantCommon::EncryptDevId(uuid).c_str());
     return uuid;
 }
 
@@ -356,7 +357,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
+    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), ConstantCommon::EncryptDevId(nodeId).c_str(),
         NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
     if (ret != Constant::SUCCESS) {
         delete[] info;

@@ -53,8 +53,8 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
 
     ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s, uuid: %{public}s, udid: %{public}s",
-        networkId.c_str(),
-        uuid.c_str(),
+        ConstantCommon::EncryptDevId(networkId).c_str(),
+        ConstantCommon::EncryptDevId(uuid).c_str(),
         ConstantCommon::EncryptDevId(udid).c_str());
 
     if (uuid != "" && udid != "") {
@@ -75,8 +75,8 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 
     ACCESSTOKEN_LOG_INFO(LABEL,
         "networkId: %{public}s,  uuid: %{public}s, udid: %{public}s",
-        networkId.c_str(),
-        uuid.c_str(),
+        ConstantCommon::EncryptDevId(networkId).c_str(),
+        ConstantCommon::EncryptDevId(uuid).c_str(),
         ConstantCommon::EncryptDevId(udid).c_str());
 
     if (uuid != "" && udid != "") {
@@ -108,13 +108,13 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 void SoftBusDeviceConnectionListener::OnDeviceReady(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 
 void SoftBusDeviceConnectionListener::OnDeviceChanged(const DmDeviceInfo &info)
 {
     std::string networkId = info.deviceId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", networkId.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 }  // namespace AccessToken
 }  // namespace Security
