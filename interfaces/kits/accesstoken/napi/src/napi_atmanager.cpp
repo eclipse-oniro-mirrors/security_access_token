@@ -69,6 +69,7 @@ const std::string RESULT_KEY = "ohos.user.grant.permission.result";
 const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 const std::string ORI_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
+const std::string ORI_PERMISSION_MANAGER_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const std::string TOKEN_KEY = "ohos.ability.params.token";
 const std::string CALLBACK_KEY = "ohos.ability.params.callback";
 
@@ -1029,6 +1030,24 @@ static napi_value GetContext(const napi_env &env, const napi_value &value,
     }
 }
 
+static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
+    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext, Ace::UIContent **UIContent)
+{
+    if (abilityContext != nullptr) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from abilityContext");
+        *UIContent = abilityContext->GetUIContent();
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from uiExtensionContext");
+        *UIContent = uiExtensionContext->GetUIContent();
+    }
+    if (*UIContent == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
+        return false;
+    }
+
+    return true;
+}
+
 bool NapiAtManager::ParseRequestPermissionFromUser(
     const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext)
 {
@@ -1054,6 +1073,12 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
+    }
+
+    // if uiContent can't get, uIExtensionComponent can't create too, so start the old ServiceExtension
+    if (!GetUIContentFromContext(asyncContext.abilityContext,
+        asyncContext.uiExtensionContext, &(asyncContext.UIContent))) {
+        asyncContext.oriPmFlag = true;
     }
 
     // argv[1] : permissionList
@@ -1198,7 +1223,7 @@ static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, RequestAsyn
     int32_t requestCode)
 {
     AAFwk::Want want;
-    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
+    want.SetElementName(ORI_PERMISSION_MANAGER_BUNDLE_NAME, ORI_PERMISSION_MANAGER_ABILITY_NAME);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
@@ -1366,33 +1391,8 @@ void RequestAsyncContext::OnDestroy()
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
 }
 
-static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
-    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext, Ace::UIContent **UIContent)
-{
-    if (abilityContext != nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from abilityContext");
-        *UIContent = abilityContext->GetUIContent();
-    } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from uiExtensionContext");
-        *UIContent = uiExtensionContext->GetUIContent();
-    }
-    if (*UIContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
-        return false;
-    }
-
-    return true;
-}
-
 static int32_t StartUIExtension(const napi_env& env, RequestAsyncContext* asyncContext)
 {
-    if (!GetUIContentFromContext(asyncContext->abilityContext,
-        asyncContext->uiExtensionContext, &(asyncContext->UIContent))) {
-        std::string errMsg = "can't get UIContent from context";
-        NAPI_CALL_BASE(env,
-            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), 0);
-    }
-
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -1456,7 +1456,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     }
 
     // temporary solution, wait for exchange to ui extension in blue
-    if (asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
+    if ((asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) || (asyncContext->oriPmFlag)) {
         StartServiceExtension(remoteObject, asyncContext, curRequestCode_);
     } else {
         asyncContext->sessionId = StartUIExtension(env, asyncContext);

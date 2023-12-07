@@ -141,6 +141,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     Ace::UIContent *UIContent = nullptr;
     int32_t sessionId = 0;
+    bool oriPmFlag = false;
 };
 
 struct ResultCallback {
