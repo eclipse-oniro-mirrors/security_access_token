@@ -35,6 +35,7 @@
 #ifndef INTERFACE_INNER_KITS_PRIVACY_SEC_COMP_ENHANCE_DATA_H
 #define INTERFACE_INNER_KITS_PRIVACY_SEC_COMP_ENHANCE_DATA_H
 
+#include "access_token.h"
 #include "iremote_object.h"
 
 namespace OHOS {
@@ -52,6 +53,10 @@ struct SecCompEnhanceData {
      * pid for which used security component.
      */
     int32_t pid;
+    /**
+     * token id for which used security component.
+     */
+    AccessTokenID token;
     /**
      * challenge for register.
      */
