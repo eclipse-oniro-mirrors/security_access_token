@@ -579,7 +579,7 @@ bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
     int32_t callingUid = IPCSkeleton::GetCallingUid();
-    return callingUid == SYSTEM_UID || callingUid == ROOT_UID;
+    return callingUid == ROOT_UID;
 }
 
 bool AccessTokenManagerStub::IsFoundationCalling() const
