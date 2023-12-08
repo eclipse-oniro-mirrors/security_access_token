@@ -84,7 +84,7 @@ int RemoteCommandManager::ExecuteCommand(const std::string &udid, const std::sha
     }
     std::string uniqueId = command->remoteProtocol_.uniqueId;
     ACCESSTOKEN_LOG_INFO(LABEL, "start with udid: %{public}s , uniqueId: %{public}s ",
-        ConstantCommon::EncryptDevId(udid).c_str(), uniqueId.c_str());
+        ConstantCommon::EncryptDevId(udid).c_str(), ConstantCommon::EncryptDevId(uniqueId).c_str());
 
     std::shared_ptr<RemoteCommandExecutor> executor = GetOrCreateRemoteCommandExecutor(udid);
     if (executor == nullptr) {
