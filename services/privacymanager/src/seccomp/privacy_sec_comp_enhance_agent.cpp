@@ -120,6 +120,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     SecCompEnhanceData enhance;
     enhance.callback = enhanceData.callback;
     enhance.pid = pid;
+    enhance.token = IPCSkeleton::GetCallingTokenID();
     enhance.challenge = enhanceData.challenge;
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "register sec comp enhance success, pid %{public}d, total %{public}u.",
