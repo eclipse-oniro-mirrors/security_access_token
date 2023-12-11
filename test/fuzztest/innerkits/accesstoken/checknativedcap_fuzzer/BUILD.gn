@@ -29,6 +29,7 @@ ohos_fuzztest("CheckNativeDCapFuzzTest") {
   sources = [ "checknativedcap_fuzzer.cpp" ]
 
   deps = [
+    "${access_token_path}/frameworks/permission_code:accesstoken_permission_map",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
   ]
 

@@ -20,7 +20,7 @@
 using namespace testing::ext;
 using namespace OHOS::Security;
 
-static const uint32_t ACCESS_TOKEN_UID = 3081;
+static const uint32_t ACCESS_TOKEN_UID = 3020;
 static const uint32_t MAX_PROCESS_SIZE = 500; // same as kernel size
 static uint32_t g_tokeId = 5000;
 static const uint32_t SIZE = 8;
@@ -109,8 +109,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel005, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
-    EXPECT_EQ(EEXIST, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
 }
@@ -156,6 +155,33 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level1)
     for (uint32_t i = 0; i < tokenList.size(); i++) {
         RemovePermissionFromKernel(tokenList[i]);
     }
+    setuid(g_gelfUid);
+}
+
+
+/**
+ * @tc.name: AddPermissionToKernel008
+ * @tc.desc: AddPermissionToKernel with update permission.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level1)
+{
+    setuid(ACCESS_TOKEN_UID);
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+
+    ASSERT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
+    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+
+    // update with less permission(size is 0)
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, 0));
+    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+
+    // update with more permission
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+    ASSERT_EQ(g_statusList[0] == PERMISSION_GRANTED, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+
+    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
 }
 

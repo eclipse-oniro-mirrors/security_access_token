@@ -58,6 +58,7 @@ if (is_standard_system) {
       "main/cpp/include/token",
       "main/cpp/include/permission",
       "main/cpp/include/database",
+      "//third_party/json/include",
       "//third_party/sqlite/include/",
     ]
 
@@ -105,8 +106,10 @@ if (is_standard_system) {
     deps = [
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/permission_code:accesstoken_permission_map",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
       "${access_token_path}/services/accesstokenmanager:permission_definition_config",
       "${access_token_path}/services/common:accesstoken_service_common",
@@ -123,6 +126,7 @@ if (is_standard_system) {
       "init:libbegetutil",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
     ]
 
     if (hicollie_enable == true) {

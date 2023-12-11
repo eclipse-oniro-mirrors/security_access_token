@@ -1124,7 +1124,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
         .permissionName = "ohos.permission.CAMERA",
         .isGeneral = true,
         .resDeviceID = {"local"},
-        .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_GRANTED},
+        .grantStatus = {OHOS::Security::AccessToken::PermissionState::PERMISSION_DENIED},
         .grantFlags = {PERMISSION_GRANTED_BY_POLICY | PERMISSION_DEFAULT_FLAG}
     };
     OHOS::Security::AccessToken::PermissionStateFull infoManagerTestState2 = {
@@ -1150,6 +1150,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState004, TestSize.Level0
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, infoManagerTestPolicyPrams);
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
+
     int ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
 
