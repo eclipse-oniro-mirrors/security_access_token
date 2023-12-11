@@ -27,6 +27,7 @@ ohos_shared_library("libabilityaccessctrl") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/token_callback/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${ace_engine_path}/interfaces/inner_api/ace",
     "../common/include",
     "napi/include",
   ]
@@ -50,7 +51,6 @@ ohos_shared_library("libabilityaccessctrl") {
     "ability_runtime:abilitykit_native",
     "ability_runtime:napi_base_context",
     "ability_runtime:ui_extension",
-    "ace_engine:ace_uicontent",
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",

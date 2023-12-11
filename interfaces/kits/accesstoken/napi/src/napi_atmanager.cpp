@@ -26,10 +26,6 @@
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "config_policy_utils.h"
-#include "json_parser.h"
-#endif
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_base_context.h"
@@ -1002,9 +998,7 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
-static napi_value GetContext(const napi_env &env, const napi_value &value,
-    std::shared_ptr<AbilityRuntime::AbilityContext> &abilityContext,
-    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext)
+static napi_value GetContext(const napi_env &env, const napi_value &value, RequestAsyncContext& asyncContext)
 {
     bool stageMode = false;
     napi_status status = OHOS::AbilityRuntime::IsStageContext(env, value, stageMode);
@@ -1017,11 +1011,14 @@ static napi_value GetContext(const napi_env &env, const napi_value &value,
             ACCESSTOKEN_LOG_ERROR(LABEL, "get context failed");
             return nullptr;
         }
-        abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-        if (abilityContext == nullptr) {
+        asyncContext.abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
+        if (asyncContext.abilityContext != nullptr) {
+            asyncContext.uiAbilityFlag = true;
+        } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "convert to ability context failed");
-            uiExtensionContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
-            if (uiExtensionContext == nullptr) {
+            asyncContext.uiExtensionContext =
+                AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIExtensionContext>(context);
+            if (asyncContext.uiExtensionContext == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "convert to ui extension context failed");
                 return nullptr;
             }
@@ -1030,16 +1027,10 @@ static napi_value GetContext(const napi_env &env, const napi_value &value,
     }
 }
 
-static bool GetUIContentFromContext(std::shared_ptr<AbilityRuntime::AbilityContext>& abilityContext,
-    std::shared_ptr<AbilityRuntime::UIExtensionContext> &uiExtensionContext, Ace::UIContent **UIContent)
+static bool GetUIContentFromContext(
+    const std::shared_ptr<AbilityRuntime::UIExtensionContext>& uiExtensionContext, Ace::UIContent** UIContent)
 {
-    if (abilityContext != nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from abilityContext");
-        *UIContent = abilityContext->GetUIContent();
-    } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "UIContent get from uiExtensionContext");
-        *UIContent = uiExtensionContext->GetUIContent();
-    }
+    *UIContent = uiExtensionContext->GetUIContent();
     if (*UIContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
         return false;
@@ -1068,17 +1059,20 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
     std::string errMsg;
 
     // argv[0] : context : AbilityContext
-    if (GetContext(env, argv[0], asyncContext.abilityContext, asyncContext.uiExtensionContext) == nullptr) {
+    if (GetContext(env, argv[0], asyncContext) == nullptr) {
         errMsg = GetParamErrorMsg("context", "Context");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
 
-    // if uiContent can't get, uIExtensionComponent can't create too, so start the old ServiceExtension
-    if (!GetUIContentFromContext(asyncContext.abilityContext,
-        asyncContext.uiExtensionContext, &(asyncContext.UIContent))) {
-        asyncContext.oriPmFlag = true;
+    if (!asyncContext.uiAbilityFlag) {
+        if (!GetUIContentFromContext(asyncContext.uiExtensionContext, &(asyncContext.UIContent))) {
+            errMsg = "get UIContent failed";
+            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(
+                env, JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, errMsg)), false);
+            return false;
+        }
     }
 
     // argv[1] : permissionList
@@ -1425,7 +1419,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
 
     AccessTokenID tokenID = 0;
-    if (asyncContext->abilityContext != nullptr) {
+    if (asyncContext->uiAbilityFlag) {
         tokenID = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
     } else {
         tokenID = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
@@ -1454,17 +1448,23 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         asyncContext->result = JsErrorCode::JS_ERROR_INNER;
         return;
     }
-
-    // temporary solution, wait for exchange to ui extension in blue
-    if ((asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) || (asyncContext->oriPmFlag)) {
+    if (asyncContext->uiAbilityFlag) {
         StartServiceExtension(remoteObject, asyncContext, curRequestCode_);
     } else {
+        // service extension dialog
+        if ((asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "not support for UIExtension");
+            asyncContext->needDynamicRequest = false;
+            asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+            return;
+        }
         asyncContext->sessionId = StartUIExtension(env, asyncContext);
         if (asyncContext->sessionId == 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "create component failed, sessionId is 0");
-        } else {
-            ACCESSTOKEN_LOG_INFO(LABEL, "create component success, sessionId is %{public}d", asyncContext->sessionId);
+            asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+            return;
         }
+        ACCESSTOKEN_LOG_INFO(LABEL, "create component success, sessionId is %{public}d", asyncContext->sessionId);
     }
 }
 
@@ -1478,7 +1478,7 @@ void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status
         callbackPtr.release();
         return;
     }
-    if (asyncContext->permissionsState.empty()) {
+    if ((asyncContext->permissionsState.empty()) && (asyncContext->result == JsErrorCode::JS_OK)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantResults empty");
         asyncContext->result = JsErrorCode::JS_ERROR_INNER;
     }
@@ -1486,7 +1486,9 @@ void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status
         env, asyncContext->permissionList, asyncContext->permissionsState);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "wrap requestResult failed");
-        asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        if (asyncContext->result == JsErrorCode::JS_OK) {
+            asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        }
     } else {
         asyncContext->requestResult = requestResult;
     }
