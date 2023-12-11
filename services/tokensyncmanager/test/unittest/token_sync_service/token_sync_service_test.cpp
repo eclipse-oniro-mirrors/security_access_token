@@ -40,9 +40,9 @@
 #include "dm_device_info.h"
 #include "i_token_sync_manager.h"
 #include "remote_command_manager.h"
-#include "session.h"
+#include "socket.h"
 #include "soft_bus_device_connection_listener.h"
-#include "soft_bus_session_listener.h"
+#include "soft_bus_socket_listener.h"
 #include "token_setproc.h"
 #include "token_sync_manager_stub.h"
 
@@ -84,6 +84,7 @@ static DmDeviceInfo g_devInfo = {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
 static constexpr int MAX_RETRY_TIMES = 10;
+static constexpr int32_t DEVICEID_MAX_LEN = 256;
 }
 
 TokenSyncServiceTest::TokenSyncServiceTest()
@@ -173,7 +174,7 @@ void SendTaskThread()
     int sendLen = 0x1000;
     CompressMock(sendJson, sendBuffer, sendLen);
 
-    SoftBusSessionListener::OnBytesReceived(1, sendBuffer, sendLen);
+    SoftBusSocketListener::OnClientBytes(1, sendBuffer, sendLen);
     free(sendBuffer);
 }
 
@@ -609,16 +610,17 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
     CompressMock(recvJson, recvBuffer, recvLen);
 
     ResetSendMessFlagMock();
-    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    int count = 0;
-    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
-        sleep(1);
-        count++;
-    }
+    g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo); // create channel
 
-    ResetSendMessFlagMock();
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-    count = 0;
+    char networkId[DEVICEID_MAX_LEN + 1];
+    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
+
+    PeerSocketInfo info = {
+        .networkId = networkId,
+    };
+    SoftBusSocketListener::OnBind(1, info);
+    SoftBusSocketListener::OnClientBytes(1, recvBuffer, recvLen);
+    int count = 0;
     while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;
@@ -836,7 +838,7 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo008, TestSize.Level1)
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
 
     ResetSendMessFlagMock();
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
+    SoftBusSocketListener::OnClientBytes(1, recvBuffer, recvLen);
 
     int count = 0;
     while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
@@ -989,15 +991,15 @@ HWTEST_F(TokenSyncServiceTest, SyncNativeTokens004, TestSize.Level1)
 
     ResetSendMessFlagMock();
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo);
-    int count = 0;
-    while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
-        sleep(1);
-        count++;
-    }
+    char networkId[DEVICEID_MAX_LEN + 1];
+    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
 
-    ResetSendMessFlagMock();
-    SoftBusSessionListener::OnBytesReceived(1, recvBuffer, recvLen);
-    count = 0;
+    PeerSocketInfo info = {
+        .networkId = networkId,
+    };
+    SoftBusSocketListener::OnBind(1, info);
+    SoftBusSocketListener::OnClientBytes(1, recvBuffer, recvLen);
+    int count = 0;
     while (!GetSendMessFlagMock() && count < MAX_RETRY_TIMES) {
         sleep(1);
         count++;

@@ -28,7 +28,7 @@
 #include "accesstoken_log.h"
 #include "nlohmann/json.hpp"
 #include "rpc_channel.h"
-#include "session.h"
+#include "socket.h"
 #include "random.h"
 
 namespace OHOS {
@@ -70,13 +70,13 @@ public:
     /**
      * @brief Handle data received. This interface only use for soft bus channel.
      *
-     * @param session Session with peer device.
+     * @param socket Session with peer device.
      * @param bytes Data sent from the peer device.
      * @param length Data length sent from the peer device.
      * @since 1.0
      * @version 1.0
      */
-    void HandleDataReceived(int session, const unsigned char *bytes, int length) override;
+    void HandleDataReceived(int socket, const unsigned char *bytes, int length) override;
 
     /**
      * @brief Close rpc connection when no data is being transmitted. it will run in a delayed task.
@@ -149,17 +149,17 @@ private:
     /**
      * @brief transfer response data to soft bus.
      *
-     * @param session response session id
+     * @param socket response socket id
      * @param bytes data array to transfer
      * @param bytesLength data length
      * @return The execute result, SUCCESS: 0; FAILURE: -1.
      * @since 1.0
      * @version 1.0
      */
-    int SendResponseBytes(int session, const unsigned char *bytes, const int bytesLength);
+    int SendResponseBytes(int socket, const unsigned char *bytes, const int bytesLength);
 
     /**
-     * @brief enforce session is available. if session is opened, reopen it.
+     * @brief enforce socket is available. if socket is opened, reopen it.
      *
      * @return The execute result, SUCCESS: 0; FAILURE: -1.
      * @since 1.0
@@ -168,7 +168,7 @@ private:
     int CheckSessionMayReopenLocked();
 
     /**
-     * @brief check session is available.
+     * @brief check socket is available.
      *
      * @return The execute result, available: true, otherwise: false.
      * @since 1.0
@@ -196,7 +196,7 @@ private:
      * @version 1.0
      */
     void HandleRequest(
-        int session, const std::string &id, const std::string &commandName, const std::string &jsonPayload);
+        int socket, const std::string &id, const std::string &commandName, const std::string &jsonPayload);
 
     /**
      * @brief response callback for HandleDataReceived
@@ -284,14 +284,14 @@ private:
     // connection closing state. true: in closing, false: otherwise
     bool isDelayClosing_;
 
-    // soft bus session mutex
-    std::mutex sessionMutex_;
+    // soft bus socket mutex
+    std::mutex socketMutex_;
 
-    // soft bus session id, -1 for invalid session id.
-    int session_;
+    // soft bus socket id, -1 for invalid socket id.
+    int socketFd_;
 
-    // soft bus session busy flag, true: busy, false: otherwise
-    bool isSessionUsing_;
+    // soft bus socket busy flag, true: busy, false: otherwise
+    bool isSocketUsing_;
 
     // communication callbacks map. key: unique message id, value: response callback.
     std::map<std::string, std::function<void(std::string)>> callbacks_;

@@ -238,7 +238,7 @@ std::shared_ptr<RemoteCommandExecutor> RemoteCommandManager::GetOrCreateRemoteCo
 }
 
 /**
- * caller: session listener(onBytesReceived), device listener(offline)
+ * caller: session listener(OnBytes)
  */
 std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::string &nodeId)
 {

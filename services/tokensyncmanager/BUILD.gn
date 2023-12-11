@@ -75,7 +75,7 @@ ohos_shared_library("token_sync_manager_service") {
     "src/remote/soft_bus_channel.cpp",
     "src/remote/soft_bus_device_connection_listener.cpp",
     "src/remote/soft_bus_manager.cpp",
-    "src/remote/soft_bus_session_listener.cpp",
+    "src/remote/soft_bus_socket_listener.cpp",
     "src/service/token_sync_manager_service.cpp",
     "src/service/token_sync_manager_stub.cpp",
   ]

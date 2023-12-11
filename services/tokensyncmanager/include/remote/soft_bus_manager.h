@@ -21,13 +21,11 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
-#include "accesstoken_log.h"
 #include "device_manager.h"
 #include "remote_command_executor.h"
-#include "session.h"
-#include "soft_bus_device_connection_listener.h"
-#include "soft_bus_session_listener.h"
+#include "socket.h"
 
 namespace OHOS {
 namespace Security {
@@ -69,17 +67,17 @@ public:
      * @since 1.0
      * @version 1.0
      */
-    int OpenSession(const std::string &deviceUdid);
+    int BindService(const std::string &deviceUdid);
 
     /**
-     * @brief Close session with the peer device.
+     * @brief Close socket with the peer device.
      *
-     * @param session The session id need to close.
+     * @param socketFd The socket id need to close.
      * @return 0 if close successfully, otherwise return -1(Constant::FAILURE).
      * @since 1.0
      * @version 1.0
      */
-    int CloseSession(int sessionId);
+    int CloseSocket(int socketFd);
 
     /**
      * @brief Get UUID(networkId) by deviceNodeId.
@@ -101,13 +99,17 @@ public:
      */
     std::string GetUniqueDeviceIdByNodeId(const std::string &deviceNodeId);
 
+    bool GetNetworkIdBySocket(const int32_t socket, std::string& networkId);
+
 public:
     static const std::string SESSION_NAME;
 
 private:
     SoftBusManager();
     int DeviceInit();
-    int SessionInit();
+    bool CheckAndCopyStr(char* dest, uint32_t destLen, const std::string& src);
+    int32_t InitSocketAndListener(const std::string& networkId, ISocketListener& listener);
+    int32_t ServiceSocketInit();
 
     /**
      * @brief Fulfill local device info
@@ -129,8 +131,6 @@ private:
     std::string GetUuidByNodeId(const std::string &nodeId) const;
     std::string GetUdidByNodeId(const std::string &nodeId) const;
 
-    const static std::string TOKEN_SYNC_PACKAGE_NAME;
-
     // soft bus session server opened flag
     bool isSoftBusServiceBindSuccess_;
     std::atomic_bool inited_;
@@ -140,6 +140,13 @@ private:
 
     // fulfill thread mutex
     std::mutex fulfillMutex_;
+
+    // soft bus service socket fd
+    int32_t socketFd_ = -1;
+
+    // soft bus client socket with networkId map
+    std::mutex clientSocketMutex_;
+    std::map<int32_t, std::string> clientSocketMap_;
 };
 }  // namespace AccessToken
 }  // namespace Security
