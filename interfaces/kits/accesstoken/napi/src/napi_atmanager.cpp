@@ -1222,6 +1222,11 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
 static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, RequestAsyncContext* asyncContext,
     int32_t requestCode)
 {
+    const std::string WINDOW_RECTANGLE_LEFT_KEY = { "ohos.ability.params.request.left" };
+    const std::string WINDOW_RECTANGLE_TOP_KEY = { "ohos.ability.params.request.top" };
+    const std::string WINDOW_RECTANGLE_HEIGHT_KEY = { "ohos.ability.params.request.height" };
+    const std::string WINDOW_RECTANGLE_WIDTH_KEY = { "ohos.ability.params.request.width" };
+    const std::string REQUEST_TOKEN_KEY = { "ohos.ability.params.request.token" };
     AAFwk::Want want;
     want.SetElementName(ORI_PERMISSION_MANAGER_BUNDLE_NAME, ORI_PERMISSION_MANAGER_ABILITY_NAME);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -1229,8 +1234,16 @@ static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, RequestAsyn
     want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
     want.SetParam(CALLBACK_KEY, remoteObject);
 
-    int32_t err = asyncContext->abilityContext->StartAbility(want, requestCode);
-    ACCESSTOKEN_LOG_INFO(LABEL, "End calling StartExtension. ret=%{public}d", err);
+    int32_t left, top, width, height;
+    asyncContext->abilityContext->GetWindowRect(left, top, width, height);
+    want.SetParam(WINDOW_RECTANGLE_LEFT_KEY, left);
+    want.SetParam(WINDOW_RECTANGLE_TOP_KEY, top);
+    want.SetParam(WINDOW_RECTANGLE_WIDTH_KEY, width);
+    want.SetParam(WINDOW_RECTANGLE_HEIGHT_KEY, height);
+    want.SetParam(REQUEST_TOKEN_KEY, asyncContext->abilityContext->GetToken());
+    int32_t err = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
+        want, asyncContext->abilityContext->GetToken());
+    ACCESSTOKEN_LOG_INFO(LABEL, "End calling RequestDialogService. ret=%{public}d", err);
 }
 
 bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions,
