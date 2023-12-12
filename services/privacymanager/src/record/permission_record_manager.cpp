@@ -472,6 +472,7 @@ void PermissionRecordManager::SavePermissionRecords(
 void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_MICROPHONE) {
             continue;
@@ -483,6 +484,7 @@ void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_CAMERA) {
             continue;
