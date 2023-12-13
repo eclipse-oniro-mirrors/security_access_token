@@ -69,6 +69,12 @@ const std::string ORI_PERMISSION_MANAGER_ABILITY_NAME = "com.ohos.permissionmana
 const std::string TOKEN_KEY = "ohos.ability.params.token";
 const std::string CALLBACK_KEY = "ohos.ability.params.callback";
 
+const std::string WINDOW_RECTANGLE_LEFT_KEY = "ohos.ability.params.request.left";
+const std::string WINDOW_RECTANGLE_TOP_KEY = "ohos.ability.params.request.top";
+const std::string WINDOW_RECTANGLE_HEIGHT_KEY = "ohos.ability.params.request.height";
+const std::string WINDOW_RECTANGLE_WIDTH_KEY = "ohos.ability.params.request.width";
+const std::string REQUEST_TOKEN_KEY = "ohos.ability.params.request.token";
+
 static int32_t GetJsErrorCode(uint32_t errCode)
 {
     int32_t jsCode;
@@ -1216,11 +1222,6 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
 static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, RequestAsyncContext* asyncContext,
     int32_t requestCode)
 {
-    const std::string WINDOW_RECTANGLE_LEFT_KEY = { "ohos.ability.params.request.left" };
-    const std::string WINDOW_RECTANGLE_TOP_KEY = { "ohos.ability.params.request.top" };
-    const std::string WINDOW_RECTANGLE_HEIGHT_KEY = { "ohos.ability.params.request.height" };
-    const std::string WINDOW_RECTANGLE_WIDTH_KEY = { "ohos.ability.params.request.width" };
-    const std::string REQUEST_TOKEN_KEY = { "ohos.ability.params.request.token" };
     AAFwk::Want want;
     want.SetElementName(ORI_PERMISSION_MANAGER_BUNDLE_NAME, ORI_PERMISSION_MANAGER_ABILITY_NAME);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
