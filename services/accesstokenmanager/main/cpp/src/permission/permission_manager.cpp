@@ -903,7 +903,6 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
 
 void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy)
 {
-    RemovePermFromKernel(tokenID);
     if (policy == nullptr) {
         return;
     }
