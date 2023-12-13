@@ -33,10 +33,12 @@
 #include "ipc_skeleton.h"
 #include "parameter.h"
 #include "permission_definition_cache.h"
+#include "permission_map.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -409,6 +411,9 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
+
+    // set to kernel(grant/revoke)
+    SetPermToKernel(tokenID, permissionName, isGranted);
 
     // DFX.
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
@@ -867,6 +872,9 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
 
     NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
+
+    // clear
+    AddPermToKernel(tokenID, permPolicySet);
     return RET_SUCCESS;
 }
 
@@ -891,6 +899,39 @@ std::string PermissionManager::TransferPermissionDefToString(const PermissionDef
     infos.append(R"(, "availableType": )" + std::to_string(inPermissionDef.availableType));
     infos.append("}");
     return infos;
+}
+
+void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy)
+{
+    RemovePermFromKernel(tokenID);
+    if (policy == nullptr) {
+        return;
+    }
+    std::vector<uint32_t> opCodeList;
+    std::vector<int32_t> statusList;
+    policy->GetPermissionStateList(opCodeList, statusList);
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList.data(), statusList.data(), statusList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "AddPermissionToKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+}
+
+void PermissionManager::RemovePermFromKernel(AccessTokenID tokenID)
+{
+    int32_t ret = RemovePermissionFromKernel(tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "RemovePermissionFromKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+}
+
+void PermissionManager::SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted)
+{
+    uint32_t code;
+    if (!TransferPermissionToOpcode(permissionName, code)) {
+        return;
+    }
+    int32_t ret = SetPermissionToKernel(tokenID, code, isGranted);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
+        tokenID, permissionName.c_str(), ret);
 }
 } // namespace AccessToken
 } // namespace Security

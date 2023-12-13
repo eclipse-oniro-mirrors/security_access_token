@@ -65,6 +65,7 @@ if (is_standard_system) {
       ":libtokenid_sdk",
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+      "${access_token_path}/frameworks/permission_code:accesstoken_permission_map",
       "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 

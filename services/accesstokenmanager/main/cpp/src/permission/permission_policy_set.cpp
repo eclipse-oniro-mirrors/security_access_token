@@ -22,6 +22,7 @@
 #include "access_token_db.h"
 #include "access_token_error.h"
 #include "permission_definition_cache.h"
+#include "permission_map.h"
 #include "permission_validator.h"
 #include "data_translator.h"
 #include "token_field_const.h"
@@ -439,6 +440,18 @@ void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::stri
     }
     for (const auto& permission : secCompGrantedPermList_) {
         permissionList.emplace_back(permission);
+    }
+}
+
+void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<int32_t>& statusList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& state : permStateList_) {
+        uint32_t code;
+        if (TransferPermissionToOpcode(state.permissionName, code)) {
+            opCodeList.emplace_back(code);
+            statusList.emplace_back(state.grantStatus[0]);
+        }
     }
 }
 

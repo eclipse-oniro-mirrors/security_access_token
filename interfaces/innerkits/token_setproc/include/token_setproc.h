@@ -22,8 +22,8 @@
 extern "C" {
 #endif
 #define ACCESS_TOKEN_OK 0
-#define ACCESS_TOKEN_PARAM_INVALID (1)
-#define ACCESS_TOKEN_OPEN_ERROR (2)
+#define ACCESS_TOKEN_PARAM_INVALID (-1)
+#define ACCESS_TOKEN_OPEN_ERROR (-2)
 
 uint64_t GetSelfTokenID();
 

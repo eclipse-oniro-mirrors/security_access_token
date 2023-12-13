@@ -23,8 +23,8 @@
 #include "constant_common.h"
 #include "data_validator.h"
 #include "hap_token_info.h"
-#include "hisysevent.h"
 #include "permission_def.h"
+#include "permission_map.h"
 #include "perm_state_change_callback_customize.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
@@ -209,7 +209,14 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return PERMISSION_DENIED;
     }
-    return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+
+    // get perm from kernel
+    uint32_t code;
+    if (!TransferPermissionToOpcode(permissionName, code)) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
+    bool isGranted = GetPermissionFromKernel(tokenID, code);
+    return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
 }
 
 int AccessTokenKit::VerifyAccessToken(

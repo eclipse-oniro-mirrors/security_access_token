@@ -217,6 +217,9 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     if (idRemoved != INVALID_TOKENID) {
         RemoveHapTokenInfo(idRemoved);
     }
+    // add hap to kernel
+    std::shared_ptr<PermissionPolicySet> policySet = info->GetHapInfoPermissionPolicySet();
+    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
 
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP", HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
@@ -251,6 +254,10 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
 
     ACCESSTOKEN_LOG_INFO(LABEL, "token info is added %{public}u.", id);
     nativeTokenInfoMap_[id] = info;
+
+    // add native to kernel
+    std::shared_ptr<PermissionPolicySet> policySet = info->GetNativeInfoPermissionPolicySet();
+    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
 
     return RET_SUCCESS;
 }
@@ -381,6 +388,8 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token %{public}u ok!", id);
     RemoveHapTokenInfoFromDb(id);
     PermissionStateNotify(info, id);
+    // remove hap to kernel
+    PermissionManager::GetInstance().RemovePermFromKernel(id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
 #endif
@@ -422,6 +431,8 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove native token %{public}u ok!", id);
     RefreshTokenInfoIfNeeded();
+    // remove native to kernel
+    PermissionManager::GetInstance().RemovePermFromKernel(id);
     return RET_SUCCESS;
 }
 
@@ -644,6 +655,9 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
+    // update hap to kernel
+    std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetHapInfoPermissionPolicySet();
+    PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
     RefreshTokenInfoIfNeeded();
     return RET_SUCCESS;
 }
@@ -719,6 +733,8 @@ int AccessTokenInfoManager::UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTok
         infoPtr->SetTokenBaseInfo(hapSync.baseInfo);
         infoPtr->SetPermissionPolicySet(newPermPolicySet);
     }
+    // update remote hap to kernel
+    PermissionManager::GetInstance().AddPermToKernel(mapID, newPermPolicySet);
     return RET_SUCCESS;
 }
 

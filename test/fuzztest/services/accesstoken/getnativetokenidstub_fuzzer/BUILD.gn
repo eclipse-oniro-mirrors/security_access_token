@@ -34,7 +34,9 @@ ohos_fuzztest("GetNativeTokenIdStubFuzzTest") {
   ]
 
   deps = [
+    "${access_token_path}/frameworks/permission_code:accesstoken_permission_map",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
