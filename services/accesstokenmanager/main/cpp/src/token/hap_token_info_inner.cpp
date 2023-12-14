@@ -55,7 +55,7 @@ HapTokenInfoInner::HapTokenInfoInner(AccessTokenID id,
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
     }
     tokenInfoBasic_.bundleName = info.bundleName;
-    tokenInfoBasic_.apiVersion = info.apiVersion;
+    tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
     tokenInfoBasic_.instIndex = info.instIndex;
     tokenInfoBasic_.dlpType = info.dlpType;
     tokenInfoBasic_.appID = info.appIDDesc;
@@ -90,7 +90,7 @@ void HapTokenInfoInner::Update(
     const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy, bool isSystemApp)
 {
     tokenInfoBasic_.appID = appIDDesc;
-    tokenInfoBasic_.apiVersion = apiVersion;
+    tokenInfoBasic_.apiVersion = GetApiVersion(apiVersion);
     tokenInfoBasic_.apl = policy.apl;
     if (isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
@@ -281,6 +281,18 @@ bool HapTokenInfoInner::IsPermDialogForbidden() const
 void HapTokenInfoInner::SetPermDialogForbidden(bool isForbidden)
 {
     isPermDialogForbidden_ = isForbidden;
+}
+
+int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
+{
+    uint32_t apiSize = 3; // 3: api verision length
+    std::string apiStr = std::to_string(apiVersion);
+    uint32_t inputSize = apiStr.length();
+    if (inputSize <= apiSize) {
+        return apiVersion;
+    }
+    std::string api = apiStr.substr(inputSize - apiSize);
+    return std::stoi(api);
 }
 
 void HapTokenInfoInner::ToString(std::string& info) const

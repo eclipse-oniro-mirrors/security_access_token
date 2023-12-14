@@ -63,6 +63,7 @@ public:
 
     uint64_t permUpdateTimestamp_;
 private:
+    int32_t GetApiVersion(int32_t apiVersion);
     void StoreHapBasicInfo(std::vector<GenericValues>& valueList) const;
     void TranslationIntoGenericValues(GenericValues& outGenericValues) const;
     int RestoreHapTokenBasicInfo(const GenericValues& inGenericValues);
