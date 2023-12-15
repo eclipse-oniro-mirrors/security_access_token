@@ -55,6 +55,11 @@ public:
     const static int32_t INVALID_SESSION = -1;
 
     /**
+     * Session Id, indicates invalid session.
+     */
+    const static int32_t INVALID_SOCKET_FD = 0;
+
+    /**
      * Command status code, indicate a status of command before RPC call.
      */
     const static int32_t STATUS_CODE_BEFORE_RPC = 100001;

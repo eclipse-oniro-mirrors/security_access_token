@@ -40,12 +40,12 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "../../../src/remote/soft_bus_channel.cpp",
     "../../../src/remote/soft_bus_device_connection_listener.cpp",
     "../../../src/remote/soft_bus_manager.cpp",
-    "../../../src/remote/soft_bus_session_listener.cpp",
+    "../../../src/remote/soft_bus_socket_listener.cpp",
     "../../../src/service/token_sync_manager_service.cpp",
     "../../../src/service/token_sync_manager_stub.cpp",
     "../../mock/src/constant_mock.cpp",
     "../../mock/src/soft_bus_center_mock.cpp",
-    "../../mock/src/soft_bus_session_mock.cpp",
+    "../../mock/src/soft_bus_socket_mock.cpp",
     "token_sync_service_test.cpp",
   ]
 

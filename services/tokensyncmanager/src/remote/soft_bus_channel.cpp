@@ -45,8 +45,8 @@ SoftBusChannel::SoftBusChannel(const std::string &deviceId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "SoftBusChannel(deviceId)");
     isDelayClosing_ = false;
-    session_ = Constant::INVALID_SESSION;
-    isSessionUsing_ = false;
+    socketFd_ = Constant::INVALID_SOCKET_FD;
+    isSocketUsing_ = false;
 }
 
 SoftBusChannel::~SoftBusChannel()
@@ -57,21 +57,22 @@ SoftBusChannel::~SoftBusChannel()
 int SoftBusChannel::BuildConnection()
 {
     CancelCloseConnectionIfNeeded();
-    if (session_ != Constant::INVALID_SESSION) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "session is exist, no need open again.");
+
+    std::unique_lock<std::mutex> lock(socketMutex_);
+    if (socketFd_ != Constant::INVALID_SOCKET_FD) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "socket is exist, no need open again.");
         return Constant::SUCCESS;
     }
 
-    std::unique_lock<std::mutex> lock(sessionMutex_);
-    if (session_ == Constant::INVALID_SESSION) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "open session with device: %{public}s",
+    if (socketFd_ == Constant::INVALID_SOCKET_FD) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "bind service with device: %{public}s",
             ConstantCommon::EncryptDevId(deviceId_).c_str());
-        int session = SoftBusManager::GetInstance().OpenSession(deviceId_);
-        if (session == Constant::INVALID_SESSION) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "open session failed.");
+        int socket = SoftBusManager::GetInstance().BindService(deviceId_);
+        if (socket == Constant::INVALID_SOCKET_FD) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "bind service failed.");
             return Constant::FAILURE;
         }
-        session_ = session;
+        socketFd_ = socket;
     }
     return Constant::SUCCESS;
 }
@@ -92,19 +93,19 @@ void SoftBusChannel::CloseConnection()
     }
     auto thisPtr = shared_from_this();
     std::function<void()> delayed = ([thisPtr]() {
-        std::unique_lock<std::mutex> lock(thisPtr->sessionMutex_);
-        if (thisPtr->isSessionUsing_) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "session is in using, cancel close session");
+        std::unique_lock<std::mutex> lock(thisPtr->socketMutex_);
+        if (thisPtr->isSocketUsing_) {
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "socket is in using, cancel close socket");
         } else {
-            SoftBusManager::GetInstance().CloseSession(thisPtr->session_);
-            thisPtr->session_ = Constant::INVALID_SESSION;
-            ACCESSTOKEN_LOG_INFO(LABEL, "close session for device: %{public}s",
+            SoftBusManager::GetInstance().CloseSocket(thisPtr->socketFd_);
+            thisPtr->socketFd_ = Constant::INVALID_SESSION;
+            ACCESSTOKEN_LOG_INFO(LABEL, "close socket for device: %{public}s",
                 ConstantCommon::EncryptDevId(thisPtr->deviceId_).c_str());
         }
         thisPtr->isDelayClosing_ = false;
     });
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "close session after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
     handler->ProxyPostTask(delayed, TASK_NAME_CLOSE_SESSION, WAIT_SESSION_CLOSE_MILLISECONDS);
 
     isDelayClosing_ = true;
@@ -135,7 +136,7 @@ std::string SoftBusChannel::GetUuid()
 
 void SoftBusChannel::InsertCallback(int result, std::string &uuid)
 {
-    std::unique_lock<std::mutex> lock(sessionMutex_);
+    std::unique_lock<std::mutex> lock(socketMutex_);
     std::function<void(const std::string &)> callback = [&](const std::string &result) {
         responseResult_ = std::string(result);
         loadedCond_.notify_all();
@@ -143,7 +144,7 @@ void SoftBusChannel::InsertCallback(int result, std::string &uuid)
     };
     callbacks_.insert(std::pair<std::string, std::function<void(std::string)>>(uuid, callback));
 
-    isSessionUsing_ = true;
+    isSocketUsing_ = true;
     lock.unlock();
 }
 
@@ -175,11 +176,11 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     int retCode = SendRequestBytes(buf, info.bytesLength);
     delete[] buf;
 
-    std::unique_lock<std::mutex> lock2(sessionMutex_);
+    std::unique_lock<std::mutex> lock2(socketMutex_);
     if (retCode != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "send request data failed: %{public}d ", retCode);
         callbacks_.erase(uuid);
-        isSessionUsing_ = false;
+        isSocketUsing_ = false;
         return "";
     }
 
@@ -187,22 +188,22 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     if (loadedCond_.wait_for(lock2, std::chrono::milliseconds(EXECUTE_COMMAND_TIME_OUT)) == std::cv_status::timeout) {
         ACCESSTOKEN_LOG_WARN(LABEL, "time out to wait response.");
         callbacks_.erase(uuid);
-        isSessionUsing_ = false;
+        isSocketUsing_ = false;
         return "";
     }
 
-    isSessionUsing_ = false;
+    isSocketUsing_ = false;
     return responseResult_;
 }
 
-void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes, int length)
+void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, int length)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "HandleDataReceived");
 #ifdef DEBUG_API_PERFORMANCE
     ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:recieve message from softbus");
 #endif
-    if (session <= 0 || length <= 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params: session: %{public}d, data length: %{public}d", session, length);
+    if (socket <= 0 || length <= 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params: socket: %{public}d, data length: %{public}d", socket, length);
         return;
     }
     std::string receiveData = Decompress(bytes, length);
@@ -223,7 +224,7 @@ void SoftBusChannel::HandleDataReceived(int session, const unsigned char *bytes,
     std::string type = message->GetType();
     if (REQUEST_TYPE == (type)) {
         std::function<void()> delayed = ([=]() {
-            HandleRequest(session, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
+            HandleRequest(socket, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
         });
 
         std::shared_ptr<AccessEventHandler> handler =
@@ -302,9 +303,9 @@ int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytes
         return Constant::FAILURE;
     }
 
-    std::unique_lock<std::mutex> lock(sessionMutex_);
+    std::unique_lock<std::mutex> lock(socketMutex_);
     if (CheckSessionMayReopenLocked() != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "session invalid and reopen failed!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "socket invalid and reopen failed!");
         return Constant::FAILURE;
     }
 
@@ -312,7 +313,7 @@ int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytes
 #ifdef DEBUG_API_PERFORMANCE
     ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:send command to softbus");
 #endif
-    int result = ::SendBytes(session_, bytes, bytesLength);
+    int result = ::SendBytes(socketFd_, bytes, bytesLength);
     if (result != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to send! result= %{public}d", result);
         return Constant::FAILURE;
@@ -323,13 +324,13 @@ int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytes
 
 int SoftBusChannel::CheckSessionMayReopenLocked()
 {
-    // when session is opened, we got a valid sessionid, when session closed, we will reset sessionid.
+    // when socket is opened, we got a valid sessionid, when socket closed, we will reset sessionid.
     if (IsSessionAvailable()) {
         return Constant::SUCCESS;
     }
-    int session = SoftBusManager::GetInstance().OpenSession(deviceId_);
-    if (session != Constant::INVALID_SESSION) {
-        session_ = session;
+    int socket = SoftBusManager::GetInstance().BindService(deviceId_);
+    if (socket != Constant::INVALID_SESSION) {
+        socketFd_ = socket;
         return Constant::SUCCESS;
     }
     return Constant::FAILURE;
@@ -337,7 +338,7 @@ int SoftBusChannel::CheckSessionMayReopenLocked()
 
 bool SoftBusChannel::IsSessionAvailable()
 {
-    return session_ > Constant::INVALID_SESSION;
+    return socketFd_ > Constant::INVALID_SESSION;
 }
 
 void SoftBusChannel::CancelCloseConnectionIfNeeded()
@@ -352,7 +353,7 @@ void SoftBusChannel::CancelCloseConnectionIfNeeded()
     isDelayClosing_ = false;
 }
 
-void SoftBusChannel::HandleRequest(int session, const std::string &id, const std::string &commandName,
+void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std::string &commandName,
     const std::string &jsonPayload)
 {
     std::shared_ptr<BaseRemoteCommand> command =
@@ -376,7 +377,7 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
             delete[] sendbuf;
             return;
         }
-        int sendResultCode = SendResponseBytes(session, sendbuf, info.bytesLength);
+        int sendResultCode = SendResponseBytes(socket, sendbuf, info.bytesLength);
         delete[] sendbuf;
         ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d ", sendResultCode);
         return;
@@ -405,14 +406,14 @@ void SoftBusChannel::HandleRequest(int session, const std::string &id, const std
         delete[] buf;
         return;
     }
-    int retCode = SendResponseBytes(session, buf, info.bytesLength);
+    int retCode = SendResponseBytes(socket, buf, info.bytesLength);
     delete[] buf;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d", retCode);
 }
 
 void SoftBusChannel::HandleResponse(const std::string &id, const std::string &jsonPayload)
 {
-    std::unique_lock<std::mutex> lock(sessionMutex_);
+    std::unique_lock<std::mutex> lock(socketMutex_);
     auto callback = callbacks_.find(id);
     if (callback != callbacks_.end()) {
         (callback->second)(jsonPayload);
@@ -420,10 +421,10 @@ void SoftBusChannel::HandleResponse(const std::string &id, const std::string &js
     }
 }
 
-int SoftBusChannel::SendResponseBytes(int session, const unsigned char *bytes, const int bytesLength)
+int SoftBusChannel::SendResponseBytes(int socket, const unsigned char *bytes, const int bytesLength)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "send len (after compress len)= %{public}d", bytesLength);
-    int result = ::SendBytes(session, bytes, bytesLength);
+    int result = ::SendBytes(socket, bytes, bytesLength);
     if (result != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to send! result= %{public}d", result);
         return Constant::FAILURE;

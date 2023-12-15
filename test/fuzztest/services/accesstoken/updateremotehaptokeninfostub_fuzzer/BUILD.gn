@@ -61,7 +61,7 @@ ohos_fuzztest("UpdateRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/services/tokensyncmanager/src/remote/soft_bus_channel.cpp",
     "${access_token_path}/services/tokensyncmanager/src/remote/soft_bus_device_connection_listener.cpp",
     "${access_token_path}/services/tokensyncmanager/src/remote/soft_bus_manager.cpp",
-    "${access_token_path}/services/tokensyncmanager/src/remote/soft_bus_session_listener.cpp",
+    "${access_token_path}/services/tokensyncmanager/src/remote/soft_bus_socket_listener.cpp",
     "${access_token_path}/services/tokensyncmanager/src/service/token_sync_manager_service.cpp",
     "${access_token_path}/services/tokensyncmanager/src/service/token_sync_manager_stub.cpp",
   ]

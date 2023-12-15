@@ -17,11 +17,16 @@
 #include <securec.h>
 #include <thread>
 #include <pthread.h>
+
+#include "accesstoken_log.h"
+#include "constant.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "dm_device_info.h"
 #include "remote_command_manager.h"
 #include "softbus_bus_center.h"
+#include "soft_bus_device_connection_listener.h"
+#include "soft_bus_socket_listener.h"
 
 namespace OHOS {
 namespace Security {
@@ -30,18 +35,26 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusManager"};
 }
 namespace {
-static const std::string SESSION_GROUP_ID = "atm_dsoftbus_session_group_id";
-static const SessionAttribute SESSION_ATTR = {.dataType = TYPE_BYTES};
-
-static const int REASON_EXIST = -3;
-static const int OPENSESSION_RETRY_TIMES = 10 * 3;
-static const int OPENSESSION_RETRY_INTERVAL_MS = 100;
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
-} // namespace
 
-const std::string SoftBusManager::TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
-const std::string SoftBusManager::SESSION_NAME = "ohos.security.atm_channel";
+static const std::string TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
+static const std::string TOKEN_SYNC_SOCKET_NAME = "ohos.security.atm_channel.";
+
+static const uint32_t SOCKET_NAME_MAX_LEN = 256;
+static const uint32_t QOS_LEN = 3;
+static const int32_t MIN_BW = 160 * 1024 * 1024; // 160M
+static const int32_t MAX_LATENCY = 4000; // 4s
+static const int32_t MIN_LATENCY = 2000; // 2s
+
+static const int32_t ERROR_TRANSFORM_STRING_TO_CHAR = -1;
+static const int32_t ERROR_CREATE_SOCKET_FAIL = -2;
+static const int32_t ERROR_CREATE_LISTENER_FAIL = -3;
+static const int32_t ERROR_CLIENT_HAS_BIND_ALREADY = -4;
+
+static const int32_t BIND_SERVICE_MAX_RETRY_TIMES = 10;
+static const int32_t BIND_SERVICE_SLEEP_TIMES_MS = 100; // 0.1s
+} // namespace
 
 SoftBusManager::SoftBusManager() : isSoftBusServiceBindSuccess_(false), inited_(false), mutex_(), fulfillMutex_()
 {
@@ -119,21 +132,64 @@ int SoftBusManager::DeviceInit()
     return ERR_OK;
 }
 
-int SoftBusManager::SessionInit()
+bool SoftBusManager::CheckAndCopyStr(char* dest, uint32_t destLen, const std::string& src)
 {
-    // register session listener
-    ISessionListener sessionListener;
-    sessionListener.OnSessionOpened = SoftBusSessionListener::OnSessionOpened;
-    sessionListener.OnSessionClosed = SoftBusSessionListener::OnSessionClosed;
-    sessionListener.OnBytesReceived = SoftBusSessionListener::OnBytesReceived;
-    sessionListener.OnMessageReceived = SoftBusSessionListener::OnMessageReceived;
+    if (destLen < src.length() + 1) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid src length");
+        return false;
+    }
+    if (strcpy_s(dest, destLen, src.c_str()) != EOK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid src");
+        return false;
+    }
+    return true;
+}
 
-    int ret = ::CreateSessionServer(TOKEN_SYNC_PACKAGE_NAME.c_str(), SESSION_NAME.c_str(), &sessionListener);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Initialize: createSessionServer, result: %{public}d", ret);
-    // REASON_EXIST
-    if ((ret != Constant::SUCCESS) && (ret != REASON_EXIST)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: CreateSessionServer error, result: %{public}d", ret);
-        return ret;
+int32_t SoftBusManager::ServiceSocketInit()
+{
+    std::string serviceName = TOKEN_SYNC_SOCKET_NAME + "service";
+    char name[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, serviceName)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(pkgName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_PACKAGE_NAME)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    SocketInfo info = {
+        .name = name,
+        .pkgName = pkgName,
+        .dataType = DATA_TYPE_BYTES
+    };
+    int32_t ret = ::Socket(info); // create service socket id
+    if (ret <= Constant::INVALID_SOCKET_FD) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "create service socket faild, ret is %{public}d.", ret);
+        return ERROR_CREATE_SOCKET_FAIL;
+    } else {
+        socketFd_ = ret;
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "create service socket[%{public}d] success.", socketFd_);
+    }
+
+    // set service qos, no need to regist OnQos now, regist it
+    QosTV serverQos[] = {
+        { .qos = QOS_TYPE_MIN_BW,      .value = MIN_BW },
+        { .qos = QOS_TYPE_MAX_LATENCY, .value = MAX_LATENCY },
+        { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
+    };
+
+    ISocketListener listener;
+    listener.OnBind = SoftBusSocketListener::OnBind; // only service may receive OnBind
+    listener.OnShutdown = SoftBusSocketListener::OnShutdown;
+    listener.OnBytes = SoftBusSocketListener::OnClientBytes;
+
+    ret = ::Listen(socketFd_, serverQos, QOS_LEN, &listener);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "create listener failed, ret is %{public}d.", ret);
+        return ERROR_CREATE_LISTENER_FAIL;
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "create listener success.");
     }
 
     return ERR_OK;
@@ -161,7 +217,7 @@ void SoftBusManager::Initialize()
                 continue;
             }
 
-            ret = SessionInit();
+            ret = ServiceSocketInit();
             if (ret != ERR_OK) {
                 std::this_thread::sleep_for(sleepTime);
                 continue;
@@ -195,8 +251,11 @@ void SoftBusManager::Destroy()
     }
 
     if (isSoftBusServiceBindSuccess_) {
-        int32_t ret = ::RemoveSessionServer(TOKEN_SYNC_PACKAGE_NAME.c_str(), SESSION_NAME.c_str());
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, RemoveSessionServer: %{public}d", ret);
+        if (socketFd_ > Constant::INVALID_SOCKET_FD) {
+            ::Shutdown(socketFd_);
+        }
+
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy socket");
         isSoftBusServiceBindSuccess_ = false;
     }
 
@@ -215,68 +274,133 @@ void SoftBusManager::Destroy()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, done");
 }
 
-int32_t SoftBusManager::OpenSession(const std::string &deviceId)
+int32_t SoftBusManager::InitSocketAndListener(const std::string& networkId, ISocketListener& listener)
+{
+    std::string clientName = TOKEN_SYNC_SOCKET_NAME + networkId;
+    char name[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(name, SOCKET_NAME_MAX_LEN, clientName)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    std::string serviceName = TOKEN_SYNC_SOCKET_NAME + "service";
+    char peerName[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(peerName, SOCKET_NAME_MAX_LEN, serviceName)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    char peerNetworkId[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(peerNetworkId, SOCKET_NAME_MAX_LEN, networkId)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    char pkgName[SOCKET_NAME_MAX_LEN + 1];
+    if (!CheckAndCopyStr(pkgName, SOCKET_NAME_MAX_LEN, TOKEN_SYNC_PACKAGE_NAME)) {
+        return ERROR_TRANSFORM_STRING_TO_CHAR;
+    }
+
+    SocketInfo info = {
+        .name = name,
+        .peerName = peerName,
+        .peerNetworkId = peerNetworkId,
+        .pkgName = pkgName,
+        .dataType = DATA_TYPE_BYTES
+    };
+
+    listener.OnShutdown = SoftBusSocketListener::OnShutdown;
+    listener.OnBytes = SoftBusSocketListener::OnServiceBytes;
+    listener.OnQos = SoftBusSocketListener::OnQos; // only client may receive OnQos
+
+    return ::Socket(info);
+}
+
+int32_t SoftBusManager::BindService(const std::string &deviceId)
 {
 #ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start open session");
+    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start bind service");
 #endif
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (!result) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "device info notfound for deviceId %{public}s",
+        ACCESSTOKEN_LOG_WARN(LABEL, "device info not found for deviceId %{public}s",
             ConstantCommon::EncryptDevId(deviceId).c_str());
         return Constant::FAILURE;
     }
     std::string networkId = info.deviceId.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "openSession, networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 
-    // async open session, should waitting for OnSessionOpened event.
-    int sessionId = ::OpenSession(SESSION_NAME.c_str(), SESSION_NAME.c_str(), networkId.c_str(),
-        SESSION_GROUP_ID.c_str(), &SESSION_ATTR);
+    ISocketListener listener;
+    int32_t socketFd = InitSocketAndListener(networkId, listener);
+    if (socketFd_ <= Constant::INVALID_SOCKET_FD) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "create client socket faild.");
+        return ERROR_CREATE_SOCKET_FAIL;
+    } else {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "create client socket[%{public}d] success.", socketFd);
+    }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "async open session");
+    {
+        std::lock_guard<std::mutex> guard(clientSocketMutex_);
+        auto iter = clientSocketMap_.find(socketFd);
+        if (iter == clientSocketMap_.end()) {
+            clientSocketMap_.insert(std::pair<int32_t, std::string>(socketFd, networkId));
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "client socket has bind already");
+            return ERROR_CLIENT_HAS_BIND_ALREADY;
+        }
+    }
 
-    // wait session opening
-    int retryTimes = 0;
-    int logSpan = 10;
-    auto sleepTime = std::chrono::milliseconds(OPENSESSION_RETRY_INTERVAL_MS);
-    while (retryTimes++ < OPENSESSION_RETRY_TIMES) {
-        if (SoftBusSessionListener::GetSessionState(sessionId) < 0) {
+    // set service qos
+    QosTV clientQos[] = {
+        { .qos = QOS_TYPE_MIN_BW,      .value = MIN_BW },
+        { .qos = QOS_TYPE_MAX_LATENCY, .value = MAX_LATENCY },
+        { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
+    };
+
+    // retry 10 times or bind success
+    int32_t retryTimes = 0;
+    auto sleepTime = std::chrono::milliseconds(BIND_SERVICE_SLEEP_TIMES_MS);
+    while (retryTimes < BIND_SERVICE_MAX_RETRY_TIMES) {
+        int32_t res = ::Bind(socketFd, clientQos, QOS_LEN, &listener);
+        if (res != Constant::SUCCESS) {
             std::this_thread::sleep_for(sleepTime);
-            if (retryTimes % logSpan == 0) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "openSession, waitting for: %{public}d ms",
-                    retryTimes * OPENSESSION_RETRY_INTERVAL_MS);
-            }
+            retryTimes++;
             continue;
         }
         break;
     }
-#ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start open session success");
-#endif
-    int64_t state = SoftBusSessionListener::GetSessionState(sessionId);
-    if (state < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "openSession, timeout, session: %{public}" PRId64, state);
-        return Constant::FAILURE;
-    }
 
-    SoftBusSessionListener::DeleteSessionIdFromMap(sessionId);
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "openSession, succeed, session: %{public}" PRId64, state);
-    return sessionId;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Bind service succeed, socketFd is %{public}d.", socketFd);
+    return socketFd;
 }
 
-int SoftBusManager::CloseSession(int sessionId)
+int SoftBusManager::CloseSocket(int socketFd)
 {
-    if (sessionId < 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "closeSession: session is invalid");
+    if (socketFd <= Constant::INVALID_SOCKET_FD) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "socket is invalid");
         return Constant::FAILURE;
     }
 
-    ::CloseSession(sessionId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "closeSession ");
+    ::Shutdown(socketFd);
+
+    std::lock_guard<std::mutex> guard(clientSocketMutex_);
+    auto iter = clientSocketMap_.find(socketFd);
+    if (iter == clientSocketMap_.end()) {
+        clientSocketMap_.erase(iter);
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "close socket");
+
     return Constant::SUCCESS;
+}
+
+bool SoftBusManager::GetNetworkIdBySocket(const int32_t socket, std::string& networkId)
+{
+    std::lock_guard<std::mutex> guard(clientSocketMutex_);
+    auto iter = clientSocketMap_.find(socket);
+    if (iter != clientSocketMap_.end()) {
+        networkId = iter->second;
+        return true;
+    }
+    return false;
 }
 
 std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
