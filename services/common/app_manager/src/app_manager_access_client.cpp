@@ -107,7 +107,7 @@ void AppManagerAccessClient::InitProxy()
 
 void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback)
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
+    std::lock_guard<std::mutex> lock(deathCallbackMutex_);
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: callback is nullptr");
         return;
@@ -117,11 +117,16 @@ void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManag
 
 void AppManagerAccessClient::OnRemoteDiedHandle()
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    for (size_t i = 0; i < appManagerDeathCallbackList_.size(); i++) {
-        appManagerDeathCallbackList_[i]->NotifyAppManagerDeath();
+    std::vector<std::shared_ptr<AppManagerDeathCallback>> tmpCallbackList;
+    {
+        std::lock_guard<std::mutex> lock(deathCallbackMutex_);
+        tmpCallbackList.assign(appManagerDeathCallbackList_.begin(), appManagerDeathCallbackList_.end());
     }
 
+    for (size_t i = 0; i < tmpCallbackList.size(); i++) {
+        tmpCallbackList[i]->NotifyAppManagerDeath();
+    }
+    std::lock_guard<std::mutex> lock(proxyMutex_);
     proxy_ = nullptr;
 }
 
