@@ -96,9 +96,6 @@ void PermissionUsedRecordCache::DeepCopyFromHead(const std::shared_ptr<Permissio
 
 void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record)
 {
-    if (nextPersistTimestamp_ == 0) {
-        nextPersistTimestamp_ = record.timestamp + INTERVAL;
-    }
     std::shared_ptr<PermissionUsedRecordNode> curFindMergePos;
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead = std::make_shared<PermissionUsedRecordNode>();
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
@@ -156,8 +153,7 @@ void PermissionUsedRecordCache::AddToPersistQueue(
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         persistPendingBufferQueue_.emplace_back(persistPendingBufferHead);
-        if ((TimeUtil::GetCurrentTimestamp() >= nextPersistTimestamp_ ||
-            readableSize_ >= MAX_PERSIST_SIZE) && !persistIsRunning_) {
+        if (!persistIsRunning_) {
             startPersist = true;
         }
     }
@@ -188,8 +184,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         isEmpty = persistPendingBufferQueue_.empty();
         persistIsRunning_ = true;
-        nextPersistTimestamp_ = TimeUtil::GetCurrentTimestamp() + INTERVAL;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "add %{public}d record node", readableSize_);
     while (!isEmpty) {
         {
             Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -208,7 +204,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
             curPendingRecordNode = next;
         }
         if (!insertValues.empty() && !PermissionRecordRepository::GetInstance().AddRecordValues(insertValues)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to persist pending records");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to persist pending records, insertValues size: %{public}d", 
+                insertValues.size());
         }
         {
             Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -262,8 +259,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
                 }
                 DeleteRecordNode(curFindDeletePos);
                 readableSize_--;
-            } else if (TimeUtil::GetCurrentTimestamp() -
-                curFindDeletePos->record.timestamp >= INTERVAL) {
+            } else if (TimeUtil::GetCurrentTimestamp() - curFindDeletePos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindDeletePos;
                 countPersistPendingNode++;
             }

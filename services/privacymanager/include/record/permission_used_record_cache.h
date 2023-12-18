@@ -66,7 +66,6 @@ private:
     std::shared_ptr<PermissionUsedRecordNode> recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
     std::vector<std::shared_ptr<PermissionUsedRecordNode>> persistPendingBufferQueue_;
-    int64_t nextPersistTimestamp_ = 0L;
     const static int64_t INTERVAL = 15 * 60 * 1000; // 1s = 1000ms
     const static int32_t MAX_PERSIST_SIZE = 100;
     bool persistIsRunning_ = false;
