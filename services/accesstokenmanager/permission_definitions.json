@@ -62,6 +62,42 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INSTALL_SANDBOX_BUNDLE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.UNINSTALL_SANDBOX_BUNDLE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INSTALL_QUICK_FIX_BUNDLE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.UNINSTALL_QUICK_FIX_BUNDLE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
