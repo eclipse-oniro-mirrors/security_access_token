@@ -18,30 +18,16 @@
 
 #include <iremote_proxy.h>
 
-#include "privacy_audio_service_ipc_interface_code.h"
-
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-struct MicStateChangeEvent {
-    bool mute;
-};
-
-class IStandardAudioRoutingManagerListener : public IRemoteBroker {
-public:
-    virtual ~IStandardAudioRoutingManagerListener() override = default;
-    virtual void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) = 0;
-
-    DECLARE_INTERFACE_DESCRIPTOR(u"IStandardAudioRoutingManagerListener");
-};
-
 class IAudioPolicy : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"IAudioPolicy");
 
     virtual bool IsMicrophoneMute() = 0;
     virtual int32_t SetMicrophoneMute(bool isMute) = 0;
-    virtual int32_t SetMicStateChangeCallback(const int32_t clientId, const sptr<IRemoteObject> &object) = 0;
+    virtual int32_t SetMicStateChangeCallback(const sptr<IRemoteObject> &object) = 0;
 };
 
 class AudioManagerPrivacyProxy : public IRemoteProxy<IAudioPolicy> {
@@ -52,7 +38,7 @@ public:
 
     bool IsMicrophoneMute() override;
     int32_t SetMicrophoneMute(bool isMute) override;
-    int32_t SetMicStateChangeCallback(const int32_t clientId, const sptr<IRemoteObject> &object) override;
+    int32_t SetMicStateChangeCallback(const sptr<IRemoteObject> &object) override;
 private:
     static inline BrokerDelegator<AudioManagerPrivacyProxy> delegator_;
 };

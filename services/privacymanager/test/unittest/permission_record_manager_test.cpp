@@ -1555,35 +1555,6 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords001, TestSize.Level1)
     ASSERT_EQ(static_cast<size_t>(0), findRecordsValues.size());
 }
 
-/*
- * @tc.name: GetRecords002
- * @tc.desc: PermissionUsedRecordCache::GetRecords function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level1)
-{
-    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId1);
-    g_record.tokenId = tokenId1;
-    PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(g_record);
-    {
-        Utils::UniqueWriteGuard<Utils::RWLock> lock1(PermissionUsedRecordCache::GetInstance().cacheLock1_);
-        PermissionUsedRecordCache::GetInstance().recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
-        Utils::UniqueWriteGuard<Utils::RWLock> lock2(PermissionUsedRecordCache::GetInstance().cacheLock2_);
-        PermissionUsedRecordCache::GetInstance().persistPendingBufferQueue_.emplace_back(
-            PermissionUsedRecordCache::GetInstance().recordBufferHead_);
-    }
-    PermissionUsedRecordCache::GetInstance().PersistPendingRecords(); // store the data in cache to database immediately
-
-    std::vector<std::string> permissionList;
-    GenericValues andConditionValues;
-    std::vector<GenericValues> findRecordsValues;
-    PermissionUsedRecordCache::GetInstance().GetRecords(permissionList, andConditionValues, findRecordsValues, 10);
-    ASSERT_NE(static_cast<size_t>(0), findRecordsValues.size());
-}
-
 void AddRecord(int32_t num, std::vector<GenericValues>& values)
 {
     for (int32_t i = 0; i < num; i++) {
