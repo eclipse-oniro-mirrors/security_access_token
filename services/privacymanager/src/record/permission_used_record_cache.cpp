@@ -33,10 +33,29 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordCache"
 };
 }
+PermissionUsedRecordCache::PermissionUsedRecordCache()
+    : hasInited_(false), readRecordBufferTaskWorker_("PermissionUsedRecordCache") {}
+
+PermissionUsedRecordCache::~PermissionUsedRecordCache()
+{
+    if (!hasInited_) {
+        return;
+    }
+    this->readRecordBufferTaskWorker_.Stop();
+    this->hasInited_ = false;
+}
 
 PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
 {
     static PermissionUsedRecordCache instance;
+
+    if (!instance.hasInited_) {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance.initLock_);
+        if (!instance.hasInited_) {
+            instance.readRecordBufferTaskWorker_.Start(1);
+            instance.hasInited_ = true;
+        }
+    }
     return instance;
 }
 
@@ -116,16 +135,13 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
             }
             curFindMergePos = pre;
         }
-
-        // when current record timestamp more than last record timestamp 15mins
-        if (persistPendingBufferEnd != nullptr) {
-            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
-        }
-
         AddRecordNode(mergedRecord); // refresh curRecordBUfferPos and readableSize
         remainCount++;
+        // when current record timestamp more than last record timestamp 15mins
         if ((remainCount >= MAX_PERSIST_SIZE) || (persistPendingBufferEnd != nullptr)) {
+            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
             ResetRecordBufferWhenAdd(remainCount, persistPendingBufferEnd);
+            ACCESSTOKEN_LOG_INFO(LABEL, "reset record count: %{public}d", remainCount);
         }
     }
     if (persistPendingBufferEnd != nullptr) {
@@ -179,7 +195,6 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
 {
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead;
     bool isEmpty;
-    std::vector<GenericValues> insertValues;
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
         isEmpty = persistPendingBufferQueue_.empty();
@@ -192,6 +207,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
             persistPendingBufferHead = persistPendingBufferQueue_[0];
             persistPendingBufferQueue_.erase(persistPendingBufferQueue_.begin());
         }
+        std::vector<GenericValues> insertValues;
         std::shared_ptr<PermissionUsedRecordNode> curPendingRecordNode =
             persistPendingBufferHead->next;
         while (curPendingRecordNode != nullptr) {
@@ -204,8 +220,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
             curPendingRecordNode = next;
         }
         if (!insertValues.empty() && !PermissionRecordRepository::GetInstance().AddRecordValues(insertValues)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to persist pending records, insertValues size: %{public}d", 
-                insertValues.size());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to persist pending records, insertValues size: %{public}u",
+                static_cast<uint32_t>(insertValues.size()));
         }
         {
             Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -269,6 +285,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
         // this should do after delete the matched tokenID data
         if (persistPendingBufferEnd != nullptr) {
             DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
+            ACCESSTOKEN_LOG_INFO(LABEL, "deep copy countPersistPendingNode: %{public}d", countPersistPendingNode);
         }
 
         if (countPersistPendingNode != 0) { // refresh recordBufferHead
@@ -340,6 +357,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
 
         if (persistPendingBufferEnd != nullptr) {
             DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
+            ACCESSTOKEN_LOG_INFO(LABEL, "deep copy countPersistPendingNode: %{public}d", countPersistPendingNode);
         }
 
         if (countPersistPendingNode != 0) { // refresh recordBufferHead

@@ -31,6 +31,7 @@ namespace AccessToken {
 class PermissionUsedRecordCache {
 public:
     static PermissionUsedRecordCache& GetInstance();
+    ~PermissionUsedRecordCache();
     void AddRecordToBuffer(const PermissionRecord& record);
     void MergeRecord(PermissionRecord& record, std::shared_ptr<PermissionUsedRecordNode> curFindMergePos);
     void AddToPersistQueue(const std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead);
@@ -58,10 +59,13 @@ public:
 #endif
 
 private:
+    PermissionUsedRecordCache();
+    DISALLOW_COPY_AND_MOVE(PermissionUsedRecordCache);
     bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2);
     void DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
         std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode);
-
+    bool hasInited_;
+    OHOS::Utils::RWLock initLock_;
     int32_t readableSize_ = 0;
     std::shared_ptr<PermissionUsedRecordNode> recordBufferHead_ = std::make_shared<PermissionUsedRecordNode>();
     std::shared_ptr<PermissionUsedRecordNode> curRecordBufferPos_ = recordBufferHead_;
