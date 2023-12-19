@@ -130,24 +130,6 @@ void SensitiveManagerServiceTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
-#ifdef AUDIO_FRAMEWORK_ENABLE
-/*
- * @tc.name: AudioManagerPrivacyCode001
- * @tc.desc: test api function
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyCode001, TestSize.Level1)
-{
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE),
-        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MICROPHONE_MUTE)); // 15
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE),
-        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::IS_MICROPHONE_MUTE)); // 17
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AudioStandard::AudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK),
-        static_cast<uint32_t>(PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK)); // 61
-}
-#endif
-
 /*
  * @tc.name: AudioManagerPrivacyTest001
  * @tc.desc: test api function

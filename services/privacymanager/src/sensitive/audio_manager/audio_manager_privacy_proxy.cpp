@@ -14,7 +14,9 @@
  */
 
 #include "audio_manager_privacy_proxy.h"
+
 #include "accesstoken_log.h"
+#include "audio_policy_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
@@ -33,7 +35,8 @@ bool AudioManagerPrivacyProxy::IsMicrophoneMute()
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return false;
     }
-    int32_t error = Remote()->SendRequest(PrivacyAudioPolicyInterfaceCode::IS_MICROPHONE_MUTE, data, reply, option);
+    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+        AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "IsMicrophoneMute failed, error: %{public}d", error);
         return false;
@@ -51,7 +54,8 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
         return ERROR;
     }
     data.WriteBool(isMute);
-    int32_t error = Remote()->SendRequest(PrivacyAudioPolicyInterfaceCode::SET_MICROPHONE_MUTE, data, reply, option);
+    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+        AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "set microphoneMute failed, error: %d", error);
         return error;
@@ -59,7 +63,7 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
     return reply.ReadInt32();
 }
 
-int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t clientId, const sptr<IRemoteObject> &object)
+int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const sptr<IRemoteObject> &object)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -68,10 +72,9 @@ int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const int32_t client
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;
     }
-    data.WriteInt32(clientId);
     (void)data.WriteRemoteObject(object);
-    int error = Remote()->SendRequest(
-        PrivacyAudioPolicyInterfaceCode::SET_MIC_STATE_CHANGE_CALLBACK, data, reply, option);
+    int error = Remote()->SendRequest(static_cast<uint32_t>(
+        AudioStandard::AudioPolicyInterfaceCode::REGISTER_POLICY_CALLBACK_CLIENT), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback failed, error: %{public}d", error);
         return error;

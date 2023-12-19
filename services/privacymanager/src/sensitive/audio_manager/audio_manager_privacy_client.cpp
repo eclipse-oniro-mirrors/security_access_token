@@ -51,13 +51,12 @@ int32_t AudioManagerPrivacyClient::SetMicStateChangeCallback(const sptr<AudioRou
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return -1;
     }
-    int32_t clientId = static_cast<int32_t>(getpid());
     sptr<IRemoteObject> object = callback->AsObject();
     if (object == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: AsObject is nullptr.");
         return -1;
     }
-    return proxy->SetMicStateChangeCallback(clientId, object);
+    return proxy->SetMicStateChangeCallback(object);
 }
 
 int32_t AudioManagerPrivacyClient::SetMicrophoneMute(bool isMute)
