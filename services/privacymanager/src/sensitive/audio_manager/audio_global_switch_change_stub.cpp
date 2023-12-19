@@ -24,6 +24,8 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AudioRoutingManagerListenerStub"};
+
+static const uint32_t UPDATE_CALLBACK_CLIENT = 0;
 }
 AudioRoutingManagerListenerStub::AudioRoutingManagerListenerStub()
 {
@@ -42,9 +44,8 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_INFO(LABEL, "AudioRoutingManagerListenerStub: ReadInterfaceToken failed");
         return ERROR_IPC_REQUEST_FAIL;
     }
-    PrivacyAudioRingerInterfaceCode msgId = static_cast<PrivacyAudioRingerInterfaceCode>(code);
-    switch (msgId) {
-        case ON_MIC_STATE_UPDATED: {
+    switch (code) {
+        case UPDATE_CALLBACK_CLIENT: {
             MicStateChangeEvent micStateChangeEvent = {};
 
             micStateChangeEvent.mute = data.ReadBool();

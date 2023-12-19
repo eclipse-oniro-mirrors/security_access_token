@@ -125,7 +125,8 @@ if (is_standard_system && ability_base_enable == true) {
         "-DHILOG_ENABLE",
         "-DFEATURE_DTMF_TONE",
       ]
-      external_deps += [ "audio_framework:audio_client" ]
+      include_dirs +=
+          [ "${audio_framework_path}/services/audio_policy/common/include" ]
     }
 
     if (camera_framework_enable) {

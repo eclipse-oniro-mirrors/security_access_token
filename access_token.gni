@@ -13,6 +13,7 @@
 
 access_token_path = "//base/security/access_token"
 ace_engine_path = "//foundation/arkui/ace_engine"
+audio_framework_path = "//foundation/multimedia/audio_framework"
 module_output_path_interface_privacy =
     "access_token/access_token/interface_privacy"
 module_output_path_interface_access_token =
