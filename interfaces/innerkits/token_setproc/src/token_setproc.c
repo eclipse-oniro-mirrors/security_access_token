@@ -139,7 +139,7 @@ int SetFirstCallerTokenID(uint64_t tokenID)
     return ACCESS_TOKEN_OK;
 }
 
-int32_t AddPermissionToKernel(uint32_t tokenID, uint32_t* opCodeList, int32_t* statusList, uint32_t size)
+int32_t AddPermissionToKernel(uint32_t tokenID, const uint32_t* opCodeList, const int32_t* statusList, uint32_t size)
 {
     if (size == 0) {
         RemovePermissionFromKernel(tokenID);
