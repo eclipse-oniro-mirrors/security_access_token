@@ -1033,18 +1033,6 @@ static napi_value GetContext(const napi_env &env, const napi_value &value, Reque
     }
 }
 
-static bool GetUIContentFromContext(
-    const std::shared_ptr<AbilityRuntime::UIExtensionContext>& uiExtensionContext, Ace::UIContent** UIContent)
-{
-    *UIContent = uiExtensionContext->GetUIContent();
-    if (*UIContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "UIContent is nullptr");
-        return false;
-    }
-
-    return true;
-}
-
 bool NapiAtManager::ParseRequestPermissionFromUser(
     const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext)
 {
@@ -1066,20 +1054,12 @@ bool NapiAtManager::ParseRequestPermissionFromUser(
 
     // argv[0] : context : AbilityContext
     if (GetContext(env, argv[0], asyncContext) == nullptr) {
-        errMsg = GetParamErrorMsg("context", "Context");
+        errMsg = GetParamErrorMsg("context", "UIAbility or UIExtension Context");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;
     }
-
-    if (!asyncContext.uiAbilityFlag) {
-        if (!GetUIContentFromContext(asyncContext.uiExtensionContext, &(asyncContext.UIContent))) {
-            errMsg = "get UIContent failed";
-            NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(
-                env, JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT, errMsg)), false);
-            return false;
-        }
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "asyncContext.uiAbilityFlag is: %{public}d.", asyncContext.uiAbilityFlag);
 
     // argv[1] : permissionList
     if (!ParseStringArray(env, argv[1], asyncContext.permissionList) ||
@@ -1273,41 +1253,51 @@ bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions
     return true;
 }
 
-void RequestAsyncContext::ReleaseOrErrorHandle(int32_t code)
+void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
 {
-    if (UIContent != nullptr) {
+    auto uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+    if (uiContent != nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "close uiextension component");
-        UIContent->CloseModalUIExtension(sessionId);
-        UIContent = nullptr;
+        uiContent->CloseModalUIExtension(this->sessionId_);
     }
 
     if (code == 0) {
         return; // code is 0 means request has return by OnResult
     }
 
-    std::unique_ptr<RequestAsyncContext> contextPtr {this}; // use unique smart ptr to manage the memory
+    std::unique_ptr<UIExtensionCallback> contextPtr {this}; // use unique smart ptr to manage the memory
 
     napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(env, &scope);
+    napi_open_handle_scope(this->reqContext_->env, &scope);
     if (scope == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_open_handle_scope failed");
         return;
     }
 
-    napi_value result = GetNapiNull(env);
-    if (deferred != nullptr) {
-        ReturnPromiseResult(env, code, deferred, result);
+    napi_value result = GetNapiNull(this->reqContext_->env);
+    if (this->reqContext_->deferred != nullptr) {
+        ReturnPromiseResult(this->reqContext_->env, code, this->reqContext_->deferred, result);
     } else {
-        ReturnCallbackResult(env, code, callbackRef, result);
+        ReturnCallbackResult(this->reqContext_->env, code, this->reqContext_->callbackRef, result);
     }
-    napi_close_handle_scope(env, scope);
+    napi_close_handle_scope(this->reqContext_->env, scope);
+}
+
+UIExtensionCallback::UIExtensionCallback(RequestAsyncContext* reqContext)
+{
+    this->reqContext_ = std::make_shared<RequestAsyncContext>(*reqContext);
+}
+
+void UIExtensionCallback::SetSessionId(int32_t sessionId)
+{
+    this->sessionId_ = sessionId;
 }
 
 /*
  * when UIExtensionAbility disconnect or use terminate or process die
  * releaseCode is 0 when process normal exit
  */
-void RequestAsyncContext::OnRelease(int32_t releaseCode) __attribute__((no_sanitize("cfi")))
+void UIExtensionCallback::OnRelease(int32_t releaseCode) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "releaseCode is %{public}d", releaseCode);
 
@@ -1353,19 +1343,19 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
 /*
  * when UIExtensionAbility use terminateSelfWithResult
  */
-void RequestAsyncContext::OnResult(int32_t resultCode, const AAFwk::Want& result)
+void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "resultCode is %{public}d", resultCode);
     std::vector<std::string> permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     std::vector<int32_t> permissionStates = result.GetIntArrayParam(RESULT_KEY);
 
-    GrantResultsCallbackUI(permissionList, permissionStates, this);
+    GrantResultsCallbackUI(permissionList, permissionStates, this->reqContext_.get());
 }
 
 /*
  * when UIExtensionAbility send message to UIExtensionComponent
  */
-void RequestAsyncContext::OnReceive(const AAFwk::WantParams& receive)
+void UIExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 }
@@ -1373,7 +1363,7 @@ void RequestAsyncContext::OnReceive(const AAFwk::WantParams& receive)
 /*
  * when UIExtensionComponent init or turn to background or destroy UIExtensionAbility occur error
  */
-void RequestAsyncContext::OnError(int32_t code, const std::string& name,
+void UIExtensionCallback::OnError(int32_t code, const std::string& name,
     const std::string& message) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "code is %{public}d, name is %{public}s, message is %{public}s",
@@ -1386,7 +1376,7 @@ void RequestAsyncContext::OnError(int32_t code, const std::string& name,
  * when UIExtensionComponent connect to UIExtensionAbility, ModalUIExtensionProxy will init,
  * UIExtensionComponent can send message to UIExtensionAbility by ModalUIExtensionProxy
  */
-void RequestAsyncContext::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>&)
+void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>& uiProxy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "connect to UIExtensionAbility successfully.");
 }
@@ -1394,38 +1384,45 @@ void RequestAsyncContext::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 /*
  * when UIExtensionComponent destructed
  */
-void RequestAsyncContext::OnDestroy()
+void UIExtensionCallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
 }
 
-static int32_t StartUIExtension(const napi_env& env, RequestAsyncContext* asyncContext)
+static void StartUIExtension(const napi_env& env, RequestAsyncContext* asyncContext)
 {
     AAFwk::Want want;
     want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
-    if (asyncContext->abilityContext != nullptr) {
-        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
-    } else {
-        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
+    want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
+    auto uiContent = asyncContext->uiExtensionContext->GetUIContent();
+    if (uiContent == nullptr) {
+        asyncContext->result = JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+        return;
     }
-
-    Ace::ModalUIExtensionCallbacks callbacks = {
-        std::bind(&RequestAsyncContext::OnRelease, asyncContext, std::placeholders::_1),
-        std::bind(&RequestAsyncContext::OnResult, asyncContext, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&RequestAsyncContext::OnReceive, asyncContext, std::placeholders::_1),
-        std::bind(&RequestAsyncContext::OnError, asyncContext, std::placeholders::_1, std::placeholders::_2,
+    auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
+    Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
+        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1, std::placeholders::_2,
             std::placeholders::_2),
-        std::bind(&RequestAsyncContext::OnRemoteReady, asyncContext, std::placeholders::_1),
-        std::bind(&RequestAsyncContext::OnDestroy, asyncContext),
+        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
+        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback),
     };
 
     Ace::ModalUIExtensionConfig config;
     config.isProhibitBack = true;
-
-    return asyncContext->UIContent->CreateModalUIExtension(want, callbacks, config);
+    int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
+    ACCESSTOKEN_LOG_INFO(LABEL, "end CreateModalUIExtension, sessionId is %{public}d", sessionId);
+    if (sessionId == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "create component failed, sessionId is 0");
+        asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        return;
+    }
+    uiExtCallback->SetSessionId(sessionId);
 }
 
 void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
@@ -1463,22 +1460,18 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         return;
     }
     if (asyncContext->uiAbilityFlag) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "pop service extension dialog");
         StartServiceExtension(remoteObject, asyncContext, curRequestCode_);
     } else {
         // service extension dialog
         if ((asyncContext->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "not support for UIExtension");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "not support for ui extension");
             asyncContext->needDynamicRequest = false;
             asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
             return;
         }
-        asyncContext->sessionId = StartUIExtension(env, asyncContext);
-        if (asyncContext->sessionId == 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "create component failed, sessionId is 0");
-            asyncContext->result = JsErrorCode::JS_ERROR_INNER;
-            return;
-        }
-        ACCESSTOKEN_LOG_INFO(LABEL, "create component success, sessionId is %{public}d", asyncContext->sessionId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "pop ui extension dialog");
+        StartUIExtension(env, asyncContext);
     }
 }
 
