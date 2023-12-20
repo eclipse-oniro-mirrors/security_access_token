@@ -61,6 +61,7 @@ private:
 
     sptr<AppMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
+    std::mutex deathCallbackMutex_;
     sptr<IAppMgr> proxy_ = nullptr;
     std::vector<std::shared_ptr<AppManagerDeathCallback>> appManagerDeathCallbackList_;
 };
