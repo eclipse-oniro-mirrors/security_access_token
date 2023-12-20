@@ -603,7 +603,10 @@ void PermissionRecordManager::SavePermissionRecords(
 void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
-    isMicMute_ = !switchStatus;
+    {
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        isMicMute_ = !switchStatus;
+    }
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_MICROPHONE) {
@@ -616,7 +619,11 @@ void PermissionRecordManager::NotifyMicChange(bool switchStatus)
 void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
-    isCameraMute_ = !switchStatus;
+    {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        isCameraMute_ = !switchStatus;
+    }
+
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode) != Constant::OP_CAMERA) {
@@ -887,6 +894,18 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
 
 bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
 {
+    // app manager death callback register
+    {
+        std::lock_guard<std::mutex> lock(appManagerDeathMutex_);
+        if (appManagerDeathCallback_ == nullptr) {
+            appManagerDeathCallback_ = std::make_shared<PrivacyAppManagerDeathCallback>();
+            if (appManagerDeathCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register appManagerDeathCallback failed.");
+                return false;
+            }
+            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+        }
+    }
     // app state change callback register
     {
         std::lock_guard<std::mutex> lock(appStateMutex_);
@@ -915,7 +934,7 @@ bool PermissionRecordManager::Register()
 {
     // microphone mute
     {
-        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        std::lock_guard<std::mutex> lock(micCallbackMutex_);
         if (micMuteCallback_ == nullptr) {
             micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
             if (micMuteCallback_ == nullptr) {
@@ -928,7 +947,7 @@ bool PermissionRecordManager::Register()
 
     // camera mute
     {
-        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
         if (camMuteCallback_ == nullptr) {
             camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
             if (camMuteCallback_ == nullptr) {
@@ -938,18 +957,13 @@ bool PermissionRecordManager::Register()
             CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
         }
     }
-
-    // app manager death callback register
     {
-        std::lock_guard<std::mutex> lock(appManagerDeathMutex_);
-        if (appManagerDeathCallback_ == nullptr) {
-            appManagerDeathCallback_ = std::make_shared<PrivacyAppManagerDeathCallback>();
-            if (appManagerDeathCallback_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register appManagerDeathCallback failed.");
-                return false;
-            }
-            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
-        }
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    }
+    {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     }
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback register
@@ -1012,14 +1026,26 @@ void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
-    std::lock_guard<std::mutex> lock(micMuteMutex_);
-    micMuteCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        isMicMute_ = false;
+    }
+    {
+        std::lock_guard<std::mutex> lock(micCallbackMutex_);
+        micMuteCallback_ = nullptr;
+    }
 }
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
-    std::lock_guard<std::mutex> lock(camMuteMutex_);
-    camMuteCallback_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        isCameraMute_ = false;
+    }
+    {
+        std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
+        camMuteCallback_ = nullptr;
+    }
 }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -1162,8 +1188,6 @@ void PermissionRecordManager::Init()
     hasInited_ = true;
 
     GetConfigValue();
-    isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
-    isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
 }
 } // namespace AccessToken
 } // namespace Security
