@@ -159,10 +159,12 @@ private:
     std::mutex startRecordListMutex_;
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
+    std::mutex cameraCallbackMutex_;
     sptr<IRemoteObject> cameraCallback_ = nullptr;
 
     // microphone
     std::mutex micMuteMutex_;
+    std::mutex micCallbackMutex_;
     bool isMicMute_ = false;
     sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
