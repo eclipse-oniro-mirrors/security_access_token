@@ -210,13 +210,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
         return PERMISSION_DENIED;
     }
 
-    // get perm from kernel
-    uint32_t code;
-    if (!TransferPermissionToOpcode(permissionName, code)) {
-        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    }
-    bool isGranted = GetPermissionFromKernel(tokenID, code);
-    return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenKit::VerifyAccessToken(
