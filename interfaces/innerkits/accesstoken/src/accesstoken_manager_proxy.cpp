@@ -429,7 +429,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID = %{public}u, result = %{public}d", tokenID, result);
     return result;
 }
 
