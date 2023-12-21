@@ -179,6 +179,7 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
             if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_NATIVE) {
                 return PERMISSION_GRANTED;
             }
+            ACCESSTOKEN_LOG_ERROR(LABEL, "token: %{public}d type error!", tokenID);
             return PERMISSION_DENIED;
         }
         ACCESSTOKEN_LOG_ERROR(LABEL, "no definition for permission: %{public}s!", permissionName.c_str());

@@ -52,7 +52,7 @@ namespace AccessToken {
 class PermissionStateFull final {
 public:
     std::string permissionName;
-    /** indicate whether permission is in common use or not */
+    /** indicate whether permission is distributed */
     bool isGeneral;
     std::vector<std::string> resDeviceID;
     /**
