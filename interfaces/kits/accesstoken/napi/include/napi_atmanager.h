@@ -122,14 +122,6 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
         this->env = env;
     }
 
-    void ReleaseOrErrorHandle(int32_t code);
-    void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const AAFwk::Want& result);
-    void OnReceive(const AAFwk::WantParams& receive);
-    void OnError(int32_t code, const std::string& name, const std::string& message);
-    void OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>&);
-    void OnDestroy();
-
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
     int32_t result = AT_PERM_OPERA_SUCC;
@@ -139,9 +131,24 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
-    Ace::UIContent *UIContent = nullptr;
-    int32_t sessionId = 0;
     bool uiAbilityFlag = false;
+};
+
+class UIExtensionCallback {
+public:
+    explicit UIExtensionCallback(RequestAsyncContext* reqContext);
+    void SetSessionId(int32_t sessionId);
+    void OnRelease(int32_t releaseCode);
+    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
+    void OnReceive(const OHOS::AAFwk::WantParams& request);
+    void OnError(int32_t code, const std::string& name, const std::string& message);
+    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
+    void OnDestroy();
+    void ReleaseOrErrorHandle(int32_t code);
+
+private:
+    int32_t sessionId_ = 0;
+    std::shared_ptr<RequestAsyncContext> reqContext_ = nullptr;
 };
 
 struct ResultCallback {
