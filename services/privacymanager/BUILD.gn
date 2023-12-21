@@ -63,6 +63,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/database/include",
+      "${audio_framework_path}/services/audio_policy/common/include",
       "//third_party/sqlite/include/",
     ]
 
@@ -114,6 +115,11 @@ if (is_standard_system && ability_base_enable == true) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+
+    if (audio_framework_enable) {
+      include_dirs +=
+          [ "${audio_framework_path}/services/audio_policy/common/include" ]
+    }
 
     if (common_event_service_enable) {
       cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]

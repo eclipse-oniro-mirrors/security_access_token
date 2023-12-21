@@ -16,14 +16,25 @@
 #ifndef MIC_GLOBAL_SWITCH_CHANGE_STUB_H
 #define MIC_GLOBAL_SWITCH_CHANGE_STUB_H
 
-#include "audio_manager_privacy_proxy.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AudioRoutingManagerListenerStub : public IRemoteStub<IStandardAudioRoutingManagerListener> {
+struct MicStateChangeEvent {
+    bool mute;
+};
+
+class IAudioPolicyClient : public IRemoteBroker {
+public:
+    virtual void OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent) = 0;
+
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"IAudioPolicyClient");
+};
+
+class AudioRoutingManagerListenerStub : public IRemoteStub<IAudioPolicyClient> {
 public:
     AudioRoutingManagerListenerStub();
     virtual ~AudioRoutingManagerListenerStub();
