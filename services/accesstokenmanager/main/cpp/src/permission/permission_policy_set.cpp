@@ -188,19 +188,29 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& perm : permStateList_) {
-        if (perm.permissionName == permissionName) {
-            if (perm.isGeneral) {
-                return IsPermGrantedBySecComp(perm.grantFlags[0]) ? PERMISSION_GRANTED : perm.grantStatus[0];
-            } else {
-                return PERMISSION_DENIED;
-            }
+        if (perm.permissionName != permissionName) {
+            continue;
         }
+        if (!perm.isGeneral) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is not general", permissionName.c_str());
+            return PERMISSION_DENIED;
+        }
+        if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "permission is granted by seccomp");
+            return PERMISSION_GRANTED;
+        }
+        if (perm.grantStatus[0] != PERMISSION_GRANTED) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is not granted", permissionName.c_str());
+            return PERMISSION_DENIED;
+        }
+        return PERMISSION_GRANTED;
     }
     // check if undeclared permission is granted by security component.
     if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
         [permissionName](const auto& permission) { return permission == permissionName; })) {
             return PERMISSION_GRANTED;
     }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is undeclared", permissionName.c_str());
     return PERMISSION_DENIED;
 }
 

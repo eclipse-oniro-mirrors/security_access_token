@@ -46,13 +46,13 @@ bool AccessTokenManagerProxy::SendRequest(
 
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "code: %{public}d remote service null.", code);
         return false;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(code), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "code: %{public}d request fail, result: %{public}d", code, requestResult);
         return false;
     }
     return true;
