@@ -130,6 +130,15 @@
           }
         },
         {
+          "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libperm_setproc",
+          "header": {
+            "header_files": [
+              "perm_setproc.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
+          }
+        },
+        {
           "name": "//base/security/access_token/interfaces/innerkits/analysis_model:libcodesignature_analysis",
           "header": {
             "header_files": [

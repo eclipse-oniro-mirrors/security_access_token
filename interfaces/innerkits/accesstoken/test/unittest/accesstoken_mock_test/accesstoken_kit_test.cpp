@@ -184,7 +184,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken001, TestSize.Level1)
 {
     AccessTokenID tokenId = 123;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, permission));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(tokenId, permission, true));
 }
 
 /**
@@ -198,7 +198,7 @@ HWTEST_F(AccessTokenKitTest, VerifyAccessToken002, TestSize.Level1)
     AccessTokenID callerTokenID = 123;
     AccessTokenID firstTokenID = 456;
     std::string permission = "ohos.permission.CAMERA";
-    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(callerTokenID, firstTokenID, permission));
+    ASSERT_EQ(PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(callerTokenID, firstTokenID, permission, true));
 }
 
 /**

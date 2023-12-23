@@ -160,7 +160,7 @@ public:
      * @param permissionName permission to be checked
      * @return enum PermissionState, see access_token.h
      */
-    static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
+    static int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc = false);
     /**
      * @brief Check if the input tokenID has been granted the input permission.
      * @param callerTokenID the tokenID of caller native process or hap process
@@ -168,8 +168,8 @@ public:
      * @param permissionName permission to be checked
      * @return enum PermissionState, see access_token.h
      */
-    static int VerifyAccessToken(
-        AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName);
+    static int VerifyAccessToken(AccessTokenID callerTokenID,
+        AccessTokenID firstTokenID, const std::string& permissionName, bool crossIpc = false);
     /**
      * @brief Get permission definition by permission name.
      * @param permissionName permission name quote

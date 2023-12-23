@@ -100,6 +100,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     "${access_token_path}/services/common:accesstoken_service_common",
     "//third_party/googletest:gtest_main",

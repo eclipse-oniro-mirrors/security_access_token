@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,22 +13,19 @@
  * limitations under the License.
  */
 
-#ifndef TOKEN_SETPROC_H
-#define TOKEN_SETPROC_H
-#include <stdint.h>
+#ifndef PERM_SETPROC_H
+#define PERM_SETPROC_H
+#include <vector>
 #include "setproc_common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-uint64_t GetSelfTokenID();
-int SetSelfTokenID(uint64_t tokenID);
-uint64_t GetFirstCallerTokenID();
-int SetFirstCallerTokenID(uint64_t tokenID);
-
-#ifdef __cplusplus
-}
-#endif
-
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+int32_t AddPermissionToKernel(
+    uint32_t tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
+int32_t RemovePermissionFromKernel(uint32_t tokenID);
+int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status);
+bool GetPermissionFromKernel(uint32_t tokenID, int32_t opCode);
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
 #endif
