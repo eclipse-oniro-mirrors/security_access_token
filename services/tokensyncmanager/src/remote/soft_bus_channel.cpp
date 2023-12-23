@@ -18,7 +18,9 @@
 
 #include "constant_common.h"
 #include "device_info_manager.h"
+#ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
+#endif
 #include "token_sync_manager_service.h"
 #include "singleton.h"
 #include "soft_bus_manager.h"
@@ -85,12 +87,14 @@ void SoftBusChannel::CloseConnection()
         return;
     }
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
         return;
     }
+#endif
     auto thisPtr = shared_from_this();
     std::function<void()> delayed = ([thisPtr]() {
         std::unique_lock<std::mutex> lock(thisPtr->socketMutex_);
@@ -106,13 +110,16 @@ void SoftBusChannel::CloseConnection()
     });
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
+#ifdef EVENTHANDLER_ENABLE
     handler->ProxyPostTask(delayed, TASK_NAME_CLOSE_SESSION, WAIT_SESSION_CLOSE_MILLISECONDS);
+#endif
 
     isDelayClosing_ = true;
 }
 
 void SoftBusChannel::Release()
 {
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
@@ -120,6 +127,7 @@ void SoftBusChannel::Release()
         return;
     }
     handler->ProxyRemoveTask(TASK_NAME_CLOSE_SESSION);
+#endif
 }
 
 std::string SoftBusChannel::GetUuid()
@@ -227,6 +235,7 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
             HandleRequest(socket, message->GetId(), message->GetCommandName(), message->GetJsonPayload());
         });
 
+#ifdef EVENTHANDLER_ENABLE
         std::shared_ptr<AccessEventHandler> handler =
             DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRecvEventHandler();
         if (handler == nullptr) {
@@ -234,6 +243,7 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
             return;
         }
         handler->ProxyPostTask(delayed, "HandleDataReceived_HandleRequest");
+#endif
     } else if (RESPONSE_TYPE == (type)) {
         HandleResponse(message->GetId(), message->GetJsonPayload());
     } else {

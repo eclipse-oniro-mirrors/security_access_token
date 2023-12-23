@@ -14,7 +14,9 @@
  */
 
 #include "remote_command_executor.h"
+#ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
+#endif
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "singleton.h"
@@ -211,6 +213,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
     running_ = true;
     const std::function<void()> runner = std::bind(&RemoteCommandExecutor::ProcessBufferedCommands, this, true);
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
@@ -222,6 +225,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
         ACCESSTOKEN_LOG_ERROR(LABEL, "post task failed, targetNodeId: %{public}s",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
     }
+#endif
     ACCESSTOKEN_LOG_INFO(LABEL,
         "post task succeed, targetNodeId: %{public}s, taskName: %{public}s",
         ConstantCommon::EncryptDevId(targetNodeId_).c_str(),

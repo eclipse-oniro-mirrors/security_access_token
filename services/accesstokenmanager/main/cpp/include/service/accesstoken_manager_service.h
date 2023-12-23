@@ -20,7 +20,9 @@
 #include <vector>
 
 #include "accesstoken_manager_stub.h"
+#ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
+#endif
 #include "access_token.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
@@ -93,8 +95,10 @@ private:
     bool Initialize();
     void AccessTokenServiceParamSet() const;
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
+#endif
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;

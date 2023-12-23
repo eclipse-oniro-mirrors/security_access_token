@@ -117,7 +117,6 @@ ohos_unittest("libprivacy_mock_test") {
 
   external_deps = [
     "c_utils:utils",
-    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
@@ -132,6 +131,11 @@ ohos_unittest("libprivacy_mock_test") {
     "-DHILOG_ENABLE",
     "-DDEBUG_API_PERFORMANCE",
   ]
+
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
 }
 
 group("unittest") {

@@ -18,8 +18,10 @@
 
 #include <string>
 
+#ifdef EVENTHANDLER_ENABLE
 #include "event_handler.h"
 #include "access_event_handler.h"
+#endif
 #include "hap_token_info_for_sync_parcel.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
@@ -39,8 +41,10 @@ public:
     void OnStart() override;
     void OnStop() override;
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> GetSendEventHandler() const;
     std::shared_ptr<AccessEventHandler> GetRecvEventHandler() const;
+#endif
     int GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
     int UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
@@ -48,10 +52,12 @@ public:
 private:
     bool Initialize();
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> sendRunner_;
     std::shared_ptr<AppExecFwk::EventRunner> recvRunner_;
     std::shared_ptr<AccessEventHandler> sendHandler_;
     std::shared_ptr<AccessEventHandler> recvHandler_;
+#endif
     ServiceRunningState state_;
 };
 } // namespace AccessToken

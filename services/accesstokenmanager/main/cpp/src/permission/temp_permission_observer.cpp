@@ -27,7 +27,9 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TempPermissionObserver"};
 static const std::string TASK_NAME_TEMP_PERMISSION = "atm_permission_manager_temp_permission";
+#ifdef EVENTHANDLER_ENABLE
 static constexpr int32_t WAIT_MILLISECONDS = 10 * 1000; // 10s
+#endif
 }
 
 TempPermissionObserver& TempPermissionObserver::GetInstance()
@@ -212,13 +214,16 @@ void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
     appStateCallback_= nullptr;
 }
 
+#ifdef EVENTHANDLER_ENABLE
 void TempPermissionObserver::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
 {
     eventHandler_ = eventHandler;
 }
+#endif
 
 bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID tokenID, const std::string& taskName)
 {
+#ifdef EVENTHANDLER_ENABLE
     if (eventHandler_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
         return false;
@@ -233,10 +238,14 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
 
     eventHandler_->ProxyPostTask(delayed, taskName, WAIT_MILLISECONDS);
     return true;
+#else
+    return false;
+#endif
 }
 
 bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& taskName)
 {
+#ifdef EVENTHANDLER_ENABLE
     if (eventHandler_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
         return false;
@@ -245,6 +254,9 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
     ACCESSTOKEN_LOG_INFO(LABEL, "revoke permission task name:%{public}s", taskName.c_str());
     eventHandler_->ProxyRemoveTask(taskName);
     return true;
+#else
+    return false;
+#endif
 }
 } // namespace AccessToken
 } // namespace Security

@@ -119,7 +119,6 @@ if (is_standard_system) {
     external_deps = [
       "c_utils:utils",
       "dsoftbus:softbus_client",
-      "eventhandler:libeventhandler",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "init:libbegetutil",
@@ -127,6 +126,11 @@ if (is_standard_system) {
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]
+
+    if (eventhandler_enable == true) {
+      cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+      external_deps += [ "eventhandler:libeventhandler" ]
+    }
 
     if (hicollie_enable == true) {
       external_deps += [ "hicollie:libhicollie" ]

@@ -116,7 +116,6 @@ ohos_fuzztest("AllocLocalTokenIDStubFuzzTest") {
 
   external_deps += [
     "dsoftbus:softbus_client",
-    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
@@ -124,6 +123,11 @@ ohos_fuzztest("AllocLocalTokenIDStubFuzzTest") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
   ]
+
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
 
   if (hicollie_enable == true) {
     external_deps += [ "hicollie:libhicollie" ]
