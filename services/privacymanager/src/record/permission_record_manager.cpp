@@ -141,17 +141,13 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid (%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (successCount == 0 && failCount == 0) {
-        record.status = PERM_INACTIVE;
-    } else {
-        record.status = GetAppStatus(tokenId);
+
+    record.status = GetAppStatus(tokenId);
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
-        int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
-            LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-        record.lockScreenStatus = lockScreenStatus;
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+    record.lockScreenStatus = lockScreenStatus;
 #endif
-    }
-    
     record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;
@@ -167,14 +163,14 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, 
 {
     ExecuteDeletePermissionRecordTask();
 
+    if ((successCount == 0) && (failCount == 0)) {
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
     PermissionRecord record;
     int32_t result = GetPermissionRecord(tokenId, permissionName, successCount, failCount, record);
     if (result != Constant::SUCCESS) {
         return result;
-    }
-
-    if (record.status == PERM_INACTIVE) {
-        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     AddRecord(record);
@@ -541,6 +537,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
         if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
+            it->accessCount = 1;
             record = *it;
             record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
             startRecordList_.erase(it);
@@ -663,7 +660,9 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
-    int32_t accessCount = 1;
+
+    // instantaneous record accessCount set to zero in StartUsingPermission, wait for combine in StopUsingPermission
+    int32_t accessCount = 0;
     int32_t failCount = 0;
 
     PermissionRecord record = { 0 };
@@ -735,7 +734,8 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return PrivacyError::ERR_MALLOC_FAILED;
     }
 
-    int32_t accessCount = 1;
+    // instantaneous record accessCount set to zero in StartUsingPermission, wait for combine in StopUsingPermission
+    int32_t accessCount = 0;
     int32_t failCount = 0;
     PermissionRecord record = { 0 };
     int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);

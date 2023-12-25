@@ -74,6 +74,15 @@ bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1
         return false;
     }
 
+    bool startFlag = ((record1.timestamp == record2.timestamp) && // same timestamp
+        ((record1.accessCount == 0) && (record2.accessCount == 1)) &&
+        ((record1.rejectCount == 0) && (record2.rejectCount == 0)));
+    // true means record1 is instantaneous record add by StartUsingPermission, record2 is add by StopUsingPermission
+    if (startFlag) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "StopUsingPermission record combine StartUsingPermission record.");
+        return true;
+    }
+
     // both success
     if (((record1.accessCount > 0) && (record2.accessCount == 0)) ||
         ((record1.accessCount == 0) && (record2.accessCount > 0))) {
