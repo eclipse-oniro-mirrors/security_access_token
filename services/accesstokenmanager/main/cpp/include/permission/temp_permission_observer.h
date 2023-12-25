@@ -21,7 +21,9 @@
 #include <string>
 
 #include "access_token.h"
+#ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
+#endif
 #include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
@@ -66,13 +68,17 @@ public:
     void RevokeAllTempPermission(AccessTokenID tokenID);
     bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& PermissionStateFullList);
     
+#ifdef EVENTHANDLER_ENABLE
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
+#endif
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
     bool CancleTaskOfPermissionRevoking(const std::string& taskName);
     void RegisterCallback();
 
 private:
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> eventHandler_;
+#endif
 
     std::mutex tempPermissionMutex_;
     std::vector<AccessTokenID> tempPermTokenList_;

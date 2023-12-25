@@ -124,7 +124,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   external_deps = [
     "c_utils:utils",
     "dsoftbus:softbus_client",
-    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
@@ -132,6 +131,11 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
 }
 
 group("unittest") {

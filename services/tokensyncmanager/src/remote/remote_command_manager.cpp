@@ -15,7 +15,9 @@
 
 #include "remote_command_manager.h"
 #include <thread>
+#ifdef EVENTHANDLER_ENABLE
 #include "access_event_handler.h"
+#endif
 #include "device_info_manager.h"
 #include "sync_remote_native_token_command.h"
 #include "remote_command_factory.h"
@@ -209,6 +211,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
         AccessTokenKit::DeleteRemoteDeviceTokens(uniqueDeviceId);
     });
 
+#ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
@@ -216,6 +219,7 @@ int RemoteCommandManager::NotifyDeviceOffline(const std::string &nodeId)
         return Constant::FAILURE;
     }
     handler->ProxyPostTask(delayed, "HandleDeviceOffline");
+#endif
 
     ACCESSTOKEN_LOG_INFO(LABEL, "complete");
     return Constant::SUCCESS;

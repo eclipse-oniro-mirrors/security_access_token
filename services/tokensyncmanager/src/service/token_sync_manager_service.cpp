@@ -72,6 +72,7 @@ void TokenSyncManagerService::OnStop()
     SoftBusManager::GetInstance().Destroy();
 }
 
+#ifdef EVENTHANDLER_ENABLE
 std::shared_ptr<AccessEventHandler> TokenSyncManagerService::GetSendEventHandler() const
 {
     return sendHandler_;
@@ -81,6 +82,7 @@ std::shared_ptr<AccessEventHandler> TokenSyncManagerService::GetRecvEventHandler
 {
     return recvHandler_;
 }
+#endif
 
 int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
 {
@@ -169,6 +171,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
 
 bool TokenSyncManagerService::Initialize()
 {
+#ifdef EVENTHANDLER_ENABLE
     sendRunner_ = AppExecFwk::EventRunner::Create(true);
     if (!sendRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a sendRunner.");
@@ -183,6 +186,7 @@ bool TokenSyncManagerService::Initialize()
     }
 
     recvHandler_ = std::make_shared<AccessEventHandler>(recvRunner_);
+#endif
     SoftBusManager::GetInstance().Initialize();
     return true;
 }

@@ -46,7 +46,6 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
   ]
 
   sources += [
-    "${access_token_path}/services/common/handler/src/access_event_handler.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/base_remote_command.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/delete_remote_token_command.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/sync_remote_hap_token_command.cpp",
@@ -82,12 +81,17 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "dsoftbus:softbus_client",
-    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    sources += [ "${access_token_path}/services/common/handler/src/access_event_handler.cpp" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
 
   if (token_sync_enable == true) {
     cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]

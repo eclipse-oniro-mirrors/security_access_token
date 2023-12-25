@@ -44,7 +44,6 @@ ohos_shared_library("accesstoken_service_common") {
     "database/src/sqlite_helper.cpp",
     "database/src/statement.cpp",
     "database/src/variant_value.cpp",
-    "handler/src/access_event_handler.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -54,13 +53,17 @@ ohos_shared_library("accesstoken_service_common") {
 
   external_deps = [
     "c_utils:utils",
-    "eventhandler:libeventhandler",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    sources += [ "handler/src/access_event_handler.cpp" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
   if (ability_base_enable == true) {
     include_dirs += [ "ability_manager/include" ]
 
