@@ -33,6 +33,7 @@ ohos_unittest("libtoken_setproc_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
+    "../:libperm_setproc",
     "../:libtoken_setproc",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
