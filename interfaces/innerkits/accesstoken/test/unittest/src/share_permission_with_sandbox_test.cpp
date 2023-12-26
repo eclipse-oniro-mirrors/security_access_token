@@ -162,11 +162,11 @@ static AccessTokenID AllocHapTokenId(HapInfoParams info, HapPolicyParams policy)
     tokenIdEx = AccessTokenKit::AllocHapToken(info, policy);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_NE(0, tokenId);
-    int ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_FULL_CONTROL, false);
+    int ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
     return tokenId;
 }
@@ -187,31 +187,31 @@ HWTEST_F(SharePermissionTest, PermissionShareTest001, TestSize.Level1)
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenCommon, PERMISSION_ALL, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenCommon, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenCommon, PERMISSION_NONE, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::DeleteToken(tokenCommon);
@@ -238,31 +238,31 @@ HWTEST_F(SharePermissionTest, PermissionShareTest002, TestSize.Level1)
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenFullControl, PERMISSION_ALL, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenFullControl, PERMISSION_FULL_CONTROL, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     // grant common app
     ret = AccessTokenKit::GrantPermission(tokenFullControl, PERMISSION_NONE, PERMISSION_USER_FIXED);
     EXPECT_NE(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_NONE, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_NONE);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::DeleteToken(tokenCommon);
@@ -302,11 +302,11 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest001, TestSize.Lev
 
     ret = AccessTokenKit::ClearUserGrantedPermissionState(tokenFullRead);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteToken(tokenFullControl);
@@ -358,11 +358,11 @@ HWTEST_F(SharePermissionTest, PermissionShareClearUserGrantTest002, TestSize.Lev
     EXPECT_EQ(flag, PERMISSION_DEFAULT_FLAG);
     (void)AccessTokenKit::GetPermissionFlag(tokenFullRead, PERMISSION_FULL_CONTROL, flag);
     EXPECT_EQ(flag, PERMISSION_DEFAULT_FLAG);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_FULL_CONTROL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::DeleteToken(tokenFullControl);
@@ -385,7 +385,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level1)
     AccessTokenID tokenCommon = AllocHapTokenId(g_infoParmsCommon, g_policyParams);
     ASSERT_EQ(0, SetSelfTokenID(tokenCommon));
 
-    int32_t ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_NOT_DISPLAYED, false);
+    int32_t ret = AccessTokenKit::VerifyAccessToken(tokenId, PERMISSION_NOT_DISPLAYED);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     std::vector<PermissionListState> permsList;
@@ -565,11 +565,11 @@ HWTEST_F(SharePermissionTest, PermissionShareTest006, TestSize.Level1)
     // revoke common app
     ret = AccessTokenKit::RevokePermission(tokenCommon, PERMISSION_ALL, PERMISSION_USER_FIXED);
     EXPECT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenCommon, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullControl, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
-    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL, false);
+    ret = AccessTokenKit::VerifyAccessToken(tokenFullRead, PERMISSION_ALL);
     EXPECT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     uint32_t flag;

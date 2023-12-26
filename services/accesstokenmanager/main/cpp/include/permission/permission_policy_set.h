@@ -63,7 +63,7 @@ public:
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
     void GetGrantedPermissionList(std::vector<std::string>& permissionList);
 
-    void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<int32_t>& statusList);
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
         PermissionStateFull& state);

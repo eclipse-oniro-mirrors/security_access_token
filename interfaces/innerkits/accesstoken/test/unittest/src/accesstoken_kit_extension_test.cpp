@@ -785,13 +785,13 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback001, TestSi
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     ASSERT_EQ(ret, TOKEN_HAP);
 
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_DENIED, res);
 
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
 
     EXPECT_EQ(true, callbackPtr->ready_);
@@ -866,7 +866,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback002, TestSi
 
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
 
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
@@ -924,16 +924,16 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback003, TestSi
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -991,16 +991,16 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback004, TestSi
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_GRANTED, res);
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_DENIED, res);
     EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
     ASSERT_EQ(PERMISSION_GRANTED, res);
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -1054,14 +1054,14 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback005, TestSi
     int32_t res = AccessTokenKit::RegisterPermStateChangeCallback(callbackPtr);
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA");
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO", false);
+    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.GET_BUNDLE_INFO");
     ASSERT_EQ(PERMISSION_GRANTED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
@@ -1687,23 +1687,24 @@ HWTEST_F(AccessTokenKitExtensionTest, VerifyAccessToken005, TestSize.Level1)
     AccessTokenID callerTokenID = AccessTokenKit::GetHapTokenID(TEST_USER_ID, "accesstoken_test3", 0);
     ASSERT_NE(INVALID_TOKENID, callerTokenID);
     AccessTokenID firstTokenID;
+    std::string permissionName;
 
     // ret = PERMISSION_GRANTED + firstTokenID = 0
-    std::string permissionName = "ohos.permission.GET_BUNDLE_INFO";
+    permissionName = "ohos.permission.GET_BUNDLE_INFO";
     firstTokenID = 0;
     ASSERT_EQ(PermissionState::PERMISSION_GRANTED, AccessTokenKit::VerifyAccessToken(
-        callerTokenID, firstTokenID, permissionName, false));
+        callerTokenID, firstTokenID, permissionName));
 
     firstTokenID = 1;
     // ret = PERMISSION_GRANTED + firstTokenID != 0
     ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
-        callerTokenID, firstTokenID, permissionName, false));
+        callerTokenID, firstTokenID, permissionName));
     AccessTokenKit::DeleteToken(callerTokenID);
 
     callerTokenID = 0;
     // ret = PERMISSION_DENIED
     ASSERT_EQ(PermissionState::PERMISSION_DENIED, AccessTokenKit::VerifyAccessToken(
-        callerTokenID, firstTokenID, permissionName, false));
+        callerTokenID, firstTokenID, permissionName));
 }
 
 /**

@@ -12,9 +12,8 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../../access_token.gni")
 
-config("setproc_config") {
+config("token_setproc") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
@@ -25,40 +24,13 @@ if (is_standard_system) {
     part_name = "access_token"
     output_name = "libtoken_setproc"
 
-    public_configs = [ ":setproc_config" ]
+    public_configs = [ ":token_setproc" ]
 
     cflags = [ "-Wall" ]
 
     include_dirs = [ "src" ]
 
     sources = [ "src/token_setproc.c" ]
-
-    deps = []
-  }
-
-  ohos_shared_library("libperm_setproc") {
-    subsystem_name = "security"
-    part_name = "access_token"
-    output_name = "libperm_setproc"
-    innerapi_tags = [ "platformsdk" ]
-    sanitize = {
-      cfi = true
-      cfi_cross_dso = true
-      debug = false
-    }
-    branch_protector_ret = "pac_ret"
-
-    if (!use_clang_coverage) {
-      version_script = "libperm_setproc.map"
-    }
-
-    public_configs = [ ":setproc_config" ]
-
-    cflags = [ "-Wall" ]
-
-    include_dirs = [ "src" ]
-
-    sources = [ "src/perm_setproc.cpp" ]
 
     deps = []
   }

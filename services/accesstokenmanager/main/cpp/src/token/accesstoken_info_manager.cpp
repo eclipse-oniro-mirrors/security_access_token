@@ -585,10 +585,6 @@ bool AccessTokenInfoManager::TryUpdateExistNativeToken(const std::shared_ptr<Nat
     }
 
     nativeTokenInfoMap_[id] = infoPtr;
-
-    // add native to kernel
-    std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetNativeInfoPermissionPolicySet();
-    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
     return true;
 }
 
