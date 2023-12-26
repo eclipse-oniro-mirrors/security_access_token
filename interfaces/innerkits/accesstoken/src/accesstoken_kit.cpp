@@ -25,7 +25,6 @@
 #include "hap_token_info.h"
 #include "permission_def.h"
 #include "permission_map.h"
-#include "perm_setproc.h"
 #include "perm_state_change_callback_customize.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"
@@ -202,36 +201,31 @@ PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionLis
     return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList, info);
 }
 
-int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
+int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d",
-        tokenID, permissionName.c_str(), crossIpc);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d, permissionName=%{public}s",
+        tokenID, permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return PERMISSION_DENIED;
     }
 
-    uint32_t code;
-    if (crossIpc || !TransferPermissionToOpcode(permissionName, code)) {
-        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
-    }
-    bool isGranted = GetPermissionFromKernel(tokenID, code);
-    return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
+    return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
 }
 
 int AccessTokenKit::VerifyAccessToken(
-    AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName, bool crossIpc)
+    AccessTokenID callerTokenID, AccessTokenID firstTokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, callerToken=%{public}d, firstToken=%{public}d, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, callerTokenID=%{public}d, firstTokenID=%{public}d, permissionName=%{public}s",
         callerTokenID, firstTokenID, permissionName.c_str());
-    int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName, crossIpc);
+    int ret = AccessTokenKit::VerifyAccessToken(callerTokenID, permissionName);
     if (ret != PERMISSION_GRANTED) {
         return ret;
     }
     if (firstTokenID == FIRSTCALLER_TOKENID_DEFAULT) {
         return ret;
     }
-    return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName, crossIpc);
+    return AccessTokenKit::VerifyAccessToken(firstTokenID, permissionName);
 }
 
 int AccessTokenKit::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)

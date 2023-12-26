@@ -17,7 +17,6 @@
 #define TOKENSYNC_KIT_TEST_H
 
 #include <gtest/gtest.h>
-#include "perm_setproc.h"
 
 namespace OHOS {
 namespace Security {

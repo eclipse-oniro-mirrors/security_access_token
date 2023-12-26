@@ -19,15 +19,16 @@
 
 using namespace testing::ext;
 using namespace OHOS::Security;
-using namespace OHOS::Security::AccessToken;
 
 static const uint32_t ACCESS_TOKEN_UID = 3020;
 static const uint32_t MAX_PROCESS_SIZE = 500; // same as kernel size
 static uint32_t g_tokeId = 5000;
-static const std::vector<uint32_t> g_opCodeList = {0, 1, 2, 3, 4, 5, 63, 64};
-static const std::vector<bool> g_statusList = {true, true, false, false, false, false, true, true};
+static const uint32_t SIZE = 8;
+static uint32_t g_opCodeList[SIZE] = {0, 1, 2, 3, 4, 5, 63, 64};
+static int32_t g_statusList[SIZE] = {0, 0, 1, 1, 1, 1, 0, 0};
 static uint32_t g_gelfUid;
 static const int32_t CYCLE_TIMES = 1000;
+static int32_t PERMISSION_GRANTED = 0;
 
 void TokensetprocKitTest::SetUpTestCase()
 {
@@ -54,21 +55,20 @@ void TokensetprocKitTest::TearDown()
  */
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel001, TestSize.Level1)
 {
-    ASSERT_EQ(EPERM, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(EPERM, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
 }
 
 /**
  * @tc.name: AddPermissionToKernel002
- * @tc.desc: AddPermissionToKernel with differet size parameter.
+ * @tc.desc: AddPermissionToKernel with invalid parameter.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel002, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    std::vector<uint32_t> opcodeList = {0, 1, 2};
-    std::vector<bool> statusList = {0, 0};
-    ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
+    ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, nullptr, g_statusList, SIZE));
+    ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, g_opCodeList, nullptr, SIZE));
     setuid(g_gelfUid);
 }
 
@@ -81,9 +81,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel002, TestSize.Level1)
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel003, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    std::vector<uint32_t> opcodeList;
-    std::vector<bool> statusList;
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, 0));
     setuid(g_gelfUid);
 }
 
@@ -96,87 +94,56 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel003, TestSize.Level1)
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel004, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
 }
 
 /**
  * @tc.name: AddPermissionToKernel005
- * @tc.desc: update less permission with same token.
+ * @tc.desc: AddPermissionToKernel with same token.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel005, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    std::vector<uint32_t> opCodeList1 = {123, 124};
-    std::vector<bool> statusList1 = {false, false}; // not granted
-    std::vector<uint32_t> opCodeList2 = {123};
-    std::vector<bool> statusList2 = {true}; // granted
-
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList1, statusList1));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, opCodeList1[0]));
-    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList2, statusList2));
-    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, opCodeList2[0]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-
     setuid(g_gelfUid);
 }
 
 /**
  * @tc.name: AddPermissionToKernel006
- * @tc.desc: update more permissiion with same token.
+ * @tc.desc: AddPermissionToKernel with different token.
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(TokensetprocKitTest, AddPermissionToKernel006, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    std::vector<uint32_t> opCodeList1 = {123};
-    std::vector<bool> statusList1 = {true}; // granted
-    std::vector<uint32_t> opCodeList2 = {123, 124};
-    std::vector<bool> statusList2 = {false, false}; // not granted
-
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList1, statusList1));
-    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, opCodeList1[0]));
-    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList2, statusList2));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, opCodeList2[0]));
-    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-
-    setuid(g_gelfUid);
-}
-
-/**
- * @tc.name: AddPermissionToKernel007
- * @tc.desc: AddPermissionToKernel with different token.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level1)
-{
-    setuid(ACCESS_TOKEN_UID);
     uint32_t token1 = 111;
     uint32_t token2 = 222;
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token1, g_opCodeList, g_statusList));
-    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token2, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token1, g_opCodeList, g_statusList, SIZE));
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(token2, g_opCodeList, g_statusList, SIZE));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token1));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(token2));
     setuid(g_gelfUid);
 }
 
 /**
- * @tc.name: AddPermissionToKernel008
+ * @tc.name: AddPermissionToKernel007
  * @tc.desc: AddPermissionToKernel with oversize.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level1)
+HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
     std::vector<uint32_t> tokenList;
     for (uint32_t i = 0; i < MAX_PROCESS_SIZE + 1; i++) {
-        int32_t ret = AddPermissionToKernel(i, g_opCodeList, g_statusList);
+        int32_t ret = AddPermissionToKernel(i, g_opCodeList, g_statusList, SIZE);
         if (ret != ACCESS_TOKEN_OK) {
             EXPECT_EQ(ret, EOVERFLOW);
             break;
@@ -193,28 +160,26 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level1)
 
 
 /**
- * @tc.name: AddPermissionToKernel009
+ * @tc.name: AddPermissionToKernel008
  * @tc.desc: AddPermissionToKernel with update permission.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level1)
+HWTEST_F(TokensetprocKitTest, AddPermissionToKernel008, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
 
     ASSERT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
     ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
 
-    std::vector<uint32_t> opCodeList;
-    std::vector<bool> statusList;
     // update with less permission(size is 0)
-    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList, statusList));
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, 0));
     ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
 
     // update with more permission
-    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    ASSERT_EQ(g_statusList[0], GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+    ASSERT_EQ(g_statusList[0] == PERMISSION_GRANTED, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
@@ -240,7 +205,7 @@ HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel001, TestSize.Level1)
 HWTEST_F(TokensetprocKitTest, RemovePermissionFromKernel002, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
     EXPECT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
@@ -279,7 +244,7 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel002, TestSize.Level1)
 HWTEST_F(TokensetprocKitTest, SetPermissionToKernel003, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     ASSERT_EQ(ENODATA, SetPermissionToKernel(g_tokeId,  g_opCodeList[0], true));
     ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
@@ -295,14 +260,13 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel003, TestSize.Level1)
 HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel001, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
-    uint32_t size = g_opCodeList.size();
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    for (uint32_t i = 0; i < size; i++) {
-        EXPECT_EQ(g_statusList[i], GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+    for (uint32_t i = 0; i < SIZE; i++) {
+        EXPECT_EQ(g_statusList[i] == PERMISSION_GRANTED, GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
     }
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
-    for (uint32_t i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < SIZE; i++) {
         EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
     }
     setuid(g_gelfUid);
@@ -318,7 +282,7 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "GetPermissionFromKernel002 start";
     setuid(ACCESS_TOKEN_UID);
-    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
 
     // set permission status: false
     EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], false));
@@ -336,7 +300,7 @@ static void *ThreadTestFunc01(void *args)
 {
     int32_t token1 = g_tokeId;
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
-        AddPermissionToKernel(token1, g_opCodeList, g_statusList);
+        AddPermissionToKernel(token1, g_opCodeList, g_statusList, SIZE);
         SetPermissionToKernel(token1, g_opCodeList[0], false);
         GetPermissionFromKernel(token1, g_opCodeList[0]);
         RemovePermissionFromKernel(token1);
@@ -348,11 +312,10 @@ static void *ThreadTestFunc01(void *args)
 static void *ThreadTestFunc02(void *args)
 {
     int32_t token2 = g_tokeId + CYCLE_TIMES;
-    uint32_t size = g_opCodeList.size();
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
-        AddPermissionToKernel(token2, g_opCodeList, g_statusList);
-        SetPermissionToKernel(token2, g_opCodeList[size - 1], true);
-        GetPermissionFromKernel(token2, g_opCodeList[size - 1]);
+        AddPermissionToKernel(token2, g_opCodeList, g_statusList, SIZE);
+        SetPermissionToKernel(token2, g_opCodeList[7], true); // 7: array index
+        GetPermissionFromKernel(token2, g_opCodeList[7]); // 7: array index
         RemovePermissionFromKernel(token2);
         token2++;
     }
@@ -396,7 +359,7 @@ HWTEST_F(TokensetprocKitTest, APICostTimeTest001, TestSize.Level1)
     double costSum = 0.0;
     std::vector<uint32_t> tokenList;
     while (1) {
-        if (AddPermissionToKernel(token, g_opCodeList, g_statusList) != 0) {
+        if (AddPermissionToKernel(token, g_opCodeList, g_statusList, SIZE) != 0) {
             break;
         }
         tokenList.emplace_back(token);

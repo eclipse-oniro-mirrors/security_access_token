@@ -453,14 +453,14 @@ void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::stri
     }
 }
 
-void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
+void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<int32_t>& statusList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     for (const auto& state : permStateList_) {
         uint32_t code;
         if (TransferPermissionToOpcode(state.permissionName, code)) {
             opCodeList.emplace_back(code);
-            statusList.emplace_back(state.grantStatus[0] == PERMISSION_GRANTED);
+            statusList.emplace_back(state.grantStatus[0]);
         }
     }
 }

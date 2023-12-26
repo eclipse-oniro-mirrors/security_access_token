@@ -35,7 +35,6 @@ ohos_fuzztest("RevokePermissionStubFuzzTest") {
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
   ]
 

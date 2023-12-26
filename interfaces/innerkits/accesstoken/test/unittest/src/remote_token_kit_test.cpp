@@ -239,7 +239,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_NE(resultInfo.tokenID, remoteTokenInfo1.baseInfo.tokenID); // tokenID already is map tokenID
     ASSERT_EQ(resultInfo.tokenAttr, remoteTokenInfo1.baseInfo.tokenAttr);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID1, 0x20100000);
@@ -357,7 +357,7 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo003, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID3, 0x20100000);
@@ -397,14 +397,14 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo004, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     remoteTokenInfo4.permStateList[0].grantStatus[0] = PermissionState::PERMISSION_GRANTED; // second granted
     ret = AccessTokenKit::SetRemoteHapTokenInfo(deviceID4, remoteTokenInfo4);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID4, 0x20100000);
@@ -444,13 +444,13 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo005, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::GrantPermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
     ASSERT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     ASSERT_EQ(ret, PermissionState::PERMISSION_DENIED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID5, 0x20100000);
@@ -490,13 +490,13 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo006, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::RevokePermission(mapID, "ohos.permission.test1", PermissionFlag::PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(ret, ERR_PERMISSION_NOT_EXIST);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.test1");
     EXPECT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID6, 0x20100000);
@@ -622,13 +622,13 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo009, TestSize.Level1)
     AccessTokenID mapID = AccessTokenKit::AllocLocalTokenID(networkId_, 0x20100000);
     ASSERT_NE(mapID, 0);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::ClearUserGrantedPermissionState(mapID);
     ASSERT_EQ(ret, RET_SUCCESS);
 
-    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA", false);
+    ret = AccessTokenKit::VerifyAccessToken(mapID, "ohos.permission.CAMERA");
     ASSERT_EQ(ret, PermissionState::PERMISSION_GRANTED);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID9, 0x20100000);

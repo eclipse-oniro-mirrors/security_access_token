@@ -33,7 +33,7 @@ namespace OHOS {
 
         AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        int32_t result = AccessTokenKit::VerifyAccessToken(tokenId, tokenId, testName, false);
+        int32_t result = AccessTokenKit::VerifyAccessToken(tokenId, tokenId, testName);
 
         return result == RET_SUCCESS;
     }
