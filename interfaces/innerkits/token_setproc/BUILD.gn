@@ -32,6 +32,6 @@ if (is_standard_system) {
 
     sources = [ "src/token_setproc.c" ]
 
-    deps = []
+    external_deps = [ "c_utils:utils" ]
   }
 }
