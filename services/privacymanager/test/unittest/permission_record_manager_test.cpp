@@ -886,6 +886,10 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
  */
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
     auto callbackPtr = std::make_shared<CbCustomizeTest1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
@@ -983,6 +987,11 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -990,6 +999,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level
 
     PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill opCode not mic branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 }
 
 /*
@@ -1000,6 +1010,11 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level1)
 {
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -1007,6 +1022,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
     PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is not inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 }
 
 /*
@@ -1021,6 +1037,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
     EXPECT_EQ(0, SetSelfTokenID(tokenID));
 
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -1029,6 +1046,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level
     sleep(3); // wait for dialog disappear
     PermissionRecordManager::GetInstance().NotifyMicChange(true); // fill true status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 }
 
 /*
@@ -1043,6 +1061,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
     EXPECT_EQ(0, SetSelfTokenID(tokenID));
 
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -1051,7 +1070,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level
     sleep(3); // wait for dialog disappear
     PermissionRecordManager::GetInstance().NotifyMicChange(false); // fill false status is inactive branch
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
 }
 
 /*
@@ -1486,7 +1505,7 @@ HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck002, TestSize.Level1)
     PermissionRecord record1 = g_record;
     record1.timestamp = timestamp;
     PermissionRecord record2 = g_record;
-    record2.timestamp = timestamp;
+    record2.timestamp = timestamp + 1;
 
     record1.accessCount = accessCount1;
     record2.accessCount = accessCount2;

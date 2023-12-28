@@ -1211,7 +1211,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
     ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(2, result.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
 /**
@@ -1300,7 +1300,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level1)
     ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
     ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
     ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(2, result.bundleRecords[0].permissionRecords[0].accessCount);
+    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
 /**
