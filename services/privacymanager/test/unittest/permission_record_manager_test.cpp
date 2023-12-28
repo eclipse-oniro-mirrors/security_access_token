@@ -463,7 +463,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest005, Tes
 
     PermissionUsedResult queryResult;
     PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, queryResult);
-    ASSERT_NE(queryResult.bundleRecords.size(), 0);
+    ASSERT_NE(queryResult.bundleRecords.size(), static_cast<size_t>(0));
     auto bundleRecordIter = std::find_if(queryResult.bundleRecords.begin(), queryResult.bundleRecords.end(),
         [tokenId](const BundleUsedRecord& bur) {
             return tokenId == bur.tokenId;
@@ -477,7 +477,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest005, Tes
         });
     ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
@@ -537,7 +537,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
@@ -604,7 +604,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter1, bundleRecordIter1->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter1->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter1->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, permissionRecordIter1->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter1->accessRecords[0].lockScreenStatus);
 
@@ -624,7 +624,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter2, bundleRecordIter2->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter2->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter2->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter2->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter2->accessRecords[0].lockScreenStatus);
 }
@@ -672,7 +672,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
@@ -720,7 +720,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
@@ -786,7 +786,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter1, bundleRecordIter1->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter1->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter1->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter1->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter1->accessRecords[0].lockScreenStatus);
 
@@ -806,7 +806,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter2, bundleRecordIter2->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter2->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter2->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter2->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_LOCKED, permissionRecordIter2->accessRecords[0].lockScreenStatus);
 }
@@ -853,7 +853,7 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
         });
     ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
 
-    ASSERT_EQ(1, permissionRecordIter->accessRecords.size());
+    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_LOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
@@ -1679,7 +1679,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
     PermissionUsedResult result1;
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result1));
     EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords.size());
-    EXPECT_EQ(static_cast<int32_t>(tokenID), result1.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<uint32_t>(tokenID), result1.bundleRecords[0].tokenId);
     EXPECT_EQ(static_cast<size_t>(1), result1.bundleRecords[0].permissionRecords.size());
     EXPECT_EQ(2, result1.bundleRecords[0].permissionRecords[0].accessCount);
 
@@ -1687,7 +1687,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED;
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result2));
     EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords.size());
-    EXPECT_EQ(static_cast<int32_t>(tokenID), result2.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<uint32_t>(tokenID), result2.bundleRecords[0].tokenId);
     EXPECT_EQ(static_cast<size_t>(1), result2.bundleRecords[0].permissionRecords.size());
     EXPECT_EQ(2, result2.bundleRecords[0].permissionRecords[0].accessCount);
 
@@ -1695,7 +1695,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND;
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result3));
     EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords.size());
-    EXPECT_EQ(static_cast<int32_t>(tokenID), result3.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<uint32_t>(tokenID), result3.bundleRecords[0].tokenId);
     EXPECT_EQ(static_cast<size_t>(1), result3.bundleRecords[0].permissionRecords.size());
     EXPECT_EQ(2, result3.bundleRecords[0].permissionRecords[0].accessCount);
 
@@ -1703,7 +1703,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND;
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result4));
     EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords.size());
-    EXPECT_EQ(static_cast<int32_t>(tokenID), result4.bundleRecords[0].tokenId);
+    EXPECT_EQ(static_cast<uint32_t>(tokenID), result4.bundleRecords[0].tokenId);
     EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords[0].permissionRecords.size());
     EXPECT_EQ(2, result4.bundleRecords[0].permissionRecords[0].accessCount);
 }

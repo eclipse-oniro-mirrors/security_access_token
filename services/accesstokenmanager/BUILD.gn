@@ -108,7 +108,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
       "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+      "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
       "${access_token_path}/services/accesstokenmanager:access_token.rc",
       "${access_token_path}/services/accesstokenmanager:permission_definition_config",
       "${access_token_path}/services/common:accesstoken_service_common",

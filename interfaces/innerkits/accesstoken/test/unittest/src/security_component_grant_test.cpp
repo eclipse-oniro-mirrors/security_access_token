@@ -131,7 +131,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Lev
 {
     AccessTokenID tokenID = AllocTestToken();
     ASSERT_NE(tokenID, INVALID_TOKENID);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -140,12 +140,12 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest001, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_NE(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
 
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -172,7 +172,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
     uint32_t flag;
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
@@ -182,7 +182,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest002, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -209,7 +209,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
     uint32_t flag;
     AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
@@ -218,7 +218,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest003, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
     res = AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(res, RET_SUCCESS);
@@ -245,7 +245,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_NE(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
 
     uint32_t flag;
@@ -256,7 +256,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest004, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
     AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -279,7 +279,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Lev
     // security component grant
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     // user grant
@@ -295,7 +295,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest005, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -316,7 +316,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
     // security component grant
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     uint32_t flag;
@@ -327,7 +327,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
     // user revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
     AccessTokenKit::GetPermissionFlag(tokenID, TEST_PERMISSION, flag);
     ASSERT_EQ(((static_cast<uint32_t>(flag)) & PERMISSION_COMPONENT_SET), 0);
@@ -335,7 +335,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest006, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -356,7 +356,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest007, TestSize.Lev
     // security component grant
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     PermissionOper result;
@@ -402,7 +402,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest008, TestSize.Lev
     // security component grant
     int32_t res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     // security component grant repeat
@@ -558,7 +558,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
-    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED);
+    int32_t status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED, false);
     ASSERT_EQ(status, PERMISSION_GRANTED);
 
     // security component revoke
@@ -566,7 +566,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     ASSERT_EQ(res, RET_SUCCESS);
     ASSERT_EQ(callbackPtr->ready2_, true);
 
-    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED);
+    status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED, false);
     ASSERT_EQ(status, PERMISSION_DENIED);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
