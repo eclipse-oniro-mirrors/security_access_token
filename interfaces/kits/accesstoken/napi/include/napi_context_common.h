@@ -15,6 +15,8 @@
 #ifndef  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
 #define  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
 
+#include <uv.h>
+#include "accesstoken_log.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "napi_common.h"
@@ -29,6 +31,12 @@ struct AtManagerAsyncWorkData {
     napi_env        env = nullptr;
     napi_async_work work = nullptr;
     napi_deferred   deferred = nullptr;
+    napi_ref        callbackRef = nullptr;
+};
+
+struct AtManagerAsyncWorkDataRel {
+    napi_env        env = nullptr;
+    napi_async_work work = nullptr;
     napi_ref        callbackRef = nullptr;
 };
 }  // namespace AccessToken
