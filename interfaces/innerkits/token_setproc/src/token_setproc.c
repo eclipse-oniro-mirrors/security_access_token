@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <securec.h>
 
 #define    ACCESS_TOKEN_ID_IOCTL_BASE    'A'
 #define PERMISSION_GRANTED (0)
@@ -62,7 +63,7 @@ struct IoctlSetGetPermData {
 #define    ACCESS_TOKENID_REMOVE_PERMISSIONS \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, REMOVE_PERMISSIONS, uint32_t)
 #define    ACCESS_TOKENID_GET_PERMISSION \
-    _IOWR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, struct IoctlSetGetPermData)
+    _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, struct IoctlSetGetPermData)
 #define    ACCESS_TOKENID_SET_PERMISSION \
     _IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, struct IoctlSetGetPermData)
 
@@ -150,6 +151,7 @@ int32_t AddPermissionToKernel(uint32_t tokenID, const uint32_t* opCodeList, cons
     }
     struct IoctlAddPermData data;
     data.token = tokenID;
+    memset_s(data.perm, MAX_PERM_SIZE, 0, MAX_PERM_SIZE);
 
     for (uint32_t i = 0; i < size; ++i) {
         uint32_t opCode = opCodeList[i];
@@ -227,11 +229,11 @@ bool GetPermissionFromKernel(uint32_t tokenID, int32_t opCode)
         return false;
     }
     int ret = ioctl(fd, ACCESS_TOKENID_GET_PERMISSION, &data);
-    if (ret) {
+    if (ret < 0) {
         close(fd);
         return false;
     }
 
     close(fd);
-    return data.isGranted;
+    return ret == 1;
 }

@@ -22,10 +22,12 @@ using namespace OHOS::Security;
 
 static const uint32_t ACCESS_TOKEN_UID = 3020;
 static const uint32_t MAX_PROCESS_SIZE = 500; // same as kernel size
+static const uint32_t MAX_PERM_NUM = 2048; // 64 * 32
+static const uint32_t INVALID_OP_CODE = 65532;
 static uint32_t g_tokeId = 5000;
 static const uint32_t SIZE = 8;
-static uint32_t g_opCodeList[SIZE] = {0, 1, 2, 3, 4, 5, 63, 64};
-static int32_t g_statusList[SIZE] = {0, 0, 1, 1, 1, 1, 0, 0};
+static uint32_t g_opCodeList[SIZE] = {0, 1, 2, 3, 4, 5, 63, 128};
+static int32_t g_statusList[SIZE] = {0, 0, 1, 1, 1, 1, 0, 1};
 static uint32_t g_gelfUid;
 static const int32_t CYCLE_TIMES = 1000;
 static int32_t PERMISSION_GRANTED = 0;
@@ -145,7 +147,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel007, TestSize.Level1)
     for (uint32_t i = 0; i < MAX_PROCESS_SIZE + 1; i++) {
         int32_t ret = AddPermissionToKernel(i, g_opCodeList, g_statusList, SIZE);
         if (ret != ACCESS_TOKEN_OK) {
-            EXPECT_EQ(ret, EOVERFLOW);
+            EXPECT_EQ(ret, EDQUOT);
             break;
         } else {
             tokenList.emplace_back(i);
@@ -265,6 +267,13 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel001, TestSize.Level1)
         EXPECT_EQ(g_statusList[i] == PERMISSION_GRANTED, GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
     }
 
+    std::set<uint32_t> knownOpCodeSet(g_opCodeList, g_opCodeList + SIZE);
+    for (uint32_t i = 0; i < MAX_PERM_NUM; i++) {
+        if (knownOpCodeSet.find(i) == knownOpCodeSet.end()) {
+            EXPECT_FALSE(GetPermissionFromKernel(g_tokeId, i));
+        }
+    }
+
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     for (uint32_t i = 0; i < SIZE; i++) {
         EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
@@ -294,6 +303,24 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel002, TestSize.Level1)
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
+}
+
+/**
+ * @tc.name: Invalid parameter
+ * @tc.desc: InvalidParam test.
+ * @tc.type: FUNC
+ * @tc.require: issueI8HMUH
+ */
+HWTEST_F(TokensetprocKitTest, InvalidParam1, TestSize.Level1)
+{
+    setuid(ACCESS_TOKEN_UID);
+    ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList, SIZE));
+
+    // set permission fail
+    EXPECT_EQ(EINVAL, SetPermissionToKernel(g_tokeId, INVALID_OP_CODE, false));
+
+    // get permission fail
+    EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, INVALID_OP_CODE));
 }
 
 static void *ThreadTestFunc01(void *args)
