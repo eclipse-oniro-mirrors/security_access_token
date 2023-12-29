@@ -38,7 +38,7 @@
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
-#include "token_setproc.h"
+#include "perm_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -908,11 +908,11 @@ void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared
         return;
     }
     std::vector<uint32_t> opCodeList;
-    std::vector<int32_t> statusList;
+    std::vector<bool> statusList;
     policy->GetPermissionStateList(opCodeList, statusList);
-    int32_t ret = AddPermissionToKernel(tokenID, opCodeList.data(), statusList.data(), statusList.size());
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "AddPermissionToKernel(token=%{public}d), err=%{public}d", tokenID, ret);
+        "AddPermissionToKernel(token=%{public}d), size=%{public}d, err=%{public}d", tokenID, opCodeList.size(), ret);
 }
 
 void PermissionManager::RemovePermFromKernel(AccessTokenID tokenID)
