@@ -22,7 +22,6 @@ ohos_unittest("libnativetoken_test") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
 
@@ -56,7 +55,6 @@ ohos_unittest("libnativetoken_mock_test") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
 

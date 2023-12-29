@@ -21,7 +21,6 @@ ohos_shared_library("accesstoken_service_common") {
     cfi = true
     cfi_cross_dso = true
     debug = false
-    blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
   include_dirs = [
