@@ -134,9 +134,19 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiAbilityFlag = false;
 };
 
+struct RequestAsyncContextHandle {
+    explicit RequestAsyncContextHandle(std::shared_ptr<RequestAsyncContext>& requestAsyncContext)
+    {
+        asyncContextPtr = requestAsyncContext;
+    }
+
+    std::shared_ptr<RequestAsyncContext> asyncContextPtr;
+};
+
 class UIExtensionCallback {
 public:
-    explicit UIExtensionCallback(RequestAsyncContext* reqContext);
+    explicit UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext);
+    ~UIExtensionCallback();
     void SetSessionId(int32_t sessionId);
     void OnRelease(int32_t releaseCode);
     void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
@@ -155,12 +165,14 @@ struct ResultCallback {
     std::vector<std::string> permissions;
     std::vector<int32_t> grantResults;
     int32_t requestCode;
-    void* data = nullptr;
+    std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    explicit AuthorizationResult(int32_t requestCode, void* data) : requestCode_(requestCode), data_(data) {}
+    AuthorizationResult(int32_t requestCode, std::shared_ptr<RequestAsyncContext>& data)
+        : requestCode_(requestCode), data_(data)
+    {}
     virtual ~AuthorizationResult() override = default;
 
     virtual void GrantResultsCallback(const std::vector<std::string>& permissions,
@@ -168,7 +180,7 @@ public:
 
 private:
     int32_t requestCode_ = 0;
-    void* data_ = nullptr;
+    std::shared_ptr<RequestAsyncContext> data_ = nullptr;
 };
 
 class NapiAtManager {
@@ -220,7 +232,7 @@ private:
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
     static bool ParseRequestPermissionFromUser(
-        const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext);
+        const napi_env& env, const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext);
     static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);
     static void RequestPermissionsFromUserExecute(napi_env env, void* data);
     static bool IsDynamicRequest(const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState,
