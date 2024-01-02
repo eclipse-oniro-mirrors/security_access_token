@@ -100,8 +100,10 @@ bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1
 
 // data from cache1 to cache2, should use deep copy to avoid data change in multithread scene
 void PermissionUsedRecordCache::DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
-    std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode)
+    std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode, int32_t copyCount)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "deep copy count is %{public}d.", copyCount);
+
     std::shared_ptr<PermissionUsedRecordNode> head = oriHeadNode;
     std::shared_ptr<PermissionUsedRecordNode> currentNode = copyHeadNode;
 
@@ -112,13 +114,17 @@ void PermissionUsedRecordCache::DeepCopyFromHead(const std::shared_ptr<Permissio
     }
 
     while (head->next != nullptr) {
-        head = head->next;
+        if (copyCount <= 0) {
+            break;
+        }
 
+        head = head->next;
         std::shared_ptr<PermissionUsedRecordNode> tmpNode = std::make_shared<PermissionUsedRecordNode>();
         tmpNode->record = head->record;
         tmpNode->pre = currentNode;
         currentNode->next = tmpNode;
         currentNode = currentNode->next;
+        copyCount--;
     }
 }
 
@@ -131,7 +137,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
         curFindMergePos = curRecordBufferPos_;
-        int32_t remainCount = 0;
+        int32_t remainCount = 0; // records left in cache1
         while (curFindMergePos != recordBufferHead_) {
             auto pre = curFindMergePos->pre.lock();
             if ((record.timestamp - curFindMergePos->record.timestamp) >= INTERVAL) {
@@ -148,9 +154,15 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
         remainCount++;
         // when current record timestamp more than last record timestamp 15mins
         if ((remainCount >= MAX_PERSIST_SIZE) || (persistPendingBufferEnd != nullptr)) {
-            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
-            ResetRecordBufferWhenAdd(remainCount, persistPendingBufferEnd);
             ACCESSTOKEN_LOG_INFO(LABEL, "reset record count: %{public}d", remainCount);
+            /*
+             * when remainCount reach the max, move all data from cache1 to cache2
+             * otherwise copyCount should be readableSize_ - remainCount beause curFindMergePos match from tail to head
+             */
+            int32_t copyCount = remainCount >= MAX_PERSIST_SIZE ? remainCount : readableSize_ - remainCount;
+            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead, copyCount);
+
+            ResetRecordBufferWhenAdd(remainCount, persistPendingBufferEnd);
         }
     }
     if (persistPendingBufferEnd != nullptr) {
@@ -255,7 +267,7 @@ void PermissionUsedRecordCache::PersistPendingRecordsImmediately()
     // this function can be use only when receive shut down callback
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
-        DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
+        DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead, readableSize_);
     }
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -293,11 +305,8 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
 
         // this should do after delete the matched tokenID data
         if (persistPendingBufferEnd != nullptr) {
-            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
-            ACCESSTOKEN_LOG_INFO(LABEL, "deep copy countPersistPendingNode: %{public}d", countPersistPendingNode);
-        }
+            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead, countPersistPendingNode);
 
-        if (countPersistPendingNode != 0) { // refresh recordBufferHead
             int32_t remainCount = readableSize_ - countPersistPendingNode;
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
@@ -365,11 +374,8 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
         }
 
         if (persistPendingBufferEnd != nullptr) {
-            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead);
-            ACCESSTOKEN_LOG_INFO(LABEL, "deep copy countPersistPendingNode: %{public}d", countPersistPendingNode);
-        }
+            DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead, countPersistPendingNode);
 
-        if (countPersistPendingNode != 0) { // refresh recordBufferHead
             int32_t remainCount = readableSize_ - countPersistPendingNode;
             ResetRecordBuffer(remainCount, persistPendingBufferEnd);
         }
