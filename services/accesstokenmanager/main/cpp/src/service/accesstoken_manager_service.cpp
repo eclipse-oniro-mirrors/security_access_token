@@ -276,7 +276,8 @@ int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<
 
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName: %{public}s",
+        info.hapInfoParameter.userID, info.hapInfoParameter.bundleName.c_str());
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = 0LL;
 
