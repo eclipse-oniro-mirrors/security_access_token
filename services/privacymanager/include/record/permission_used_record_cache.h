@@ -63,7 +63,7 @@ private:
     DISALLOW_COPY_AND_MOVE(PermissionUsedRecordCache);
     bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2);
     void DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
-        std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode);
+        std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode, int32_t copyCount);
     bool hasInited_;
     OHOS::Utils::RWLock initLock_;
     int32_t readableSize_ = 0;
