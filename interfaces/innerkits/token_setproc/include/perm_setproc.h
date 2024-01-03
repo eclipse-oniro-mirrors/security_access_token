@@ -24,7 +24,7 @@ int32_t AddPermissionToKernel(
     uint32_t tokenID, const std::vector<uint32_t>& opCodeList, const std::vector<bool>& statusList);
 int32_t RemovePermissionFromKernel(uint32_t tokenID);
 int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status);
-bool GetPermissionFromKernel(uint32_t tokenID, int32_t opCode);
+int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGranted);
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
