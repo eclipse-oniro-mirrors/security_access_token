@@ -43,7 +43,7 @@ static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called!");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, bundleName: %{public}s", info.userID, info.bundleName.c_str());
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
