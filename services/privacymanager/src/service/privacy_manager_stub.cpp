@@ -390,7 +390,7 @@ bool PrivacyManagerStub::IsSystemAppCalling() const
 bool PrivacyManagerStub::VerifyPermission(const std::string& permission) const
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission, false) == PERMISSION_DENIED) {
+    if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission, true) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(callingTokenID=%{public}d)", callingTokenID);
         return false;
     }
