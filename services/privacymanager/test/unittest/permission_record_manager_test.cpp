@@ -52,6 +52,7 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t MAX_DETAIL_NUM = 500;
+static constexpr int32_t DEEP_COPY_NUM = 10;
 static constexpr int64_t ONE_SECOND = 1000;
 static constexpr int64_t TWO_SECOND = 2000;
 static constexpr int64_t THREE_SECOND = 3000;
@@ -1781,10 +1782,12 @@ HWTEST_F(PermissionRecordManagerTest, DeepCopyFromHead001, TestSize.Level1)
     ASSERT_EQ(head->next->next->next->next->record.opCode, g_recordB2.opCode);
 
     std::shared_ptr<PermissionUsedRecordNode> copyHead = std::make_shared<PermissionUsedRecordNode>();
-    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(nullptr, copyHead);
+    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(nullptr, copyHead, DEEP_COPY_NUM);
+    ASSERT_EQ(copyHead->next, nullptr);
+    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(head, copyHead, 0);
     ASSERT_EQ(copyHead->next, nullptr);
 
-    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(head, copyHead);
+    PermissionUsedRecordCache::GetInstance().DeepCopyFromHead(head, copyHead, DEEP_COPY_NUM);
 
     ASSERT_EQ(copyHead->record.opCode, head->record.opCode);
     ASSERT_EQ(copyHead->next->record.opCode, g_recordA1.opCode);

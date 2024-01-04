@@ -233,7 +233,7 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
 
     std::function<void()> delayed = ([tokenID]() {
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
-        ACCESSTOKEN_LOG_INFO(LABEL, "delay revoke permission end");
+        ACCESSTOKEN_LOG_INFO(LABEL, "token: %{public}d, delay revoke permission end", tokenID);
     });
 
     eventHandler_->ProxyPostTask(delayed, taskName, WAIT_MILLISECONDS);
