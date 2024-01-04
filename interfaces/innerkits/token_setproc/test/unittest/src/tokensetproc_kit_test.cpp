@@ -118,9 +118,14 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel005, TestSize.Level1)
     std::vector<bool> statusList2 = {true}; // granted
 
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList1, statusList1));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, opCodeList1[0]));
+    bool isGranted = false;
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList1[0], isGranted));
+    ASSERT_EQ(false, isGranted);
+
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList2, statusList2));
-    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, opCodeList2[0]));
+
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList2[0], isGranted));
+    ASSERT_EQ(true, isGranted);
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
 
     setuid(g_gelfUid);
@@ -141,9 +146,14 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel006, TestSize.Level1)
     std::vector<bool> statusList2 = {false, false}; // not granted
 
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList1, statusList1));
-    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, opCodeList1[0]));
+    bool isGranted = false;
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList1[0], isGranted));
+    ASSERT_EQ(true, isGranted);
+
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList2, statusList2));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, opCodeList2[0]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, opCodeList2[0], isGranted));
+    ASSERT_EQ(false, isGranted);
+
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
 
     setuid(g_gelfUid);
@@ -206,17 +216,21 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel009, TestSize.Level1)
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
 
     ASSERT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
-    ASSERT_EQ(true, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    bool isGranted = false;
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    ASSERT_EQ(true, isGranted);
 
     std::vector<uint32_t> opCodeList;
     std::vector<bool> statusList;
     // update with less permission(size is 0)
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opCodeList, statusList));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    ASSERT_EQ(false, isGranted);
 
     // update with more permission
     EXPECT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
-    ASSERT_EQ(g_statusList[0], GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    ASSERT_EQ(g_statusList[0], isGranted);
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
@@ -269,7 +283,9 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel002, TestSize.Level1)
 {
     setuid(ACCESS_TOKEN_UID);
     ASSERT_EQ(ENODATA, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    bool isGranted = false;
+    ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    ASSERT_EQ(false, isGranted);
 }
 
 /**
@@ -284,7 +300,8 @@ HWTEST_F(TokensetprocKitTest, SetPermissionToKernel003, TestSize.Level1)
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     ASSERT_EQ(ENODATA, SetPermissionToKernel(g_tokeId,  g_opCodeList[0], true));
-    ASSERT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    bool isGranted = false;
+    ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
 }
 
 
@@ -300,19 +317,25 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel001, TestSize.Level1)
     uint32_t size = g_opCodeList.size();
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
     for (uint32_t i = 0; i < size; i++) {
-        EXPECT_EQ(g_statusList[i], GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
+        bool isGranted = false;
+        ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[i], isGranted));
+        EXPECT_EQ(g_statusList[i], isGranted);
     }
 
     std::set<uint32_t> knownOpCodeSet(g_opCodeList.data(), g_opCodeList.data() + size);
     for (uint32_t i = 0; i < MAX_PERM_NUM; i++) {
         if (knownOpCodeSet.find(i) == knownOpCodeSet.end()) {
-            EXPECT_FALSE(GetPermissionFromKernel(g_tokeId, i));
+            bool isGranted = false;
+            ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, i, isGranted));
+            EXPECT_FALSE(isGranted);
         }
     }
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     for (uint32_t i = 0; i < size; i++) {
-        EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[i]));
+        bool isGranted = false;
+        ASSERT_EQ(ENODATA, GetPermissionFromKernel(g_tokeId, g_opCodeList[i], isGranted));
+        EXPECT_EQ(false, isGranted);
     }
     setuid(g_gelfUid);
 }
@@ -330,12 +353,15 @@ HWTEST_F(TokensetprocKitTest, GetPermissionFromKernel002, TestSize.Level1)
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, g_opCodeList, g_statusList));
 
     // set permission status: false
+    bool isGranted = false;
     EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], false));
-    EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    EXPECT_EQ(false, isGranted);
 
     // set permission status: true
     EXPECT_EQ(ACCESS_TOKEN_OK, SetPermissionToKernel(g_tokeId, g_opCodeList[0], true));
-    EXPECT_EQ(true, GetPermissionFromKernel(g_tokeId, g_opCodeList[0]));
+    ASSERT_EQ(ACCESS_TOKEN_OK, GetPermissionFromKernel(g_tokeId, g_opCodeList[0], isGranted));
+    EXPECT_EQ(true, isGranted);
 
     ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
@@ -356,16 +382,19 @@ HWTEST_F(TokensetprocKitTest, InvalidParam1, TestSize.Level1)
     EXPECT_EQ(EINVAL, SetPermissionToKernel(g_tokeId, INVALID_OP_CODE, false));
 
     // get permission fail
-    EXPECT_EQ(false, GetPermissionFromKernel(g_tokeId, INVALID_OP_CODE));
+    bool isGranted = false;
+    ASSERT_EQ(EINVAL, GetPermissionFromKernel(g_tokeId, INVALID_OP_CODE, isGranted));
+    EXPECT_EQ(false, isGranted);
 }
 
 static void *ThreadTestFunc01(void *args)
 {
     int32_t token1 = g_tokeId;
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
+        bool isGranted = false;
         AddPermissionToKernel(token1, g_opCodeList, g_statusList);
         SetPermissionToKernel(token1, g_opCodeList[0], false);
-        GetPermissionFromKernel(token1, g_opCodeList[0]);
+        GetPermissionFromKernel(token1, g_opCodeList[0], isGranted);
         RemovePermissionFromKernel(token1);
         token1++;
     }
@@ -377,9 +406,10 @@ static void *ThreadTestFunc02(void *args)
     int32_t token2 = g_tokeId + CYCLE_TIMES;
     uint32_t size = g_opCodeList.size();
     for (int32_t i = 0; i < CYCLE_TIMES; i++) {
+        bool isGranted = false;
         AddPermissionToKernel(token2, g_opCodeList, g_statusList);
         SetPermissionToKernel(token2, g_opCodeList[size - 1], true);
-        GetPermissionFromKernel(token2, g_opCodeList[size - 1]);
+        GetPermissionFromKernel(token2, g_opCodeList[size - 1], isGranted);
         RemovePermissionFromKernel(token2);
         token2++;
     }
@@ -422,6 +452,7 @@ HWTEST_F(TokensetprocKitTest, APICostTimeTest001, TestSize.Level1)
     int32_t token = 0;
     double costSum = 0.0;
     std::vector<uint32_t> tokenList;
+    bool isGranted = false;
     while (1) {
         if (AddPermissionToKernel(token, g_opCodeList, g_statusList) != 0) {
             break;
@@ -430,7 +461,7 @@ HWTEST_F(TokensetprocKitTest, APICostTimeTest001, TestSize.Level1)
 
         struct timespec ts1, ts2;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
-        GetPermissionFromKernel(token, g_opCodeList[0]);
+        GetPermissionFromKernel(token, g_opCodeList[0], isGranted);
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts2);
 
         double cost = (1000.0 * 1000.0 * ts2.tv_sec + 1e-3 * ts2.tv_nsec) -

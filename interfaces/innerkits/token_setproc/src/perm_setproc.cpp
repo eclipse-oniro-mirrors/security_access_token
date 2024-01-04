@@ -119,25 +119,26 @@ int32_t SetPermissionToKernel(uint32_t tokenID, int32_t opCode, bool status)
     return ACCESS_TOKEN_OK;
 }
 
-bool GetPermissionFromKernel(uint32_t tokenID, int32_t opCode)
+int32_t GetPermissionFromKernel(uint32_t tokenID, int32_t opCode, bool& isGranted)
 {
     struct IoctlSetGetPermData data = {
         .token = tokenID,
         .opCode = opCode,
         .isGranted = false,
     };
+    isGranted =  false;
 
     int32_t fd = open(TOKENID_DEVNODE, O_RDWR);
     if (fd < 0) {
-        return false;
+        return ACCESS_TOKEN_OPEN_ERROR;
     }
     int32_t ret = ioctl(fd, ACCESS_TOKENID_GET_PERMISSION, &data);
     close(fd);
     if (ret < 0) {
-        return false;
+        return errno;
     }
-
-    return ret == 1;
+    isGranted = (ret == 1);
+    return ACCESS_TOKEN_OK;
 }
 } // namespace AccessToken
 } // namespace Security

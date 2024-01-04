@@ -215,7 +215,11 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     if (crossIpc || !TransferPermissionToOpcode(permissionName, code)) {
         return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
-    bool isGranted = GetPermissionFromKernel(tokenID, code);
+    bool isGranted = false;
+    int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
+    if (ret != 0) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
     return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
 }
 
