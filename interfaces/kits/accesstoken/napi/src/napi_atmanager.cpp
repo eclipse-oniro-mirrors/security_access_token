@@ -1272,7 +1272,12 @@ bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions
 
 void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
 {
-    auto uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+    Ace::UIContent* uiContent = nullptr;
+    if (this->reqContext_->uiAbilityFlag) {
+        uiContent = this->reqContext_->abilityContext->GetUIContent();
+    } else {
+        uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+    }
     if (uiContent != nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "close uiextension component");
         uiContent->CloseModalUIExtension(this->sessionId_);
@@ -1412,8 +1417,15 @@ static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
-    want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
-    auto uiContent = asyncContext->uiExtensionContext->GetUIContent();
+    Ace::UIContent* uiContent = nullptr;
+    if (asyncContext->uiAbilityFlag) {
+        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
+        uiContent = asyncContext->abilityContext->GetUIContent();
+    } else {
+        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
+        uiContent = asyncContext->uiExtensionContext->GetUIContent();
+    }
+
     if (uiContent == nullptr) {
         asyncContext->result = JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
         return;
@@ -1463,8 +1475,8 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         asyncContextHandle->asyncContextPtr->needDynamicRequest = false;
         return;
     }
-
-    if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
+    // service extension dialog
+    if ((asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "pop service extension dialog");
         sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
             curRequestCode_, asyncContextHandle->asyncContextPtr);
@@ -1478,13 +1490,6 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         curRequestCode_ = (curRequestCode_ == INT_MAX) ? 0 : (curRequestCode_ + 1);
         StartServiceExtension(remoteObject, asyncContextHandle->asyncContextPtr, curRequestCode_);
     } else {
-        // service extension dialog
-        if ((asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "not support for ui extension");
-            asyncContextHandle->asyncContextPtr->needDynamicRequest = false;
-            asyncContextHandle->asyncContextPtr->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
-            return;
-        }
         ACCESSTOKEN_LOG_INFO(LABEL, "pop ui extension dialog");
         StartUIExtension(asyncContextHandle->asyncContextPtr);
     }
