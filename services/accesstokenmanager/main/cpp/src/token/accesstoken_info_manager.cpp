@@ -1158,26 +1158,46 @@ AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& proces
     return tokenID;
 }
 
-void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
+void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "get hapTokenInfo");
-    if (tokenID != 0) {
-        ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
-        if (type == TOKEN_HAP) {
-            std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
-            if (infoPtr != nullptr) {
-                infoPtr->ToString(dumpInfo);
-            }
-        } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
-            std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenID);
-            if (infoPtr != nullptr) {
-                infoPtr->ToString(dumpInfo);
-            }
-        } else {
-            dumpInfo.append("invalid tokenId");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get hap token info by tokenId[%{public}u].", tokenId);
+
+    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenId);
+    if (type == TOKEN_HAP) {
+        std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
+        if (infoPtr != nullptr) {
+            infoPtr->ToString(dumpInfo);
         }
-        return;
+    } else if (type == TOKEN_NATIVE || type == TOKEN_SHELL) {
+        std::shared_ptr<NativeTokenInfoInner> infoPtr = GetNativeTokenInfoInner(tokenId);
+        if (infoPtr != nullptr) {
+            infoPtr->ToString(dumpInfo);
+        }
+    } else {
+        dumpInfo.append("invalid tokenId");
     }
+}
+
+void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get hap token info by bundleName[%{public}s].", bundleName.c_str());
+
+    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
+    for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
+        if (iter->second != nullptr) {
+            if (bundleName != iter->second->GetBundleName()) {
+                continue;
+            }
+
+            iter->second->ToString(dumpInfo);
+            dumpInfo.append("\n"); // probilly exsits remote hap token with the same bundleName
+        }
+    }
+}
+
+void AccessTokenInfoManager::DumpAllHapTokenInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get all hap token info.");
 
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
@@ -1186,15 +1206,54 @@ void AccessTokenInfoManager::DumpTokenInfo(AccessTokenID tokenID, std::string& d
             dumpInfo.append("\n");
         }
     }
+}
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "get nativeTokenInfo");
-    Utils::UniqueReadGuard<Utils::RWLock> nativeInfoGuard(this->nativeTokenInfoLock_);
+void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get native token info by processName[%{public}s].", processName.c_str());
+
+    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->nativeTokenInfoLock_);
+    for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
+        if ((iter->second != nullptr) && (processName == iter->second->GetProcessName())) {
+            iter->second->ToString(dumpInfo);
+            dumpInfo.append("\n");
+            break;
+        }
+    }
+}
+
+void AccessTokenInfoManager::DumpAllNativeTokenInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "get all native token info.");
+
+    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
             iter->second->ToString(dumpInfo);
             dumpInfo.append("\n");
         }
     }
+}
+
+void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
+{
+    if (info.tokenId != 0) {
+        DumpHapTokenInfoByTokenId(info.tokenId, dumpInfo);
+        return;
+    }
+
+    if ((!info.bundleName.empty()) && (info.bundleName.length() > 0)) {
+        DumpHapTokenInfoByBundleName(info.bundleName, dumpInfo);
+        return;
+    }
+
+    if ((!info.processName.empty()) && (info.processName.length() > 0)) {
+        DumpNativeTokenInfoByProcessName(info.processName, dumpInfo);
+        return;
+    }
+
+    DumpAllHapTokenInfo(dumpInfo);
+    DumpAllNativeTokenInfo(dumpInfo);
 }
 
 void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList)

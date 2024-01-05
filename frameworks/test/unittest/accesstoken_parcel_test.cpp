@@ -18,6 +18,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "atm_tools_param_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_policy_parcel.h"
 #include "hap_token_info_parcel.h"
@@ -589,6 +590,27 @@ HWTEST_F(AccessTokenParcelTest, PermissionGrantInfoParcel001, TestSize.Level1)
     Parcel parcel;
     EXPECT_EQ(true, permissionGrantInfoParcel.Marshalling(parcel));
     std::shared_ptr<PermissionGrantInfoParcel> readedData(PermissionGrantInfoParcel::Unmarshalling(parcel));
+    EXPECT_NE(nullptr, readedData);
+}
+
+/**
+ * @tc.name: AtmToolsParamInfoParcel001
+ * @tc.desc: Test AtmToolsParamInfo Marshalling/Unmarshalling.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenParcelTest, AtmToolsParamInfoParcel001, TestSize.Level1)
+{
+    AtmToolsParamInfoParcel atmToolsParamInfoParcel;
+    atmToolsParamInfoParcel.info.type = DUMP_TOKEN;
+    atmToolsParamInfoParcel.info.tokenId = INVALID_TOKENID;
+    atmToolsParamInfoParcel.info.permissionName = "ohos.permission.CAMERA";
+    atmToolsParamInfoParcel.info.bundleName = "com.ohos.parceltest";
+    atmToolsParamInfoParcel.info.permissionName = "test_service";
+
+    Parcel parcel;
+    EXPECT_EQ(true, atmToolsParamInfoParcel.Marshalling(parcel));
+    std::shared_ptr<AtmToolsParamInfoParcel> readedData(AtmToolsParamInfoParcel::Unmarshalling(parcel));
     EXPECT_NE(nullptr, readedData);
 }
 } // namespace AccessToken

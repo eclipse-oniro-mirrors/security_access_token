@@ -44,6 +44,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_tools_param_info.h"
 #include "hap_token_info.h"
 #include "native_token_info.h"
 #include "permission_def.h"
@@ -350,7 +351,7 @@ public:
      * @param tokenID token id, if tokenID is valid, only dump this token info
      * @param dumpInfo all token info
      */
-    static void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
+    static void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
 };
 } // namespace AccessToken
 } // namespace Security

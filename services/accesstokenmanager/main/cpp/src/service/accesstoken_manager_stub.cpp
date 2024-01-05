@@ -618,9 +618,14 @@ void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParc
         reply.WriteString("");
         return;
     }
-    AccessTokenID tokenID = data.ReadUint32();
+    sptr<AtmToolsParamInfoParcel> infoParcel = data.ReadParcelable<AtmToolsParamInfoParcel>();
+    if (infoParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read infoParcel fail");
+        reply.WriteString("read infoParcel fail");
+        return;
+    }
     std::string dumpInfo = "";
-    this->DumpTokenInfo(tokenID, dumpInfo);
+    this->DumpTokenInfo(*infoParcel, dumpInfo);
     if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
         ACCESSTOKEN_LOG_WARN(LABEL, "SetDataCapacity failed");
     }

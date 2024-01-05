@@ -831,12 +831,12 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
 }
 #endif
 
-void AccessTokenManagerProxy::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
+void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
-    if (!data.WriteUint32(tokenID)) {
+    if (!data.WriteParcelable(&infoParcel)) {
         return;
     }
     MessageParcel reply;

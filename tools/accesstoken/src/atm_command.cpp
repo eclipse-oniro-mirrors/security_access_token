@@ -30,7 +30,7 @@ namespace {
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
-static const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:";
+static const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -42,9 +42,12 @@ static const std::string HELP_MSG =
 static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
-    "  -h, --help                                                       list available options\n"
-    "  -t, --token-info [-i <token-id>]                                 list token info in system\n"
-    "  -r, --record-info [-i <token-id>] [-p <permission-name>]         list used records in system\n";
+    "  -h, --help                                               list available options\n"
+    "  -t, --token-info                                         list all token info in system\n"
+    "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
+    "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
+    "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
+    "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n";
 
 static const std::string HELP_MSG_PERM =
     "usage: atm perm <option>.\n"
@@ -59,6 +62,8 @@ static const struct option LONG_OPTIONS_DUMP[] = {
     {"record-info", no_argument, nullptr, 'r'},
     {"token-id", required_argument, nullptr, 'i'},
     {"permission-name", required_argument, nullptr, 'p'},
+    {"bundle-name", required_argument, nullptr, 'b'},
+    {"process-name", required_argument, nullptr, 'n'},
     {nullptr, 0, nullptr, 0}
 };
 
@@ -182,8 +187,7 @@ int32_t AtmCommand::RunAsCommandMissingOptionArgument(void)
     return result;
 }
 
-int32_t AtmCommand::RunAsCommandExistentOptionArgument(
-    const int32_t& option, OptType& type, AccessTokenID& tokenId, std::string& permissionName)
+int32_t AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
 {
     int32_t result = RET_SUCCESS;
     switch (option) {
@@ -192,25 +196,35 @@ int32_t AtmCommand::RunAsCommandExistentOptionArgument(
             result = ERR_INVALID_VALUE;
             break;
         case 't':
-            type = DUMP_TOKEN;
+            info.type = DUMP_TOKEN;
             break;
         case 'r':
-            type = DUMP_RECORD;
+            info.type = DUMP_RECORD;
             break;
         case 'g':
-            type = PERM_GRANT;
+            info.type = PERM_GRANT;
             break;
         case 'c':
-            type = PERM_REVOKE;
+            info.type = PERM_REVOKE;
             break;
         case 'i':
             if (optarg != nullptr) {
-                tokenId = static_cast<uint32_t>(std::atoi(optarg));
+                info.tokenId = static_cast<AccessTokenID>(std::atoi(optarg));
             }
             break;
         case 'p':
             if (optarg != nullptr) {
-                permissionName = optarg;
+                info.permissionName = optarg;
+            }
+            break;
+        case 'b':
+            if (optarg != nullptr) {
+                info.bundleName = optarg;
+            }
+            break;
+        case 'n':
+            if (optarg != nullptr) {
+                info.processName = optarg;
             }
             break;
         default:
@@ -255,21 +269,20 @@ int32_t AtmCommand::ModifyPermission(const OptType& type, AccessTokenID tokenId,
     return result;
 }
 
-int32_t AtmCommand::RunCommandByOperationType(const OptType& type,
-    AccessTokenID tokenId, const std::string& permissionName)
+int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
 {
     std::string dumpInfo;
     int32_t ret = RET_SUCCESS;
-    switch (type) {
+    switch (info.type) {
         case DUMP_TOKEN:
-            AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
+            AccessTokenKit::DumpTokenInfo(info, dumpInfo);
             break;
         case DUMP_RECORD:
-            dumpInfo = DumpRecordInfo(tokenId, permissionName);
+            dumpInfo = DumpRecordInfo(info.tokenId, info.permissionName);
             break;
         case PERM_GRANT:
         case PERM_REVOKE:
-            ret = ModifyPermission(type, tokenId, permissionName);
+            ret = ModifyPermission(info.type, info.tokenId, info.permissionName);
             if (ret == RET_SUCCESS) {
                 dumpInfo = "Success";
             } else {
@@ -288,9 +301,7 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
     const std::string& helpMsg)
 {
     int32_t result = RET_SUCCESS;
-    OptType type = DEFAULT;
-    uint32_t tokenId = 0;
-    std::string permissionName;
+    AtmToolsParamInfo info;
     int32_t counter = 0;
 
     while (true) {
@@ -312,13 +323,13 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
             break;
         }
 
-        result = RunAsCommandExistentOptionArgument(option, type, tokenId, permissionName);
+        result = RunAsCommandExistentOptionArgument(option, info);
     }
 
     if (result != RET_SUCCESS) {
         resultReceiver_.append(helpMsg + "\n");
     } else {
-        result = RunCommandByOperationType(type, tokenId, permissionName);
+        result = RunCommandByOperationType(info);
     }
     return result;
 }

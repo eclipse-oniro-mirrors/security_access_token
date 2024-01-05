@@ -342,9 +342,11 @@ HWTEST_F(AccessTokenDenyTest, GetNativeTokenId001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
 {
-    std::string info;
-    AccessTokenKit::DumpTokenInfo(123, info);
-    ASSERT_EQ("", info);
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.tokenId = 123;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    ASSERT_EQ("", dumpInfo);
 }
 
 #ifdef TOKEN_SYNC_ENABLE

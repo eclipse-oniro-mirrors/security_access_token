@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_tools_param_info_parcel.h"
 #include "hap_info_parcel.h"
 #include "hap_base_info_parcel.h"
 #include "hap_policy_parcel.h"
@@ -83,7 +84,7 @@ public:
 #endif
 
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
-    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo) override;
+    void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
 
 private:
     bool SendRequest(AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply);

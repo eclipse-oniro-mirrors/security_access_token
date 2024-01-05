@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "accesstoken_manager_proxy.h"
+#include "atm_tools_param_info_parcel.h"
 #include "hap_token_info.h"
 #include "hap_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
@@ -510,14 +511,17 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
 }
 #endif
 
-void AccessTokenManagerClient::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
+void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return;
     }
-    proxy->DumpTokenInfo(tokenID, dumpInfo);
+
+    AtmToolsParamInfoParcel infoParcel;
+    infoParcel.info = info;
+    proxy->DumpTokenInfo(infoParcel, dumpInfo);
 }
 
 void AccessTokenManagerClient::InitProxy()

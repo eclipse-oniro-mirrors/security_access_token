@@ -219,6 +219,22 @@ typedef enum TypeDlpPerm {
     DLP_PERM_FULL_CONTROL = 1,
     DLP_PERM_NONE = 2,
 } DlpPermMode;
+
+/**
+ * @brief Atm tools operate type
+ */
+typedef enum TypeOptType {
+    /** default */
+    DEFAULT_OPER = 0,
+    /** dump hap or native token info */
+    DUMP_TOKEN,
+    /** dump permission used records */
+    DUMP_RECORD,
+    /** grant permission */
+    PERM_GRANT,
+    /** revoke permission */
+    PERM_REVOKE,
+} OptType;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

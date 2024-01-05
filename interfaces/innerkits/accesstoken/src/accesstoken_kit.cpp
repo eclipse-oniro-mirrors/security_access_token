@@ -458,10 +458,11 @@ AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID
 }
 #endif
 
-void AccessTokenKit::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
+void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
-    AccessTokenManagerClient::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenId=%{public}d, bundleName=%{public}s, processName=%{public}s",
+        info.tokenId, info.bundleName.c_str(), info.processName.c_str());
+    AccessTokenManagerClient::GetInstance().DumpTokenInfo(info, dumpInfo);
 }
 
 int32_t AccessTokenKit::GetVersion(void)

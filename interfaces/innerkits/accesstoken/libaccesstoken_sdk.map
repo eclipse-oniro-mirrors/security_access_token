@@ -32,7 +32,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterPermStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(OHOS::Security::AccessToken::AtmToolsParamInfo const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoFromRemote(unsigned int, OHOS::Security::AccessToken::HapTokenInfoForSync&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetAllNativeTokenInfo(std::__h::vector<OHOS::Security::AccessToken::NativeTokenInfoForSync, std::__h::allocator<OHOS::Security::AccessToken::NativeTokenInfoForSync>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::SetRemoteHapTokenInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::HapTokenInfoForSync const&)";

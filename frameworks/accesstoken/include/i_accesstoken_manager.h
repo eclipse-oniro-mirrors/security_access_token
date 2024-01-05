@@ -20,6 +20,7 @@
 
 #include "access_token.h"
 #include "accesstoken_service_ipc_interface_code.h"
+#include "atm_tools_param_info_parcel.h"
 #include "errors.h"
 #include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
@@ -89,7 +90,7 @@ public:
 #endif
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
-    virtual void DumpTokenInfo(AccessTokenID tokenID, std::string& tokenInfo) = 0;
+    virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
 };
 } // namespace AccessToken
 } // namespace Security
