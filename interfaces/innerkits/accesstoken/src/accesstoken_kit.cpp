@@ -50,7 +50,6 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return res;
     }
-
     return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
 }
 

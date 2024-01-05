@@ -121,7 +121,6 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
 {
     uint32_t flag = GetFlagWroteToDb(state.grantFlags[0]);
     state.grantFlags[0] = flag;
-
     for (auto iter = permStateList.begin(); iter != permStateList.end(); iter++) {
         if (state.permissionName == iter->permissionName) {
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
@@ -136,6 +135,7 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
 void PermissionPolicySet::StorePermissionState(std::vector<GenericValues>& valueList) const
 {
     for (const auto& permissionState : permStateList_) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName: %{public}s", permissionState.permissionName.c_str());
         if (permissionState.isGeneral) {
             GenericValues genericValues;
             genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId_));
@@ -192,15 +192,17 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
             continue;
         }
         if (!perm.isGeneral) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is not general", permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, permission: %{public}s is not general",
+                tokenId_, permissionName.c_str());
             return PERMISSION_DENIED;
         }
         if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "permission is granted by seccomp");
+            ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission is granted by seccomp", tokenId_);
             return PERMISSION_GRANTED;
         }
         if (perm.grantStatus[0] != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is not granted", permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, permission: %{public}s is not granted",
+                tokenId_, permissionName.c_str());
             return PERMISSION_DENIED;
         }
         return PERMISSION_GRANTED;
@@ -210,7 +212,8 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
         [permissionName](const auto& permission) { return permission == permissionName; })) {
             return PERMISSION_GRANTED;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "permission: %{public}s is undeclared", permissionName.c_str());
+    ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, permission: %{public}s is undeclared",
+        tokenId_, permissionName.c_str());
     return PERMISSION_DENIED;
 }
 

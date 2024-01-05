@@ -150,12 +150,12 @@ int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::st
     std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can not find tokenInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, can not find tokenInfo!", tokenID);
         return PERMISSION_DENIED;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid params!", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -206,7 +206,7 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     }
 
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid params!", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -217,7 +217,7 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     if (tokenType == TOKEN_HAP) {
         return VerifyHapAccessToken(tokenID, permissionName);
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenType!");
+    ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, invalid tokenType!", tokenID);
     return PERMISSION_DENIED;
 }
 
