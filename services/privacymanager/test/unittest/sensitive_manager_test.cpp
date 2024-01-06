@@ -25,7 +25,9 @@
 #include "app_mgr_interface.h"
 #endif
 #include "app_state_data.h"
+#define private public
 #include "audio_manager_privacy_client.h"
+#undef private
 #include "audio_manager_privacy_proxy.h"
 #ifdef AUDIO_FRAMEWORK_ENABLE
 #include "audio_policy_ipc_interface_code.h"
@@ -154,6 +156,9 @@ HWTEST_F(SensitiveManagerServiceTest, AudioManagerPrivacyTest001, TestSize.Level
     EXPECT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
 
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
+
+    AudioManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
+    EXPECT_EQ(AudioManagerPrivacyClient::GetInstance().proxy_, nullptr);
 }
 
 #ifdef CAMERA_FRAMEWORK_ENABLE
@@ -198,6 +203,8 @@ HWTEST_F(SensitiveManagerServiceTest, CameraManagerPrivacyTest001, TestSize.Leve
     EXPECT_EQ(false, CameraManagerPrivacyClient::GetInstance().IsCameraMuted());
 
     CameraManagerPrivacyClient::GetInstance().MuteCamera(initMute);
+
+    CameraManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
 }
 
 #ifdef ABILITY_RUNTIME_ENABLE
@@ -346,7 +353,9 @@ HWTEST_F(SensitiveManagerServiceTest, GetProxy001, TestSize.Level1)
     sptr<IWindowManager> proxy = WindowManagerPrivacyClient::GetInstance().proxy_; // backup
     ASSERT_NE(nullptr, proxy);
 
-    WindowManagerPrivacyClient::GetInstance().proxy_ = nullptr;
+    // WindowManagerPrivacyClient::GetInstance().proxy_ = nullptr;
+    WindowManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
+    EXPECT_EQ(nullptr, WindowManagerPrivacyClient::GetInstance().proxy_);
     WindowManagerPrivacyClient::GetInstance().GetProxy();
     ASSERT_NE(nullptr, WindowManagerPrivacyClient::GetInstance().proxy_);
 

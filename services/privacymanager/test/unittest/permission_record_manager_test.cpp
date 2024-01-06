@@ -210,6 +210,23 @@ public:
 
 
 /**
+ * @tc.name: OnForegroundApplicationChanged001
+ * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX8
+ */
+HWTEST_F(PermissionRecordManagerTest, OnForegroundApplicationChanged001, TestSize.Level1)
+{
+    PrivacyAppStateObserver observer;
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    observer.OnForegroundApplicationChanged(appStateData);
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    observer.OnForegroundApplicationChanged(appStateData);
+    ASSERT_EQ(static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND), appStateData.state);
+}
+
+/**
  * @tc.name: RegisterPermActiveStatusCallback001
  * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
  * @tc.type: FUNC
@@ -1429,6 +1446,33 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
         tokenId, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: TranslationIntoPermissionRecord001
+ * @tc.desc: PermissionRecord::TranslationIntoPermissionRecord function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, TranslationIntoPermissionRecord001, TestSize.Level1)
+{
+    GenericValues values;
+    values.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(10086));
+    values.Put(PrivacyFiledConst::FIELD_OP_CODE, 0);
+    values.Put(PrivacyFiledConst::FIELD_STATUS, 0);
+    values.Put(PrivacyFiledConst::FIELD_TIMESTAMP, static_cast<int64_t>(20210109));
+    values.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, static_cast<int64_t>(1));
+    values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 10);
+    values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 100);
+    values.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    PermissionRecord record;
+    PermissionRecord::TranslationIntoPermissionRecord(values, record);
+    ASSERT_EQ(static_cast<int32_t>(10086), record.tokenId);
+    ASSERT_EQ(10, record.accessCount);
+    ASSERT_EQ(100, record.rejectCount);
+    ASSERT_EQ(static_cast<int64_t>(20210109), record.timestamp);
+    ASSERT_EQ(static_cast<int64_t>(1), record.accessDuration);
+    ASSERT_EQ(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED, record.lockScreenStatus);
 }
 
 /*

@@ -1215,6 +1215,26 @@ HWTEST_F(AccessTokenKitTest, GetTokenType002, TestSize.Level0)
 }
 
 /**
+ * @tc.name: GetTokenType003
+ * @tc.desc: get the token type.
+ * @tc.type: FUNC
+ * @tc.require Issue I5RJBB
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenType003, TestSize.Level0)
+{
+    FullTokenID tokenID = 0;
+    int32_t ret = AccessTokenKit::GetTokenType(tokenID);
+    ASSERT_EQ(TOKEN_INVALID, ret);
+    
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    ret = AccessTokenKit::GetTokenType(tokenIdEx.tokenIDEx);
+    ASSERT_EQ(TOKEN_HAP, ret);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
+}
+
+/**
  * @tc.name: GetHapDlpFlag001
  * @tc.desc: GetHapDlpFlag function abnormal branch.
  * @tc.type: FUNC
@@ -2714,6 +2734,20 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
     AccessTokenID tokenID = tokenId01 & 0xffffffff;
     ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
     ASSERT_EQ(ret, TOKEN_NATIVE);
+}
+
+/**
+ * @tc.name: GetTokenTypeFlag003
+ * @tc.desc: cannot get token type with tokenID.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
+{
+    FullTokenID tokenID = 0;
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    AccessTokenKit::GetVersion();
+    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId_));
 }
 
 /**
