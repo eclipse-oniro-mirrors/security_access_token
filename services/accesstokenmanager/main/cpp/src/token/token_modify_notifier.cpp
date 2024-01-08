@@ -101,6 +101,8 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
 
 void TokenModifyNotifier::NotifyTokenSyncTask()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     for (AccessTokenID deleteToken : deleteTokenList_) {
         TokenSyncKit::DeleteRemoteHapTokenInfo(deleteToken);
@@ -117,6 +119,8 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
     }
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "over!");
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -127,11 +131,13 @@ int32_t TokenModifyNotifier::GetCurTaskNum()
 
 void TokenModifyNotifier::AddCurTaskNum()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add task!");
     curTaskNum_++;
 }
 
 void TokenModifyNotifier::ReduceCurTaskNum()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Reduce task!");
     curTaskNum_--;
 }
 #endif
@@ -140,20 +146,20 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     if (GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task!");
+        ACCESSTOKEN_LOG_INFO(LABEL, "has notify task! taskNum is %{public}d.", GetCurTaskNum());
         return;
     }
 
     std::string taskName = "TokenModify";
     auto tokenModify = []() {
         TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
-        AccessTokenInfoManager::GetInstance().ReduceCurTaskNum();
+        TokenModifyNotifier::GetInstance().ReduceCurTaskNum();
     };
-    AddCurTaskNum();
     ffrt::submit(tokenModify, {}, {}, ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
+    AddCurTaskNum();
 #else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task!");
+        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task! taskNum is %{public}d.", notifyTokenWorker_.GetCurTaskNum());
         return;
     }
 

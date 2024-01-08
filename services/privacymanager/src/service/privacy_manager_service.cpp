@@ -15,6 +15,7 @@
 
 #include "privacy_manager_service.h"
 
+#include <cinttypes>
 #include <cstring>
 
 #include "accesstoken_log.h"
@@ -131,7 +132,10 @@ int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d", request.request.tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, beginTime: %{public}" PRId64 ", endTime: %{public}" PRId64
+        ", flag: %{public}d", request.request.tokenId, request.request.beginTimeMillis,
+        request.request.endTimeMillis, request.request.flag);
+
     PermissionUsedResult permissionRecord;
     int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
     result.result = permissionRecord;
