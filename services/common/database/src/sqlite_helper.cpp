@@ -16,6 +16,8 @@
 #include "sqlite_helper.h"
 
 #include "accesstoken_log.h"
+#include "sqlite3ext.h"
+#include <sys/types.h>
 
 namespace OHOS {
 namespace Security {
@@ -43,6 +45,9 @@ void SqliteHelper::Open()
                               dbName_.c_str(), dbPath_.c_str(), currentVersion_);
         return;
     }
+    // set soft heap limit as 10KB
+    const int32_t heapLimit = 10 * 1024;
+    sqlite3_soft_heap_limit64(heapLimit);
     std::string fileName = dbPath_ + dbName_;
     int32_t res = sqlite3_open(fileName.c_str(), &db_);
     if (res != SQLITE_OK) {
