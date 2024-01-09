@@ -43,8 +43,8 @@ static const std::string TOKEN_SYNC_SOCKET_NAME = "ohos.security.atm_channel.";
 
 static const uint32_t SOCKET_NAME_MAX_LEN = 256;
 static const uint32_t QOS_LEN = 3;
-static const int32_t MIN_BW = 160 * 1024 * 1024; // 160M
-static const int32_t MAX_LATENCY = 4000; // 4s
+static const int32_t MIN_BW = 64 * 1024; // 64k
+static const int32_t MAX_LATENCY = 10000; // 10s
 static const int32_t MIN_LATENCY = 2000; // 2s
 
 static const int32_t ERROR_TRANSFORM_STRING_TO_CHAR = -1;
