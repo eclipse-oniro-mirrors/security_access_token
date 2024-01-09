@@ -43,5 +43,4 @@ ohos_static_library("libnapi_common") {
 
   subsystem_name = "security"
   part_name = "access_token"
-  output_name = "libnativetoken"
 }

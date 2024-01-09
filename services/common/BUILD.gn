@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../access_token.gni")
 
-ohos_shared_library("accesstoken_service_common") {
+ohos_static_library("accesstoken_service_common") {
   subsystem_name = "security"
   part_name = "access_token"
   sanitize = {
