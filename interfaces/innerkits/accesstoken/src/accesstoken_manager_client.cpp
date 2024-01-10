@@ -528,7 +528,8 @@ void AccessTokenManagerClient::InitProxy()
             ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
             return;
         }
-        auto accesstokenSa = sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
+        sptr<IRemoteObject> accesstokenSa =
+            sam->GetSystemAbility(IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
         if (accesstokenSa == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
                 IAccessTokenManager::SA_ID_ACCESSTOKEN_MANAGER_SERVICE);
