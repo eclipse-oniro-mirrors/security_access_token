@@ -1427,6 +1427,7 @@ static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     }
 
     if (uiContent == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
         asyncContext->result = JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
         return;
     }

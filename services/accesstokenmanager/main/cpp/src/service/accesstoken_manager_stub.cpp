@@ -70,9 +70,15 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
             (this->*requestFunc)(data, reply);
         } else {
             // when valid code without any function to handle
+#ifdef HICOLLIE_ENABLE
+            HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
+#endif // HICOLLIE_ENABLE
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     } else {
+#ifdef HICOLLIE_ENABLE
+        HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
+#endif // HICOLLIE_ENABLE
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option); // when code invalid
     }
 
