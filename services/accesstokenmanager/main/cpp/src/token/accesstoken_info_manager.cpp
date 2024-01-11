@@ -1140,9 +1140,11 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
 
     std::vector<std::string> permissionList;
     policy->GetDeletedPermissionListToNotify(permissionList);
+    if (permissionList.size() != 0) {
+        PermissionManager::GetInstance().ParamUpdate(permissionList[0], 0, true);
+    }
     for (const auto& permissionName : permissionList) {
         CallbackManager::GetInstance().ExecuteCallbackAsync(id, permissionName, PermStateChangeType::REVOKED);
-        PermissionManager::GetInstance().ParamUpdate(permissionName, 0, true);
     }
 }
 
