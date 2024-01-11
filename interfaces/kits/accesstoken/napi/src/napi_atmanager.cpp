@@ -1459,10 +1459,15 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
     AccessTokenID tokenID = 0;
+    bool isUiContentLoad = false;
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
         tokenID = asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
+        isUiContentLoad =
+            asyncContextHandle->asyncContextPtr->abilityContext->GetUIContent() != nullptr ? true : false;
     } else {
         tokenID = asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        isUiContentLoad =
+            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetUIContent() != nullptr ? true : false;
     }
     if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
@@ -1477,7 +1482,8 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         return;
     }
     // service extension dialog
-    if ((asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
+    if ((!isUiContentLoad) ||
+        (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "pop service extension dialog");
         sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
             curRequestCode_, asyncContextHandle->asyncContextPtr);
