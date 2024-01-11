@@ -35,8 +35,10 @@ namespace OHOS {
 
         tokenId = static_cast<AccessTokenID>(size);
         std::string dumpInfo;
+        AtmToolsParamInfo info;
+        info.tokenId = tokenId;
 
-        AccessTokenKit::DumpTokenInfo(tokenId, dumpInfo);
+        AccessTokenKit::DumpTokenInfo(info, dumpInfo);
  
         return tokenId != 0;
     }

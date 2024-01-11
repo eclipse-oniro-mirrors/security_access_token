@@ -434,11 +434,11 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
 }
 #endif
 
-void AccessTokenManagerService::DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo)
+void AccessTokenManagerService::DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
 
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenID, dumpInfo);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpInfo);
 }
 
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
@@ -472,12 +472,15 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
         if (tokenID <= 0) {
             return ERR_INVALID_VALUE;
         }
+        AtmToolsParamInfoParcel infoParcel;
+        infoParcel.info.tokenId = static_cast<AccessTokenID>(tokenID);
         std::string dumpStr;
-        DumpTokenInfo(static_cast<AccessTokenID>(tokenID), dumpStr);
+        DumpTokenInfo(infoParcel, dumpStr);
         dprintf(fd, "%s\n", dumpStr.c_str());
     }  else if (arg0.compare("-a") == 0 || arg0 == "") {
         std::string dumpStr;
-        DumpTokenInfo(static_cast<AccessTokenID>(0), dumpStr);
+        AtmToolsParamInfoParcel infoParcel;
+        DumpTokenInfo(infoParcel, dumpStr);
         dprintf(fd, "%s\n", dumpStr.c_str());
     }
     return ERR_OK;

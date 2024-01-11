@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_tools_param_info.h"
 #include "accesstoken_death_recipient.h"
 #include "hap_base_info_parcel.h"
 #include "hap_info_parcel.h"
@@ -86,7 +87,7 @@ public:
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
 #endif
 
-    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
+    void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
 

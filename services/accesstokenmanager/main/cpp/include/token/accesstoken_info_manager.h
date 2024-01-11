@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_tools_param_info.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
@@ -55,7 +56,7 @@ public:
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
     int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
         bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
-    void DumpTokenInfo(AccessTokenID tokenID, std::string& dumpInfo);
+    void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);
     AccessTokenID GetNativeTokenId(const std::string& processName);
@@ -104,6 +105,11 @@ private:
     int CreateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     int UpdateRemoteHapTokenInfo(AccessTokenID mapID, HapTokenInfoForSync& hapSync);
     void PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id);
+    void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
+    void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
+    void DumpAllHapTokenInfo(std::string& dumpInfo);
+    void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
+    void DumpAllNativeTokenInfo(std::string& dumpInfo);
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::atomic_int32_t curTaskNum_;

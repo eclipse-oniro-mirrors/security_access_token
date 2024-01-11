@@ -1008,11 +1008,14 @@ HWTEST_F(AccessTokenInfoManagerTest, Dump001, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo001, TestSize.Level1)
 {
     std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo);
+    AtmToolsParamInfo info;
+    info.tokenId = static_cast<AccessTokenID>(0);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
 
     dumpInfo.clear();
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(123, dumpInfo);
+    info.tokenId = static_cast<AccessTokenID>(123);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ("invalid tokenId", dumpInfo);
 }
 
@@ -1033,7 +1036,9 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
     EXPECT_NE(0, static_cast<int>(tokenId));
     std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo);
+    AtmToolsParamInfo info;
+    info.tokenId = tokenId;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
 
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
@@ -1051,8 +1056,9 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo002, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
 {
     std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
-        AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service"), dumpInfo);
+    AtmToolsParamInfo info;
+    info.tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("accesstoken_service");
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
 }
 
@@ -1065,8 +1071,9 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo003, TestSize.Level1)
 HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
 {
     std::string dumpInfo;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(
-        AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd"), dumpInfo);
+    AtmToolsParamInfo info;
+    info.tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
     EXPECT_EQ(false, dumpInfo.empty());
 }
 
@@ -1943,25 +1950,28 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo005, TestSize.Level1)
     AccessTokenID tokenId = 537919487; // 537919487 is max hap tokenId: 001 00 0 000000 11111111111111111111
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_HAP));
     std::string dumpInfo;
-
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo); // hap infoPtr is null
+    AtmToolsParamInfo info;
+    info.tokenId = tokenId;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo); // hap infoPtr is null
     ASSERT_EQ("", dumpInfo);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 
     tokenId = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
     ASSERT_EQ(RET_SUCCESS, AccessTokenIDManager::GetInstance().RegisterTokenId(tokenId, TOKEN_NATIVE));
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(tokenId, dumpInfo); // native infoPtr is null
+    info.tokenId = tokenId;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo); // native infoPtr is null
     ASSERT_EQ("", dumpInfo);
     AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
 
     std::shared_ptr<HapTokenInfoInner> hap = nullptr;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[537919487] = hap;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo); // iter->second is null
+    info.tokenId = static_cast<AccessTokenID>(0);
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo); // iter->second is null
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(537919487);
 
     std::shared_ptr<NativeTokenInfoInner> native = nullptr;
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_[672137215] = native;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(0, dumpInfo); // iter->second is null
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo); // iter->second is null
     AccessTokenInfoManager::GetInstance().nativeTokenInfoMap_.erase(672137215);
 }
 

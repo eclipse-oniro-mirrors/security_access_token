@@ -24,18 +24,11 @@
 #include <vector>
 
 #include "access_token.h"
+#include "atm_tools_param_info.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-typedef enum TypeOptType {
-    DEFAULT = 0,
-    DUMP_TOKEN,
-    DUMP_RECORD,
-    PERM_GRANT,
-    PERM_REVOKE,
-} OptType;
-
 class AtmCommand final {
 public:
     AtmCommand(int32_t argc, char *argv[]);
@@ -48,12 +41,10 @@ private:
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
     int32_t RunAsCommandMissingOptionArgument(void);
-    int32_t RunAsCommandExistentOptionArgument(const int32_t& option,
-        OptType& type, AccessTokenID& tokenId, std::string& permissionName);
+    int32_t RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
-    int32_t RunCommandByOperationType(const OptType& type,
-        AccessTokenID tokenId, const std::string& permissionName);
+    int32_t RunCommandByOperationType(const AtmToolsParamInfo& info);
     int32_t HandleComplexCommand(const std::string& shortOption, const struct option longOption[],
         const std::string& helpMsg);
 
