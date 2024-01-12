@@ -492,6 +492,7 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     if (res != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY failed %{public}d", res);
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY success");
 }
 
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
@@ -598,6 +599,7 @@ bool AccessTokenManagerService::Initialize()
     SystemPermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
     return true;
 }
 } // namespace AccessToken
