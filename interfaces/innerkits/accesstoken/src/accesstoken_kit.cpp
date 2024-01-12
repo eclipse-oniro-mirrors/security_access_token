@@ -43,7 +43,7 @@ static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "userID: %{public}d, bundleName: %{public}s", info.userID, info.bundleName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName: %{public}s", info.userID, info.bundleName.c_str());
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
@@ -55,7 +55,7 @@ AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const H
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, deviceID=%{public}s, tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID=%{public}s, tokenID=%{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
 #ifdef DEBUG_API_PERFORMANCE
     ACCESSTOKEN_LOG_DEBUG(LABEL, "api_performance:start call");
@@ -70,7 +70,8 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d",
+        tokenIdEx.tokenIdExStruct.tokenID, isSystemApp);
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
@@ -82,7 +83,7 @@ int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenID=%{public}d", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called, tokenID=%{public}d", tokenID);
     if (tokenID == INVALID_TOKENID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
