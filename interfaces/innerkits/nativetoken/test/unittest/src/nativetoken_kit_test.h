@@ -20,7 +20,6 @@
 
 namespace OHOS {
 namespace Security {
-static const int32_t BUFF_LEN = 102400;
 static const int32_t DELAY_ONE_SECONDS = 5;
 static const int32_t DELAY_FIVE_SECONDS = 10;
 class TokenLibKitTest : public testing::Test {

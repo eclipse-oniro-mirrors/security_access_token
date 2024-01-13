@@ -29,7 +29,7 @@ extern "C" {
 #define TOKEN_SHELL_TYPE 2
 #define DEFAULT_AT_VERSION 1
 #define TRANSFER_KEY_WORDS "NativeTokenInfo"
-#define MAX_JSON_FILE_LEN 102400
+#define MAX_JSON_FILE_LEN 1024000
 #define MAX_DCAPS_NUM 32
 #define MAX_DCAP_LEN 1024
 #define MAX_PERM_NUM 64
