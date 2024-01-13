@@ -42,6 +42,7 @@ void TokenLibKitTest::SetUp()
 
 void TokenLibKitTest::TearDown()
 {
+    ASSERT_NE(g_tokenListHead, nullptr);
     while (g_tokenListHead->next != nullptr) {
         NativeTokenList *tmp = g_tokenListHead->next;
         g_tokenListHead->next = tmp->next;
