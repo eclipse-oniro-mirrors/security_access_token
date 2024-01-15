@@ -91,6 +91,15 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.STORAGE_MANAGER_CRYPT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.UNINSTALL_QUICK_FIX_BUNDLE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
