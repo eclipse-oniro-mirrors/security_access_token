@@ -48,6 +48,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned long long)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned long)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapDlpFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSelfPermissionsState(std::__h::vector<OHOS::Security::AccessToken::PermissionListState, std::__h::allocator<OHOS::Security::AccessToken::PermissionListState>>&, OHOS::Security::AccessToken::PermissionGrantInfo&)";
