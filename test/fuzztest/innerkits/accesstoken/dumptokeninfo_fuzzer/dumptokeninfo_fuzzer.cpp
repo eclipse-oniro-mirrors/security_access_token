@@ -40,7 +40,7 @@ namespace OHOS {
 
         AccessTokenKit::DumpTokenInfo(info, dumpInfo);
  
-        return tokenId != 0;
+        return true;
     }
 }
 
