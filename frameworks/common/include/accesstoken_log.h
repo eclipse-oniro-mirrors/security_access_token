@@ -20,35 +20,28 @@
 
 #include "hilog/log.h"
 
-#ifndef __cplusplus
-
-#define ACCESSTOKEN_LOG_DEBUG(fmt, ...) HILOG_DEBUG(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_INFO(fmt, ...) HILOG_INFO(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_WARN(fmt, ...) HILOG_WARN(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_ERROR(fmt, ...) HILOG_ERROR(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_FATAL(fmt, ...) HILOG_FATAL(LOG_CORE, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-
-#else
-
-#define ACCESSTOKEN_LOG_DEBUG(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Debug(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_INFO(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Info(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_WARN(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Warn(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_ERROR(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Error(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-#define ACCESSTOKEN_LOG_FATAL(label, fmt, ...) \
-    OHOS::HiviewDFX::HiLog::Fatal(label, "[%{public}s]:" fmt, __func__, ##__VA_ARGS__)
-
-#endif // __cplusplus
-
 /* define LOG_TAG as "security_*" at your submodule, * means your submodule name such as "security_dac" */
 #undef LOG_TAG
 #undef LOG_DOMAIN
 
 static constexpr unsigned int SECURITY_DOMAIN_ACCESSTOKEN = 0xD005A01;
 static constexpr unsigned int SECURITY_DOMAIN_PRIVACY = 0xD005A02;
+
+#define ACCESSTOKEN_LOG_FATAL(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_FATAL, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define ACCESSTOKEN_LOG_ERROR(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_ERROR, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define ACCESSTOKEN_LOG_WARN(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_WARN, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define ACCESSTOKEN_LOG_INFO(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_INFO, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
+#define ACCESSTOKEN_LOG_DEBUG(label, fmt, ...)            \
+    ((void)HILOG_IMPL(label.type, LOG_DEBUG, label.domain, label.tag, \
+    "[%{public}s:%{public}d]" fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__))
 
 #else
 

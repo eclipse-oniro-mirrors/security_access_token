@@ -212,7 +212,7 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
         [permissionName](const auto& permission) { return permission == permissionName; })) {
             return PERMISSION_GRANTED;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID: %{public}d, permission: %{public}s is undeclared",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d, permission: %{public}s is undeclared",
         tokenId_, permissionName.c_str());
     return PERMISSION_DENIED;
 }
