@@ -79,6 +79,7 @@ HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
  */
 HWTEST_F(DatabaseTest, RollbackTransaction001, TestSize.Level1)
 {
+    AccessTokenDb::GetInstance().SetVersion();
     int32_t result = AccessTokenDb::GetInstance().RollbackTransaction();
     EXPECT_EQ(result, ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
 }
@@ -173,6 +174,19 @@ HWTEST_F(DatabaseTest, VariantValue64002, TestSize.Level1)
     int64_t testValue = 1;
     VariantValue Test(testValue);
     EXPECT_EQ(DEFAULT_VALUE, Test.GetInt());
+}
+
+/**
+ * @tc.name: VariantValue001
+ * @tc.desc: VariantValue001 getstring
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level1)
+{
+    VariantValue Test;
+    Test.GetString();
+    EXPECT_EQ(ValueType::TYPE_NULL, Test.GetType());
 }
 
 static void RemoveTestTokenHapInfo()

@@ -146,6 +146,40 @@ void AccessTokenInfoManagerTest::TearDown()
 }
 
 /**
+ * @tc.name: HapTokenInfoInner001
+ * @tc.desc: HapTokenInfoInner::HapTokenInfoInner.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, HapTokenInfoInner001, TestSize.Level1)
+{
+    AccessTokenID id = 0x20240112;
+    HapTokenInfo info = {
+        .apl = APL_NORMAL,
+        .ver = 1,
+        .userID = 1,
+        .bundleName = "com.ohos.access_token",
+        .instIndex = 1,
+        .appID = "testtesttesttest",
+        .deviceID = "deviceId",
+        .tokenID = id,
+        .tokenAttr = 0
+    };
+    std::vector<PermissionStateFull> permStateList;
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>(id, info, permStateList);
+    ASSERT_EQ(hap->IsRemote(), false);
+    hap->SetRemote(true);
+    std::vector<GenericValues> valueList;
+    hap->StoreHapInfo(valueList);
+
+    hap->StorePermissionPolicy(valueList);
+    ASSERT_EQ(hap->IsRemote(), true);
+    hap->SetRemote(false);
+    int32_t version = hap->GetApiVersion(5608);
+    ASSERT_EQ(static_cast<int32_t>(608), version);
+}
+
+/**
  * @tc.name: CreateHapTokenInfo001
  * @tc.desc: Verify the CreateHapTokenInfo add one hap token function.
  * @tc.type: FUNC
@@ -717,7 +751,7 @@ static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapToke
         .permStateList = permStateList
     };
 
-    return RET_SUCCESS == AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo("", remoteTokenInfo);
+    return RET_SUCCESS == AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID, remoteTokenInfo);
 }
 
 /**
@@ -799,6 +833,23 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
     TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
 
     TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
+}
+#endif
+
+#ifdef RESOURCESCHEDULE_FFRT_ENABLE
+/**
+ * @tc.name: GetCurTaskNum001
+ * @tc.desc: TokenModifyNotifier::GetCurTaskNum function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetCurTaskNum001, TestSize.Level1)
+{
+    int32_t curTaskNum = TokenModifyNotifier::GetInstance().GetCurTaskNum();
+    TokenModifyNotifier::GetInstance().AddCurTaskNum();
+    ASSERT_NE(curTaskNum, TokenModifyNotifier::GetInstance().GetCurTaskNum());
+    TokenModifyNotifier::GetInstance().ReduceCurTaskNum();
+    ASSERT_EQ(curTaskNum, TokenModifyNotifier::GetInstance().GetCurTaskNum());
 }
 #endif
 
@@ -894,6 +945,9 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken002, TestSize.Level1)
 {
     std::string deviceID = "dev-001";
     AccessTokenID tokenID = 123; // 123 is random input
+
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID,
+        AccessTokenInfoManager::GetInstance().DeleteRemoteToken("", tokenID));
 
     AccessTokenRemoteDevice device;
     device.DeviceID_ = deviceID;
@@ -1848,6 +1902,36 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreNativeTokenInfo001, TestSize.Level1)
     inGenericValues.Put(TokenFiledConst::FIELD_TOKEN_VERSION, version);
     // version invalid
     ASSERT_NE(RET_SUCCESS, native->RestoreNativeTokenInfo(tokenId, inGenericValues, permStateRes));
+}
+
+/**
+ * @tc.name: Init001
+ * @tc.desc: NativeTokenInfoInner::Init function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Init001, TestSize.Level1)
+{
+    std::shared_ptr<NativeTokenInfoInner> native = std::make_shared<NativeTokenInfoInner>();
+    ASSERT_NE(nullptr, native);
+
+    AccessTokenID tokenId = 0;
+    std::string processName = "tdd_0112";
+    int apl = static_cast<int>(ATokenAplEnum::APL_NORMAL);
+    std::vector<std::string> dcap;
+    std::vector<std::string> nativeAcls;
+    std::vector<PermissionStateFull> permStateList;
+
+    // processName invalid
+    TokenInfo tokenInfo = {
+        .id = tokenId,
+        .processName = processName,
+        .apl = apl
+    };
+    ASSERT_EQ(RET_SUCCESS, native->Init(tokenInfo, dcap, nativeAcls, permStateList));
+    native->GetNativeAcls();
+    native->SetRemote(true);
+    ASSERT_EQ(true, native->IsRemote());
 }
 
 /**

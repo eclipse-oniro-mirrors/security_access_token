@@ -60,6 +60,8 @@ static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback
     std::make_shared<SoftBusDeviceConnectionListener>();
 static std::string g_networkID = "deviceid-1";
 static std::string g_udid = "deviceid-1:udid-001";
+static int32_t g_selfUid;
+static AccessTokenID g_selfTokenId = 0;
 
 class TokenSyncServiceTest : public testing::Test {
 public:
@@ -104,6 +106,8 @@ void NativeTokenGet()
 
 void TokenSyncServiceTest::SetUpTestCase()
 {
+    g_selfUid = getuid();
+    g_selfTokenId = GetSelfTokenID();
     NativeTokenGet();
 }
 void TokenSyncServiceTest::TearDownTestCase()
@@ -1033,6 +1037,58 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteTokenCommand001, TestSize.Level1)
     ASSERT_EQ(
         // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
         deleteRemoteTokenCommand->remoteProtocol_.requestVersion, 2);
+
+    deleteRemoteTokenCommand->Execute();
+    deleteRemoteTokenCommand->Finish();
+    ASSERT_EQ(deleteRemoteTokenCommand->remoteProtocol_.statusCode, Constant::SUCCESS);
+}
+
+/**
+ * @tc.name: NewSyncRemoteNativeTokenCommand001
+ * @tc.desc: test delete remote token command
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(TokenSyncServiceTest, NewSyncRemoteNativeTokenCommand001, TestSize.Level1)
+{
+    std::string srcDeviceId = "001";
+    std::string dstDeviceId = "002";
+    std::shared_ptr<SyncRemoteNativeTokenCommand> nativeTokenCommand =
+        RemoteCommandFactory::GetInstance().NewSyncRemoteNativeTokenCommand(srcDeviceId, dstDeviceId);
+    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.commandName, "SyncRemoteNativeTokenCommand");
+    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.uniqueId, "SyncRemoteNativeTokenCommand");
+    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.srcDeviceId, srcDeviceId);
+    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.dstDeviceId, dstDeviceId);
+    ASSERT_EQ(
+        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
+        nativeTokenCommand->remoteProtocol_.responseVersion, 2);
+    ASSERT_EQ(
+        // 2 is DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION
+        nativeTokenCommand->remoteProtocol_.requestVersion, 2);
+    nativeTokenCommand->Finish();
+    nativeTokenCommand->Prepare();
+    ASSERT_EQ(nativeTokenCommand->remoteProtocol_.statusCode, Constant::SUCCESS);
+    nativeTokenCommand->Finish();
+}
+
+/**
+ * @tc.name: NewUpdateRemoteHapTokenCommand001
+ * @tc.desc: test delete remote token command
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(TokenSyncServiceTest, NewUpdateRemoteHapTokenCommand001, TestSize.Level1)
+{
+    std::string srcDeviceId = "001";
+    std::string dstDeviceId = "002";
+    HapTokenInfoForSync tokenInfo;
+    std::shared_ptr<UpdateRemoteHapTokenCommand> command =
+        RemoteCommandFactory::GetInstance().NewUpdateRemoteHapTokenCommand(srcDeviceId, dstDeviceId, tokenInfo);
+    ASSERT_EQ(command->remoteProtocol_.commandName, "UpdateRemoteHapTokenCommand");
+    ASSERT_EQ(command->remoteProtocol_.uniqueId, "UpdateRemoteHapTokenCommand");
+    command->Execute();
+    command->Finish();
+    ASSERT_EQ(command->remoteProtocol_.statusCode, Constant::SUCCESS);
 }
 
 /**
@@ -1403,6 +1459,57 @@ HWTEST_F(TokenSyncServiceTest, OnRemoteRequest001, TestSize.Level1)
     // msgCode UPDATE_REMOTE_HAP_TOKEN_INFO + type != TOKEN_NATIVE
     ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+}
+
+/**
+ * @tc.name: OnRemoteRequest002
+ * @tc.desc: TokenSyncManagerStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, OnRemoteRequest002, TestSize.Level1)
+{
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    TestStub sub;
+    auto tokenId = GetSelfTokenID();
+    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    setuid(1234);
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+    
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(ITokenSyncManager::GetDescriptor()));
+
+    ASSERT_EQ(NO_ERROR, sub.OnRemoteRequest(static_cast<uint32_t>(
+        TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option));
+    
+    ASSERT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
+
+    setuid(g_selfUid);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+}
+
+/**
+ * @tc.name: OnStart001
+ * @tc.desc: TokenSyncManagerStub::OnStart function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, OnStart001, TestSize.Level1)
+{
+    tokenSyncManagerService_->OnStop();
+    ASSERT_EQ(ServiceRunningState::STATE_NOT_START, tokenSyncManagerService_->state_);
+    tokenSyncManagerService_->OnStart();
+    ASSERT_EQ(ServiceRunningState::STATE_RUNNING, tokenSyncManagerService_->state_);
+    tokenSyncManagerService_->OnStart();
 }
 
 namespace {
