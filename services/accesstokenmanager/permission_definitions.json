@@ -107,6 +107,15 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.QUERY_TRUSTED_RING_USER_INFO",
+            "grantMode": "system_grant",
+            "since": 11,
+            "deprecated": "",
+            "availableLevel": "system_basic",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ]
 }
