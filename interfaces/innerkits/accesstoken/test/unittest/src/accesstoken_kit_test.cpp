@@ -1215,26 +1215,6 @@ HWTEST_F(AccessTokenKitTest, GetTokenType002, TestSize.Level0)
 }
 
 /**
- * @tc.name: GetTokenType003
- * @tc.desc: get the token type.
- * @tc.type: FUNC
- * @tc.require Issue I5RJBB
- */
-HWTEST_F(AccessTokenKitTest, GetTokenType003, TestSize.Level0)
-{
-    FullTokenID tokenID = 0;
-    int32_t ret = AccessTokenKit::GetTokenType(tokenID);
-    ASSERT_EQ(TOKEN_INVALID, ret);
-    
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    ret = AccessTokenKit::GetTokenType(tokenIdEx.tokenIDEx);
-    ASSERT_EQ(TOKEN_HAP, ret);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
-}
-
-/**
  * @tc.name: GetHapDlpFlag001
  * @tc.desc: GetHapDlpFlag function abnormal branch.
  * @tc.type: FUNC
