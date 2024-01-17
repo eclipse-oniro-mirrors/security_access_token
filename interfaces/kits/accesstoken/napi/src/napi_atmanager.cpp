@@ -56,6 +56,7 @@ static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
 static constexpr int32_t REQUEST_PERMISSION_MAX_PARAMS = 3;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
 static constexpr int32_t MAX_LENGTH = 256;
+static constexpr int32_t MAX_WAIT_TIME = 1000;
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 
@@ -1409,21 +1410,29 @@ void UIExtensionCallback::OnDestroy()
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
 }
 
-static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
+static void CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncContext> asyncContext)
 {
-    AAFwk::Want want;
-    want.SetElementName(asyncContext->info.grantBundleName,
-        asyncContext->info.grantAbilityName);
-    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
-    want.SetParam(STATE_KEY, asyncContext->permissionsState);
-    want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
     Ace::UIContent* uiContent = nullptr;
+    uint64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     if (asyncContext->uiAbilityFlag) {
-        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
-        uiContent = asyncContext->abilityContext->GetUIContent();
+        while (true) {
+            uiContent = asyncContext->abilityContext->GetUIContent();
+            uint64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
+                break;
+            }
+        }
     } else {
-        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
-        uiContent = asyncContext->uiExtensionContext->GetUIContent();
+        while (true) {
+            uiContent = asyncContext->uiExtensionContext->GetUIContent();
+            uint64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
+                break;
+            }
+        }
     }
 
     if (uiContent == nullptr) {
@@ -1454,20 +1463,30 @@ static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     uiExtCallback->SetSessionId(sessionId);
 }
 
+static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+    AAFwk::Want want;
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantAbilityName);
+    want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
+    want.SetParam(STATE_KEY, asyncContext->permissionsState);
+    want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
+    if (asyncContext->uiAbilityFlag) {
+        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
+    } else {
+        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
+    }
+    CreateUIExtension(want, asyncContext);
+}
+
 void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
 {
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
     AccessTokenID tokenID = 0;
-    bool isUiContentLoad = false;
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
         tokenID = asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
-        isUiContentLoad =
-            asyncContextHandle->asyncContextPtr->abilityContext->GetUIContent() != nullptr ? true : false;
     } else {
         tokenID = asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
-        isUiContentLoad =
-            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetUIContent() != nullptr ? true : false;
     }
     if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
@@ -1482,8 +1501,7 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
         return;
     }
     // service extension dialog
-    if ((!isUiContentLoad) ||
-        (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME)) {
+    if (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
         ACCESSTOKEN_LOG_INFO(LABEL, "pop service extension dialog");
         sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
             curRequestCode_, asyncContextHandle->asyncContextPtr);
