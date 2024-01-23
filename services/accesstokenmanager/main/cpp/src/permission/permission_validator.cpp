@@ -51,24 +51,34 @@ bool PermissionValidator::IsPermissionNameValid(const std::string& permissionNam
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 {
     if (!DataValidator::IsLabelValid(permDef.label)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "label invalid.");
         return false;
     }
     if (!DataValidator::IsDescValid(permDef.description)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "desc invalid.");
         return false;
     }
     if (!DataValidator::IsBundleNameValid(permDef.bundleName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "bundleName invalid.");
         return false;
     }
     if (!DataValidator::IsPermissionNameValid(permDef.permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName invalid.");
         return false;
     }
     if (!IsGrantModeValid(permDef.grantMode)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "grantMode invalid.");
         return false;
     }
     if (!DataValidator::IsAvailableTypeValid(permDef.availableType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "availableType invalid.");
         return false;
     }
-    return DataValidator::IsAplNumValid(permDef.availableLevel);
+    if (!DataValidator::IsAplNumValid(permDef.availableLevel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "availableLevel invalid.");
+        return false;
+    }
+    return true;
 }
 
 bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName)
@@ -107,7 +117,6 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& perm
     }
     return true;
 }
-
 
 void PermissionValidator::FilterInvalidPermissionDef(
     const std::vector<PermissionDef>& permList, std::vector<PermissionDef>& result)

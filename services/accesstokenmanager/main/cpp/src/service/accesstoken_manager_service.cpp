@@ -142,7 +142,7 @@ int AccessTokenManagerService::GetDefPermission(
 
 int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenID);
     std::vector<PermissionDef> permVec;
     int ret = PermissionManager::GetInstance().GetDefPermissions(tokenID, permVec);
     for (const auto& perm : permVec) {
@@ -156,7 +156,7 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x, isSystemGrant: %{public}d", tokenID, isSystemGrant);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d, isSystemGrant: %{public}d", tokenID, isSystemGrant);
 
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
@@ -229,14 +229,14 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<Pe
 int AccessTokenManagerService::GetPermissionFlag(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -245,7 +245,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, permission: %{public}s, flag: %{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -254,7 +254,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
 
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
@@ -276,9 +276,7 @@ int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<
 
 AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName: %{public}s, permStateListSize: %{public}zu",
-        info.hapInfoParameter.userID, info.hapInfoParameter.bundleName.c_str(),
-        policy.hapPolicyParameter.permStateList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIDEx = 0LL;
 
@@ -292,7 +290,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenID);
     PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
     return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
@@ -300,13 +298,13 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d", tokenID);
     return AccessTokenIDManager::GetInstance().GetTokenIdType(tokenID);
 }
 
 int AccessTokenManagerService::CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x, dcap: %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, dcap: %{public}s",
         tokenID, dcap.c_str());
     return AccessTokenInfoManager::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
@@ -330,7 +328,7 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
 int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenIdEx.tokenIdExStruct.tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
 
     return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
@@ -338,14 +336,14 @@ int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, infoParcel.hapTokenInfoParams);
 }
 
 int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID: %{public}d", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetNativeTokenInfo(tokenID, infoParcel.nativeTokenInfoParams);
 }
@@ -366,7 +364,7 @@ AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& pro
 int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: 0x%{public}x", tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenID);
 
     return AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenID,
         hapSyncParcel.hapTokenInfoForSyncParams);
