@@ -43,7 +43,9 @@ static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName: %{public}s", info.userID, info.bundleName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName :%{public}s, \
+permList: %{public}zu, stateList: %{public}zu",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
@@ -70,8 +72,9 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d",
-        tokenIdEx.tokenIdExStruct.tokenID, isSystemApp);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d, \
+permList: %{public}zu, stateList: %{public}zu",
+        tokenIdEx.tokenIdExStruct.tokenID, isSystemApp, policy.permList.size(), policy.permStateList.size());
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
