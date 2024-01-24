@@ -66,6 +66,7 @@ public:
         OP_READ_WRITE_DOWNLOAD_DIRECTORY = 37,
         OP_READ_WRITE_DOCUMENTS_DIRECTORY = 38,
         OP_READ_WRITE_DESKTOP_DIRECTORY = 39,
+        OP_ACCESS_NEARLINK = 40,
     };
 
     enum ErrorCode {
