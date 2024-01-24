@@ -261,13 +261,17 @@ int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionNa
         });
     if (iter != permStateList_.end()) {
         if (iter->isGeneral) {
+            if ((static_cast<uint32_t>(flag) & PERMISSION_SYSTEM_FIXED) == 1) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "permission fixed by system!");
+                return AccessTokenError::ERR_PARAM_INVALID;
+            }
             iter->grantStatus[0] = isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
             iter->grantFlags[0] = UpdateWithNewFlag(iter->grantFlags[0], flag);
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "perm isGeneral is false.");
         }
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission not request!");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return RET_SUCCESS;
