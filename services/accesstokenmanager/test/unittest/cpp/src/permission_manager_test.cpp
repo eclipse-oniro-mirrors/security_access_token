@@ -38,6 +38,7 @@ namespace {
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int USER_ID = 100;
 static constexpr int INST_INDEX = 0;
+static constexpr int DEFAULT_API_VERSION_VAGUE = 9;
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static bool g_hasHapPermissionDefinition;
 static PermissionDef g_infoManagerTestPermDef1 = {
@@ -327,8 +328,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig001, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig001",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig001",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "DlpPermissionConfig001"
@@ -382,8 +383,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig002",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig002",
         .instIndex = 0,
         .dlpType = DLP_READ,
         .appIDDesc = "DlpPermissionConfig002"
@@ -436,8 +437,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig003, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig003",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig003",
         .instIndex = 0,
         .dlpType = DLP_FULL_CONTROL,
         .appIDDesc = "DlpPermissionConfig003"
@@ -513,8 +514,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig004, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig004",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig004",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "DlpPermissionConfig004"
@@ -571,8 +572,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig005, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig005",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig005",
         .instIndex = 0,
         .dlpType = DLP_READ,
         .appIDDesc = "DlpPermissionConfig005"
@@ -628,8 +629,8 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig006, TestSize.Level1)
                           g_infoManagerTestStateC, g_infoManagerTestStateD}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "DlpPermissionConfig006",
         .userID = 1,
+        .bundleName = "DlpPermissionConfig006",
         .instIndex = 0,
         .dlpType = DLP_FULL_CONTROL,
         .appIDDesc = "DlpPermissionConfig006"
@@ -886,17 +887,12 @@ HWTEST_F(PermissionManagerTest, VerifyAccessToken002, TestSize.Level1)
 {
     AccessTokenID tokenId = 0;
     std::string permissionName;
-
-    // permissionName invalid
-    ASSERT_EQ(
-        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+    // tokenID invalid
+    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 
     tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
-    permissionName = "ohos.permission.DISTRIBUTED_DATASYNC";
-    
-    // token type is TOKEN_TYPE_BUTT
-    ASSERT_EQ(
-        PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+    // permissionName invalid
+    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
 
 /**
@@ -1161,6 +1157,14 @@ HWTEST_F(PermissionManagerTest, GetPermissionFlag002, TestSize.Level1)
  */
 HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 {
+    AccessTokenID tokenId = 123; // random input
+    std::string permissionName = "ohos.permission.DUMP";
+    bool isGranted = false;
+    uint32_t flag = 0;
+    // tokenId invalid
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, isGranted, flag));
+
     HapInfoParams info = {
         .userID = USER_ID,
         .bundleName = "permission_manager_test",
@@ -1173,15 +1177,121 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     };
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
-    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
-    std::string permissionName = "ohos.permission.DUMP";
-    bool isGranted = false;
-    int flag = 0;
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    infoPtr->SetRemote(true);
+    // remote token is true
+    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, isGranted, flag));
+    infoPtr->SetRemote(false);
+
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
         permissionName, isGranted, flag));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: IsAllowGrantTempPermission001
+ * @tc.desc: PermissionManager::IsAllowGrantTempPermission function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, IsAllowGrantTempPermission001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // random input
+    std::string permissionName = "ohos.permission.TEST";
+    // tokenId invalid
+    ASSERT_EQ(false, PermissionManager::GetInstance().IsAllowGrantTempPermission(tokenId, permissionName));
+}
+
+/**
+ * @tc.name: IsPermissionVaild001
+ * @tc.desc: PermissionManager::IsPermissionVaild function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
+{
+    std::string permissionName;
+    // permissionName invalid
+    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
+
+    permissionName = "ohos.permission.PERMISSION_MANAGR_TEST";
+    // no definition
+    ASSERT_EQ(false, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
+
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(true, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
+}
+
+/**
+ * @tc.name: GetLocationPermissionState001
+ * @tc.desc: PermissionManager::GetLocationPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetLocationPermissionState001, TestSize.Level1)
+{
+    std::vector<PermissionListStateParcel> reqPermList;
+    std::vector<PermissionStateFull> permsList;
+    int32_t apiVersion = DEFAULT_API_VERSION_VAGUE;
+
+    // no location permissions
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+
+    PermissionListStateParcel accurateParcel;
+    accurateParcel.permsState.permissionName = "ohos.permission.LOCATION";
+    reqPermList.emplace_back(accurateParcel);
+    // only accurate location permission
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+    ASSERT_EQ(INVALID_OPER, reqPermList[0].permsState.state);
+
+    reqPermList.clear();
+    PermissionListStateParcel backParcel;
+    backParcel.permsState.permissionName = "ohos.permission.LOCATION_IN_BACKGROUND";
+    reqPermList.emplace_back(backParcel);
+    // only back location permission
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+    ASSERT_EQ(INVALID_OPER, reqPermList[0].permsState.state);
+}
+
+/**
+ * @tc.name: GetPermissionStateFull001
+ * @tc.desc: TempPermissionObserver::GetPermissionStateFull function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetPermissionStateFull001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // random input
+    std::vector<PermissionStateFull> permissionStateFullList;
+    // tokenId invalid
+    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionStateFull(tokenId, permissionStateFullList));
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
+    infoPtr->SetRemote(true);
+    // remote token is true
+    ASSERT_EQ(false, TempPermissionObserver::GetInstance().GetPermissionStateFull(tokenId, permissionStateFullList));
+    infoPtr->SetRemote(false);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
@@ -1264,8 +1374,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
         .permStateList = { g_infoManagerTestStateA }
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "GrantTempPermission001",
         .userID = 1,
+        .bundleName = "GrantTempPermission001",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "GrantTempPermission001"
@@ -1316,8 +1426,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
         .permStateList = { g_infoManagerTestStateA }
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "GrantTempPermission002",
         .userID = 1,
+        .bundleName = "GrantTempPermission002",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "GrantTempPermission002"
@@ -1370,8 +1480,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
         .permStateList = { g_infoManagerTestStateA }
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "GrantTempPermission002",
         .userID = 1,
+        .bundleName = "GrantTempPermission002",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "GrantTempPermission002"
@@ -1418,8 +1528,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
         .permStateList = { g_infoManagerTestStateA }
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "GrantTempPermission002",
         .userID = 1,
+        .bundleName = "GrantTempPermission002",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "GrantTempPermission002"
@@ -1464,8 +1574,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
         .permStateList = { g_infoManagerTestStateA }
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .bundleName = "GrantTempPermission002",
         .userID = 1,
+        .bundleName = "GrantTempPermission002",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
         .appIDDesc = "GrantTempPermission002"
