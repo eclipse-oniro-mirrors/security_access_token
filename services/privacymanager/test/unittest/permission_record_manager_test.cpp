@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include "access_token.h"
@@ -1838,6 +1839,106 @@ HWTEST_F(PermissionRecordManagerTest, DeepCopyFromHead001, TestSize.Level1)
     ASSERT_EQ(copyHead->next->next->record.opCode, g_recordA2.opCode);
     ASSERT_EQ(copyHead->next->next->next->record.opCode, g_recordB1.opCode);
     ASSERT_EQ(copyHead->next->next->next->next->record.opCode, g_recordB2.opCode);
+}
+
+/*
+ * @tc.name: RecordManagerTest001
+ * @tc.desc: GetAllRecordValuesByKey normal case
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RecordManagerTest001, TestSize.Level1)
+{
+    std::vector<GenericValues> resultValues;
+    EXPECT_EQ(true, PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(
+        PrivacyFiledConst::FIELD_TOKEN_ID, resultValues));
+}
+
+/*
+ * @tc.name: PermissionUsedRecordCacheTest001
+ * @tc.desc: PermissionUsedRecordCache Func test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, PermissionUsedRecordCacheTest001, TestSize.Level1)
+{
+    std::set<AccessTokenID> tokenIdList;
+    PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
+    PermissionRecordManager::GetInstance().GetLocalRecordTokenIdList(tokenIdList);
+    std::set<int32_t> opCodeList;
+    GenericValues andConditionValues;
+    std::vector<GenericValues> findRecordsValues;
+    int32_t cache2QueryCount = 0; // 0 is a invalid input
+    PermissionUsedRecordCache::GetInstance().GetFromPersistQueueAndDatabase(opCodeList,
+        andConditionValues, findRecordsValues, cache2QueryCount);
+    
+    opCodeList.insert(0); // 0 is a test opcode
+    PermissionRecord record = {
+        .tokenId = g_selfTokenId,
+        .opCode = -1, // -1 is a test opcode
+    };
+    EXPECT_FALSE(PermissionUsedRecordCache::GetInstance().RecordCompare(g_selfTokenId,
+        opCodeList, andConditionValues, record));
+}
+
+/**
+ * @tc.name: GetRecordsFromLocalDBTest001
+ * @tc.desc: test GetRecordsFromLocalDB: token = 0
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Level1)
+{
+    PermissionUsedRequest request;
+    request.tokenId = g_selfTokenId;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    PermissionUsedResult result;
+    EXPECT_TRUE(PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+}
+
+/**
+ * @tc.name: GetRecordsFromLocalDBTest002
+ * @tc.desc: test GetRecordsFromLocalDB: beginTimeMillis = -1
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Level1)
+{
+    PermissionUsedRequest request;
+    request.tokenId = g_selfTokenId;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    request.beginTimeMillis = -1; // -1 is a invalid input
+    PermissionUsedResult result;
+    EXPECT_EQ(false, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
+}
+
+/**
+ * @tc.name: GetRecordsFromLocalDBTest003
+ * @tc.desc: test GetRecords: not exist OpCode
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RecordConverage011, TestSize.Level1)
+{
+    PermissionUsedRequest request;
+    request.tokenId = g_selfTokenId;
+    request.isRemote = false;
+    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
+    request.beginTimeMillis = -1; // -1 is a invalid input
+
+    std::vector<GenericValues> recordValues;
+    GenericValues tmp;
+    int64_t val = 1; // 1 is a test value
+    int32_t notExistOpCode = -2; // -2 is a not exist OpCode
+    tmp.Put(PrivacyFiledConst::FIELD_TIMESTAMP, val);
+    tmp.Put(PrivacyFiledConst::FIELD_OP_CODE, notExistOpCode);
+    recordValues.emplace_back(tmp);
+    int32_t flag = 1; // 1 is a test flag
+    BundleUsedRecord bundleRecord;
+    PermissionUsedResult result;
+    PermissionRecordManager::GetInstance().GetRecords(flag, recordValues, bundleRecord, result);
 }
 } // namespace AccessToken
 } // namespace Security
