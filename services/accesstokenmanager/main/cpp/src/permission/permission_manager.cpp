@@ -698,7 +698,7 @@ bool PermissionManager::GetStateWithVaguePermission(std::vector<PermissionListSt
     GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
     needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
     if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        // request accurate and vague permission, if vague has benn set or invalid, accurate can't be requested
+        // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
         GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
         if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
             ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
@@ -752,7 +752,7 @@ bool PermissionManager::GetStateWithVaguePermissionBackGroundVersion(
     GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
     needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
     if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        // request accurate and vague permission, if vague has benn set or invalid, accurate can't be requested
+        // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
         GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
         if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
             ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
