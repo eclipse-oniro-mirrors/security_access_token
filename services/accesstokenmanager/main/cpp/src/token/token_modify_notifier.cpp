@@ -159,7 +159,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
     AddCurTaskNum();
 #else
     if (notifyTokenWorker_.GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task! taskNum is %{public}d.", notifyTokenWorker_.GetCurTaskNum());
+        ACCESSTOKEN_LOG_INFO(LABEL, " has notify task! taskNum is %{public}zu.", notifyTokenWorker_.GetCurTaskNum());
         return;
     }
 

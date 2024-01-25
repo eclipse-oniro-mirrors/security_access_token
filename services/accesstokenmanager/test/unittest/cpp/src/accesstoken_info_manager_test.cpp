@@ -1384,6 +1384,10 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionDefValid001, TestSize.Level1)
 
     // ret not RET_SUCCESS
     ASSERT_EQ(false, PermissionValidator::IsPermissionDefValid(permDef)); // grant mode invalid
+
+    permDef.grantMode = GrantMode::USER_GRANT;
+    permDef.availableType = ATokenAvailableTypeEnum::INVALID;
+    ASSERT_EQ(false, PermissionValidator::IsPermissionDefValid(permDef)); // availableType invalid
 }
 
 /**
@@ -1417,9 +1421,17 @@ HWTEST_F(AccessTokenInfoManagerTest, IsPermissionStateValid001, TestSize.Level1)
 
     ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState)); // permissionName empty
 
+    permState.permissionName = "com.ohos.TEST";
     permState.resDeviceID.emplace_back("dev-002");
-    // deviceID nums not eauql status nums or flag nums
+    // deviceID nums not equal status nums or flag nums
     ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState));
+
+    permState.grantStatus.emplace_back(PermissionState::PERMISSION_DENIED);
+    // deviceID nums not equal flag nums
+    ASSERT_EQ(false, PermissionValidator::IsPermissionStateValid(permState));
+
+    permState.grantFlags.emplace_back(PermissionFlag::PERMISSION_DEFAULT_FLAG);
+    ASSERT_EQ(true, PermissionValidator::IsPermissionStateValid(permState));
 }
 
 /**

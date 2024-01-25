@@ -138,7 +138,7 @@ void TempPermissionObserver::DeleteTempPermFromList(AccessTokenID tokenID, const
 }
 
 bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
-    std::vector<PermissionStateFull>& PermissionStateFullList)
+    std::vector<PermissionStateFull>& permissionStateFullList)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
@@ -155,7 +155,7 @@ bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
         return false;
     }
 
-    permPolicySet->GetPermissionStateFulls(PermissionStateFullList);
+    permPolicySet->GetPermissionStateFulls(permissionStateFullList);
     return true;
 }
 

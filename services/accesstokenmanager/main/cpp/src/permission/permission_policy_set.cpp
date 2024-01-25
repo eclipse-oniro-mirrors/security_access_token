@@ -406,31 +406,6 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<PermissionStateFull
     }
 }
 
-void PermissionPolicySet::GetResetPermissionListToNotify(
-    std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList)
-{
-    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.isGeneral) {
-            uint32_t oldFlag = static_cast<uint32_t>(perm.grantFlags[0]);
-            if (((oldFlag & PERMISSION_GRANTED_BY_POLICY) != 0) && (perm.grantStatus[0] == PERMISSION_DENIED)) {
-                permissionList.emplace_back(perm.permissionName);
-                changeTypeList.emplace_back(PermStateChangeType::GRANTED);
-                continue;
-            }
-            if ((oldFlag & PERMISSION_SYSTEM_FIXED) == 0 && (perm.grantStatus[0] == PERMISSION_GRANTED)) {
-                permissionList.emplace_back(perm.permissionName);
-                changeTypeList.emplace_back(PermStateChangeType::REVOKED);
-            }
-        }
-    }
-
-    for (const auto& permission : secCompGrantedPermList_) {
-        permissionList.emplace_back(permission);
-        changeTypeList.emplace_back(PermStateChangeType::REVOKED);
-    }
-}
-
 void PermissionPolicySet::GetGrantedPermissionList(std::vector<std::string>& permissionList)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
