@@ -1175,26 +1175,43 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnRequestPermissionsFromUser async callback is called end");
 }
 
+static void UpdateGrantPermissionResultOnly(const std::vector<std::string>& permissions,
+    const std::vector<int>& grantResults, const std::vector<int>& permissionsState, std::vector<int>& newGrantResults)
+{
+    uint32_t size = permissions.size();
+
+    for (uint32_t i = 0; i < size; i++) {
+        int result = permissionsState[i] == DYNAMIC_OPER ? grantResults[i] : permissionsState[i];
+        newGrantResults.emplace_back(result);
+    }
+}
+
 void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& permissions,
     const std::vector<int>& grantResults)
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "called.");
+
     auto* retCB = new (std::nothrow) ResultCallback();
     if (retCB == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
         return;
     }
-    std::unique_ptr<ResultCallback> callbackPtr {retCB};
-
-    retCB->permissions = permissions;
-    retCB->grantResults = grantResults;
-    retCB->requestCode = requestCode_;
-    retCB->data = data_;
 
     std::shared_ptr<RequestAsyncContext> asyncContext = data_;
     if (asyncContext == nullptr) {
         return;
     }
+
+    // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
+    std::vector<int> newGrantResults;
+    UpdateGrantPermissionResultOnly(permissions, grantResults, asyncContext->permissionsState, newGrantResults);
+
+    std::unique_ptr<ResultCallback> callbackPtr {retCB};
+
+    retCB->permissions = permissions;
+    retCB->grantResults = newGrantResults;
+    retCB->requestCode = requestCode_;
+    retCB->data = data_;
 
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(asyncContext->env,
@@ -1254,6 +1271,11 @@ bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions
         permList.size(), permissions.size());
 
     auto ret = AccessTokenKit::GetSelfPermissionsState(permList, info);
+    if (ret == FORBIDDEN_OPER) { // if app is under control, change state from default -1 to 2
+        for (auto& perm : permList) {
+            perm.state = INVALID_OPER;
+        }
+    }
 
     for (const auto& permState : permList) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "permissions: %{public}s. permissionsState: %{public}u",
@@ -1337,9 +1359,13 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
         return;
     }
 
+    // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
+    std::vector<int> newGrantResults;
+    UpdateGrantPermissionResultOnly(permissionList, permissionStates, data->permissionsState, newGrantResults);
+
     std::unique_ptr<ResultCallback> callbackPtr {retCB};
     retCB->permissions = permissionList;
-    retCB->grantResults = permissionStates;
+    retCB->grantResults = newGrantResults;
     retCB->data = data;
 
     uv_loop_s* loop = nullptr;
