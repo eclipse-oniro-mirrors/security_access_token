@@ -166,7 +166,7 @@ HWTEST_F(PermissionRecordDBTest, CreateUpdatePrepareSqlCmd005, TestSize.Level1)
     modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TOKEN_ID);
     modifyColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
     std::vector<std::string> conditionColumns;
-    modifyColumns.emplace_back(PrivacyFiledConst::FIELD_STATUS);
+    conditionColumns.emplace_back(PrivacyFiledConst::FIELD_STATUS);
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns,
         conditionColumns));
 }
