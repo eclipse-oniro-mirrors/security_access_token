@@ -1217,9 +1217,17 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     callbackPtr.release();
 }
 
-static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, std::shared_ptr<RequestAsyncContext>& asyncContext,
-    int32_t requestCode)
+static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
+    sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
+        curRequestCode_, asyncContext);
+    if (remoteObject == nullptr) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        return;
+    }
+
     AAFwk::Want want;
     want.SetElementName(ORI_PERMISSION_MANAGER_BUNDLE_NAME, ORI_PERMISSION_MANAGER_ABILITY_NAME);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
@@ -1236,7 +1244,10 @@ static void StartServiceExtension(sptr<IRemoteObject>& remoteObject, std::shared
     want.SetParam(REQUEST_TOKEN_KEY, asyncContext->abilityContext->GetToken());
     int32_t err = AAFwk::AbilityManagerClient::GetInstance()->RequestDialogService(
         want, asyncContext->abilityContext->GetToken());
-    ACCESSTOKEN_LOG_INFO(LABEL, "End calling RequestDialogService. ret=%{public}d", err);
+
+    std::lock_guard<std::mutex> lock(g_lockForPermRequestCallbacks);
+    curRequestCode_ = (curRequestCode_ == INT_MAX) ? 0 : (curRequestCode_ + 1);
+    ACCESSTOKEN_LOG_INFO(LABEL, "RequestDialogService end. ret=%{public}d", err);
 }
 
 bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions,
@@ -1503,20 +1514,14 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
     // service extension dialog
     if (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
         ACCESSTOKEN_LOG_INFO(LABEL, "pop service extension dialog");
-        sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
-            curRequestCode_, asyncContextHandle->asyncContextPtr);
-        if (remoteObject == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
-            asyncContextHandle->asyncContextPtr->needDynamicRequest = false;
-            asyncContextHandle->asyncContextPtr->result = JsErrorCode::JS_ERROR_INNER;
-            return;
-        }
-        std::lock_guard<std::mutex> lock(g_lockForPermRequestCallbacks);
-        curRequestCode_ = (curRequestCode_ == INT_MAX) ? 0 : (curRequestCode_ + 1);
-        StartServiceExtension(remoteObject, asyncContextHandle->asyncContextPtr, curRequestCode_);
+        StartServiceExtension(asyncContextHandle->asyncContextPtr);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "pop ui extension dialog");
         StartUIExtension(asyncContextHandle->asyncContextPtr);
+        if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "pop uiextension dialog fail, start to pop service extension dialog");
+            StartServiceExtension(asyncContextHandle->asyncContextPtr);
+        }
     }
 }
 
