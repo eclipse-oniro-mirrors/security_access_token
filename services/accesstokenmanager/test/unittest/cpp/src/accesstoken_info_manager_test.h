@@ -17,7 +17,9 @@
 #define ACCESSTOKEN_INFO_MANAGER_TEST_H
 
 #include <gtest/gtest.h>
+#define private public
 #include "accesstoken_manager_service.h"
+#undef private
 
 namespace OHOS {
 namespace Security {

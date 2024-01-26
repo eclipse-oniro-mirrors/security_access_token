@@ -16,8 +16,14 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
+#include <fcntl.h>
 
+#include "access_token_error.h"
 #include "constant_common.h"
+#define private public
+#include "permission_map.h"
+#undef private
+#include "json_parser.h"
 #include "random_mbedtls.h"
 
 using namespace testing::ext;
@@ -25,6 +31,22 @@ using namespace testing::ext;
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+const static uint32_t MAX_PERM_SIZE = 2048;
+const static uint32_t MAX_CONFIG_FILE_SIZE = 5 * 1024;
+const static std::string TEST_JSON_PATH = "/data/test.json";
+const std::string teststr =
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
+    "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA";
+}
 class CommonTest : public testing::Test  {
 public:
     static void SetUpTestCase();
@@ -69,6 +91,84 @@ HWTEST_F(CommonTest, GenerateRandomArray001, TestSize.Level1)
     unsigned char *randStr = nullptr;
     unsigned int len = 0;
     EXPECT_NE(0, RandomMbedtls::GetInstance().GenerateRandomArray(randStr, len));
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission001
+ * @tc.desc: TransferOpcodeToPermission function test
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(CommonTest, TransferOpcodeToPermission001, TestSize.Level1)
+{
+    std::string permissionName;
+    EXPECT_TRUE(TransferOpcodeToPermission(0, permissionName));
+    EXPECT_EQ(permissionName, "ohos.permission.ANSWER_CALL");
+}
+
+/*
+ * @tc.name: TransferOpcodeToPermission002
+ * @tc.desc: TransferOpcodeToPermission code oversize
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(CommonTest, TransferOpcodeToPermission002, TestSize.Level1)
+{
+    std::string permissionName;
+    EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE, permissionName));
+    EXPECT_FALSE(TransferOpcodeToPermission(MAX_PERM_SIZE - 1, permissionName));
+}
+
+/*
+ * @tc.name: GetUnsignedIntFromJson001
+ * @tc.desc: GetUnsignedIntFromJson
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(CommonTest, GetUnsignedIntFromJson001, TestSize.Level1)
+{
+    const nlohmann::json json;
+    u_int32_t out = 0;
+    EXPECT_FALSE(JsonParser::GetUnsignedIntFromJson(json, "tokenId", out));
+    EXPECT_EQ(0, out);
+}
+
+/*
+ * @tc.name: ReadCfgFile001
+ * @tc.desc: GetUnsignedIntFromJson json invalid
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(CommonTest, ReadCfgFile001, TestSize.Level1)
+{
+    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT);
+    EXPECT_NE(-1, fd);
+    std::string rawData;
+    EXPECT_EQ(ERR_PARAM_INVALID, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
+    for (int i = 0; i < MAX_CONFIG_FILE_SIZE; i++) {
+        size_t strLen = strlen(teststr.c_str());
+        write(fd, (void *)teststr.c_str(), (size_t)strLen);
+    }
+    EXPECT_EQ(ERR_OVERSIZE, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
+    close(fd);
+    sleep(5);
+
+    remove(TEST_JSON_PATH.c_str());
+}
+
+/*
+ * @tc.name: IsDirExsit001
+ * @tc.desc: IsDirExsit input param error
+ * @tc.type: FUNC
+ * @tc.require: issueI6024A
+ */
+HWTEST_F(CommonTest, IsDirExsit001, TestSize.Level1)
+{
+    EXPECT_FALSE(JsonParser::IsDirExsit(""));
+    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT);
+    EXPECT_NE(-1, fd);
+
+    EXPECT_FALSE(JsonParser::IsDirExsit(TEST_JSON_PATH.c_str()));
 }
 } // namespace AccessToken
 } // namespace Security
