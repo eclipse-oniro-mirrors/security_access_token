@@ -310,6 +310,7 @@ void HapTokenInfoInner::ToString(std::string& info) const
     info.append(R"(  "deviceID": ")" + tokenInfoBasic_.deviceID + R"(")" + ",\n");
     info.append(R"(  "apl": )" + std::to_string(tokenInfoBasic_.apl) + ",\n");
     info.append(R"(  "isRemote": )" + std::to_string(isRemote_) + ",\n");
+    info.append(R"(  "isPermDialogForbidden": )" + std::to_string(isPermDialogForbidden_) + ",\n");
 
     if (permPolicySet_ != nullptr) {
         permPolicySet_->ToString(info);
