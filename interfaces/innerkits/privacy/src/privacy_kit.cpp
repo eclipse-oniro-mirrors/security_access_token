@@ -142,14 +142,16 @@ int32_t PrivacyKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
     return PrivacyManagerClient::GetInstance().RegisterSecCompEnhance(enhance);
 }
 
-int32_t PrivacyKit::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+int32_t PrivacyKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
-    return PrivacyManagerClient::GetInstance().DepositSecCompEnhance(enhanceList);
+    return PrivacyManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);
 }
 
-int32_t PrivacyKit::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
+int32_t PrivacyKit::GetSpecialSecCompEnhance(const std::string& bundleName,
+    std::vector<SecCompEnhanceData>& enhanceList)
 {
-    return PrivacyManagerClient::GetInstance().RecoverSecCompEnhance(enhanceList);
+    return PrivacyManagerClient::GetInstance().
+        GetSpecialSecCompEnhance(bundleName, enhanceList);
 }
 #endif
 } // namespace AccessToken

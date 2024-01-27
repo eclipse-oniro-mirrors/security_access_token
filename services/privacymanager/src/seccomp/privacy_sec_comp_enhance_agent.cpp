@@ -15,6 +15,7 @@
 #include "privacy_sec_comp_enhance_agent.h"
 
 #include "access_token.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
@@ -109,10 +110,6 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
-    if (isRecoverd) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "need register sec comp enhance redirect.");
-        return PrivacyError::ERR_CALLBACK_REGIST_REDIRECT;
-    }
     int pid = IPCSkeleton::GetCallingPid();
     if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
         [pid](const auto& e) { return e.pid == pid; })) {
@@ -130,25 +127,32 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     return RET_SUCCESS;
 }
 
-int32_t PrivacySecCompEnhanceAgent::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
-    secCompEnhanceData_.assign(enhanceList.begin(), enhanceList.end());
-    ACCESSTOKEN_LOG_INFO(LABEL, "Deposit sec comp enhance size %{public}u.", static_cast<uint32_t>(enhanceList.size()));
-    isRecoverd = false;
-    return RET_SUCCESS;
+    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
+        if (iter->pid == pid) {
+            enhanceData = *iter;
+            ACCESSTOKEN_LOG_INFO(LABEL, "get pid %{public}d data.", pid);
+            return RET_SUCCESS;
+        }
+    }
+    return ERR_PARAM_INVALID;
 }
 
-int32_t PrivacySecCompEnhanceAgent::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
+int32_t PrivacySecCompEnhanceAgent::GetSpecialSecCompEnhance(const std::string& bundleName,
+    std::vector<SecCompEnhanceData>& enhanceList)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
-    InitAppObserver();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Recover sec comp enhance size %{public}u.",
-        static_cast<uint32_t>(secCompEnhanceData_.size()));
-    enhanceList.assign(secCompEnhanceData_.begin(), secCompEnhanceData_.end());
-    secCompEnhanceData_.clear();
-    isRecoverd = true;
+    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); iter++) {
+        HapTokenInfo info;
+        if (AccessTokenKit::GetHapTokenInfo(iter->token, info) == AccessTokenKitRet::RET_SUCCESS) {
+            if (bundleName == info.bundleName) {
+                enhanceList.emplace_back(*iter);
+            }
+        }
+    }
     return RET_SUCCESS;
 }
 } // namespace AccessToken

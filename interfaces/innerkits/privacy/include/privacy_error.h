@@ -59,9 +59,6 @@ enum PrivacyError {
     ERR_PERMISSION_ALREADY_START_USING,
     ERR_PERMISSION_NOT_START_USING,
     ERR_FILE_OPERATE_FAILED,
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    ERR_CALLBACK_REGIST_REDIRECT,
-#endif
 };
 } // namespace AccessToken
 } // namespace Security
