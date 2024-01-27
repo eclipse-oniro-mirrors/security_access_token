@@ -2785,6 +2785,35 @@ HWTEST_F(AccessTokenKitTest, SetPermDialogCap002, TestSize.Level1)
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
 }
+
+/**
+ * @tc.name: GetSelfPermissionsState001
+ * @tc.desc: get self permissions state with wrong token type.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
+{
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    HapBaseInfo hapBaseInfo = {
+        .userID = g_infoManagerTestInfoParms.userID,
+        .bundleName = g_infoManagerTestInfoParms.bundleName,
+        .instIndex = g_infoManagerTestInfoParms.instIndex,
+    };
+
+    std::vector<PermissionListState> permsList;
+    PermissionListState tmp = {
+        .permissionName = g_infoManagerTestPolicyPrams.permStateList[0].permissionName,
+        .state = TYPE_BUTT
+    };
+    permsList.emplace_back(tmp);
+
+    // test dialog isn't forbiddedn
+    ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
+    SetSelfTokenID(tokenID);
+    PermissionGrantInfo info;
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
