@@ -27,6 +27,7 @@
 #include "permission_definition_cache.h"
 #undef private
 #include "permission_state_change_callback_stub.h"
+#include "perm_state_callback_death_recipient.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -1593,6 +1594,18 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: PermissionCallbackTest001
+ * @tc.desc: Test nullptr input for callback
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level1)
+{
+    PermStateChangeScope scope;
+    EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, CallbackManager::GetInstance().AddCallback(scope, nullptr));
 }
 } // namespace AccessToken
 } // namespace Security
