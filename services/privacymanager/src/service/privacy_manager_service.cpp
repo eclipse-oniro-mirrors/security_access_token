@@ -162,20 +162,24 @@ int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataPa
     return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
 }
 
-int32_t PrivacyManagerService::DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
 {
-    std::vector<SecCompEnhanceData> enhanceList;
-    std::transform(enhanceParcelList.begin(),
-        enhanceParcelList.end(), std::back_inserter(enhanceList),
-        [](const auto& parcel) { return parcel.enhanceData; });
+    SecCompEnhanceData enhanceData;
+    int32_t res = PrivacySecCompEnhanceAgent::GetInstance().GetSecCompEnhance(pid, enhanceData);
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "pid: %{public}d get enhance failed ", pid);
+        return res;
+    }
 
-    return PrivacySecCompEnhanceAgent::GetInstance().DepositSecCompEnhance(enhanceList);
+    enhanceParcel.enhanceData = enhanceData;
+    return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerService::RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+int32_t PrivacyManagerService::GetSpecialSecCompEnhance(const std::string& bundleName,
+    std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
 {
     std::vector<SecCompEnhanceData> enhanceList;
-    PrivacySecCompEnhanceAgent::GetInstance().RecoverSecCompEnhance(enhanceList);
+    PrivacySecCompEnhanceAgent::GetInstance().GetSpecialSecCompEnhance(bundleName, enhanceList);
     for (const auto& enhance : enhanceList) {
         SecCompEnhanceDataParcel parcel;
         parcel.enhanceData = enhance;

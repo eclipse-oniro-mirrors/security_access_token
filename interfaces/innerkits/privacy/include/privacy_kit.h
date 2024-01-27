@@ -140,17 +140,20 @@ public:
      */
     static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     /**
-     * @brief deposit security component enhance data when security component service exit
-     * @param enhanceList enhance data
+     * @brief get security component enhance data
+     * @param pid process id
+     * @param enhance enhance data
      * @return error code, see privacy_error.h
      */
-    static int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
+    static int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
     /**
-     * @brief recover security component enhance data to security component service
+     * @brief get special security component enhance data
+     * @param bundleName bundle name
      * @param enhanceList enhance data
      * @return error code, see privacy_error.h
      */
-    static int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
+    static int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
+        std::vector<SecCompEnhanceData>& enhanceList);
 #endif
 };
 } // namespace AccessToken

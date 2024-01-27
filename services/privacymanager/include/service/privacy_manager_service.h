@@ -55,8 +55,9 @@ public:
     int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) override;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) override;
-    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
-    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
+    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
+    int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
+        std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
 #endif
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;

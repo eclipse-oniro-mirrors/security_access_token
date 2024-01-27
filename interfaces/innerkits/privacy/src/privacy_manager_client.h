@@ -58,8 +58,9 @@ public:
     void OnRemoteDiedHandle();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
-    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
-    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
+    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceList);
+    int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
+        std::vector<SecCompEnhanceData>& enhanceList);
 #endif
 
 private:
