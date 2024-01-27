@@ -66,7 +66,7 @@ public:
     void AddTempPermTokenToList(AccessTokenID tokenID, const std::string& permissionName);
     void DeleteTempPermFromList(AccessTokenID tokenID, const std::string& permissionName);
     void RevokeAllTempPermission(AccessTokenID tokenID);
-    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& PermissionStateFullList);
+    bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& permissionStateFullList);
     
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);

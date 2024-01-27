@@ -58,8 +58,6 @@ public:
     void ClearSecCompGrantedPerm(void);
     static uint32_t GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag);
     static uint32_t GetFlagWroteToDb(uint32_t grantFlag);
-    void GetResetPermissionListToNotify(
-        std::vector<std::string>& permissionList, std::vector<PermStateChangeType>& changeTypeList);
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
     void GetGrantedPermissionList(std::vector<std::string>& permissionList);
 
