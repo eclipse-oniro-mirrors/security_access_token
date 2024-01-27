@@ -286,8 +286,19 @@ int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
 
 bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-    return ((hapTokenInfoMap_.count(id) != 0) || (nativeTokenInfoMap_.count(id) != 0));
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+        if (hapTokenInfoMap_.count(id) != 0) {
+            return true;
+        }
+    }
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+        if (nativeTokenInfoMap_.count(id) != 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& info)
@@ -1151,6 +1162,7 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
 AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& processName)
 {
     AccessTokenID tokenID = INVALID_TOKENID;
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr && iter->second->GetProcessName() == processName) {
             tokenID = iter->first;
@@ -1214,7 +1226,7 @@ void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string&
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get native token info by processName[%{public}s].", processName.c_str());
 
-    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->nativeTokenInfoLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if ((iter->second != nullptr) && (processName == iter->second->GetProcessName())) {
             iter->second->ToString(dumpInfo);
@@ -1228,7 +1240,7 @@ void AccessTokenInfoManager::DumpAllNativeTokenInfo(std::string& dumpInfo)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "get all native token info.");
 
-    Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->nativeTokenInfoLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
             iter->second->ToString(dumpInfo);
