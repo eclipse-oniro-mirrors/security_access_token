@@ -285,6 +285,20 @@ public:
     {
         return true;
     }
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
+    {
+        return RET_SUCCESS;
+    }
+    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+    {
+        return RET_SUCCESS;
+    }
+    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+    {
+        return RET_SUCCESS;
+    }
+#endif
 };
 
 /**

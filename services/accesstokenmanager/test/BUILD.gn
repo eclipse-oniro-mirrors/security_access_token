@@ -72,6 +72,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   ]
 
   sources = [
+    "unittest/cpp/src/accesstoken_database_test.cpp",
     "unittest/cpp/src/accesstoken_info_manager_test.cpp",
     "unittest/cpp/src/native_token_receptor_test.cpp",
     "unittest/cpp/src/permission_grant_event_test.cpp",
