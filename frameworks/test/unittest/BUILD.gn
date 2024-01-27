@@ -23,6 +23,7 @@ config("accesstoken_test_config") {
     "../../privacy/include",
     "//third_party/googletest/include",
     "//third_party/mbedtls/include",
+    "//third_party/json/include",
   ]
 }
 

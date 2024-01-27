@@ -836,23 +836,6 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
 }
 #endif
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-/**
- * @tc.name: GetCurTaskNum001
- * @tc.desc: TokenModifyNotifier::GetCurTaskNum function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, GetCurTaskNum001, TestSize.Level1)
-{
-    int32_t curTaskNum = TokenModifyNotifier::GetInstance().GetCurTaskNum();
-    TokenModifyNotifier::GetInstance().AddCurTaskNum();
-    ASSERT_NE(curTaskNum, TokenModifyNotifier::GetInstance().GetCurTaskNum());
-    TokenModifyNotifier::GetInstance().ReduceCurTaskNum();
-    ASSERT_EQ(curTaskNum, TokenModifyNotifier::GetInstance().GetCurTaskNum());
-}
-#endif
-
 /**
  * @tc.name: UpdateRemoteHapTokenInfo001
  * @tc.desc: AccessTokenInfoManager::UpdateRemoteHapTokenInfo function test
@@ -2197,6 +2180,46 @@ HWTEST_F(AccessTokenInfoManagerTest, GetPermDialogCap001, TestSize.Level1)
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = back;
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: AllocHapToken001
+ * @tc.desc: alloc hap create haptokeninfo failed.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, AllocHapToken001, TestSize.Level1)
+{
+    HapInfoParcel hapinfoParcel;
+    hapinfoParcel.hapInfoParameter = {
+        .userID = -1,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+    };
+    HapPolicyParcel hapPolicyParcel;
+    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+
+    AccessTokenIDEx tokenIDEx = atManagerService_->AllocHapToken(hapinfoParcel, hapPolicyParcel);
+    ASSERT_EQ(INVALID_TOKENID, tokenIDEx.tokenIDEx);
+}
+
+/**
+ * @tc.name: OnStart001
+ * @tc.desc: service is running.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, OnStart001, TestSize.Level1)
+{
+    ServiceRunningState state = atManagerService_->state_;
+    atManagerService_->state_ = ServiceRunningState::STATE_RUNNING;
+    atManagerService_->OnStart();
+    ASSERT_EQ(ServiceRunningState::STATE_RUNNING, atManagerService_->state_);
+    atManagerService_->state_ = state;
 }
 } // namespace AccessToken
 } // namespace Security

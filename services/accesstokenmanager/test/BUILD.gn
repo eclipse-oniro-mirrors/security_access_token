@@ -132,11 +132,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "samgr:samgr_proxy",
   ]
 
-  if (resourceschedule_ffrt_enable) {
-    external_deps += [ "ffrt:libffrt" ]
-    cflags_cc += [ "-DRESOURCESCHEDULE_FFRT_ENABLE" ]
-  }
-
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]
