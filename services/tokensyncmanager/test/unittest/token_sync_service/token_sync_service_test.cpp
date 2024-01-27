@@ -62,6 +62,7 @@ static std::string g_networkID = "deviceid-1";
 static std::string g_udid = "deviceid-1:udid-001";
 static int32_t g_selfUid;
 static AccessTokenID g_selfTokenId = 0;
+static const int32_t OUT_OF_MAP_SOCKET = 2;
 
 class TokenSyncServiceTest : public testing::Test {
 public:
@@ -1510,6 +1511,71 @@ HWTEST_F(TokenSyncServiceTest, OnStart001, TestSize.Level1)
     tokenSyncManagerService_->OnStart();
     ASSERT_EQ(ServiceRunningState::STATE_RUNNING, tokenSyncManagerService_->state_);
     tokenSyncManagerService_->OnStart();
+}
+
+/**
+ * @tc.name: RemoteCommandManager001
+ * @tc.desc: RemoteCommandManager001 function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level1)
+{
+    RemoteCommandManager::GetInstance().Init();
+    std::string udid = "test_udId";
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    char networkId[DEVICEID_MAX_LEN + 1];
+    int recvLen = 0x1000;
+    strcpy_s(networkId, DEVICEID_MAX_LEN, "deviceid-1:udid-001");
+    PeerSocketInfo info = {
+        .networkId = networkId,
+    };
+    SoftBusSocketListener::OnBind(0, info);
+    int32_t ret = RemoteCommandManager::GetInstance().AddCommand(udid, cmd);
+    ASSERT_EQ(Constant::SUCCESS, ret);
+    ret = RemoteCommandManager::GetInstance().AddCommand("", cmd);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    SoftBusSocketListener::OnServiceBytes(0, nullptr, recvLen);
+    ret = RemoteCommandManager::GetInstance().AddCommand(udid, nullptr);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    SoftBusSocketListener::OnClientBytes(0, nullptr, recvLen);
+    ret = RemoteCommandManager::GetInstance().AddCommand("", nullptr);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    SoftBusSocketListener::OnShutdown(0, SHUTDOWN_REASON_UNKNOWN);
+}
+
+/**
+ * @tc.name: RemoteCommandManager002
+ * @tc.desc: RemoteCommandManager002 function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager002, TestSize.Level1)
+{
+    RemoteCommandManager::GetInstance().Init();
+    std::string udid = "test_udId";
+    int32_t ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately(udid);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately("");
+    ASSERT_EQ(Constant::FAILURE, ret);
+    SoftBusSocketListener::OnShutdown(1, SHUTDOWN_REASON_UNKNOWN);
+}
+
+/**
+ * @tc.name: RemoteCommandManager003
+ * @tc.desc: RemoteCommandManager003 function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
+{
+    RemoteCommandManager::GetInstance().Init();
+    std::string nodeId = "test_udId";
+    int32_t ret = RemoteCommandManager::GetInstance().NotifyDeviceOnline("");
+    ASSERT_EQ(Constant::FAILURE, ret);
+    ret = RemoteCommandManager::GetInstance().NotifyDeviceOnline(nodeId);
+    ASSERT_EQ(Constant::SUCCESS, ret);
+    SoftBusSocketListener::OnShutdown(OUT_OF_MAP_SOCKET, SHUTDOWN_REASON_UNKNOWN);
 }
 
 namespace {
