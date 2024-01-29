@@ -28,7 +28,7 @@
 #include "securec.h"
 #include "nativetoken_json_oper.h"
 #include "nativetoken_kit.h"
-#include "nativetoken_log.h"
+#include "nativetoken_klog.h"
 
 
 NativeTokenList *g_tokenListHead;
@@ -45,12 +45,12 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
             *retBuff = NULL;
             return ATRET_SUCCESS;
         }
-        AT_LOG_ERROR("[ATLIB-%s]:invalid filePath.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:invalid filePath.", __func__);
         return ATRET_FAILED;
     }
 
     if (stat(filePath, &fileStat) != 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:stat file failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:stat file failed.", __func__);
         return ATRET_FAILED;
     }
 
@@ -60,7 +60,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     }
 
     if (fileStat.st_size > MAX_JSON_FILE_LEN) {
-        AT_LOG_ERROR("[ATLIB-%s]:stat file size is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:stat file size is invalid.", __func__);
         return ATRET_FAILED;
     }
 
@@ -68,19 +68,19 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
 
     FILE *cfgFd = fopen(filePath, "r");
     if (cfgFd == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:fopen file failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fopen file failed.", __func__);
         return ATRET_FAILED;
     }
 
     char *buff = (char *)malloc((size_t)(fileSize + 1));
     if (buff == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
         fclose(cfgFd);
         return ATRET_FAILED;
     }
 
     if (fread(buff, fileSize, 1, cfgFd) != 1) {
-        AT_LOG_ERROR("[ATLIB-%s]:fread failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fread failed.", __func__);
         free(buff);
         buff = NULL;
         fclose(cfgFd);
@@ -111,7 +111,7 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     StrAttrSet(&attr, MAX_DCAP_LEN, MAX_DCAPS_NUM, DCAPS_KEY_NAME);
     ret |= GetInfoArrFromJson(cjsonItem, tokenNode->dcaps, &(tokenNode->dcapsNum), &attr);
     if (ret != ATRET_SUCCESS) {
-        AT_LOG_ERROR("[ATLIB-%s]:GetInfoArrFromJson failed for dcaps.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for dcaps.", __func__);
         return ATRET_FAILED;
     }
 
@@ -119,7 +119,7 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     ret = GetInfoArrFromJson(cjsonItem, tokenNode->perms, &(tokenNode->permsNum), &attr);
     if (ret != ATRET_SUCCESS) {
         FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
-        AT_LOG_ERROR("[ATLIB-%s]:GetInfoArrFromJson failed for perms.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for perms.", __func__);
         return ATRET_FAILED;
     }
 
@@ -128,7 +128,7 @@ static int32_t GetNativeTokenFromJson(cJSON *cjsonItem, NativeTokenList *tokenNo
     if (ret != ATRET_SUCCESS) {
         FreeStrArray(tokenNode->dcaps, tokenNode->dcapsNum - 1);
         FreeStrArray(tokenNode->perms, tokenNode->permsNum - 1);
-        AT_LOG_ERROR("[ATLIB-%s]:GetInfoArrFromJson failed for acls.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:GetInfoArrFromJson failed for acls.", __func__);
         return ATRET_FAILED;
     }
     return ATRET_SUCCESS;
@@ -139,7 +139,7 @@ static int32_t GetTokenList(const cJSON *object)
     NativeTokenList *tmp = NULL;
 
     if (object == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:object is null.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:object is null.", __func__);
         return ATRET_FAILED;
     }
     int32_t arraySize = cJSON_GetArraySize(object);
@@ -147,13 +147,13 @@ static int32_t GetTokenList(const cJSON *object)
     for (int32_t i = 0; i < arraySize; i++) {
         tmp = (NativeTokenList *)malloc(sizeof(NativeTokenList));
         if (tmp == NULL) {
-            AT_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
             return ATRET_FAILED;
         }
         cJSON *cjsonItem = cJSON_GetArrayItem(object, i);
         if (cjsonItem == NULL) {
             free(tmp);
-            AT_LOG_ERROR("[ATLIB-%s]:cJSON_GetArrayItem failed.", __func__);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:cJSON_GetArrayItem failed.", __func__);
             return ATRET_FAILED;
         }
         if (GetNativeTokenFromJson(cjsonItem, tmp) != ATRET_SUCCESS) {
@@ -194,7 +194,7 @@ static int32_t CreateCfgFile(void)
 {
     int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:open failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
         return ATRET_FAILED;
     }
 
@@ -207,12 +207,11 @@ static int32_t CreateCfgFile(void)
 
     struct stat buf;
     if (stat(TOKEN_ID_CFG_DIR_PATH, &buf) != 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:stat folder path is invalid %d.",
-            __func__, errno);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:stat folder path is invalid %d.", __func__, errno);
         return ATRET_FAILED;
     }
     if (chown(TOKEN_ID_CFG_FILE_PATH, buf.st_uid, buf.st_gid) != 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:chown failed, errno is %d.", __func__, errno);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:chown failed, errno is %d.", __func__, errno);
         return ATRET_FAILED;
     }
 
@@ -223,7 +222,7 @@ int32_t AtlibInit(void)
 {
     g_tokenListHead = (NativeTokenList *)malloc(sizeof(NativeTokenList));
     if (g_tokenListHead == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:g_tokenListHead memory alloc failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:g_tokenListHead memory alloc failed.", __func__);
         return ATRET_FAILED;
     }
     g_tokenListHead->next = NULL;
@@ -257,7 +256,7 @@ static int32_t GetRandomTokenId(uint32_t *randNum)
     (void)close(fd);
 
     if (len != sizeof(random)) {
-        AT_LOG_ERROR("[ATLIB-%s]:read failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:read failed.", __func__);
         return ATRET_FAILED;
     }
     *randNum = random;
@@ -294,7 +293,7 @@ static NativeAtId CreateNativeTokenId(const char *processName)
         retry--;
     }
     if (retry == 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:retry times is 0.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:retry times is 0.", __func__);
         return INVALID_TOKEN_ID;
     }
 
@@ -325,7 +324,7 @@ static int32_t GetAplLevel(const char *aplStr)
     if (strcmp(aplStr, "normal") == 0) {
         return NORMAL;
     }
-    AT_LOG_ERROR("[ATLIB-%s]:aplStr is invalid.", __func__);
+    NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:aplStr is invalid.", __func__);
     return 0;
 }
 
@@ -334,7 +333,7 @@ static void WriteToFile(const cJSON *root)
     char *jsonStr = NULL;
     jsonStr = cJSON_PrintUnformatted(root);
     if (jsonStr == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:cJSON_PrintUnformatted failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:cJSON_PrintUnformatted failed.", __func__);
         return;
     }
 
@@ -342,14 +341,14 @@ static void WriteToFile(const cJSON *root)
         int32_t fd = open(TOKEN_ID_CFG_FILE_PATH, O_RDWR | O_CREAT | O_TRUNC,
                           S_IRUSR | S_IWUSR | S_IRGRP);
         if (fd < 0) {
-            AT_LOG_ERROR("[ATLIB-%s]:open failed.", __func__);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:open failed.", __func__);
             break;
         }
         size_t strLen = strlen(jsonStr);
         ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
         close(fd);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
-            AT_LOG_ERROR("[ATLIB-%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
             break;
         }
     } while (0);
@@ -378,7 +377,7 @@ static void SaveTokenIdToCfg(const NativeTokenList *curr)
     }
 
     if (record == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:get record failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:get record failed.", __func__);
         return;
     }
 
@@ -398,12 +397,12 @@ static uint32_t CheckStrArray(const char **strArray, int32_t strNum, int32_t max
 {
     if (((strArray == NULL) && (strNum != 0)) ||
         (strNum > maxNum) || (strNum < 0)) {
-        AT_LOG_ERROR("[ATLIB-%s]:strArray is null or strNum is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strArray is null or strNum is invalid.", __func__);
         return ATRET_FAILED;
     }
     for (int32_t i = 0; i < strNum; i++) {
         if ((strArray[i] == NULL) || (strlen(strArray[i]) > maxInfoLen) || (strlen(strArray[i]) == 0)) {
-            AT_LOG_ERROR("[ATLIB-%s]:strArray[%d] length is invalid.", __func__, i);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strArray[%d] length is invalid.", __func__, i);
             return ATRET_FAILED;
         }
     }
@@ -414,28 +413,28 @@ static uint32_t CheckProcessInfo(NativeTokenInfoParams *tokenInfo, int32_t *aplR
 {
     if ((tokenInfo->processName == NULL) || strlen(tokenInfo->processName) > MAX_PROCESS_NAME_LEN ||
         strlen(tokenInfo->processName) == 0) {
-        AT_LOG_ERROR("[ATLIB-%s]:processName is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:processName is invalid.", __func__);
         return ATRET_FAILED;
     }
     uint32_t retDcap = CheckStrArray(tokenInfo->dcaps, tokenInfo->dcapsNum, MAX_DCAPS_NUM, MAX_DCAP_LEN);
     if (retDcap != ATRET_SUCCESS) {
-        AT_LOG_ERROR("[ATLIB-%s]:dcaps is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:dcaps is invalid.", __func__);
         return ATRET_FAILED;
     }
     uint32_t retPerm = CheckStrArray(tokenInfo->perms, tokenInfo->permsNum, MAX_PERM_NUM, MAX_PERM_LEN);
     if (retPerm != ATRET_SUCCESS) {
-        AT_LOG_ERROR("[ATLIB-%s]:perms is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:perms is invalid.", __func__);
         return ATRET_FAILED;
     }
 
     uint32_t retAcl = CheckStrArray(tokenInfo->acls, tokenInfo->aclsNum, MAX_PERM_NUM, MAX_PERM_LEN);
     if (retAcl != ATRET_SUCCESS) {
-        AT_LOG_ERROR("[ATLIB-%s]:acls is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:acls is invalid.", __func__);
         return ATRET_FAILED;
     }
 
     if (tokenInfo->aclsNum > tokenInfo->permsNum) {
-        AT_LOG_ERROR("[ATLIB-%s]:aclsNum is invalid.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:aclsNum is invalid.", __func__);
         return ATRET_FAILED;
     }
     int32_t apl = GetAplLevel(tokenInfo->aplStr);
@@ -452,7 +451,7 @@ static uint32_t CreateStrArray(int32_t num, const char **strArr, char **strArrRe
         strArrRes[i] = (char *)malloc(sizeof(char) * (strlen(strArr[i]) + 1));
         if (strArrRes[i] == NULL ||
             (strcpy_s(strArrRes[i], strlen(strArr[i]) + 1, strArr[i]) != EOK)) {
-            AT_LOG_ERROR("[ATLIB-%s]:copy strArr[%d] failed.", __func__, i);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
             FreeStrArray(strArrRes, i);
             return ATRET_FAILED;
         }
@@ -473,13 +472,13 @@ static uint32_t AddNewTokenToListAndFile(const NativeTokenInfoParams *tokenInfo,
 
     tokenNode = (NativeTokenList *)malloc(sizeof(NativeTokenList));
     if (tokenNode == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:memory alloc failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
         return ATRET_FAILED;
     }
     tokenNode->tokenId = id;
     tokenNode->apl = aplIn;
     if (strcpy_s(tokenNode->processName, MAX_PROCESS_NAME_LEN + 1, tokenInfo->processName) != EOK) {
-        AT_LOG_ERROR("[ATLIB-%s]:strcpy_s failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strcpy_s failed.", __func__);
         free(tokenNode);
         return ATRET_FAILED;
     }
@@ -556,7 +555,7 @@ static uint32_t UpdateStrArrayInList(char *strArr[], int32_t *strNum,
         size_t len = strlen(strArrNew[i]) + 1;
         strArr[i] = (char *)malloc(sizeof(char) * len);
         if (strArr[i] == NULL || (strcpy_s(strArr[i], len, strArrNew[i]) != EOK)) {
-            AT_LOG_ERROR("[ATLIB-%s]:copy strArr[%d] failed.", __func__, i);
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:copy strArr[%d] failed.", __func__, i);
             FreeStrArray(strArr, i);
             return ATRET_FAILED;
         }
@@ -607,13 +606,13 @@ static uint32_t UpdateInfoInCfgFile(const NativeTokenList *tokenNode)
     }
 
     if (record == NULL) {
-        AT_LOG_ERROR("[ATLIB-%s]:get record failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:get record failed.", __func__);
         return ATRET_FAILED;
     }
 
     ret = UpdateGoalItemFromRecord(tokenNode, record);
     if (ret != ATRET_SUCCESS) {
-        AT_LOG_ERROR("[ATLIB-%s]:UpdateGoalItemFromRecord failed.", __func__);
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:UpdateGoalItemFromRecord failed.", __func__);
         cJSON_Delete(record);
         return ATRET_FAILED;
     }

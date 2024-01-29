@@ -43,6 +43,7 @@ if (is_standard_system) {
     sources = [
       "src/nativetoken.c",
       "src/nativetoken_json_oper.c",
+      "src/nativetoken_klog.c",
     ]
 
     deps = [
