@@ -35,7 +35,7 @@ namespace {
 const static uint32_t MAX_PERM_SIZE = 2048;
 const static uint32_t MAX_CONFIG_FILE_SIZE = 5 * 1024;
 const static std::string TEST_JSON_PATH = "/data/test.json";
-const std::string teststr =
+const static std::string TEST_STR =
     "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
     "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
     "iVBORw0KGgoAAAANSUhEUgAAABUAAAAXCAIAAABrvZPKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAEXRFWHRTb2Z0d2FyZQBTbmlwYXN0ZV0Xzt0AA"
@@ -146,8 +146,8 @@ HWTEST_F(CommonTest, ReadCfgFile001, TestSize.Level1)
     std::string rawData;
     EXPECT_EQ(ERR_PARAM_INVALID, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
     for (int i = 0; i < MAX_CONFIG_FILE_SIZE; i++) {
-        size_t strLen = strlen(teststr.c_str());
-        write(fd, (void *)teststr.c_str(), (size_t)strLen);
+        size_t strLen = strlen(TEST_STR.c_str());
+        write(fd, TEST_STR.c_str(), strLen);
     }
     EXPECT_EQ(ERR_OVERSIZE, JsonParser::ReadCfgFile(TEST_JSON_PATH, rawData));
     close(fd);
