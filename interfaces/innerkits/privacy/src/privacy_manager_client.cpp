@@ -279,35 +279,36 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
     return proxy->RegisterSecCompEnhance(registerParcel);
 }
 
-int32_t PrivacyManagerClient::DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList)
+int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    std::vector<SecCompEnhanceDataParcel> parcelList;
-    for (const auto& data : enhanceList) {
-        SecCompEnhanceDataParcel parcel;
-        parcel.enhanceData = data;
-        parcelList.emplace_back(parcel);
-    }
-    return proxy->DepositSecCompEnhance(parcelList);
-}
-
-int32_t PrivacyManagerClient::RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return PrivacyError::ERR_PARAM_INVALID;
-    }
-    std::vector<SecCompEnhanceDataParcel> parcelList;
-    int32_t res = proxy->RecoverSecCompEnhance(parcelList);
+    SecCompEnhanceDataParcel parcel;
+    int32_t res = proxy->GetSecCompEnhance(pid, parcel);
     if (res != RET_SUCCESS) {
         return res;
     }
-    
+    enhance = parcel.enhanceData;
+    return RET_SUCCESS;
+}
+
+int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundleName,
+    std::vector<SecCompEnhanceData>& enhanceList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    std::vector<SecCompEnhanceDataParcel> parcelList;
+    int32_t res = proxy->GetSpecialSecCompEnhance(bundleName, parcelList);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+
     std::transform(parcelList.begin(), parcelList.end(), std::back_inserter(enhanceList),
         [](SecCompEnhanceDataParcel pair) { return pair.enhanceData; });
     return RET_SUCCESS;

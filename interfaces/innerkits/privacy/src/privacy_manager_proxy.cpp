@@ -326,7 +326,7 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
     return result;
 }
 
-int32_t PrivacyManagerProxy::DepositSecCompEnhance(const std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+int32_t PrivacyManagerProxy::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -334,28 +334,29 @@ int32_t PrivacyManagerProxy::DepositSecCompEnhance(const std::vector<SecCompEnha
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteUint32(enhanceParcelList.size())) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Failed to write uint32.");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    if (!data.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32(%{public}d)", pid);
+        return false;
     }
-
-    for (const auto& parcel : enhanceParcelList) {
-        if (!data.WriteParcelable(&parcel)) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Failed to write parcel.");
-            continue;
-        }
-    }
-
-    if (!SendRequest(PrivacyInterfaceCode::DEPOSIT_SEC_COMP_ENHANCE, data, reply)) {
+    if (!SendRequest(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
     int32_t result = reply.ReadInt32();
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    sptr<SecCompEnhanceDataParcel> parcel = reply.ReadParcelable<SecCompEnhanceDataParcel>();
+    if (parcel != nullptr) {
+        enhanceParcel = *parcel;
+    }
     return result;
 }
 
-int32_t PrivacyManagerProxy::RecoverSecCompEnhance(std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
+int32_t PrivacyManagerProxy::GetSpecialSecCompEnhance(const std::string& bundleName,
+    std::vector<SecCompEnhanceDataParcel>& enhanceParcelList)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -364,7 +365,12 @@ int32_t PrivacyManagerProxy::RecoverSecCompEnhance(std::vector<SecCompEnhanceDat
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 
-    if (!SendRequest(PrivacyInterfaceCode::RECOVER_SEC_COMP_ENHANCE, data, reply)) {
+    if (!data.WriteString(bundleName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write string.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!SendRequest(PrivacyInterfaceCode::GET_SPECIAL_SEC_COMP_ENHANCE, data, reply)) {
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 

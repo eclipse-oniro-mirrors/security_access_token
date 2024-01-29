@@ -32,9 +32,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
-#endif
 }
 
 int32_t PrivacyManagerStub::OnRemoteRequest(
@@ -295,11 +292,11 @@ bool PrivacyManagerStub::HandleSecCompReq(uint32_t code, MessageParcel& data, Me
         case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE):
             RegisterSecCompEnhanceInner(data, reply);
             break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::DEPOSIT_SEC_COMP_ENHANCE):
-            DepositSecCompEnhanceInner(data, reply);
+        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE):
+            GetSecCompEnhanceInner(data, reply);
             break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::RECOVER_SEC_COMP_ENHANCE):
-            RecoverSecCompEnhanceInner(data, reply);
+        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_SPECIAL_SEC_COMP_ENHANCE):
+            GetSpecialSecCompEnhanceInner(data, reply);
             break;
         default:
             return false;
@@ -319,42 +316,35 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
     reply.WriteInt32(result);
 }
 
-void PrivacyManagerStub::DepositSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+void PrivacyManagerStub::GetSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsSecCompServiceCalling()) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
 
-    std::vector<SecCompEnhanceDataParcel> parcelList;
-    uint32_t size = data.ReadUint32();
-    if (size > MAX_SEC_COMP_ENHANCE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size %{public}u is invalid", size);
-        reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
+    int32_t pid = data.ReadInt32();
+    SecCompEnhanceDataParcel parcel;
+    int32_t result = this->GetSecCompEnhance(pid, parcel);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
         return;
     }
-    for (uint32_t i = 0; i < size; i++) {
-        sptr<SecCompEnhanceDataParcel> parcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
-        if (parcel == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "parcel read faild");
-            continue;
-        }
-        parcelList.emplace_back(*parcel);
-    }
 
-    int32_t result = this->DepositSecCompEnhance(parcelList);
-    reply.WriteInt32(result);
+    reply.WriteParcelable(&parcel);
 }
 
-void PrivacyManagerStub::RecoverSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+void PrivacyManagerStub::GetSpecialSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsSecCompServiceCalling()) {
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
 
+    std::string bundleName = data.ReadString();
+
     std::vector<SecCompEnhanceDataParcel> parcelList;
-    int32_t result = this->RecoverSecCompEnhance(parcelList);
+    int32_t result = this->GetSpecialSecCompEnhance(bundleName, parcelList);
     reply.WriteInt32(result);
     if (result != RET_SUCCESS) {
         return;
