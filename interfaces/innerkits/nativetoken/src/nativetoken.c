@@ -346,6 +346,9 @@ static void WriteToFile(const cJSON *root)
         }
         size_t strLen = strlen(jsonStr);
         ssize_t writtenLen = write(fd, (void *)jsonStr, (size_t)strLen);
+        if (fsync(fd) != 0) {
+            NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fsync failed, errno is %d.", __func__, errno);
+        }
         close(fd);
         if (writtenLen < 0 || (size_t)writtenLen != strLen) {
             NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:write failed, writtenLen is %zu.", __func__, writtenLen);
