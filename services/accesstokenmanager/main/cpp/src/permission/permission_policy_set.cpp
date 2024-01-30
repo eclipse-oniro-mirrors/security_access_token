@@ -265,7 +265,7 @@ int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionNa
         });
     if (iter != permStateList_.end()) {
         if (iter->isGeneral) {
-            if ((static_cast<uint32_t>(flag) & PERMISSION_SYSTEM_FIXED) == 1) {
+            if ((static_cast<uint32_t>(iter->grantFlags[0]) & PERMISSION_SYSTEM_FIXED) == PERMISSION_SYSTEM_FIXED) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "permission fixed by system!");
                 return AccessTokenError::ERR_PARAM_INVALID;
             }
