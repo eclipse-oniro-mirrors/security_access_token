@@ -1647,63 +1647,38 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, RegisterSecCompEnhance001, TestSize.Level1)
 {
+    SetSelfTokenID(g_tokenIdA);
     SecCompEnhanceData data;
     data.callback = nullptr;
-    data.pid = 1;
     data.challenge = 0;
-    ASSERT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, PrivacyKit::RegisterSecCompEnhance(data));
-
-    AccessTokenID secCompId = AccessTokenKit::GetNativeTokenId("security_component_service");
-    EXPECT_EQ(0, SetSelfTokenID(secCompId));
-
-    std::vector<SecCompEnhanceData> enhanceList;
-    enhanceList.emplace_back(data);
-
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::DepositSecCompEnhance(enhanceList));
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    EXPECT_EQ(PrivacyError::ERR_WRITE_PARCEL_FAILED, PrivacyKit::RegisterSecCompEnhance(data));
 
     // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     data.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterSecCompEnhance(data));
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::RegisterSecCompEnhance(data));
+
+    AccessTokenID secCompId = AccessTokenKit::GetNativeTokenId("security_component_service");
+    EXPECT_EQ(0, SetSelfTokenID(secCompId));
+    SecCompEnhanceData data1;
+    EXPECT_EQ(RET_SUCCESS, PrivacyKit::GetSecCompEnhance(getpid(), data1));
+    EXPECT_NE(RET_SUCCESS, PrivacyKit::GetSecCompEnhance(0, data1));
 }
 
 /**
- * @tc.name: DepositSecCompEnhance001
- * @tc.desc: PrivacyKit:: function test Deposit and Recover
+ * @tc.name: GetSpecialSecCompEnhance001
+ * @tc.desc: PrivacyKit:: function test Get Special enhance
  * @tc.type: FUNC
  * @tc.require: issueI7MXZ
  */
-HWTEST_F(PrivacyKitTest, DepositSecCompEnhance001, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, GetSpecialSecCompEnhance001, TestSize.Level1)
 {
     AccessTokenID secCompId = AccessTokenKit::GetNativeTokenId("security_component_service");
     EXPECT_EQ(0, SetSelfTokenID(secCompId));
 
-    SecCompEnhanceData data;
-    data.callback = nullptr;
-    data.pid = 1;
-    data.challenge = 0;
-
-    SecCompEnhanceData data1;
-    // StateChangeCallback is not the real callback of SecCompEnhance, but it does not effect the final result.
-    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
-    data1.callback = new (std::nothrow) StateChangeCallback(callbackPtr);
-    data1.pid = 2;
-    data1.challenge = 0;
-
-    std::vector<SecCompEnhanceData> enhanceList;
-    enhanceList.emplace_back(data);
-    enhanceList.emplace_back(data1);
-
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::DepositSecCompEnhance(enhanceList));
-
     std::vector<SecCompEnhanceData> res;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RecoverSecCompEnhance(res));
-
-    bool isPidExist = std::any_of(res.begin(), res.end(), [](const SecCompEnhanceData & data) {
-        return data.pid == 2;
-    });
-    ASSERT_TRUE(isPidExist);
-    EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance("", res));
+    ASSERT_EQ(static_cast<int32_t>(res.size()), 0);
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetSpecialSecCompEnhance(g_infoParmsA.bundleName, res));
 }
 #endif

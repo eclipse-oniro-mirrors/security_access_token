@@ -49,8 +49,9 @@ public:
     virtual ~PrivacySecCompEnhanceAgent();
 
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData);
-    int32_t DepositSecCompEnhance(const std::vector<SecCompEnhanceData>& enhanceList);
-    int32_t RecoverSecCompEnhance(std::vector<SecCompEnhanceData>& enhanceList);
+    int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
+    int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
+        std::vector<SecCompEnhanceData>& enhanceList);
     void RemoveSecCompEnhance(int pid);
     void OnAppMgrRemoteDiedHandle();
 
@@ -64,10 +65,8 @@ private:
     std::shared_ptr<PrivacySecCompAppManagerDeathCallback> appManagerDeathCallback_ = nullptr;
     std::mutex secCompEnhanceMutex_;
     std::vector<SecCompEnhanceData> secCompEnhanceData_;
-    bool isRecoverd = false;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
 #endif // PERMISSION_SEC_COMP_ENHANCE_AGENT_H
-
