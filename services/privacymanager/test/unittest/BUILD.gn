@@ -151,16 +151,6 @@ if (is_standard_system && ability_base_enable == true) {
         "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
       ]
     }
-
-    if (security_component_enhance_enable) {
-      cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
-      include_dirs +=
-          [ "${access_token_path}/services/privacymanager/include/seccomp" ]
-      sources += [
-        "../../src/seccomp/privacy_sec_comp_enhance_agent.cpp",
-        "privacy_sec_comp_enhance_agent_test.cpp",
-      ]
-    }
   }
 }
 
