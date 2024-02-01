@@ -195,6 +195,41 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
     return permPolicySet->VerifyPermissionStatus(permissionName);
 }
 
+PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
+    AccessTokenID tokenID, const std::string& permissionName)
+{
+    if ((tokenID == INVALID_TOKENID) ||
+        (TOKEN_HAP != AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d is invalid.", tokenID);
+        return INVALID_USED_TYPE;
+    }
+
+    PermissionDef permissionDefResult;
+    int ret = GetDefPermission(permissionName, permissionDefResult);
+    if (RET_SUCCESS != ret) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Query permission info of %{public}s failed.", permissionName.c_str());
+        return INVALID_USED_TYPE;
+    }
+    if (USER_GRANT != permissionDefResult.grantMode) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not user grant for permission=%{public}s.", permissionName.c_str());
+        return INVALID_USED_TYPE;
+    }
+
+    std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
+        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    if (tokenInfoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, can not find tokenInfo.", tokenID);
+        return INVALID_USED_TYPE;
+    }
+    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
+    if (permPolicySet == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, invalid params.", tokenID);
+        return INVALID_USED_TYPE;
+    }
+
+    return permPolicySet->GetUserGrantedPermissionUsedType(permissionName);
+}
+
 int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (tokenID == INVALID_TOKENID) {

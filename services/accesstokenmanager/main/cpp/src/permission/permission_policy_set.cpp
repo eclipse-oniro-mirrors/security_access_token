@@ -188,6 +188,44 @@ uint32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, 
     return unmaskedFlag;
 }
 
+PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& perm : permStateList_) {
+        if (perm.permissionName != permissionName) {
+            continue;
+        }
+
+        if (!perm.isGeneral) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not general.",
+                permissionName.c_str(), tokenId_);
+            return INVALID_USED_TYPE;
+        }
+
+        if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
+            return SEC_COMPONENT_TYPE;
+        }
+
+        if (perm.grantStatus[0] != PERMISSION_GRANTED) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is requested, not granted.",
+                permissionName.c_str(), tokenId_);
+            return INVALID_USED_TYPE;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s of %{public}d is applied for normally.",
+            permissionName.c_str(), tokenId_);
+        return NORMAL_TYPE;
+    }
+
+    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
+        [permissionName](const auto& permission) { return permission == permissionName; })) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
+            return SEC_COMPONENT_TYPE;
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not application", permissionName.c_str(), tokenId_);
+    return INVALID_USED_TYPE;
+}
+
 int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);

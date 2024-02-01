@@ -52,6 +52,22 @@ static const int DEFAULT_TOKEN_VERSION = 1;
 static const AccessTokenID INVALID_TOKENID = 0;
 
 /**
+ * @brief visit type
+ */
+typedef enum PermUsedTypeEnum {
+    /** invalid type */
+    INVALID_USED_TYPE = 0,
+    /** normal type for permision request */
+    NORMAL_TYPE = 1,
+    /** picker type for permision request */
+    PICKER_TYPE,
+    /** security component type for permision request */
+    SEC_COMPONENT_TYPE,
+    /** buttom of type for no use */
+    BUTT_TYPE,
+} PermUsedTypeEnum;
+
+/**
  * @brief Access token kit return code
  */
 enum AccessTokenKitRet {

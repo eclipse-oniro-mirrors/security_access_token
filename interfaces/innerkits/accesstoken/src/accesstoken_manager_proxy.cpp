@@ -58,6 +58,39 @@ bool AccessTokenManagerProxy::SendRequest(
     return true;
 }
 
+PermUsedTypeEnum AccessTokenManagerProxy::GetUserGrantedPermissionUsedType(
+    AccessTokenID tokenID, const std::string &permissionName)
+{
+    MessageParcel data;
+
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write descriptor failed.");
+        return INVALID_USED_TYPE;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write tokenID failed.");
+        return INVALID_USED_TYPE;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write permissionName failed.");
+        return INVALID_USED_TYPE;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_USER_GRANTED_PERMISSION_USED_TYPE, data, reply)) {
+        return INVALID_USED_TYPE;
+    }
+
+    int32_t ret;
+    if (!reply.ReadInt32(ret)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read result failed.");
+        return INVALID_USED_TYPE;
+    }
+    PermUsedTypeEnum result = static_cast<PermUsedTypeEnum>(ret);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get result from server, result=%{public}d.", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
     MessageParcel data;

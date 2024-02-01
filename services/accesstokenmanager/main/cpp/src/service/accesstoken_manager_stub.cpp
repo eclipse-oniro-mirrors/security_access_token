@@ -103,6 +103,22 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
     reply.WriteInt32(result);
 }
 
+void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t tokenID;
+    if (!data.ReadUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
+    }
+    std::string permissionName;
+    if (!data.ReadString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permissionName.");
+    }
+    PermUsedTypeEnum result = this->GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail.");
+    }
+}
+
 void AccessTokenManagerStub::VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenID = data.ReadUint32();
@@ -752,6 +768,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
 {
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_USER_GRANTED_PERMISSION_USED_TYPE)] =
+        &AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =

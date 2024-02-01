@@ -59,6 +59,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::GetScope(OHOS::Security::AccessToken::PermStateChangeScope&) const";
         "OHOS::Security::AccessToken::AccessTokenKit::SetPermDialogCap(OHOS::Security::AccessToken::HapBaseInfo const&, bool)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetUserGrantedPermissionUsedType(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "";
         "";
     };

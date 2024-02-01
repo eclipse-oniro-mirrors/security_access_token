@@ -121,6 +121,13 @@ void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, c
     }
 }
 
+PermUsedTypeEnum AccessTokenManagerService::GetUserGrantedPermissionUsedType(
+    AccessTokenID tokenID, const std::string& permissionName)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d, permission=%{public}s", tokenID, permissionName.c_str());
+    return PermissionManager::GetInstance().GetUserGrantedPermissionUsedType(tokenID, permissionName);
+}
+
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
 {
 #ifdef HITRACE_NATIVE_ENABLE

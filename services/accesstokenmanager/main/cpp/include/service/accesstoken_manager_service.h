@@ -45,6 +45,8 @@ public:
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy) override;
+    PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+        AccessTokenID tokenID, const std::string& permissionName) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDefParcel>& permList) override;
