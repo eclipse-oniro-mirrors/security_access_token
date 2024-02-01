@@ -1553,7 +1553,7 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager001, TestSize.Level1)
 HWTEST_F(TokenSyncServiceTest, RemoteCommandManager002, TestSize.Level1)
 {
     RemoteCommandManager::GetInstance().Init();
-    std::string udid = "test_udId";
+    std::string udid = "test_udId_1";
     int32_t ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately(udid);
     ASSERT_EQ(Constant::FAILURE, ret);
     ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately("");

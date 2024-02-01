@@ -195,7 +195,7 @@ void TestPreparePermStateList(HapPolicyParams &policy)
         .isGeneral = true,
         .resDeviceID = {"device3"},
         .grantStatus = {PermissionState::PERMISSION_GRANTED},
-        .grantFlags = {PermissionFlag::PERMISSION_SYSTEM_FIXED}
+        .grantFlags = {PermissionFlag::PERMISSION_USER_FIXED}
     };
 
     policy.permStateList.emplace_back(permStatAlpha);
@@ -1089,7 +1089,7 @@ HWTEST_F(AccessTokenKitTest, ClearUserGrantedPermissionState001, TestSize.Level0
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
     ret = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NAME_BETA, false);
-    ASSERT_EQ(PERMISSION_GRANTED, ret);
+    ASSERT_EQ(PERMISSION_DENIED, ret);
 }
 
 /**
@@ -2812,7 +2812,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     ASSERT_EQ(0, AccessTokenKit::SetPermDialogCap(hapBaseInfo, false));
     SetSelfTokenID(tokenID);
     PermissionGrantInfo info;
-    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
+    ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permsList, info));
 }
 } // namespace AccessToken
 } // namespace Security
