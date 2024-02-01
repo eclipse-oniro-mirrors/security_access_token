@@ -1198,6 +1198,7 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission003, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
@@ -1287,6 +1288,7 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level1)
     std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
