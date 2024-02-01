@@ -19,7 +19,7 @@
 #include "securec.h"
 
 #define MAX_LOG_SIZE 1024
-#define MAX_LEVEL_SIZE 4
+#define MAX_LEVEL_SIZE 3
 
 static const char *LOG_LEVEL_STR[] = {"ERROR", "WARNING", "INFO"};
 

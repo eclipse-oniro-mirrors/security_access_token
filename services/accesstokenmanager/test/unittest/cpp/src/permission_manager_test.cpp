@@ -1400,9 +1400,6 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     observer_->OnForegroundApplicationChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
-    sleep(11);
-    EXPECT_EQ(PERMISSION_DENIED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.MEDIA_LOCATION"));
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";

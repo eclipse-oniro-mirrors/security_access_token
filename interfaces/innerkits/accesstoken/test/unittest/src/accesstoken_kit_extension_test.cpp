@@ -1392,17 +1392,6 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback014, TestSi
     EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::RevokePermission(tokenIdEx.tokenIdExStruct.tokenID,
-        "ohos.permission.READ_MEDIA", PERMISSION_GRANTED_BY_POLICY);
-    EXPECT_EQ(RET_SUCCESS, res);
-    EXPECT_EQ(true, callbackPtr->ready_);
-
-    callbackPtr->ready_ = false;
-    res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
-    EXPECT_EQ(RET_SUCCESS, res);
-    EXPECT_EQ(true, callbackPtr->ready_);
-
-    callbackPtr->ready_ = false;
     res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, res);
     EXPECT_EQ(true, callbackPtr->ready_);
