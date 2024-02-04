@@ -1299,7 +1299,7 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
 
 int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool enable)
 {
-    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
     auto infoIter = hapTokenInfoMap_.find(tokenID);
     if ((infoIter == hapTokenInfoMap_.end()) || (infoIter->second == nullptr)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
