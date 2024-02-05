@@ -93,6 +93,7 @@ private:
     void SetDefaultConfigGrantValue();
     void GetConfigValue();
     bool Initialize();
+    void DumpToken();
     void AccessTokenServiceParamSet() const;
 
 #ifdef EVENTHANDLER_ENABLE
