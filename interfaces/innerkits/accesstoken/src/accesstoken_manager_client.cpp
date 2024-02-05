@@ -37,13 +37,20 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init";
+std::recursive_mutex g_instanceMutex;
 } // namespace
 static const uint32_t MAX_CALLBACK_MAP_SIZE = 200;
 
 AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
 {
-    static AccessTokenManagerClient instance;
-    return instance;
+    static AccessTokenManagerClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenManagerClient();
+        }
+    }
+    return *instance;
 }
 
 AccessTokenManagerClient::AccessTokenManagerClient()
