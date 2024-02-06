@@ -262,7 +262,9 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
         PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
             andConditionValues, findRecordsValues, dataLimitNum); // find records from cache and database
         andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
-        dataLimitNum -= findRecordsValues.size();
+        uint32_t currentCount = findRecordsValues.size();
+        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d get %{public}d records", tokenId, currentCount);
+        dataLimitNum -= currentCount;
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
             continue;
