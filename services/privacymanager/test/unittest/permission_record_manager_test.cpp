@@ -347,7 +347,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
         .opCode = Constant::OP_CAMERA,
     };
     CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
-    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
@@ -377,7 +377,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_MICROPHONE,
     };
-    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
@@ -406,7 +406,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
@@ -435,7 +435,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
         .tokenId = tokenId,
         .opCode = Constant::OP_CAMERA,
     };
-    PermissionRecordManager::GetInstance().AddRecordIfNotStarted(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 #endif

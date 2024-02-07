@@ -383,7 +383,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& record)
+bool PermissionRecordManager::AddRecordToStartList(const PermissionRecord& record)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
@@ -395,7 +395,6 @@ bool PermissionRecordManager::AddRecordIfNotStarted(const PermissionRecord& reco
         ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId(%{public}d), opCode(%{public}d) add record.",
             record.tokenId, record.opCode);
         startRecordList_.emplace_back(record);
-        AddRecord(record); // when start using permission, add a instananeous record which accessDuration is 0
     }
     return hasStarted;
 }
@@ -671,7 +670,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         return result;
     }
 
-    if (AddRecordIfNotStarted(record)) {
+    if (AddRecordToStartList(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
 
@@ -742,7 +741,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (result != Constant::SUCCESS) {
         return result;
     }
-    if (AddRecordIfNotStarted(record)) {
+    if (AddRecordToStartList(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
     if (!GetGlobalSwitchStatus(permissionName)) {
@@ -782,7 +781,6 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     }
 
     if (record.status != PERM_INACTIVE) {
-        AddRecord(record);
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
     return Constant::SUCCESS;

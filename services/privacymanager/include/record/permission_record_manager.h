@@ -124,7 +124,7 @@ private:
     void RemoveRecordFromStartList(const PermissionRecord& record);
     void UpdateRecord(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
-    bool AddRecordIfNotStarted(const PermissionRecord& record);
+    bool AddRecordToStartList(const PermissionRecord& record);
 
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
