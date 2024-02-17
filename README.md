@@ -62,8 +62,8 @@ The following figure shows the ATM architecture.
 | int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes); | Obtains the native token information.|
 | int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName); | Checks whether an access token has the specified permission.|
 | int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult); | Obtains definition information about the specified permission.|
-| int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList); | Obtains the permission definition set of a HAP.|
-| int GetReqPermissions(AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant); | Obtains the status set of the permission requested by a HAP.|
+| int GetDefPermissions(AccessTokenID tokenID, std::vector&lt;PermissionDef&gt;& permList); | Obtains the permission definition set of a HAP.|
+| int GetReqPermissions(AccessTokenID tokenID, std::vector&lt;PermissionStateFull&gt;& reqPermList, bool isSystemGrant); | Obtains the status set of the permission requested by a HAP.|
 | int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName); | Obtains the permissions of the app with the specified token ID.|
 | int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | Grants a permission to the app with the specified token ID.|
 | int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | Revokes a permission from the app with the specified token ID.|
