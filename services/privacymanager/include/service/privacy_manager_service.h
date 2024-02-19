@@ -18,6 +18,9 @@
 
 #include <string>
 
+#ifdef EVENTHANDLER_ENABLE
+#include "access_event_handler.h"
+#endif
 #include "privacy_manager_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
@@ -65,13 +68,17 @@ private:
 #ifdef POWER_MANAGER_ENABLE
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 #endif
-    bool Initialize() const;
+    bool Initialize();
     int32_t ResponseDumpCommand(int32_t fd,  const std::vector<std::u16string>& args);
 
     ServiceRunningState state_;
 
 #ifdef POWER_MANAGER_ENABLE
     sptr<PowerMgr::IAsyncShutdownCallback> powerShutDownCallback_ = nullptr;
+#endif
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
+    std::shared_ptr<AccessEventHandler> eventHandler_;
 #endif
 };
 } // namespace AccessToken

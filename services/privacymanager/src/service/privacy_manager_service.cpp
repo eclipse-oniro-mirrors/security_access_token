@@ -19,6 +19,7 @@
 #include <cstring>
 
 #include "accesstoken_log.h"
+#include "active_status_callback_manager.h"
 #include "constant_common.h"
 #include "constant.h"
 #include "ipc_skeleton.h"
@@ -290,9 +291,18 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
 }
 #endif
 
-bool PrivacyManagerService::Initialize() const
+bool PrivacyManagerService::Initialize()
 {
     PermissionRecordManager::GetInstance().Init();
+#ifdef EVENTHANDLER_ENABLE
+    eventRunner_ = AppExecFwk::EventRunner::Create(true);
+    if (!eventRunner_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
+        return false;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
+    ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
+#endif
     return true;
 }
 } // namespace AccessToken

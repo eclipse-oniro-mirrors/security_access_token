@@ -31,9 +31,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ActiveStatusCallbackManager"
 };
-static const time_t MAX_TIMEOUT_SEC = 30;
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
-static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 }
 
 ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
@@ -51,6 +49,13 @@ ActiveStatusCallbackManager::ActiveStatusCallbackManager()
 ActiveStatusCallbackManager::~ActiveStatusCallbackManager()
 {
 }
+
+#ifdef EVENTHANDLER_ENABLE
+void ActiveStatusCallbackManager::InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler)
+{
+    eventHandler_ = eventHandler;
+}
+#endif
 
 int32_t ActiveStatusCallbackManager::AddCallback(
     const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
@@ -110,6 +115,38 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
         [permName](const std::string& perm) { return perm == permName; });
 }
 
+
+void ActiveStatusCallbackManager::ActiveStatusChange(
+    AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
+    std::vector<sptr<IRemoteObject>> list;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
+            std::vector<std::string> permList = (*it).permList_;
+            if (!NeedCalled(permList, permName)) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
+                continue;
+            }
+            list.emplace_back((*it).callbackObject_);
+        }
+    }
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        auto callback = iface_cast<IPermActiveStatusCallback>(*it);
+        if (callback != nullptr) {
+            ActiveChangeResponse resInfo;
+            resInfo.type = changeType;
+            resInfo.permissionName = permName;
+            resInfo.tokenID = tokenId;
+            resInfo.deviceId = deviceId;
+            ACCESSTOKEN_LOG_INFO(LABEL, "callback execute tokenId %{public}u, changeType %{public}d",
+                tokenId, changeType);
+            callback->ActiveStatusChangeCallback(resInfo);
+        }
+    }
+}
+
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
@@ -119,46 +156,25 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,
             "CALLER_TOKENID", tokenId, "PERMISSION_NAME", permName, "REASON", "background call");
     }
-    auto callbackFunc = [&]() {
-        ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
-        std::string name = "PrivacyCallback";
-        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
-        std::vector<sptr<IRemoteObject>> list;
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
-                std::vector<std::string> permList = (*it).permList_;
-                if (!NeedCalled(permList, permName)) {
-                    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
-                    continue;
-                }
-                list.emplace_back((*it).callbackObject_);
-            }
-        }
-        for (auto it = list.begin(); it != list.end(); ++it) {
-            auto callback = iface_cast<IPermActiveStatusCallback>(*it);
-            if (callback != nullptr) {
-                ActiveChangeResponse resInfo;
-                resInfo.type = changeType;
-                resInfo.permissionName = permName;
-                resInfo.tokenID = tokenId;
-                resInfo.deviceId = deviceId;
-                ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", changeType);
-                callback->ActiveStatusChangeCallback(resInfo);
-            }
-        }
-    };
 
-    std::packaged_task<void()> callbackTask(callbackFunc);
-    std::future<void> fut = callbackTask.get_future();
-    std::make_unique<std::thread>(std::move(callbackTask))->detach();
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "Waiting for the callback execution complete...");
-    std::future_status status = fut.wait_for(std::chrono::seconds(MAX_TIMEOUT_SEC));
-    if (status == std::future_status::timeout) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "callbackTask callback execution timeout");
+#ifdef EVENTHANDLER_ENABLE
+    if (eventHandler_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+        return;
     }
+    std::string taskName = permName + std::to_string(tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "add permission task name:%{public}s", taskName.c_str());
+    std::function<void()> task = ([tokenId, permName, deviceId, changeType]() {
+        ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(tokenId, permName, deviceId, changeType);
+        ACCESSTOKEN_LOG_INFO(LABEL, "token: %{public}d, ActiveStatusChange end", tokenId);
+    });
+    eventHandler_->ProxyPostTask(task, taskName);
     ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");
+    return;
+#else
+    ACCESSTOKEN_LOG_INFO(LABEL, "event handler is unenabled");
+    return;
+#endif
 }
 } // namespace AccessToken
 } // namespace Security
