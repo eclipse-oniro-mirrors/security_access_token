@@ -474,6 +474,7 @@ void PermissionPolicySet::PermStateFullToString(const PermissionStateFull& state
     info.append("\n");
     info.append(R"(      "permissionName": ")" + state.permissionName + R"(")" + ",\n");
     info.append(R"(      "isGeneral": )" + std::to_string(state.isGeneral) + ",\n");
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
     info.append(R"(      "resDeviceIDList": [ )");
     for (auto iter = state.resDeviceID.begin(); iter != state.resDeviceID.end(); iter++) {
         info.append("\n");
@@ -483,7 +484,7 @@ void PermissionPolicySet::PermStateFullToString(const PermissionStateFull& state
         }
     }
     info.append("\n      ],\n");
-
+#endif
     info.append(R"(      "grantStatusList": [)");
     for (auto iter = state.grantStatus.begin(); iter != state.grantStatus.end(); iter++) {
         info.append("\n");
