@@ -15,8 +15,8 @@
 
 #include "accesstoken_manager_service.h"
 
-#include <algorithm>
-#include <sys/types.h>
+#include <fcntl.h>
+#include <cstdint>
 #include <unistd.h>
 
 #include "access_token.h"
@@ -61,6 +61,7 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
+const std::string TEST_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
@@ -240,6 +241,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    DumpToken();
     return ret;
 }
 
@@ -249,6 +251,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    DumpToken();
     return ret;
 }
 
@@ -258,6 +261,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    DumpToken();
     return RET_SUCCESS;
 }
 
@@ -285,6 +289,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_INFO(LABEL, "hap token info create failed");
     }
+    DumpToken();
     return tokenIdEx;
 }
 
@@ -293,7 +298,9 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenID);
     PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
-    return AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    int ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    DumpToken();
+    return ret;
 }
 
 int AccessTokenManagerService::GetTokenType(AccessTokenID tokenID)
@@ -322,16 +329,19 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
-    return AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    AccessTokenID tokenID = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
+    DumpToken();
+    return tokenID;
 }
 
 int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
-
-    return AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
+    int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
+    DumpToken();
+    return ret;
 }
 
 int AccessTokenManagerService::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel)
@@ -351,7 +361,9 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
-    return NativeTokenReceptor::GetInstance().Init();
+    int32_t ret = NativeTokenReceptor::GetInstance().Init();
+    DumpToken();
+    return ret;
 }
 #endif
 
@@ -389,9 +401,10 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
-
-    return AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
+    int ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
+    DumpToken();
+    return ret;
 }
 
 int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
@@ -403,16 +416,18 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
     std::transform(nativeTokenInfoForSyncParcel.begin(),
         nativeTokenInfoForSyncParcel.end(), std::back_inserter(nativeList),
         [](const auto& nativeParcel) { return nativeParcel.nativeTokenInfoForSyncParams; });
-
-    return AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
+    int ret = AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
+    DumpToken();
+    return ret;
 }
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
-
-    return AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
+    int ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
+    DumpToken();
+    return ret;
 }
 
 AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::string& deviceID,
@@ -427,8 +442,9 @@ AccessTokenID AccessTokenManagerService::GetRemoteNativeTokenID(const std::strin
 int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& deviceID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
-
-    return AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
+    int ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
+    DumpToken();
+    return ret;
 }
 #endif
 
@@ -482,6 +498,21 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
         dprintf(fd, "%s\n", dumpStr.c_str());
     }
     return ERR_OK;
+}
+
+void AccessTokenManagerService::DumpToken()
+{
+    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
+        close(fd);
+        return;
+    }
+    std::string dumpStr;
+    AtmToolsParamInfoParcel infoParcel;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpStr);
+    dprintf(fd, "%s\n", dumpStr.c_str());
+    close(fd);
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
