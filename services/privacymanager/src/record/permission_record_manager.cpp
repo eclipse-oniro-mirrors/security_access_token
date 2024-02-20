@@ -236,6 +236,22 @@ void PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>&
     }
 }
 
+static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bundleRecord, const int32_t currentCount,
+    int32_t& totalSuccCount, int32_t& totalFailCount)
+{
+    int32_t tokenTotalSuccCount = 0;
+    int32_t tokenTotalFailCount = 0;
+    for (const auto& PermissionRecord : bundleRecord.permissionRecords) {
+        tokenTotalSuccCount += PermissionRecord.accessCount;
+        tokenTotalFailCount += PermissionRecord.rejectCount;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
+        " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), currentCount, tokenTotalSuccCount,
+        tokenTotalFailCount);
+    totalSuccCount += tokenTotalSuccCount;
+    totalFailCount += tokenTotalFailCount;
+}
+
 bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     GenericValues andConditionValues;
@@ -254,6 +270,8 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
 
     // sumarry don't limit querry data num, detail do
     int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
+    int32_t totalSuccCount = 0;
+    int32_t totalFailCount = 0;
 
     Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
     for (const auto& tokenId : tokenIdList) {
@@ -263,19 +281,28 @@ bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest&
             andConditionValues, findRecordsValues, dataLimitNum); // find records from cache and database
         andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
         uint32_t currentCount = findRecordsValues.size();
-        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d get %{public}d records", tokenId, currentCount);
         dataLimitNum -= currentCount;
         BundleUsedRecord bundleRecord;
         if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
             continue;
         }
-        if (!findRecordsValues.empty()) {
+
+        if (currentCount > 0) {
             GetRecords(request.flag, findRecordsValues, bundleRecord, result);
+            // add debug log when get exsit record
+            AddDebugLog(tokenId, bundleRecord, currentCount, totalSuccCount, totalFailCount);
         }
+
         if (!bundleRecord.permissionRecords.empty()) {
             result.bundleRecords.emplace_back(bundleRecord);
         }
     }
+
+    if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "total success count is %{public}d, total failure count is %{public}d",
+            totalSuccCount, totalFailCount);
+    }
+
     return true;
 }
 

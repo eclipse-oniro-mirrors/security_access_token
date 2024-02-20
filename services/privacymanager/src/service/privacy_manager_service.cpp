@@ -132,9 +132,14 @@ int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result)
 {
+    std::string permissionList;
+    for (const auto& perm : request.request.permissionList) {
+        permissionList.append(perm);
+        permissionList.append(" ");
+    }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, beginTime: %{public}" PRId64 ", endTime: %{public}" PRId64
-        ", flag: %{public}d", request.request.tokenId, request.request.beginTimeMillis,
-        request.request.endTimeMillis, request.request.flag);
+        ", flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
+        request.request.endTimeMillis, request.request.flag, permissionList.c_str());
 
     PermissionUsedResult permissionRecord;
     int32_t ret =  PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request.request, permissionRecord);
