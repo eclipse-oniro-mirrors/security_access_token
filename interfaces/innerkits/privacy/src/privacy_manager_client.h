@@ -37,8 +37,7 @@ public:
 
     virtual ~PrivacyManagerClient();
 
-    int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-        int32_t successCount, int32_t failCount, bool asyncMode = false);
+    int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
     int32_t CreateStateChangeCbk(const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);

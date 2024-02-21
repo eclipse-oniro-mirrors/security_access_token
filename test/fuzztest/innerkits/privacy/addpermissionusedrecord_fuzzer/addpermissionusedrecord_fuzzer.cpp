@@ -37,7 +37,12 @@ namespace OHOS {
         int32_t successCount = static_cast<int32_t>(size);
         int32_t failCount = static_cast<int32_t>(size);
 
-        int32_t result = PrivacyKit::AddPermissionUsedRecord(tokenId, testName, successCount, failCount);
+        AddPermParamInfo info;
+        info.tokenId = tokenId;
+        info.permissionName = testName;
+        info.successCount = successCount;
+        info.failCount = failCount;
+        int32_t result = PrivacyKit::AddPermissionUsedRecord(info);
 
         return result == RET_SUCCESS;
     }

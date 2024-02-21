@@ -38,6 +38,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "add_perm_param_info.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
@@ -65,6 +66,13 @@ public:
      */
     static int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
         int32_t successCount, int32_t failCount, bool asyncMode = false);
+    /**
+     * @brief Add input tokenID access input permission record.
+     * @param info struct AddPermParamInfo, see add_perm_param_info.h
+     * @param asyncMode ipc wait type, true means sync waiting, false means async waiting
+     * @return error code, see privacy_error.h
+     */
+    static int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
     /**
      * @brief Input tokenID start using input permission.
      * @param tokenID token id

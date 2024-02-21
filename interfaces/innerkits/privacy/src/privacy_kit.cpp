@@ -31,18 +31,30 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyKit"};
 } // namespace
 
+// tmp interface
 int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s,",
-        tokenID, permissionName.c_str());
-    if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName) ||
-        (successCount < 0 || failCount < 0)) {
+    AddPermParamInfo info;
+    info.tokenId = tokenID;
+    info.permissionName = permissionName;
+    info.successCount = successCount;
+    info.failCount = failCount;
+
+    return AddPermissionUsedRecord(info, asyncMode);
+}
+
+int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
+        info.tokenId, info.permissionName.c_str());
+    if ((!DataValidator::IsTokenIDValid(info.tokenId)) ||
+        (!DataValidator::IsPermissionNameValid(info.permissionName)) ||
+        (info.successCount < 0 || info.failCount < 0)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(
-        tokenID, permissionName, successCount, failCount, asyncMode);
+    return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)

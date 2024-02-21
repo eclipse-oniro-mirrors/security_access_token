@@ -93,14 +93,14 @@ void PrivacyManagerService::OnStop()
 #endif
 }
 
-int32_t PrivacyManagerService::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
-    int32_t successCount, int32_t failCount, bool asyncMode)
+int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
+    bool asyncMode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d, \
-        failCount: %{public}d, asyncMode: %{public}d",
-        tokenId, permissionName.c_str(), successCount, failCount, asyncMode);
-    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
-        tokenId, permissionName, successCount, failCount);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d,"
+        " failCount: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
+        infoParcel.info.successCount, infoParcel.info.failCount);
+    AddPermParamInfo info = infoParcel.info;
+    return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
 int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)

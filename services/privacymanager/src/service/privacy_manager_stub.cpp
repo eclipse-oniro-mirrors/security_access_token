@@ -97,11 +97,13 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-    AccessTokenID tokenId = data.ReadUint32();
-    std::string permissionName = data.ReadString();
-    int32_t successCount = data.ReadInt32();
-    int32_t failCount = data.ReadInt32();
-    int32_t result = this->AddPermissionUsedRecord(tokenId, permissionName, successCount, failCount);
+    sptr<AddPermParamInfoParcel> infoParcel = data.ReadParcelable<AddPermParamInfoParcel>();
+    if (infoParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable faild");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    int32_t result = this->AddPermissionUsedRecord(*infoParcel);
     reply.WriteInt32(result);
 }
 

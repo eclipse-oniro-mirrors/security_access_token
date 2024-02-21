@@ -32,23 +32,17 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
         std::string testName(reinterpret_cast<const char*>(data), size);
-        int32_t successCount = static_cast<int32_t>(size);
-        int32_t failCount = static_cast<int32_t>(size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteUint32(tokenId)) {
-            return false;
-        }
-        if (!datas.WriteString(testName)) {
-            return false;
-        }
-        if (!datas.WriteInt32(successCount)) {
-            return false;
-        }
-        if (!datas.WriteInt32(failCount)) {
+
+        AddPermParamInfoParcel infoParcel;
+        infoParcel.info.tokenId = static_cast<AccessTokenID>(size);
+        infoParcel.info.permissionName = testName;
+        infoParcel.info.successCount = static_cast<int32_t>(size);
+        infoParcel.info.failCount = static_cast<int32_t>(size);
+        if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }
 
