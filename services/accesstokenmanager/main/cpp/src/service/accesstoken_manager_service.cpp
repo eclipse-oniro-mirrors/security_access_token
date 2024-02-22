@@ -81,6 +81,7 @@ AccessTokenManagerService::AccessTokenManagerService()
 AccessTokenManagerService::~AccessTokenManagerService()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "~AccessTokenManagerService()");
+    tokenDumpWorker_.Stop();
 }
 
 void AccessTokenManagerService::OnStart()
@@ -241,7 +242,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -251,7 +252,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -261,7 +262,7 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
-    DumpToken();
+    DumpTokenIfNeeded();
     return RET_SUCCESS;
 }
 
@@ -289,7 +290,7 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_INFO(LABEL, "hap token info create failed");
     }
-    DumpToken();
+    DumpTokenIfNeeded();
     return tokenIdEx;
 }
 
@@ -299,7 +300,7 @@ int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
     PrivacyKit::RemovePermissionUsedRecords(tokenID, "");
     // only support hap token deletion
     int ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -330,7 +331,7 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     ACCESSTOKEN_LOG_INFO(LABEL, "remoteDeviceID: %{public}s, remoteTokenID: %{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
     AccessTokenID tokenID = AccessTokenInfoManager::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
-    DumpToken();
+    DumpTokenIfNeeded();
     return tokenID;
 }
 
@@ -340,7 +341,7 @@ int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
         policyParcel.hapPolicyParameter);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -362,7 +363,7 @@ int AccessTokenManagerService::GetNativeTokenInfo(AccessTokenID tokenID, NativeT
 int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
     int32_t ret = NativeTokenReceptor::GetInstance().Init();
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 #endif
@@ -403,7 +404,7 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
     int ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -417,7 +418,7 @@ int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& devic
         nativeTokenInfoForSyncParcel.end(), std::back_inserter(nativeList),
         [](const auto& nativeParcel) { return nativeParcel.nativeTokenInfoForSyncParams; });
     int ret = AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -426,7 +427,7 @@ int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, Ac
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s, token id %{public}d",
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     int ret = AccessTokenInfoManager::GetInstance().DeleteRemoteToken(deviceID, tokenID);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 
@@ -443,7 +444,7 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
     int ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
-    DumpToken();
+    DumpTokenIfNeeded();
     return ret;
 }
 #endif
@@ -502,6 +503,7 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
 
 void AccessTokenManagerService::DumpToken()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "AccessToken Dump");
     int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
@@ -513,6 +515,20 @@ void AccessTokenManagerService::DumpToken()
     AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpStr);
     dprintf(fd, "%s\n", dumpStr.c_str());
     close(fd);
+}
+
+void AccessTokenManagerService::DumpTokenIfNeeded()
+{
+    if (tokenDumpWorker_.GetCurTaskNum() > 1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "has refresh task!");
+        return;
+    }
+
+    tokenDumpWorker_.AddTask([this]() {
+        DumpToken();
+        // Sleep for one minute to avoid frequent refresh of the database.
+        std::this_thread::sleep_for(std::chrono::minutes(1));
+    });
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
@@ -628,6 +644,7 @@ bool AccessTokenManagerService::Initialize()
     SystemPermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
+    tokenDumpWorker_.Start(1);
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
     return true;
 }
