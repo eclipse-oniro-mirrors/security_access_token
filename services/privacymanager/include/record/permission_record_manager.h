@@ -50,7 +50,8 @@ class PrivacyAppStateObserver : public ApplicationStateObserverStub {
 public:
     PrivacyAppStateObserver() = default;
     ~PrivacyAppStateObserver() = default;
-
+    void OnProcessDied(const ProcessData &processData) override;
+    void OnApplicationStateChanged(const AppStateData &appStateData) override;
     void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
     DISALLOW_COPY_AND_MOVE(PrivacyAppStateObserver);
 };
@@ -102,6 +103,7 @@ public:
     void OnCameraMgrRemoteDiedHandle();
     int32_t GetRecordSizeMaxImum();
     int32_t GetRecordAgingTime();
+    void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
 
 private:
     PermissionRecordManager();

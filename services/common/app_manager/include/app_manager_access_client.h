@@ -34,10 +34,12 @@ public:
 
     virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) = 0;
     virtual void OnProcessDied(const ProcessData &processData) = 0;
+    virtual void OnApplicationStateChanged(const AppStateData &appStateData) = 0;
 
     enum class Message {
         TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
         TRANSACT_ON_PROCESS_DIED = 5,
+        TRANSACT_ON_APPLICATION_STATE_CHANGED = 6,
     };
 };
 

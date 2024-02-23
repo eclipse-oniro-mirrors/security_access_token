@@ -111,6 +111,30 @@ void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData 
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 }
 
+void PrivacyAppStateObserver::OnApplicationStateChanged(const AppStateData &appStateData)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
+        appStateData.accessTokenId, appStateData.state);
+
+    uint32_t tokenId = appStateData.accessTokenId;
+    if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
+        ActiveChangeType status = PERM_INACTIVE;
+        PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    }
+}
+
+void PrivacyAppStateObserver::OnProcessDied(const ProcessData &processData)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
+        processData.accessTokenId, processData.state);
+
+    uint32_t tokenId = processData.accessTokenId;
+    ActiveChangeType status = PERM_INACTIVE;
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+}
+
 void PrivacyAppManagerDeathCallback::NotifyAppManagerDeath()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "PermissionRecordManager AppManagerDeath called");
@@ -544,6 +568,18 @@ void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& 
         if ((it->opCode == record.opCode) && (it->tokenId == record.tokenId)) {
             startRecordList_.erase(it);
             return;
+        }
+    }
+}
+
+void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d", tokenId);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if (it->tokenId == tokenId) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "opCode %{public}d", it->opCode);
+            startRecordList_.erase(it);
         }
     }
 }

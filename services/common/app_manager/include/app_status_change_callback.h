@@ -34,10 +34,12 @@ public:
 
     virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override {};
     virtual void OnProcessDied(const ProcessData &processData) override {};
+    virtual void OnApplicationStateChanged(const AppStateData &appStateData) override {};
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
     int32_t HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply);
     int32_t HandleOnProcessDied(MessageParcel &data, MessageParcel &reply);
+    int32_t HandleOnApplicationStateChanged(MessageParcel &data, MessageParcel &reply);
 };
 } // namespace AccessToken
 } // namespace Security
