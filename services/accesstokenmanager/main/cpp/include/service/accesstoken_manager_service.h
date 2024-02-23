@@ -24,11 +24,12 @@
 #include "access_event_handler.h"
 #endif
 #include "access_token.h"
+#include "hap_token_info.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
 #include "singleton.h"
 #include "system_ability.h"
-#include "hap_token_info.h"
+#include "thread_pool.h"
 
 namespace OHOS {
 namespace Security {
@@ -94,6 +95,7 @@ private:
     void GetConfigValue();
     bool Initialize();
     void DumpToken();
+    void DumpTokenIfNeeded();
     void AccessTokenServiceParamSet() const;
 
 #ifdef EVENTHANDLER_ENABLE
@@ -103,6 +105,7 @@ private:
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
+    OHOS::ThreadPool tokenDumpWorker_;
 };
 } // namespace AccessToken
 } // namespace Security
