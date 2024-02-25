@@ -535,8 +535,12 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken001, TestSize.Level1)
 
     HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
-    ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx,
-        false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
+    UpdateHapInfoParams info;
+    info.appIDDesc = std::string("updateAppId");
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = false;
+    ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "update the hap token";
 
@@ -563,12 +567,17 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken002, TestSize.Level1)
     AccessTokenIDEx tokenIdEx = {0};
     HapPolicyParams policy = g_infoManagerTestPolicyPrams1;
     policy.apl = APL_SYSTEM_BASIC;
+    UpdateHapInfoParams info;
+    info.appIDDesc = std::string("");
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = false;
     int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, false, std::string(""), DEFAULT_API_VERSION, policy);
+        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
     ASSERT_EQ(ERR_PARAM_INVALID, ret);
 
+    info.appIDDesc = std::string("updateAppId");
     ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(
-        tokenIdEx, false, std::string("updateAppId"), DEFAULT_API_VERSION, policy);
+        tokenIdEx, info, policy.permStateList, policy.apl, policy.permList);
     ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
 }
 
@@ -586,10 +595,13 @@ HWTEST_F(AccessTokenInfoManagerTest, UpdateHapToken003, TestSize.Level1)
     std::shared_ptr<HapTokenInfoInner> info = std::make_shared<HapTokenInfoInner>();
     info->isRemote_ = true;
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = info;
-    std::string appIDDesc = "who cares";
-    int32_t apiVersion = DEFAULT_API_VERSION;
     HapPolicyParams policy;
-    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, policy));
+    UpdateHapInfoParams hapInfoParams;
+    hapInfoParams.appIDDesc = "who cares";
+    hapInfoParams.apiVersion = DEFAULT_API_VERSION;
+    hapInfoParams.isSystemApp = false;
+    ASSERT_NE(0, AccessTokenInfoManager::GetInstance().UpdateHapToken(
+        tokenIdEx, hapInfoParams, policy.permStateList, policy.apl, policy.permList));
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
@@ -1946,11 +1958,13 @@ HWTEST_F(AccessTokenInfoManagerTest, RestoreHapTokenInfo001, TestSize.Level1)
     std::string bundleName;
     std::string appIDDesc;
     std::string deviceID;
-    int32_t apiVersion = DEFAULT_API_VERSION;
     int aplNum = static_cast<int>(ATokenAplEnum::APL_INVALID);
     int version = 10; // 10 is random input which only need not equal 1
     HapPolicyParams policy;
-    hap->Update(appIDDesc, apiVersion, policy, false); // permPolicySet_ is null
+    UpdateHapInfoParams hapInfo;
+    hapInfo.apiVersion = DEFAULT_API_VERSION;
+    hapInfo.isSystemApp = false;
+    hap->Update(hapInfo, policy.permStateList, policy.apl); // permPolicySet_ is null
 
     std::string info;
     hap->ToString(info); // permPolicySet_ is null

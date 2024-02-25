@@ -44,6 +44,7 @@ private:
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply);
     void AllocHapTokenInner(MessageParcel& data, MessageParcel& reply);
+    void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void UpdateHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void GetHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);

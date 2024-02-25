@@ -413,6 +413,39 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     return res;
 }
 
+int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel, HapPolicyParcel& policyParcel,
+    AccessTokenIDEx& fullTokenId)
+{
+    MessageParcel data;
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+
+    if (!data.WriteParcelable(&hapInfoParcel)) {
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteParcelable(&policyParcel)) {
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::INIT_TOKEN_HAP, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read result");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "result error = %{public}d", result);
+        return result;
+    }
+    if (!reply.ReadUint64(fullTokenId.tokenIDEx)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read fullTokenId");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    return RET_SUCCESS;
+}
+
 int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
 {
     MessageParcel data;
@@ -584,8 +617,8 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
+int AccessTokenManagerProxy::UpdateHapToken(
+    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     MessageParcel data;
@@ -593,13 +626,16 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     if (!data.WriteUint32(tokenID)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteBool(isSystemApp)) {
+    if (!data.WriteBool(info.isSystemApp)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(appIDDesc)) {
+    if (!data.WriteString(info.appIDDesc)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(apiVersion)) {
+    if (!data.WriteInt32(info.apiVersion)) {
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteString(info.appDistributionType)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {

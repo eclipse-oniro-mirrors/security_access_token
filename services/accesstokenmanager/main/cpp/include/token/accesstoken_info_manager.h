@@ -54,8 +54,9 @@ public:
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID);
     void ProcessNativeTokenInfos(const std::vector<std::shared_ptr<NativeTokenInfoInner>>& tokenInfos);
-    int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-        bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy);
+    int UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+        const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
+        const std::vector<PermissionDef>& permList);
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     void RefreshTokenInfoIfNeeded();
     bool IsTokenIdExist(AccessTokenID id);

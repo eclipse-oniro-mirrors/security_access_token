@@ -482,14 +482,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     if (info.dlpType != DLP_COMMON) {
         HapPolicyParams policyNew;
         GetPolicyCopied(policy, policyNew);
-        int32_t res = DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
-            info.dlpType, policyNew.permStateList);
-        if (res != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s update dlp permission failed", info.bundleName.c_str());
-            AccessTokenIDManager::GetInstance().ReleaseTokenId(tokenId);
-            PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
-            return res;
-        }
+        DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(info.dlpType, policyNew.permStateList);
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policyNew);
     } else {
         tokenInfo = std::make_shared<HapTokenInfoInner>(tokenId, info, policy);
@@ -635,11 +628,12 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
     RefreshTokenInfoIfNeeded();
 }
 
-int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+    const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
+    const std::vector<PermissionDef>& permList)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    if (!DataValidator::IsAppIDDescValid(appIDDesc)) {
+    if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u parm format error!", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -653,20 +647,20 @@ int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
         ACCESSTOKEN_LOG_ERROR(LABEL, "remote hap token %{public}u can not update!", tokenID);
         return ERR_IDENTITY_CHECK_FAILED;
     }
-    if (isSystemApp) {
+    if (info.isSystemApp) {
         tokenIdEx.tokenIdExStruct.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
         tokenIdEx.tokenIdExStruct.tokenAttr &= ~SYSTEM_APP_FLAG;
     }
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        infoPtr->Update(appIDDesc, apiVersion, policy, isSystemApp);
+        infoPtr->Update(info, permStateList, apl);
         ACCESSTOKEN_LOG_INFO(LABEL,
             "token %{public}u bundle name %{public}s user %{public}d inst %{public}d tokenAttr %{public}d update ok!",
             tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex(),
             infoPtr->GetHapInfoBasic().tokenAttr);
     }
-    PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenID, true);
+    PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif

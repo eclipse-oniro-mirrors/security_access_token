@@ -31,6 +31,7 @@ enum class AccessTokenInterfaceCode {
     CLEAR_USER_GRANT_PERMISSION,
     ALLOC_TOKEN_HAP,
     TOKEN_DELETE,
+    INIT_TOKEN_HAP,
 
     GET_TOKEN_TYPE = 0x0010,
     CHECK_NATIVE_DCAP,

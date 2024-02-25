@@ -55,6 +55,21 @@ permList: %{public}zu, stateList: %{public}zu",
     return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
 }
 
+int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+    AccessTokenIDEx& fullTokenId)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName :%{public}s, \
+permList: %{public}zu, stateList: %{public}zu",
+        info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
+    if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
+        !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
+        !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId);
+}
+
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "deviceID=%{public}s, tokenID=%{public}d",
@@ -69,19 +84,18 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 #endif
 }
 
-int AccessTokenKit::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+int AccessTokenKit::UpdateHapToken(
+    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d, \
 permList: %{public}zu, stateList: %{public}zu",
-        tokenIdEx.tokenIdExStruct.tokenID, isSystemApp, policy.permList.size(), policy.permStateList.size());
-    if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(appIDDesc)) ||
+        tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size());
+    if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    return AccessTokenManagerClient::GetInstance().UpdateHapToken(
-        tokenIdEx, isSystemApp, appIDDesc, apiVersion, policy);
+    return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy);
 }
 
 int AccessTokenKit::DeleteToken(AccessTokenID tokenID)

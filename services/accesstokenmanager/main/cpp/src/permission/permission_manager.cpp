@@ -60,6 +60,7 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.READ_CALL_LOG",
     "ohos.permission.WRITE_CALL_LOG"
 };
+constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 }
 PermissionManager* PermissionManager::implInstance_ = nullptr;
 std::recursive_mutex PermissionManager::mutex_;
@@ -264,6 +265,8 @@ int PermissionManager::GetReqPermissions(
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
     std::vector<PermissionStateFull> tmpList;
     permPolicySet->GetPermissionStateFulls(tmpList);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tmpList size %{public}d",
+        tmpList.size());
     for (const auto& perm : tmpList) {
         PermissionDef permDef;
         GetDefPermission(perm.permissionName, permDef);
@@ -934,6 +937,98 @@ void PermissionManager::SetPermToKernel(AccessTokenID tokenID, const std::string
         "SetPermissionToKernel(token=%{public}d, permission=(%{public}s), err=%{public}d",
         tokenID, permissionName.c_str(), ret);
 }
+
+bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicyParams& policy)
+{
+    if (policy.apl < permDef.availableLevel) {
+        if (!permDef.provisionEnable) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s provisionEnable is false.", permDef.permissionName.c_str());
+            return false;
+        }
+        auto isAclExist = std::any_of(
+            policy.aclRequestedList.begin(), policy.aclRequestedList.end(), [permDef](const auto &perm) {
+            return permDef.permissionName == perm;
+        });
+        if (!isAclExist) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s need acl.", permDef.permissionName.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool IsPermAvailableRangeSatisfied(const PermissionDef& permDef, const std::string& appDistributionType)
+{
+    if ((appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) &&
+        permDef.availableType == ATokenAvailableTypeEnum::MDM) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is a mdm permission, the hap is not a mdm application.",
+            permDef.permissionName.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
+    const std::string &permissionName, bool &userCancelable)
+{
+    auto iter = std::find_if(list.begin(), list.end(), [&permissionName](const auto &info) {
+            return info.permissionName == permissionName;
+        });
+    if (iter == list.end()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission(%{public}s) is not in the list", permissionName.c_str());
+        return false;
+    }
+
+    userCancelable = iter->userCancelable;
+    return true;
+}
+
+bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
+    const HapPolicyParams& policy, std::vector<PermissionStateFull>& InitializedList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermStateList size: %{public}zu.", policy.permStateList.size());
+    for (auto state : policy.permStateList) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Request %{public}s.", state.permissionName.c_str());
+        PermissionDef permDef;
+        int32_t ret = PermissionManager::GetInstance().GetDefPermission(
+            state.permissionName, permDef);
+        if (ret != AccessToken::AccessTokenKitRet::RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get %{public}s def failed.", state.permissionName.c_str());
+            continue;
+        }
+        if (!IsAclSatisfied(permDef, policy)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Acl is unsatisfied.");
+            return false;
+        }
+
+        // edm check
+        if (!IsPermAvailableRangeSatisfied(permDef, appDistributionType)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Perm available range is unsatisfied.");
+            return false;
+        }
+        state.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
+        state.grantStatus[0] = PERMISSION_DENIED;
+
+        if (permDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
+            state.grantFlags[0] = PERMISSION_SYSTEM_FIXED;
+            state.grantStatus[0] = PERMISSION_GRANTED;
+            InitializedList.emplace_back(state);
+            continue;
+        }
+        if (policy.preAuthorizationInfo.size() == 0) {
+            InitializedList.emplace_back(state);
+            continue;
+        }
+        bool userCancelable = true;
+        if (IsUserGrantPermPreAuthorized(policy.preAuthorizationInfo, state.permissionName, userCancelable)) {
+            state.grantFlags[0] = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
+            state.grantStatus[0] = PERMISSION_GRANTED;
+        }
+        InitializedList.emplace_back(state);
+    }
+    return true;
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
