@@ -575,10 +575,12 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d", tokenId);
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
         if (it->tokenId == tokenId) {
             ACCESSTOKEN_LOG_INFO(LABEL, "opCode %{public}d", it->opCode);
-            startRecordList_.erase(it);
+            it = startRecordList_.erase(it);
+        } else {
+            it++;
         }
     }
 }
