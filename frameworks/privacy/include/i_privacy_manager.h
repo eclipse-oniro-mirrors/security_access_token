@@ -19,6 +19,7 @@
 #include <string>
 
 #include "access_token.h"
+#include "add_perm_param_info_parcel.h"
 #include "errors.h"
 #include "iremote_broker.h"
 
@@ -40,8 +41,7 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IPrivacyManager");
 
-    virtual int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-        int32_t successCount, int32_t failCount, bool asyncMode = false) = 0;
+    virtual int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) = 0;

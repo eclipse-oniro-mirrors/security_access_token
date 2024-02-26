@@ -182,17 +182,16 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     return Constant::SUCCESS;
 }
 
-int32_t PermissionRecordManager::AddPermissionUsedRecord(AccessTokenID tokenId, const std::string& permissionName,
-    int32_t successCount, int32_t failCount)
+int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
     ExecuteDeletePermissionRecordTask();
 
-    if ((successCount == 0) && (failCount == 0)) {
+    if ((info.successCount == 0) && (info.failCount == 0)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     PermissionRecord record;
-    int32_t result = GetPermissionRecord(tokenId, permissionName, successCount, failCount, record);
+    int32_t result = GetPermissionRecord(info.tokenId, info.permissionName, info.successCount, info.failCount, record);
     if (result != Constant::SUCCESS) {
         return result;
     }

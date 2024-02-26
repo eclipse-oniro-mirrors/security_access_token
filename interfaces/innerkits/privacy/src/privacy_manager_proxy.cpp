@@ -38,25 +38,12 @@ PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
 PrivacyManagerProxy::~PrivacyManagerProxy()
 {}
 
-int32_t PrivacyManagerProxy::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-    int32_t successCount, int32_t failCount, bool asyncMode)
+int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode)
 {
     MessageParcel addData;
     addData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-    if (!addData.WriteUint32(tokenID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!addData.WriteString(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permissionName");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!addData.WriteInt32(successCount)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(successCount)");
-        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!addData.WriteInt32(failCount)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(failCount)");
+    if (!addData.WriteParcelable(&infoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(infoParcel)");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
 

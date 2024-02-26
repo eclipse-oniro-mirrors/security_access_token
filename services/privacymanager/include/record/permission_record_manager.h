@@ -22,6 +22,7 @@
 
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "add_perm_param_info.h"
 #include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
@@ -71,8 +72,7 @@ public:
     virtual ~PermissionRecordManager();
 
     void Init();
-    int32_t AddPermissionUsedRecord(
-        AccessTokenID tokenId, const std::string& permissionName, int32_t successCount, int32_t failCount);
+    int32_t AddPermissionUsedRecord(const AddPermParamInfo& info);
     void RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecordsAsync(

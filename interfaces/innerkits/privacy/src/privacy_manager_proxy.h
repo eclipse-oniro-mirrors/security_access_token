@@ -29,8 +29,7 @@ public:
     explicit PrivacyManagerProxy(const sptr<IRemoteObject>& impl);
     ~PrivacyManagerProxy() override;
 
-    int32_t AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
-        int32_t successCount, int32_t failCount, bool asyncMode = false) override;
+    int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) override;

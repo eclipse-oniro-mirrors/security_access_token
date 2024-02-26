@@ -704,6 +704,9 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
  */
 HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest004, TestSize.Level1)
 {
+    std::vector<PermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
+    PermissionRecordManager::GetInstance().startRecordList_.clear();
+
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
@@ -742,6 +745,8 @@ HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest
     ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
     ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
+
+    PermissionRecordManager::GetInstance().startRecordList_ = startRecordList;
 }
 
 void GenerateUnLockScreenPerUsedRecord(AccessTokenID tokenId1, AccessTokenID tokenId2)
@@ -1202,12 +1207,13 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
-    std::string permissionName = "com.ohos.test";
-    int32_t successCount = 1;
-    int32_t failCount = 0;
-
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "com.ohos.test";
+    info.successCount = 1;
+    info.failCount = 0;
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
-        tokenId, permissionName, successCount, failCount)); // invaild permission error
+        info)); // invaild permission error
 }
 
 /*
@@ -1222,12 +1228,12 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord002, TestSize.Level
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
-    std::string permissionName = "ohos.permission.READ_MEDIA";
-    int32_t successCount = 0;
-    int32_t failCount = 0;
-
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
-        tokenId, permissionName, successCount, failCount));
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = "com.permission.READ_MEDIA";
+    info.successCount = 0;
+    info.failCount = 0;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info));
 }
 
 /*
