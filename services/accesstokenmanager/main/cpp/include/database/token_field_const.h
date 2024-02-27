@@ -32,25 +32,25 @@ public:
     const static std::string FIELD_DEVICE_ID;
     const static std::string FIELD_APL;
     const static std::string FIELD_TOKEN_VERSION;
-    const static std::string FIELD_FORBID_PERM_DIALOG;
     const static std::string FIELD_TOKEN_ATTR;
+    const static std::string FIELD_API_VERSION;
+    const static std::string FIELD_FORBID_PERM_DIALOG;
     const static std::string FIELD_PROCESS_NAME;
     const static std::string FIELD_DCAP;
     const static std::string FIELD_NATIVE_ACLS;
     const static std::string FIELD_PERMISSION_NAME;
     const static std::string FIELD_GRANT_MODE;
     const static std::string FIELD_AVAILABLE_LEVEL;
-    const static std::string FIELD_AVAILABLE_TYPE;
     const static std::string FIELD_PROVISION_ENABLE;
     const static std::string FIELD_DISTRIBUTED_SCENE_ENABLE;
     const static std::string FIELD_LABEL;
     const static std::string FIELD_LABEL_ID;
     const static std::string FIELD_DESCRIPTION;
     const static std::string FIELD_DESCRIPTION_ID;
+    const static std::string FIELD_AVAILABLE_TYPE;
+    const static std::string FIELD_GRANT_IS_GENERAL;
     const static std::string FIELD_GRANT_STATE;
     const static std::string FIELD_GRANT_FLAG;
-    const static std::string FIELD_GRANT_IS_GENERAL;
-    const static std::string FIELD_API_VERSION;
 };
 } // namespace AccessToken
 } // namespace Security

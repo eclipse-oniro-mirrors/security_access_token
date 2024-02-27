@@ -46,11 +46,13 @@ void AccessTokenDb::OnCreate()
     CreatePermissionStateTable();
 }
 
-void AccessTokenDb::OnUpdate()
+void AccessTokenDb::OnUpdate(int32_t version)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
-    AddAvailableTypeColumn();
-    AddPermDialogCapColumn();
+    if (version < DataBaseVersion::VERISION_2) {
+        AddAvailableTypeColumn();
+        AddPermDialogCapColumn();
+    }
 }
 
 AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)

@@ -285,7 +285,7 @@ void HapTokenInfoInner::SetPermDialogForbidden(bool isForbidden)
 
 int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
 {
-    uint32_t apiSize = 3; // 3: api verision length
+    uint32_t apiSize = 3; // 3: api version length
     std::string apiStr = std::to_string(apiVersion);
     uint32_t inputSize = apiStr.length();
     if (inputSize <= apiSize) {

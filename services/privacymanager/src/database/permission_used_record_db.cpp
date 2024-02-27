@@ -48,10 +48,12 @@ void PermissionUsedRecordDb::OnCreate()
     CreatePermissionRecordTable();
 }
 
-void PermissionUsedRecordDb::OnUpdate()
+void PermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    InsertLockScreenStatusColumn();
+    if (version < DataBaseVersion::VERISION_2) {
+        InsertLockScreenStatusColumn();
+    }
 }
 
 PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
