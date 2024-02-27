@@ -128,6 +128,8 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
+    std::vector<bool> dialogShownResults;
+    std::vector<int32_t> permissionQueryResults;
     PermissionGrantInfo info;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
@@ -164,6 +166,7 @@ private:
 struct ResultCallback {
     std::vector<std::string> permissions;
     std::vector<int32_t> grantResults;
+    std::vector<bool> dialogShownResults;
     int32_t requestCode;
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
@@ -231,12 +234,16 @@ private:
     static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
+    static napi_value GetPermissionsStatus(napi_env env, napi_callback_info info);
     static bool ParseRequestPermissionFromUser(
         const napi_env& env, const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext);
+    static bool ParseInputToGetQueryResult(
+        const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext);
     static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);
     static void RequestPermissionsFromUserExecute(napi_env env, void* data);
-    static bool IsDynamicRequest(const std::vector<std::string>& permissions, std::vector<int32_t>& permissionsState,
-        PermissionGrantInfo& info);
+    static void GetPermissionsStatusComplete(napi_env env, napi_status status, void* data);
+    static void GetPermissionsStatusExecute(napi_env env, void* data);
+    static bool IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
 }  // namespace AccessToken
 }  // namespace Security
