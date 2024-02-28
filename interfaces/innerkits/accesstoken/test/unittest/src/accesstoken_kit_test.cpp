@@ -39,6 +39,11 @@ namespace {
 static const int INVALID_DLP_TOKEN_FLAG = -1;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenKitTest"};
+static constexpr int32_t PERM_NUMBER_FOUR = 4;
+static constexpr int32_t PERM_INDEX_ONE = 0;
+static constexpr int32_t PERM_INDEX_TWO = 1;
+static constexpr int32_t PERM_INDEX_THREE = 2;
+static constexpr int32_t PERM_INDEX_FOUR = 3;
 
 PermissionStateFull g_grantPermissionReq = {
     .permissionName = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
@@ -153,15 +158,15 @@ HapInfoParams g_infoManagerTestSystemInfoParms = {
 void NativeTokenGet()
 {
     uint64_t tokenId;
-    const char **perms = new const char *[4];
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC";
-    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
-    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
-    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    const char **perms = new const char *[PERM_NUMBER_FOUR];
+    perms[PERM_INDEX_ONE] = "ohos.permission.DISTRIBUTED_DATASYNC";
+    perms[PERM_INDEX_TWO] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
+    perms[PERM_INDEX_THREE] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
+    perms[PERM_INDEX_FOUR] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
-        .permsNum = 4,
+        .permsNum = PERM_NUMBER_FOUR,
         .aclsNum = 0,
         .dcaps = nullptr,
         .perms = perms,

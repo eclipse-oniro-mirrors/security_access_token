@@ -27,12 +27,10 @@ static const int SESSION_COUNT_LIMIT = 20;
 static const int SERVER_COUNT_LIMIT = 10;
 } // namespace
 
-#define MIN_(x, y) ((x) < (y)) ? (x) : (y)
-
-static int serverCount_ = -1;
+static int g_serverCount = -1;
 bool IsServerCountOK()
 {
-    return serverCount_ >= 0 && serverCount_ < SERVER_COUNT_LIMIT;
+    return g_serverCount >= 0 && g_serverCount < SERVER_COUNT_LIMIT;
 }
 
 static ISessionListener *listener_ = nullptr;
@@ -40,14 +38,14 @@ int CreateSessionServer(const char *pkgName, const char *sessionName, const ISes
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "pkg name: %{public}s", pkgName);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "sessionName: %{public}s", sessionName);
-    serverCount_++;
+    g_serverCount++;
     if (IsServerCountOK()) {
         listener_ = const_cast<ISessionListener *>(listener);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, server count: %{public}d", serverCount_);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, server count: %{public}d", g_serverCount);
         return Constant::SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, server count: %{public}d", serverCount_);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, server count: %{public}d", g_serverCount);
     return Constant::FAILURE;
 }
 int RemoveSessionServer(const char *pkgName, const char *sessionName)
@@ -55,24 +53,24 @@ int RemoveSessionServer(const char *pkgName, const char *sessionName)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "pkg name: %{public}s", pkgName);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "sessionName: %{public}s", sessionName);
     if (IsServerCountOK()) {
-        serverCount_--;
+        g_serverCount--;
         listener_ = nullptr;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, server count: %{public}d", serverCount_);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, server count: %{public}d", g_serverCount);
         return Constant::SUCCESS;
     }
 
-    if (serverCount_ >= 0) {
-        serverCount_--;
+    if (g_serverCount >= 0) {
+        g_serverCount--;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, server count: %{public}d", serverCount_);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "failure, server count: %{public}d", g_serverCount);
     return Constant::FAILURE;
 }
 
-static int sessionCount_ = -1;
+static int g_sessionCount = -1;
 bool IsSessionCountOK()
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "SESSION_COUNT_LIMIT: %{public}d", SESSION_COUNT_LIMIT);
-    return sessionCount_ >= 0 && sessionCount_ < SESSION_COUNT_LIMIT;
+    return g_sessionCount >= 0 && g_sessionCount < SESSION_COUNT_LIMIT;
 }
 
 int OpenSession(const char *mySessionName, const char *peerSessionName, const char *peerDeviceId, const char *groupId,
@@ -83,17 +81,17 @@ int OpenSession(const char *mySessionName, const char *peerSessionName, const ch
     ACCESSTOKEN_LOG_DEBUG(LABEL, "peerDeviceId: %{public}s", peerDeviceId);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "groupId: %{public}s", groupId);
 
-    sessionCount_++;
+    g_sessionCount++;
     SoftBusSessionListener::OnSessionOpened(1, Constant::SUCCESS);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "success, session count: %{public}d", sessionCount_);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "success, session count: %{public}d", g_sessionCount);
     return 1;
 }
 void CloseSession(int sessionId)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "sessionId: %{public}d", sessionId);
-    if (sessionCount_ >= 0) {
-        sessionCount_--;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, session count: %{public}d", sessionCount_);
+    if (g_sessionCount >= 0) {
+        g_sessionCount--;
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "success, session count: %{public}d", g_sessionCount);
     }
 }
 
