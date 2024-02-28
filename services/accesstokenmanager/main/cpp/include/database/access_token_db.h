@@ -59,7 +59,7 @@ public:
     int RefreshAll(const DataType type, const std::vector<GenericValues>& values);
 
     void OnCreate() override;
-    void OnUpdate() override;
+    void OnUpdate(int32_t version) override;
 
 private:
     int CreateHapTokenInfoTable() const;

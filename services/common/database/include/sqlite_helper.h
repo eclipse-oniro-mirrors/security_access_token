@@ -29,6 +29,11 @@ class SqliteHelper {
 public:
     explicit SqliteHelper(const std::string& dbName, const std::string& dbPath, int32_t version);
     virtual ~SqliteHelper();
+    enum DataBaseVersion {
+        VERISION_0 = 0,
+        VERISION_1,
+        VERISION_2,
+    };
 
     void Open();
     void Close();
@@ -42,7 +47,7 @@ public:
     std::string SpitError() const;
 
     virtual void OnCreate() = 0;
-    virtual void OnUpdate() = 0;
+    virtual void OnUpdate(int32_t version) = 0;
 
 private:
     inline static const std::string PRAGMA_VERSION_COMMAND = "PRAGMA user_version";

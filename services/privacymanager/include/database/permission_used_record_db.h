@@ -52,7 +52,7 @@ public:
     int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
 
     void OnCreate() override;
-    void OnUpdate() override;
+    void OnUpdate(int32_t version) override;
 
 private:
     PermissionUsedRecordDb();

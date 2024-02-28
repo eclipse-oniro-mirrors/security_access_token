@@ -61,11 +61,11 @@ void SqliteHelper::Open()
     }
 
     BeginTransaction();
-    if (version == 0) {
+    if (version == DataBaseVersion::VERISION_0) {
         OnCreate();
     } else {
         if (version < currentVersion_) {
-            OnUpdate();
+            OnUpdate(version);
         }
     }
     SetVersion();
