@@ -56,7 +56,7 @@ ohos_unittest("libaccesstoken_framework_test") {
     "c_utils:utils",
     "ipc:ipc_single",
     "json:nlohmann_json_static",
-    "mbedtls:mbedtls_shared",
+    "openssl:libcrypto_shared",
   ]
 }
 

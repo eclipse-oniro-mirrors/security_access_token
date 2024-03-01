@@ -23,6 +23,9 @@
 #include "constant_common.h"
 #include "constant.h"
 #include "ipc_skeleton.h"
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+#include "package_uninstall_observer.h"
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "permission_record_manager.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
@@ -55,6 +58,9 @@ PrivacyManagerService::PrivacyManagerService()
 PrivacyManagerService::~PrivacyManagerService()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyManagerService()");
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+    PackageUninstallObserver::UnRegisterEvent();
+#endif //COMMON_EVENT_SERVICE_ENABLE
 }
 
 void PrivacyManagerService::OnStart()
@@ -333,6 +339,10 @@ bool PrivacyManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
 #endif
+
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+    PackageUninstallObserver::RegisterEvent();
+#endif // COMMON_EVENT_SERVICE_ENABLE
     return true;
 }
 } // namespace AccessToken

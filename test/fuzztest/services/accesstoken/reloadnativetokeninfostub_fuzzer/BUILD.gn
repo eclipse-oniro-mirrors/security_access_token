@@ -136,18 +136,20 @@ ohos_fuzztest("ReloadNativeTokenInfoStubFuzzTest") {
   }
 
   if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+    cflags_cc += [
+      "-DTOKEN_SYNC_ENABLE",
+      "-DFUZZ_ENABLE",
+    ]
 
     sources += [
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
       "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
+      "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
     ]
 
-    include_dirs +=
-        [ "${access_token_path}/interfaces/innerkits/tokensync/include" ]
-
-    deps += [
-      "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk",
+    include_dirs += [
+      "${access_token_path}/interfaces/innerkits/tokensync/include",
+      "${access_token_path}/services/common/libraryloader/include",
     ]
   }
 }

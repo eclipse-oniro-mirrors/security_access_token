@@ -49,6 +49,7 @@
         "json",
         "mbedtls",
         "napi",
+        "openssl",
         "power_manager",
         "safwk",
         "samgr",
@@ -68,12 +69,14 @@
           "//base/security/access_token/interfaces/kits:napi_packages"
         ],
         "service_group": [
+          "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
           "//base/security/access_token/services/tokensyncmanager:tokensyncmanager",
           "//base/security/access_token/services/privacymanager:privacymanager",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
-          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac"
+          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac",
+          "//base/security/access_token/services/common:accesstoken_ability_manager_access"
         ]
       },
       "inner_kits": [

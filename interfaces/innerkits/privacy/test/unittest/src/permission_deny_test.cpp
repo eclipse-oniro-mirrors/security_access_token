@@ -66,6 +66,7 @@ void PermDenyTest::TearDown()
 {
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     AccessTokenKit::DeleteToken(g_testTokenId);
+    PrivacyKit::RemovePermissionUsedRecords(g_testTokenId, "");
 }
 
 /**

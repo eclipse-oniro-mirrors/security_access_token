@@ -45,24 +45,24 @@ ohos_fuzztest("StartUsingPermissionCallbackStubFuzzTest") {
     "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/lockscreen_manager/",
+    "${access_token_path}/services/privacymanager/include/sensitive/uninstall_observer/",
     "${access_token_path}/services/common/ability_manager/include",
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
+    "${access_token_path}/services/common/libraryloader/include",
   ]
 
   sources += [
     "${access_token_path}/interfaces/innerkits/privacy/src/state_change_callback.cpp",
     "${access_token_path}/interfaces/innerkits/privacy/src/state_change_callback_stub.cpp",
     "${access_token_path}/interfaces/innerkits/privacy/src/state_customized_cbk.cpp",
-    "${access_token_path}/services/common/ability_manager/src/ability_manager_access_client.cpp",
-    "${access_token_path}/services/common/ability_manager/src/ability_manager_access_death_recipient.cpp",
-    "${access_token_path}/services/common/ability_manager/src/ability_manager_access_proxy.cpp",
     "${access_token_path}/services/common/app_manager/src/app_manager_access_client.cpp",
     "${access_token_path}/services/common/app_manager/src/app_manager_access_proxy.cpp",
     "${access_token_path}/services/common/app_manager/src/app_manager_death_recipient.cpp",
     "${access_token_path}/services/common/app_manager/src/app_state_data.cpp",
     "${access_token_path}/services/common/app_manager/src/app_status_change_callback.cpp",
     "${access_token_path}/services/common/app_manager/src/process_data.cpp",
+    "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
     "${access_token_path}/services/privacymanager/src/active/active_status_callback_manager.cpp",
     "${access_token_path}/services/privacymanager/src/active/perm_active_status_callback_death_recipient.cpp",
     "${access_token_path}/services/privacymanager/src/active/perm_active_status_change_callback_proxy.cpp",
@@ -86,6 +86,7 @@ ohos_fuzztest("StartUsingPermissionCallbackStubFuzzTest") {
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_service_callback_stub.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp",
+    "${access_token_path}/services/privacymanager/src/sensitive/uninstall_observer/package_uninstall_observer.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
   ]
@@ -95,7 +96,10 @@ ohos_fuzztest("StartUsingPermissionCallbackStubFuzzTest") {
       defines = [ "CONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
-  cflags_cc = [ "-DHILOG_ENABLE" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-DFUZZ_ENABLE",
+  ]
 
   deps = [
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",

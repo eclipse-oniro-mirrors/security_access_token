@@ -20,7 +20,9 @@
 #define private public
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
+#include "libraryloader.h"
 #include "token_field_const.h"
+#include "token_sync_kit_loader.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "token_modify_notifier.h"
@@ -2234,6 +2236,36 @@ HWTEST_F(AccessTokenInfoManagerTest, OnStart001, TestSize.Level1)
     atManagerService_->OnStart();
     ASSERT_EQ(ServiceRunningState::STATE_RUNNING, atManagerService_->state_);
     atManagerService_->state_ = state;
+}
+
+/**
+ * @tc.name: Dlopen001
+ * @tc.desc: Open a not exist lib & not exist func
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level1)
+{
+    LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
+    EXPECT_EQ(nullptr, loader1.handle_);
+
+    LibraryLoader loader2("libaccesstoken_manager_service.z.so"); // is a exist lib without create func
+    EXPECT_EQ(nullptr, loader2.instance_);
+    EXPECT_NE(nullptr, loader2.handle_);
+}
+
+/**
+ * @tc.name: Dlopen002
+ * @tc.desc: Open a exist lib & exist func
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
+{
+    LibraryLoader loader(LibTokenSyncPath);
+    TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
+    EXPECT_NE(nullptr, loader.handle_);
+    EXPECT_NE(nullptr, tokenSyncKit);
 }
 } // namespace AccessToken
 } // namespace Security

@@ -43,7 +43,7 @@ ohos_shared_library("accesstoken_common_cxx") {
     "src/data_validator.cpp",
     "src/json_parser.cpp",
     "src/permission_map.cpp",
-    "src/random_mbedtls.cpp",
+    "src/random_openssl.cpp",
   ]
 
   external_deps = [
@@ -51,7 +51,7 @@ ohos_shared_library("accesstoken_common_cxx") {
     "hilog:libhilog",
     "init:libbegetutil",
     "json:nlohmann_json_static",
-    "mbedtls:mbedtls_shared",
+    "openssl:libcrypto_shared",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

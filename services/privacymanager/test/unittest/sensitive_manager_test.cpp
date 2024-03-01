@@ -46,6 +46,7 @@
 #undef private
 #include "window_manager_privacy_proxy.h"
 #endif
+#include "permission_record_manager.h"
 
 using namespace testing::ext;
 
@@ -129,6 +130,7 @@ void SensitiveManagerServiceTest::TearDown()
                                                           g_infoManagerTestSystemInfoParms.bundleName,
                                                           g_infoManagerTestSystemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
+    PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenID, "");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 

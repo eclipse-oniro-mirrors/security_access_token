@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,7 +24,6 @@
 #include "permission_map.h"
 #undef private
 #include "json_parser.h"
-#include "random_mbedtls.h"
 
 using namespace testing::ext;
 
@@ -78,19 +77,6 @@ HWTEST_F(CommonTest, EncryptDevId001, TestSize.Level1)
 
     res = ConstantCommon::EncryptDevId("123454321");
     EXPECT_EQ(res, "1234****4321");
-}
-
-/*
- * @tc.name: GenerateRandomArray001
- * @tc.desc: RandomMbedtls::GenerateRandomArray function test randStr is null
- * @tc.type: FUNC
- * @tc.require: issueI6024A
- */
-HWTEST_F(CommonTest, GenerateRandomArray001, TestSize.Level1)
-{
-    unsigned char *randStr = nullptr;
-    unsigned int len = 0;
-    EXPECT_NE(0, RandomMbedtls::GetInstance().GenerateRandomArray(randStr, len));
 }
 
 /*
