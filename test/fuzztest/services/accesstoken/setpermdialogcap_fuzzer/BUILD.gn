@@ -60,8 +60,6 @@ ohos_fuzztest("SetPermDialogCapFuzzTest") {
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
-    "//third_party/sqlite/include/",
-    "//third_party/json/include/",
   ]
 
   include_dirs += access_token_impl_include_dirs
@@ -119,8 +117,10 @@ ohos_fuzztest("SetPermDialogCapFuzzTest") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "sqlite:sqlite",
   ]
 
   if (eventhandler_enable == true) {

@@ -26,7 +26,11 @@ enum PrivacyAudioRingerInterfaceCode {
 enum PrivacyAudioPolicyInterfaceCode {
     SET_MICROPHONE_MUTE = 15,
     IS_MICROPHONE_MUTE = 17,
-    SET_MIC_STATE_CHANGE_CALLBACK = 61,
+#ifdef FEATURE_DTMF_TONE
+    REGISTER_POLICY_CALLBACK_CLIENT = 94,
+#else
+    REGISTER_POLICY_CALLBACK_CLIENT = 92,
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

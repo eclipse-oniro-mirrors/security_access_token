@@ -25,10 +25,8 @@ ohos_unittest("libtoken_callback_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = [
-    "${access_token_path}/interfaces/innerkits/token_callback/include",
-    "//third_party/googletest/include",
-  ]
+  include_dirs =
+      [ "${access_token_path}/interfaces/innerkits/token_callback/include" ]
 
   sources = [ "unittest/src/token_callback_test.cpp" ]
 

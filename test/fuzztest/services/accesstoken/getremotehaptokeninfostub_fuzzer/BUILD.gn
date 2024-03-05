@@ -42,7 +42,6 @@ ohos_fuzztest("GetRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "//third_party/json/include/",
   ]
 
   sources += [
@@ -75,7 +74,6 @@ ohos_fuzztest("GetRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "//third_party/zlib:shared_libz",
   ]
 
   external_deps = [
@@ -83,8 +81,10 @@ ohos_fuzztest("GetRemoteHapTokenInfoStubFuzzTest") {
     "dsoftbus:softbus_client",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "zlib:shared_libz",
   ]
 
   if (eventhandler_enable == true) {

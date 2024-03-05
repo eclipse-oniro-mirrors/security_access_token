@@ -48,8 +48,6 @@ ohos_static_library("accesstoken_service_common") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [ "//third_party/sqlite:sqlite" ]
-
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
@@ -57,6 +55,7 @@ ohos_static_library("accesstoken_service_common") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "sqlite:sqlite",
   ]
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]

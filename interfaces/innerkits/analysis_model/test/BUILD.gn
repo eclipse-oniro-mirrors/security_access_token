@@ -38,11 +38,13 @@ ohos_unittest("lib_code_signature_analysis_test") {
 
   deps = [
     "../../analysis_model:libcodesignature_analysis",
-    "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "hilog:libhilog",
+  ]
 }
 
 group("unittest") {

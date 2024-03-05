@@ -31,7 +31,6 @@ ohos_unittest("libtokensync_sdk_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "../include",
     "../src",
-    "//third_party/googletest/include",
   ]
 
   sources = [ "unittest/src/token_sync_kit_test.cpp" ]

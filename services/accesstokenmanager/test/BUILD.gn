@@ -66,9 +66,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "../main/cpp/include/permission",
     "../main/cpp/include/service",
     "../main/cpp/include/token",
-    "//third_party/googletest/include",
-    "//third_party/sqlite/include/",
-    "//third_party/json/include/",
   ]
 
   sources = [
@@ -104,7 +101,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     "${access_token_path}/services/common:accesstoken_service_common",
     "//third_party/googletest:gtest_main",
-    "//third_party/sqlite:sqlite",
   ]
 
   if (token_sync_enable == true) {
@@ -129,8 +125,10 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "sqlite:sqlite",
   ]
 
   if (eventhandler_enable == true) {

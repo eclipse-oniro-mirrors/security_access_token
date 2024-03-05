@@ -49,7 +49,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
   ]
 
   include_dirs = [
-    "//third_party/googletest/include",
     "../../../include/service",
     "../../../include/remote",
     "../../../include/command",

@@ -23,7 +23,6 @@ config("access_token_kits_config_benchmarktest") {
     "${access_token_path}/frameworks/common/include",
     "../../../token_setproc/include",
     "../../napi/include",
-    "//third_party/googletest/include",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

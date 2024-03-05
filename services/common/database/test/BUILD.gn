@@ -34,7 +34,6 @@ ohos_unittest("libdatabase_test") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
-    "//third_party/googletest/include",
   ]
 
   sources = [
@@ -54,7 +53,6 @@ ohos_unittest("libdatabase_test") {
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/services/common:accesstoken_service_common",
-    "//third_party/sqlite:sqlite",
   ]
 
   external_deps = [
@@ -62,6 +60,7 @@ ohos_unittest("libdatabase_test") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
+    "sqlite:sqlite",
   ]
 }
 

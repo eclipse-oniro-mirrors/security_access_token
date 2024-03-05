@@ -32,7 +32,6 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "../src",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
-    "//third_party/googletest/include",
   ]
 
   sources = [
@@ -91,7 +90,6 @@ ohos_unittest("accesstoken_mock_test") {
     "../../token_setproc/include",
     "../include",
     "../src",
-    "//third_party/googletest/include",
   ]
 
   sources = [
