@@ -707,21 +707,21 @@ HWTEST_F(PermissionManagerTest, ScopeFilter001, TestSize.Level1)
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.tokenIDs.clear();
-    inScopeInfo.permList = {"ohos.permission.test"};
+    inScopeInfo.permList = {"ohos.permission.test_scopeFilter"};
     EXPECT_EQ(ERR_PARAM_INVALID,
         PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(true, outScopeInfo.permList.empty());
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.permList.clear();
-    inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
+    inScopeInfo.permList = {"ohos.permission.test_scopeFilter", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
 
     outScopeInfo = emptyScopeInfo;
     inScopeInfo.permList.clear();
     inScopeInfo.tokenIDs = {123, tokenId, tokenId};
-    inScopeInfo.permList = {"ohos.permission.test", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
+    inScopeInfo.permList = {"ohos.permission.test_scopeFilter", "ohos.permission.CAMERA", "ohos.permission.CAMERA"};
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().ScopeFilter(inScopeInfo, outScopeInfo));
     EXPECT_EQ(1, static_cast<int>(outScopeInfo.tokenIDs.size()));
     EXPECT_EQ(1, static_cast<int>(outScopeInfo.permList.size()));
