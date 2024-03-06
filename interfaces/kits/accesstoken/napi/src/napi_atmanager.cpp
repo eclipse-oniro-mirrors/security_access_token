@@ -1507,11 +1507,6 @@ static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
-    if (asyncContext->uiAbilityFlag) {
-        want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
-    } else {
-        want.SetParam(TOKEN_KEY, asyncContext->uiExtensionContext->GetToken());
-    }
     CreateUIExtension(want, asyncContext);
 }
 
