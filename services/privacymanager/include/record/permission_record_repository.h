@@ -19,6 +19,7 @@
 #include <set>
 #include <vector>
 #include "generic_values.h"
+#include "permission_used_record_db.h"
 
 namespace OHOS {
 namespace Security {
@@ -30,14 +31,18 @@ public:
 
     static PermissionRecordRepository& GetInstance();
 
-    bool AddRecordValues(const std::vector<GenericValues>& recordValues);
+    bool Add(const PermissionUsedRecordDb::DataType type, const std::vector<GenericValues>& recordValues);
     bool FindRecordValues(const std::set<int32_t>& opCodeList, const GenericValues& andConditionValues,
         std::vector<GenericValues>& recordValues, int32_t databaseQueryCount);
-    bool RemoveRecordValues(const GenericValues& conditionValues);
+    bool Remove(const PermissionUsedRecordDb::DataType type, const GenericValues& conditionValues);
     bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
     void CountRecordValues(GenericValues& resultValues);
     bool DeleteExpireRecordsValues(const GenericValues& andConditions);
     bool DeleteExcessiveSizeRecordValues(uint32_t excessiveSize);
+    bool Update(const PermissionUsedRecordDb::DataType type, const GenericValues& modifyValue,
+        const GenericValues& conditionValue);
+    bool Query(const PermissionUsedRecordDb::DataType type, const GenericValues& conditionValue,
+        std::vector<GenericValues>& results);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -36,6 +36,7 @@ class PermissionUsedRecordDb : public SqliteHelper {
 public:
     enum DataType {
         PERMISSION_RECORD,
+        PERMISSION_USED_TYPE,
     };
     enum ExecuteResult { FAILURE = -1, SUCCESS };
     static PermissionUsedRecordDb& GetInstance();
@@ -50,6 +51,8 @@ public:
     int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
     int32_t DeleteExcessiveRecords(DataType type, uint32_t excessiveSize);
     int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
+    int32_t Update(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
+    int32_t Query(DataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
 
     void OnCreate() override;
     void OnUpdate(int32_t version) override;
@@ -62,6 +65,7 @@ private:
     OHOS::Utils::RWLock rwLock_;
 
     int32_t CreatePermissionRecordTable() const;
+    int32_t CreatePermissionUsedTypeTable() const;
     int32_t InsertLockScreenStatusColumn() const;
 
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
@@ -76,12 +80,14 @@ private:
         const std::vector<std::string>& andColumns) const;
     std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type, uint32_t excessiveSize) const;
     std::string CreateGetDistinctValue(DataType type, const std::string conditionColumns) const;
+    std::string CreateQueryPrepareSqlCmd(DataType type, const std::vector<std::string>& conditionColumns) const;
 
 private:
     inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
+    inline static const std::string PERMISSION_USED_TYPE_TABLE = "permission_used_type_table";
     inline static const std::string DATABASE_NAME = "permission_used_record.db";
     inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int32_t DATABASE_VERSION = 2;
+    static const int32_t DATABASE_VERSION = 3;
 };
 } // namespace AccessToken
 } // namespace Security

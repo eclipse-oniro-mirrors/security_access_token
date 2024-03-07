@@ -17,6 +17,7 @@
 
 #include "access_token.h"
 #include "permission_used_request.h"
+#include "permission_used_type.h"
 
 namespace OHOS {
 namespace Security {
@@ -112,6 +113,11 @@ bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_UNLOCKED) ||
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_BACKGROUND) ||
             (flag == FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND));
+}
+
+bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
+{
+    return ((type == NORMAL_TYPE) || (type == PICKER_TYPE) || (type == SECURITY_COMPONENT_TYPE));
 }
 } // namespace AccessToken
 } // namespace Security

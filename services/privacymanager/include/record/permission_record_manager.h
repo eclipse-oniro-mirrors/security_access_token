@@ -137,6 +137,11 @@ private:
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
     void SetCameraCallback(sptr<IRemoteObject>);
 
+    void GenerateNewUsedType(const PermissionUsedType type, int32_t& dataType);
+    bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
+        const PermissionUsedType type);
+    void RemovePermissionUsedType(AccessTokenID tokenId);
+
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool IsFlowWindowShow(AccessTokenID tokenId);
 #endif

@@ -50,6 +50,7 @@ public:
     static bool IsTokenIDValid(AccessTokenID id);
     static bool IsDlpTypeValid(int dlpType);
     static bool IsPermissionUsedFlagValid(uint32_t flag);
+    static bool IsPermissionUsedTypeValid(uint32_t type);
 
 private:
     const static int MAX_LENGTH = 256;
