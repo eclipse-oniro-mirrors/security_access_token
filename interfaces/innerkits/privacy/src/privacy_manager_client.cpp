@@ -316,6 +316,26 @@ int32_t PrivacyManagerClient::GetSpecialSecCompEnhance(const std::string& bundle
 }
 #endif
 
+int32_t PrivacyManagerClient::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+    std::vector<PermissionUsedTypeInfo>& results)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    std::vector<PermissionUsedTypeInfoParcel> resultsParcel;
+    int32_t res = proxy->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
+    if (res != RET_SUCCESS) {
+        return res;
+    }
+
+    std::transform(resultsParcel.begin(), resultsParcel.end(), std::back_inserter(results),
+        [](PermissionUsedTypeInfoParcel parcel) { return parcel.info; });
+    return RET_SUCCESS;
+}
+
 void PrivacyManagerClient::InitProxy()
 {
     if (proxy_ == nullptr) {

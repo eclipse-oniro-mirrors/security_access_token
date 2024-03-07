@@ -36,6 +36,7 @@ enum class PrivacyInterfaceCode {
     GET_SEC_COMP_ENHANCE,
     GET_SPECIAL_SEC_COMP_ENHANCE,
 #endif
+    GET_PERMISSION_USED_TYPE_INFOS,
 };
 } // namespace AccessToken
 } // namespace Security

@@ -50,7 +50,8 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
         info.tokenId, info.permissionName.c_str());
     if ((!DataValidator::IsTokenIDValid(info.tokenId)) ||
         (!DataValidator::IsPermissionNameValid(info.permissionName)) ||
-        (info.successCount < 0 || info.failCount < 0)) {
+        (info.successCount < 0 || info.failCount < 0) ||
+        (!DataValidator::IsPermissionUsedTypeValid(info.type))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
@@ -166,6 +167,20 @@ int32_t PrivacyKit::GetSpecialSecCompEnhance(const std::string& bundleName,
         GetSpecialSecCompEnhance(bundleName, enhanceList);
 }
 #endif
+
+int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+    std::vector<PermissionUsedTypeInfo>& results)
+{
+    if (permissionName.empty()) {
+        return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
+    }
+
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
