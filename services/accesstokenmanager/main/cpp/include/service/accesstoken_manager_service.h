@@ -65,7 +65,7 @@ public:
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& infoParcel) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& infoParcel) override;
-    int UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    int32_t UpdateHapToken(AccessTokenIDEx& tokenIdEx,
         const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
     int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;

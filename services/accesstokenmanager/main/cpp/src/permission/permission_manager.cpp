@@ -265,8 +265,6 @@ int PermissionManager::GetReqPermissions(
     GrantMode mode = isSystemGrant ? SYSTEM_GRANT : USER_GRANT;
     std::vector<PermissionStateFull> tmpList;
     permPolicySet->GetPermissionStateFulls(tmpList);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tmpList size %{public}d",
-        tmpList.size());
     for (const auto& perm : tmpList) {
         PermissionDef permDef;
         GetDefPermission(perm.permissionName, permDef);
@@ -1026,6 +1024,7 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         }
         InitializedList.emplace_back(state);
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitializedList size: %{public}zu.", InitializedList.size());
     return true;
 }
 

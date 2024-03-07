@@ -357,7 +357,7 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     return tokenID;
 }
 
-int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);

@@ -321,11 +321,10 @@ void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParce
     int32_t res;
     AccessTokenIDEx fullTokenId = { 0 };
     res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "res %{public}d", res);
     if (!reply.WriteInt32(res)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "res %{public}d", res);
+
     if (res != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "res error %{public}d", res);
         return;

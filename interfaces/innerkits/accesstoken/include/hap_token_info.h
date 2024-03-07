@@ -68,7 +68,7 @@ public:
     int32_t apiVersion;
     /** indicates whether the hap is a system app */
     bool isSystemApp;
-    /* app type 类型有哪些 */
+    /* app type */
     std::string appDistributionType;
 };
 
@@ -82,7 +82,7 @@ public:
     int32_t apiVersion;
     /** indicates whether the hap is a system app */
     bool isSystemApp;
-    /* app type 类型有哪些 */
+    /* app type */
     std::string appDistributionType;
 };
 

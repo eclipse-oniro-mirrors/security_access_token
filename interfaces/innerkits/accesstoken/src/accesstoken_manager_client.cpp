@@ -304,7 +304,7 @@ int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPol
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     HapInfoParcel hapInfoParcel;
@@ -368,7 +368,7 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int AccessTokenManagerClient::UpdateHapToken(
+int32_t AccessTokenManagerClient::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
     auto proxy = GetProxy();

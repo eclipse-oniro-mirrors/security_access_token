@@ -393,12 +393,17 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
 {
     MessageParcel data;
     AccessTokenIDEx res = { 0 };
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return res;
+    }
 
     if (!data.WriteParcelable(&hapInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable hapInfo failed.");
         return res;
     }
     if (!data.WriteParcelable(&policyParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable policyParcel failed.");
         return res;
     }
 
@@ -408,7 +413,7 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     }
 
     unsigned long long result = reply.ReadUint64();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}llu", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}llu.", result);
     res.tokenIDEx = result;
     return res;
 }
@@ -417,12 +422,17 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
     AccessTokenIDEx& fullTokenId)
 {
     MessageParcel data;
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
 
     if (!data.WriteParcelable(&hapInfoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable hapInfo failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable policyParcel failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
@@ -432,15 +442,15 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
     }
     int32_t result = 0;
     if (!reply.ReadInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read result");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read result.");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     if (result != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "result error = %{public}d", result);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Result error = %{public}d.", result);
         return result;
     }
     if (!reply.ReadUint64(fullTokenId.tokenIDEx)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read fullTokenId");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read fullTokenId.");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     return RET_SUCCESS;
@@ -617,7 +627,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int AccessTokenManagerProxy::UpdateHapToken(
+int32_t AccessTokenManagerProxy::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;

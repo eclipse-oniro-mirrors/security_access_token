@@ -84,7 +84,7 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 #endif
 }
 
-int AccessTokenKit::UpdateHapToken(
+int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d, \

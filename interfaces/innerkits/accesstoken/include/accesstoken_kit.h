@@ -92,7 +92,7 @@ public:
      * @param policy struct HapPolicyParams quote, see hap_token_info.h
      * @return error code, see access_token_error.h
      */
-    static int UpdateHapToken(
+    static int32_t UpdateHapToken(
         AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy);
     /**
      * @brief Delete token info.

@@ -628,7 +628,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
     RefreshTokenInfoIfNeeded();
 }
 
-int AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
+int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
     const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl,
     const std::vector<PermissionDef>& permList)
 {

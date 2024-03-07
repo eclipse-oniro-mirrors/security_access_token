@@ -2265,18 +2265,17 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken004, TestSize.Level1)
 HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
 {
     std::string backUpPermission = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
-    const std::string appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     PermissionDef permDefResult;
 
     DeleteTestToken();
     AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
-    ASSERT_NE(INVALID_TOKENID, tokenID);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
 
-    UpdateHapInfoParams info = { 0 };
+    UpdateHapInfoParams info;
     info.appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
     info.appDistributionType = "enterprise_mdm";
+    info.isSystemApp = false;
 
     std::string backup = g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName;
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = "";
@@ -2318,7 +2317,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken005, TestSize.Level1)
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].description = backup;
     g_infoManagerTestPolicyPrams.permList[INDEX_ZERO].permissionName = backUpPermission;
 
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID));
 }
 
 /**
@@ -2333,8 +2332,6 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
     int updateFlag = 0;
     int deleteFlag = 0;
     AccessTokenIDEx tokenIdEx = {0};
-    AccessTokenID tokenID;
-    int ret;
     vector<AccessTokenID> obj;
     bool exist;
     HapInfoParams testInfo = g_infoManagerTestInfoParms;
@@ -2342,7 +2339,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 
     for (int i = 0; i < CYCLE_TIMES; i++) {
         tokenIdEx = AccessTokenKit::AllocHapToken(testInfo, g_infoManagerTestPolicyPrams);
-        tokenID = GetAccessTokenID(testInfo.userID, testInfo.bundleName, testInfo.instIndex);
+        AccessTokenID tokenID = GetAccessTokenID(testInfo.userID, testInfo.bundleName, testInfo.instIndex);
 
         exist = ExistInVector(obj, tokenID);
         if (exist) {
@@ -2355,16 +2352,17 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
 
     testInfo.instIndex = 1;
     g_infoManagerTestPolicyPrams.apl = APL_SYSTEM_BASIC;
-    UpdateHapInfoParams info = {0};
+    UpdateHapInfoParams info;
     info.appIDDesc = g_infoManagerTestInfoParms.appIDDesc;
     info.apiVersion = DEFAULT_API_VERSION;
     info.appDistributionType = "enterprise_mdm";
+    info.isSystemApp = false;
     for (size_t i = 0; i < obj.size(); i++) {
         AccessTokenIDEx idEx = {
             .tokenIdExStruct.tokenID = obj[i],
             .tokenIdExStruct.tokenAttr = 0,
         };
-        ret = AccessTokenKit::UpdateHapToken(idEx, info, g_infoManagerTestPolicyPrams);
+        int ret = AccessTokenKit::UpdateHapToken(idEx, info, g_infoManagerTestPolicyPrams);
         if (RET_SUCCESS != ret) {
             updateFlag = 1;
             break;
@@ -2373,7 +2371,7 @@ HWTEST_F(AccessTokenKitTest, UpdateHapToken006, TestSize.Level1)
     g_infoManagerTestPolicyPrams.apl = APL_NORMAL;
 
     for (size_t i = 0; i < obj.size(); i++) {
-        ret = AccessTokenKit::DeleteToken(obj[i]);
+        int ret = AccessTokenKit::DeleteToken(obj[i]);
         if (RET_SUCCESS != ret) {
             deleteFlag = 1;
         }

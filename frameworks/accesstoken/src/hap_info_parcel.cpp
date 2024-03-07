@@ -45,7 +45,7 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
     hapInfoParcel->hapInfoParameter.appIDDesc = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.apiVersion), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isSystemApp), hapInfoParcel);
-    hapInfoParcel->hapInfoParameter.appDistributionType = in.ReadString();
+    RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.appDistributionType), hapInfoParcel);
     return hapInfoParcel;
 }
 } // namespace AccessToken

@@ -297,7 +297,7 @@ void GetNativeToken()
 
     infoInstance.processName = "TestCase";
     tokenId = GetAccessTokenId(&infoInstance);
-EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::ReloadNativeTokenInfo();
     delete[] perms;
 }
