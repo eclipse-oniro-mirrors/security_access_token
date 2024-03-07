@@ -21,7 +21,6 @@
 #include "permission_record_manager.h"
 #include "permission_record_node.h"
 #include "permission_record_repository.h"
-#include "permission_used_record_db.h"
 #include "privacy_field_const.h"
 #include "time_util.h"
 
@@ -240,7 +239,8 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
             DeleteRecordNode(curPendingRecordNode);
             curPendingRecordNode = next;
         }
-        if (!insertValues.empty() && !PermissionRecordRepository::GetInstance().AddRecordValues(insertValues)) {
+        if (!insertValues.empty() && !PermissionRecordRepository::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_RECORD, insertValues)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to persist pending records, insertValues size: %{public}u",
                 static_cast<uint32_t>(insertValues.size()));
         }
@@ -339,7 +339,8 @@ void PermissionUsedRecordCache::RemoveFromPersistQueueAndDatabase(const AccessTo
     }
     GenericValues record;
     record.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-    PermissionRecordRepository::GetInstance().RemoveRecordValues(record); // remove from database
+    // remove from database
+    PermissionRecordRepository::GetInstance().Remove(PermissionUsedRecordDb::DataType::PERMISSION_RECORD, record);
 }
 
 void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permissionList,

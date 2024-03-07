@@ -36,6 +36,9 @@ public:
     const static std::string FIELD_TIMESTAMP_END;
     const static std::string FIELD_FLAG;
     const static std::string FIELD_LOCKSCREEN_STATUS;
+
+    const static std::string FIELD_PERMISSION_CODE;
+    const static std::string FIELD_USED_TYPE;
 };
 } // namespace AccessToken
 } // namespace Security

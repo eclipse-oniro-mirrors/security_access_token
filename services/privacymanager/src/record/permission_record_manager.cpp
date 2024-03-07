@@ -76,6 +76,9 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
 #endif
+static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
+static const int32_t PICKER_TYPE_ADD_VALUE = 2;
+static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -182,6 +185,72 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     return Constant::SUCCESS;
 }
 
+void PermissionRecordManager::GenerateNewUsedType(const PermissionUsedType type, int32_t& dataType)
+{
+    if (type == PermissionUsedType::NORMAL_TYPE) {
+        dataType |= NORMAL_TYPE_ADD_VALUE;
+    } else if (type == PermissionUsedType::PICKER_TYPE) {
+        dataType |= PICKER_TYPE_ADD_VALUE;
+    } else if (type == PermissionUsedType::SECURITY_COMPONENT_TYPE) {
+        dataType |= SEC_COMPONENT_TYPE_ADD_VALUE;
+    }
+}
+
+bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
+    const PermissionUsedType type)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+
+    std::vector<GenericValues> results;
+    if (!PermissionRecordRepository::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, conditionValue, results)) {
+        return false;
+    }
+
+    if (results.empty()) {
+        // empty means there is no permission used type record, add it
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "no exsit record, add it.");
+
+        GenericValues recordValue;
+        recordValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+        recordValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+        recordValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(type));
+
+        std::vector<GenericValues> recordValues;
+        recordValues.emplace_back(recordValue);
+        if (!PermissionRecordRepository::GetInstance().Add(
+            PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, recordValues)) {
+            return false;
+        }
+    } else {
+        // not empty means there is permission used type record exsit, update it if needed
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "record exsit.");
+
+        int32_t inputType = static_cast<int32_t>(type);
+        int32_t dataType = results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+        if ((dataType & inputType) == inputType) {
+            // true means visitTypeEnum has exsits, no need to add
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "used type has add");
+            return true;
+        } else {
+            // false means visitTypeEnum not exsits, update record
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "used type not add");
+
+            results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
+            GenerateNewUsedType(type, dataType);
+
+            GenericValues newValue;
+            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, dataType);
+            return PermissionRecordRepository::GetInstance().Update(
+                PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, newValue, results[0]);
+        }
+    }
+
+    return true;
+}
+
 int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo& info)
 {
     ExecuteDeletePermissionRecordTask();
@@ -197,7 +266,16 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     AddRecord(record);
-    return Constant::SUCCESS;
+    return AddOrUpdateUsedTypeIfNeeded(
+        info.tokenId, record.opCode, info.type) ? Constant::SUCCESS : Constant::FAILURE;
+}
+
+void PermissionRecordManager::RemovePermissionUsedType(AccessTokenID tokenId)
+{
+    GenericValues conditionValues;
+    conditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    PermissionRecordRepository::GetInstance().Remove(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, conditionValues);
 }
 
 void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
@@ -216,6 +294,7 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
 
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionUsedRecordCache::GetInstance().RemoveRecords(tokenId); // remove from cache and database
+    RemovePermissionUsedType(tokenId);
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(

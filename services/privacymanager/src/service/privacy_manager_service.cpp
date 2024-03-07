@@ -98,8 +98,8 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     bool asyncMode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d,"
-        " failCount: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
-        infoParcel.info.successCount, infoParcel.info.failCount);
+        " failCount: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
+        infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
     AddPermParamInfo info = infoParcel.info;
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
