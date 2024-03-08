@@ -61,6 +61,8 @@ public:
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceData>& enhanceList);
 #endif
+    int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfo>& results);
 
 private:
     PrivacyManagerClient();

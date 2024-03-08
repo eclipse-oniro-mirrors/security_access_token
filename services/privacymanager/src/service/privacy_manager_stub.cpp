@@ -34,6 +34,44 @@ static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
 }
 
+PrivacyManagerStub::PrivacyManagerStub()
+{
+    SetPrivacyFuncInMap();
+}
+
+void PrivacyManagerStub::SetPrivacyFuncInMap()
+{
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD)] =
+        &PrivacyManagerStub::AddPermissionUsedRecordInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION)] =
+        &PrivacyManagerStub::StartUsingPermissionInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK)] =
+        &PrivacyManagerStub::StartUsingPermissionCallbackInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::STOP_USING_PERMISSION)] =
+        &PrivacyManagerStub::StopUsingPermissionInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS)] =
+        &PrivacyManagerStub::RemovePermissionUsedRecordsInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS)] =
+        &PrivacyManagerStub::GetPermissionUsedRecordsInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC)] =
+        &PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK)] =
+        &PrivacyManagerStub::RegisterPermActiveStatusCallbackInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK)] =
+        &PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION)] =
+        &PrivacyManagerStub::IsAllowedUsingPermissionInner;
+#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE)] =
+        &PrivacyManagerStub::RegisterSecCompEnhanceInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE)] =
+        &PrivacyManagerStub::GetSecCompEnhanceInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_SPECIAL_SEC_COMP_ENHANCE)] =
+        &PrivacyManagerStub::GetSpecialSecCompEnhanceInner;
+#endif
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_TYPE_INFOS)] =
+        &PrivacyManagerStub::GetPermissionUsedTypeInfosInner;
+}
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
@@ -43,47 +81,17 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
-    switch (code) {
-        case static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD):
-            AddPermissionUsedRecordInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION):
-            StartUsingPermissionInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::START_USING_PERMISSION_CALLBACK):
-            StartUsingPermissionCallbackInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::STOP_USING_PERMISSION):
-            StopUsingPermissionInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::DELETE_PERMISSION_USED_RECORDS):
-            RemovePermissionUsedRecordsInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS):
-            GetPermissionUsedRecordsInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC):
-            GetPermissionUsedRecordsAsyncInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
-            RegisterPermActiveStatusCallbackInner(data, reply);
-            break;
-        case static_cast<uint32_t>(
-            PrivacyInterfaceCode::UNREGISTER_PERM_ACTIVE_STATUS_CHANGE_CALLBACK):
-            UnRegisterPermActiveStatusCallbackInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::IS_ALLOWED_USING_PERMISSION):
-            IsAllowedUsingPermissionInner(data, reply);
-            break;
-        default:
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-            if (HandleSecCompReq(code, data, reply)) {
-                return NO_ERROR;
-            }
-#endif
-            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+    
+    auto itFunc = requestMap_.find(code);
+    if (itFunc != requestMap_.end()) {
+        auto requestFunc = itFunc->second;
+        if (requestFunc != nullptr) {
+            (this->*requestFunc)(data, reply);
+            return NO_ERROR;
+        }
     }
-    return NO_ERROR;
+
+    return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
 }
 
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
@@ -366,6 +374,31 @@ bool PrivacyManagerStub::IsSecCompServiceCalling()
     return tokenCaller == secCompTokenId_;
 }
 #endif
+
+void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    AccessTokenID tokenId = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    std::vector<PermissionUsedTypeInfoParcel> resultsParcel;
+    int32_t result = this->GetPermissionUsedTypeInfos(tokenId, permissionName, resultsParcel);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32(%{public}d-%{public}s)", tokenId, permissionName.c_str());
+        return;
+    }
+    reply.WriteUint32(resultsParcel.size());
+    for (const auto& parcel : resultsParcel) {
+        reply.WriteParcelable(&parcel);
+    }
+}
 
 bool PrivacyManagerStub::IsAccessTokenCalling() const
 {

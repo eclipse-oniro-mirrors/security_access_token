@@ -27,6 +27,7 @@
 #include "privacy_service_ipc_interface_code.h"
 #include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
+#include "permission_used_type_info_parcel.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -61,6 +62,8 @@ public:
     virtual int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) = 0;
 #endif
+    virtual int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) = 0;
 };
 } // namespace AccessToken
 } // namespace Security

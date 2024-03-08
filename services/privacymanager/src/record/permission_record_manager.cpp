@@ -185,20 +185,23 @@ int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, cons
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::GenerateNewUsedType(const PermissionUsedType type, int32_t& dataType)
+void PermissionRecordManager::TransformEnumToBitValue(const PermissionUsedType type, int32_t& value)
 {
     if (type == PermissionUsedType::NORMAL_TYPE) {
-        dataType |= NORMAL_TYPE_ADD_VALUE;
+        value = NORMAL_TYPE_ADD_VALUE;
     } else if (type == PermissionUsedType::PICKER_TYPE) {
-        dataType |= PICKER_TYPE_ADD_VALUE;
+        value = PICKER_TYPE_ADD_VALUE;
     } else if (type == PermissionUsedType::SECURITY_COMPONENT_TYPE) {
-        dataType |= SEC_COMPONENT_TYPE_ADD_VALUE;
+        value = SEC_COMPONENT_TYPE_ADD_VALUE;
     }
 }
 
 bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
     const PermissionUsedType type)
 {
+    int32_t inputType = 0;
+    TransformEnumToBitValue(type, inputType);
+
     GenericValues conditionValue;
     conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
     conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
@@ -216,7 +219,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
         GenericValues recordValue;
         recordValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
         recordValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
-        recordValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(type));
+        recordValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(inputType));
 
         std::vector<GenericValues> recordValues;
         recordValues.emplace_back(recordValue);
@@ -226,11 +229,10 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
         }
     } else {
         // not empty means there is permission used type record exsit, update it if needed
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "record exsit.");
+        int32_t dbType = results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "record exsit, type is %{public}d.", dbType);
 
-        int32_t inputType = static_cast<int32_t>(type);
-        int32_t dataType = results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
-        if ((dataType & inputType) == inputType) {
+        if ((dbType & inputType) == inputType) {
             // true means visitTypeEnum has exsits, no need to add
             ACCESSTOKEN_LOG_DEBUG(LABEL, "used type has add");
             return true;
@@ -239,10 +241,10 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
             ACCESSTOKEN_LOG_DEBUG(LABEL, "used type not add");
 
             results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
-            GenerateNewUsedType(type, dataType);
+            dbType |= inputType;
 
             GenericValues newValue;
-            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, dataType);
+            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, dbType);
             return PermissionRecordRepository::GetInstance().Update(
                 PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, newValue, results[0]);
         }
@@ -1003,6 +1005,66 @@ int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
 int32_t PermissionRecordManager::UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback)
 {
     return ActiveStatusCallbackManager::GetInstance().RemoveCallback(callback);
+}
+
+void PermissionRecordManager::AddDataValueToResults(const GenericValues value,
+    std::vector<PermissionUsedTypeInfo>& results)
+{
+    PermissionUsedTypeInfo info;
+    info.tokenId = static_cast<AccessTokenID>(value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
+    Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE), info.permissionName);
+    int32_t type = value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+
+    if ((type & NORMAL_TYPE_ADD_VALUE) == NORMAL_TYPE_ADD_VALUE) { // normal first
+        info.type = PermissionUsedType::NORMAL_TYPE;
+        results.emplace_back(info);
+    }
+    if ((type & PICKER_TYPE_ADD_VALUE) == PICKER_TYPE_ADD_VALUE) { // picker second
+        info.type = PermissionUsedType::PICKER_TYPE;
+        results.emplace_back(info);
+    }
+    if ((type & SEC_COMPONENT_TYPE_ADD_VALUE) == SEC_COMPONENT_TYPE_ADD_VALUE) { // security component last
+        info.type = PermissionUsedType::SECURITY_COMPONENT_TYPE;
+        results.emplace_back(info);
+    }
+}
+
+int32_t PermissionRecordManager::GetPermissionUsedTypeInfos(AccessTokenID tokenId, const std::string& permissionName,
+    std::vector<PermissionUsedTypeInfo>& results)
+{
+    GenericValues value;
+
+    if (tokenId != INVALID_TOKENID) {
+        HapTokenInfo tokenInfo;
+        if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+            return PrivacyError::ERR_TOKENID_NOT_EXIST;
+        }
+        value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+    }
+
+    if (!permissionName.empty()) {
+        int32_t opCode;
+        if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "invalid (%{public}s)", permissionName.c_str());
+            return PrivacyError::ERR_PERMISSION_NOT_EXIST;
+        }
+        value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+    }
+
+    std::vector<GenericValues> valueResults;
+    if (!PermissionRecordRepository::GetInstance().Query(
+        PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, value, valueResults)) {
+        return Constant::FAILURE;
+    }
+
+    for (const auto& valueResult : valueResults) {
+        AddDataValueToResults(valueResult, results);
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "get %{public}zu permission used type records", results.size());
+
+    return Constant::SUCCESS;
 }
 
 std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
