@@ -47,8 +47,6 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permStateList_ size: %{public}zu",
-        tokenId, policySet->permStateList_.size());
     return policySet;
 }
 

@@ -86,24 +86,24 @@ HapTokenInfoInner::~HapTokenInfoInner()
         "tokenID: 0x%{public}x destruction", tokenInfoBasic_.tokenID);
 }
 
-void HapTokenInfoInner::Update(
-    const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy, bool isSystemApp)
+void HapTokenInfoInner::Update(const UpdateHapInfoParams& info,
+    const std::vector<PermissionStateFull>& permStateList, ATokenAplEnum apl)
 {
-    tokenInfoBasic_.appID = appIDDesc;
-    tokenInfoBasic_.apiVersion = GetApiVersion(apiVersion);
-    tokenInfoBasic_.apl = policy.apl;
-    if (isSystemApp) {
+    tokenInfoBasic_.appID = info.appIDDesc;
+    tokenInfoBasic_.apiVersion = GetApiVersion(info.apiVersion);
+    tokenInfoBasic_.apl = apl;
+    if (info.isSystemApp) {
         tokenInfoBasic_.tokenAttr |= SYSTEM_APP_FLAG;
     } else {
         tokenInfoBasic_.tokenAttr &= ~SYSTEM_APP_FLAG;
     }
     if (permPolicySet_ == nullptr) {
         permPolicySet_ = PermissionPolicySet::BuildPermissionPolicySet(tokenInfoBasic_.tokenID,
-            policy.permStateList);
+            permStateList);
         return;
     }
 
-    permPolicySet_->Update(policy.permStateList);
+    permPolicySet_->Update(permStateList);
     return;
 }
 

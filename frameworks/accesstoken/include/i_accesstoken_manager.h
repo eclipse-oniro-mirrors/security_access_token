@@ -59,6 +59,8 @@ public:
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;
     virtual AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) = 0;
+    virtual int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
+        AccessTokenIDEx& fullTokenId) = 0;
     virtual int DeleteToken(AccessTokenID tokenID) = 0;
     virtual int GetTokenType(AccessTokenID tokenID) = 0;
     virtual int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) = 0;
@@ -66,8 +68,8 @@ public:
     virtual AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) = 0;
     virtual int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) = 0;
     virtual int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) = 0;
-    virtual int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc,
-        int32_t apiVersion, const HapPolicyParcel& policyParcel) = 0;
+    virtual int32_t UpdateHapToken(
+        AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) = 0;
     virtual int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;
