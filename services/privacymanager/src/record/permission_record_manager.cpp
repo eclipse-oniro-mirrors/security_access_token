@@ -158,23 +158,21 @@ lockScreenStatus: %{public}d, timestamp: %{public}" PRId64,
 int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
     int32_t successCount, int32_t failCount, PermissionRecord& record)
 {
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d)", tokenId);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid (%{public}s)", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-
-    record.status = GetAppStatus(tokenId);
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
-        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    record.lockScreenStatus = lockScreenStatus;
-#endif
+    if (!GetGlobalSwitchStatus(permissionName)) {
+        record.status = PERM_INACTIVE;
+    } else {
+        record.status = GetAppStatus(tokenId);
+    }
+    record.lockScreenStatus = GetLockScreenStatus();
     record.tokenId = tokenId;
     record.accessCount = successCount;
     record.rejectCount = failCount;
@@ -263,7 +261,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
 
     PermissionRecord record;
     int32_t result = GetPermissionRecord(info.tokenId, info.permissionName, info.successCount, info.failCount, record);
-    if (result != Constant::SUCCESS) {
+    if (result != Constant::SUCCESS || record.status == PERM_INACTIVE) {
         return result;
     }
 
@@ -532,15 +530,14 @@ bool PermissionRecordManager::AddRecordToStartList(const PermissionRecord& recor
     return hasStarted;
 }
 
-void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
-    uint32_t tokenId, ActiveChangeType status)
-    {
+void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status)
+{
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
     {
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            if ((it->tokenId == tokenId) && ((it->status) != status)) {
+            if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
                 std::string perm;
                 Constant::TransferOpcodeToPermission(it->opCode, perm);
                 if (!GetGlobalSwitchStatus(perm)) {
@@ -567,7 +564,6 @@ void PermissionRecordManager::FindRecordsToUpdateAndExecuted(
                     it->status = PERM_ACTIVE_IN_BACKGROUND;
                     it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
                 }
-                AddRecord(*it);
 
                 // update status to input, accessDuration to 0 and timestamp to now in cache
                 it->status = status;
@@ -596,48 +592,20 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status %{public}d", tokenId, status);
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    FindRecordsToUpdateAndExecuted(tokenId, status);
+    ExecuteAndUpdateRecord(tokenId, status);
 }
 
-void PermissionRecordManager::GenerateRecordsWhenScreenStatusChanged(LockScreenStatusChangeType lockScreenStatus)
-{
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        std::string perm;
-        Constant::TransferOpcodeToPermission(it->opCode, perm);
-        if (!GetGlobalSwitchStatus(perm)) {
-            continue;
-        }
-        if ((perm == CAMERA_PERMISSION_NAME) &&
-            (lockScreenStatus == LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED)) {
-            continue;
-        }
-        
-        // update accessDuration and store in databases
-        int64_t curStamp = TimeUtil::GetCurrentTimestamp();
-        it->accessDuration = curStamp - it->timestamp;
-
-        int32_t tempStatus = it->status;
-        if (tempStatus == PERM_ACTIVE_IN_FOREGROUND && it->lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
-            it->status = PERM_ACTIVE_IN_BACKGROUND;
-            it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
-        }
-        AddRecord(*it);
-
-        // update lockScreenStatus to input, accessDuration to 0 and timestamp to now in cache
-        it->status = tempStatus;
-        it->lockScreenStatus = lockScreenStatus;
-        it->accessDuration = 0;
-        it->timestamp = curStamp;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "get target permission %{public}s.", perm.c_str());
-    }
-}
-
-void PermissionRecordManager::NotifyLockScreenStatusChange(LockScreenStatusChangeType lockScreenStatus)
+void PermissionRecordManager::SetLockScreenStatus(int32_t lockScreenStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "lockScreenStatus %{public}d", lockScreenStatus);
-    GenerateRecordsWhenScreenStatusChanged(lockScreenStatus);
+    std::mutex lockScreenStateMutex_;
+    lockScreenStatus_ = lockScreenStatus;
+}
+
+int32_t PermissionRecordManager::GetLockScreenStatus()
+{
+    std::mutex lockScreenStateMutex_;
+    return lockScreenStatus_;
 }
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
@@ -719,61 +687,58 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
  */
-void PermissionRecordManager::SavePermissionRecords(
-    const std::string& permissionName, PermissionRecord& record, bool switchStatus)
+void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switchStatus)
 {
-    int64_t curStamp = TimeUtil::GetCurrentTimestamp();
-    if (switchStatus) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
-        // no need to store in database when status from inactive to foreground or background
-        record.status = GetAppStatus(record.tokenId);
-        record.timestamp = curStamp;
-    } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
-        if (record.status != PERM_INACTIVE) {
-            // update accessDuration and store in database
-            record.accessDuration = curStamp - record.timestamp;
-            AddRecord(record);
-            // update status to input, accessDuration to 0 and timestamp to now in cache
-            record.status = PERM_INACTIVE;
-            record.accessDuration = 0;
-            record.timestamp = curStamp;
+    std::string perm;
+    Constant::TransferOpcodeToPermission(opCode, perm);
+    std::vector<PermissionRecord> recordList;
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+            PermissionRecord record = *it;
+            if ((record.opCode) != opCode) {
+                continue;
+            }
+            if (switchStatus) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
+                // no need to store in database when status from inactive to foreground or background
+                record.status = GetAppStatus(record.tokenId);
+            } else {
+                ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
+                    record.status = PERM_INACTIVE;
+                    record.status = PERM_INACTIVE;
+                record.status = PERM_INACTIVE;
+            }
+            recordList.emplace_back(record);
         }
     }
-    CallbackExecute(record.tokenId, permissionName, record.status);
+    // each permission sends a status change notice
+    for (const auto& record : recordList) {
+        CallbackExecute(record.tokenId, perm, record.status);
+    }
 }
 
-void PermissionRecordManager::NotifyMicChange(bool switchStatus)
+void PermissionRecordManager::NotifyMicChange(bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "===========OnMicStateChange(%{public}d)", switchStatus);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnMicStateChange(%{public}d)", isMute);
     {
         std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMicMute_ = !switchStatus;
+        isMicMute_ = isMute;
     }
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->opCode) != Constant::OP_MICROPHONE) {
-            continue;
-        }
-        SavePermissionRecords("ohos.permission.MICROPHONE", *it, switchStatus);
-    }
+    // find permissions from startRecordList_ by tokenId which status diff from currStatus
+    ExecuteAndUpdateRecord(Constant::OP_MICROPHONE, !isMute);
 }
 
-void PermissionRecordManager::NotifyCameraChange(bool switchStatus)
+void PermissionRecordManager::NotifyCameraChange(bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "=========OnCameraStateChange(%{public}d)", switchStatus);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraStateChange(%{public}d)", isMute);
     {
         std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isCameraMute_ = !switchStatus;
+        isCameraMute_ = isMute;
     }
 
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->opCode) != Constant::OP_CAMERA) {
-            continue;
-        }
-        SavePermissionRecords("ohos.permission.CAMERA", *it, switchStatus);
-    }
+    // find permissions from startRecordList_ by tokenId which status diff from currStatus
+    ExecuteAndUpdateRecord(Constant::OP_CAMERA, !isMute);
 }
 
 bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
@@ -827,11 +792,9 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             RemoveRecordFromStartList(record);
             return ERR_SERVICE_ABNORMAL;
         }
-        record.status = PERM_INACTIVE;
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-    UpdateRecord(record);
     return Constant::SUCCESS;
 }
 
@@ -897,12 +860,10 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             RemoveRecordFromStartList(record);
             return ERR_SERVICE_ABNORMAL;
         }
-        record.status = PERM_INACTIVE;
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
     SetCameraCallback(callback);
-    UpdateRecord(record);
     return Constant::SUCCESS;
 }
 
@@ -914,7 +875,7 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return PrivacyError::ERR_TOKENID_NOT_EXIST;
+        return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
     if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
@@ -1124,6 +1085,9 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
         }
     }
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
+    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
+        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+    SetLockScreenStatus(lockScreenStatus);
     // lockscreen status change call back register
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     {
