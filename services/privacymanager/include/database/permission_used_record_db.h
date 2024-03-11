@@ -67,6 +67,7 @@ private:
     int32_t CreatePermissionRecordTable() const;
     int32_t CreatePermissionUsedTypeTable() const;
     int32_t InsertLockScreenStatusColumn() const;
+    int32_t InsertPermissionUsedTypeColumn() const;
 
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(

@@ -62,7 +62,7 @@ public:
         std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
 #endif
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
-    int32_t GetPermissionUsedTypeInfos(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
 private:

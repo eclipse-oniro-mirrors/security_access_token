@@ -26,6 +26,7 @@ bool UsedRecordDetailParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteInt64(this->detail.timestamp));
     RETURN_IF_FALSE(out.WriteInt64(this->detail.accessDuration));
     RETURN_IF_FALSE(out.WriteInt32(this->detail.count));
+    RETURN_IF_FALSE(out.WriteUint32(static_cast<uint32_t>(this->detail.type)));
     return true;
 }
 
@@ -41,6 +42,9 @@ UsedRecordDetailParcel* UsedRecordDetailParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadInt64(detailRecordParcel->detail.timestamp), detailRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt64(detailRecordParcel->detail.accessDuration), detailRecordParcel);
     RELEASE_IF_FALSE(in.ReadInt32(detailRecordParcel->detail.count), detailRecordParcel);
+    uint32_t type = 0;
+    RELEASE_IF_FALSE(in.ReadUint32(type), detailRecordParcel);
+    detailRecordParcel->detail.type = static_cast<PermissionUsedType>(type);
     return detailRecordParcel;
 }
 } // namespace AccessToken

@@ -1204,6 +1204,7 @@ void AddRecord(int32_t num, std::vector<GenericValues>& values)
         value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
         value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
         value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+        value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
         values.emplace_back(value);
     }
 
@@ -1245,48 +1246,38 @@ static void GeneratePermissionRecord(AccessTokenID tokenID)
 {
     int64_t timestamp = TimeUtil::GetCurrentTimestamp();
 
-    GenericValues value1;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    value1.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
-    value1.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - THREE_SECOND);
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-    GenericValues value2;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
-    value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - TWO_SECOND);
-    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-    GenericValues value3;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    value3.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
-    value3.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
-    value3.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - ONE_SECOND);
-    value3.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value3.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value3.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value3.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    GenericValues value4;
-    value1.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    value4.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
-    value4.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value4.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp);
-    value4.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
-    value4.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value4.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value4.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-
     std::vector<GenericValues> values;
-    values.emplace_back(value1);
-    values.emplace_back(value2);
-    values.emplace_back(value3);
-    values.emplace_back(value4);
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - THREE_SECOND);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 1);
+    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    values.emplace_back(value); // background + unlock + normal
+
+    value.Remove(PrivacyFiledConst::FIELD_TIMESTAMP);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - TWO_SECOND);
+    value.Remove(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    values.emplace_back(value); // background + lock + normal
+
+    value.Remove(PrivacyFiledConst::FIELD_STATUS);
+    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
+    value.Remove(PrivacyFiledConst::FIELD_TIMESTAMP);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp - ONE_SECOND);
+    value.Remove(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    values.emplace_back(value); // foreground + unlock + normal
+
+    value.Remove(PrivacyFiledConst::FIELD_TIMESTAMP);
+    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, timestamp);
+    value.Remove(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);
+    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    values.emplace_back(value); // foreground + lock + normal
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));

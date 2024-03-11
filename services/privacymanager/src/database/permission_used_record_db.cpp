@@ -16,9 +16,10 @@
 #include "permission_used_record_db.h"
 
 #include "accesstoken_log.h"
-#include "constant.h"
-#include "privacy_field_const.h"
 #include "active_change_response_info.h"
+#include "constant.h"
+#include "permission_used_type.h"
+#include "privacy_field_const.h"
 
 namespace OHOS {
 namespace Security {
@@ -54,8 +55,10 @@ void PermissionUsedRecordDb::OnUpdate(int32_t version)
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     if (version == DataBaseVersion::VERISION_1) {
         InsertLockScreenStatusColumn();
+        InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
     } else if (version == DataBaseVersion::VERISION_2) {
+        InsertPermissionUsedTypeColumn();
         CreatePermissionUsedTypeTable();
     }
 }
@@ -72,7 +75,8 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
         PrivacyFiledConst::FIELD_ACCESS_DURATION,
         PrivacyFiledConst::FIELD_ACCESS_COUNT,
         PrivacyFiledConst::FIELD_REJECT_COUNT,
-        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
+        PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS,
+        PrivacyFiledConst::FIELD_USED_TYPE
     };
 
     SqliteTable permissionUsedTypeTable;
@@ -497,6 +501,8 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(" integer not null,")
         .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
         .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(" integer not null,")
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -552,6 +558,32 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
         .append(" integer default ")
         .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
+    int32_t insertResult = ExecuteSql(sql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    return insertResult;
+}
+
+int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
+        PrivacyFiledConst::FIELD_USED_TYPE + "=" +
+        std::to_string(PermissionUsedType::NORMAL_TYPE);
+    int32_t checkResult = ExecuteSql(checkSql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    if (checkResult != -1) {
+        return SUCCESS;
+    }
+
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(" integer default ")
+        .append(std::to_string(PermissionUsedType::NORMAL_TYPE));
     int32_t insertResult = ExecuteSql(sql);
     ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
     return insertResult;

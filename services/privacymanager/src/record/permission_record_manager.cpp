@@ -149,36 +149,36 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     ACCESSTOKEN_LOG_INFO(LABEL,
-        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d, \
-lockScreenStatus: %{public}d, timestamp: %{public}" PRId64,
-        record.tokenId, record.opCode, record.status, record.lockScreenStatus, record.timestamp);
+        "add record: tokenId %{public}d, opCode %{public}d, status: %{public}d,"
+        "lockScreenStatus %{public}d, timestamp %{public}" PRId64 ", type %{public}d",
+        record.tokenId, record.opCode, record.status, record.lockScreenStatus, record.timestamp, record.type);
     PermissionUsedRecordCache::GetInstance().AddRecordToBuffer(record);
 }
 
-int32_t PermissionRecordManager::GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
-    int32_t successCount, int32_t failCount, PermissionRecord& record)
+int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
 {
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d)", tokenId);
+    if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d)", info.tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
-    if (!Constant::TransferPermissionToOpcode(permissionName, opCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", permissionName.c_str());
+    if (!Constant::TransferPermissionToOpcode(info.permissionName, opCode)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", info.permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (!GetGlobalSwitchStatus(permissionName)) {
+    if (!GetGlobalSwitchStatus(info.permissionName)) {
         record.status = PERM_INACTIVE;
     } else {
-        record.status = GetAppStatus(tokenId);
+        record.status = GetAppStatus(info.tokenId);
     }
     record.lockScreenStatus = GetLockScreenStatus();
-    record.tokenId = tokenId;
-    record.accessCount = successCount;
-    record.rejectCount = failCount;
+    record.tokenId = info.tokenId;
+    record.accessCount = info.successCount;
+    record.rejectCount = info.failCount;
     record.opCode = opCode;
     record.timestamp = TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
+    record.type = info.type;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
     return Constant::SUCCESS;
 }
@@ -212,7 +212,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
 
     if (results.empty()) {
         // empty means there is no permission used type record, add it
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "no exsit record, add it.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "No exsit record, add it.");
 
         GenericValues recordValue;
         recordValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
@@ -228,18 +228,18 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
     } else {
         // not empty means there is permission used type record exsit, update it if needed
         int32_t dbType = results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "record exsit, type is %{public}d.", dbType);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Record exsit, type is %{public}d.", dbType);
 
         if ((dbType & inputType) == inputType) {
             // true means visitTypeEnum has exsits, no need to add
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "used type has add");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type has add.");
             return true;
         } else {
-            // false means visitTypeEnum not exsits, update record
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "used type not add");
-
             results[0].Remove(PrivacyFiledConst::FIELD_USED_TYPE);
             dbType |= inputType;
+
+            // false means visitTypeEnum not exsits, update record
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type not add, generate new %{public}d.", dbType);
 
             GenericValues newValue;
             newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, dbType);
@@ -260,7 +260,7 @@ int32_t PermissionRecordManager::AddPermissionUsedRecord(const AddPermParamInfo&
     }
 
     PermissionRecord record;
-    int32_t result = GetPermissionRecord(info.tokenId, info.permissionName, info.successCount, info.failCount, record);
+    int32_t result = GetPermissionRecord(info, record);
     if (result != Constant::SUCCESS || record.status == PERM_INACTIVE) {
         return result;
     }
@@ -775,9 +775,14 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     // instantaneous record accessCount set to zero in StartUsingPermission, wait for combine in StopUsingPermission
     int32_t accessCount = 0;
     int32_t failCount = 0;
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = permissionName;
+    info.successCount = accessCount;
+    info.failCount = failCount;
 
     PermissionRecord record = { 0 };
-    int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);
+    int32_t result = GetPermissionRecord(info, record);
     if (result != Constant::SUCCESS) {
         return result;
     }
@@ -847,7 +852,12 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     int32_t accessCount = 0;
     int32_t failCount = 0;
     PermissionRecord record = { 0 };
-    int32_t result = GetPermissionRecord(tokenId, permissionName, accessCount, failCount, record);
+    AddPermParamInfo info;
+    info.tokenId = tokenId;
+    info.permissionName = permissionName;
+    info.successCount = accessCount;
+    info.failCount = failCount;
+    int32_t result = GetPermissionRecord(info, record);
     if (result != Constant::SUCCESS) {
         return result;
     }
@@ -975,7 +985,6 @@ void PermissionRecordManager::AddDataValueToResults(const GenericValues value,
     info.tokenId = static_cast<AccessTokenID>(value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE), info.permissionName);
     int32_t type = value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
-
     if ((type & NORMAL_TYPE_ADD_VALUE) == NORMAL_TYPE_ADD_VALUE) { // normal first
         info.type = PermissionUsedType::NORMAL_TYPE;
         results.emplace_back(info);

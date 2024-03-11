@@ -25,6 +25,7 @@
 #include "napi_context_common.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "permission_used_type_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -36,8 +37,17 @@ struct RecordManagerAsyncContext : public PrivacyAsyncWorkData {
     std::string     permissionName;
     int32_t         successCount = 0;
     int32_t         failCount = 0;
+    PermissionUsedType type = PermissionUsedType::NORMAL_TYPE;
     PermissionUsedRequest request;
     PermissionUsedResult result;
+    int32_t retCode = -1;
+};
+
+struct PermissionUsedTypeAsyncContext : public PrivacyAsyncWorkData {
+    explicit PermissionUsedTypeAsyncContext(napi_env env) : PrivacyAsyncWorkData(env) {}
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+    std::vector<PermissionUsedTypeInfo> results;
     int32_t retCode = -1;
 };
 
@@ -53,6 +63,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo);
 napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo);
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
+napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbInfo);
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

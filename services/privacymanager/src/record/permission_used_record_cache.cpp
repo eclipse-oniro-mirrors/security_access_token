@@ -65,11 +65,12 @@ bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1
         return false;
     }
 
-    // the same tokenID + opCode + status + lockScreenStatus
+    // the same tokenID + opCode + status + lockScreenStatus + usedType
     if ((record1.tokenId != record2.tokenId) ||
         (record1.opCode != record2.opCode) ||
         (record1.status != record2.status) ||
-        (record1.lockScreenStatus != record2.lockScreenStatus)) {
+        (record1.lockScreenStatus != record2.lockScreenStatus) ||
+        (record1.type != record2.type)) {
         return false;
     }
 

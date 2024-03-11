@@ -43,6 +43,7 @@ private:
     int32_t RunAsCommandMissingOptionArgument(void);
     int32_t RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
+    std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
     int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
     int32_t RunCommandByOperationType(const AtmToolsParamInfo& info);
     int32_t HandleComplexCommand(const std::string& shortOption, const struct option longOption[],

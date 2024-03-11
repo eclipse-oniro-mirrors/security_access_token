@@ -115,8 +115,7 @@ private:
 
     void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
-    int32_t GetPermissionRecord(AccessTokenID tokenId, const std::string& permissionName,
-        int32_t successCount, int32_t failCount, PermissionRecord& record);
+    int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);

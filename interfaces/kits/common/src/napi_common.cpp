@@ -53,7 +53,7 @@ bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetyp
     napi_valuetype valuetype = napi_undefined;
     napi_typeof(env, value, &valuetype);
     if (valuetype != type) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch, [%{public}d]->[%{public}d]", valuetype, type);
         return false;
     }
     return true;
