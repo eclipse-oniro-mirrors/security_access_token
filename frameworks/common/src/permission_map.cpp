@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -346,6 +346,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_APP_BOOT_INTERNAL",            false},
     {"ohos.permission.REGISTER_APP_DEBUG_LISTENER",         false},
     {"ohos.permission.ATTACH_APP_DEBUG",                    false},
+    {"ohos.permission.NOTIFY_DEBUG_ASSERT_RESULT",          false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

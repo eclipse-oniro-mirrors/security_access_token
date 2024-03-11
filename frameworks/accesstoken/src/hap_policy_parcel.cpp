@@ -50,6 +50,22 @@ bool HapPolicyParcel::Marshalling(Parcel& out) const
         out.WriteParcelable(&permStateParcel);
     }
 
+    const std::vector<std::string>& aclRequestedList = this->hapPolicyParameter.aclRequestedList;
+    uint32_t aclRequestedListSize = aclRequestedList.size();
+    RETURN_IF_FALSE(out.WriteUint32(aclRequestedListSize));
+
+    for (uint32_t i = 0; i < aclRequestedListSize; i++) {
+        RETURN_IF_FALSE(out.WriteString(aclRequestedList[i]));
+    }
+
+    const std::vector<PreAuthorizationInfo>& info = this->hapPolicyParameter.preAuthorizationInfo;
+    uint32_t infoSize = info.size();
+    RETURN_IF_FALSE(out.WriteUint32(infoSize));
+
+    for (uint32_t i = 0; i < infoSize; i++) {
+        RETURN_IF_FALSE(out.WriteString(info[i].permissionName));
+        RETURN_IF_FALSE(out.WriteBool(info[i].userCancelable));
+    }
     return true;
 }
 
@@ -83,6 +99,23 @@ HapPolicyParcel* HapPolicyParcel::Unmarshalling(Parcel& in)
         sptr<PermissionStateFullParcel> permissionStateParcel = in.ReadParcelable<PermissionStateFullParcel>();
         RELEASE_IF_FALSE(permissionStateParcel != nullptr, hapPolicyParcel);
         hapPolicyParcel->hapPolicyParameter.permStateList.emplace_back(permissionStateParcel->permStatFull);
+    }
+    uint32_t aclRequestedListSize;
+    RELEASE_IF_FALSE(in.ReadUint32(aclRequestedListSize), hapPolicyParcel);
+    RELEASE_IF_FALSE((aclRequestedListSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
+    for (uint32_t i = 0; i < aclRequestedListSize; i++) {
+        std::string acl;
+        RELEASE_IF_FALSE(in.ReadString(acl), hapPolicyParcel);
+        hapPolicyParcel->hapPolicyParameter.aclRequestedList.emplace_back(acl);
+    }
+    uint32_t infoSize;
+    RELEASE_IF_FALSE(in.ReadUint32(infoSize), hapPolicyParcel);
+    RELEASE_IF_FALSE((infoSize <= MAX_PERMLIST_SIZE), hapPolicyParcel);
+    for (uint32_t i = 0; i < infoSize; i++) {
+        PreAuthorizationInfo info;
+        RELEASE_IF_FALSE(in.ReadString(info.permissionName), hapPolicyParcel);
+        RELEASE_IF_FALSE(in.ReadBool(info.userCancelable), hapPolicyParcel);
+        hapPolicyParcel->hapPolicyParameter.preAuthorizationInfo.emplace_back(info);
     }
     return hapPolicyParcel;
 }

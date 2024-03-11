@@ -46,13 +46,17 @@ void PermissionUsedRecordDb::OnCreate()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     CreatePermissionRecordTable();
+    CreatePermissionUsedTypeTable();
 }
 
 void PermissionUsedRecordDb::OnUpdate(int32_t version)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    if (version < DataBaseVersion::VERISION_2) {
+    if (version == DataBaseVersion::VERISION_1) {
         InsertLockScreenStatusColumn();
+        CreatePermissionUsedTypeTable();
+    } else if (version == DataBaseVersion::VERISION_2) {
+        CreatePermissionUsedTypeTable();
     }
 }
 
@@ -71,8 +75,27 @@ PermissionUsedRecordDb::PermissionUsedRecordDb() : SqliteHelper(DATABASE_NAME, D
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS
     };
 
+    SqliteTable permissionUsedTypeTable;
+    permissionUsedTypeTable.tableName_ = PERMISSION_USED_TYPE_TABLE;
+    permissionUsedTypeTable.tableColumnNames_ = {
+        PrivacyFiledConst::FIELD_TOKEN_ID,
+        PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        /**
+         * bit operation:
+         * 1 -> 001, NORMAL_TYPE
+         * 2 -> 010, PICKER_TYPE
+         * 3 -> 011, NORMAL_TYPE + PICKER_TYPE
+         * 4 -> 100, SECURITY_COMPONENT_TYPE
+         * 5 -> 101, NORMAL_TYPE + SECURITY_COMPONENT_TYPE
+         * 6 -> 110, PICKER_TYPE + SECURITY_COMPONENT_TYPE
+         * 7 -> 111, NORMAL_TYPE + PICKER_TYPE + SECURITY_COMPONENT_TYPE
+         */
+        PrivacyFiledConst::FIELD_USED_TYPE
+    };
+
     dataTypeToSqlTable_ = {
         {PERMISSION_RECORD, permissionRecordTable},
+        {PERMISSION_USED_TYPE, permissionUsedTypeTable},
     };
     Open();
 }
@@ -209,6 +232,55 @@ int32_t PermissionUsedRecordDb::DeleteExcessiveRecords(DataType type, uint32_t e
     return SUCCESS;
 }
 
+int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modifyValue,
+    const GenericValues& conditionValue)
+{
+    std::vector<std::string> modifyNames = modifyValue.GetAllKeys();
+    std::vector<std::string> conditionNames = conditionValue.GetAllKeys();
+
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
+    auto statement = Prepare(prepareSql);
+
+    for (const auto& modifyName : modifyNames) {
+        statement.Bind(modifyName, modifyValue.Get(modifyName));
+    }
+
+    for (const auto& conditionName : conditionNames) {
+        statement.Bind(conditionName, conditionValue.Get(conditionName));
+    }
+
+    int32_t ret = statement.Step();
+    return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
+}
+
+int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& conditionValue,
+    std::vector<GenericValues>& results)
+{
+    std::vector<std::string> conditionColumns = conditionValue.GetAllKeys();
+
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
+
+    auto statement = Prepare(prepareSql);
+    for (const auto& conditionColumn : conditionColumns) {
+        statement.Bind(conditionColumn, conditionValue.Get(conditionColumn));
+    }
+
+    while (statement.Step() == Statement::State::ROW) {
+        int32_t columnCount = statement.GetColumnCount();
+        GenericValues value;
+
+        for (int32_t i = 0; i < columnCount; i++) {
+            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
+        }
+
+        results.emplace_back(value);
+    }
+
+    return SUCCESS;
+}
+
 std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -225,6 +297,23 @@ std::string PermissionUsedRecordDb::CreateInsertPrepareSqlCmd(DataType type) con
         i += 1;
     }
     sql.append(")");
+    return sql;
+}
+
+std::string PermissionUsedRecordDb::CreateQueryPrepareSqlCmd(DataType type,
+    const std::vector<std::string>& conditionColumns) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+
+    for (const auto& andColumn : conditionColumns) {
+        sql.append(" and ");
+        sql.append(andColumn + "=:" + andColumn);
+    }
+
     return sql;
 }
 
@@ -416,6 +505,28 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
         .append(PrivacyFiledConst::FIELD_STATUS)
         .append(",")
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
+        .append("))");
+    return ExecuteSql(sql);
+}
+
+int32_t PermissionUsedRecordDb::CreatePermissionUsedTypeTable() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_USED_TYPE);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = "create table if not exists ";
+    sql.append(it->second.tableName_ + " (")
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
+        .append(" integer not null,")
+        .append(PrivacyFiledConst::FIELD_USED_TYPE)
+        .append(" integer not null,")
+        .append("primary key(")
+        .append(PrivacyFiledConst::FIELD_TOKEN_ID)
+        .append(",")
+        .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
         .append("))");
     return ExecuteSql(sql);
 }

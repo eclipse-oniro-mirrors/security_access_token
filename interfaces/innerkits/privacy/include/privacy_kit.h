@@ -42,6 +42,7 @@
 #include "on_permission_used_record_callback.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "permission_used_type_info.h"
 #include "perm_active_status_customized_cbk.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data.h"
@@ -163,6 +164,15 @@ public:
     static int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceData>& enhanceList);
 #endif
+    /**
+     * @brief query permission used type.
+     * @param tokenId token id, if 0 return all tokenIds
+     * @param permissionName permission name, if null return all permissions
+     * @param results query result as PermissionUsedTypeInfo array
+     * @return error code, see privacy_error.h
+     */
+    static int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfo>& results);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -54,7 +54,7 @@ static const AccessTokenID INVALID_TOKENID = 0;
 /**
  * @brief visit type
  */
-typedef enum PermUsedTypeEnum {
+enum class PermUsedTypeEnum {
     /** invalid type */
     INVALID_USED_TYPE = 0,
     /** normal type for permision request */
@@ -65,7 +65,7 @@ typedef enum PermUsedTypeEnum {
     SEC_COMPONENT_TYPE,
     /** buttom of type for no use */
     BUTT_TYPE,
-} PermUsedTypeEnum;
+};
 
 /**
  * @brief Access token kit return code

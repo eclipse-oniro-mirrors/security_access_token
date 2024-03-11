@@ -65,7 +65,7 @@ PermUsedTypeEnum AccessTokenManagerClient::GetUserGrantedPermissionUsedType(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
-        return INVALID_USED_TYPE;
+        return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     return proxy->GetUserGrantedPermissionUsedType(tokenID, permissionName);
 }
@@ -310,6 +310,22 @@ AccessTokenIDEx AccessTokenManagerClient::AllocHapToken(const HapInfoParams& inf
     return proxy->AllocHapToken(hapInfoParcel, hapPolicyParcel);
 }
 
+int32_t AccessTokenManagerClient::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
+    AccessTokenIDEx& fullTokenId)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    HapInfoParcel hapInfoParcel;
+    HapPolicyParcel hapPolicyParcel;
+    hapInfoParcel.hapInfoParameter = info;
+    hapPolicyParcel.hapPolicyParameter = policy;
+
+    return proxy->InitHapToken(hapInfoParcel, hapPolicyParcel, fullTokenId);
+}
+
 int AccessTokenManagerClient::DeleteToken(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();
@@ -363,8 +379,8 @@ AccessTokenID AccessTokenManagerClient::AllocLocalTokenID(
     return proxy->AllocLocalTokenID(remoteDeviceID, remoteTokenID);
 }
 
-int AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParams& policy)
+int32_t AccessTokenManagerClient::UpdateHapToken(
+    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -373,7 +389,7 @@ int AccessTokenManagerClient::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     }
     HapPolicyParcel hapPolicyParcel;
     hapPolicyParcel.hapPolicyParameter = policy;
-    return proxy->UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion, hapPolicyParcel);
+    return proxy->UpdateHapToken(tokenIdEx, info, hapPolicyParcel);
 }
 
 int AccessTokenManagerClient::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)

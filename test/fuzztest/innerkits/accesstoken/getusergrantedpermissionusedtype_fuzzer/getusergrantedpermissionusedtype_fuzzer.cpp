@@ -28,7 +28,7 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
 {
-    PermUsedTypeEnum type = BUTT_TYPE;
+    PermUsedTypeEnum type = PermUsedTypeEnum::BUTT_TYPE;
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
@@ -37,7 +37,7 @@ bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
     
     type = AccessTokenKit::GetUserGrantedPermissionUsedType(tokenId, permissionName);
 
-    return type != BUTT_TYPE;
+    return type != PermUsedTypeEnum::BUTT_TYPE;
 }
 }
 

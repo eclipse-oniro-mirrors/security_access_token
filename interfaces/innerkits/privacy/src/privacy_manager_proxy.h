@@ -49,6 +49,8 @@ public:
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;
 #endif
+    int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
 
 private:
     bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode = false);

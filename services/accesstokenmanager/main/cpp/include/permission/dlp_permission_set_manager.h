@@ -31,7 +31,7 @@ public:
     static DlpPermissionSetManager& GetInstance();
     virtual ~DlpPermissionSetManager();
 
-    int32_t UpdatePermStateWithDlpInfo(int32_t hapDlpType, std::vector<PermissionStateFull>& permStateList);
+    void UpdatePermStateWithDlpInfo(int32_t hapDlpType, std::vector<PermissionStateFull>& permStateList);
     bool IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode);
     void ProcessDlpPermInfos(const std::vector<PermissionDlpMode>& info);
     int32_t GetPermDlpMode(const std::string& permissionName);

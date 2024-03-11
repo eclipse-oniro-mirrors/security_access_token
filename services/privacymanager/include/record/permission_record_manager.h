@@ -34,6 +34,7 @@
 #include "permission_record.h"
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "permission_used_type_info.h"
 #include "rwlock.h"
 #include "thread_pool.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -88,6 +89,8 @@ public:
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
+    int32_t GetPermissionUsedTypeInfos(AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfo>& results);
 
     void NotifyMicChange(bool switchStatus);
     void NotifyCameraChange(bool switchStatus);
@@ -136,6 +139,12 @@ private:
 
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
     void SetCameraCallback(sptr<IRemoteObject>);
+
+    void TransformEnumToBitValue(const PermissionUsedType type, int32_t& value);
+    bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
+        const PermissionUsedType type);
+    void RemovePermissionUsedType(AccessTokenID tokenId);
+    void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool IsFlowWindowShow(AccessTokenID tokenId);

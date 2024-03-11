@@ -47,8 +47,6 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPermissionPolicyS
     std::shared_ptr<PermissionPolicySet> policySet = std::make_shared<PermissionPolicySet>();
     PermissionValidator::FilterInvalidPermissionState(tokenType, true, permStateList, policySet->permStateList_);
     policySet->tokenId_ = tokenId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permStateList_ size: %{public}zu",
-        tokenId, policySet->permStateList_.size());
     return policySet;
 }
 
@@ -199,31 +197,31 @@ PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std
         if (!perm.isGeneral) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not general.",
                 permissionName.c_str(), tokenId_);
-            return INVALID_USED_TYPE;
+            return PermUsedTypeEnum::INVALID_USED_TYPE;
         }
 
         if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
-            return SEC_COMPONENT_TYPE;
+            return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
 
         if (perm.grantStatus[0] != PERMISSION_GRANTED) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is requested, not granted.",
                 permissionName.c_str(), tokenId_);
-            return INVALID_USED_TYPE;
+            return PermUsedTypeEnum::INVALID_USED_TYPE;
         }
         ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s of %{public}d is applied for normally.",
             permissionName.c_str(), tokenId_);
-        return NORMAL_TYPE;
+        return PermUsedTypeEnum::NORMAL_TYPE;
     }
 
     if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
         [permissionName](const auto& permission) { return permission == permissionName; })) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
-            return SEC_COMPONENT_TYPE;
+            return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not application", permissionName.c_str(), tokenId_);
-    return INVALID_USED_TYPE;
+    return PermUsedTypeEnum::INVALID_USED_TYPE;
 }
 
 int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
