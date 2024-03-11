@@ -71,6 +71,7 @@ enum AccessTokenError {
     ERR_CHECK_DCAP_FAIL,
     ERR_FILE_OPERATE_FAILED,
     ERR_DATABASE_OPERATE_FAILED,
+    ERR_PERM_REQUEST_CFG_FAILED,
 };
 } // namespace AccessToken
 } // namespace Security

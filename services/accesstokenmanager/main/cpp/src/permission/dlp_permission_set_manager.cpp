@@ -66,7 +66,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
     return dlpPermissionModeMap_[permissionName];
 }
 
-int32_t DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
+void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
     std::vector<PermissionStateFull>& permStateList)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d", hapDlpType);
@@ -80,7 +80,6 @@ int32_t DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
             iter->grantStatus[0] = PERMISSION_DENIED;
         }
     }
-    return RET_SUCCESS;
 }
 
 bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,

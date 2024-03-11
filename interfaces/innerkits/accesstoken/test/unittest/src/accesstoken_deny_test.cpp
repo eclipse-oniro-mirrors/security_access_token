@@ -89,6 +89,19 @@ HWTEST_F(AccessTokenDenyTest, AllocHapToken001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapToken001
+ * @tc.desc: InitHapToken with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, InitHapToken001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenKit::InitHapToken(g_InfoParms, g_PolicyPrams, tokenIdEx);
+    ASSERT_NE(ret, RET_SUCCESS);
+}
+
+/**
  * @tc.name: AllocLocalTokenID001
  * @tc.desc: AllocLocalTokenID with no permission
  * @tc.type: FUNC
@@ -110,12 +123,14 @@ HWTEST_F(AccessTokenDenyTest, AllocLocalTokenID001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenDenyTest, UpdateHapToken001, TestSize.Level1)
 {
-    std::string appIDDesc = "appdi desc";
-    int32_t apiVersion = 9;
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx.tokenIdExStruct.tokenID = 123;
+    UpdateHapInfoParams info;
+    info.appIDDesc = "appId desc";
+    info.apiVersion = 9;
+    info.isSystemApp = false;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
-        AccessTokenKit::UpdateHapToken(tokenIdEx, false, appIDDesc, apiVersion, g_PolicyPrams));
+        AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_PolicyPrams));
 }
 
 /**

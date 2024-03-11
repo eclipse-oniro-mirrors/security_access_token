@@ -48,6 +48,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static AccessTokenID g_selfTokenId = 0;
+static AccessTokenID g_nativeToken = 0;
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
@@ -162,6 +163,7 @@ public:
 void PermissionRecordManagerTest::SetUpTestCase()
 {
     g_selfTokenId = GetSelfTokenID();
+    g_nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
 }
 
 void PermissionRecordManagerTest::TearDownTestCase() {}
@@ -351,7 +353,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
     PermissionRecord record;
@@ -381,7 +383,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
 
     PermissionRecord record;
@@ -410,7 +412,7 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
@@ -439,447 +441,11 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
 #endif
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
 
     PermissionRecord record;
     PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
     ASSERT_EQ(record1.tokenId, tokenId);
-}
-
-/*
- * @tc.name: FindRecordsToUpdateAndExecutedTest005
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest005, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
-
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_FOREGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_LOCKED,
-    };
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record1);
-
-    PermissionRecordManager::GetInstance().FindRecordsToUpdateAndExecuted(tokenId, status);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    std::vector<std::string> permissionList;
-    permissionList.emplace_back(permissionName);
-    PermissionUsedRequest request = {
-        .tokenId = tokenId,
-        .permissionList = permissionList,
-        .flag = FLAG_PERMISSION_USAGE_DETAIL
-    };
-
-    PermissionUsedResult queryResult;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, queryResult);
-    ASSERT_NE(queryResult.bundleRecords.size(), static_cast<size_t>(0));
-    auto bundleRecordIter = std::find_if(queryResult.bundleRecords.begin(), queryResult.bundleRecords.end(),
-        [tokenId](const BundleUsedRecord& bur) {
-            return tokenId == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter, queryResult.bundleRecords.end());
-
-    auto permissionRecordIter = std::find_if(bundleRecordIter->permissionRecords.begin(),
-        bundleRecordIter->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
-}
-
-PermissionUsedRequest GenerateRequest(AccessTokenID tokenId, std::string permissionName)
-{
-    std::vector<std::string> permissionList;
-    permissionList.emplace_back(permissionName);
-    PermissionUsedRequest request = {
-        .tokenId = tokenId,
-        .permissionList = permissionList,
-        .flag = FLAG_PERMISSION_USAGE_DETAIL
-    };
-    return request;
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest001
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest001, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-
-    PermissionRecord record = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_FOREGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED
-    };
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record);
-    LockScreenStatusChangeType screenLocked = PERM_ACTIVE_IN_LOCKED;
-    PermissionRecordManager::GetInstance().NotifyLockScreenStatusChange(screenLocked);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request = GenerateRequest(tokenId, permissionName);
-
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
-    auto bundleRecordIter = std::find_if(result.bundleRecords.begin(), result.bundleRecords.end(),
-        [tokenId](const BundleUsedRecord& bur) {
-            return tokenId == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter, result.bundleRecords.end());
-
-    auto permissionRecordIter = std::find_if(bundleRecordIter->permissionRecords.begin(),
-        bundleRecordIter->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, permissionRecordIter->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
-}
-
-void GenerateLockScreenPerUsedRecord(AccessTokenID tokenId1, AccessTokenID tokenId2)
-{
-    PermissionRecord record1 = {
-        .tokenId = tokenId1,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_FOREGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED
-    };
-
-    PermissionRecord record2 = {
-        .tokenId = tokenId2,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_BACKGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED
-    };
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record1);
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record2);
-    LockScreenStatusChangeType screenLocked = PERM_ACTIVE_IN_LOCKED;
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(screenLocked);
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest002
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest002, TestSize.Level1)
-{
-    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId1);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId1));
-
-    AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
-        g_InfoParms2.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId2);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId2));
-
-    GenerateLockScreenPerUsedRecord(tokenId1, tokenId2);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request1 = GenerateRequest(tokenId1, permissionName);
-    PermissionUsedResult result1;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request1, result1);
-    auto bundleRecordIter1 = std::find_if(result1.bundleRecords.begin(), result1.bundleRecords.end(),
-        [tokenId1](const BundleUsedRecord& bur) {
-            return tokenId1 == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter1, result1.bundleRecords.end());
-
-    auto permissionRecordIter1 = std::find_if(bundleRecordIter1->permissionRecords.begin(),
-        bundleRecordIter1->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter1, bundleRecordIter1->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter1->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_FOREGROUND, permissionRecordIter1->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter1->accessRecords[0].lockScreenStatus);
-
-    PermissionUsedRequest request2 = GenerateRequest(tokenId2, permissionName);
-    PermissionUsedResult result2;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request2, result2);
-    auto bundleRecordIter2 = std::find_if(result2.bundleRecords.begin(), result2.bundleRecords.end(),
-        [tokenId2](const BundleUsedRecord& bur) {
-            return tokenId2 == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter2, result2.bundleRecords.end());
-
-    auto permissionRecordIter2 = std::find_if(bundleRecordIter2->permissionRecords.begin(),
-        bundleRecordIter2->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter2, bundleRecordIter2->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter2->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter2->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter2->accessRecords[0].lockScreenStatus);
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest003
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest003, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-
-    PermissionRecord record = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_BACKGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED
-    };
-
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record);
-    LockScreenStatusChangeType screenLocked = PERM_ACTIVE_IN_LOCKED;
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(screenLocked);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request = GenerateRequest(tokenId, permissionName);
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
-    auto bundleRecordIter = std::find_if(result.bundleRecords.begin(), result.bundleRecords.end(),
-        [tokenId](const BundleUsedRecord& bur) {
-            return tokenId == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter, result.bundleRecords.end());
-
-    auto permissionRecordIter = std::find_if(bundleRecordIter->permissionRecords.begin(),
-        bundleRecordIter->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest004
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest004, TestSize.Level1)
-{
-    std::vector<PermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
-    PermissionRecordManager::GetInstance().startRecordList_.clear();
-
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-
-    PermissionRecord record = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_FOREGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_LOCKED
-    };
-
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record);
-    LockScreenStatusChangeType screenUnLocked = PERM_ACTIVE_IN_UNLOCKED;
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(screenUnLocked);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request = GenerateRequest(tokenId, permissionName);
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
-    auto bundleRecordIter = std::find_if(result.bundleRecords.begin(), result.bundleRecords.end(),
-        [tokenId](const BundleUsedRecord& bur) {
-            return tokenId == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter, result.bundleRecords.end());
-
-    auto permissionRecordIter = std::find_if(bundleRecordIter->permissionRecords.begin(),
-        bundleRecordIter->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
-
-    PermissionRecordManager::GetInstance().startRecordList_ = startRecordList;
-}
-
-void GenerateUnLockScreenPerUsedRecord(AccessTokenID tokenId1, AccessTokenID tokenId2)
-{
-    PermissionRecord record1 = {
-        .tokenId = tokenId1,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_FOREGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_LOCKED
-    };
-
-    PermissionRecord record2 = {
-        .tokenId = tokenId2,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_BACKGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_LOCKED
-    };
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record1);
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record2);
-    LockScreenStatusChangeType screenUnLocked = PERM_ACTIVE_IN_UNLOCKED;
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(screenUnLocked);
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest005
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest005, TestSize.Level1)
-{
-    AccessTokenID tokenId1 = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId1);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId1));
-
-    AccessTokenID tokenId2 = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
-        g_InfoParms2.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId2);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId2));
-
-    GenerateUnLockScreenPerUsedRecord(tokenId1, tokenId2);
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request1 = GenerateRequest(tokenId1, permissionName);
-    PermissionUsedResult result1;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request1, result1);
-    auto bundleRecordIter1 = std::find_if(result1.bundleRecords.begin(), result1.bundleRecords.end(),
-        [tokenId1](const BundleUsedRecord& bur) {
-            return tokenId1 == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter1, result1.bundleRecords.end());
-
-    auto permissionRecordIter1 = std::find_if(bundleRecordIter1->permissionRecords.begin(),
-        bundleRecordIter1->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter1, bundleRecordIter1->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter1->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter1->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_UNLOCKED, permissionRecordIter1->accessRecords[0].lockScreenStatus);
-
-    PermissionUsedRequest request2 = GenerateRequest(tokenId2, permissionName);
-    PermissionUsedResult result2;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request2, result2);
-    auto bundleRecordIter2 = std::find_if(result2.bundleRecords.begin(), result2.bundleRecords.end(),
-        [tokenId2](const BundleUsedRecord& bur) {
-            return tokenId2 == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter2, result2.bundleRecords.end());
-
-    auto permissionRecordIter2 = std::find_if(bundleRecordIter2->permissionRecords.begin(),
-        bundleRecordIter2->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter2, bundleRecordIter2->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter2->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter2->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_LOCKED, permissionRecordIter2->accessRecords[0].lockScreenStatus);
-}
-
-/*
- * @tc.name: GenerateRecordsWhenScreenStatusChangedTest006
- * @tc.desc: FindRecordsToUpdateAndExecuted function test with invaild tokenId or permissionName or callback.
- * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
- */
-HWTEST_F(PermissionRecordManagerTest, GenerateRecordsWhenScreenStatusChangedTest006, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    EXPECT_EQ(0, SetSelfTokenID(tokenId));
-
-    PermissionRecord record = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-        .status = PERM_ACTIVE_IN_BACKGROUND,
-        .timestamp = TimeUtil::GetCurrentTimestamp(),
-        .accessCount = 1,
-        .lockScreenStatus = PERM_ACTIVE_IN_LOCKED
-    };
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(record);
-    LockScreenStatusChangeType screenUnLocked = PERM_ACTIVE_IN_UNLOCKED;
-    PermissionRecordManager::GetInstance().GenerateRecordsWhenScreenStatusChanged(screenUnLocked);
-
-    std::string permissionName = MICROPHONE_PERMISSION_NAME;
-    PermissionUsedRequest request = GenerateRequest(tokenId, permissionName);
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result);
-    auto bundleRecordIter = std::find_if(result.bundleRecords.begin(), result.bundleRecords.end(),
-        [tokenId](const BundleUsedRecord& bur) {
-            return tokenId == bur.tokenId;
-        });
-    ASSERT_NE(bundleRecordIter, result.bundleRecords.end());
-
-    auto permissionRecordIter = std::find_if(bundleRecordIter->permissionRecords.begin(),
-        bundleRecordIter->permissionRecords.end(),
-        [permissionName](const PermissionUsedRecord& prs) {
-            return permissionName == prs.permissionName;
-        });
-    ASSERT_NE(permissionRecordIter, bundleRecordIter->permissionRecords.end());
-
-    ASSERT_EQ(static_cast<size_t>(1), permissionRecordIter->accessRecords.size());
-    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, permissionRecordIter->accessRecords[0].status);
-    ASSERT_EQ(PERM_ACTIVE_IN_LOCKED, permissionRecordIter->accessRecords[0].lockScreenStatus);
 }
 
 /*
@@ -898,7 +464,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST,
+    ASSERT_EQ(ERR_PARAM_INVALID,
         PermissionRecordManager::GetInstance().StartUsingPermission(0, permissionName, callbackWrap->AsObject()));
 }
 
@@ -925,8 +491,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
         tokenId, "ohos.permission.LOCATION", callbackWrap->AsObject()));
 
     // tokenId invaild
-    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StartUsingPermission(
-        static_cast<AccessTokenID>(123), "ohos.permission.CAMERA", nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
+        g_nativeToken, "ohos.permission.CAMERA", nullptr));
     
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.CAMERA", nullptr));
@@ -1354,8 +920,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermission001, TestSize.Level1)
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     // tokenId invaild
-    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StartUsingPermission(
-        static_cast<AccessTokenID>(123), "ohos.permission.READ_MEDIA"));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
+        g_nativeToken, "ohos.permission.READ_MEDIA"));
     
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.READ_MEDIA"));
@@ -1379,7 +945,7 @@ HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level1)
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     // tokenId invaild
-    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST, PermissionRecordManager::GetInstance().StopUsingPermission(
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StopUsingPermission(
         static_cast<AccessTokenID>(0), "ohos.permission.READ_MEDIA"));
 
     // permission invaild

@@ -1711,8 +1711,11 @@ HWTEST_F(AccessTokenKitExtensionTest, IsSystemAppByFullTokenIDTest001, TestSize.
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     bool res = TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
     ASSERT_EQ(true, res);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, false, g_infoManagerTestSystemInfoParms.appIDDesc,
-        g_infoManagerTestSystemInfoParms.apiVersion, g_infoManagerTestPolicyPrams));
+    UpdateHapInfoParams info;
+    info.appIDDesc = g_infoManagerTestSystemInfoParms.appIDDesc;
+    info.apiVersion = g_infoManagerTestSystemInfoParms.apiVersion;
+    info.isSystemApp = false;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
     tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     res = TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);
@@ -1733,8 +1736,11 @@ HWTEST_F(AccessTokenKitExtensionTest, IsSystemAppByFullTokenIDTest002, TestSize.
     AccessTokenIDEx tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     ASSERT_EQ(false, res);
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, true, g_infoManagerTestNormalInfoParms.appIDDesc,
-        g_infoManagerTestNormalInfoParms.apiVersion, g_infoManagerTestPolicyPrams));
+    UpdateHapInfoParams info;
+    info.appIDDesc = g_infoManagerTestNormalInfoParms.appIDDesc;
+    info.apiVersion = g_infoManagerTestNormalInfoParms.apiVersion;
+    info.isSystemApp = true;
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::UpdateHapToken(tokenIdEx, info, g_infoManagerTestPolicyPrams));
     tokenIdEx1 = AccessTokenKit::GetHapTokenIDEx(1, "accesstoken_test", 0);
     ASSERT_EQ(tokenIdEx.tokenIDEx, tokenIdEx1.tokenIDEx);
     res = TokenIdKit::IsSystemAppByFullTokenID(tokenIdEx.tokenIDEx);

@@ -28,6 +28,7 @@ bool HapInfoParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteString(this->hapInfoParameter.appIDDesc));
     RETURN_IF_FALSE(out.WriteInt32(this->hapInfoParameter.apiVersion));
     RETURN_IF_FALSE(out.WriteBool(this->hapInfoParameter.isSystemApp));
+    RETURN_IF_FALSE(out.WriteString(this->hapInfoParameter.appDistributionType));
     return true;
 }
 
@@ -44,6 +45,7 @@ HapInfoParcel* HapInfoParcel::Unmarshalling(Parcel& in)
     hapInfoParcel->hapInfoParameter.appIDDesc = in.ReadString();
     RELEASE_IF_FALSE(in.ReadInt32(hapInfoParcel->hapInfoParameter.apiVersion), hapInfoParcel);
     RELEASE_IF_FALSE(in.ReadBool(hapInfoParcel->hapInfoParameter.isSystemApp), hapInfoParcel);
+    RELEASE_IF_FALSE(in.ReadString(hapInfoParcel->hapInfoParameter.appDistributionType), hapInfoParcel);
     return hapInfoParcel;
 }
 } // namespace AccessToken

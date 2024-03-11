@@ -13,9 +13,28 @@
  * limitations under the License.
  */
 
-#ifndef TEST_FUZZTEST_INITHAPTOKEN_FUZZER_H
-#define TEST_FUZZTEST_INITHAPTOKEN_FUZZER_H
+#ifndef APP_INSTALLATION_OPTIMIZED_TEST
+#define APP_INSTALLATION_OPTIMIZED_TEST
 
-#define FUZZ_PROJECT_NAME "inithaptoken_fuzzer"
+#include <gtest/gtest.h>
 
-#endif // TEST_FUZZTEST_INITHAPTOKEN_FUZZER_H
+#include "access_token.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
+
+namespace OHOS {
+namespace Security {
+namespace AccessToken {
+class AppInstallationOptimizedTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
+    uint64_t selfTokenId_;
+};
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // APP_INSTALLATION_OPTIMIZED_TEST

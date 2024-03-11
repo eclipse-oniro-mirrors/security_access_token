@@ -288,10 +288,32 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
     int ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, tokenIdEx);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "hap token info create failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token info create failed");
     }
     DumpTokenIfNeeded();
     return tokenIdEx;
+}
+
+int32_t AccessTokenManagerService::InitHapToken(
+    const HapInfoParcel& info, HapPolicyParcel& policy, AccessTokenIDEx& fullTokenId)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
+    std::vector<PermissionStateFull> InitializedList;
+    if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
+        policy.hapPolicyParameter, InitializedList)) {
+        return ERR_PERM_REQUEST_CFG_FAILED;
+    }
+    policy.hapPolicyParameter.permStateList = InitializedList;
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        info.hapInfoParameter, policy.hapPolicyParameter, fullTokenId);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token info create failed");
+        return ret;
+    }
+
+    DumpTokenIfNeeded();
+    return ret;
 }
 
 int AccessTokenManagerService::DeleteToken(AccessTokenID tokenID)
@@ -335,12 +357,17 @@ AccessTokenID AccessTokenManagerService::AllocLocalTokenID(
     return tokenID;
 }
 
-int AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
+int32_t AccessTokenManagerService::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
+    const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d", tokenIdEx.tokenIdExStruct.tokenID);
-    int ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion,
-        policyParcel.hapPolicyParameter);
+    std::vector<PermissionStateFull> InitializedList;
+    if (!PermissionManager::GetInstance().InitPermissionList(
+        info.appDistributionType, policyParcel.hapPolicyParameter, InitializedList)) {
+        return ERR_PERM_REQUEST_CFG_FAILED;
+    }
+    int32_t ret = AccessTokenInfoManager::GetInstance().UpdateHapToken(tokenIdEx, info,
+        InitializedList, policyParcel.hapPolicyParameter.apl, policyParcel.hapPolicyParameter.permList);
     DumpTokenIfNeeded();
     return ret;
 }

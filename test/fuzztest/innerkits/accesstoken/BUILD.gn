@@ -19,7 +19,6 @@ group("fuzztest") {
   deps += [
     # deps file
     "allochaptoken_fuzzer:AllocHapTokenFuzzTest",
-    "inithaptoken_fuzzer:InitHapTokenFuzzTest",
     "alloclocaltokenid_fuzzer:AllocLocalTokenIDFuzzTest",
     "checknativedcap_fuzzer:CheckNativeDCapFuzzTest",
     "clearusergrantedpermissionstate_fuzzer:ClearUserGrantedPermissionStateFuzzTest",
@@ -43,6 +42,7 @@ group("fuzztest") {
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",
     "grantpermission_fuzzer:GrantPermissionFuzzTest",
+    "inithaptoken_fuzzer:InitHapTokenFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
