@@ -89,10 +89,11 @@ public:
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
 
-    void NotifyMicChange(bool switchStatus);
-    void NotifyCameraChange(bool switchStatus);
+    void NotifyMicChange(bool isMute);
+    void NotifyCameraChange(bool isMute);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
-    void NotifyLockScreenStatusChange(LockScreenStatusChangeType lockScreenStatus);
+    void SetLockScreenStatus(int32_t lockScreenStatus);
+    int32_t GetLockScreenStatus();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
@@ -121,8 +122,8 @@ private:
         BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
-    void FindRecordsToUpdateAndExecuted(uint32_t tokenId, ActiveChangeType status);
-    void GenerateRecordsWhenScreenStatusChanged(LockScreenStatusChangeType lockScreenStatus);
+    void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
+    void ExecuteAndUpdateRecord(uint32_t opCode, bool switchStatus);
     void RemoveRecordFromStartList(const PermissionRecord& record);
     void UpdateRecord(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
@@ -131,7 +132,6 @@ private:
     std::string GetDeviceId(AccessTokenID tokenId);
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
-    void SavePermissionRecords(const std::string& permissionName, PermissionRecord& record, bool switchStatus);
     bool ShowGlobalDialog(const std::string& permissionName);
 
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
@@ -190,6 +190,7 @@ private:
 
     // lockScreenState
     std::mutex lockScreenStateMutex_;
+    int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
     // camera float window
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
