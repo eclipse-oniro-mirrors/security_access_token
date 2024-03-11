@@ -24,36 +24,37 @@
  */
 
 /**
- * @file add_perm_param_info.h
+ * @file permission_used_type.h
  *
- * @brief Declares AddPermParamInfo struct.
+ * @brief Declares enum PermissionUsedType.
  *
  * @since 12.0
  * @version 12.0
  */
 
-#ifndef SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
-#define SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
-
-#include <string>
-#include "access_token.h"
-#include "permission_used_type.h"
+#ifndef SECURITY_ACCESSTOKEN_PERMISSION_USED_TYPE_H
+#define SECURITY_ACCESSTOKEN_PERMISSION_USED_TYPE_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 /**
- * @brief add permission param info
+ * @brief Permission permission used type values
  */
-struct AddPermParamInfo {
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    int32_t successCount = 0;
-    int32_t failCount = 0;
-    /** enum PermissionUsedType, see permission_used_type.h */
-    PermissionUsedType type = NORMAL_TYPE;
-};
+typedef enum PermissionUsedTypeValue {
+    /** invalid type */
+    INVALID_USED_TYPE = 0,
+    /** normal type for permision request */
+    NORMAL_TYPE,
+    /** picker type for permision request */
+    PICKER_TYPE,
+    /** security component type for permision request */
+    SECURITY_COMPONENT_TYPE,
+    /** buttom of type for no use */
+    BUTT_TYPE,
+} PermissionUsedType;
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
+
+#endif // SECURITY_ACCESSTOKEN_PERMISSION_USED_TYPE_H

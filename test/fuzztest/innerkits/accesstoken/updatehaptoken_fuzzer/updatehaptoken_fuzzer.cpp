@@ -53,15 +53,19 @@ namespace OHOS {
         testState.resDeviceID = {testName};
         testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
         testState.grantFlags = {1};
-        HapPolicyParams TestPolicyPrams = {
+        HapPolicyParams TestPolicyParams = {
             .apl = APL_NORMAL,
             .domain = testName,
             .permList = {testPermDef},
             .permStateList = {testState}
         };
-        constexpr int32_t apiVersion = 8;
+        UpdateHapInfoParams info;
+        info.appIDDesc = testName;
+        info.apiVersion = 8; // 8 means the version
+        info.isSystemApp = false;
+
         int32_t result = AccessTokenKit::UpdateHapToken(
-            tokenIDex, false, testName, apiVersion, TestPolicyPrams);
+            tokenIDex, info, TestPolicyParams);
 
         return result == RET_SUCCESS;
     }

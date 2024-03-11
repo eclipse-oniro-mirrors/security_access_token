@@ -13,39 +13,35 @@
  * limitations under the License.
  */
 
-#include "add_perm_param_info_parcel.h"
+#include "permission_used_type_info_parcel.h"
 #include "parcel_utils.h"
 #include "refbase.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-bool AddPermParamInfoParcel::Marshalling(Parcel& out) const
+bool PermissionUsedTypeInfoParcel::Marshalling(Parcel& out) const
 {
     RETURN_IF_FALSE(out.WriteUint32(this->info.tokenId));
     RETURN_IF_FALSE(out.WriteString(this->info.permissionName));
-    RETURN_IF_FALSE(out.WriteInt32(this->info.successCount));
-    RETURN_IF_FALSE(out.WriteInt32(this->info.failCount));
     RETURN_IF_FALSE(out.WriteUint32(static_cast<uint32_t>(this->info.type)));
     return true;
 }
 
-AddPermParamInfoParcel* AddPermParamInfoParcel::Unmarshalling(Parcel& in)
+PermissionUsedTypeInfoParcel* PermissionUsedTypeInfoParcel::Unmarshalling(Parcel& in)
 {
-    auto* infoParcel = new (std::nothrow) AddPermParamInfoParcel();
-    if (infoParcel == nullptr) {
+    auto* parcel = new (std::nothrow) PermissionUsedTypeInfoParcel();
+    if (parcel == nullptr) {
         return nullptr;
     }
 
-    RELEASE_IF_FALSE(in.ReadUint32(infoParcel->info.tokenId), infoParcel);
-    RELEASE_IF_FALSE(in.ReadString(infoParcel->info.permissionName), infoParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(infoParcel->info.successCount), infoParcel);
-    RELEASE_IF_FALSE(in.ReadInt32(infoParcel->info.failCount), infoParcel);
+    RELEASE_IF_FALSE(in.ReadUint32(parcel->info.tokenId), parcel);
+    RELEASE_IF_FALSE(in.ReadString(parcel->info.permissionName), parcel);
     uint32_t type = 0;
-    RELEASE_IF_FALSE(in.ReadUint32(type), infoParcel);
-    infoParcel->info.type = static_cast<PermissionUsedType>(type);
+    RELEASE_IF_FALSE(in.ReadUint32(type), parcel);
+    parcel->info.type = static_cast<PermissionUsedType>(type);
 
-    return infoParcel;
+    return parcel;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -41,6 +41,7 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/permission_used_record_parcel.cpp",
     "src/permission_used_request_parcel.cpp",
     "src/permission_used_result_parcel.cpp",
+    "src/permission_used_type_info_parcel.cpp",
     "src/used_record_detail_parcel.cpp",
   ]
 

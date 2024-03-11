@@ -581,8 +581,11 @@ HWTEST_F(RemoteTokenKitTest, SetRemoteHapTokenInfo008, TestSize.Level1)
         .tokenIdExStruct.tokenAttr = 0,
     };
     HapPolicyParams policy;
-
-    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, false, "updateFailed", DEFAULT_API_VERSION, policy);
+    UpdateHapInfoParams info;
+    info.appIDDesc = std::string("updateFailed");
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = false;
+    ret = AccessTokenKit::UpdateHapToken(tokenIdEx, info, policy);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
 
     ret = AccessTokenKit::DeleteRemoteToken(deviceID8, 0x20100000);

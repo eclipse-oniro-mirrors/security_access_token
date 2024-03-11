@@ -426,12 +426,17 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
 {
     MessageParcel data;
     AccessTokenIDEx res = { 0 };
-    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return res;
+    }
 
     if (!data.WriteParcelable(&hapInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable hapInfo failed.");
         return res;
     }
     if (!data.WriteParcelable(&policyParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable policyParcel failed.");
         return res;
     }
 
@@ -441,9 +446,47 @@ AccessTokenIDEx AccessTokenManagerProxy::AllocHapToken(
     }
 
     unsigned long long result = reply.ReadUint64();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}llu", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}llu.", result);
     res.tokenIDEx = result;
     return res;
+}
+
+int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel, HapPolicyParcel& policyParcel,
+    AccessTokenIDEx& fullTokenId)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteParcelable(&hapInfoParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable hapInfo failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteParcelable(&policyParcel)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable policyParcel failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::INIT_TOKEN_HAP, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = 0;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read result.");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Result error = %{public}d.", result);
+        return result;
+    }
+    if (!reply.ReadUint64(fullTokenId.tokenIDEx)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read fullTokenId.");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    return RET_SUCCESS;
 }
 
 int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
@@ -617,8 +660,8 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     return result;
 }
 
-int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
-    bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion, const HapPolicyParcel& policyParcel)
+int32_t AccessTokenManagerProxy::UpdateHapToken(
+    AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel)
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     MessageParcel data;
@@ -626,13 +669,16 @@ int AccessTokenManagerProxy::UpdateHapToken(AccessTokenIDEx& tokenIdEx,
     if (!data.WriteUint32(tokenID)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteBool(isSystemApp)) {
+    if (!data.WriteBool(info.isSystemApp)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteString(appIDDesc)) {
+    if (!data.WriteString(info.appIDDesc)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
-    if (!data.WriteInt32(apiVersion)) {
+    if (!data.WriteInt32(info.apiVersion)) {
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteString(info.appDistributionType)) {
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteParcelable(&policyParcel)) {

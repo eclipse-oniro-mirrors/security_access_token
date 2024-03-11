@@ -289,6 +289,11 @@ public:
     {
         return true;
     }
+    int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+        std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
+    {
+        return RET_SUCCESS;
+    }
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
     {

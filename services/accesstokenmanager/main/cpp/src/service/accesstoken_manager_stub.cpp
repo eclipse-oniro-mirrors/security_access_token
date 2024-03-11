@@ -317,6 +317,37 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
     reply.WriteUint64(res.tokenIDEx);
 }
 
+void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParcel& reply)
+{
+    AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
+    if (!IsPrivilegedCalling() &&
+        (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", tokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    sptr<HapInfoParcel> hapInfoParcel = data.ReadParcelable<HapInfoParcel>();
+    sptr<HapPolicyParcel> hapPolicyParcel = data.ReadParcelable<HapPolicyParcel>();
+    if (hapInfoParcel == nullptr || hapPolicyParcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "read hapPolicyParcel or hapInfoParcel fail");
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    int32_t res;
+    AccessTokenIDEx fullTokenId = { 0 };
+    res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId);
+    if (!reply.WriteInt32(res)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail");
+    }
+
+    if (res != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "res error %{public}d", res);
+        return;
+    }
+    reply.WriteUint64(fullTokenId.tokenIDEx);
+}
+
 void AccessTokenManagerStub::GetTokenTypeInner(MessageParcel& data, MessageParcel& reply)
 {
     AccessTokenID tokenID = data.ReadUint32();
@@ -373,10 +404,12 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
     }
+    UpdateHapInfoParams info;
     AccessTokenID tokenID = data.ReadUint32();
-    bool isSystemApp = data.ReadBool();
-    std::string appIDDesc = data.ReadString();
-    int32_t apiVersion = data.ReadInt32();
+    info.isSystemApp = data.ReadBool();
+    info.appIDDesc = data.ReadString();
+    info.apiVersion = data.ReadInt32();
+    info.appDistributionType = data.ReadString();
     AccessTokenIDEx tokenIdEx;
     tokenIdEx.tokenIdExStruct.tokenID = tokenID;
     sptr<HapPolicyParcel> policyParcel = data.ReadParcelable<HapPolicyParcel>();
@@ -385,7 +418,7 @@ void AccessTokenManagerStub::UpdateHapTokenInner(MessageParcel& data, MessagePar
         reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->UpdateHapToken(tokenIdEx, isSystemApp, appIDDesc, apiVersion, *policyParcel);
+    int32_t result = this->UpdateHapToken(tokenIdEx, info, *policyParcel);
     reply.WriteInt32(result);
     reply.WriteUint32(tokenIdEx.tokenIdExStruct.tokenAttr);
 }
@@ -740,6 +773,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_TOKEN_HAP)] =
         &AccessTokenManagerStub::AllocHapTokenInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::INIT_TOKEN_HAP)] =
+        &AccessTokenManagerStub::InitHapTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::TOKEN_DELETE)] =
         &AccessTokenManagerStub::DeleteTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_TOKEN_TYPE)] =

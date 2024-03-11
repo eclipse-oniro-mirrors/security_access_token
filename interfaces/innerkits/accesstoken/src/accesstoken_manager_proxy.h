@@ -61,9 +61,11 @@ public:
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) override;
+    int32_t InitHapToken(const HapInfoParcel& hapInfoParcel, HapPolicyParcel& policyParcel,
+        AccessTokenIDEx& fullTokenId) override;
     int DeleteToken(AccessTokenID tokenID) override;
-    int UpdateHapToken(AccessTokenIDEx& tokenIdEx, bool isSystemApp, const std::string& appIDDesc, int32_t apiVersion,
-        const HapPolicyParcel& policyParcel) override;
+    int32_t UpdateHapToken(
+        AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParcel& policyParcel) override;
     int GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfoParcel& hapTokenInfoRes) override;
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE

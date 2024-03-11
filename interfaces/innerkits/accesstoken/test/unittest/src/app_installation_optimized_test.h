@@ -13,47 +13,28 @@
  * limitations under the License.
  */
 
-/**
- * @addtogroup Privacy
- * @{
- *
- * @brief Provides sensitive data access management.
- *
- * @since 8.0
- * @version 8.0
- */
+#ifndef APP_INSTALLATION_OPTIMIZED_TEST
+#define APP_INSTALLATION_OPTIMIZED_TEST
 
-/**
- * @file add_perm_param_info.h
- *
- * @brief Declares AddPermParamInfo struct.
- *
- * @since 12.0
- * @version 12.0
- */
+#include <gtest/gtest.h>
 
-#ifndef SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
-#define SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
-
-#include <string>
 #include "access_token.h"
-#include "permission_used_type.h"
+#include "accesstoken_kit.h"
+#include "permission_def.h"
+#include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/**
- * @brief add permission param info
- */
-struct AddPermParamInfo {
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    int32_t successCount = 0;
-    int32_t failCount = 0;
-    /** enum PermissionUsedType, see permission_used_type.h */
-    PermissionUsedType type = NORMAL_TYPE;
+class AppInstallationOptimizedTest : public testing::Test {
+public:
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void SetUp();
+    void TearDown();
+    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // SECURITY_ACCESSTOKEN_ADD_PERM_PARAM_INFO_H
+#endif // APP_INSTALLATION_OPTIMIZED_TEST

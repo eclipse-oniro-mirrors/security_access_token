@@ -33,6 +33,7 @@ public:
         VERISION_0 = 0,
         VERISION_1,
         VERISION_2,
+        VERISION_3,
     };
 
     void Open();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,8 @@
 #ifndef PRIVACY_MANAGER_STUB_H
 #define PRIVACY_MANAGER_STUB_H
 
+#include <map>
+
 #include "i_privacy_manager.h"
 #include "iremote_stub.h"
 #include "nocopyable.h"
@@ -25,7 +27,7 @@ namespace Security {
 namespace AccessToken {
 class PrivacyManagerStub : public IRemoteStub<IPrivacyManager> {
 public:
-    PrivacyManagerStub() = default;
+    PrivacyManagerStub();
     virtual ~PrivacyManagerStub() = default;
 
     int32_t OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override;
@@ -48,6 +50,7 @@ private:
     void GetSpecialSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
     bool IsSecCompServiceCalling();
 #endif
+    void GetPermissionUsedTypeInfosInner(MessageParcel& data, MessageParcel& reply);
     bool IsAccessTokenCalling() const;
     bool IsSystemAppCalling() const;
     bool VerifyPermission(const std::string& permission) const;
@@ -55,6 +58,10 @@ private:
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     AccessTokenID secCompTokenId_ = 0;
 #endif
+    void SetPrivacyFuncInMap();
+
+    using RequestType = void (PrivacyManagerStub::*)(MessageParcel &data, MessageParcel &reply);
+    std::map<uint32_t, RequestType> requestMap_;
 };
 } // namespace AccessToken
 } // namespace Security

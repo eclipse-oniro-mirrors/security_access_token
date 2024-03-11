@@ -29,6 +29,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
 #endif
+static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 }
 
 PrivacyManagerProxy::PrivacyManagerProxy(const sptr<IRemoteObject>& impl)
@@ -381,6 +382,48 @@ int32_t PrivacyManagerProxy::GetSpecialSecCompEnhance(const std::string& bundleN
     return result;
 }
 #endif
+
+int32_t PrivacyManagerProxy::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
+    std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenId);
+        return false;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteString(%{public}s)", permissionName.c_str());
+        return false;
+    }
+
+    if (!SendRequest(PrivacyInterfaceCode::GET_PERMISSION_USED_TYPE_INFOS, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server is %{public}d.", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    uint32_t size = reply.ReadUint32();
+    if (size > MAX_PERMISSION_USED_TYPE_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, results oversize %{public}d, please add query params!", size);
+        return PrivacyError::ERR_OVERSIZE;
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<PermissionUsedTypeInfoParcel> parcel = reply.ReadParcelable<PermissionUsedTypeInfoParcel>();
+        if (parcel != nullptr) {
+            resultsParcel.emplace_back(*parcel);
+        }
+    }
+    return result;
+}
 
 bool PrivacyManagerProxy::SendRequest(
     PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode)
