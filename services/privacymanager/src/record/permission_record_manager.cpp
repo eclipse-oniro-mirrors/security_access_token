@@ -980,17 +980,11 @@ std::string PermissionRecordManager::GetDeviceId(AccessTokenID tokenId)
 
 int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
 {
-    int32_t status = PERM_INACTIVE;
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetHapTokenInfo(tokenId, tokenInfo) != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
-        return status;
-    }
-    status = PERM_ACTIVE_IN_BACKGROUND;
+    int32_t status = PERM_ACTIVE_IN_BACKGROUND;
     std::vector<AppStateData> foreGroundAppList;
     AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
     if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
-        [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
+        [=](const auto& foreGroundApp) { return foreGroundApp.accessTokenId == tokenId; })) {
         status = PERM_ACTIVE_IN_FOREGROUND;
     }
     return status;
