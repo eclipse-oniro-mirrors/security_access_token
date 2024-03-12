@@ -23,6 +23,7 @@
 
 #include "ability.h"
 #include "ability_manager_client.h"
+#include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -51,10 +52,9 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
 };
-static constexpr int32_t VERIFY_OR_FLAG_INPUT_MAX_PARAMS = 2;
-static constexpr int32_t GRANT_OR_REVOKE_INPUT_MAX_PARAMS = 4;
-static constexpr int32_t REQUEST_PERMISSION_MAX_PARAMS = 3;
-static constexpr int32_t ON_OFF_MAX_PARAMS = 4;
+static constexpr int32_t MAX_PARAMS_TWO = 2;
+static constexpr int32_t MAX_PARAMS_THREE = 3;
+static constexpr int32_t MAX_PARAMS_FOUR = 4;
 static constexpr int32_t MAX_LENGTH = 256;
 static constexpr int32_t MAX_WAIT_TIME = 1000;
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
@@ -376,6 +376,7 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("off", UnregisterPermStateChangeCallback),
         DECLARE_NAPI_FUNCTION("getVersion", GetVersion),
         DECLARE_NAPI_FUNCTION("requestPermissionsFromUser", RequestPermissionsFromUser),
+        DECLARE_NAPI_FUNCTION("getPermissionsStatus", GetPermissionsStatus),
     };
 
     napi_value cons = nullptr;
@@ -397,9 +398,19 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     SetNamedProperty(env, permStateChangeType, PERMISSION_REVOKED_OPER, "PERMISSION_REVOKED_OPER");
     SetNamedProperty(env, permStateChangeType, PERMISSION_GRANTED_OPER, "PERMISSION_GRANTED_OPER");
 
+    napi_value permissionStatus = nullptr;
+    napi_create_object(env, &permissionStatus);
+
+    SetNamedProperty(env, permissionStatus, SETTING_OPER, "DENIED");
+    SetNamedProperty(env, permissionStatus, PASS_OPER, "GRANTED");
+    SetNamedProperty(env, permissionStatus, DYNAMIC_OPER, "NOT_DETERMINED");
+    SetNamedProperty(env, permissionStatus, INVALID_OPER, "INVALID");
+    SetNamedProperty(env, permissionStatus, FORBIDDEN_OPER, "RESTRICTED");
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
+        DECLARE_NAPI_PROPERTY("PermissionStatus", permissionStatus),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 
@@ -435,14 +446,14 @@ napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInf
 bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = VERIFY_OR_FLAG_INPUT_MAX_PARAMS;
+    size_t argc = MAX_PARAMS_TWO;
 
-    napi_value argv[VERIFY_OR_FLAG_INPUT_MAX_PARAMS] = { nullptr };
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
     napi_value thisVar = nullptr;
     std::string errMsg;
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < VERIFY_OR_FLAG_INPUT_MAX_PARAMS) {
+    if (argc < MAX_PARAMS_TWO) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -682,14 +693,14 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
 bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const napi_callback_info info,
     AtManagerAsyncContext& asyncContext)
 {
-    size_t argc = GRANT_OR_REVOKE_INPUT_MAX_PARAMS;
-    napi_value argv[GRANT_OR_REVOKE_INPUT_MAX_PARAMS] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = {nullptr};
     napi_value thatVar = nullptr;
 
     void *data = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
     // 1: grant and revoke required minnum argc
-    if (argc < GRANT_OR_REVOKE_INPUT_MAX_PARAMS - 1) {
+    if (argc < MAX_PARAMS_FOUR - 1) {
         NAPI_CALL_BASE(env, napi_throw(env,
             GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -720,7 +731,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
         return false;
     }
 
-    if (argc == GRANT_OR_REVOKE_INPUT_MAX_PARAMS) {
+    if (argc == MAX_PARAMS_FOUR) {
         // 3: the fourth parameter of argv
         if (!IsUndefinedOrNull(env, argv[3]) && !ParseCallback(env, argv[3], asyncContext.callbackRef)) {
             NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL,
@@ -759,14 +770,14 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+        asyncContext->result = ERR_PARAM_INVALID;
     }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::GrantPermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
     } else {
-        asyncContext->result = JsErrorCode::JS_ERROR_PERMISSION_NOT_EXIST;
+        asyncContext->result = ERR_PERMISSION_NOT_EXIST;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL,
         "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, grant result = %{public}d.",
@@ -897,14 +908,14 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
-        asyncContext->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+        asyncContext->result = ERR_PARAM_INVALID;
     }
     // only user_grant permission can use innerkit class method to grant permission, system_grant return failed
     if (permissionDef.grantMode == USER_GRANT) {
         asyncContext->result = AccessTokenKit::RevokePermission(asyncContext->tokenId, asyncContext->permissionName,
             asyncContext->flag);
     } else {
-        asyncContext->result = JsErrorCode::JS_ERROR_PERMISSION_NOT_EXIST;
+        asyncContext->result = ERR_PERMISSION_NOT_EXIST;
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL,
         "tokenId = %{public}d, permissionName = %{public}s, flag = %{public}d, revoke result = %{public}d.",
@@ -999,8 +1010,8 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 
     napi_value resource = nullptr; // resource name
     napi_create_string_utf8(env, "GetPermissionFlags", NAPI_AUTO_LENGTH, &resource);
-
-    napi_create_async_work( // define work
+    // define work
+    napi_create_async_work(
         env, nullptr, resource, GetPermissionFlagsExecute, GetPermissionFlagsComplete,
         reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
     // add async work handle to the napi queue and wait for result
@@ -1052,15 +1063,15 @@ static napi_value GetContext(
 bool NapiAtManager::ParseRequestPermissionFromUser(const napi_env& env,
     const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    size_t argc = REQUEST_PERMISSION_MAX_PARAMS;
-    napi_value argv[REQUEST_PERMISSION_MAX_PARAMS] = { nullptr };
+    size_t argc = MAX_PARAMS_THREE;
+    napi_value argv[MAX_PARAMS_THREE] = { nullptr };
     napi_value thisVar = nullptr;
 
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
         return false;
     }
-    if (argc < REQUEST_PERMISSION_MAX_PARAMS - 1) {
+    if (argc < MAX_PARAMS_THREE - 1) {
         NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
             JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -1087,7 +1098,7 @@ bool NapiAtManager::ParseRequestPermissionFromUser(const napi_env& env,
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "asyncContext.permissionList size: %{public}zu.", asyncContext->permissionList.size());
 
-    if (argc == REQUEST_PERMISSION_MAX_PARAMS) {
+    if (argc == MAX_PARAMS_THREE) {
         // argv[2] : callback
         if (!IsUndefinedOrNull(env, argv[2]) && !ParseCallback(env, argv[2], asyncContext->callbackRef)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionRequestResult>");
@@ -1099,8 +1110,8 @@ bool NapiAtManager::ParseRequestPermissionFromUser(const napi_env& env,
     return true;
 }
 
-static napi_value WrapRequestResult(const napi_env& env,
-    const std::vector<std::string>& permissions, const std::vector<int>& grantResults)
+static napi_value WrapRequestResult(const napi_env& env, const std::vector<std::string>& permissions,
+    const std::vector<int>& grantResults, const std::vector<bool>& dialogShownResults)
 {
     napi_value result = nullptr;
     NAPI_CALL(env, napi_create_object(env, &result));
@@ -1122,6 +1133,15 @@ static napi_value WrapRequestResult(const napi_env& env,
         NAPI_CALL(env, napi_set_element(env, objGrantResults, i, nGrantResult));
     }
     NAPI_CALL(env, napi_set_named_property(env, result, "authResults", objGrantResults));
+
+    napi_value objDialogShown;
+    NAPI_CALL(env, napi_create_array(env, &objDialogShown));
+    for (size_t i = 0; i < dialogShownResults.size(); i++) {
+        napi_value nDialogShown = nullptr;
+        NAPI_CALL(env, napi_get_boolean(env, dialogShownResults[i], &nDialogShown));
+        NAPI_CALL(env, napi_set_element(env, objDialogShown, i, nDialogShown));
+    }
+    NAPI_CALL(env, napi_set_named_property(env, result, "dialogShownResults", objDialogShown));
 
     return result;
 }
@@ -1149,7 +1169,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
     int32_t result = JsErrorCode::JS_OK;
     if (retCB->grantResults.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantResults empty");
-        result = JsErrorCode::JS_ERROR_INNER;
+        result = RET_FAILED;
     }
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(asyncContext->env, &scope);
@@ -1158,18 +1178,16 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
         return;
     }
     napi_value requestResult = WrapRequestResult(
-        asyncContext->env, retCB->permissions, retCB->grantResults);
+        asyncContext->env, retCB->permissions, retCB->grantResults, retCB->dialogShownResults);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "wrap requestResult failed");
-        result = JsErrorCode::JS_ERROR_INNER;
+        result = RET_FAILED;
     }
 
     if (asyncContext->deferred != nullptr) {
-        ReturnPromiseResult(asyncContext->env, result,
-            asyncContext->deferred, requestResult);
+        ReturnPromiseResult(asyncContext->env, result, asyncContext->deferred, requestResult);
     } else {
-        ReturnCallbackResult(asyncContext->env, result,
-            asyncContext->callbackRef, requestResult);
+        ReturnCallbackResult(asyncContext->env, result, asyncContext->callbackRef, requestResult);
     }
     napi_close_handle_scope(asyncContext->env, scope);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnRequestPermissionsFromUser async callback is called end");
@@ -1210,6 +1228,7 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
 
     retCB->permissions = permissions;
     retCB->grantResults = newGrantResults;
+    retCB->dialogShownResults = asyncContext->dialogShownResults;
     retCB->requestCode = requestCode_;
     retCB->data = data_;
 
@@ -1241,7 +1260,7 @@ static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncCon
     if (remoteObject == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
         asyncContext->needDynamicRequest = false;
-        asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        asyncContext->result = RET_FAILED;
         return;
     }
 
@@ -1267,21 +1286,20 @@ static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncCon
     ACCESSTOKEN_LOG_INFO(LABEL, "RequestDialogService end. ret=%{public}d", err);
 }
 
-bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions,
-    std::vector<int32_t>& permissionsState, PermissionGrantInfo& info)
+bool NapiAtManager::IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     std::vector<PermissionListState> permList;
-    for (const auto& permission : permissions) {
+    for (const auto& permission : asyncContext->permissionList) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "permission: %{public}s.", permission.c_str());
         PermissionListState permState;
         permState.permissionName = permission;
-        permState.state = SETTING_OPER;
+        permState.state = INVALID_OPER;
         permList.emplace_back(permState);
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu, permissions size: %{public}zu.",
-        permList.size(), permissions.size());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu, asyncContext->permissionList size: %{public}zu.",
+        permList.size(), asyncContext->permissionList.size());
 
-    auto ret = AccessTokenKit::GetSelfPermissionsState(permList, info);
+    auto ret = AccessTokenKit::GetSelfPermissionsState(permList, asyncContext->info);
     if (ret == FORBIDDEN_OPER) { // if app is under control, change state from default -1 to 2
         for (auto& perm : permList) {
             perm.state = INVALID_OPER;
@@ -1289,11 +1307,12 @@ bool NapiAtManager::IsDynamicRequest(const std::vector<std::string>& permissions
     }
 
     for (const auto& permState : permList) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "permissions: %{public}s. permissionsState: %{public}u",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "permission: %{public}s. permissionsState: %{public}u",
             permState.permissionName.c_str(), permState.state);
-        permissionsState.emplace_back(permState.state);
+        asyncContext->permissionsState.emplace_back(permState.state);
+        asyncContext->dialogShownResults.emplace_back(permState.state == TypePermissionOper::DYNAMIC_OPER);
     }
-    if (permList.size() != permissions.size()) {
+    if (permList.size() != asyncContext->permissionList.size()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Returned permList size: %{public}zu.", permList.size());
         return false;
     }
@@ -1377,6 +1396,7 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
     std::unique_ptr<ResultCallback> callbackPtr {retCB};
     retCB->permissions = permissionList;
     retCB->grantResults = newGrantResults;
+    retCB->dialogShownResults = data->dialogShownResults;
     retCB->data = data;
 
     uv_loop_s* loop = nullptr;
@@ -1474,7 +1494,7 @@ static void CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncCont
 
     if (uiContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
-        asyncContext->result = JsErrorCode::JS_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
+        asyncContext->result = RET_FAILED;
         return;
     }
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
@@ -1494,7 +1514,7 @@ static void CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncCont
     ACCESSTOKEN_LOG_INFO(LABEL, "end CreateModalUIExtension, sessionId is %{public}d", sessionId);
     if (sessionId == 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "create component failed, sessionId is 0");
-        asyncContext->result = JsErrorCode::JS_ERROR_INNER;
+        asyncContext->result = RET_FAILED;
         return;
     }
     uiExtCallback->SetSessionId(sessionId);
@@ -1514,20 +1534,20 @@ void NapiAtManager::RequestPermissionsFromUserExecute(napi_env env, void* data)
 {
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
-    AccessTokenID tokenID = 0;
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
-        tokenID = asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
+        asyncContextHandle->asyncContextPtr->tokenId =
+            asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
     } else {
-        tokenID = asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        asyncContextHandle->asyncContextPtr->tokenId =
+            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
     }
-    if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
+    if (asyncContextHandle->asyncContextPtr->tokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
-        asyncContextHandle->asyncContextPtr->result = JsErrorCode::JS_ERROR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
         return;
     }
 
-    if (!IsDynamicRequest(asyncContextHandle->asyncContextPtr->permissionList,
-        asyncContextHandle->asyncContextPtr->permissionsState, asyncContextHandle->asyncContextPtr->info)) {
+    if (!IsDynamicRequest(asyncContextHandle->asyncContextPtr)) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "it does not need to request permission exsion");
         asyncContextHandle->asyncContextPtr->needDynamicRequest = false;
         return;
@@ -1557,14 +1577,14 @@ void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status
     if ((asyncContextHandle->asyncContextPtr->permissionsState.empty()) &&
         (asyncContextHandle->asyncContextPtr->result == JsErrorCode::JS_OK)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "grantResults empty");
-        asyncContextHandle->asyncContextPtr->result = JsErrorCode::JS_ERROR_INNER;
+        asyncContextHandle->asyncContextPtr->result = RET_FAILED;
     }
-    napi_value requestResult = WrapRequestResult(env,
-        asyncContextHandle->asyncContextPtr->permissionList, asyncContextHandle->asyncContextPtr->permissionsState);
+    napi_value requestResult = WrapRequestResult(env, asyncContextHandle->asyncContextPtr->permissionList,
+        asyncContextHandle->asyncContextPtr->permissionsState, asyncContextHandle->asyncContextPtr->dialogShownResults);
     if (requestResult == nullptr) {
         ACCESSTOKEN_LOG_DEBUG(LABEL, "wrap requestResult failed");
         if (asyncContextHandle->asyncContextPtr->result == JsErrorCode::JS_OK) {
-            asyncContextHandle->asyncContextPtr->result = JsErrorCode::JS_ERROR_INNER;
+            asyncContextHandle->asyncContextPtr->result = RET_FAILED;
         }
     } else {
         asyncContextHandle->asyncContextPtr->requestResult = requestResult;
@@ -1607,6 +1627,119 @@ napi_value NapiAtManager::RequestPermissionsFromUser(napi_env env, napi_callback
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionsFromUser end.");
     asyncContextHandle.release();
     return result;
+}
+
+napi_value NapiAtManager::GetPermissionsStatus(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionsStatus begin.");
+
+    auto* asyncContext = new (std::nothrow) RequestAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<RequestAsyncContext> context {asyncContext};
+    if (!ParseInputToGetQueryResult(env, info, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    napi_create_promise(env, &(asyncContext->deferred), &result); // create delay promise object
+
+    napi_value resource = nullptr; // resource name
+    napi_create_string_utf8(env, "GetPermissionsStatus", NAPI_AUTO_LENGTH, &resource);
+
+    napi_create_async_work(
+        env, nullptr, resource, GetPermissionsStatusExecute, GetPermissionsStatusComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work));
+    // add async work handle to the napi queue and wait for result
+    napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default);
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionsStatus end.");
+    context.release();
+    return result;
+}
+
+bool NapiAtManager::ParseInputToGetQueryResult(const napi_env& env, const napi_callback_info& info,
+    RequestAsyncContext& asyncContext)
+{
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = {nullptr};
+    napi_value thatVar = nullptr;
+
+    void *data = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thatVar, &data), false);
+    // 1: can request permissions minnum argc
+    if (argc < MAX_PARAMS_TWO - 1) {
+        NAPI_CALL_BASE(env, napi_throw(env,
+            GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
+
+    std::string errMsg;
+    asyncContext.env = env;
+    // the first parameter of argv
+    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+        errMsg = GetParamErrorMsg("tokenId", "number");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    // the second parameter of argv
+    if (!ParseStringArray(env, argv[1], asyncContext.permissionList)) {
+        errMsg = GetParamErrorMsg("permissions", "Array<string>");
+        NAPI_CALL_BASE(
+            env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionList size = %{public}zu", asyncContext.tokenId,
+        asyncContext.permissionList.size());
+    return true;
+}
+
+void NapiAtManager::GetPermissionsStatusExecute(napi_env env, void *data)
+{
+    RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
+
+    std::vector<PermissionListState> permList;
+    for (const auto& permission : asyncContext->permissionList) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "permission: %{public}s.", permission.c_str());
+        PermissionListState permState;
+        permState.permissionName = permission;
+        permState.state = INVALID_OPER;
+        permList.emplace_back(permState);
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size: %{public}zu, asyncContext->permissionList size: %{public}zu.",
+        permList.size(), asyncContext->permissionList.size());
+
+    asyncContext->result = AccessTokenKit::GetPermissionsStatus(asyncContext->tokenId, permList);
+    for (const auto& permState : permList) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "permission: %{public}s", permState.permissionName.c_str());
+        asyncContext->permissionQueryResults.emplace_back(permState.state);
+    }
+}
+
+void NapiAtManager::GetPermissionsStatusComplete(napi_env env, napi_status status, void *data)
+{
+    RequestAsyncContext* asyncContext = reinterpret_cast<RequestAsyncContext*>(data);
+    std::unique_ptr<RequestAsyncContext> callbackPtr {asyncContext};
+
+    if ((asyncContext->permissionQueryResults.empty()) && asyncContext->result == JsErrorCode::JS_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionQueryResults empty");
+        asyncContext->result = RET_FAILED;
+    }
+    napi_value result;
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &result));
+
+    for (size_t i = 0; i < asyncContext->permissionQueryResults.size(); i++) {
+        napi_value nPermissionQueryResult = nullptr;
+        NAPI_CALL_RETURN_VOID(env, napi_create_int32(env,
+            asyncContext->permissionQueryResults[i], &nPermissionQueryResult));
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, result, i, nPermissionQueryResult));
+    }
+    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
 }
 
 bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
@@ -1666,11 +1799,11 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
 bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
-    size_t argc = ON_OFF_MAX_PARAMS;
-    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = {nullptr};
     napi_value thisVar = nullptr;
     NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
-    if (argc < ON_OFF_MAX_PARAMS) {
+    if (argc < MAX_PARAMS_FOUR) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
@@ -1738,8 +1871,8 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
 bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_info cbInfo,
     UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo)
 {
-    size_t argc = ON_OFF_MAX_PARAMS;
-    napi_value argv[ON_OFF_MAX_PARAMS] = {nullptr};
+    size_t argc = MAX_PARAMS_FOUR;
+    napi_value argv[MAX_PARAMS_FOUR] = {nullptr};
     napi_value thisVar = nullptr;
     napi_ref callback = nullptr;
     std::string errMsg;
@@ -1748,7 +1881,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         return false;
     }
     // 1: off required minnum argc
-    if (argc < ON_OFF_MAX_PARAMS - 1) {
+    if (argc < MAX_PARAMS_FOUR - 1) {
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing."));
         return false;
     }
@@ -1772,7 +1905,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
         napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg));
         return false;
     }
-    if (argc == ON_OFF_MAX_PARAMS) {
+    if (argc == MAX_PARAMS_FOUR) {
         // 3: the fourth parameter of argv
         if (!ParseCallback(env, argv[3], callback)) {
             errMsg = GetParamErrorMsg("callback", "Callback<PermissionStateChangeInfo>");

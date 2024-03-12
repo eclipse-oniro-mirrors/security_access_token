@@ -55,6 +55,8 @@ public:
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) override;
+    int32_t GetPermissionsStatus(
+        AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;

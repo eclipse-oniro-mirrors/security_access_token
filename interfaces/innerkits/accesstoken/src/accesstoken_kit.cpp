@@ -231,6 +231,16 @@ PermissionOper AccessTokenKit::GetSelfPermissionsState(std::vector<PermissionLis
     return AccessTokenManagerClient::GetInstance().GetSelfPermissionsState(permList, info);
 }
 
+int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permList.size=%{public}zu.", tokenID, permList.size());
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        return ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetPermissionsStatus(tokenID, permList);
+}
+
 int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName, bool crossIpc)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",

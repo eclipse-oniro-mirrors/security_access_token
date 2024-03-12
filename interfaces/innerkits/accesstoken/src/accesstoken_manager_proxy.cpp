@@ -291,6 +291,53 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
     return result;
 }
 
+int32_t AccessTokenManagerProxy::GetPermissionsStatus(AccessTokenID tokenID,
+    std::vector<PermissionListStateParcel>& permListParcel)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(permListParcel.size())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel size.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    for (const auto& permission : permListParcel) {
+        if (!data.WriteParcelable(&permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permListParcel.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSIONS_STATUS, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    size_t size = reply.ReadUint32();
+    if (size != permListParcel.size()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permListParcel size from server is invalid!");
+        return ERR_SIZE_NOT_EQUAL;
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<PermissionListStateParcel> permissionReq = reply.ReadParcelable<PermissionListStateParcel>();
+        if (permissionReq != nullptr) {
+            permListParcel[i].permsState.state = permissionReq->permsState.state;
+        }
+    }
+    return result;
+}
+
 int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
     MessageParcel inData;

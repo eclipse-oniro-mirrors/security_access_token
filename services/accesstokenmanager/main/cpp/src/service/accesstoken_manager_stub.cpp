@@ -105,13 +105,22 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
 {
+    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE));
+        return;
+    }
     uint32_t tokenID;
     if (!data.ReadUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenID.");
+        reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE));
+        return;
     }
     std::string permissionName;
     if (!data.ReadString(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permissionName.");
+        reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE));
+        return;
     }
     PermUsedTypeEnum result = this->GetUserGrantedPermissionUsedType(tokenID, permissionName);
     int32_t type = static_cast<int32_t>(result);
@@ -205,6 +214,51 @@ void AccessTokenManagerStub::GetSelfPermissionsStateInner(MessageParcel& data, M
         reply.WriteParcelable(&perm);
     }
     reply.WriteParcelable(&infoParcel);
+}
+
+void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    if (!IsPrivilegedCalling() &&
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    AccessTokenID tokenID = data.ReadUint32();
+    std::vector<PermissionListStateParcel> permList;
+    uint32_t size = 0;
+    if (!data.ReadUint32(size)) {
+        reply.WriteInt32(INVALID_OPER);
+        return;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "permList size read from client data is %{public}d.", size);
+    if (size > MAX_PERMISSION_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permList size %{public}d is invalid", size);
+        reply.WriteInt32(INVALID_OPER);
+        return;
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        sptr<PermissionListStateParcel> permissionParcel = data.ReadParcelable<PermissionListStateParcel>();
+        if (permissionParcel != nullptr) {
+            permList.emplace_back(*permissionParcel);
+        }
+    }
+    int32_t result = this->GetPermissionsStatus(tokenID, permList);
+
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteUint32(permList.size());
+    for (const auto& perm : permList) {
+        reply.WriteParcelable(&perm);
+    }
 }
 
 void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply)
@@ -824,6 +878,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::ClearUserGrantedPermissionStateInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =
         &AccessTokenManagerStub::GetSelfPermissionsStateInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSIONS_STATUS)] =
+        &AccessTokenManagerStub::GetPermissionsStatusInner;
     requestFuncMap_[
         static_cast<uint32_t>(AccessTokenInterfaceCode::REGISTER_PERM_STATE_CHANGE_CALLBACK)] =
         &AccessTokenManagerStub::RegisterPermStateChangeCallbackInner;

@@ -59,7 +59,7 @@ int CameraServiceCallbackStub::OnRemoteRequest(
 int32_t CameraServiceCallbackStub::OnCameraMute(bool muteMode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraMute(%{public}d)", muteMode);
-    PermissionRecordManager::GetInstance().NotifyCameraChange(!muteMode);
+    PermissionRecordManager::GetInstance().NotifyCameraChange(muteMode);
     return 0;
 }
 }

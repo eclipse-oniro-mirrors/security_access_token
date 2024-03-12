@@ -64,7 +64,7 @@ void AudioRoutingManagerListenerStub::OnMicStateUpdated(const MicStateChangeEven
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraMute(%{public}d)",
         micStateChangeEvent.mute);
-    PermissionRecordManager::GetInstance().NotifyMicChange(!micStateChangeEvent.mute);
+    PermissionRecordManager::GetInstance().NotifyMicChange(micStateChangeEvent.mute);
 }
 }
 } // namespace AccessToken

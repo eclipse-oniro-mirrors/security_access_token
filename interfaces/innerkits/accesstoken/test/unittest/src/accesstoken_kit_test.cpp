@@ -367,6 +367,13 @@ HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType002, TestSize.Level
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
         AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+    int32_t selfUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    setuid(1);
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+    setuid(selfUid);
+    ASSERT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**

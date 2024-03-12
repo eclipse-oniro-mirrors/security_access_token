@@ -40,6 +40,7 @@ private:
     void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetReqPermissionsInner(MessageParcel& data, MessageParcel& reply);
     void GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
