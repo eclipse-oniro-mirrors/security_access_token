@@ -275,6 +275,7 @@ void HapTokenInfoInner::SetRemote(bool isRemote)
 
 bool HapTokenInfoInner::IsPermDialogForbidden() const
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}d", isPermDialogForbidden_);
     return isPermDialogForbidden_;
 }
 

@@ -177,22 +177,34 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<Pe
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
-    bool isPermDialogForbidden = AccessTokenInfoManager::GetInstance().GetPermDialogCap(callingTokenID);
-    if (isPermDialogForbidden) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d is under control", callingTokenID);
-        return FORBIDDEN_OPER;
+    return GetPermissionsState(callingTokenID, reqPermList);
+}
+
+int32_t AccessTokenManagerService::GetPermissionsStatus(AccessTokenID tokenID,
+    std::vector<PermissionListStateParcel>& reqPermList)
+{
+    if (!AccessTokenInfoManager::GetInstance().IsTokenIdExist(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d does not exist", tokenID);
+        return ERR_TOKENID_NOT_EXIST;
     }
+    PermissionOper ret = GetPermissionsState(tokenID, reqPermList);
+    return ret == INVALID_OPER ? RET_FAILED : RET_SUCCESS;
+}
+
+PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID tokenID,
+    std::vector<PermissionListStateParcel>& reqPermList)
+{
     int32_t apiVersion = 0;
-    if (!PermissionManager::GetInstance().GetApiVersionByTokenId(callingTokenID, apiVersion)) {
+    if (!PermissionManager::GetInstance().GetApiVersionByTokenId(tokenID, apiVersion)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get api version error");
         return INVALID_OPER;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "callingTokenID: %{public}d, apiVersion: %{public}d", callingTokenID, apiVersion);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, apiVersion: %{public}d", tokenID, apiVersion);
 
     bool needRes = false;
     std::vector<PermissionStateFull> permsList;
-    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, false);
-    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(callingTokenID, permsList, true);
+    int retUserGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, false);
+    int retSysGrant = PermissionManager::GetInstance().GetReqPermissions(tokenID, permsList, true);
     if ((retSysGrant != RET_SUCCESS) || (retUserGrant != RET_SUCCESS)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "GetReqPermissions failed, retUserGrant:%{public}d, retSysGrant:%{public}d",
@@ -221,6 +233,16 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<Pe
         }
         ACCESSTOKEN_LOG_DEBUG(LABEL, "perm: 0x%{public}s, state: 0x%{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
+    }
+    if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID=%{public}d is under control", tokenID);
+        uint32_t size = reqPermList.size();
+        for (uint32_t i = 0; i < size; i++) {
+            if (reqPermList[i].permsState.state != INVALID_OPER) {
+                reqPermList[i].permsState.state = FORBIDDEN_OPER;
+            }
+        }
+        return FORBIDDEN_OPER;
     }
     if (needRes) {
         return DYNAMIC_OPER;

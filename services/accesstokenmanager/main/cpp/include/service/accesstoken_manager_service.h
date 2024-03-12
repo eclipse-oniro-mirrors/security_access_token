@@ -54,6 +54,7 @@ public:
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& reqPermList,
         PermissionGrantInfoParcel& infoParcel) override;
+    int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
@@ -99,7 +100,7 @@ private:
     void DumpToken();
     void DumpTokenIfNeeded();
     void AccessTokenServiceParamSet() const;
-
+    PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;

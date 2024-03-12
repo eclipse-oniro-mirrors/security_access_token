@@ -229,17 +229,23 @@ public:
      */
     static int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
     /**
-     * @brief Get requsted permission grant result.
+     * @brief Get requsted permission grant result
      * @param permList PermissionListState list quote, as input and query result
      * @return enum PermissionOper, see access_token.h
      */
     static PermissionOper GetSelfPermissionsState(std::vector<PermissionListState>& permList,
         PermissionGrantInfo& info);
     /**
+     * @brief Get requsted permissions status
+     * @param permList PermissionListState list quote, as input and query result
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
+    /**
      * @brief Grant input permission to input tokenID with input flag.
      * @param tokenID token id
      * @param permissionName permission name quote
-     * @param flag the permission grant flag
+     * @param flag enum PermissionFlag, see access_token.h
      * @return error code, see access_token_error.h
      */
     static int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
@@ -247,7 +253,7 @@ public:
      * @brief Revoke input permission to input tokenID with input flag.
      * @param tokenID token id
      * @param permissionName permission name quote
-     * @param flag the permission grant flag
+     * @param flag enum PermissionFlag, see access_token.h
      * @return error code, see access_token_error.h
      */
     static int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
