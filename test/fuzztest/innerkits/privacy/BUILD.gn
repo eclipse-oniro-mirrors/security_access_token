@@ -19,6 +19,7 @@ group("fuzztest") {
     deps += [
       "addpermissionusedrecord_fuzzer:AddPermissionUsedRecordFuzzTest",
       "getpermissionusedrecords_fuzzer:GetPermissionUsedRecordsFuzzTest",
+      "getpermissionusedtypeinfos_fuzzer:GetPermissionUsedTypeInfosFuzzTest",
       "isallowedusingpermission_fuzzer:IsAllowedUsingPermissionFuzzTest",
       "registerpermactivestatuscallback_fuzzer:RegisterPermActiveStatusCallbackFuzzTest",
       "removepermissionusedrecords_fuzzer:RemovePermissionUsedRecordsFuzzTest",
