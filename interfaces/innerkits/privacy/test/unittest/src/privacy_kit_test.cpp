@@ -1404,7 +1404,8 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission004, TestSize.Level1)
  */
 HWTEST_F(PrivacyKitTest, StopUsingPermission005, TestSize.Level1)
 {
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, "ohos.permission.CAMERA"));
+    ASSERT_EQ(
+        PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(g_nativeToken, "ohos.permission.CAMERA"));
 }
 
 /**
