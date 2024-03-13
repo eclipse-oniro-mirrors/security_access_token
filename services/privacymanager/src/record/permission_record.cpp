@@ -27,6 +27,7 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
     values.Put(PrivacyFiledConst::FIELD_STATUS, record.status);
     values.Put(PrivacyFiledConst::FIELD_TIMESTAMP, record.timestamp);
     values.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, record.accessDuration);
+    values.Put(PrivacyFiledConst::FIELD_USED_TYPE, record.type);
     values.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, record.accessCount);
     values.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, record.rejectCount);
     values.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, record.lockScreenStatus);
@@ -39,6 +40,8 @@ void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& valu
     record.status = values.GetInt(PrivacyFiledConst::FIELD_STATUS);
     record.timestamp = values.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
     record.accessDuration = values.GetInt64(PrivacyFiledConst::FIELD_ACCESS_DURATION);
+    int32_t type = values.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+    record.type = static_cast<PermissionUsedType>(type);
     record.accessCount = values.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     record.rejectCount = values.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
     int32_t lockScreenStatus = values.GetInt(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS);

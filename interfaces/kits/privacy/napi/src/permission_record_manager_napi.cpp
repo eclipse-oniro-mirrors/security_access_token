@@ -31,9 +31,17 @@ std::mutex g_lockForPermActiveChangeSubscribers;
 std::vector<RegisterPermActiveChangeContext*> g_permActiveChangeSubscribers;
 static constexpr size_t MAX_CALLBACK_SIZE = 200;
 static constexpr int32_t ADD_PERMISSION_RECORD_MAX_PARAMS = 5;
+static constexpr int32_t ADD_PERMISSION_RECORD_MIN_PARAMS = 4;
 static constexpr int32_t GET_PERMISSION_RECORD_MAX_PARAMS = 2;
 static constexpr int32_t ON_OFF_MAX_PARAMS = 3;
 static constexpr int32_t START_STOP_MAX_PARAMS = 3;
+static constexpr int32_t GET_PERMISSION_USED_TYPE_MAX_PARAMS = 2;
+static constexpr int32_t GET_PERMISSION_USED_TYPE_ONE_PARAMS = 1;
+static constexpr int32_t FIRST_PARAM = 0;
+static constexpr int32_t SECOND_PARAM = 1;
+static constexpr int32_t THIRD_PARAM = 2;
+static constexpr int32_t FOURTH_PARAM = 3;
+static constexpr int32_t FIFTH_PARAM = 4;
 
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
@@ -126,6 +134,38 @@ static void ReturnCallbackResult(napi_env env, const RecordManagerAsyncContext& 
         napi_call_function(env, thisValue, callback, ASYNC_CALL_BACK_VALUES_NUM, results, &thatValue));
 }
 
+static bool ParseAddPermissionFifthParam(const napi_env env, const napi_value& value,
+    RecordManagerAsyncContext& asyncContext)
+{
+    napi_valuetype typeValue = napi_undefined;
+    napi_typeof(env, value, &typeValue);
+
+    if (typeValue == napi_object) {
+        // options
+        napi_value property = nullptr;
+        uint32_t type = 0;
+        /* if AddPermissionUsedRecordOptions exsit valid property, asyncContext.type use input param
+         * if not, asyncContext.type use default NORMAL_TYPE
+         */
+        if (IsNeedParseProperty(env, value, "usedType", property)) {
+            if (!ParseUint32(env, property, type)) {
+                ParamResolveErrorThrow(env, "AddPermissionUsedRecordOptions:usedType", "number");
+                return false;
+            }
+
+            asyncContext.type = static_cast<PermissionUsedType>(type);
+        }
+    } else if (typeValue == napi_function) {
+        // callback
+        if (!IsUndefinedOrNull(env, value) && !ParseCallback(env, value, asyncContext.callbackRef)) {
+            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
+            return false;
+        }
+    }
+
+    return true;
+}
+
 static bool ParseAddPermissionRecord(
     const napi_env env, const napi_callback_info info, RecordManagerAsyncContext& asyncContext)
 {
@@ -135,7 +175,7 @@ static bool ParseAddPermissionRecord(
     void* data = nullptr;
 
     NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
-    if (argc < ADD_PERMISSION_RECORD_MAX_PARAMS - 1) {
+    if (argc < ADD_PERMISSION_RECORD_MIN_PARAMS) {
         NAPI_CALL_BASE(env,
             napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
         return false;
@@ -143,35 +183,36 @@ static bool ParseAddPermissionRecord(
 
     asyncContext.env = env;
     // 0: the first parameter of argv
-    if (!ParseUint32(env, argv[0], asyncContext.tokenId)) {
+    if (!ParseUint32(env, argv[FIRST_PARAM], asyncContext.tokenId)) {
         ParamResolveErrorThrow(env, "tokenID", "number");
         return false;
     }
 
     // 1: the second parameter of argv
-    if (!ParseString(env, argv[1], asyncContext.permissionName)) {
+    if (!ParseString(env, argv[SECOND_PARAM], asyncContext.permissionName)) {
         ParamResolveErrorThrow(env, "permissionName", "string");
         return false;
     }
 
     // 2: the third parameter of argv
-    if (!ParseInt32(env, argv[2], asyncContext.successCount)) {
+    if (!ParseInt32(env, argv[THIRD_PARAM], asyncContext.successCount)) {
         ParamResolveErrorThrow(env, "successCount", "number");
         return false;
     }
 
     // 3: the fourth parameter of argv
-    if (!ParseInt32(env, argv[3], asyncContext.failCount)) {
+    if (!ParseInt32(env, argv[FOURTH_PARAM], asyncContext.failCount)) {
         ParamResolveErrorThrow(env, "failCount", "number");
         return false;
     }
+
+    // 4: the fifth parameter of argv, may be napi_object or napi_function
     if (argc == ADD_PERMISSION_RECORD_MAX_PARAMS) {
-        // 4: : the fifth parameter of argv
-        if (!IsUndefinedOrNull(env, argv[4]) && !ParseCallback(env, argv[4], asyncContext.callbackRef)) {
-            ParamResolveErrorThrow(env, "callback", "AsyncCallback");
+        if (!ParseAddPermissionFifthParam(env, argv[FIFTH_PARAM], asyncContext)) {
             return false;
         }
     }
+
     return true;
 }
 
@@ -233,6 +274,10 @@ static void ConvertDetailUsedRecord(napi_env env, napi_value value, const UsedRe
     napi_value nCount;
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.count, &nCount));
     NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "count", nCount));
+
+    napi_value nUsedType;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, detailRecord.type, &nUsedType));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "usedType", nUsedType));
 }
 
 static void ConvertPermissionUsedRecord(napi_env env, napi_value value, const PermissionUsedRecord& permissionRecord)
@@ -435,8 +480,13 @@ static void AddPermissionUsedRecordExecute(napi_env env, void* data)
         return;
     }
 
-    asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(asyncContext->tokenId,
-        asyncContext->permissionName, asyncContext->successCount, asyncContext->failCount);
+    AddPermParamInfo info;
+    info.tokenId = asyncContext->tokenId;
+    info.permissionName = asyncContext->permissionName;
+    info.successCount = asyncContext->successCount;
+    info.failCount = asyncContext->failCount;
+    info.type = asyncContext->type;
+    asyncContext->retCode = PrivacyKit::AddPermissionUsedRecord(info);
 }
 
 static void AddPermissionUsedRecordComplete(napi_env env, napi_status status, void* data)
@@ -917,6 +967,143 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
         }
     }
     return nullptr;
+}
+
+static bool ParseGetPermissionUsedType(const napi_env env, const napi_callback_info cbInfo,
+    PermissionUsedTypeAsyncContext& context)
+{
+    size_t argc = GET_PERMISSION_USED_TYPE_MAX_PARAMS;
+    napi_value argv[GET_PERMISSION_USED_TYPE_MAX_PARAMS] = {nullptr};
+    napi_value thisVar = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr), false);
+
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+
+    if (argc == GET_PERMISSION_USED_TYPE_ONE_PARAMS) {
+        // one param: only tokenId
+        if (!ParseUint32(env, argv[0], tokenId)) {
+            ParamResolveErrorThrow(env, "tokenId", "number");
+            return false;
+        }
+    } else if (argc == GET_PERMISSION_USED_TYPE_MAX_PARAMS) {
+        // two params: tokenId + permissionName or null + permissionName
+        if (!IsUndefinedOrNull(env, argv[0])) {
+            // if first param is null, ignore it, otherwise that is tokenId: number
+            if (!ParseUint32(env, argv[0], tokenId)) {
+                ParamResolveErrorThrow(env, "tokenId", "number");
+                return false;
+            }
+        }
+
+        if (!ParseString(env, argv[1], permissionName)) {
+            ParamResolveErrorThrow(env, "permissionName", "string");
+            return false;
+        }
+    }
+
+    // if there is no input param, that means return all tokenId and permissionName
+    context.env = env;
+    context.tokenId = tokenId;
+    context.permissionName = permissionName;
+    return true;
+}
+
+static void GetPermissionUsedTypeInfosExecute(napi_env env, void* data)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedTypeInfos execute.");
+
+    PermissionUsedTypeAsyncContext* asyncContext = reinterpret_cast<PermissionUsedTypeAsyncContext*>(data);
+    if (asyncContext == nullptr) {
+        return;
+    }
+
+    asyncContext->retCode = PrivacyKit::GetPermissionUsedTypeInfos(asyncContext->tokenId, asyncContext->permissionName,
+        asyncContext->results);
+}
+
+static void ConvertPermissionUsedTypeInfo(const napi_env& env, napi_value& value, const PermissionUsedTypeInfo& info)
+{
+    napi_value tokenIdValue;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, info.tokenId, &tokenIdValue));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "tokenId", tokenIdValue));
+
+    napi_value permissionNameValue;
+    NAPI_CALL_RETURN_VOID(env, napi_create_string_utf8(env, info.permissionName.c_str(),
+        NAPI_AUTO_LENGTH, &permissionNameValue));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "permissionName", permissionNameValue));
+
+    napi_value permissionUsedTypeValue;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, info.type, &permissionUsedTypeValue));
+    NAPI_CALL_RETURN_VOID(env, napi_set_named_property(env, value, "usedType", permissionUsedTypeValue));
+}
+
+static void ProcessPermissionUsedTypeInfoResult(const napi_env& env, napi_value& value,
+    const std::vector<PermissionUsedTypeInfo>& results)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "size is %{public}d", results.size());
+    size_t index = 0;
+    NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &value));
+    for (const auto& result : results) {
+        napi_value permissionUsedTypeValue;
+        NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &permissionUsedTypeValue));
+        ConvertPermissionUsedTypeInfo(env, permissionUsedTypeValue, result);
+        NAPI_CALL_RETURN_VOID(env, napi_set_element(env, value, index, permissionUsedTypeValue));
+        index++;
+    }
+}
+
+static void GetPermissionUsedTypeInfosComplete(napi_env env, napi_status status, void* data)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeInfos complete.");
+
+    PermissionUsedTypeAsyncContext* asyncContext = reinterpret_cast<PermissionUsedTypeAsyncContext*>(data);
+    std::unique_ptr<PermissionUsedTypeAsyncContext> callbackPtr{asyncContext};
+
+    napi_value result = GetNapiNull(env);
+    NAPI_CALL_RETURN_VOID(env, napi_create_object(env, &result));
+    ProcessPermissionUsedTypeInfoResult(env, result, asyncContext->results);
+
+    if (asyncContext->retCode != RET_SUCCESS) {
+        int32_t jsCode = GetJsErrorCode(asyncContext->retCode);
+        napi_value businessError = GenerateBusinessError(env, jsCode, GetErrorMessage(jsCode));
+        NAPI_CALL_RETURN_VOID(env, napi_reject_deferred(env, asyncContext->deferred, businessError));
+    } else {
+        NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    }
+}
+
+napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "GetPermissionUsedTypeInfos begin.");
+
+    auto *asyncContext = new (std::nothrow) PermissionUsedTypeAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        return nullptr;
+    }
+
+    std::unique_ptr<PermissionUsedTypeAsyncContext> callbackPtr {asyncContext};
+    if (!ParseGetPermissionUsedType(env, cbinfo, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result));
+
+    napi_value resource = nullptr;
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetPermissionUsedTypeInfos", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(env,
+        nullptr,
+        resource,
+        GetPermissionUsedTypeInfosExecute,
+        GetPermissionUsedTypeInfosComplete,
+        reinterpret_cast<void *>(asyncContext),
+        &(asyncContext->asyncWork)));
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->asyncWork, napi_qos_default));
+    callbackPtr.release();
+    return result;
 }
 }  // namespace AccessToken
 }  // namespace Security

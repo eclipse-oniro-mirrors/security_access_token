@@ -30,15 +30,16 @@ void ToString::DetailUsedRecordToString(
     }
     infos.append("\n");
     for (const auto& detail : detailRecord) {
-        infos.append("              {");
+        infos.append("            {");
         infos.append("\n");
-        infos.append(R"(                  "status": ")" + std::to_string(detail.status) + R"(")" + ",\n");
-        infos.append(R"(                  "lockScreenStatus": ")" +
-            std::to_string(detail.lockScreenStatus) + R"(")" + ",\n");
-        infos.append(R"(                  "timestamp": ")" + std::to_string(detail.timestamp) + R"(")" + ",\n");
-        infos.append(R"(                  "duration": )" + std::to_string(detail.accessDuration) + ",\n");
-        infos.append(R"(                  "count": )" + std::to_string(detail.count) + ",\n");
-        infos.append("              },");
+        infos.append(R"(              "status": ")" + std::to_string(detail.status) + R"(")" + ",\n");
+        infos.append(R"(              "lockScreenStatus": ")" + std::to_string(
+            detail.lockScreenStatus) + R"(")" + ",\n");
+        infos.append(R"(              "timestamp": ")" + std::to_string(detail.timestamp) + R"(")" + ",\n");
+        infos.append(R"(              "duration": )" + std::to_string(detail.accessDuration) + ",\n");
+        infos.append(R"(              "count": )" + std::to_string(detail.count) + ",\n");
+        infos.append(R"(              "usedType": )" + std::to_string(detail.type) + ",\n");
+        infos.append("            },");
         infos.append("\n");
     }
 
@@ -49,11 +50,8 @@ void ToString::DetailUsedRecordToString(
 void ToString::PermissionUsedRecordToString(
     const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos)
 {
-    infos.append(R"(  "permissionRecords": [)");
-    infos.append("\n");
-
     for (const auto& perm : permissionRecords) {
-        infos.append("      {");
+        infos.append("        {");
         infos.append("\n");
         infos.append(R"(          "permissionName": ")" + perm.permissionName + R"(")" + ",\n");
         infos.append(R"(          "accessCount": ")" + std::to_string(perm.accessCount) + R"(")" + ",\n");
@@ -63,26 +61,27 @@ void ToString::PermissionUsedRecordToString(
         infos.append(R"(          "lastAccessDuration": )" + std::to_string(perm.lastAccessDuration) + ",\n");
         ToString::DetailUsedRecordToString(true, perm.accessRecords, infos);
         ToString::DetailUsedRecordToString(false, perm.rejectRecords, infos);
-        infos.append("      },");
+        infos.append("        },");
         infos.append("\n");
     }
-
-    infos.append("  ]");
-    infos.append("\n");
 }
 
 void ToString::BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos)
 {
-    infos.append("{");
+    infos.append("    {");
     infos.append("\n");
-    infos.append(R"(  "tokenId": )" + std::to_string(bundleRecord.tokenId) + ",\n");
-    infos.append(R"(  "isRemote": )" + std::to_string(bundleRecord.isRemote) + ",\n");
-    infos.append(R"(  "bundleName": )" + bundleRecord.bundleName + ",\n");
-    infos.append(R"(  "deviceId": )" + ConstantCommon::EncryptDevId(bundleRecord.deviceId) + ",\n");
+    infos.append(R"(      "tokenId": )" + std::to_string(bundleRecord.tokenId) + ",\n");
+    infos.append(R"(      "isRemote": )" + std::to_string(bundleRecord.isRemote) + ",\n");
+    infos.append(R"(      "bundleName": )" + bundleRecord.bundleName + ",\n");
+    infos.append(R"(      "deviceId": )" + ConstantCommon::EncryptDevId(bundleRecord.deviceId) + ",\n");
+    infos.append(R"(      "permissionRecords": [)");
+    infos.append("\n");
 
     ToString::PermissionUsedRecordToString(bundleRecord.permissionRecords, infos);
 
-    infos.append("}");
+    infos.append("      ]");
+    infos.append("\n");
+    infos.append("    }");
     infos.append("\n");
 }
 
@@ -91,12 +90,30 @@ void ToString::PermissionUsedResultToString(const PermissionUsedResult& result, 
     if (result.bundleRecords.empty()) {
         return;
     }
-    infos.append(R"("beginTime": )" + std::to_string(result.beginTimeMillis) + ",\n");
-    infos.append(R"("endTime": )" + std::to_string(result.endTimeMillis) + ",\n");
+    infos.append("{");
+    infos.append("\n");
+    infos.append(R"(  "beginTime": )" + std::to_string(result.beginTimeMillis) + ",\n");
+    infos.append(R"(  "endTime": )" + std::to_string(result.endTimeMillis) + ",\n");
+    infos.append(R"(  "bundleRecords": [)");
+    infos.append("\n");
 
     for (const auto& res : result.bundleRecords) {
         ToString::BundleUsedRecordToString(res, infos);
     }
+
+    infos.append("  ]");
+    infos.append("\n");
+    infos.append("}");
+    infos.append("\n");
+}
+
+void ToString::PermissionUsedTypeInfoToString(const PermissionUsedTypeInfo& info, std::string& infos)
+{
+    infos.append("{\n");
+    infos.append(R"(  "tokenId": )" + std::to_string(info.tokenId) + ",\n");
+    infos.append(R"(  "permissionName": )" + info.permissionName + ",\n");
+    infos.append(R"(  "usedType": )" + std::to_string(info.type) + ",\n");
+    infos.append("}\n");
 }
 } // namespace AccessToken
 } // namespace Security

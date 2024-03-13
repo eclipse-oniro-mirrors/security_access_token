@@ -18,6 +18,7 @@
 
 #include "active_change_response_info.h"
 #include "generic_values.h"
+#include "permission_used_type.h"
 
 namespace OHOS {
 namespace Security {
@@ -28,6 +29,7 @@ struct PermissionRecord {
     int32_t status = 0;
     int64_t timestamp = 0L;
     int64_t accessDuration = 0L;
+    PermissionUsedType type = PermissionUsedType::NORMAL_TYPE;
     int32_t accessCount = 0;
     int32_t rejectCount = 0;
     int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;

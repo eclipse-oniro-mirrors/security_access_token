@@ -32,7 +32,8 @@ static napi_value Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPermissionUsedRecord", GetPermissionUsedRecords),
         DECLARE_NAPI_FUNCTION("getPermissionUsedRecords", GetPermissionUsedRecords),
         DECLARE_NAPI_FUNCTION("on", RegisterPermActiveChangeCallback),
-        DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback)
+        DECLARE_NAPI_FUNCTION("off", UnregisterPermActiveChangeCallback),
+        DECLARE_NAPI_FUNCTION("getPermissionUsedTypeInfos", GetPermissionUsedTypeInfos)
     };
 
     napi_define_properties(env, exports, sizeof(descriptor) / sizeof(descriptor[0]), descriptor);
@@ -63,9 +64,25 @@ static napi_value Init(napi_env env, napi_value exports)
     napi_create_int32(env, PERM_ACTIVE_IN_BACKGROUND, &prop);
     napi_set_named_property(env, permActiveStatus, "PERM_ACTIVE_IN_BACKGROUND", prop);
 
+    napi_value permissionUsedType = nullptr;
+    napi_create_object(env, &permissionUsedType); // create enmu PermissionUsedType
+
+    prop = nullptr;
+    napi_create_int32(env, NORMAL_TYPE, &prop);
+    napi_set_named_property(env, permissionUsedType, "NORMAL_TYPE", prop);
+
+    prop = nullptr;
+    napi_create_int32(env, PICKER_TYPE, &prop);
+    napi_set_named_property(env, permissionUsedType, "PICKER_TYPE", prop);
+
+    prop = nullptr;
+    napi_create_int32(env, SECURITY_COMPONENT_TYPE, &prop);
+    napi_set_named_property(env, permissionUsedType, "SECURITY_COMPONENT_TYPE", prop);
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("PermissionUsageFlag", permissionUsageFlag),
-        DECLARE_NAPI_PROPERTY("PermissionActiveStatus", permActiveStatus)
+        DECLARE_NAPI_PROPERTY("PermissionActiveStatus", permActiveStatus),
+        DECLARE_NAPI_PROPERTY("PermissionUsedType", permissionUsedType)
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(exportFuncs[0]), exportFuncs);
 

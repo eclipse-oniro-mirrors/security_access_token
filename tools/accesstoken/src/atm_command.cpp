@@ -30,7 +30,7 @@ namespace {
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
-static const std::string SHORT_OPTIONS_DUMP = "ht::r::i:p:b:n:";
+static const std::string SHORT_OPTIONS_DUMP = "ht::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -47,7 +47,8 @@ static const std::string HELP_MSG_DUMP =
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
     "  -t, --token-info -n <process-name>                       list single token info by specific native processName\n"
-    "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n";
+    "  -r, --record-info [-i <token-id>] [-p <permission-name>] list used records in system\n"
+    "  -v, --visit-type [-i <token-id>] [-p <permission-name>]  list all token used type in system\n";
 
 static const std::string HELP_MSG_PERM =
     "usage: atm perm <option>.\n"
@@ -201,6 +202,9 @@ int32_t AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, At
         case 'r':
             info.type = DUMP_RECORD;
             break;
+        case 'v':
+            info.type = DUMP_TYPE;
+            break;
         case 'g':
             info.type = PERM_GRANT;
             break;
@@ -252,6 +256,21 @@ std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& perm
     return dumpInfo;
 }
 
+std::string AtmCommand::DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName)
+{
+    std::vector<PermissionUsedTypeInfo> results;
+    if (PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, results) != 0) {
+        return "";
+    }
+
+    std::string dumpInfo;
+    for (const auto& result : results) {
+        ToString::PermissionUsedTypeInfoToString(result, dumpInfo);
+    }
+
+    return dumpInfo;
+}
+
 int32_t AtmCommand::ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName)
 {
     if ((tokenId == 0) || (permissionName.empty())) {
@@ -279,6 +298,9 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
             break;
         case DUMP_RECORD:
             dumpInfo = DumpRecordInfo(info.tokenId, info.permissionName);
+            break;
+        case DUMP_TYPE:
+            dumpInfo = DumpUsedTypeInfo(info.tokenId, info.permissionName);
             break;
         case PERM_GRANT:
         case PERM_REVOKE:

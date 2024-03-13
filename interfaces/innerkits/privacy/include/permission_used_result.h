@@ -39,6 +39,7 @@
 #include <vector>
 #include "access_token.h"
 #include "active_change_response_info.h"
+#include "permission_used_type.h"
 
 namespace OHOS {
 namespace Security {
@@ -65,6 +66,8 @@ struct UsedRecordDetail {
     int64_t accessDuration = 0L;
     /** The value of successCount or failCount passed in to addPermissionUsedRecord */
     int32_t count = 0;
+    /** permission used type */
+    PermissionUsedType type;
 };
 
 /**

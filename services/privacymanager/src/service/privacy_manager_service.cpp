@@ -274,8 +274,8 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
 
-int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(AccessTokenID tokenId, const std::string& permissionName,
-    std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
+int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
+    const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
 

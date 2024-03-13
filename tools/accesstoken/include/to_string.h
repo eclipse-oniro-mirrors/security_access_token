@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include <string>
 #include "permission_used_request.h"
 #include "permission_used_result.h"
+#include "permission_used_type_info.h"
 
 namespace OHOS {
 namespace Security {
@@ -31,6 +32,7 @@ public:
         const std::vector<PermissionUsedRecord>& permissionRecords, std::string& infos);
     static void BundleUsedRecordToString(const BundleUsedRecord& bundleRecord, std::string& infos);
     static void PermissionUsedResultToString(const PermissionUsedResult& result, std::string& infos);
+    static void PermissionUsedTypeInfoToString(const PermissionUsedTypeInfo& type, std::string& infos);
 };
 } // namespace AccessToken
 } // namespace Security

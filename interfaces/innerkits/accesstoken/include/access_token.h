@@ -230,6 +230,8 @@ typedef enum TypeOptType {
     DUMP_TOKEN,
     /** dump permission used records */
     DUMP_RECORD,
+    /** dump permission used types */
+    DUMP_TYPE,
     /** grant permission */
     PERM_GRANT,
     /** revoke permission */
