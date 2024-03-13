@@ -57,6 +57,7 @@ enum class AccessTokenInterfaceCode {
     RELOAD_NATIVE_TOKEN_INFO,
     GET_NATIVE_TOKEN_ID,
     SET_PERM_DIALOG_CAPABILITY,
+    GET_USER_GRANTED_PERMISSION_USED_TYPE,
 };
 } // namespace AccessToken
 } // namespace Security

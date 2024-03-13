@@ -295,6 +295,117 @@ AccessTokenID AccessTokenKitTest::AllocTestToken(
 }
 
 /**
+ * @tc.name: GetUserGrantedPermissionUsedType001
+ * @tc.desc: Get hap permission visit type return invalid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType001, TestSize.Level1)
+{
+    std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(selfTokenId_, accessBluetooth));
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(0, accessBluetooth));
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, "ohos.permission.ACCELEROMETER"));
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, "ohos.permission.xxxxx"));
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, accessBluetooth));
+}
+
+/**
+ * @tc.name: GetUserGrantedPermissionUsedType002
+ * @tc.desc: Different grant permission modes get different visit type.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType002, TestSize.Level1)
+{
+    std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
+    std::string sendMessages = "ohos.permission.SEND_MESSAGES";
+    std::string writeCalendar = "ohos.permission.WRITE_CALENDAR";
+    PermissionStateFull testState1 = {
+        .permissionName = accessBluetooth,
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {PermissionFlag::PERMISSION_COMPONENT_SET}
+    };
+    PermissionStateFull testState2 = {
+        .permissionName = sendMessages,
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+    PermissionStateFull testState3 = {
+        .permissionName = writeCalendar,
+        .isGeneral = false,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+    HapPolicyParams testPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permStateList = {testState1, testState2, testState3}
+    };
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, testPolicyPrams);
+
+    EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, accessBluetooth));
+
+    EXPECT_EQ(PermUsedTypeEnum::NORMAL_TYPE, AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, sendMessages));
+
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+    int32_t selfUid = getuid();
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    setuid(1);
+    EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+    setuid(selfUid);
+    ASSERT_EQ(0, SetSelfTokenID(selfTokenId_));
+}
+
+/**
+ * @tc.name: GetUserGrantedPermissionUsedType003
+ * @tc.desc: Get security component visit type.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType003, TestSize.Level1)
+{
+    std::string distributedDatasync = "ohos.permission.DISTRIBUTED_DATASYNC";
+    PermissionStateFull testState1 = {
+        .permissionName = distributedDatasync,
+        .isGeneral = true,
+        .resDeviceID = {"local5"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {0},
+    };
+    HapPolicyParams testPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain5",
+        .permList = {},
+        .permStateList = {testState1}
+    };
+    AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, testPolicyPrams);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, distributedDatasync, PERMISSION_COMPONENT_SET));
+    EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
+        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, distributedDatasync));
+}
+
+/**
  * @tc.name: GetDefPermission001
  * @tc.desc: Get permission definition info after AllocHapToken function has been invoked.
  * @tc.type: FUNC

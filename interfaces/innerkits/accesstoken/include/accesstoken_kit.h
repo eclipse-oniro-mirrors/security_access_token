@@ -63,6 +63,13 @@ namespace AccessToken {
 class AccessTokenKit {
 public:
     /**
+     * @brief Get permission used type by tokenID.
+     * @param tokenID token id
+     * @param permissionName permission to be checked
+     * @return enum PermUsedTypeEnum, see access_token.h
+     */
+    static PermUsedTypeEnum GetUserGrantedPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+    /**
      * @brief Create a unique hap token by input values.
      * @param info struct HapInfoParams quote, see hap_token_info.h
      * @param policy struct HapPolicyParams quote, see hap_token_info.h

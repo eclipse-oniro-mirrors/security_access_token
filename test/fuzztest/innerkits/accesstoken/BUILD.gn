@@ -42,6 +42,7 @@ group("fuzztest") {
     "getselfpermissionsstate_fuzzer:GetSelfPermissionsStateFuzzTest",
     "gettokentype_fuzzer:GetTokenTypeFuzzTest",
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",
+    "getusergrantedpermissionusedtype_fuzzer:GetUserGrantedPermissionUsedTypeFuzzTest",
     "grantpermission_fuzzer:GrantPermissionFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
