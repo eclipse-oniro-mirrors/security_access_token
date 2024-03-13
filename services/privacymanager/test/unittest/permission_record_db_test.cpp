@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,12 +21,20 @@
 #define private public
 #include "permission_used_record_db.h"
 #undef private
+#include "permission_used_type.h"
 
 using namespace testing::ext;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static const int32_t NOT_EXSIT_TYPE = 9;
+static const int32_t PERMISSION_USED_TYPE_VALUE = 1;
+static const int32_t PICKER_TYPE_VALUE = 2;
+static const int32_t RANDOM_TOKENID = 123;
+}
+
 class PermissionRecordDBTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -435,12 +443,12 @@ HWTEST_F(PermissionRecordDBTest, Add002, TestSize.Level1)
     value2.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 1);
     value2.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
     value2.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value1.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value1.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value1.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value1.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-    value1.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
+    value2.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
+    value2.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
+    value2.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
+    value2.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
+    value2.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
 
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     std::vector<GenericValues> values;
@@ -648,6 +656,132 @@ HWTEST_F(PermissionRecordDBTest, DeleteExcessiveRecords001, TestSize.Level1)
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     uint32_t excessiveSize = 10;
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(type, excessiveSize));
+}
+
+/*
+ * @tc.name: CreateQueryPrepareSqlCmd001
+ * @tc.desc: PermissionUsedRecordDb::CreateQueryPrepareSqlCmd function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, CreateQueryPrepareSqlCmd001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    std::vector<std::string> conditionColumns;
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateQueryPrepareSqlCmd(
+        type, conditionColumns));
+
+    type = static_cast<PermissionUsedRecordDb::DataType>(NOT_EXSIT_TYPE);
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateQueryPrepareSqlCmd(
+        type, conditionColumns));
+}
+
+/*
+ * @tc.name: Query001
+ * @tc.desc: PermissionUsedRecordDb::Query function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Query001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    std::vector<GenericValues> results;
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    for (const auto& result : results) {
+        // no record with token 123 before add
+        ASSERT_NE(RANDOM_TOKENID, result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
+    }
+    results.clear();
+
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PERMISSION_USED_TYPE_VALUE);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    // add a record: 123-0-1
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Add(type, values));
+
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 1
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
+        type, conditionValue));
+}
+
+/*
+ * @tc.name: Update001
+ * @tc.desc: PermissionUsedRecordDb::Update function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordDBTest, Update001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PERMISSION_USED_TYPE_VALUE);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    // add a record: 123-0-1
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Add(type, values));
+
+    std::vector<GenericValues> results;
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 1
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+    results.clear();
+
+    GenericValues modifyValue;
+    modifyValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, PICKER_TYPE_VALUE);
+    // update record 123-0-1 to 123-0-2
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Update(
+        type, modifyValue, conditionValue));
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS,
+        PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 2
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PICKER_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+
+    ASSERT_EQ(PermissionUsedRecordDb::ExecuteResult::SUCCESS, PermissionUsedRecordDb::GetInstance().Remove(
+        type, conditionValue));
 }
 } // namespace AccessToken
 } // namespace Security

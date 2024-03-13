@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -58,6 +58,10 @@ static constexpr int32_t DEEP_COPY_NUM = 10;
 static constexpr int64_t ONE_SECOND = 1000;
 static constexpr int64_t TWO_SECOND = 2000;
 static constexpr int64_t THREE_SECOND = 3000;
+static constexpr int32_t PERMISSION_USED_TYPE_VALUE = 1;
+static constexpr int32_t PICKER_TYPE_VALUE = 2;
+static constexpr int32_t PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE = 3;
+static constexpr int32_t RANDOM_TOKENID = 123;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -778,6 +782,14 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level
     info.permissionName = "com.ohos.test";
     info.successCount = 1;
     info.failCount = 0;
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        info)); // invaild permission error
+
+    info.type = PermissionUsedType::PICKER_TYPE;
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
+        info)); // invaild permission error
+
+    info.type = PermissionUsedType::SECURITY_COMPONENT_TYPE;
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
         info)); // invaild permission error
 }
@@ -1502,6 +1514,192 @@ HWTEST_F(PermissionRecordManagerTest, RecordConverage011, TestSize.Level1)
     BundleUsedRecord bundleRecord;
     PermissionUsedResult result;
     PermissionRecordManager::GetInstance().GetRecords(flag, recordValues, bundleRecord, result);
+}
+
+/*
+ * @tc.name: Query001
+ * @tc.desc: PermissionRecordRepository::Query function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Query001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    std::vector<GenericValues> results;
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    for (const auto& result : results) {
+        // no record with token 123 before add
+        ASSERT_NE(RANDOM_TOKENID, result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
+    }
+    results.clear();
+
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PERMISSION_USED_TYPE_VALUE);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    // add a record: 123-0-1
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Add(type, values));
+
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 1
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+    results.clear();
+
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
+}
+
+/*
+ * @tc.name: Update001
+ * @tc.desc: PermissionRecordRepository::Update function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Update001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE,
+        static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL));
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PERMISSION_USED_TYPE_VALUE);
+    std::vector<GenericValues> values;
+    values.emplace_back(value);
+    // add a record: 123-0-1
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Add(type, values));
+
+    std::vector<GenericValues> results;
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 1
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+    results.clear();
+
+    GenericValues modifyValue;
+    modifyValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, PICKER_TYPE_VALUE);
+    // update record 123-0-1 to 123-0-2
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Update(type, modifyValue, conditionValue));
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        // query result success, when tokenId is 123, permission_code is 0 and used_type is 2
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PICKER_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
+}
+
+/*
+ * @tc.name: AddOrUpdateUsedTypeIfNeeded001
+ * @tc.desc: PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.Level1)
+{
+    int32_t tokenId = RANDOM_TOKENID;
+    int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL);
+    PermissionUsedType visitType = PermissionUsedType::NORMAL_TYPE;
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_USED_TYPE;
+    GenericValues conditionValue;
+    conditionValue.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    conditionValue.Put(PrivacyFiledConst::FIELD_PERMISSION_CODE, opCode);
+
+    // query result empty, add input type
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    std::vector<GenericValues> results;
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    ASSERT_EQ(false, results.empty());
+    for (const auto& result : results) {
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+    results.clear();
+
+    // uesd type exsit and same to input type, return
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    for (const auto& result : results) {
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+    results.clear();
+
+    visitType = PermissionUsedType::PICKER_TYPE;
+    // used type exsit and diff from input type, update the type
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().AddOrUpdateUsedTypeIfNeeded(tokenId, opCode, visitType));
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+    for (const auto& result : results) {
+        if (RANDOM_TOKENID == result.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID)) {
+            ASSERT_EQ(static_cast<int32_t>(Constant::OpCode::OP_ANSWER_CALL),
+                result.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE));
+            ASSERT_EQ(PERMISSION_USED_TYPE_WITH_PICKER_TYPE_VALUE, result.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+            break;
+        }
+    }
+
+    ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
+}
+
+/*
+ * @tc.name: GetPermissionUsedType001
+ * @tc.desc: PermissionRecordManager::GetPermissionUsedType function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level1)
+{
+    int32_t tokenId = RANDOM_TOKENID;
+    std::string permissionName = "ohos.permission.PERMISSION_RECORD_MANAGER_TEST";
+    std::vector<PermissionUsedTypeInfo> results;
+    // tokenId is not exsit
+    ASSERT_EQ(PrivacyError::ERR_TOKENID_NOT_EXIST,
+        PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
+
+    tokenId = 0;
+    // permissionName is not exsit
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST,
+        PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
+
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 }
 } // namespace AccessToken
 } // namespace Security

@@ -1041,7 +1041,7 @@ static void ConvertPermissionUsedTypeInfo(const napi_env& env, napi_value& value
 static void ProcessPermissionUsedTypeInfoResult(const napi_env& env, napi_value& value,
     const std::vector<PermissionUsedTypeInfo>& results)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "size is %{public}d", results.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "size is %{public}zu", results.size());
     size_t index = 0;
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &value));
     for (const auto& result : results) {
