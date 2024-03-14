@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 static const int MAX_SEC_COMP_ENHANCE_SIZE = 1000;
 #endif
+// if change this, copy value in privacy_kit_test.cpp should change together
 static const uint32_t MAX_PERMISSION_USED_TYPE_SIZE = 2000;
 }
 
