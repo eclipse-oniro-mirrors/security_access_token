@@ -85,7 +85,6 @@ void PermissionPolicySet::Update(const std::vector<PermissionStateFull>& permSta
             });
         if (iter != permStateList_.end()) {
             UpdatePermStateFull(*iter, permStateNew);
-            break;
         }
     }
     permStateList_ = permStateFilterList;
