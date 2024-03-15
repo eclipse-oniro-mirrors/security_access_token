@@ -285,7 +285,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
         ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
         return PERMISSION_DENIED;
     }
-    return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    return AccessTokenKit::VerifyAccessToken(tokenID, permissionName, false);
 }
 
 int AccessTokenKit::VerifyAccessToken(
