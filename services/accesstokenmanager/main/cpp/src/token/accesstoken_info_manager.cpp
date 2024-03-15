@@ -625,7 +625,7 @@ void AccessTokenInfoManager::ProcessNativeTokenInfos(
             }
         }
     }
-    RefreshTokenInfoIfNeeded();
+    AddAllNativeTokenInfoToDb();
 }
 
 int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info,
@@ -667,7 +667,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     // update hap to kernel
     std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetHapInfoPermissionPolicySet();
     PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
-    RefreshTokenInfoIfNeeded();
+    ModifyHapTokenInfoFromDb(tokenID);
     return RET_SUCCESS;
 }
 
@@ -1053,6 +1053,29 @@ void AccessTokenInfoManager::StoreAllTokenInfo()
     AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
     int res = AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
     PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
+}
+
+int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
+{
+    std::vector<GenericValues> permStateValues;
+    std::vector<GenericValues> nativeTokenValues;
+
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
+    for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
+        if (iter->second != nullptr) {
+            iter->second->StoreNativeInfo(nativeTokenValues);
+            iter->second->StorePermissionPolicy(permStateValues);
+        }
+    }
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
+    return RET_SUCCESS;
+}
+
+int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
+{
+    RemoveHapTokenInfoFromDb(tokenID);
+    return AddHapTokenInfoToDb(tokenID);
 }
 
 int AccessTokenInfoManager::AddHapTokenInfoToDb(AccessTokenID tokenID)

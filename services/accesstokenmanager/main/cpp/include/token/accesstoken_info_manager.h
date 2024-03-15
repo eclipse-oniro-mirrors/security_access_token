@@ -49,6 +49,8 @@ public:
     std::shared_ptr<PermissionPolicySet> GetHapPermissionPolicySet(AccessTokenID id);
     int RemoveHapTokenInfo(AccessTokenID id);
     int RemoveNativeTokenInfo(AccessTokenID id);
+    int32_t AddAllNativeTokenInfoToDb(void);
+    int32_t ModifyHapTokenInfoFromDb(AccessTokenID tokenID);
     int CreateHapTokenInfo(const HapInfoParams& info, const HapPolicyParams& policy, AccessTokenIDEx& tokenIdEx);
     int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex);
