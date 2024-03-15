@@ -37,6 +37,7 @@ const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TO
 const std::string CERT_PERMISSION = "ohos.permission.ACCESS_CERT_MANAGER";
 const std::string MICROPHONE_PERMISSION = "ohos.permission.MICROPHONE";
 const std::string CAMERA_PERMISSION = "ohos.permission.CAMERA";
+const std::string ACCESS_BLUETOOTH_PERMISSION = "ohos.permission.ACCESS_BLUETOOTH";
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static constexpr int32_t MAX_PERM_LIST_SIZE = 1024;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
@@ -67,6 +68,14 @@ PermissionStateFull g_tddPermRevoke = {
 };
 PermissionStateFull g_infoManagerCameraState = {
     .permissionName = CAMERA_PERMISSION,
+    .isGeneral = true,
+    .resDeviceID = {"local2"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {0}
+};
+
+PermissionStateFull g_infoBlueToothManagerState = {
+    .permissionName = ACCESS_BLUETOOTH_PERMISSION,
     .isGeneral = true,
     .resDeviceID = {"local2"},
     .grantStatus = {PermissionState::PERMISSION_DENIED},
@@ -402,7 +411,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
-        .permStateList = {g_infoManagerCameraState, g_infoManagerCertState}
+        .permStateList = {g_infoManagerCameraState, g_infoBlueToothManagerState, g_infoManagerCertState}
     };
     AccessTokenIDEx fullTokenId;
     int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
@@ -417,8 +426,13 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
 
     ret = AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, 0);
     EXPECT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    EXPECT_EQ(PERMISSION_GRANTED, ret);
+    ret = AccessTokenKit::GrantPermission(
+    fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION, PERMISSION_SYSTEM_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
     ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+        fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
 
     UpdateHapInfoParams info;
@@ -428,18 +442,17 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
     HapPolicyParams testPolicyParams2 = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
-        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState}
+        .permStateList = {g_infoManagerCameraState, g_infoBlueToothManagerState, g_infoManagerMicrophoneState}
     };
     ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
     ASSERT_EQ(RET_SUCCESS, ret);
-    ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
     EXPECT_EQ(PERMISSION_GRANTED, ret);
-    ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
-    ret = AccessTokenKit::VerifyAccessToken(
-        fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION);
+    EXPECT_EQ(PERMISSION_GRANTED, ret);
+    ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
@@ -818,7 +831,7 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapTokenAbnormal003, TestSize.Level1)
     EXPECT_NE(RET_SUCCESS, res);
     testHapInfoParams.dlpType = g_testHapInfoParams.dlpType;
 
-    const static int invalidAppIdLen = 10241; // 10241 is invalid appid length
+    int32_t invalidAppIdLen = 10241; // 10241 is invalid appid length
     // invalid dlpType
     std::string invalidAppIDDesc (invalidAppIdLen, 'x');
     testHapInfoParams.appIDDesc = invalidAppIDDesc;

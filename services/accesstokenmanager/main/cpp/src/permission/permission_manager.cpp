@@ -1019,7 +1019,9 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
 bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
     const HapPolicyParams& policy, std::vector<PermissionStateFull>& InitializedList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermStateList size: %{public}zu.", policy.permStateList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermStateList size: %{public}zu , preAuthorizationInfo size %{public}zu",
+        policy.permStateList.size(), policy.preAuthorizationInfo.size());
+
     for (auto state : policy.permStateList) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Request %{public}s.", state.permissionName.c_str());
         PermissionDef permDef;
