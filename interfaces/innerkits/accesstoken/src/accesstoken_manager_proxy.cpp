@@ -529,10 +529,12 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
         ACCESSTOKEN_LOG_ERROR(LABEL, "Result error = %{public}d.", result);
         return result;
     }
-    if (!reply.ReadUint64(fullTokenId.tokenIDEx)) {
+    uint64_t tokenId;
+    if (!reply.ReadUint64(tokenId)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read fullTokenId.");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
+    fullTokenId.tokenIDEx = tokenId;
     return RET_SUCCESS;
 }
 
