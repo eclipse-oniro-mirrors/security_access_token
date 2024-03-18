@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +42,7 @@ public:
         ACCESSTOKEN_NATIVE_INFO,
         ACCESSTOKEN_PERMISSION_DEF,
         ACCESSTOKEN_PERMISSION_STATE,
+        ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
     };
 
     static AccessTokenDb& GetInstance();
@@ -66,6 +67,7 @@ private:
     int CreateNativeTokenInfoTable() const;
     int CreatePermissionDefinitionTable() const;
     int CreatePermissionStateTable() const;
+    int32_t CreatePermissionRequestToggleStatusTable() const;
 
     std::string CreateInsertPrepareSqlCmd(const DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
@@ -85,9 +87,10 @@ private:
     inline static const std::string NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
     inline static const std::string PERMISSION_DEF_TABLE = "permission_definition_table";
     inline static const std::string PERMISSION_STATE_TABLE = "permission_state_table";
+    inline static const std::string PERMISSION_REQUEST_TOGGLE_STATUS_TABLE = "permission_request_toggle_status_table";
     inline static const std::string DATABASE_NAME = "access_token.db";
     inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int DATABASE_VERSION = 2;
+    static const int DATABASE_VERSION = 3;
 };
 } // namespace AccessToken
 } // namespace Security

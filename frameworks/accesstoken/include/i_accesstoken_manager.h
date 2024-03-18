@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -55,6 +55,10 @@ public:
     virtual int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant) = 0;
     virtual int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) = 0;
+    virtual int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+        int32_t userID = 0) = 0;
+    virtual int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+        int32_t userID = 0) = 0;
     virtual PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int32_t GetPermissionsStatus(

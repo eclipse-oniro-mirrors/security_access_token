@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,6 +52,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenAbilityAccessCtrl"
 };
+static constexpr int32_t MAX_PARAMS_ONE = 1;
 static constexpr int32_t MAX_PARAMS_TWO = 2;
 static constexpr int32_t MAX_PARAMS_THREE = 3;
 static constexpr int32_t MAX_PARAMS_FOUR = 4;
@@ -377,6 +378,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVersion", GetVersion),
         DECLARE_NAPI_FUNCTION("requestPermissionsFromUser", RequestPermissionsFromUser),
         DECLARE_NAPI_FUNCTION("getPermissionsStatus", GetPermissionsStatus),
+        DECLARE_NAPI_FUNCTION("setPermissionRequestToggleStatus", SetPermissionRequestToggleStatus),
+        DECLARE_NAPI_FUNCTION("getPermissionRequestToggleStatus", GetPermissionRequestToggleStatus),
     };
 
     napi_value cons = nullptr;
@@ -386,6 +389,13 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     NAPI_CALL(env, napi_create_reference(env, cons, 1, &g_atManagerRef_));
     NAPI_CALL(env, napi_set_named_property(env, exports, ATMANAGER_CLASS_NAME.c_str(), cons));
 
+    CreateObjects(env, exports);
+
+    return exports;
+}
+
+void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
+{
     napi_value grantStatus = nullptr;
     napi_create_object(env, &grantStatus);
 
@@ -407,14 +417,19 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
     SetNamedProperty(env, permissionStatus, INVALID_OPER, "INVALID");
     SetNamedProperty(env, permissionStatus, FORBIDDEN_OPER, "RESTRICTED");
 
+    napi_value permissionRequestToggleStatus = nullptr;
+    napi_create_object(env, &permissionRequestToggleStatus);
+
+    SetNamedProperty(env, permissionRequestToggleStatus, CLOSED, "CLOSED");
+    SetNamedProperty(env, permissionRequestToggleStatus, OPEN, "OPEN");
+
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
         DECLARE_NAPI_PROPERTY("PermissionStatus", permissionStatus),
+        DECLARE_NAPI_PROPERTY("PermissionRequestToggleStatus", permissionRequestToggleStatus),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
-
-    return exports;
 }
 
 napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
@@ -1596,6 +1611,170 @@ void NapiAtManager::RequestPermissionsFromUserComplete(napi_env env, napi_status
         ReturnCallbackResult(env, asyncContextHandle->asyncContextPtr->result,
             asyncContextHandle->asyncContextPtr->callbackRef, asyncContextHandle->asyncContextPtr->requestResult);
     }
+}
+
+bool NapiAtManager::ParseInputSetToggleStatus(const napi_env env, const napi_callback_info info,
+    AtManagerAsyncContext& asyncContext)
+{
+    size_t argc = MAX_PARAMS_TWO;
+    napi_value argv[MAX_PARAMS_TWO] = { nullptr };
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    std::string errMsg;
+
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc < MAX_PARAMS_TWO) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
+    asyncContext.env = env;
+    // 0: the first parameter of argv
+    if (!ParseString(env, argv[0], asyncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    // 1: the second parameter of argv
+    if (!ParseUint32(env, argv[1], asyncContext.status)) {
+        errMsg = GetParamErrorMsg("status", "number");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    return true;
+}
+
+bool NapiAtManager::ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
+    AtManagerAsyncContext& asyncContext)
+{
+    size_t argc = MAX_PARAMS_ONE;
+
+    napi_value argv[MAX_PARAMS_ONE] = { nullptr };
+    napi_value thisVar = nullptr;
+    std::string errMsg;
+    void *data = nullptr;
+    NAPI_CALL_BASE(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, &data), false);
+    if (argc < MAX_PARAMS_ONE) {
+        NAPI_CALL_BASE(env, napi_throw(env, GenerateBusinessError(env,
+            JsErrorCode::JS_ERROR_PARAM_ILLEGAL, "Parameter is missing.")), false);
+        return false;
+    }
+    asyncContext.env = env;
+    // 0: the first parameter of argv
+    if (!ParseString(env, argv[0], asyncContext.permissionName)) {
+        errMsg = GetParamErrorMsg("permissionName", "string");
+        NAPI_CALL_BASE(env,
+            napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
+        return false;
+    }
+
+    return true;
+}
+
+void NapiAtManager::SetPermissionRequestToggleStatusExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+
+    asyncContext->result = AccessTokenKit::SetPermissionRequestToggleStatus(asyncContext->permissionName,
+        asyncContext->status, 0);
+}
+
+void NapiAtManager::SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
+
+    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+}
+
+void NapiAtManager::GetPermissionRequestToggleStatusExecute(napi_env env, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+
+    asyncContext->result = AccessTokenKit::GetPermissionRequestToggleStatus(asyncContext->permissionName,
+        asyncContext->status, 0);
+}
+
+void NapiAtManager::GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data)
+{
+    AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext*>(data);
+    std::unique_ptr<AtManagerAsyncContext> callbackPtr {asyncContext};
+
+    napi_value result = nullptr;
+    NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->status, &result));
+
+    ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
+}
+
+napi_value NapiAtManager::SetPermissionRequestToggleStatus(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SetPermissionRequestToggleStatus begin.");
+
+    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New asyncContext failed.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputSetToggleStatus(env, info, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result)); // create delay promise object
+
+    napi_value resource = nullptr; // resource name
+    NAPI_CALL(env, napi_create_string_utf8(env, "SetPermissionRequestToggleStatus", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource, SetPermissionRequestToggleStatusExecute, SetPermissionRequestToggleStatusComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    // add async work handle to the napi queue and wait for result
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "SetPermissionRequestToggleStatus end.");
+    context.release();
+    return result;
+}
+
+napi_value NapiAtManager::GetPermissionRequestToggleStatus(napi_env env, napi_callback_info info)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionRequestToggleStatus begin.");
+
+    auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
+    if (asyncContext == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New asyncContext failed.");
+        return nullptr;
+    }
+
+    std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
+    if (!ParseInputGetToggleStatus(env, info, *asyncContext)) {
+        return nullptr;
+    }
+
+    napi_value result = nullptr;
+    NAPI_CALL(env, napi_create_promise(env, &(asyncContext->deferred), &result)); // create delay promise object
+
+    napi_value resource = nullptr; // resource name
+    NAPI_CALL(env, napi_create_string_utf8(env, "GetPermissionRequestToggleStatus", NAPI_AUTO_LENGTH, &resource));
+
+    NAPI_CALL(env, napi_create_async_work(
+        env, nullptr, resource, GetPermissionRequestToggleStatusExecute, GetPermissionRequestToggleStatusComplete,
+        reinterpret_cast<void *>(asyncContext), &(asyncContext->work)));
+    // add async work handle to the napi queue and wait for result
+    NAPI_CALL(env, napi_queue_async_work_with_qos(env, asyncContext->work, napi_qos_default));
+
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionRequestToggleStatus end.");
+    context.release();
+    return result;
 }
 
 napi_value NapiAtManager::RequestPermissionsFromUser(napi_env env, napi_callback_info info)

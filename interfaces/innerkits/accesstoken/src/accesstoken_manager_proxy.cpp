@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -212,6 +212,68 @@ int AccessTokenManagerProxy::GetReqPermissions(
             reqPermList.emplace_back(*permissionReq);
         }
     }
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+    int32_t userID = 0)
+{
+    MessageParcel sendData;
+    if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!sendData.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write permissionName failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!sendData.WriteUint32(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write status failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!sendData.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write userID failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS, sendData, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data=%{public}d.", result);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+    int32_t userID = 0)
+{
+    MessageParcel sendData;
+    if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!sendData.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write permissionName failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!sendData.WriteInt32(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write userID failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_REQUEST_TOGGLE_STATUS, sendData, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data=%{public}d.", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    status = reply.ReadUint32();
     return result;
 }
 

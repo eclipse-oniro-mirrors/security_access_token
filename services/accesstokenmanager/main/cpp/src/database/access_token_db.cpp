@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,6 +44,7 @@ void AccessTokenDb::OnCreate()
     CreateNativeTokenInfoTable();
     CreatePermissionDefinitionTable();
     CreatePermissionStateTable();
+    CreatePermissionRequestToggleStatusTable();
 }
 
 void AccessTokenDb::OnUpdate(int32_t version)
@@ -52,6 +53,9 @@ void AccessTokenDb::OnUpdate(int32_t version)
     if (version < DataBaseVersion::VERISION_2) {
         AddAvailableTypeColumn();
         AddPermDialogCapColumn();
+    }
+    if (version < DataBaseVersion::VERISION_3) {
+        CreatePermissionRequestToggleStatusTable();
     }
 }
 
@@ -95,11 +99,18 @@ AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
         TokenFiledConst::FIELD_GRANT_STATE, TokenFiledConst::FIELD_GRANT_FLAG
     };
 
+    SqliteTable permissionRequestToggleStatusTable;
+    permissionRequestToggleStatusTable.tableName_ = PERMISSION_REQUEST_TOGGLE_STATUS_TABLE;
+    permissionRequestToggleStatusTable.tableColumnNames_ = {
+        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME
+    };
+
     dataTypeToSqlTable_ = {
         {ACCESSTOKEN_HAP_INFO, hapTokenInfoTable},
         {ACCESSTOKEN_NATIVE_INFO, nativeTokenInfoTable},
         {ACCESSTOKEN_PERMISSION_DEF, permissionDefTable},
         {ACCESSTOKEN_PERMISSION_STATE, permissionStateTable},
+        {ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, permissionRequestToggleStatusTable},
     };
 
     Open();
@@ -471,6 +482,26 @@ int AccessTokenDb::CreatePermissionStateTable() const
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append(",")
         .append(TokenFiledConst::FIELD_DEVICE_ID)
+        .append("))");
+    return ExecuteSql(sql);
+}
+
+int32_t AccessTokenDb::CreatePermissionRequestToggleStatusTable() const
+{
+    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = "create table if not exists ";
+    sql.append(it->second.tableName_ + " (")
+        .append(TokenFiledConst::FIELD_USER_ID)
+        .append(INTEGER_STR)
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
+        .append(TEXT_STR)
+        .append("primary key(")
+        .append(TokenFiledConst::FIELD_USER_ID)
+        .append(",")
+        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append("))");
     return ExecuteSql(sql);
 }

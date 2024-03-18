@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Copyright (c) 2023-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -47,6 +47,8 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetReqPermissions(unsigned int, std::__h::vector<OHOS::Security::AccessToken::PermissionStateFull, std::__h::allocator<OHOS::Security::AccessToken::PermissionStateFull>>&, bool)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
+        "OHOS::Security::AccessToken::AccessTokenKit::SetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int, int)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionRequestToggleStatus(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&, int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenType(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapDlpFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(unsigned int)";

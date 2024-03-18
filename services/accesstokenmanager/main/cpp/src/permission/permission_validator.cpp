@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -46,6 +46,16 @@ bool PermissionValidator::IsPermissionFlagValid(uint32_t flag)
 bool PermissionValidator::IsPermissionNameValid(const std::string& permissionName)
 {
     return DataValidator::IsPermissionNameValid(permissionName);
+}
+
+bool PermissionValidator::IsUserIdValid(const int32_t userID)
+{
+    return DataValidator::IsUserIdValid(userID);
+}
+
+bool PermissionValidator::IsToggleStatusValid(const uint32_t status)
+{
+    return DataValidator::IsToggleStatusValid(status);
 }
 
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)

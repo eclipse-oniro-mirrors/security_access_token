@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -69,6 +69,8 @@ public:
     int GetReqPermissions(
         AccessTokenID tokenID, std::vector<PermissionStateFull>& reqPermList, bool isSystemGrant);
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag);
+    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status, int32_t userID);
+    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag);
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
@@ -115,6 +117,9 @@ private:
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
+    bool FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
+    void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName);
+    void DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;

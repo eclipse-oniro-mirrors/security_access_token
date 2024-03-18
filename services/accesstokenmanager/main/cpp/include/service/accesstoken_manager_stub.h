@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -42,6 +42,8 @@ private:
     void GetSelfPermissionsStateInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionsStatusInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionFlagInner(MessageParcel& data, MessageParcel& reply);
+    void SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply);

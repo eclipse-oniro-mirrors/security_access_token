@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -58,6 +58,10 @@ public:
         PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList) override;
     int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag) override;
+    int32_t SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+        int32_t userID) override;
+    int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+        int32_t userID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
