@@ -44,6 +44,7 @@ group("fuzztest") {
     "gettokentypeflag_fuzzer:GetTokenTypeFlagFuzzTest",
     "getusergrantedpermissionusedtype_fuzzer:GetUserGrantedPermissionUsedTypeFuzzTest",
     "grantpermission_fuzzer:GrantPermissionFuzzTest",
+    "inithaptoken_fuzzer:InitHapTokenFuzzTest",
     "registerpermstatechangecallback_fuzzer:RegisterPermStateChangeCallbackFuzzTest",
     "revokeusergrantedpermission_fuzzer:RevokeUserGrantedPermissionFuzzTest",
     "setpermdialogcap_fuzzer:SetPermDialogCapFuzzTest",
