@@ -1089,13 +1089,16 @@ int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
     for (size_t i = 0; i < permStateValues.size(); i++) {
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
-        AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
+        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME,
+            permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
+        AccessTokenDb::GetInstance().Modify(
+            AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     for (size_t i = 0; i < permDefValues.size(); i++) {
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permDefValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
+        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME,
+            permDefValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
         AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues[i], conditions);
     }
     GenericValues condition;
@@ -1107,7 +1110,7 @@ int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
 int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission)
 {
     std::vector<GenericValues> permStateValues;
-
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
     std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
     if (hapInfo == nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
@@ -1122,7 +1125,8 @@ int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, 
         GenericValues conditions;
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
         conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permission);
-        AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
+        AccessTokenDb::GetInstance().Modify(
+            AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     return RET_SUCCESS;
 }

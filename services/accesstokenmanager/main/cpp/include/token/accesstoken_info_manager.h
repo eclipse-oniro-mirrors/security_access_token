@@ -126,6 +126,7 @@ private:
     OHOS::Utils::RWLock hapTokenInfoLock_;
     OHOS::Utils::RWLock nativeTokenInfoLock_;
     OHOS::Utils::RWLock managerLock_;
+    OHOS::Utils::RWLock modifyLock_;
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
