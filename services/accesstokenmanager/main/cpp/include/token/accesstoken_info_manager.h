@@ -67,6 +67,7 @@ public:
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
+    int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -125,6 +126,7 @@ private:
     OHOS::Utils::RWLock hapTokenInfoLock_;
     OHOS::Utils::RWLock nativeTokenInfoLock_;
     OHOS::Utils::RWLock managerLock_;
+    OHOS::Utils::RWLock modifyLock_;
 
     std::map<int, std::shared_ptr<HapTokenInfoInner>> hapTokenInfoMap_;
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
