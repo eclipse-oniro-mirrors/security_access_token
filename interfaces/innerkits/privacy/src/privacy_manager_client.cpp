@@ -30,22 +30,30 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyManagerClient"
 };
-} // namespace
-
 const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
+std::recursive_mutex g_instanceMutex;
+} // namespace
 
 PrivacyManagerClient& PrivacyManagerClient::GetInstance()
 {
-    static PrivacyManagerClient instance;
-    return instance;
+    static PrivacyManagerClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PrivacyManagerClient();
+        }
+    }
+    return *instance;
 }
 
 PrivacyManagerClient::PrivacyManagerClient()
 {}
 
 PrivacyManagerClient::~PrivacyManagerClient()
-{}
+{
+    ACCESSTOKEN_LOG_ERROR(LABEL, "~PrivacyManagerClient");
+}
 
 int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
 {
