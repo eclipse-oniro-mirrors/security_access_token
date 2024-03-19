@@ -270,7 +270,7 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
-    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     DumpTokenIfNeeded();
     return ret;
 }
@@ -280,7 +280,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
-    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
+    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     DumpTokenIfNeeded();
     return ret;
 }

@@ -67,6 +67,7 @@ public:
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
+    int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
