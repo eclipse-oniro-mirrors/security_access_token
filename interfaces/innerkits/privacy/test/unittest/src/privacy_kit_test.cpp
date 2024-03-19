@@ -2163,22 +2163,22 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
     // g_tokenIdC add security component used type
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
 
-    std::string processName;
+    std::string permissionName;
     std::vector<PermissionUsedTypeInfo> results1;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdA, processName, results1));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdA, permissionName, results1));
     ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results1.size()); // only g_tokenIdA
     ASSERT_EQ(g_tokenIdA, results1[FIRST_INDEX].tokenId);
     ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results1[FIRST_INDEX].type); // normal type
 
     std::vector<PermissionUsedTypeInfo> results2;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdB, processName, results2));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdB, permissionName, results2));
     ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results2.size()); // only g_tokenIdB
     ASSERT_EQ(g_tokenIdB, results2[FIRST_INDEX].tokenId);
     ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results2[FIRST_INDEX].type); // picker type
 
     std::vector<PermissionUsedTypeInfo> results3;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdC.tokenIdExStruct.tokenID,
-        processName, results3));
+        permissionName, results3));
     ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results3.size()); // only g_tokenIdC
     ASSERT_EQ(g_tokenIdC.tokenIdExStruct.tokenID, results3[FIRST_INDEX].tokenId);
     ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results3[FIRST_INDEX].type); // security component type

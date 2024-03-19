@@ -25,19 +25,28 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncManagerClient"};
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 TokenSyncManagerClient& TokenSyncManagerClient::GetInstance()
 {
-    static TokenSyncManagerClient instance;
-    return instance;
+    static TokenSyncManagerClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new TokenSyncManagerClient();
+        }
+    }
+    return *instance;
 }
 
 TokenSyncManagerClient::TokenSyncManagerClient()
 {}
 
 TokenSyncManagerClient::~TokenSyncManagerClient()
-{}
+{
+    ACCESSTOKEN_LOG_ERROR(LABEL, "~TokenSyncManagerClient");
+}
 
 int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const
 {

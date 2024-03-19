@@ -57,7 +57,9 @@ AccessTokenManagerClient::AccessTokenManagerClient()
 {}
 
 AccessTokenManagerClient::~AccessTokenManagerClient()
-{}
+{
+    ACCESSTOKEN_LOG_ERROR(LABEL, "~AccessTokenManagerClient");
+}
 
 PermUsedTypeEnum AccessTokenManagerClient::GetUserGrantedPermissionUsedType(
     AccessTokenID tokenID, const std::string &permissionName)
