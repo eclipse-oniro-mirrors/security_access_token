@@ -37,7 +37,7 @@ PermissionListStateParcel* PermissionListStateParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadString(permissionStateParcel->permsState.permissionName), permissionStateParcel);
     int32_t state;
     RELEASE_IF_FALSE(in.ReadInt32(state), permissionStateParcel);
-    if (state >= static_cast<int32_t>(TYPE_BUTT) || state < static_cast<int32_t>(SETTING_OPER)) {
+    if (state >= static_cast<int32_t>(BUTT_OPER) || state < static_cast<int32_t>(SETTING_OPER)) {
         return nullptr;
     }
     permissionStateParcel->permsState.state = static_cast<PermissionOper>(state);

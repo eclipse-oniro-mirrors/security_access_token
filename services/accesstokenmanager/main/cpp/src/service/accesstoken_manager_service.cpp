@@ -48,7 +48,7 @@
 #include "privacy_kit.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
-#include "system_permission_definition_parser.h"
+#include "permission_definition_parser.h"
 
 namespace OHOS {
 namespace Security {
@@ -712,7 +712,7 @@ bool AccessTokenManagerService::Initialize()
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
         "PID_INFO", getpid());
-    SystemPermissionDefinitionParser::GetInstance().Init();
+    PermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
     tokenDumpWorker_.Start(1);

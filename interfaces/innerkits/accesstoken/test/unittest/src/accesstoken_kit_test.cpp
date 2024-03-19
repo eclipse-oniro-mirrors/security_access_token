@@ -3250,7 +3250,7 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     std::vector<PermissionListState> permsList;
     PermissionListState tmp = {
         .permissionName = g_infoManagerTestPolicyPrams.permStateList[0].permissionName,
-        .state = TYPE_BUTT
+        .state = BUTT_OPER
     };
     permsList.emplace_back(tmp);
 

@@ -63,8 +63,8 @@ enum class PermUsedTypeEnum {
     PICKER_TYPE,
     /** security component type for permision request */
     SEC_COMPONENT_TYPE,
-    /** buttom of type for no use */
-    BUTT_TYPE,
+    /** bottom of type for no use */
+    PERM_USED_TYPE_BUTT,
 };
 
 /**
@@ -119,9 +119,13 @@ typedef enum TypeATokenAplEnum {
  * @brief AvailableType
  */
 typedef enum TypeATokenAvailableTypeEnum {
-    INVALID = 0,
-    NORMAL = 1,
+    INVALID = -1,
+    NORMAL = 0,
+    SYSTEM,
     MDM,
+    SYSTEM_AND_MDM,
+    SERVICE,
+    AVAILABLE_TYPE_BUTT,
 } ATokenAvailableTypeEnum;
 
 /**
@@ -222,7 +226,7 @@ typedef enum TypePermissionOper {
     /** operate is forbidden */
     FORBIDDEN_OPER = 3,
     /** buttom of permission oper */
-    TYPE_BUTT,
+    BUTT_OPER,
 } PermissionOper;
 
 /**
@@ -232,7 +236,7 @@ typedef enum DlpType {
     DLP_COMMON = 0,
     DLP_READ = 1,
     DLP_FULL_CONTROL = 2,
-    DLP_FULL_BUTT,
+    BUTT_DLP_TYPE,
 } HapDlpType;
 
 /**

@@ -26,7 +26,7 @@ accesstoken_manager_service_source = [
   "../main/cpp/src/permission/permission_manager.cpp",
   "../main/cpp/src/permission/permission_policy_set.cpp",
   "../main/cpp/src/permission/permission_validator.cpp",
-  "../main/cpp/src/permission/system_permission_definition_parser.cpp",
+  "../main/cpp/src/permission/permission_definition_parser.cpp",
   "../main/cpp/src/permission/temp_permission_observer.cpp",
   "../main/cpp/src/service/accesstoken_manager_service.cpp",
   "../main/cpp/src/service/accesstoken_manager_stub.cpp",
@@ -75,9 +75,9 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "unittest/cpp/src/accesstoken_database_test.cpp",
     "unittest/cpp/src/accesstoken_info_manager_test.cpp",
     "unittest/cpp/src/native_token_receptor_test.cpp",
+    "unittest/cpp/src/permission_definition_parser_test.cpp",
     "unittest/cpp/src/permission_grant_event_test.cpp",
     "unittest/cpp/src/permission_manager_test.cpp",
-    "unittest/cpp/src/system_permission_definition_parser_test.cpp",
   ]
   sources += accesstoken_manager_service_source
 

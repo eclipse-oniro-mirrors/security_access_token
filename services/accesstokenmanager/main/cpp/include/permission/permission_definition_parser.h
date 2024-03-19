@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef SYSTEM_PERMISSION_DEFINITION_PARSER_H
-#define SYSTEM_PERMISSION_DEFINITION_PARSER_H
+#ifndef PERMISSION_DEFINITION_PARSER_H
+#define PERMISSION_DEFINITION_PARSER_H
 
 #include <string>
 
@@ -30,18 +30,19 @@ struct PermissionDefParseRet {
     PermissionDef permDef;
     bool isSuccessful = false;
 };
-class SystemPermissionDefinitionParser final {
+class PermissionDefinitionParser final {
 public:
-    static SystemPermissionDefinitionParser& GetInstance();
-    virtual ~SystemPermissionDefinitionParser() = default;
+    static PermissionDefinitionParser& GetInstance();
+    virtual ~PermissionDefinitionParser() = default;
     int32_t Init();
 
 private:
-    SystemPermissionDefinitionParser() : ready_(false) {}
-    DISALLOW_COPY_AND_MOVE(SystemPermissionDefinitionParser);
+    PermissionDefinitionParser() : ready_(false) {}
+    DISALLOW_COPY_AND_MOVE(PermissionDefinitionParser);
     int ReadCfgFile(std::string& PermsRawData);
-    int32_t ParserPermsRawData(const std::string& permsRawData,
-        std::vector<PermissionDef>& perms);
+    int32_t GetPermissionDefList(const nlohmann::json& json, const std::string& permsRawData, const std::string& type,
+        std::vector<PermissionDef>& permDefList);
+    int32_t ParserPermsRawData(const std::string& permsRawData, std::vector<PermissionDef>& perms);
     void from_json(const nlohmann::json& j, PermissionDefParseRet& p);
     void ProcessPermsInfos(std::vector<PermissionDef>& Perms);
 
@@ -51,4 +52,4 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif  // SYSTEM_PERMISSION_DEFINITION_PARSER_H
+#endif  // PERMISSION_DEFINITION_PARSER_H

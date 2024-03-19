@@ -281,7 +281,7 @@ int32_t AccessTokenInfoManager::GetHapTokenDlpType(AccessTokenID id)
         return iter->second->GetDlpType();
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "token %{public}u is invalid.", id);
-    return DLP_FULL_BUTT;
+    return BUTT_DLP_TYPE;
 }
 
 bool AccessTokenInfoManager::IsTokenIdExist(AccessTokenID id)
