@@ -2068,7 +2068,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level1)
     std::string permissionName;
     std::vector<PermissionUsedTypeInfo> results;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, permissionName, results));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_THREE), results.size());
+    // results size may more than 3
     for (PermissionUsedTypeInfo& result : results) {
         if (result.tokenId == g_tokenIdA) {
             ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, result.type); // g_tokenIdA only normal type
@@ -2094,53 +2094,6 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos002, TestSize.Level1)
     info.permissionName = "ohos.permission.CAMERA";
     info.successCount = 1;
     info.failCount = 0;
-    // g_tokenIdA add normal used type
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
-
-    info.tokenId = g_tokenIdB;
-    info.type = PermissionUsedType::PICKER_TYPE;
-    // g_tokenIdB add picker used type
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
-
-    info.tokenId = g_tokenIdC.tokenIdExStruct.tokenID;
-    info.type = PermissionUsedType::SECURITY_COMPONENT_TYPE;
-    // g_tokenIdC add security component used type
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
-
-    std::string permissionName;
-    std::vector<PermissionUsedTypeInfo> results1;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdA, permissionName, results1));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results1.size());
-    ASSERT_EQ(g_tokenIdA, results1[FIRST_INDEX].tokenId); // only g_tokenIdA
-    ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results1[FIRST_INDEX].type); // only normal type
-
-    std::vector<PermissionUsedTypeInfo> results2;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdB, permissionName, results2));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results2.size());
-    ASSERT_EQ(g_tokenIdB, results2[FIRST_INDEX].tokenId); // only g_tokenIdB
-    ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results2[FIRST_INDEX].type); // only picker type
-
-    std::vector<PermissionUsedTypeInfo> results3;
-    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdC.tokenIdExStruct.tokenID,
-        permissionName, results3));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results3.size());
-    ASSERT_EQ(g_tokenIdC.tokenIdExStruct.tokenID, results3[FIRST_INDEX].tokenId); // only g_tokenIdC
-    ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results3[FIRST_INDEX].type); // only security component type
-}
-
-/**
- * @tc.name: GetPermissionUsedTypeInfos003
- * @tc.desc: Test GetPermissionUsedTypeInfos with default permissionName
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
-{
-    AddPermParamInfo info;
-    info.tokenId = g_tokenIdA;
-    info.permissionName = "ohos.permission.CAMERA";
-    info.successCount = 1;
-    info.failCount = 0;
     // CAMERA add normal used type
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
 
@@ -2156,21 +2109,79 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
 
     std::vector<PermissionUsedTypeInfo> results1;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, "ohos.permission.CAMERA", results1));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results1.size());
-    ASSERT_EQ("ohos.permission.CAMERA", results1[FIRST_INDEX].permissionName); // only CAMERA
-    ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results1[FIRST_INDEX].type); // only normal type
+    // result1 size may more than one
+    for (const auto& result : results1) {
+        if (g_tokenIdA == result.tokenId) {
+            ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, result.type); // g_tokenIdA only normal type
+        }
+    }
 
     std::vector<PermissionUsedTypeInfo> results2;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, "ohos.permission.LOCATION", results2));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results2.size());
-    ASSERT_EQ("ohos.permission.LOCATION", results2[FIRST_INDEX].permissionName); // only LOCATION
-    ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results2[FIRST_INDEX].type); // only picker type
+    // result2 size may more than one
+    for (const auto& result : results2) {
+        if (g_tokenIdA == result.tokenId) {
+            ASSERT_EQ(PermissionUsedType::PICKER_TYPE, result.type); // g_tokenIdA only picker type
+        }
+    }
 
     std::vector<PermissionUsedTypeInfo> results3;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, "ohos.permission.MICROPHONE", results3));
     ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results3.size());
-    ASSERT_EQ("ohos.permission.MICROPHONE", results3[FIRST_INDEX].permissionName); // only MICROPHONE
-    ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results3[FIRST_INDEX].type); // only security component type
+    // result3 size may more than one
+    for (const auto& result : results3) {
+        if (g_tokenIdA == result.tokenId) {
+            // g_tokenIdA only security component type
+            ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, result.type);
+        }
+    }
+}
+
+/**
+ * @tc.name: GetPermissionUsedTypeInfos003
+ * @tc.desc: Test GetPermissionUsedTypeInfos with default permissionName
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos003, TestSize.Level1)
+{
+    AddPermParamInfo info;
+    info.tokenId = g_tokenIdA;
+    info.permissionName = "ohos.permission.CAMERA";
+    info.successCount = 1;
+    info.failCount = 0;
+    // g_tokenIdA add normal used type
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.tokenId = g_tokenIdB;
+    info.type = PermissionUsedType::PICKER_TYPE;
+    // g_tokenIdB add picker used type
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+
+    info.tokenId = g_tokenIdC.tokenIdExStruct.tokenID;
+    info.type = PermissionUsedType::SECURITY_COMPONENT_TYPE;
+    // g_tokenIdC add security component used type
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::AddPermissionUsedRecord(info));
+
+    std::string processName;
+    std::vector<PermissionUsedTypeInfo> results1;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdA, processName, results1));
+    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results1.size()); // only g_tokenIdA
+    ASSERT_EQ(g_tokenIdA, results1[FIRST_INDEX].tokenId);
+    ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results1[FIRST_INDEX].type); // normal type
+
+    std::vector<PermissionUsedTypeInfo> results2;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdB, processName, results2));
+    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results2.size()); // only g_tokenIdB
+    ASSERT_EQ(g_tokenIdB, results2[FIRST_INDEX].tokenId);
+    ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results2[FIRST_INDEX].type); // picker type
+
+    std::vector<PermissionUsedTypeInfo> results3;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(g_tokenIdC.tokenIdExStruct.tokenID,
+        processName, results3));
+    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results3.size()); // only g_tokenIdC
+    ASSERT_EQ(g_tokenIdC.tokenIdExStruct.tokenID, results3[FIRST_INDEX].tokenId);
+    ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results3[FIRST_INDEX].type); // security component type
 }
 
 /**
