@@ -556,19 +556,9 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveCha
                 }
                 permList.emplace_back(perm);
                 int64_t curStamp = TimeUtil::GetCurrentTimestamp();
-                // update accessDuration and store in database
-                it->accessDuration = curStamp - it->timestamp;
-                int32_t lockScreenStatus = it->lockScreenStatus;
-                if (it->status == PERM_ACTIVE_IN_FOREGROUND && lockScreenStatus == PERM_ACTIVE_IN_LOCKED) {
-                    ACCESSTOKEN_LOG_DEBUG(LABEL, "foreground & locked convert into background & unlocked");
-                    it->status = PERM_ACTIVE_IN_BACKGROUND;
-                    it->lockScreenStatus = PERM_ACTIVE_IN_UNLOCKED;
-                }
 
-                // update status to input, accessDuration to 0 and timestamp to now in cache
+                // update status to input and timestamp to now in cache
                 it->status = status;
-                it->lockScreenStatus = lockScreenStatus;
-                it->accessDuration = 0;
                 it->timestamp = curStamp;
                 ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
             }
@@ -598,13 +588,13 @@ void PermissionRecordManager::NotifyAppStateChange(AccessTokenID tokenId, Active
 void PermissionRecordManager::SetLockScreenStatus(int32_t lockScreenStatus)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "lockScreenStatus %{public}d", lockScreenStatus);
-    std::mutex lockScreenStateMutex_;
+    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
     lockScreenStatus_ = lockScreenStatus;
 }
 
 int32_t PermissionRecordManager::GetLockScreenStatus()
 {
-    std::mutex lockScreenStateMutex_;
+    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
     return lockScreenStatus_;
 }
 
@@ -696,7 +686,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switc
         std::lock_guard<std::mutex> lock(startRecordListMutex_);
         for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
             PermissionRecord record = *it;
-            if ((record.opCode) != opCode) {
+            if ((record.opCode) != static_cast<int32_t>(opCode)) {
                 continue;
             }
             if (switchStatus) {
@@ -705,8 +695,6 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switc
                 record.status = GetAppStatus(record.tokenId);
             } else {
                 ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
-                    record.status = PERM_INACTIVE;
-                    record.status = PERM_INACTIVE;
                 record.status = PERM_INACTIVE;
             }
             recordList.emplace_back(record);
