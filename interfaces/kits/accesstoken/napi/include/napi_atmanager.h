@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -99,7 +99,10 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
 
     AccessTokenID tokenId = 0;
     std::string permissionName;
-    uint32_t flag = 0;
+    union {
+        uint32_t flag = 0;
+        uint32_t status;
+    };
     int32_t result = AT_PERM_OPERA_FAIL;
     int32_t errorCode = 0;
 };
@@ -200,8 +203,14 @@ private:
     static napi_value CheckAccessToken(napi_env env, napi_callback_info info);
     static napi_value GetPermissionFlags(napi_env env, napi_callback_info info);
     static napi_value GetVersion(napi_env env, napi_callback_info info);
+    static napi_value SetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
+    static napi_value GetPermissionRequestToggleStatus(napi_env env, napi_callback_info info);
 
     static bool ParseInputVerifyPermissionOrGetFlag(const napi_env env, const napi_callback_info info,
+        AtManagerAsyncContext& asyncContext);
+    static bool ParseInputSetToggleStatus(const napi_env env, const napi_callback_info info,
+        AtManagerAsyncContext& asyncContext);
+    static bool ParseInputGetToggleStatus(const napi_env env, const napi_callback_info info,
         AtManagerAsyncContext& asyncContext);
     static void VerifyAccessTokenExecute(napi_env env, void *data);
     static void VerifyAccessTokenComplete(napi_env env, napi_status status, void *data);
@@ -217,7 +226,12 @@ private:
     static void GetVersionComplete(napi_env env, napi_status status, void *data);
     static void GetPermissionFlagsExecute(napi_env env, void *data);
     static void GetPermissionFlagsComplete(napi_env env, napi_status status, void *data);
+    static void SetPermissionRequestToggleStatusExecute(napi_env env, void *data);
+    static void SetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data);
+    static void GetPermissionRequestToggleStatusExecute(napi_env env, void *data);
+    static void GetPermissionRequestToggleStatusComplete(napi_env env, napi_status status, void *data);
     static void SetNamedProperty(napi_env env, napi_value dstObj, const int32_t objValue, const char *propName);
+    static void CreateObjects(napi_env env, napi_value exports);
     static bool FillPermStateChangeInfo(const napi_env env, const napi_value* argv, const std::string& type,
         const napi_value thisVar, RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static bool ParseInputToRegister(const napi_env env, const napi_callback_info cbInfo,

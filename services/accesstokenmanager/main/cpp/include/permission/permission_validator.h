@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,8 @@ public:
 
     static bool IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName);
     static bool IsPermissionNameValid(const std::string& permissionName);
+    static bool IsUserIdValid(const int32_t userID);
+    static bool IsToggleStatusValid(const uint32_t status);
     static bool IsPermissionFlagValid(uint32_t flag);
     static bool IsPermissionDefValid(const PermissionDef& permDef);
     static bool IsPermissionStateValid(const PermissionStateFull& permState);

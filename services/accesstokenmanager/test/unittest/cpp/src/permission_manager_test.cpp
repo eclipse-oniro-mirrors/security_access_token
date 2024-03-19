@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1079,6 +1079,123 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
     // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is granted, return PASS_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList4, permState4, apiVersion);
     ASSERT_EQ(PermissionOper::PASS_OPER, permState4.state);
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus001
+ * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
+ * status and invalid userID.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    // UserId is invalid.
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Permission name is invalid.
+    userID = 123;
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        "", status, userID));
+
+    // PermissionName is not defined.
+    permissionName = "ohos.permission.invalid";
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Status is invalid.
+    status = -1;
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus002
+ * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with normal process.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, SetPermissionRequestToggleStatus002, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    status = PermissionRequestToggleStatus::OPEN;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus001
+ * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with invalid userID, invalid permission
+ * name.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = -1;
+    uint32_t status;
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    // UserId is invalid.
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // PermissionName is invalid.
+    userID = 123;
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        "", status, userID));
+
+    // PermissionName is not defined.
+    permissionName = "ohos.permission.invalid";
+    ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus002
+ * @tc.desc: PermissionManager::GetPermissionRequestToggleStatus function test with normal process.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetPermissionRequestToggleStatus002, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t setStatusClose = PermissionRequestToggleStatus::CLOSED;
+    uint32_t setStatusOpen = PermissionRequestToggleStatus::OPEN;
+    uint32_t getStatus;
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusOpen, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", setStatusClose, userID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusClose, getStatus);
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", setStatusOpen, userID));
+
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        "ohos.permission.CAMERA", getStatus, userID));
+
+    ASSERT_EQ(setStatusOpen, getStatus);
 }
 
 /**

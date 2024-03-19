@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -245,6 +245,28 @@ int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID toke
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->ClearUserGrantedPermissionState(tokenID);
+}
+
+int32_t AccessTokenManagerClient::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+    int32_t userID = 0)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->SetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AccessTokenManagerClient::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+    int32_t userID = 0)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int32_t AccessTokenManagerClient::CreatePermStateChangeCallback(

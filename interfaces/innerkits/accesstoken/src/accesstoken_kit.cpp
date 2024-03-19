@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -401,6 +401,42 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
+}
+
+int32_t AccessTokenKit::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+    int32_t userID = 0)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName=%{public}s, status=%{public}d, userID=%{public}d.",
+        permissionName.c_str(), status, userID);
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsToggleStatusValid(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Toggle status is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+    int32_t userID = 0)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName=%{public}s, userID=%{public}d.",
+        permissionName.c_str(), userID);
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -263,6 +263,21 @@ int AccessTokenManagerService::GetPermissionFlag(
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s",
         tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
+}
+
+int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
+    const std::string& permissionName, uint32_t status, int32_t userID = 0)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Permission=%{public}s, status=%{public}d, userID=%{public}d",
+        permissionName.c_str(), status, userID);
+    return PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
+    const std::string& permissionName, uint32_t& status, int32_t userID = 0)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Permission=%{public}s, userID=%{public}d", permissionName.c_str(), userID);
+    return PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -137,6 +137,14 @@ typedef union {
 } AccessTokenIDEx;
 
 /**
+ * @brief Permission request toggle status
+ */
+typedef enum TypePermissionRequestToggleStatus {
+    CLOSED = 0,
+    OPEN = 1,
+} PermissionRequestToggleStatus;
+
+/**
  * @brief Permission states
  */
 typedef enum TypePermissionState {
@@ -252,6 +260,10 @@ typedef enum TypeOptType {
     PERM_GRANT,
     /** revoke permission */
     PERM_REVOKE,
+    /** set toggle status */
+    TOGGLE_SET,
+    /** get toggle status */
+    TOGGLE_GET,
 } OptType;
 } // namespace AccessToken
 } // namespace Security

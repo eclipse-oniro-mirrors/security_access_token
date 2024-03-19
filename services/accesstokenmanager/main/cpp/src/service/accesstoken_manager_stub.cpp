@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -285,6 +285,51 @@ void AccessTokenManagerStub::GetPermissionFlagInner(MessageParcel& data, Message
         return;
     }
     reply.WriteUint32(flag);
+}
+
+void AccessTokenManagerStub::SetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+
+    std::string permissionName = data.ReadString();
+    uint32_t status = data.ReadUint32();
+    int32_t userID = data.ReadInt32();
+    if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int32_t result = this->SetPermissionRequestToggleStatus(permissionName, status, userID);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+
+    std::string permissionName = data.ReadString();
+    int32_t userID = data.ReadInt32();
+    if (!IsShellProcessCalling() && !IsPrivilegedCalling() &&
+        VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    uint32_t status;
+    int32_t result = this->GetPermissionRequestToggleStatus(permissionName, status, userID);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    reply.WriteUint32(status);
 }
 
 void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -888,6 +933,10 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS)] =
+        &AccessTokenManagerStub::SetPermissionRequestToggleStatusInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_REQUEST_TOGGLE_STATUS)] =
+        &AccessTokenManagerStub::GetPermissionRequestToggleStatusInner;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -211,6 +211,38 @@ HWTEST_F(AccessTokenDenyTest, GetPermissionFlag001, TestSize.Level1)
     std::string permission = "ohos.permission.CAMERA";
     uint32_t flag;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionFlag(tokenId, permission, flag));
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus001
+ * @tc.desc: SetPermissionRequestToggleStatus with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    std::string permission = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermissionRequestToggleStatus(
+        permission, status, userID));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus001
+ * @tc.desc: GetPermissionRequestToggleStatus with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 123;
+    uint32_t status;
+    std::string permission = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetPermissionRequestToggleStatus(
+        permission, status, userID));
 }
 
 /**

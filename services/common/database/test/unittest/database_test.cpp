@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -452,6 +452,7 @@ HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable002, TestSize.Level1)
     ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreateNativeTokenInfoTable());
     ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionDefinitionTable());
     ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionStateTable());
+    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionRequestToggleStatusTable());
 
     AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
@@ -493,6 +494,19 @@ HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionStateTable001, TestSize.Leve
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 begin");
     ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionStateTable());
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 end");
+}
+
+/*
+ * @tc.name: SqliteStorageCreatePermissionRequestToggleStatusTable001
+ * @tc.desc: CreatePermissionRequestToggleStatusTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionRequestToggleStatusTable001, TestSize.Level1)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionRequestToggleStatusTableTest001 begin");
+    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionRequestToggleStatusTable());
+    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionRequestToggleStatusTableTest001 end");
 }
 
 /*

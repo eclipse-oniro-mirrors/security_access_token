@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "access_token_db.h"
 #include "app_manager_access_client.h"
 #include "callback_manager.h"
 #ifdef SUPPORT_SANDBOX_APP
@@ -48,6 +49,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
 static constexpr int32_t ROOT_UID = 0;
+static constexpr int32_t BASE_USER_RANGE = 200000;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
     "ohos.permission.MANAGE_VOICEMAIL",
@@ -361,6 +363,7 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
 {
     int32_t goalGrantStatus;
     uint32_t goalGrantFlag;
+    int32_t userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
 
     // api8 require vague location permission refuse directly because there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
@@ -373,6 +376,11 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
     }
     if (IsPermissionRestrictedByRules(permState.permissionName)) {
         permState.state = FORBIDDEN_OPER;
+        return;
+    }
+
+    if (FindPermRequestToggleStatusFromDb(userID, permState.permissionName)) {
+        permState.state = SETTING_OPER;
         return;
     }
     if (goalGrantStatus == PERMISSION_DENIED) {
@@ -420,6 +428,117 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         flag = permPolicySet->GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
     }
     return ret;
+}
+
+bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
+{
+    std::vector<GenericValues> permRequestToggleStatusRes;
+
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+        permRequestToggleStatusRes);
+    for (const GenericValues& permRequestToggleStatus: permRequestToggleStatusRes) {
+        int32_t id = permRequestToggleStatus.GetInt(TokenFiledConst::FIELD_USER_ID);
+        if (id != userID) {
+            continue;
+        }
+
+        std::string permission = permRequestToggleStatus.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
+        if (permission == permissionName) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void PermissionManager::AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName)
+{
+    std::vector<GenericValues> permRequestToggleStatusValues;
+    GenericValues genericValues;
+
+    genericValues.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    permRequestToggleStatusValues.emplace_back(genericValues);
+
+    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+        permRequestToggleStatusValues);
+}
+
+void PermissionManager::DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
+{
+    GenericValues values;
+    values.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    values.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values);
+}
+
+int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
+    int32_t userID)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, status=%{public}d", userID,
+        permissionName.c_str(), status);
+    if (!PermissionValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+    if (!PermissionValidator::IsToggleStatusValid(status)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Status is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    if (status == PermissionRequestToggleStatus::CLOSED) {
+        AddPermRequestToggleStatusToDb(userID, permissionName);
+    } else {
+        DeletePermRequestToggleStatusFromDb(userID, permissionName);
+    }
+
+    return 0;
+}
+
+int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status,
+    int32_t userID)
+{
+    if (userID == 0) {
+        userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s", userID, permissionName.c_str());
+    if (!PermissionValidator::IsUserIdValid(userID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserID is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is invalid.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+
+    bool ret = FindPermRequestToggleStatusFromDb(userID, permissionName);
+    if (ret) {
+        status = PermissionRequestToggleStatus::CLOSED;
+    } else {
+        status = PermissionRequestToggleStatus::OPEN;
+    }
+
+    return 0;
 }
 
 void PermissionManager::ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered)

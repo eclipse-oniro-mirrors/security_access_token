@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -41,13 +41,15 @@ private:
     int32_t RunAsCommandError(void);
     std::string GetUnknownOptionMsg() const;
     int32_t RunAsCommandMissingOptionArgument(void);
-    int32_t RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
+    void RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info);
     std::string DumpRecordInfo(uint32_t tokenId, const std::string& permissionName);
     std::string DumpUsedTypeInfo(uint32_t tokenId, const std::string& permissionName);
     int32_t ModifyPermission(const OptType& type, AccessTokenID tokenId, const std::string& permissionName);
     int32_t RunCommandByOperationType(const AtmToolsParamInfo& info);
     int32_t HandleComplexCommand(const std::string& shortOption, const struct option longOption[],
         const std::string& helpMsg);
+    int32_t SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status);
+    int32_t GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo);
 
     int32_t RunAsHelpCommand();
     int32_t RunAsCommonCommand();

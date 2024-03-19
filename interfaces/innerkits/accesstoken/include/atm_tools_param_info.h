@@ -60,7 +60,11 @@ public:
      * see the definition of OptType in the access_token.h file.
      */
     OptType type = DEFAULT_OPER;
-    AccessTokenID tokenId = 0;
+    union {
+        AccessTokenID tokenId = 0;
+        int32_t userID;
+    };
+    uint32_t status = 0;
     std::string permissionName;
     std::string bundleName;
     std::string processName;

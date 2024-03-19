@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -778,6 +778,303 @@ HWTEST_F(AccessTokenKitTest, GetPermissionFlag005, TestSize.Level0)
     ASSERT_EQ(RET_SUCCESS, ret);
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenID));
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus001
+ * @tc.desc: Set permission request toggle status that userId, permission or status is invalid.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 100;
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+
+    // Permission name is invalid.
+    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus("", status, userID);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    // Status is invalid.
+    status = 2;
+    ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status, userID);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    // UserID is invalid.
+    userID = -1;
+    status = PermissionRequestToggleStatus::CLOSED;
+    ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status, userID);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus002
+ * @tc.desc: SetPermissionRequestToggleStatus caller is a normal app, not a system app.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestNormalInfoParms.userID);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus003
+ * @tc.desc: SetPermissionRequestToggleStatus caller is a system app without related permissions.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
+
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+
+    status = PermissionRequestToggleStatus::OPEN;
+    ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+
+    // restore environment
+    setuid(selfUid);
+}
+
+/**
+ * @tc.name: SetPermissionRequestToggleStatus004
+ * @tc.desc: SetPermissionRequestToggleStatus caller is a system app with related permissions.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus004, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    PermissionDef infoManagerTestPermDef = {
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .bundleName = "accesstoken_test",
+        .grantMode = 1,
+        .availableLevel = APL_NORMAL,
+        .label = "label3",
+        .labelId = 1,
+        .description = "open the door",
+        .descriptionId = 1,
+        .availableType = MDM
+    };
+
+    PermissionStateFull infoManagerTestState = {
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permList = {infoManagerTestPermDef},
+        .permStateList = {infoManagerTestState}
+    };
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
+
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    status = PermissionRequestToggleStatus::OPEN;
+    ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // restore environment
+    setuid(selfUid);
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus001
+ * @tc.desc: Get permission request toggle status that userId, permission is invalid.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionRequestToggleStatus001, TestSize.Level1)
+{
+    int32_t userID = 100;
+    uint32_t status;
+
+    // Permission name is invalid.
+    int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus("", status, userID);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+
+    // UserId is invalid.
+    userID = -1;
+    ret = AccessTokenKit::GetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status, userID);
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus002
+ * @tc.desc: GetPermissionRequestToggleStatus caller is a normal app, not a system app.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionRequestToggleStatus002, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    uint32_t status;
+    int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestNormalInfoParms.userID);
+    ASSERT_EQ(ERR_NOT_SYSTEM_APP, ret);
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus003
+ * @tc.desc: GetPermissionRequestToggleStatus caller is a system app without related permissions.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionRequestToggleStatus003, TestSize.Level0)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
+
+    uint32_t getStatus;
+    int32_t ret = AccessTokenKit::GetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, getStatus,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, ret);
+
+    // restore environment
+    setuid(selfUid);
+}
+
+static void AllocAndSetHapToken(void)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+
+    PermissionDef infoManagerTestPermDef1 = {
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .bundleName = "accesstoken_test",
+        .grantMode = 1,
+        .availableLevel = APL_NORMAL,
+        .label = "label3",
+        .labelId = 1,
+        .description = "open the door",
+        .descriptionId = 1,
+        .availableType = MDM
+    };
+
+    PermissionStateFull infoManagerTestState1 = {
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+
+    PermissionDef infoManagerTestPermDef2 = {
+        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        .bundleName = "accesstoken_test",
+        .grantMode = 1,
+        .availableLevel = APL_NORMAL,
+        .label = "label3",
+        .labelId = 1,
+        .description = "open the door",
+        .descriptionId = 1,
+        .availableType = MDM
+    };
+
+    PermissionStateFull infoManagerTestState2 = {
+        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        .isGeneral = true,
+        .resDeviceID = {"local3"},
+        .grantStatus = {PermissionState::PERMISSION_GRANTED},
+        .grantFlags = {1}
+    };
+
+    HapPolicyParams infoManagerTestPolicyPrams = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain3",
+        .permList = {infoManagerTestPermDef1, infoManagerTestPermDef2},
+        .permStateList = {infoManagerTestState1, infoManagerTestState2}
+    };
+
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, infoManagerTestPolicyPrams);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+}
+
+/**
+ * @tc.name: GetPermissionRequestToggleStatus004
+ * @tc.desc: GetPermissionRequestToggleStatus caller is a system app with related permissions.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionRequestToggleStatus004, TestSize.Level0)
+{
+    AllocAndSetHapToken();
+
+    int32_t selfUid = getuid();
+    setuid(10001); // 10001： UID
+
+    // Set a closed status value.
+    uint32_t status = PermissionRequestToggleStatus::CLOSED;
+    int32_t ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // Get a closed status value.
+    uint32_t getStatus;
+    ret = AccessTokenKit::GetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, getStatus,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, getStatus);
+
+    // Set a open status value.
+    status = PermissionRequestToggleStatus::OPEN;
+    ret = AccessTokenKit::SetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, status,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+
+    // Get a open status value.
+    ret = AccessTokenKit::GetPermissionRequestToggleStatus(TEST_PERMISSION_NAME_ALPHA, getStatus,
+        g_infoManagerTestSystemInfoParms.userID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    ASSERT_EQ(PermissionRequestToggleStatus::OPEN, getStatus);
+
+    // restore environment
+    setuid(selfUid);
 }
 
 /**

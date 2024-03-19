@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,7 +37,8 @@ static const std::string HELP_MSG =
     "These are common atm commands list:\n"
     "  help    list available commands\n"
     "  dump    dumpsys command\n"
-    "  perm    grant/cancel permission\n";
+    "  perm    grant/cancel permission\n"
+    "  toggle  set/get toggle status\n";
 
 static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
@@ -56,6 +57,13 @@ static const std::string HELP_MSG_PERM =
     "  -h, --help                                       list available options\n"
     "  -g, --grant -i <token-id> -p <permission-name>   grant a permission by a specified token-id\n"
     "  -c, --cancel -i <token-id> -p <permission-name>  cancel a permission by a specified token-id\n";
+
+static const std::string HELP_MSG_TOGGLE =
+    "usage: atm toggle <option>.\n"
+    "options list:\n"
+    "  -h, --help                                               list available options\n"
+    "  -s, --set -u <user-id> -p <permission-name> -k <status>  set the status by a specified user-id and permission\n"
+    "  -o, --get -u <user-id> -p <permission-name>              get the status by a specified user-id and permission\n";
 
 static const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
@@ -77,6 +85,27 @@ static const struct option LONG_OPTIONS_PERM[] = {
     {"permission-name", required_argument, nullptr, 'p'},
     {nullptr, 0, nullptr, 0}
 };
+
+static const std::string SHORT_OPTIONS_TOGGLE = "hs::o::u:p:k:";
+static const struct option LONG_OPTIONS_TOGGLE[] = {
+    {"help", no_argument, nullptr, 'h'},
+    {"set", no_argument, nullptr, 's'},
+    {"get", no_argument, nullptr, 'o'},
+    {"user-id", required_argument, nullptr, 'u'},
+    {"permission-name", required_argument, nullptr, 'p'},
+    {"status", required_argument, nullptr, 'k'},
+    {nullptr, 0, nullptr, 0}
+};
+
+std::map<char, OptType> COMMAND_TYPE = {
+    {'t', DUMP_TOKEN},
+    {'r', DUMP_RECORD},
+    {'v', DUMP_TYPE},
+    {'g', PERM_GRANT},
+    {'c', PERM_REVOKE},
+    {'s', TOGGLE_SET},
+    {'o', TOGGLE_GET},
+};
 }
 
 AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), name_(TOOLS_NAME)
@@ -87,6 +116,7 @@ AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), n
         {"help", std::bind(&AtmCommand::RunAsHelpCommand, this)},
         {"dump", std::bind(&AtmCommand::RunAsCommonCommand, this)},
         {"perm", std::bind(&AtmCommand::RunAsCommonCommand, this)},
+        {"toggle", std::bind(&AtmCommand::RunAsCommonCommand, this)},
     };
 
     if ((argc < MIN_ARGUMENT_NUMBER) || (argc > MAX_ARGUMENT_NUMBER)) {
@@ -188,28 +218,17 @@ int32_t AtmCommand::RunAsCommandMissingOptionArgument(void)
     return result;
 }
 
-int32_t AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
+void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmToolsParamInfo& info)
 {
-    int32_t result = RET_SUCCESS;
     switch (option) {
-        case 'h':
-            // 'atm dump -h'
-            result = ERR_INVALID_VALUE;
-            break;
         case 't':
-            info.type = DUMP_TOKEN;
-            break;
         case 'r':
-            info.type = DUMP_RECORD;
-            break;
         case 'v':
-            info.type = DUMP_TYPE;
-            break;
         case 'g':
-            info.type = PERM_GRANT;
-            break;
         case 'c':
-            info.type = PERM_REVOKE;
+        case 's':
+        case 'o':
+            info.type = COMMAND_TYPE[option];
             break;
         case 'i':
             if (optarg != nullptr) {
@@ -231,10 +250,19 @@ int32_t AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, At
                 info.processName = optarg;
             }
             break;
+        case 'u':
+            if (optarg != nullptr) {
+                info.userID = static_cast<int32_t>(std::atoi(optarg));
+            }
+            break;
+        case 'k':
+            if (optarg != nullptr) {
+                info.status = static_cast<uint32_t>(std::atoi(optarg));
+            }
+            break;
         default:
             break;
     }
-    return result;
 }
 
 std::string AtmCommand::DumpRecordInfo(uint32_t tokenId, const std::string& permissionName)
@@ -288,6 +316,38 @@ int32_t AtmCommand::ModifyPermission(const OptType& type, AccessTokenID tokenId,
     return result;
 }
 
+int32_t AtmCommand::SetToggleStatus(int32_t userID, const std::string& permissionName, const uint32_t& status)
+{
+    if ((userID < 0) || (permissionName.empty()) ||
+        ((status != PermissionRequestToggleStatus::OPEN) &&
+         (status != PermissionRequestToggleStatus::CLOSED))) {
+        return ERR_INVALID_VALUE;
+    }
+
+    return AccessTokenKit::SetPermissionRequestToggleStatus(permissionName, status, userID);
+}
+
+int32_t AtmCommand::GetToggleStatus(int32_t userID, const std::string& permissionName, std::string& statusInfo)
+{
+    if ((userID < 0) || (permissionName.empty())) {
+        return ERR_INVALID_VALUE;
+    }
+
+    uint32_t status;
+    int32_t result = AccessTokenKit::GetPermissionRequestToggleStatus(permissionName, status, userID);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+
+    if (status == PermissionRequestToggleStatus::OPEN) {
+        statusInfo = "Toggle status is open";
+    } else {
+        statusInfo = "Toggle status is closed";
+    }
+
+    return result;
+}
+
 int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
 {
     std::string dumpInfo;
@@ -309,6 +369,20 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
                 dumpInfo = "Success";
             } else {
                 dumpInfo = "Failure";
+            }
+            break;
+        case TOGGLE_SET:
+            ret = SetToggleStatus(info.userID, info.permissionName, info.status);
+            if (ret == RET_SUCCESS) {
+                dumpInfo = "Success";
+            } else {
+                dumpInfo = "Failure";
+            }
+            break;
+        case TOGGLE_GET:
+            ret = GetToggleStatus(info.userID, info.permissionName, dumpInfo);
+            if (ret != RET_SUCCESS) {
+                dumpInfo = "Failure.";
             }
             break;
         default:
@@ -345,7 +419,12 @@ int32_t AtmCommand::HandleComplexCommand(const std::string& shortOption, const s
             break;
         }
 
-        result = RunAsCommandExistentOptionArgument(option, info);
+        if (option == 'h') {
+            // 'atm dump -h'
+            result = ERR_INVALID_VALUE;
+            continue;
+        }
+        RunAsCommandExistentOptionArgument(option, info);
     }
 
     if (result != RET_SUCCESS) {
@@ -362,6 +441,8 @@ int32_t AtmCommand::RunAsCommonCommand()
         return HandleComplexCommand(SHORT_OPTIONS_DUMP, LONG_OPTIONS_DUMP, HELP_MSG_DUMP);
     } else if (cmd_ == "perm") {
         return HandleComplexCommand(SHORT_OPTIONS_PERM, LONG_OPTIONS_PERM, HELP_MSG_PERM);
+    } else if (cmd_ == "toggle") {
+        return HandleComplexCommand(SHORT_OPTIONS_TOGGLE, LONG_OPTIONS_TOGGLE, HELP_MSG_TOGGLE);
     }
 
     return ERR_PARAM_INVALID;
