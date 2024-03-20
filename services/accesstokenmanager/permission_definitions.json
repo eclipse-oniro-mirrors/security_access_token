@@ -116,6 +116,15 @@
             "availableLevel": "system_basic",
             "provisionEnable": false,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MONITOR_DEVICE_NETWORK_STATE",
+            "grantMode": "system_grant",
+            "since": 12,
+            "deprecated": "",
+            "availableLevel": "system_core", 
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
