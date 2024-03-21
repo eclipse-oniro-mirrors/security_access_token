@@ -121,10 +121,26 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.pid = pid;
     enhance.token = IPCSkeleton::GetCallingTokenID();
     enhance.challenge = enhanceData.challenge;
+    enhance.sessionId = enhanceData.sessionId;
+    enhance.seqNum = enhanceData.seqNum;
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;
+}
+
+int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+{
+    std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
+    InitAppObserver();
+    for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
+        if (iter->pid == pid) {
+            iter->seqNum = seqNum;
+            ACCESSTOKEN_LOG_INFO(LABEL, "Update pid=%{public}d data successful.", pid);
+            return RET_SUCCESS;
+        }
+    }
+    return ERR_PARAM_INVALID;
 }
 
 int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData)

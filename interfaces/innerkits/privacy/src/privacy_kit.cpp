@@ -176,6 +176,11 @@ int32_t PrivacyKit::RegisterSecCompEnhance(const SecCompEnhanceData& enhance)
     return PrivacyManagerClient::GetInstance().RegisterSecCompEnhance(enhance);
 }
 
+int32_t PrivacyKit::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+{
+    return PrivacyManagerClient::GetInstance().UpdateSecCompEnhance(pid, seqNum);
+}
+
 int32_t PrivacyKit::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
     return PrivacyManagerClient::GetInstance().GetSecCompEnhance(pid, enhance);

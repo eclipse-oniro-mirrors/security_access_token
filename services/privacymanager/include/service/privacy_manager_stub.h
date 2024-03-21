@@ -46,6 +46,7 @@ private:
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     bool HandleSecCompReq(uint32_t code, MessageParcel& data, MessageParcel& reply);
     void RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
+    void UpdateSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
     void GetSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
     void GetSpecialSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply);
     bool IsSecCompServiceCalling();

@@ -149,6 +149,13 @@ public:
      */
     static int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
     /**
+     * @brief update security component enhance data
+     * @param pid process id
+     * @param seqNum sequence number
+     * @return error code, see privacy_error.h
+     */
+    static int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum);
+    /**
      * @brief get security component enhance data
      * @param pid process id
      * @param enhance enhance data

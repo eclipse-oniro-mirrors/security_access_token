@@ -302,6 +302,9 @@ bool PrivacyManagerStub::HandleSecCompReq(uint32_t code, MessageParcel& data, Me
         case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE):
             RegisterSecCompEnhanceInner(data, reply);
             break;
+        case static_cast<uint32_t>(PrivacyInterfaceCode::UPDATE_SEC_COMP_ENHANCE):
+            UpdateSecCompEnhanceInner(data, reply);
+            break;
         case static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE):
             GetSecCompEnhanceInner(data, reply);
             break;
@@ -324,6 +327,24 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
     }
     int32_t result = this->RegisterSecCompEnhance(*requestParcel);
     reply.WriteInt32(result);
+}
+
+void PrivacyManagerStub::UpdateSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsSecCompServiceCalling()) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    int32_t pid = data.ReadInt32();
+    
+    int32_t seqNum = data.ReadInt32();
+
+    int32_t result = this->UpdateSecCompEnhance(pid, seqNum);
+    reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        return;
+    }
 }
 
 void PrivacyManagerStub::GetSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)

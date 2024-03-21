@@ -168,6 +168,11 @@ int32_t PrivacyManagerService::RegisterSecCompEnhance(const SecCompEnhanceDataPa
     return PrivacySecCompEnhanceAgent::GetInstance().RegisterSecCompEnhance(enhanceParcel.enhanceData);
 }
 
+int32_t PrivacyManagerService::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+{
+    return PrivacySecCompEnhanceAgent::GetInstance().UpdateSecCompEnhance(pid, seqNum);
+}
+
 int32_t PrivacyManagerService::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
 {
     SecCompEnhanceData enhanceData;

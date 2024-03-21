@@ -57,6 +57,7 @@ public:
     void OnRemoteDiedHandle();
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhance);
+    int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance);
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceData>& enhanceList);
