@@ -61,7 +61,7 @@ int AccessTokenIDManager::RegisterTokenId(AccessTokenID id, ATokenTypeEnum type)
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
         AccessTokenID tokenId = *it;
         AccessTokenIDInner *idInnerExist = reinterpret_cast<AccessTokenIDInner *>(&tokenId);
-        if (idInnerExist->tokenUniqueID == idInner->tokenUniqueID) {
+        if ((type == idInnerExist->type) && (idInnerExist->tokenUniqueID == idInner->tokenUniqueID)) {
             return ERR_TOKENID_HAS_EXISTED;
         }
     }
