@@ -1074,37 +1074,9 @@ int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
 
 int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
 {
-    std::vector<GenericValues> hapInfoValues;
-    std::vector<GenericValues> permDefValues;
-    std::vector<GenericValues> permStateValues;
-
-    std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
-    if (hapInfo == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-    hapInfo->StoreHapInfo(hapInfoValues);
-    hapInfo->StorePermissionPolicy(permStateValues);
-    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
-    for (size_t i = 0; i < permStateValues.size(); i++) {
-        GenericValues conditions;
-        conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME,
-            permStateValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
-        AccessTokenDb::GetInstance().Modify(
-            AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
-    }
-    for (size_t i = 0; i < permDefValues.size(); i++) {
-        GenericValues conditions;
-        conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-        conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME,
-            permDefValues[i].GetString(TokenFiledConst::FIELD_PERMISSION_NAME));
-        AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues[i], conditions);
-    }
-    GenericValues condition;
-    condition.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
-    AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues[0], condition);
-    return RET_SUCCESS;
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
+    RemoveHapTokenInfoFromDb(tokenID);
+    return AddHapTokenInfoToDb(tokenID);
 }
 
 int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission)
