@@ -451,7 +451,7 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken001, TestSize.Level1)
     ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
     ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, ACCESS_BLUETOOTH_PERMISSION);
-    EXPECT_EQ(PERMISSION_GRANTED, ret);
+    EXPECT_EQ(PERMISSION_DENIED, ret);
     ret = AccessTokenKit::VerifyAccessToken(fullTokenId.tokenIdExStruct.tokenID, CERT_PERMISSION);
     EXPECT_EQ(PERMISSION_DENIED, ret);
 
@@ -734,6 +734,259 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
     };
     res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam1);
     EXPECT_NE(RET_SUCCESS, res);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken009
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = false
+    };
+    HapPolicyParams testPolicyParams2 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState},
+        .preAuthorizationInfo = {info1}
+    };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(static_cast<uint32_t>(1), state.size());
+    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken010
+ * @tc.desc: app user_grant permission has not been operated, update with pre-authorization
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = false
+    };
+    HapPolicyParams testPolicyParams2 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState},
+        .preAuthorizationInfo = {info1}
+    };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(static_cast<uint32_t>(1), state.size());
+    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken011
+ * @tc.desc: app user_grant permission has been granted or revoked by user, update with pre-authorization
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::GrantPermission(
+        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
+    ret = AccessTokenKit::RevokePermission(
+        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = false
+    };
+    PreAuthorizationInfo info2 = {
+        .permissionName = MICROPHONE_PERMISSION,
+        .userCancelable = false
+    };
+    HapPolicyParams testPolicyParams2 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+        .preAuthorizationInfo = {info1, info2}
+    };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
+    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_USER_FIXED);
+    ASSERT_EQ(MICROPHONE_PERMISSION, state[1].permissionName);
+    EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
+    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+
+/**
+ * @tc.name: UpdateHapToken012
+ * @tc.desc: app user_grant permission has been pre-authorized with
+ *           userUnCancelable flag, update with userCancelable pre-authorization
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
+{
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = false
+    };
+    PreAuthorizationInfo info2 = {
+        .permissionName = MICROPHONE_PERMISSION,
+        .userCancelable = false
+    };
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+        .preAuthorizationInfo = {info1, info2}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::GrantPermission(
+        fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_FIXED);
+    EXPECT_NE(RET_SUCCESS, ret);
+    ret = AccessTokenKit::RevokePermission(
+        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+    EXPECT_NE(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    info1.userCancelable = true;
+    testPolicyParams1.preAuthorizationInfo = {info1};
+
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams1);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_GRANTED_BY_POLICY);
+    EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
+    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_DEFAULT_FLAG);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken013
+ * @tc.desc: app user_grant permission has been pre-authorized with userCancelable flag,
+ *           update with userCancelable pre-authorization
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
+{
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = true
+    };
+    PreAuthorizationInfo info2 = {
+        .permissionName = MICROPHONE_PERMISSION,
+        .userCancelable = true
+    };
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState},
+        .preAuthorizationInfo = {info1, info2}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    ret = AccessTokenKit::RevokePermission(
+        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_FIXED);
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    info1.userCancelable = false;
+    testPolicyParams1.preAuthorizationInfo = {info1};
+
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams1);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(static_cast<uint32_t>(2), state.size());
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
+    EXPECT_EQ(state[1].grantStatus[0], PERMISSION_DENIED);
+    EXPECT_EQ(state[1].grantFlags[0], PERMISSION_USER_FIXED | PERMISSION_GRANTED_BY_POLICY);
+
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
 }
 
