@@ -66,8 +66,8 @@ static const std::string DEFAULT_DEVICEID = "0";
 static const std::string FIELD_COUNT_NUMBER = "count";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
-static const std::string PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
-static const std::string PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
+static const std::string DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
+static const std::string DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
@@ -75,6 +75,8 @@ static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
 static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
+static const std::string GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
+static const std::string GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
 #endif
 static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const int32_t PICKER_TYPE_ADD_VALUE = 2;
@@ -742,7 +744,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     }
 
     AAFwk::Want want;
-    want.SetElementName(PERMISSION_MANAGER_BUNDLE_NAME, PERMISSION_MANAGER_DIALOG_ABILITY);
+    want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
     ErrCode err = AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
@@ -1266,6 +1268,14 @@ void from_json(const nlohmann::json& j, PermissionRecordConfig& p)
     if (!JsonParser::GetIntFromJson(j, RECORD_AGING_TIME_KEY, p.agingTime)) {
         return;
     }
+
+    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_BUNDLE_NAME_KEY, p.globalDialogBundleName)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_ABILITY_NAME_KEY, p.globalDialogAbilityName)) {
+        return;
+    }
 }
 
 bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
@@ -1280,6 +1290,8 @@ bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
         PermissionRecordConfig p = jsonRes.at("privacy").get<nlohmann::json>();
         recordSizeMaximum_ = p.sizeMaxImum;
         recordAgingTime_ = p.agingTime;
+        globalDialogBundleName_ = p.globalDialogBundleName;
+        globalDialogAbilityName_ = p.globalDialogAbilityName;
     } else {
         return false;
     }
@@ -1294,6 +1306,8 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
     recordSizeMaximum_ = DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM;
     recordAgingTime_ = DEFAULT_PERMISSION_USED_RECORD_AGING_TIME;
+    globalDialogBundleName_ = DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME;
+    globalDialogAbilityName_ = DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY;
 }
 
 void PermissionRecordManager::GetConfigValue()
@@ -1320,22 +1334,16 @@ void PermissionRecordManager::GetConfigValue()
     }
 #endif
     // when config file list empty or can not get two value from config file, set default value
-    if ((recordSizeMaximum_ == 0) || (recordAgingTime_ == 0)) {
+    if ((recordSizeMaximum_ == 0) ||
+        (recordAgingTime_ == 0) ||
+        (globalDialogBundleName_.empty()) ||
+        (globalDialogAbilityName_.empty())) {
         SetDefaultConfigValue();
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "recordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d",
-        recordSizeMaximum_, recordAgingTime_);
-}
-
-int32_t PermissionRecordManager::GetRecordSizeMaxImum()
-{
-    return recordSizeMaximum_;
-}
-
-int32_t PermissionRecordManager::GetRecordAgingTime()
-{
-    return recordAgingTime_;
+    ACCESSTOKEN_LOG_INFO(LABEL, "recordSizeMaximum_ is %{public}d, recordAgingTime_ is %{public}d,"
+        " globalDialogBundleName_ is %{public}s, globalDialogAbilityName_ is %{public}s.",
+        recordSizeMaximum_, recordAgingTime_, globalDialogBundleName_.c_str(), globalDialogAbilityName_.c_str());
 }
 
 void PermissionRecordManager::Init()
