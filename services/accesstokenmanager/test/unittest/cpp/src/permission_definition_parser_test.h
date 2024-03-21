@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef SYSTEM_PERMISSION_DEFINITION_PARSER_TEST_H
-#define SYSTEM_PERMISSION_DEFINITION_PARSER_TEST_H
+#ifndef PERMISSION_DEFINITION_PARSER_TEST_H
+#define PERMISSION_DEFINITION_PARSER_TEST_H
 
 #include <gtest/gtest.h>
 #include "accesstoken_log.h"
@@ -22,7 +22,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class SystemPermissionDefinitionParserTest : public testing::Test {
+class PermissionDefinitionParserTest : public testing::Test {
 public:
     static void SetUpTestCase();
 
@@ -35,4 +35,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // SYSTEM_PERMISSION_DEFINITION_PARSER_TEST_H
+#endif // PERMISSION_DEFINITION_PARSER_TEST_H

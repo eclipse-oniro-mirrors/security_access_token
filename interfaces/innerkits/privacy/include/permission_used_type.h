@@ -50,8 +50,8 @@ typedef enum PermissionUsedTypeValue {
     PICKER_TYPE,
     /** security component type for permision request */
     SECURITY_COMPONENT_TYPE,
-    /** buttom of type for no use */
-    BUTT_TYPE,
+    /** max of type for no use */
+    PERM_USED_TYPE_BUTT,
 } PermissionUsedType;
 } // namespace AccessToken
 } // namespace Security

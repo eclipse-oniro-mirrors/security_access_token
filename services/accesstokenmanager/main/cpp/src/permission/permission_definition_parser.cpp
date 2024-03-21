@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "system_permission_definition_parser.h"
+#include "permission_definition_parser.h"
 
 #include <fcntl.h>
 #include <memory>
@@ -23,6 +23,7 @@
 #include "accesstoken_log.h"
 #include "access_token.h"
 #include "access_token_error.h"
+#include "accesstoken_info_manager.h"
 #include "data_validator.h"
 #include "json_parser.h"
 #include "permission_def.h"
@@ -37,19 +38,26 @@ static const int32_t EXTENSION_PERMISSION_ID = 0;
 static const std::string PERMISSION_NAME = "name";
 static const std::string PERMISSION_GRANT_MODE = "grantMode";
 static const std::string PERMISSION_AVAILABLE_LEVEL = "availableLevel";
+static const std::string PERMISSION_AVAILABLE_TYPE = "availableType";
 static const std::string PERMISSION_PROVISION_ENABLE = "provisionEnable";
 static const std::string PERMISSION_DISTRIBUTED_SCENE_ENABLE = "distributedSceneEnable";
 static const std::string PERMISSION_LABEL = "label";
 static const std::string PERMISSION_DESCRIPTION = "description";
+static const std::string AVAILABLE_TYPE_NORMAL_HAP = "NORMAL";
+static const std::string AVAILABLE_TYPE_SYSTEM_HAP = "SYSTEM";
+static const std::string AVAILABLE_TYPE_MDM = "MDM";
+static const std::string AVAILABLE_TYPE_SYSTEM_AND_MDM = "SYSTEM_AND_MDM";
+static const std::string AVAILABLE_TYPE_SERVICE = "SERVICE";
 static const std::string AVAILABLE_LEVEL_NORMAL = "normal";
 static const std::string AVAILABLE_LEVEL_SYSTEM_BASIC = "system_basic";
 static const std::string AVAILABLE_LEVEL_SYSTEM_CORE = "system_core";
 static const std::string PERMISSION_GRANT_MODE_SYSTEM_GRANT = "system_grant";
 static const std::string PERMISSION_GRANT_MODE_USER_GRANT = "user_grant";
-static const std::string DEFINE_PERMISSION = "definePermissions";
+static const std::string SYSTEM_GRANT_DEFINE_PERMISSION = "systemGrantPermissions";
+static const std::string USER_GRANT_DEFINE_PERMISSION = "userGrantPermissions";
 static const std::string DEFINE_PERMISSION_FILE = "/system/etc/access_token/permission_definitions.json";
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
-    SECURITY_DOMAIN_ACCESSTOKEN, "SystemPermissionDefinitionParser"};
+    SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionParser"};
 }
 
 static bool GetPermissionApl(const std::string &apl, AccessToken::ATokenAplEnum& aplNum)
@@ -66,6 +74,34 @@ static bool GetPermissionApl(const std::string &apl, AccessToken::ATokenAplEnum&
         aplNum = AccessToken::ATokenAplEnum::APL_NORMAL;
         return true;
     }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Apl: %{public}s is invalid.", apl.c_str());
+    return false;
+}
+
+static bool GetPermissionAvailableType(const std::string &availableType, AccessToken::ATokenAvailableTypeEnum& typeNum)
+{
+    if (availableType == AVAILABLE_TYPE_NORMAL_HAP) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::NORMAL;
+        return true;
+    }
+    if (availableType == AVAILABLE_TYPE_SYSTEM_HAP) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::SYSTEM;
+        return true;
+    }
+    if (availableType == AVAILABLE_TYPE_MDM) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::MDM;
+        return true;
+    }
+    if (availableType == AVAILABLE_TYPE_SYSTEM_AND_MDM) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::SYSTEM_AND_MDM;
+        return true;
+    }
+    if (availableType == AVAILABLE_TYPE_SERVICE) {
+        typeNum = AccessToken::ATokenAvailableTypeEnum::SERVICE;
+        return true;
+    }
+    typeNum = AccessToken::ATokenAvailableTypeEnum::INVALID;
+    ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableType: %{public}s is invalid.", availableType.c_str());
     return false;
 }
 
@@ -99,6 +135,14 @@ void from_json(const nlohmann::json& j, PermissionDefParseRet& result)
         return;
     }
 
+    std::string availableTypeStr;
+    if (!JsonParser::GetStringFromJson(j, PERMISSION_AVAILABLE_TYPE, availableTypeStr)) {
+        return;
+    }
+    if (!GetPermissionAvailableType(availableTypeStr, permDef.availableType)) {
+        return;
+    }
+
     if (!JsonParser::GetBoolFromJson(j, PERMISSION_PROVISION_ENABLE, permDef.provisionEnable)) {
         return;
     }
@@ -114,7 +158,7 @@ void from_json(const nlohmann::json& j, PermissionDefParseRet& result)
     if (!JsonParser::GetStringFromJson(j, PERMISSION_LABEL, permDef.label)) {
         return;
     }
-    if (!JsonParser::GetStringFromJson(j, PERMISSION_LABEL, permDef.description)) {
+    if (!JsonParser::GetStringFromJson(j, PERMISSION_DESCRIPTION, permDef.description)) {
         return;
     }
     result.permDef = permDef;
@@ -124,14 +168,39 @@ void from_json(const nlohmann::json& j, PermissionDefParseRet& result)
 
 static bool CheckPermissionDefRules(const PermissionDef& permDef)
 {
-    // Extension permission support system_grant permission only.
-    if (permDef.grantMode != SYSTEM_GRANT) {
+    // Extension permission support permission for service only.
+    if (permDef.availableType != AccessToken::ATokenAvailableTypeEnum::SERVICE) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s is for hap.", permDef.permissionName.c_str());
         return false;
     }
     return true;
 }
 
-int32_t SystemPermissionDefinitionParser::ParserPermsRawData(const std::string& permsRawData,
+int32_t PermissionDefinitionParser::GetPermissionDefList(const nlohmann::json& json, const std::string& permsRawData,
+    const std::string& type, std::vector<PermissionDef>& permDefList)
+{
+    if ((json.find(type) == json.end()) || (!json.at(type).is_array())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "json is not array.");
+        return ERR_PARAM_INVALID;
+    }
+
+    nlohmann::json JsonData = json.at(type).get<nlohmann::json>();
+    for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
+        auto result = it->get<PermissionDefParseRet>();
+        if (!result.isSuccessful) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get permission def failed.");
+            return ERR_PERM_REQUEST_CFG_FAILED;
+        }
+        if (!CheckPermissionDefRules(result.permDef)) {
+            continue;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s insert.", result.permDef.permissionName.c_str());
+        permDefList.emplace_back(result.permDef);
+    }
+    return RET_SUCCESS;
+}
+
+int32_t PermissionDefinitionParser::ParserPermsRawData(const std::string& permsRawData,
     std::vector<PermissionDef>& permDefList)
 {
     nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
@@ -140,27 +209,22 @@ int32_t SystemPermissionDefinitionParser::ParserPermsRawData(const std::string& 
         return ERR_PARAM_INVALID;
     }
 
-    if ((jsonRes.find(DEFINE_PERMISSION) == jsonRes.end()) || (!jsonRes.at(DEFINE_PERMISSION).is_array())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is not array.");
-        return ERR_PARAM_INVALID;
+    int32_t ret = GetPermissionDefList(jsonRes, permsRawData, SYSTEM_GRANT_DEFINE_PERMISSION, permDefList);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get system_grant permission def list failed.");
+        return ret;
     }
-    nlohmann::json JsonData = jsonRes.at(DEFINE_PERMISSION).get<nlohmann::json>();
-    for (auto it = JsonData.begin(); it != JsonData.end(); it++) {
-        auto result = it->get<PermissionDefParseRet>();
-        if (result.isSuccessful) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "permDef.grantMode %{public}s.", result.permDef.permissionName.c_str());
-            if (!CheckPermissionDefRules(result.permDef)) {
-                continue;
-            }
-            permDefList.emplace_back(result.permDef);
-        }
+    ret = GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
+    if (ret != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get user_grant permission def list failed.");
+        return ret;
     }
     return RET_SUCCESS;
 }
 
-int32_t SystemPermissionDefinitionParser::Init()
+int32_t PermissionDefinitionParser::Init()
 {
-    ACCESSTOKEN_LOG_ERROR(LABEL, "system permission set begin.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "system permission set begin.");
     if (ready_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, " system permission has been set.");
         return RET_SUCCESS;
@@ -178,18 +242,18 @@ int32_t SystemPermissionDefinitionParser::Init()
         ACCESSTOKEN_LOG_ERROR(LABEL, "ParserPermsRawData failed.");
         return ret;
     }
+
     for (const auto& perm : permDefList) {
         PermissionDefinitionCache::GetInstance().Insert(perm, EXTENSION_PERMISSION_ID);
     }
-
     ready_ = true;
     ACCESSTOKEN_LOG_INFO(LABEL, "init ok.");
     return RET_SUCCESS;
 }
 
-SystemPermissionDefinitionParser& SystemPermissionDefinitionParser::GetInstance()
+PermissionDefinitionParser& PermissionDefinitionParser::GetInstance()
 {
-    static SystemPermissionDefinitionParser instance;
+    static PermissionDefinitionParser instance;
     return instance;
 }
 } // namespace AccessToken
