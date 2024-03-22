@@ -107,7 +107,7 @@ void AccessTokenManagerService::OnStart()
 
 void AccessTokenManagerService::OnStop()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Stop service.");
     state_ = ServiceRunningState::STATE_NOT_START;
 }
 
@@ -341,18 +341,18 @@ AccessTokenIDEx AccessTokenManagerService::AllocHapToken(const HapInfoParcel& in
 int32_t AccessTokenManagerService::InitHapToken(
     const HapInfoParcel& info, HapPolicyParcel& policy, AccessTokenIDEx& fullTokenId)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "bundleName: %{public}s", info.hapInfoParameter.bundleName.c_str());
-    std::vector<PermissionStateFull> InitializedList;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
+    std::vector<PermissionStateFull> initializedList;
     if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
-        policy.hapPolicyParameter, InitializedList)) {
+        policy.hapPolicyParameter, initializedList)) {
         return ERR_PERM_REQUEST_CFG_FAILED;
     }
-    policy.hapPolicyParameter.permStateList = InitializedList;
+    policy.hapPolicyParameter.permStateList = initializedList;
 
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, fullTokenId);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token info create failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token info create failed.");
         return ret;
     }
 
