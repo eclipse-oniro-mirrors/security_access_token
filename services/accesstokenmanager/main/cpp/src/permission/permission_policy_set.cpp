@@ -65,6 +65,21 @@ std::shared_ptr<PermissionPolicySet> PermissionPolicySet::BuildPolicySetWithoutD
 void PermissionPolicySet::UpdatePermStateFull(const PermissionStateFull& permOld, PermissionStateFull& permNew)
 {
     if (permNew.isGeneral == permOld.isGeneral) {
+        // if user_grant permission is not operated by user, it keeps the new initalized state.
+        // the new state can be pre_authorization.
+        if ((permOld.grantFlags[0] == PERMISSION_DEFAULT_FLAG) && (permOld.grantStatus[0] == PERMISSION_DENIED)) {
+            return;
+        }
+        // if old user_grant permission is granted by pre_authorization fixed, it keeps the new initalized state.
+        // the new state can be pre_authorization or not.
+        if ((permOld.grantFlags[0] == PERMISSION_SYSTEM_FIXED) ||
+            // if old user_grant permission is granted by pre_authorization unfixed
+            // and the user has not operated this permission, it keeps the new initalized state.
+            (permOld.grantFlags[0] == PERMISSION_GRANTED_BY_POLICY)) {
+            return;
+        }
+
+        // if old user_grant permission has been operated by user, it keeps the old status and old flag.
         permNew.resDeviceID = permOld.resDeviceID;
         permNew.grantStatus = permOld.grantStatus;
         permNew.grantFlags = permOld.grantFlags;
