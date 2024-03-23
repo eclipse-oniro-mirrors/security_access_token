@@ -34,16 +34,14 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [
-      "src",
-      "//third_party/bounds_checking_function/include",
-    ]
+    include_dirs = [ "src" ]
 
     sources = [ "src/code_signature_analysis_kit.c" ]
 
-    deps = [ "//third_party/bounds_checking_function:libsec_static" ]
-
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "hilog:libhilog",
+    ]
 
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]

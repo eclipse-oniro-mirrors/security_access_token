@@ -36,8 +36,6 @@ ohos_shared_library("accesstoken_common_cxx") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "include",
-    "//third_party/mbedtls/include",
-    "//third_party/json/include",
   ]
 
   sources = [
@@ -48,11 +46,12 @@ ohos_shared_library("accesstoken_common_cxx") {
     "src/random_mbedtls.cpp",
   ]
 
-  deps = [ "//third_party/mbedtls:mbedtls_shared" ]
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
     "init:libbegetutil",
+    "json:nlohmann_json_static",
+    "mbedtls:mbedtls_shared",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

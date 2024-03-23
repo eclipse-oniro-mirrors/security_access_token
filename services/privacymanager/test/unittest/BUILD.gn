@@ -45,8 +45,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/lockscreen_manager",
-      "//third_party/googletest/include",
-      "//third_party/sqlite/include",
     ]
 
     sources = [
@@ -96,6 +94,10 @@ if (is_standard_system && ability_base_enable == true) {
       "//third_party/googletest:gtest_main",
     ]
 
+    if (access_token_feature_dtmf_tone) {
+      defines = [ "FEATURE_DTMF_TONE" ]
+    }
+
     external_deps = [
       "ability_base:want",
       "access_token:libaccesstoken_sdk",
@@ -106,6 +108,7 @@ if (is_standard_system && ability_base_enable == true) {
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
+      "sqlite:sqlite",
     ]
     if (common_event_service_enable) {
       cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
@@ -124,8 +127,6 @@ if (is_standard_system && ability_base_enable == true) {
         "-DHILOG_ENABLE",
         "-DFEATURE_DTMF_TONE",
       ]
-      include_dirs +=
-          [ "${audio_framework_path}/services/audio_policy/common/include" ]
     }
 
     if (camera_framework_enable) {

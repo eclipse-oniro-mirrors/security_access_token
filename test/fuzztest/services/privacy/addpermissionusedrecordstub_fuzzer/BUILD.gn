@@ -48,7 +48,6 @@ ohos_fuzztest("AddPermissionUsedRecordStubFuzzTest") {
     "${access_token_path}/services/common/ability_manager/include",
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
-    "//third_party/sqlite/include/",
   ]
 
   sources += [
@@ -113,6 +112,7 @@ ohos_fuzztest("AddPermissionUsedRecordStubFuzzTest") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "sqlite:sqlite",
   ]
   if (common_event_service_enable) {
     cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]

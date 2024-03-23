@@ -57,8 +57,6 @@ if (is_standard_system) {
       "main/cpp/include/token",
       "main/cpp/include/permission",
       "main/cpp/include/database",
-      "//third_party/json/include",
-      "//third_party/sqlite/include/",
     ]
 
     include_dirs += access_token_impl_include_dirs
@@ -122,8 +120,10 @@ if (is_standard_system) {
       "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_core",
+      "json:nlohmann_json_static",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
+      "sqlite:sqlite",
     ]
 
     if (eventhandler_enable == true) {
