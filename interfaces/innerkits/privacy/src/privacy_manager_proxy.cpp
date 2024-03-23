@@ -315,6 +315,31 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
     return result;
 }
 
+int32_t PrivacyManagerProxy::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write GetDescriptor.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid=%{public}d.", pid);
+        return false;
+    }
+    if (!data.WriteInt32(seqNum)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write seqNum=%{public}d.", seqNum);
+        return false;
+    }
+    if (!SendRequest(PrivacyInterfaceCode::UPDATE_SEC_COMP_ENHANCE, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result=%{public}d", result);
+    return result;
+}
+
 int32_t PrivacyManagerProxy::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel)
 {
     MessageParcel data;

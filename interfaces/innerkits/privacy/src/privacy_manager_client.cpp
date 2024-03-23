@@ -288,6 +288,16 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
     return proxy->RegisterSecCompEnhance(registerParcel);
 }
 
+int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return proxy->UpdateSecCompEnhance(pid, seqNum);
+}
+
 int32_t PrivacyManagerClient::GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhance)
 {
     auto proxy = GetProxy();

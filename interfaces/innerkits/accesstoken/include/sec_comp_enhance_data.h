@@ -61,6 +61,14 @@ struct SecCompEnhanceData {
      * challenge for register.
      */
     uint64_t challenge;
+    /**
+     * sessionId for register.
+     */
+    int32_t sessionId;
+    /**
+     * sequence number of session.
+     */
+    int32_t seqNum;
 };
 
 } // namespace AccessToken
