@@ -497,7 +497,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
     AddHapTokenInfoToDb(tokenId);

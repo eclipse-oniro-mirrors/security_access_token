@@ -95,7 +95,7 @@ public:
     void RemovePermFromKernel(AccessTokenID tokenID);
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const std::string& appDistributionType,
-        const HapPolicyParams& policy, std::vector<PermissionStateFull>& InitializedList);
+        const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList);
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
 private:
