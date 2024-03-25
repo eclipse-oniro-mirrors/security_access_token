@@ -105,8 +105,6 @@ public:
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
-    int32_t GetRecordSizeMaxImum();
-    int32_t GetRecordAgingTime();
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
 
 private:
@@ -206,6 +204,8 @@ private:
     // record config
     int32_t recordSizeMaximum_ = 0;
     int32_t recordAgingTime_ = 0;
+    std::string globalDialogBundleName_;
+    std::string globalDialogAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security
