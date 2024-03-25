@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "remote_command_manager.h"
+#include "socket.h"
 #include "soft_bus_manager.h"
 
 namespace OHOS {
@@ -131,6 +132,15 @@ void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uin
         channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "unkonow socket.");
+    }
+}
+
+void SoftBusSocketListener::CleanUpAllBindSocket()
+{
+    std::lock_guard<std::mutex> guard(socketMutex_);
+    for (auto it = socketBindMap_.begin(); it != socketBindMap_.end();) {
+        ::Shutdown(it->first);
+        it = socketBindMap_.erase(it);
     }
 }
 } // namespace AccessToken

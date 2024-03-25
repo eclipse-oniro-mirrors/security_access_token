@@ -234,7 +234,7 @@ PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not application", permissionName.c_str(), tokenId_);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Application %{public}u not apply for %{public}s.", tokenId_, permissionName.c_str());
     return PermUsedTypeEnum::INVALID_USED_TYPE;
 }
 

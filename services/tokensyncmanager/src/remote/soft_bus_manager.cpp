@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -255,7 +255,12 @@ void SoftBusManager::Destroy()
             ::Shutdown(socketFd_);
         }
 
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy socket");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Destroy service socket.");
+
+        SoftBusSocketListener::CleanUpAllBindSocket();
+
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Destroy client socket.");
+
         isSoftBusServiceBindSuccess_ = false;
     }
 
