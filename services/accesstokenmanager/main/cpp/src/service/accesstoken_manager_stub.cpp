@@ -341,7 +341,7 @@ void AccessTokenManagerStub::GrantPermissionInner(MessageParcel& data, MessagePa
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int flag = data.ReadUint32();
+    uint32_t flag = data.ReadUint32();
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GRANT_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
@@ -364,7 +364,7 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
     }
     AccessTokenID tokenID = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int flag = data.ReadUint32();
+    uint32_t flag = data.ReadUint32();
     if (!IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, REVOKE_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",

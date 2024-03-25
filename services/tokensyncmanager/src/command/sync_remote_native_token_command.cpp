@@ -44,6 +44,10 @@ SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(
 SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(const std::string &json)
 {
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
+    if (jsonObject.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        return;
+    }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if (jsonObject.find("NativeTokenInfos") != jsonObject.end() && jsonObject.at("NativeTokenInfos").is_array()) {

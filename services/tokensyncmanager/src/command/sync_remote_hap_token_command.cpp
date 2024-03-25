@@ -65,6 +65,10 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
     hapTokenInfo_.baseInfo.ver = DEFAULT_TOKEN_VERSION;
 
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
+    if (jsonObject.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        return;
+    }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
     if ((jsonObject.find("requestTokenId") != jsonObject.end()) && (jsonObject.at("requestTokenId").is_number())) {
         jsonObject.at("requestTokenId").get_to(requestTokenId_);

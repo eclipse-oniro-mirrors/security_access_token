@@ -299,11 +299,10 @@ int PermissionPolicySet::QueryPermissionFlag(const std::string& permissionName, 
     return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
 }
 
-static int32_t UpdateWithNewFlag(int32_t oldFlag, int32_t currFlag)
+static uint32_t UpdateWithNewFlag(uint32_t oldFlag, uint32_t currFlag)
 {
-    uint32_t newFlag = static_cast<uint32_t>(currFlag) |
-        ((static_cast<uint32_t>(oldFlag)) & PERMISSION_GRANTED_BY_POLICY);
-    return static_cast<int32_t>(newFlag);
+    uint32_t newFlag = currFlag | (oldFlag & PERMISSION_GRANTED_BY_POLICY);
+    return newFlag;
 }
 
 int32_t PermissionPolicySet::UpdatePermStateList(const std::string& permissionName, bool isGranted, uint32_t flag)

@@ -45,6 +45,10 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(
 UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json)
 {
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
+    if (jsonObject.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        return;
+    }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if ((jsonObject.find("HapTokenInfos") != jsonObject.end()) && (jsonObject.at("HapTokenInfos").is_object())) {
