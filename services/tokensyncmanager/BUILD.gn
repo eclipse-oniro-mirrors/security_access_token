@@ -25,7 +25,6 @@ group("tokensyncmanager") {
   if (is_standard_system && token_sync_enable == true) {
     deps = [
       ":token_sync_manager_service",
-      "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk",
       "sa_profile:tokensync_sa_profile_standard",
     ]
   }

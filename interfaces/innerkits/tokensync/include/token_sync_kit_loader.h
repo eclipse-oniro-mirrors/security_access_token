@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,27 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_TOKEN_RANDOM_MBEDTLS
-#define ACCESS_TOKEN_RANDOM_MBEDTLS
+#ifndef ACCESSTOKEN_SYNC_KIT_LOADER_H
+#define ACCESSTOKEN_SYNC_KIT_LOADER_H
 
-#include "rwlock.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/entropy.h"
+#include "token_sync_kit_interface.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class RandomMbedtls {
-public:
-    static RandomMbedtls& GetInstance();
-    int GenerateRandomArray(unsigned char *randStr, unsigned int len);
-    ~RandomMbedtls() {}
-    static unsigned int GetRandomUint32();
+const static std::string LibTokenSyncPath = "libtokensync_sdk.z.so";
 
-private:
-    RandomMbedtls() : initFlag_(false) {}
-    mbedtls_entropy_context entropy_;
-    mbedtls_ctr_drbg_context ctrDrbg_;
-    OHOS::Utils::RWLock randomLock_;
-    bool initFlag_;
+class TokenSyncManagerLoader final : public TokenSyncKitInterface {
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override;
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override;
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override;
+};
+
+extern "C" {
+    void* Create();
+    void Destroy(void* loaderPtr);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ACCESS_TOKEN_RANDOM_MBEDTLS
+#endif // ACCESSTOKEN_SYNC_KIT_LOADER_H

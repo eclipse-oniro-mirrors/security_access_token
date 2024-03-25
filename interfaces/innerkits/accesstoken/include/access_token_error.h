@@ -73,6 +73,7 @@ enum AccessTokenError {
     ERR_DATABASE_OPERATE_FAILED,
     ERR_SIZE_NOT_EQUAL,
     ERR_PERM_REQUEST_CFG_FAILED,
+    ERR_LOAD_SO_FAILED,
 };
 } // namespace AccessToken
 } // namespace Security

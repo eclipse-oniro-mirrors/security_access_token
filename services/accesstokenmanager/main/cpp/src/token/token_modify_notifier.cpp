@@ -21,7 +21,8 @@
 #include "access_token_error.h"
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
-#include "token_sync_kit.h"
+#include "libraryloader.h"
+#include "token_sync_kit_loader.h"
 
 namespace OHOS {
 namespace Security {
@@ -104,8 +105,14 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    LibraryLoader loader(LibTokenSyncPath);
+    TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
+    if (tokenSyncKit == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
+        return;
+    }
     for (AccessTokenID deleteToken : deleteTokenList_) {
-        TokenSyncKit::DeleteRemoteHapTokenInfo(deleteToken);
+        tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
     }
 
     for (AccessTokenID modifyToken : modifiedTokenList_) {
@@ -115,7 +122,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
             ACCESSTOKEN_LOG_ERROR(LABEL, "the hap token 0x%{public}x need to sync is not found!", modifyToken);
             continue;
         }
-        TokenSyncKit::UpdateRemoteHapTokenInfo(hapSync);
+        tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
     }
     deleteTokenList_.clear();
     modifiedTokenList_.clear();

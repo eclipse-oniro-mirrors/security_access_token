@@ -35,6 +35,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
       "${access_token_path}/services/common/database/include",
+      "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/privacymanager/include/active",
       "${access_token_path}/services/privacymanager/include/common",
       "${access_token_path}/services/privacymanager/include/database",
@@ -45,9 +46,14 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/lockscreen_manager",
+      "${access_token_path}/services/privacymanager/include/sensitive/uninstall_observer",
     ]
 
     sources = [
+      "${access_token_path}/services/common/ability_manager/src/ability_manager_access_client.cpp",
+      "${access_token_path}/services/common/ability_manager/src/ability_manager_access_death_recipient.cpp",
+      "${access_token_path}/services/common/ability_manager/src/ability_manager_access_proxy.cpp",
+      "${access_token_path}/services/common/libraryloader/src/libraryloader.cpp",
       "../../src/active/active_status_callback_manager.cpp",
       "../../src/active/perm_active_status_callback_death_recipient.cpp",
       "../../src/active/perm_active_status_change_callback_proxy.cpp",
@@ -70,6 +76,7 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "../../src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
       "../../src/sensitive/camera_manager/camera_service_callback_stub.cpp",
+      "../../src/sensitive/uninstall_observer/package_uninstall_observer.cpp",
       "../../src/service/privacy_manager_service.cpp",
       "../../src/service/privacy_manager_stub.cpp",
       "permission_record_db_test.cpp",
