@@ -39,7 +39,7 @@ AccessTokenDb::~AccessTokenDb()
 
 void AccessTokenDb::OnCreate()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnCreate.");
     CreateHapTokenInfoTable();
     CreateNativeTokenInfoTable();
     CreatePermissionDefinitionTable();
@@ -49,7 +49,7 @@ void AccessTokenDb::OnCreate()
 
 void AccessTokenDb::OnUpdate(int32_t version)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called.", __func__);
+    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnUpdate(version: %{public}d).", version);
     if (version < DataBaseVersion::VERISION_2) {
         AddAvailableTypeColumn();
         AddPermDialogCapColumn();
@@ -130,17 +130,16 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
         }
         int ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", SpitError().c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s.", SpitError().c_str());
             isExecuteSuccessfully = false;
         }
         statement.Reset();
     }
     if (!isExecuteSuccessfully) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "commit transaction.");
     CommitTransaction();
     return SUCCESS;
 }
@@ -188,11 +187,13 @@ int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results
         }
         results.emplace_back(value);
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Find type(%{public}d), results size=%{public}zu.", type, results.size());
     return SUCCESS;
 }
 
 int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Refresh type=%{public}d=, results size=%{public}zu=.", type, values.size());
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteSql = CreateDeletePrepareSqlCmd(type);
     std::string insertSql = CreateInsertPrepareSqlCmd(type);
@@ -208,17 +209,17 @@ int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValu
         int ret = insertStatement.Step();
         if (ret != Statement::State::DONE) {
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "insert failed, errorMsg: %{public}s", SpitError().c_str());
+                LABEL, "Insert failed, errorMsg: %{public}s.", SpitError().c_str());
             canCommit = false;
         }
         insertStatement.Reset();
     }
     if (!canCommit) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "commit transaction.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Commit refresh transaction.");
     CommitTransaction();
     return SUCCESS;
 }
@@ -416,7 +417,7 @@ int32_t AccessTokenDb::AddAvailableTypeColumn() const
         TokenFiledConst::FIELD_AVAILABLE_TYPE + "=" +
         std::to_string(ATokenAvailableTypeEnum::NORMAL);
     int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -427,7 +428,7 @@ int32_t AccessTokenDb::AddAvailableTypeColumn() const
         .append(" integer default ")
         .append(std::to_string(ATokenAvailableTypeEnum::NORMAL));
     int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
     return insertResult;
 }
 
@@ -441,7 +442,7 @@ int32_t AccessTokenDb::AddPermDialogCapColumn() const
     std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
         TokenFiledConst::FIELD_FORBID_PERM_DIALOG + "=" + std::to_string(false);
     int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d.", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -452,7 +453,7 @@ int32_t AccessTokenDb::AddPermDialogCapColumn() const
         .append(" integer default ")
         .append(std::to_string(false));
     int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
     return insertResult;
 }
 

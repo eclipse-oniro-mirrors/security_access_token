@@ -330,6 +330,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_ACCOUNT_KIT_SERVICE",          false},
     {"ohos.permission.REQUEST_ANONYMOUS_ATTEST",            false},
     {"ohos.permission.ACCESS_ACCOUNT_KIT_UI",               false},
+    {"ohos.permission.READ_ACCOUNT_LOGIN_STATE",            false},
+    {"ohos.permission.WRITE_ACCOUNT_LOGIN_STATE",           false},
     {"ohos.permission.START_ABILITY_WITH_ANIMATION",        false},
     {"ohos.permission.START_RECENT_ABILITY",                false},
     {"ohos.permission.READ_CLOUD_SYNC_CONFIG",              false},
@@ -355,6 +357,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MONITOR_DEVICE_NETWORK_STATE",        false},
     {"ohos.permission.SYNC_PROFILE_DP",                     false},
     {"ohos.permission.ACCESS_SERVICE_DP",                   false},
+    {"ohos.permission.ACCESS_SERVICE_NAVIGATION_INFO",      false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

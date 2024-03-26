@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <gtest/gtest.h>
 
+#include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -26,6 +27,7 @@
 #include "permission_record.h"
 #define private public
 #include "active_status_callback_manager.h"
+#include "libraryloader.h"
 #include "permission_record_manager.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
@@ -185,9 +187,11 @@ void PermissionRecordManagerTest::TearDown()
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
@@ -1700,6 +1704,37 @@ HWTEST_F(PermissionRecordManagerTest, GetPermissionUsedType001, TestSize.Level1)
 
     permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(0, PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results));
+}
+
+/**
+ * @tc.name: Dlopen001
+ * @tc.desc: Open a not exist lib & not exist func
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
+{
+    LibraryLoader loader1("libnotexist.z.so"); // is a not exist path
+    EXPECT_EQ(nullptr, loader1.handle_);
+
+    LibraryLoader loader2("libaccesstoken_manager_service.z.so"); // is a exist lib without create func
+    EXPECT_EQ(nullptr, loader2.instance_);
+    EXPECT_NE(nullptr, loader2.handle_);
+}
+
+/**
+ * @tc.name: Dlopen002
+ * @tc.desc: Open a exist lib & exist func
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Dlopen002, TestSize.Level1)
+{
+    LibraryLoader loader(LibAbilityMngPath);
+    AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
+        loader.GetObject<AbilityManagerAccessLoaderInterface>();
+    EXPECT_NE(nullptr, loader.handle_);
+    EXPECT_NE(nullptr, abilityManagerAccessLoader);
 }
 } // namespace AccessToken
 } // namespace Security

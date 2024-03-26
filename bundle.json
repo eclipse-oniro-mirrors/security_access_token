@@ -20,7 +20,8 @@
     ],
     "features": [
       "access_token_feature_coverage = false",
-      "access_token_camera_float_window_enable"
+      "access_token_camera_float_window_enable",
+      "access_token_feature_dtmf_tone"
     ],
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",
@@ -29,7 +30,10 @@
       "components": [
         "ability_base",
         "ability_runtime",
+        "ace_engine",
+        "bounds_checking_function",
         "c_utils",
+        "cJSON",
         "common_event_service",
         "config_policy",
         "device_manager",
@@ -42,20 +46,19 @@
         "hilog",
         "init",
         "ipc",
+        "json",
+        "mbedtls",
         "napi",
+        "openssl",
         "power_manager",
         "safwk",
         "samgr",
         "screenlock_mgr",
-        "selinux_adapter"
-      ],
-      "third_party": [
-        "bounds_checking_function",
-        "cJSON",
-        "mbedtls",
+        "selinux_adapter",
         "sqlite",
         "zlib"
-      ]
+      ],
+      "third_party": []
     },
     "build": {
       "group_type": {
@@ -66,12 +69,14 @@
           "//base/security/access_token/interfaces/kits:napi_packages"
         ],
         "service_group": [
+          "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
           "//base/security/access_token/services/tokensyncmanager:tokensyncmanager",
           "//base/security/access_token/services/privacymanager:privacymanager",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
-          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac"
+          "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac",
+          "//base/security/access_token/services/common:accesstoken_ability_manager_access"
         ]
       },
       "inner_kits": [

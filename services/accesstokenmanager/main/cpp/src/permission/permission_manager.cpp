@@ -1136,28 +1136,28 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
 }
 
 bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
-    const HapPolicyParams& policy, std::vector<PermissionStateFull>& InitializedList)
+    const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermStateList size: %{public}zu , preAuthorizationInfo size %{public}zu",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu.",
         policy.permStateList.size(), policy.preAuthorizationInfo.size());
 
     for (auto state : policy.permStateList) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Request %{public}s.", state.permissionName.c_str());
         PermissionDef permDef;
         int32_t ret = PermissionManager::GetInstance().GetDefPermission(
             state.permissionName, permDef);
         if (ret != AccessToken::AccessTokenKitRet::RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Get %{public}s def failed.", state.permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get definition of %{public}s failed, ret = %{public}d.",
+                state.permissionName.c_str(), ret);
             continue;
         }
         if (!IsAclSatisfied(permDef, policy)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Acl is unsatisfied.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Acl of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
 
         // edm check
         if (!IsPermAvailableRangeSatisfied(permDef, appDistributionType)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Perm available range is unsatisfied.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Available range of %{public}s is invalid.", permDef.permissionName.c_str());
             return false;
         }
         state.grantFlags[0] = PERMISSION_DEFAULT_FLAG;
@@ -1166,11 +1166,11 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         if (permDef.grantMode == AccessToken::GrantMode::SYSTEM_GRANT) {
             state.grantFlags[0] = PERMISSION_SYSTEM_FIXED;
             state.grantStatus[0] = PERMISSION_GRANTED;
-            InitializedList.emplace_back(state);
+            initializedList.emplace_back(state);
             continue;
         }
         if (policy.preAuthorizationInfo.size() == 0) {
-            InitializedList.emplace_back(state);
+            initializedList.emplace_back(state);
             continue;
         }
         bool userCancelable = true;
@@ -1178,9 +1178,9 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
             state.grantFlags[0] = userCancelable ? PERMISSION_GRANTED_BY_POLICY : PERMISSION_SYSTEM_FIXED;
             state.grantStatus[0] = PERMISSION_GRANTED;
         }
-        InitializedList.emplace_back(state);
+        initializedList.emplace_back(state);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "InitializedList size: %{public}zu.", InitializedList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
 

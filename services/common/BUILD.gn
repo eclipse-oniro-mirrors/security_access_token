@@ -48,8 +48,6 @@ ohos_static_library("accesstoken_service_common") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [ "//third_party/sqlite:sqlite" ]
-
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
@@ -57,27 +55,79 @@ ohos_static_library("accesstoken_service_common") {
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "sqlite:sqlite",
   ]
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     sources += [ "handler/src/access_event_handler.cpp" ]
     external_deps += [ "eventhandler:libeventhandler" ]
   }
-  if (ability_base_enable == true) {
-    include_dirs += [ "ability_manager/include" ]
-
-    sources += [
-      "ability_manager/src/ability_manager_access_client.cpp",
-      "ability_manager/src/ability_manager_access_death_recipient.cpp",
-      "ability_manager/src/ability_manager_access_proxy.cpp",
-    ]
-
-    external_deps += [ "ability_base:want" ]
-  }
 
   if (use_musl) {
     if (use_jemalloc && use_jemalloc_dfx_intf) {
       cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
+  }
+}
+
+ohos_shared_library("accesstoken_library_loader") {
+  subsystem_name = "security"
+  part_name = "access_token"
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "libraryloader/include",
+  ]
+
+  sources = [ "libraryloader/src/libraryloader.cpp" ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  external_deps = [ "hilog:libhilog" ]
+}
+
+ohos_shared_library("accesstoken_ability_manager_access") {
+  if (is_standard_system && ability_base_enable == true) {
+    subsystem_name = "security"
+    part_name = "access_token"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    include_dirs = [
+      "${access_token_path}/frameworks/common/include",
+      "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "ability_manager/include",
+    ]
+
+    sources = [
+      "ability_manager/src/ability_manager_access_client.cpp",
+      "ability_manager/src/ability_manager_access_death_recipient.cpp",
+      "ability_manager/src/ability_manager_access_loader.cpp",
+      "ability_manager/src/ability_manager_access_proxy.cpp",
+    ]
+
+    cflags_cc = [ "-DHILOG_ENABLE" ]
+    configs = [ "${access_token_path}/config:coverage_flags" ]
+
+    external_deps = [
+      "ability_base:want",
+      "c_utils:utils",
+      "hilog:libhilog",
+      "ipc:ipc_core",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
+    ]
   }
 }

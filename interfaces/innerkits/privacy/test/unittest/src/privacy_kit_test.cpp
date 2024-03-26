@@ -194,31 +194,37 @@ static void DeleteTestToken()
                                                           g_infoParmsA.bundleName,
                                                           g_infoParmsA.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID,
                                             g_infoParmsB.bundleName,
                                             g_infoParmsB.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsC.userID,
                                             g_infoParmsC.bundleName,
                                             g_infoParmsC.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID,
                                             g_infoParmsE.bundleName,
                                             g_infoParmsE.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
     tokenId = AccessTokenKit::GetHapTokenID(g_normalInfoParms.userID,
                                             g_normalInfoParms.bundleName,
                                             g_normalInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
     tokenId = AccessTokenKit::GetHapTokenID(g_systemInfoParms.userID,
                                             g_systemInfoParms.bundleName,
                                             g_systemInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 }
 
 void PrivacyKitTest::SetUpTestCase()
@@ -2127,7 +2133,6 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos002, TestSize.Level1)
 
     std::vector<PermissionUsedTypeInfo> results3;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, "ohos.permission.MICROPHONE", results3));
-    ASSERT_EQ(static_cast<size_t>(RESULT_NUM_ONE), results3.size());
     // result3 size may more than one
     for (const auto& result : results3) {
         if (g_tokenIdA == result.tokenId) {
@@ -2229,6 +2234,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos005, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedTypeInfos(
         0, permissionName, results));
 
+    PrivacyKit::RemovePermissionUsedRecords(tokenIdEx.tokenIdExStruct.tokenID, "");
     EXPECT_EQ(0, AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID)); // delete test hap
 }
 
@@ -2272,6 +2278,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
     ASSERT_EQ(PrivacyError::ERR_OVERSIZE, PrivacyKit::GetPermissionUsedTypeInfos(tokenId, permissionName, results));
 
     for (const auto& id : tokenIdList) {
+        PrivacyKit::RemovePermissionUsedRecords(id, "");
         ASSERT_EQ(0, AccessTokenKit::DeleteToken(id));
     }
 

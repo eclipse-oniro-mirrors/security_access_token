@@ -25,6 +25,8 @@ class PermissionRecordConfig final {
 public:
     int32_t sizeMaxImum;
     int32_t agingTime;
+    std::string globalDialogBundleName;
+    std::string globalDialogAbilityName;
 };
 } // namespace AccessToken
 } // namespace Security

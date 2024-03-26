@@ -34,11 +34,7 @@ if (is_standard_system) {
 
     cflags = [ "-Wall" ]
 
-    include_dirs = [
-      "src",
-      "//third_party/cJSON",
-      "//third_party/bounds_checking_function/include",
-    ]
+    include_dirs = [ "src" ]
 
     sources = [
       "src/nativetoken.c",
@@ -46,12 +42,11 @@ if (is_standard_system) {
       "src/nativetoken_klog.c",
     ]
 
-    deps = [
-      "//third_party/bounds_checking_function:libsec_static",
-      "//third_party/cJSON:cjson_static",
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "cJSON:cjson",
+      "hilog:libhilog",
     ]
-
-    external_deps = [ "hilog:libhilog" ]
 
     if (build_selinux) {
       external_deps += [ "selinux_adapter:librestorecon" ]

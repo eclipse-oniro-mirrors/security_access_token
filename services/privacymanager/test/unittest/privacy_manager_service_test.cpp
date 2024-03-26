@@ -113,13 +113,15 @@ void PrivacyManagerServiceTest::SetUp()
 
 void PrivacyManagerServiceTest::TearDown()
 {
-    privacyManagerService_ = nullptr;
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    privacyManagerService_->RemovePermissionUsedRecords(tokenId, "");
     tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms2.userID, g_InfoParms2.bundleName,
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
+    privacyManagerService_->RemovePermissionUsedRecords(tokenId, "");
+    privacyManagerService_ = nullptr;
     EXPECT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 

@@ -25,7 +25,6 @@ group("tokensyncmanager") {
   if (is_standard_system && token_sync_enable == true) {
     deps = [
       ":token_sync_manager_service",
-      "${access_token_path}/interfaces/innerkits/tokensync:libtokensync_sdk",
       "sa_profile:tokensync_sa_profile_standard",
     ]
   }
@@ -97,7 +96,6 @@ if (token_sync_enable == true) {
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/services/common:accesstoken_service_common",
       "${access_token_path}/services/tokensyncmanager:token_sync.rc",
-      "//third_party/zlib:shared_libz",
     ]
 
     external_deps = [
@@ -106,6 +104,7 @@ if (token_sync_enable == true) {
       "hilog:libhilog",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
+      "zlib:shared_libz",
     ]
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]

@@ -34,15 +34,17 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "libraryloader.h"
+#endif
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
 #include "access_token_db.h"
 #include "token_field_const.h"
-
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
-#include "token_sync_kit.h"
+#include "token_sync_kit_loader.h"
 #endif
 
 namespace OHOS {
@@ -497,7 +499,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         PermissionManager::GetInstance().RemoveDefPermissions(tokenId);
         return ret;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Create hap token %{public}u bundleName %{public}s user %{public}d inst %{public}d ok",
         tokenId, tokenInfo->GetBundleName().c_str(), tokenInfo->GetUserID(), tokenInfo->GetInstIndex());
     AllocAccessTokenIDEx(info, tokenId, tokenIdEx);
     AddHapTokenInfoToDb(tokenId);
@@ -987,7 +989,13 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (mapID != 0) {
         return mapID;
     }
-    int ret = TokenSyncKit::GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
+    LibraryLoader loader(LibTokenSyncPath);
+    TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
+    if (tokenSyncKit == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
+        return ERR_LOAD_SO_FAILED;
+    }
+    int ret = tokenSyncKit->GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);

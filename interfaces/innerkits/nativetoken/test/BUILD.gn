@@ -25,11 +25,7 @@ ohos_unittest("libnativetoken_test") {
   }
   branch_protector_ret = "pac_ret"
 
-  include_dirs = [
-    "../include",
-    "//third_party/cJSON",
-    "//third_party/bounds_checking_function/include",
-  ]
+  include_dirs = [ "../include" ]
 
   sources = [
     "unittest/src/nativetoken_kit_test.cpp",
@@ -40,10 +36,12 @@ ohos_unittest("libnativetoken_test") {
 
   deps = [
     "../:libnativetoken",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/cJSON:cjson_static",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
+  ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
   ]
 }
 
@@ -61,7 +59,6 @@ ohos_unittest("libnativetoken_mock_test") {
   include_dirs = [
     "../include",
     "mock/include/",
-    "//third_party/bounds_checking_function/include",
   ]
 
   sources = [
@@ -75,11 +72,13 @@ ohos_unittest("libnativetoken_mock_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
-    "//third_party/bounds_checking_function:libsec_static",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "hilog:libhilog",
+  ]
 }
 
 group("unittest") {
