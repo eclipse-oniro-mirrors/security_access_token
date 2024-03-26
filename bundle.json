@@ -47,7 +47,6 @@
         "init",
         "ipc",
         "json",
-        "mbedtls",
         "napi",
         "openssl",
         "power_manager",
