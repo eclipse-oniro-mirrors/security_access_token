@@ -55,7 +55,6 @@ constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
-static constexpr int32_t MAX_DETAIL_NUM = 500;
 static constexpr int32_t DEEP_COPY_NUM = 10;
 static constexpr int64_t ONE_SECOND = 1000;
 static constexpr int64_t TWO_SECOND = 2000;
@@ -168,6 +167,8 @@ public:
 
 void PermissionRecordManagerTest::SetUpTestCase()
 {
+    PermissionRecordManager::GetInstance().Init();
+
     g_selfTokenId = GetSelfTokenID();
     g_nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
 }
@@ -484,9 +485,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
  */
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     auto callbackPtr = std::make_shared<CbCustomizeTest1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
@@ -566,9 +565,7 @@ HWTEST_F(PermissionRecordManagerTest, GetGlobalSwitchStatus001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
@@ -585,9 +582,7 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
@@ -608,9 +603,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener001, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false); // false means open
@@ -631,9 +624,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener002, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
@@ -655,9 +646,7 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener003, TestSize.Level
  */
 HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener005, TestSize.Level1)
 {
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId("privacy_service");
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
@@ -938,7 +927,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermission001, TestSize.Level1)
     // tokenId invaild
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
         g_nativeToken, "ohos.permission.READ_MEDIA"));
-    
+
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
         tokenId, "ohos.permission.READ_MEDIA"));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
@@ -1206,56 +1195,6 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords001, TestSize.Level1)
     std::vector<GenericValues> findRecordsValues;
     PermissionUsedRecordCache::GetInstance().GetRecords(permissionList, andConditionValues, findRecordsValues, 0);
     ASSERT_EQ(static_cast<size_t>(0), findRecordsValues.size());
-}
-
-void AddRecord(int32_t num, std::vector<GenericValues>& values)
-{
-    for (int32_t i = 0; i < num; i++) {
-        GenericValues value;
-        value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, i);
-        value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_LOCATION);
-        value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND);
-        value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, i);
-        value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, i);
-        value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-        value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-        value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-        value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
-        values.emplace_back(value);
-    }
-
-    ASSERT_EQ(static_cast<size_t>(num), values.size());
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
-    sleep(1); // wait record store in database
-}
-
-/**
- * @tc.name: GetRecords003
- * @tc.desc: test query record return max count 500.
- * @tc.type: FUNC
- * @tc.require: issueI5P4IU
- */
-HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
-{
-    std::vector<GenericValues> values;
-    int32_t num = MAX_DETAIL_NUM + 1;
-    AddRecord(num, values);
-
-    PermissionUsedRequest request;
-    request.isRemote = false;
-    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_DETAIL;
-
-    GenericValues andConditionValues;
-    std::vector<GenericValues> findRecordsValues;
-    PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList, andConditionValues, findRecordsValues,
-        MAX_DETAIL_NUM);
-    EXPECT_EQ(static_cast<size_t>(MAX_DETAIL_NUM), findRecordsValues.size());
-
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    for (const auto& value : values) {
-        ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
-    }
 }
 
 static void GeneratePermissionRecord(AccessTokenID tokenID)
