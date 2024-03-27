@@ -629,6 +629,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
 #endif
+    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     return RET_SUCCESS;
 }
 
@@ -1132,6 +1133,21 @@ bool IsUserGrantPermPreAuthorized(const std::vector<PreAuthorizationInfo> &list,
     }
 
     userCancelable = iter->userCancelable;
+    return true;
+}
+
+bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int32_t userId,
+    std::vector<PermissionStateFull>& initializedList)
+{
+    // get dlp original app
+    AccessTokenIDEx tokenId = AccessTokenInfoManager::GetInstance().GetHapTokenID(userId, bundleName, 0);
+    std::shared_ptr<PermissionPolicySet> permPolicySet =
+        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenId.tokenIdExStruct.tokenID);
+    if (permPolicySet == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params!");
+        return false;
+    }
+    permPolicySet->GetPermissionStateFulls(initializedList);
     return true;
 }
 

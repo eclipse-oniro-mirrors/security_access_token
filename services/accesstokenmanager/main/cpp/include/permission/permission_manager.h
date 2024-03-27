@@ -96,6 +96,8 @@ public:
     void SetPermToKernel(AccessTokenID tokenID, const std::string& permissionName, bool isGranted);
     bool InitPermissionList(const std::string& appDistributionType,
         const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList);
+    bool InitDlpPermissionList(const std::string& bundleName, int32_t userId,
+        std::vector<PermissionStateFull>& initializedList);
 protected:
     static void RegisterImpl(PermissionManager* implInstance);
 private:

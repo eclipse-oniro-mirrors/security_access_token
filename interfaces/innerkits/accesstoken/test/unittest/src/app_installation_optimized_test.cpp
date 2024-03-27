@@ -401,6 +401,61 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapToken010
+ * @tc.desc: InitHapToken with dlp type.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerMicrophoneState, g_infoManagerCertState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
+
+    HapInfoParams testHapInfoParams1 = g_testHapInfoParams;
+    testHapInfoParams1.dlpType = DLP_FULL_CONTROL;
+    testHapInfoParams1.instIndex++;
+    AccessTokenIDEx dlpFullTokenId1;
+    res = AccessTokenKit::InitHapToken(testHapInfoParams1, testPolicyParams, dlpFullTokenId1);
+    EXPECT_EQ(RET_SUCCESS, res);
+
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    EXPECT_EQ(res, PERMISSION_DENIED);
+
+    (void)AccessTokenKit::GrantPermission(fullTokenId.tokenIdExStruct.tokenID, CAMERA_PERMISSION, PERMISSION_USER_SET);
+    (void)AccessTokenKit::RevokePermission(
+        fullTokenId.tokenIdExStruct.tokenID, MICROPHONE_PERMISSION, PERMISSION_USER_SET);
+
+    testHapInfoParams1.instIndex++;
+    AccessTokenIDEx dlpFullTokenId2;
+    res = AccessTokenKit::InitHapToken(testHapInfoParams1, testPolicyParams, dlpFullTokenId2);
+    EXPECT_EQ(RET_SUCCESS, res);
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId2.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    EXPECT_EQ(res, PERMISSION_GRANTED);
+    res = AccessTokenKit::VerifyAccessToken(dlpFullTokenId1.tokenIdExStruct.tokenID, CAMERA_PERMISSION);
+    EXPECT_EQ(res, PERMISSION_GRANTED);
+
+    std::vector<PermissionStateFull> permStatList1;
+    res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, permStatList1, false);
+    ASSERT_EQ(RET_SUCCESS, res);
+    std::vector<PermissionStateFull> permStatList2;
+    res = AccessTokenKit::GetReqPermissions(dlpFullTokenId2.tokenIdExStruct.tokenID, permStatList2, false);
+    ASSERT_EQ(permStatList2.size(), permStatList1.size());
+    EXPECT_EQ(CAMERA_PERMISSION, permStatList2[0].permissionName);
+    EXPECT_EQ(permStatList2[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(permStatList2[0].grantFlags[0], PERMISSION_USER_SET);
+    EXPECT_EQ(MICROPHONE_PERMISSION, permStatList2[1].permissionName);
+    EXPECT_EQ(permStatList2[1].grantStatus[0], PERMISSION_DENIED);
+    EXPECT_EQ(permStatList2[1].grantFlags[0], PERMISSION_USER_SET);
+    ASSERT_EQ(RET_SUCCESS, res);
+}
+
+/**
  * @tc.name: UpdateHapToken001
  * @tc.desc:
  * @tc.type: FUNC

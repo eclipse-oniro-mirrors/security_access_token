@@ -287,7 +287,6 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     DumpTokenIfNeeded();
     return ret;
 }
@@ -297,7 +296,6 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, permission: %{public}s, flag: %{public}d",
         tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     DumpTokenIfNeeded();
     return ret;
 }
@@ -345,9 +343,16 @@ int32_t AccessTokenManagerService::InitHapToken(
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Init hap %{public}s.", info.hapInfoParameter.bundleName.c_str());
     std::vector<PermissionStateFull> initializedList;
-    if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
-        policy.hapPolicyParameter, initializedList)) {
-        return ERR_PERM_REQUEST_CFG_FAILED;
+    if (info.hapInfoParameter.dlpType == DLP_COMMON) {
+        if (!PermissionManager::GetInstance().InitPermissionList(info.hapInfoParameter.appDistributionType,
+            policy.hapPolicyParameter, initializedList)) {
+            return ERR_PERM_REQUEST_CFG_FAILED;
+        }
+    } else {
+        if (!PermissionManager::GetInstance().InitDlpPermissionList(
+            info.hapInfoParameter.bundleName, info.hapInfoParameter.userID, initializedList)) {
+            return ERR_PERM_REQUEST_CFG_FAILED;
+        }
     }
     policy.hapPolicyParameter.permStateList = initializedList;
 
