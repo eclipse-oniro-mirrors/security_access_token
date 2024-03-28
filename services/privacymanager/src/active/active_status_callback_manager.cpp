@@ -86,7 +86,7 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "called");
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -119,7 +119,6 @@ bool ActiveStatusCallbackManager::NeedCalled(const std::vector<std::string>& per
 void ActiveStatusCallbackManager::ActiveStatusChange(
     AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
     std::vector<sptr<IRemoteObject>> list;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -140,8 +139,9 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
             resInfo.permissionName = permName;
             resInfo.tokenID = tokenId;
             resInfo.deviceId = deviceId;
-            ACCESSTOKEN_LOG_INFO(LABEL, "callback execute tokenId %{public}u, changeType %{public}d",
-                tokenId, changeType);
+            ACCESSTOKEN_LOG_INFO(LABEL,
+                "callback execute tokenId %{public}u, permision %{public}s changeType %{public}d",
+                tokenId, permName.c_str(), changeType);
             callback->ActiveStatusChangeCallback(resInfo);
         }
     }
@@ -150,7 +150,6 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
 void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     AccessTokenID tokenId, const std::string& permName, const std::string& deviceId, ActiveChangeType changeType)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "entry");
     if (changeType == PERM_ACTIVE_IN_BACKGROUND) {
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
             HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", BACKGROUND_CALL_EVENT,

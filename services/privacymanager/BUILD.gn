@@ -53,8 +53,6 @@ if (is_standard_system && ability_base_enable == true) {
       "include/sensitive",
       "include/sensitive/audio_manager/",
       "include/sensitive/camera_manager/",
-      "include/sensitive/lockscreen_manager/",
-      "include/sensitive/uninstall_observer/",
       "${access_token_path}/frameworks/privacy/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
@@ -102,7 +100,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
       "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
       "${access_token_path}/interfaces/innerkits/accesstoken:libtokenid_sdk",
-      "${access_token_path}/services/common:accesstoken_library_loader",
       "${access_token_path}/services/common:accesstoken_service_common",
       "${access_token_path}/services/privacymanager:privacy.rc",
     ]
@@ -126,10 +123,7 @@ if (is_standard_system && ability_base_enable == true) {
     if (common_event_service_enable) {
       cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
       external_deps += [ "common_event_service:cesfwk_innerkits" ]
-      sources += [
-        "src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp",
-        "src/sensitive/uninstall_observer/package_uninstall_observer.cpp",
-      ]
+      sources += [ "src/common/privacy_common_event_subscriber.cpp" ]
     }
 
     if (theme_screenlock_mgr_enable) {

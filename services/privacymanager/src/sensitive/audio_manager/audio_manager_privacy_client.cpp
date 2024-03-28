@@ -43,7 +43,7 @@ AudioManagerPrivacyClient::~AudioManagerPrivacyClient()
 int32_t AudioManagerPrivacyClient::SetMicStateChangeCallback(const sptr<AudioRoutingManagerListenerStub>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();

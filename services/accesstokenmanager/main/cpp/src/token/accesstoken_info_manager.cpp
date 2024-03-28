@@ -34,9 +34,7 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
-#ifdef TOKEN_SYNC_ENABLE
 #include "libraryloader.h"
-#endif
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"

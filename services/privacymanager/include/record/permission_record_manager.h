@@ -36,6 +36,7 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "rwlock.h"
+#include "safe_map.h"
 #include "thread_pool.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_agent.h"
@@ -97,6 +98,8 @@ public:
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus();
+    void SetScreenOn(bool isScreenOn);
+    bool IsScreenOn();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
@@ -134,8 +137,8 @@ private:
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     bool ShowGlobalDialog(const std::string& permissionName);
 
+    void NotifyCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
-    void SetCameraCallback(sptr<IRemoteObject>);
 
     void TransformEnumToBitValue(const PermissionUsedType type, int32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
@@ -168,7 +171,7 @@ private:
     std::vector<PermissionRecord> startRecordList_;
     std::mutex cameraMutex_;
     std::mutex cameraCallbackMutex_;
-    sptr<IRemoteObject> cameraCallback_ = nullptr;
+    SafeMap<AccessTokenID, sptr<IRemoteObject>> cameraCallbackMap_;
 
     // microphone
     std::mutex micMuteMutex_;
@@ -192,6 +195,7 @@ private:
     // lockScreenState
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+    bool isScreenOn_ = false;
 
     // camera float window
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE

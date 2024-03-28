@@ -143,5 +143,6 @@ group("unittest") {
   deps = [
     ":accesstoken_mock_test",
     ":libaccesstoken_sdk_test",
+    "tool:SetPermDialogCapTest",
   ]
 }

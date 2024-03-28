@@ -13,25 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef ACCESS_TOKEN_PACKAGE_UNINSTALL_OBSERVER_H
-#define ACCESS_TOKEN_PACKAGE_UNINSTALL_OBSERVER_H
+#ifndef ACCESS_TOKEN_COMMON_EVENT_SUBSCRIBER_H
+#define ACCESS_TOKEN_COMMON_EVENT_SUBSCRIBER_H
 
-#include "active_change_response_info.h"
-#ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "common_event_manager.h"
 #include "common_event_support.h"
-#endif //COMMON_EVENT_SERVICE_ENABLE
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
 #ifdef COMMON_EVENT_SERVICE_ENABLE
-class PackageUninstallObserver : public OHOS::EventFwk::CommonEventSubscriber {
+class PrivacyCommonEventSubscriber : public OHOS::EventFwk::CommonEventSubscriber {
 public:
-    PackageUninstallObserver(const OHOS::EventFwk::CommonEventSubscribeInfo& info) : CommonEventSubscriber(info)
+    PrivacyCommonEventSubscriber(const OHOS::EventFwk::CommonEventSubscribeInfo& info) : CommonEventSubscriber(info)
     {}
 
-    ~PackageUninstallObserver() override = default;
+    ~PrivacyCommonEventSubscriber() override = default;
 
     static void RegisterEvent();
 
@@ -39,9 +37,8 @@ public:
 
     void OnReceiveEvent(const OHOS::EventFwk::CommonEventData& event) override;
 };
-#endif // COMMON_EVENT_SERVICE_ENABLE
-} // AccessToken
-} // Security
-} // OHOS
-
-#endif // ACCESS_TOKEN_PACKAGE_UNINSTALL_OBSERVER_H
+#endif //COMMON_EVENT_SERVICE_ENABLE
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif // ACCESS_TOKEN_COMMON_EVENT_SUBSCRIBER_H

@@ -44,7 +44,7 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
@@ -59,7 +59,7 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
 int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
 {
     if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return -1;
     }
     auto proxy = GetProxy();
@@ -109,7 +109,7 @@ void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManag
 {
     std::lock_guard<std::mutex> lock(deathCallbackMutex_);
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: Callback is nullptr.");
         return;
     }
     appManagerDeathCallbackList_.emplace_back(callback);
