@@ -1230,6 +1230,8 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
         return;
     }
 
+    std::unique_ptr<ResultCallback> callbackPtr {retCB};
+
     std::shared_ptr<RequestAsyncContext> asyncContext = data_;
     if (asyncContext == nullptr) {
         return;
@@ -1238,8 +1240,6 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     // only permissions which need to grant change the result, other keey as GetSelfPermissionsState result
     std::vector<int> newGrantResults;
     UpdateGrantPermissionResultOnly(permissions, grantResults, asyncContext->permissionsState, newGrantResults);
-
-    std::unique_ptr<ResultCallback> callbackPtr {retCB};
 
     retCB->permissions = permissions;
     retCB->grantResults = newGrantResults;
@@ -1485,12 +1485,12 @@ void UIExtensionCallback::OnDestroy()
 static void CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     Ace::UIContent* uiContent = nullptr;
-    uint64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     if (asyncContext->uiAbilityFlag) {
         while (true) {
             uiContent = asyncContext->abilityContext->GetUIContent();
-            uint64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
             if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
                 break;
@@ -1499,7 +1499,7 @@ static void CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncCont
     } else {
         while (true) {
             uiContent = asyncContext->uiExtensionContext->GetUIContent();
-            uint64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now().time_since_epoch()).count();
             if ((uiContent != nullptr) || (curTime - beginTime > MAX_WAIT_TIME)) {
                 break;

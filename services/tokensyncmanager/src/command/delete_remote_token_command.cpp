@@ -47,6 +47,10 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
 {
     deleteTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
+    if (jsonObject.is_discarded()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        return;
+    }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
 
     if (jsonObject.find("tokenId") != jsonObject.end() && jsonObject.at("tokenId").is_number()) {
