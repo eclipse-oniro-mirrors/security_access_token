@@ -31,9 +31,7 @@ ohos_fuzztest("SetFirstCallerTokenIDFuzzTest") {
   include_dirs =
       [ "${access_token_path}/interfaces/innerkits/token_setproc/include" ]
 
-  deps = [
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-  ]
+  deps = [ "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared" ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 

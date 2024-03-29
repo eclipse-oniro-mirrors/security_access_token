@@ -53,4 +53,39 @@ if (is_standard_system) {
       cflags += [ "-DWITH_SELINUX" ]
     }
   }
+
+  ohos_shared_library("libnativetoken_shared") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    output_name = "libnativetoken_shared"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    public_configs = [ ":accesstokenlib" ]
+
+    cflags = [ "-Wall" ]
+
+    include_dirs = [ "src" ]
+
+    sources = [
+      "src/nativetoken.c",
+      "src/nativetoken_json_oper.c",
+      "src/nativetoken_klog.c",
+    ]
+
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "cJSON:cjson",
+      "hilog:libhilog",
+    ]
+
+    if (build_selinux) {
+      external_deps += [ "selinux_adapter:librestorecon" ]
+      cflags += [ "-DWITH_SELINUX" ]
+    }
+  }
 }

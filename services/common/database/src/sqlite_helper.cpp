@@ -33,7 +33,7 @@ SqliteHelper::SqliteHelper(const std::string& dbName, const std::string& dbPath,
 SqliteHelper::~SqliteHelper()
 {}
 
-void SqliteHelper::Open()
+void SqliteHelper::Open() __attribute__((no_sanitize("cfi")))
 {
     if (db_ != nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "db s already open");
@@ -159,7 +159,7 @@ int32_t SqliteHelper::ExecuteSql(const std::string& sql) const
     return result;
 }
 
-int32_t SqliteHelper::GetVersion() const
+int32_t SqliteHelper::GetVersion() const __attribute__((no_sanitize("cfi")))
 {
     if (db_ == nullptr) {
         ACCESSTOKEN_LOG_WARN(LABEL, "do open data base first!");

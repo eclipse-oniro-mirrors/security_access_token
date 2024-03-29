@@ -37,9 +37,9 @@ ohos_fuzztest("GetPermissionsStatusStubFuzzTest") {
 
   deps = [
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
