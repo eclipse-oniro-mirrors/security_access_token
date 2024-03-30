@@ -388,7 +388,7 @@ int SoftBusManager::CloseSocket(int socketFd)
 
     std::lock_guard<std::mutex> guard(clientSocketMutex_);
     auto iter = clientSocketMap_.find(socketFd);
-    if (iter == clientSocketMap_.end()) {
+    if (iter != clientSocketMap_.end()) {
         clientSocketMap_.erase(iter);
     }
 

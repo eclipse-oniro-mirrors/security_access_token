@@ -36,7 +36,7 @@ group("accesstoken_build_module_test") {
   if (token_sync_enable == true) {
     deps += [
       "interfaces/innerkits/tokensync/test:unittest",
-      "services/tokensyncmanager/test/unittest/token_sync_service:unittest",
+      "services/tokensyncmanager/test:unittest",
     ]
   }
 }

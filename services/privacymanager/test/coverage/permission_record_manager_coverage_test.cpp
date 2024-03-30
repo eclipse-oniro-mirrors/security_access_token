@@ -143,7 +143,7 @@ static PermissionRecord g_recordB2 = {
 };
 
 static PermissionRecord g_record = {
-    .tokenId = 123,
+    .tokenId = RANDOM_TOKENID,
     .opCode = static_cast<int32_t>(Constant::OpCode::OP_READ_CALENDAR),
     .status = static_cast<int32_t>(ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND),
     .lockScreenStatus = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED),
@@ -416,6 +416,24 @@ void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChange
 {
 }
 
+class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
+public:
+    explicit CbCustomizeTest3(const std::vector<std::string> &permList)
+        : PermActiveStatusCustomizedCbk(permList)
+    {
+        GTEST_LOG_(INFO) << "CbCustomizeTest3 create";
+    }
+
+    ~CbCustomizeTest3()
+    {}
+
+    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
+    {
+        type_ = result.type;
+    }
+
+    ActiveChangeType type_ = PERM_INACTIVE;
+};
 /*
  * @tc.name: OnRemoteDied001
  * @tc.desc: PermActiveStatusCallbackDeathRecipient::OnRemoteDied function test
@@ -445,6 +463,37 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
 
     // recovery
     ActiveStatusCallbackManager::GetInstance().callbackDataList_ = callbackDataList;
+}
+
+/**
+ * @tc.name: OnApplicationStateChanged001
+ * @tc.desc: Test app state changed to APP_STATE_TERMINATED.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    PrivacyAppStateObserver observer;
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+
+    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
+    appStateData.accessTokenId = tokenId;
+    observer.OnApplicationStateChanged(appStateData);
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
 }
 
 /*
@@ -558,7 +607,7 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Lev
 
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
-    record.tokenId = 123; // 123 is random input
+    record.tokenId = RANDOM_TOKENID;
     // it->opcode == record.opcode && it->tokenId != record.tokenId
     PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record);
 
@@ -653,8 +702,8 @@ HWTEST_F(PermissionRecordManagerTest, TranslationIntoPermissionRecord001, TestSi
  */
 HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck001, TestSize.Level1)
 {
-    AccessTokenID tokenID1 = 123; // random input
-    AccessTokenID tokenID2 = 124; // random input
+    AccessTokenID tokenID1 = RANDOM_TOKENID;
+    AccessTokenID tokenID2 = RANDOM_TOKENID + 1; // random input
     int32_t opCode1 = static_cast<int32_t>(Constant::OpCode::OP_READ_CALENDAR);
     int32_t opCode2 = static_cast<int32_t>(Constant::OpCode::OP_WRITE_CALENDAR);
     int32_t status1 = static_cast<int32_t>(ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
@@ -767,6 +816,54 @@ HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck002, TestSize.Level1)
     record2.rejectCount = rejectCount3;
     // same accessCount type + same rejectCount type
     ASSERT_EQ(true, PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+}
+
+/*
+ * @tc.name: RecordMergeCheck003
+ * @tc.desc: test merge two record one add by StartUsingPermission and another add by StopUsingPermission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck003, TestSize.Level1)
+{
+    int32_t accessCount1 = 0;
+    int32_t accessCount2 = 1;
+    int32_t rejectCount1 = 0; // random input
+    int32_t rejectCount2 = 0;
+
+    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+
+    PermissionRecord record1 = g_record;
+    record1.timestamp = timestamp;
+    PermissionRecord record2 = g_record;
+    record2.timestamp = timestamp;
+
+    record1.accessCount = accessCount1;
+    record2.accessCount = accessCount2;
+    record2.rejectCount = rejectCount1;
+    record2.rejectCount = rejectCount2;
+    // different accessCount type
+    ASSERT_TRUE(PermissionUsedRecordCache::GetInstance().RecordMergeCheck(record1, record2));
+}
+
+/**
+ * @tc.name: RemoveFromPersistQueueAndDatabaseTest001
+ * @tc.desc: RemoveFromPersistQueueAndDatabase test.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveFromPersistQueueAndDatabaseTest001, TestSize.Level1)
+{
+    std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead = std::make_shared<PermissionUsedRecordNode>();
+    persistPendingBufferHead->record = g_record;
+    persistPendingBufferHead->next = std::make_shared<PermissionUsedRecordNode>();
+    persistPendingBufferHead->next->record = g_record;
+    persistPendingBufferHead->next->pre = persistPendingBufferHead;
+    PermissionUsedRecordCache::GetInstance().AddToPersistQueue(persistPendingBufferHead);
+    PermissionUsedRecordCache::GetInstance().RemoveFromPersistQueueAndDatabase(RANDOM_TOKENID);
+    PermissionUsedRecordCache::GetInstance().RemoveFromPersistQueueAndDatabase(RANDOM_TOKENID + 1);
+    sleep(1);
+    EXPECT_TRUE(PermissionUsedRecordCache::GetInstance().persistPendingBufferQueue_.empty());
 }
 
 /*
@@ -931,6 +1028,30 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords003, TestSize.Level1)
     EXPECT_EQ(static_cast<uint32_t>(tokenID), result4.bundleRecords[0].tokenId);
     EXPECT_EQ(static_cast<size_t>(1), result4.bundleRecords[0].permissionRecords.size());
     EXPECT_EQ(2, result4.bundleRecords[0].permissionRecords[0].accessCount);
+}
+
+/**
+ * @tc.name: GetRecords004
+ * @tc.desc: test query record from local dd failed
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, GetRecords004, TestSize.Level1)
+{
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenID);
+
+    GeneratePermissionRecord(tokenID);
+    PermissionRecordManager::GetInstance().SetDefaultConfigValue();
+
+    PermissionUsedRequest request;
+    request.tokenId = tokenID;
+    request.isRemote = false;
+    request.beginTimeMillis = -1;
+
+    PermissionUsedResult result;
+    EXPECT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().GetPermissionUsedRecords(request, result));
 }
 
 /*
@@ -1262,6 +1383,127 @@ HWTEST_F(PermissionRecordManagerTest, AddOrUpdateUsedTypeIfNeeded001, TestSize.L
 
     ASSERT_EQ(true, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
 }
+
+/**
+ * @tc.name: DeletePermissionRecord001
+ * @tc.desc: delete permission record when records excessive.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level1)
+{
+    int32_t recordSize = PermissionRecordManager::GetInstance().recordSizeMaximum_;
+    PermissionRecordManager::GetInstance().recordSizeMaximum_ = MAX_DETAIL_NUM;
+    std::vector<GenericValues> values;
+    int32_t num = MAX_DETAIL_NUM + 1;
+    AddRecord(num, values);
+
+    EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().DeletePermissionRecord(1));
+    GenericValues countValue;
+    PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
+    EXPECT_NE(num, countValue.GetInt64("count"));
+    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
+    for (const auto& value : values) {
+        EXPECT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
+    }
+    PermissionRecordManager::GetInstance().recordSizeMaximum_ = recordSize;
+}
+
+/*
+ * @tc.name: RemoveRecordFromStartListTest001
+ * @tc.desc: remove record from start list test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize.Level1)
+{
+    std::vector<PermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
+    PermissionRecordManager::GetInstance().startRecordList_.clear();
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+
+    PermissionRecord record1 = {
+        .tokenId = tokenId,
+        .opCode = Constant::OP_CAMERA,
+    };
+
+    PermissionRecord record2 = {
+        .tokenId = 0,
+        .opCode = Constant::OP_MICROPHONE,
+    };
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(record2);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    ASSERT_EQ(1, PermissionRecordManager::GetInstance().startRecordList_.size());
+    PermissionRecordManager::GetInstance().startRecordList_ = startRecordList;
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest001
+ * @tc.desc: start using camera permission when camera global switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    bool isMuteCamera = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(true); // true means close
+
+    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
+    ASSERT_NE(nullptr, callbackPtr);
+    ASSERT_NE(nullptr, callbackWrap);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, "ohos.permission.CAMERA", callbackWrap->AsObject()));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::GetInstance().NotifyCameraChange(true); // fill true status is inactive branch
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    CameraManagerPrivacyClient::GetInstance().MuteCamera(isMuteCamera);
+}
+
+#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
+/*
+ * @tc.name: GetConfigValueFromFile001
+ * @tc.desc: parse failed with invalid param
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, GetConfigValueFromFile001, TestSize.Level1)
+{
+    std::string fileContent = R"({"privacy": {)"\
+        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
+        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
+    EXPECT_TURE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
+
+    fileContent = R"({"privacy": {)"\
+        R"("permission_used_record_size_maximum":"500000","permission_used_record_aging_time":7},)"\
+        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
+
+    fileContent = R"({"privacy": {)"\
+        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":"7"},)"\
+        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
+
+    fileContent = R"({"privacy": {)"\
+        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
+        R"("permission_manager_bundle_name":1, "grant_ability_name":"PermissionAbility"})";
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
+
+    fileContent = R"({"privacy": {)"\
+        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
+        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":1})";
+    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

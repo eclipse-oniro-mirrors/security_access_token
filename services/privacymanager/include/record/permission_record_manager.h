@@ -128,7 +128,6 @@ private:
     void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
     void ExecuteAndUpdateRecord(uint32_t opCode, bool switchStatus);
     void RemoveRecordFromStartList(const PermissionRecord& record);
-    void UpdateRecord(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
     bool AddRecordToStartList(const PermissionRecord& record);
 

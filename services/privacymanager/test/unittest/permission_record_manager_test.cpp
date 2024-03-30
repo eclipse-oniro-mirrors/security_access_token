@@ -386,6 +386,28 @@ HWTEST_F(PermissionRecordManagerTest, MicSwitchChangeListener004, TestSize.Level
 }
 
 /*
+ * @tc.name: AppStateChangeListener001
+ * @tc.desc: AppStateChange function test mic global switch is close
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    bool isMuteMic = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true); // true means close
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    // status is inactive
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    sleep(3); // wait for dialog disappear
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PERM_ACTIVE_IN_BACKGROUND);
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(isMuteMic);
+}
+
+/*
  * @tc.name: TransferOpcodeToPermission001
  * @tc.desc: Constant::TransferOpcodeToPermission function test return false
  * @tc.type: FUNC
