@@ -2401,7 +2401,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.LAUNCH_SPAMSHIELD_PAGE",
+            "name": "ohos.permission.ACCESS_SPAMSHIELD_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
