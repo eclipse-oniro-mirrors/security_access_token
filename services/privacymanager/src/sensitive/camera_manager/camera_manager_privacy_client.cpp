@@ -54,7 +54,7 @@ int32_t CameraManagerPrivacyClient::MuteCamera(bool muteMode)
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
-        return false;
+        return -1;
     }
     return proxy->MuteCamera(muteMode);
 }

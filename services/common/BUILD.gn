@@ -29,6 +29,7 @@ ohos_static_library("accesstoken_service_common") {
     "app_manager/include",
     "database/include",
     "handler/include",
+    "libraryloader/include",
   ]
 
   sources = [
@@ -43,6 +44,7 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/sqlite_helper.cpp",
     "database/src/statement.cpp",
     "database/src/variant_value.cpp",
+    "libraryloader/src/libraryloader.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -68,30 +70,6 @@ ohos_static_library("accesstoken_service_common") {
       cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
     }
   }
-}
-
-ohos_shared_library("accesstoken_library_loader") {
-  subsystem_name = "security"
-  part_name = "access_token"
-
-  sanitize = {
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  branch_protector_ret = "pac_ret"
-
-  include_dirs = [
-    "${access_token_path}/frameworks/common/include",
-    "libraryloader/include",
-  ]
-
-  sources = [ "libraryloader/src/libraryloader.cpp" ]
-
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
-
-  external_deps = [ "hilog:libhilog" ]
 }
 
 ohos_shared_library("accesstoken_ability_manager_access") {

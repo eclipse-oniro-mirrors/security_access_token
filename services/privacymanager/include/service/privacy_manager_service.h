@@ -67,9 +67,7 @@ public:
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
     int32_t Dump(int32_t fd, const std::vector<std::u16string>& args) override;
 private:
-#ifdef POWER_MANAGER_ENABLE
     void OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
-#endif
     bool Initialize();
     int32_t ResponseDumpCommand(int32_t fd,  const std::vector<std::u16string>& args);
 

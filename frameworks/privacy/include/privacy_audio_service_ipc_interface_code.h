@@ -24,7 +24,7 @@ enum PrivacyAudioRingerInterfaceCode {
 };
 
 enum PrivacyAudioPolicyInterfaceCode {
-    SET_MICROPHONE_MUTE = 15,
+    SET_MICROPHONE_MUTE_AUDIO_CONFIG = 16,
     IS_MICROPHONE_MUTE = 17,
 #ifdef FEATURE_DTMF_TONE
     REGISTER_POLICY_CALLBACK_CLIENT = 94,

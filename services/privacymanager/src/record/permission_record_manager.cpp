@@ -36,9 +36,6 @@
 #include "i_state_change_callback.h"
 #include "iservice_registry.h"
 #include "libraryloader.h"
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-#include "lockscreen_status_observer.h"
-#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
@@ -537,34 +534,32 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveCha
 {
     std::vector<std::string> permList;
     std::vector<std::string> camPermList;
-    {
-        std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
-                std::string perm;
-                Constant::TransferOpcodeToPermission(it->opCode, perm);
-                if (!GetGlobalSwitchStatus(perm)) {
-                    continue;
-                }
-
-                // app use camera background without float window
-                bool isShow = true;
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-                isShow = IsFlowWindowShow(tokenId);
-#endif
-                if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
-                    ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-                    camPermList.emplace_back(perm);
-                    continue;
-                }
-                permList.emplace_back(perm);
-                int64_t curStamp = TimeUtil::GetCurrentTimestamp();
-
-                // update status to input and timestamp to now in cache
-                it->status = status;
-                it->timestamp = curStamp;
-                ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            if (!GetGlobalSwitchStatus(perm)) {
+                continue;
             }
+
+            // app use camera background without float window
+            bool isShow = true;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+            isShow = IsFlowWindowShow(tokenId);
+#endif
+            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
+                camPermList.emplace_back(perm);
+                continue;
+            }
+            permList.emplace_back(perm);
+            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+
+            // update status to input and timestamp to now in cache
+            it->status = status;
+            it->timestamp = curStamp;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d get permission %{public}s.", tokenId, perm.c_str());
         }
     }
 
@@ -599,6 +594,24 @@ int32_t PermissionRecordManager::GetLockScreenStatus()
 {
     std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
     return lockScreenStatus_;
+}
+
+void PermissionRecordManager::SetScreenOn(bool isScreenOn)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Screen status %{public}d", isScreenOn);
+    {
+        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
+        isScreenOn_ = isScreenOn;
+    }
+    if (!isScreenOn) {
+        NotifyCameraExecuteCallback();
+    }
+}
+
+bool PermissionRecordManager::IsScreenOn()
+{
+    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
+    return isScreenOn_;
 }
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
@@ -657,7 +670,9 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
 void PermissionRecordManager::CallbackExecute(
     AccessTokenID tokenId, const std::string& permissionName, int32_t status)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "entry ExecuteCallbackAsync, int32_t status is %{public}d", status);
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "ExecuteCallbackAsync, tokenId %{public}d using permission %{public}s, status %{public}d",
+        tokenId, permissionName.c_str(), status);
     ActiveStatusCallbackManager::GetInstance().ExecuteCallbackAsync(
         tokenId, permissionName, GetDeviceId(tokenId), (ActiveChangeType)status);
 }
@@ -685,23 +700,21 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switc
     std::string perm;
     Constant::TransferOpcodeToPermission(opCode, perm);
     std::vector<PermissionRecord> recordList;
-    {
-        std::lock_guard<std::mutex> lock(startRecordListMutex_);
-        for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-            PermissionRecord record = *it;
-            if ((record.opCode) != static_cast<int32_t>(opCode)) {
-                continue;
-            }
-            if (switchStatus) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
-                // no need to store in database when status from inactive to foreground or background
-                record.status = GetAppStatus(record.tokenId);
-            } else {
-                ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
-                record.status = PERM_INACTIVE;
-            }
-            recordList.emplace_back(record);
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
+        PermissionRecord record = *it;
+        if ((record.opCode) != static_cast<int32_t>(opCode)) {
+            continue;
         }
+        if (switchStatus) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "global switch is open, update record from inactive");
+            // no need to store in database when status from inactive to foreground or background
+            record.status = GetAppStatus(record.tokenId);
+        } else {
+            ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
+            record.status = PERM_INACTIVE;
+        }
+        recordList.emplace_back(record);
     }
     // each permission sends a status change notice
     for (const auto& record : recordList) {
@@ -801,10 +814,21 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::SetCameraCallback(sptr<IRemoteObject> callback)
+void PermissionRecordManager::NotifyCameraExecuteCallback()
 {
-    std::lock_guard<std::mutex> lock(cameraMutex_);
-    cameraCallback_ = callback;
+    std::vector<AccessTokenID> tokenList;
+    {
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto iter = startRecordList_.begin(); iter != startRecordList_.end(); ++iter) {
+            if (iter->opCode != Constant::OP_CAMERA) {
+                continue;
+            }
+            tokenList.emplace_back(iter->tokenId);
+        }
+    }
+    for (size_t i = 0; i < tokenList.size(); ++i) {
+        ExecuteCameraCallbackAsync(tokenList[i]);
+    }
 }
 
 void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
@@ -812,25 +836,20 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "entry");
     auto task = [tokenId, this]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "ExecuteCameraCallbackAsync task called");
-        sptr<IRemoteObject> cameraCallback = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(this->cameraMutex_);
-            cameraCallback = this->cameraCallback_;
-            if (cameraCallback == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "cameraCallback is null");
-                return;
+        auto it = [&](AccessTokenID id, sptr<IRemoteObject> cameraCallback) {
+            auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
+            if ((tokenId == id) && (callback != nullptr)) {
+                ACCESSTOKEN_LOG_INFO(
+                    LABEL, "CameraCallback tokenId %{public}d changeType %{public}d", tokenId, PERM_INACTIVE);
+                callback->StateChangeNotify(tokenId, false);
             }
-        }
-        auto callback = iface_cast<IStateChangeCallback>(cameraCallback);
-        if (callback != nullptr) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "callback excute changeType %{public}d", PERM_INACTIVE);
-            callback->StateChangeNotify(tokenId, false);
-            SetCameraCallback(nullptr);
-        }
+        };
+        this->cameraCallbackMap_.Iterate(it);
+        this->cameraCallbackMap_.Erase(tokenId);
     };
     std::thread executeThread(task);
     executeThread.detach();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "The cameraCallback execution is complete");
 }
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
@@ -871,7 +890,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-    SetCameraCallback(callback);
+    cameraCallbackMap_.EnsureInsert(tokenId, callback);
     return Constant::SUCCESS;
 }
 
@@ -937,12 +956,18 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 {
     // when app in foreground, return true, only for camera and microphone
     if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d).", tokenId);
         return false;
     }
 
     HapTokenInfo tokenInfo;
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d)。", tokenId);
+        return false;
+    }
+
+    if ((permissionName == CAMERA_PERMISSION_NAME) && !IsScreenOn()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Screen is off.");
         return false;
     }
 
@@ -1090,12 +1115,6 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
         LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     SetLockScreenStatus(lockScreenStatus);
     // lockscreen status change call back register
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-    {
-        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-        LockscreenObserver::RegisterEvent();
-    }
-#endif //COMMON_EVENT_SERVICE_ENABLE
 #endif
     return true;
 }
@@ -1164,16 +1183,6 @@ void PermissionRecordManager::Unregister()
             appStateCallback_= nullptr;
         }
     }
-
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-    // screen state change callback unregister
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-    {
-        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-        LockscreenObserver::UnRegisterEvent();
-    }
-#endif //COMMON_EVENT_SERVICE_ENABLE
-#endif
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     // float window status change callback unregister

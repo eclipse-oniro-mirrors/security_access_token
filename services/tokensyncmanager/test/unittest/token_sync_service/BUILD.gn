@@ -70,7 +70,6 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "${access_token_path}/services/common:accesstoken_library_loader",
     "${access_token_path}/services/common:accesstoken_service_common",
     "//third_party/zlib:libz",
   ]

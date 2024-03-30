@@ -12,16 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "lockscreen_status_observer.h"
+#include "privacy_common_event_subscriber.h"
 
 #include <unistd.h>
 #include "accesstoken_log.h"
 
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-#include "common_event_manager.h"
 #include "common_event_subscribe_info.h"
-#include "common_event_support.h"
-#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "permission_record_manager.h"
 
 #include "want.h"
@@ -29,7 +25,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-#ifdef COMMON_EVENT_SERVICE_ENABLE
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
@@ -37,10 +32,10 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 
 static bool g_isRegistered = false;
 
-static std::shared_ptr<LockscreenObserver> g_lockscreenObserver = nullptr;
+static std::shared_ptr<PrivacyCommonEventSubscriber> g_subscriber = nullptr;
 }
 
-void LockscreenObserver::RegisterEvent()
+void PrivacyCommonEventSubscriber::RegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "RegisterEvent start");
     if (g_isRegistered) {
@@ -51,9 +46,13 @@ void LockscreenObserver::RegisterEvent()
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
-    g_lockscreenObserver = std::make_shared<LockscreenObserver>(*info);
-    const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_lockscreenObserver);
+    g_subscriber = std::make_shared<PrivacyCommonEventSubscriber>(*info);
+    const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_subscriber);
     if (!result) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterEvent result is err");
         return;
@@ -61,10 +60,10 @@ void LockscreenObserver::RegisterEvent()
     g_isRegistered = true;
 }
 
-void LockscreenObserver::UnRegisterEvent()
+void PrivacyCommonEventSubscriber::UnRegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UnregisterEvent start");
-    const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(g_lockscreenObserver);
+    const auto result = EventFwk::CommonEventManager::UnSubscribeCommonEvent(g_subscriber);
     if (!result) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterEvent result is err");
         return;
@@ -72,23 +71,30 @@ void LockscreenObserver::UnRegisterEvent()
     g_isRegistered = false;
 }
 
-void LockscreenObserver::OnReceiveEvent(const EventFwk::CommonEventData& event)
+void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventData& event)
 {
     const auto want = event.GetWant();
     const auto action = want.GetAction();
+    ACCESSTOKEN_LOG_INFO(LABEL, "receive event(%{public}s)", action.c_str());
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "receive unlocked event");
         PermissionRecordManager::GetInstance()
             .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "receive locked event");
         PermissionRecordManager::GetInstance()
             .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
+        PermissionRecordManager::GetInstance().SetScreenOn(true);
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
+        PermissionRecordManager::GetInstance().SetScreenOn(false);
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
+        action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
+        uint32_t tokenId = want.GetParams().GetIntParam("accessTokenId", 0);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Receive package uninstall: tokenId=%{public}d.", tokenId);
+        PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "");
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }
 }
-#endif //COMMON_EVENT_SERVICE_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

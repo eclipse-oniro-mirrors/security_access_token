@@ -32,7 +32,7 @@ int WindowManagerPrivacyAgent::OnRemoteRequest(uint32_t code, MessageParcel& dat
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, code: %{public}u", __func__, code);
     if (data.ReadInterfaceToken() != IWindowManagerAgent::GetDescriptor()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, read desciptor error", __func__);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s called, read desciptor error", __func__);
         return ERROR_IPC_REQUEST_FAIL;
     }
     PrivacyWindowServiceInterfaceCode msgId = static_cast<PrivacyWindowServiceInterfaceCode>(code);

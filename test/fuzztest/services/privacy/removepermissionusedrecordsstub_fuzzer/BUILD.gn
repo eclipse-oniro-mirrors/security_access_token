@@ -44,8 +44,6 @@ ohos_fuzztest("RemovePermissionUsedRecordsStubFuzzTest") {
     "${access_token_path}/services/privacymanager/include/sensitive",
     "${access_token_path}/services/privacymanager/include/sensitive/audio_manager/",
     "${access_token_path}/services/privacymanager/include/sensitive/camera_manager/",
-    "${access_token_path}/services/privacymanager/include/sensitive/lockscreen_manager/",
-    "${access_token_path}/services/privacymanager/include/sensitive/uninstall_observer/",
     "${access_token_path}/services/common/ability_manager/include",
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
@@ -82,8 +80,6 @@ ohos_fuzztest("RemovePermissionUsedRecordsStubFuzzTest") {
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
     "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_service_callback_stub.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/lockscreen_manager/lockscreen_status_observer.cpp",
-    "${access_token_path}/services/privacymanager/src/sensitive/uninstall_observer/package_uninstall_observer.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
     "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
   ]
@@ -121,6 +117,7 @@ ohos_fuzztest("RemovePermissionUsedRecordsStubFuzzTest") {
   if (common_event_service_enable) {
     cflags_cc += [ "-DCOMMON_EVENT_SERVICE_ENABLE" ]
     external_deps += [ "common_event_service:cesfwk_innerkits" ]
+    sources += [ "${access_token_path}/services/privacymanager/src/common/privacy_common_event_subscriber.cpp" ]
   }
   if (access_token_camera_float_window_enable) {
     cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]

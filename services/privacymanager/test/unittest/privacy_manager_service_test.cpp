@@ -213,6 +213,9 @@ HWTEST_F(PrivacyManagerServiceTest, Dump002, TestSize.Level1)
  */
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1)
 {
+    bool initScreenOn = PermissionRecordManager::GetInstance().IsScreenOn();
+
+    PermissionRecordManager::GetInstance().SetScreenOn(true);
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
     ASSERT_NE(INVALID_TOKENID, tokenId);
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
@@ -228,18 +231,55 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
     ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 #endif
+    PermissionRecordManager::GetInstance().SetScreenOn(initScreenOn);
 }
 
 /*
  * @tc.name: IsAllowedUsingPermission002
- * @tc.desc: IsAllowedUsingPermission function test invalid tokenId
+ * @tc.desc: IsAllowedUsingPermission function test invalid tokenId and permission
  * @tc.type: FUNC
  * @tc.require: issueI5UPRK
  */
 HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission002, TestSize.Level1)
 {
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    bool initScreenOn = PermissionRecordManager::GetInstance().IsScreenOn();
+
+    PermissionRecordManager::GetInstance().SetScreenOn(true);
+    // invalid tokenId
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, CAMERA_PERMISSION_NAME));
-    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(0, "test"));
+
+    // native tokenId
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    // invalid permission
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, "test"));
+
+    PermissionRecordManager::GetInstance().SetScreenOn(initScreenOn);
+}
+
+/*
+ * @tc.name: IsAllowedUsingPermission003
+ * @tc.desc: test camera with screen off
+ * @tc.type: FUNC
+ * @tc.require: issueI5UPRK
+ */
+HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission003, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId("privacy_service");
+    bool initScreenOn = PermissionRecordManager::GetInstance().IsScreenOn();
+
+    PermissionRecordManager::GetInstance().SetScreenOn(false);
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    PermissionRecordManager::GetInstance().SetScreenOn(initScreenOn);
 }
 
 class TestPrivacyManagerStub : public PrivacyManagerStub {

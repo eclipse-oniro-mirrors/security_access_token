@@ -20,12 +20,12 @@
 
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+#include "privacy_common_event_subscriber.h"
+#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "constant_common.h"
 #include "constant.h"
 #include "ipc_skeleton.h"
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-#include "package_uninstall_observer.h"
-#endif //COMMON_EVENT_SERVICE_ENABLE
 #include "permission_record_manager.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
@@ -33,8 +33,8 @@
 #ifdef POWER_MANAGER_ENABLE
 #include "privacy_power_shutdown_callback.h"
 #include "shutdown/shutdown_client.h"
-#include "system_ability_definition.h"
 #endif
+#include "system_ability_definition.h"
 #include "string_ex.h"
 
 namespace OHOS {
@@ -59,7 +59,7 @@ PrivacyManagerService::~PrivacyManagerService()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyManagerService()");
 #ifdef COMMON_EVENT_SERVICE_ENABLE
-    PackageUninstallObserver::UnRegisterEvent();
+    PrivacyCommonEventSubscriber::UnRegisterEvent();
 #endif //COMMON_EVENT_SERVICE_ENABLE
 }
 
@@ -76,6 +76,10 @@ void PrivacyManagerService::OnStart()
 
 #ifdef POWER_MANAGER_ENABLE
     AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
+#endif
+
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+    AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
 #endif
 
     state_ = ServiceRunningState::STATE_RUNNING;
@@ -305,11 +309,11 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
     return RET_SUCCESS;
 }
 
-#ifdef POWER_MANAGER_ENABLE
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "systemAbilityId is %{public}d", systemAbilityId);
 
+#ifdef POWER_MANAGER_ENABLE
     if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
         if (powerShutDownCallback_ == nullptr) {
             powerShutDownCallback_ = new(std::nothrow) PrivacyPowerShutDownCallback();
@@ -324,8 +328,14 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
             ACCESSTOKEN_LOG_INFO(LABEL, "register power shutdown callback complete!");
         }
     }
-}
 #endif
+
+#ifdef COMMON_EVENT_SERVICE_ENABLE
+    if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
+        PrivacyCommonEventSubscriber::RegisterEvent();
+    }
+#endif //COMMON_EVENT_SERVICE_ENABLE
+}
 
 bool PrivacyManagerService::Initialize()
 {
@@ -339,10 +349,6 @@ bool PrivacyManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     ActiveStatusCallbackManager::GetInstance().InitEventHandler(eventHandler_);
 #endif
-
-#ifdef COMMON_EVENT_SERVICE_ENABLE
-    PackageUninstallObserver::RegisterEvent();
-#endif // COMMON_EVENT_SERVICE_ENABLE
     return true;
 }
 } // namespace AccessToken

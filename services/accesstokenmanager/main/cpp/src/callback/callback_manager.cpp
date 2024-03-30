@@ -84,7 +84,7 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
 int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 

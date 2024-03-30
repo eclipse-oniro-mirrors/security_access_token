@@ -114,8 +114,6 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
     ]
-    deps +=
-        [ "${access_token_path}/services/common:accesstoken_library_loader" ]
   }
 
   external_deps = [

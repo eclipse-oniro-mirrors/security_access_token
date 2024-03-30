@@ -30,7 +30,7 @@ group("accesstoken_build_module_test") {
       "services/common/database/test:unittest",
     ]
     if (ability_base_enable == true) {
-      deps += [ "services/privacymanager/test/unittest:unittest" ]
+      deps += [ "services/privacymanager/test:unittest" ]
     }
   }
   if (token_sync_enable == true) {
