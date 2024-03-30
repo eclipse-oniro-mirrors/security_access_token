@@ -64,6 +64,8 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE)] =
         &PrivacyManagerStub::RegisterSecCompEnhanceInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::UPDATE_SEC_COMP_ENHANCE)] =
+        &PrivacyManagerStub::UpdateSecCompEnhanceInner;
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE)] =
         &PrivacyManagerStub::GetSecCompEnhanceInner;
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_SPECIAL_SEC_COMP_ENHANCE)] =
