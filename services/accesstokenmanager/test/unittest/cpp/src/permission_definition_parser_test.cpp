@@ -362,3 +362,15 @@ HWTEST_F(PermissionDefinitionParserTest, FromJson005, TestSize.Level1)
     instance.ParserPermsRawData(permsRawData, permDefList);
     EXPECT_EQ(0, permDefList.size());
 }
+
+/**
+ * @tc.name: IsSystemGrantedPermission001
+ * @tc.desc: Invalid param
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionDefinitionParserTest, IsSystemGrantedPermission001, TestSize.Level1)
+{
+    EXPECT_FALSE(
+        PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission("ohos.permission.SYSTEM_GRANT_FASLE"));
+}
