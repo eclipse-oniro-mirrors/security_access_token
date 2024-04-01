@@ -544,6 +544,12 @@ void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& d
     AccessTokenManagerClient::GetInstance().DumpTokenInfo(info, dumpInfo);
 }
 
+int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called.");
+    return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
+}
+
 int32_t AccessTokenKit::GetVersion(void)
 {
     uint64_t fullTokenId = GetSelfTokenID();

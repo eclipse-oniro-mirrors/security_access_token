@@ -430,6 +430,51 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     return ret;
 }
 
+void PermissionManager::PermDefToString(const PermissionDef& def, std::string& info) const
+{
+    info.append(R"(    {)");
+    info.append("\n");
+    info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
+    info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
+    info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
+    info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
+    info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");
+    info.append(R"(      "label": ")" + def.label + R"(")" + ",\n");
+    info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
+    info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
+    info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
+    info.append(R"(    })");
+}
+
+int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all permission definition info.");
+
+    std::vector<GenericValues> permDefRes;
+
+    dumpInfo.append(R"({)");
+    dumpInfo.append("\n");
+    dumpInfo.append(R"(  "permDefList": [)");
+    dumpInfo.append("\n");
+    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
+    for (auto iter = permDefRes.begin(); iter != permDefRes.end(); iter++) {
+        PermissionDef def;
+        int32_t ret = DataTranslator::TranslationIntoPermissionDef(*iter, def);
+        if (ret != RET_SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "PermDef is wrong.");
+            return ret;
+        }
+        PermDefToString(def, dumpInfo);
+        if (iter != (permDefRes.end() - 1)) {
+            dumpInfo.append(",\n");
+        }
+        dumpInfo.append("\n");
+    }
+    dumpInfo.append("\n  ]\n");
+    dumpInfo.append("}");
+    return RET_SUCCESS;
+}
+
 bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
 {
     std::vector<GenericValues> permRequestToggleStatusRes;
@@ -505,6 +550,10 @@ int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& p
     } else {
         DeletePermRequestToggleStatusFromDb(userID, permissionName);
     }
+
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
+        "TOGGLE_STATUS", status);
 
     return 0;
 }

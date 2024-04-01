@@ -389,6 +389,12 @@ public:
      * @param dumpInfo all token info
      */
     static void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
+    /**
+     * @brief Dump all permission definition infos.
+     * @param dumpInfo all permission definition info
+     * @return error code, see access_token_error.h
+     */
+    static int32_t DumpPermDefInfo(std::string& dumpInfo);
 };
 } // namespace AccessToken
 } // namespace Security

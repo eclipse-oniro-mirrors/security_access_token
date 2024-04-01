@@ -101,6 +101,7 @@ public:
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
     virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
+    virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
 };
 } // namespace AccessToken
 } // namespace Security

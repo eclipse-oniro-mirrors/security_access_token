@@ -90,6 +90,7 @@ public:
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
     int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
+    int32_t DumpPermDefInfo(std::string& dumpInfo);
     bool IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
     void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy);
     void RemovePermFromKernel(AccessTokenID tokenID);
@@ -120,6 +121,7 @@ private:
     bool FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName);
     void DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
+    void PermDefToString(const PermissionDef& def, std::string& info) const;
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;

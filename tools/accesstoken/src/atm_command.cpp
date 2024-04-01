@@ -30,7 +30,7 @@ namespace {
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
-static const std::string SHORT_OPTIONS_DUMP = "ht::r::v::i:p:b:n:";
+static const std::string SHORT_OPTIONS_DUMP = "hd::t::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -44,6 +44,7 @@ static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
     "  -h, --help                                               list available options\n"
+    "  -d, --perm                                               list all permission definition info\n"
     "  -t, --token-info                                         list all token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
@@ -67,6 +68,7 @@ static const std::string HELP_MSG_TOGGLE =
 
 static const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
+    {"perm", no_argument, nullptr, 'd'},
     {"token-info", no_argument, nullptr, 't'},
     {"record-info", no_argument, nullptr, 'r'},
     {"token-id", required_argument, nullptr, 'i'},
@@ -101,6 +103,7 @@ std::map<char, OptType> COMMAND_TYPE = {
     {'t', DUMP_TOKEN},
     {'r', DUMP_RECORD},
     {'v', DUMP_TYPE},
+    {'d', DUMP_PERM},
     {'g', PERM_GRANT},
     {'c', PERM_REVOKE},
     {'s', TOGGLE_SET},
@@ -228,6 +231,7 @@ void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmTo
         case 'c':
         case 's':
         case 'o':
+        case 'd':
             info.type = COMMAND_TYPE[option];
             break;
         case 'i':
@@ -361,6 +365,12 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
             break;
         case DUMP_TYPE:
             dumpInfo = DumpUsedTypeInfo(info.tokenId, info.permissionName);
+            break;
+        case DUMP_PERM:
+            ret = AccessTokenKit::DumpPermDefInfo(dumpInfo);
+            if (ret != RET_SUCCESS) {
+                dumpInfo = "Failure.";
+            }
             break;
         case PERM_GRANT:
         case PERM_REVOKE:

@@ -299,6 +299,9 @@ void AccessTokenManagerStub::SetPermissionRequestToggleStatusInner(MessageParcel
     uint32_t status = data.ReadUint32();
     int32_t userID = data.ReadInt32();
     if (!IsPrivilegedCalling() && VerifyAccessToken(callingTokenID, DISABLE_PERMISSION_DIALOG) == PERMISSION_DENIED) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
+            callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "SetToggleStatus");
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
@@ -319,6 +322,9 @@ void AccessTokenManagerStub::GetPermissionRequestToggleStatusInner(MessageParcel
     int32_t userID = data.ReadInt32();
     if (!IsShellProcessCalling() && !IsPrivilegedCalling() &&
         VerifyAccessToken(callingTokenID, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR, "CALLER_TOKENID",
+            callingTokenID, "PERMISSION_NAME", permissionName, "INTERFACE", "GetToggleStatus");
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d).", callingTokenID);
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
         return;
@@ -766,6 +772,30 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
 }
 #endif
 
+void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsShellProcessCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::string dumpInfo = "";
+    int32_t result = this->DumpPermDefInfo(dumpInfo);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
+    }
+    if (result != RET_SUCCESS) {
+        return;
+    }
+
+    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
+    }
+    if (!reply.WriteString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
+    }
+}
+
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsShellProcessCalling()) {
@@ -933,6 +963,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO)] =
+        &AccessTokenManagerStub::DumpPermDefInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS)] =
         &AccessTokenManagerStub::SetPermissionRequestToggleStatusInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_REQUEST_TOGGLE_STATUS)] =
