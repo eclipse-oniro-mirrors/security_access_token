@@ -3742,9 +3742,7 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true,
-            "label": "$string:ohos_lab_enable_profiler",
-            "description": "$string:ohos_desc_enable_profiler"
+            "distributedSceneEnable": true
         }
     ]
 }
