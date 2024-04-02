@@ -1129,6 +1129,49 @@ HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo004, TestSize.Level1)
 }
 
 /**
+ * @tc.name: DumpTokenInfo006
+ * @tc.desc: Test DumpTokenInfo with native processName.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo006, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.processName = "hdcd";
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+}
+
+/**
+ * @tc.name: DumpTokenInfo007
+ * @tc.desc: Test DumpTokenInfo with hap bundleName.
+ * @tc.type: FUNC
+ * @tc.require: issueI4V02P
+ */
+HWTEST_F(AccessTokenInfoManagerTest, DumpTokenInfo007, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_infoManagerTestInfoParms,
+        g_infoManagerTestPolicyPrams1, tokenIdEx);
+
+    tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    EXPECT_NE(0, static_cast<int>(tokenId));
+    
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.bundleName = g_infoManagerTestInfoParms.bundleName;
+    AccessTokenInfoManager::GetInstance().DumpTokenInfo(info, dumpInfo);
+    EXPECT_EQ(false, dumpInfo.empty());
+
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(
+        tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+}
+
+/**
  * @tc.name: AccessTokenInfoManager001
  * @tc.desc: AccessTokenInfoManager::~AccessTokenInfoManager+Init function test hasInited_ is false
  * @tc.type: FUNC
