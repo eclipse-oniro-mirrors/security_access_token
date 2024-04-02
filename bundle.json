@@ -1,5 +1,5 @@
 {
-  "name": "@openharmony/access_token",
+  "name": "@ohos/access_token",
   "description": "access_token",
   "version": "3.1.0",
   "license": "Apache License 2.0",
