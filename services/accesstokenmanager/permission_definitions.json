@@ -3239,6 +3239,16 @@
             "deprecated":"",
             "provisionEnable":true,
             "distributedSceneEnable":false
+        },
+        {
+            "name": "ohos.permission.ENABLE_PROFILER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
         }
     ],
     "userGrantPermissions": [
