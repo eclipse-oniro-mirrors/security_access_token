@@ -25,12 +25,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "WindowManagerPrivacyClient"
 };
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 WindowManagerPrivacyClient& WindowManagerPrivacyClient::GetInstance()
 {
-    static WindowManagerPrivacyClient instance;
-    return instance;
+    static WindowManagerPrivacyClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new WindowManagerPrivacyClient();
+        }
+    }
+    return *instance;
 }
 
 WindowManagerPrivacyClient::WindowManagerPrivacyClient()

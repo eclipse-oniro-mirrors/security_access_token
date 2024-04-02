@@ -25,12 +25,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CameraManagerPrivacyClient"
 };
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 CameraManagerPrivacyClient& CameraManagerPrivacyClient::GetInstance()
 {
-    static CameraManagerPrivacyClient instance;
-    return instance;
+    static CameraManagerPrivacyClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new CameraManagerPrivacyClient();
+        }
+    }
+    return *instance;
 }
 
 CameraManagerPrivacyClient::CameraManagerPrivacyClient()

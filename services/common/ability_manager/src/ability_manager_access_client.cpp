@@ -25,12 +25,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AbilityManagerAccessClient"
 };
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 AbilityManagerAccessClient& AbilityManagerAccessClient::GetInstance()
 {
-    static AbilityManagerAccessClient instance;
-    return instance;
+    static AbilityManagerAccessClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AbilityManagerAccessClient();
+        }
+    }
+    return *instance;
 }
 
 AbilityManagerAccessClient::AbilityManagerAccessClient()
