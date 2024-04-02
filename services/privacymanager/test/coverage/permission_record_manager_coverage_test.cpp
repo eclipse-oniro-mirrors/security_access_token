@@ -1504,6 +1504,26 @@ HWTEST_F(PermissionRecordManagerTest, GetConfigValueFromFile001, TestSize.Level1
     EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
 }
 #endif
+
+/*
+ * @tc.name: Abnormal001
+ * @tc.desc: PermissionRecordRepository::Add | Remove | Update | Query function abnormal branch
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, Abnormal001, TestSize.Level1)
+{
+    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(9); // 9 is not exsit type
+    std::vector<GenericValues> recordValues;
+    GenericValues conditionValue;
+    GenericValues modifyValue;
+    std::vector<GenericValues> results;
+
+    ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Add(type, recordValues));
+    ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
+    ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Update(type, modifyValue, conditionValue));
+    ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

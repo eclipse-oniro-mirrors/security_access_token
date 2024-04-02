@@ -44,8 +44,9 @@ PermissionRecordRepository::~PermissionRecordRepository()
 bool PermissionRecordRepository::Add(const PermissionUsedRecordDb::DataType type,
     const std::vector<GenericValues>& recordValues)
 {
-    if (PermissionUsedRecordDb::GetInstance().Add(type, recordValues) != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table add fail",
+    int32_t res = PermissionUsedRecordDb::GetInstance().Add(type, recordValues);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table add fail.",
             type);
         return false;
     }
@@ -55,8 +56,9 @@ bool PermissionRecordRepository::Add(const PermissionUsedRecordDb::DataType type
 bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList, 
     const GenericValues& andConditionValues, std::vector<GenericValues>& recordValues, int32_t databaseQueryCount)
 {
-    if (PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,
-        opCodeList, andConditionValues, recordValues, databaseQueryCount) != PermissionUsedRecordDb::SUCCESS) {
+    int32_t res = PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,
+        opCodeList, andConditionValues, recordValues, databaseQueryCount);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table find fail");
         return false;
     }
@@ -66,8 +68,9 @@ bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCod
 bool PermissionRecordRepository::Remove(const PermissionUsedRecordDb::DataType type,
     const GenericValues& conditionValues)
 {
-    if (PermissionUsedRecordDb::GetInstance().Remove(type, conditionValues) != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table remove fail",
+    int32_t res = PermissionUsedRecordDb::GetInstance().Remove(type, conditionValues);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table remove fail.",
             type);
         return false;
     }
@@ -77,8 +80,9 @@ bool PermissionRecordRepository::Remove(const PermissionUsedRecordDb::DataType t
 bool PermissionRecordRepository::GetAllRecordValuesByKey(
     const std::string& condition, std::vector<GenericValues>& resultValues)
 {
-    if (PermissionUsedRecordDb::GetInstance().GetDistinctValue(PermissionUsedRecordDb::PERMISSION_RECORD,
-        condition, resultValues) != PermissionUsedRecordDb::SUCCESS) {
+    int32_t res = PermissionUsedRecordDb::GetInstance().GetDistinctValue(PermissionUsedRecordDb::PERMISSION_RECORD,
+        condition, resultValues);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
         return false;
     }
@@ -92,8 +96,9 @@ void PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
 
 bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& andConditions)
 {
-    if (PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
-        andConditions) != PermissionUsedRecordDb::SUCCESS) {
+    int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
+        andConditions);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
         return false;
     }
@@ -102,8 +107,9 @@ bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& 
 
 bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excessiveSize)
 {
-    if (PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
-        excessiveSize) != PermissionUsedRecordDb::SUCCESS) {
+    int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(
+        PermissionUsedRecordDb::PERMISSION_RECORD, excessiveSize);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
             return false;
     }
@@ -113,9 +119,10 @@ bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excess
 bool PermissionRecordRepository::Update(const PermissionUsedRecordDb::DataType type,
     const GenericValues& modifyValue, const GenericValues& conditionValue)
 {
-    if (PermissionUsedRecordDb::GetInstance().Update(
-        type, modifyValue, conditionValue) != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_USED_TYPE table update fail");
+    int32_t res = PermissionUsedRecordDb::GetInstance().Update(type, modifyValue, conditionValue);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table update fail.",
+            type);
         return false;
     }
     return true;
@@ -124,8 +131,10 @@ bool PermissionRecordRepository::Update(const PermissionUsedRecordDb::DataType t
 bool PermissionRecordRepository::Query(const PermissionUsedRecordDb::DataType type,
     const GenericValues& conditionValue, std::vector<GenericValues>& results)
 {
-    if (PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results) != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_USED_TYPE table add fail");
+    int32_t res = PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results);
+    if (res != PermissionUsedRecordDb::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table query fail.",
+            type);
         return false;
     }
     return true;

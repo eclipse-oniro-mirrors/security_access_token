@@ -108,6 +108,11 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
+
     auto statement = Prepare(prepareSql);
     BeginTransaction();
     bool isAddSuccessfully = true;
@@ -138,6 +143,11 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
+
     auto statement = Prepare(prepareSql);
     for (const auto& columnName : columnNames) {
         statement.Bind(columnName, conditions.Get(columnName));
@@ -152,6 +162,10 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
     std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, opCodeList, andColumns, databaseQueryCount);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
 
     auto statement = Prepare(prepareSql);
 
@@ -244,6 +258,11 @@ int32_t PermissionUsedRecordDb::Update(DataType type, const GenericValues& modif
 
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyNames, conditionNames);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
+
     auto statement = Prepare(prepareSql);
 
     for (const auto& modifyName : modifyNames) {
@@ -265,6 +284,10 @@ int32_t PermissionUsedRecordDb::Query(DataType type, const GenericValues& condit
 
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateQueryPrepareSqlCmd(type, conditionColumns);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
 
     auto statement = Prepare(prepareSql);
     for (const auto& conditionColumn : conditionColumns) {

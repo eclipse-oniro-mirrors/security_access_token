@@ -26,12 +26,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "AudioManagerPrivacyClient"
 };
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 AudioManagerPrivacyClient& AudioManagerPrivacyClient::GetInstance()
 {
-    static AudioManagerPrivacyClient instance;
-    return instance;
+    static AudioManagerPrivacyClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AudioManagerPrivacyClient();
+        }
+    }
+    return *instance;
 }
 
 AudioManagerPrivacyClient::AudioManagerPrivacyClient()
