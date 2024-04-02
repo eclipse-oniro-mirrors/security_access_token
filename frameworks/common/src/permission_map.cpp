@@ -364,6 +364,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MONITOR_DEVICE_NETWORK_STATE",        false},
     {"ohos.permission.SYNC_PROFILE_DP",                     false},
     {"ohos.permission.ACCESS_SERVICE_DP",                   false},
+    {"ohos.permission.ACCESS_PROTOCOL_DFX_STATE",           false},
     {"ohos.permission.ACCESS_SERVICE_NAVIGATION_INFO",      false},
     {"ohos.permission.MANAGE_STYLUS_EVENT",                 false},
     {"ohos.permission.WRITE_GTOKEN_POLICY",                 false},
