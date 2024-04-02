@@ -1,0 +1,97 @@
+# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/test.gni")
+import("../../../../access_token.gni")
+
+ohos_unittest("libtoken_sync_service_sdk_coverage_test") {
+  subsystem_name = "security"
+  part_name = "access_token"
+  module_out_path = part_name + "/" + part_name
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+
+  sources = [
+    "../../src/command/base_remote_command.cpp",
+    "../../src/command/delete_remote_token_command.cpp",
+    "../../src/command/sync_remote_hap_token_command.cpp",
+    "../../src/command/sync_remote_native_token_command.cpp",
+    "../../src/command/update_remote_hap_token_command.cpp",
+    "../../src/device/device_info_manager.cpp",
+    "../../src/device/device_info_repository.cpp",
+    "../../src/remote/remote_command_executor.cpp",
+    "../../src/remote/remote_command_factory.cpp",
+    "../../src/remote/remote_command_manager.cpp",
+    "../../src/remote/soft_bus_channel.cpp",
+    "../../src/remote/soft_bus_device_connection_listener.cpp",
+    "../../src/remote/soft_bus_manager.cpp",
+    "../../src/remote/soft_bus_socket_listener.cpp",
+    "../../src/service/token_sync_manager_service.cpp",
+    "../../src/service/token_sync_manager_stub.cpp",
+    "../mock/src/constant_mock.cpp",
+    "../mock/src/soft_bus_center_mock.cpp",
+    "../mock/src/soft_bus_socket_mock.cpp",
+    "token_sync_service_coverage_test.cpp",
+  ]
+
+  include_dirs = [
+    "../../include/service",
+    "../../include/remote",
+    "../../include/command",
+    "../../include/common",
+    "../../include/device",
+    "../../include/protocol",
+    "../mock/include",
+    "${access_token_path}/frameworks/common/include",
+    "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/tokensync/include",
+    "${access_token_path}/interfaces/innerkits/accesstoken/include",
+    "${access_token_path}/interfaces/innerkits/nativetoken/include",
+    "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_path}/services/common/handler/include",
+  ]
+
+  deps = [
+    "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
+    "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/services/common:accesstoken_service_common",
+    "//third_party/zlib:libz",
+  ]
+
+  cflags_cc = [ "-DHILOG_ENABLE" ]
+
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+
+  configs = [ "${access_token_path}/config:coverage_flags" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "device_manager:devicemanagersdk",
+    "dsoftbus:softbus_client",
+    "hilog:libhilog",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+  ]
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
+}

@@ -640,18 +640,6 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
     }
 }
 
-void PermissionRecordManager::UpdateRecord(const PermissionRecord& record)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId %{public}d, opCode %{public}d", record.tokenId, record.opCode);
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        if ((it->opCode == record.opCode) && (it->tokenId == record.tokenId)) {
-            it->status = record.status;
-            return;
-        }
-    }
-}
-
 bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record)
 {
     std::lock_guard<std::mutex> lock(startRecordListMutex_);

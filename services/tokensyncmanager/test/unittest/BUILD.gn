@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
-import("../../../../../access_token.gni")
+import("../../../../access_token.gni")
 
 ohos_unittest("libtoken_sync_service_sdk_test") {
   subsystem_name = "security"
@@ -26,36 +26,36 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
   branch_protector_ret = "pac_ret"
 
   sources = [
-    "../../../src/command/base_remote_command.cpp",
-    "../../../src/command/delete_remote_token_command.cpp",
-    "../../../src/command/sync_remote_hap_token_command.cpp",
-    "../../../src/command/sync_remote_native_token_command.cpp",
-    "../../../src/command/update_remote_hap_token_command.cpp",
-    "../../../src/device/device_info_manager.cpp",
-    "../../../src/device/device_info_repository.cpp",
-    "../../../src/remote/remote_command_executor.cpp",
-    "../../../src/remote/remote_command_factory.cpp",
-    "../../../src/remote/remote_command_manager.cpp",
-    "../../../src/remote/soft_bus_channel.cpp",
-    "../../../src/remote/soft_bus_device_connection_listener.cpp",
-    "../../../src/remote/soft_bus_manager.cpp",
-    "../../../src/remote/soft_bus_socket_listener.cpp",
-    "../../../src/service/token_sync_manager_service.cpp",
-    "../../../src/service/token_sync_manager_stub.cpp",
-    "../../mock/src/constant_mock.cpp",
-    "../../mock/src/soft_bus_center_mock.cpp",
-    "../../mock/src/soft_bus_socket_mock.cpp",
+    "../../src/command/base_remote_command.cpp",
+    "../../src/command/delete_remote_token_command.cpp",
+    "../../src/command/sync_remote_hap_token_command.cpp",
+    "../../src/command/sync_remote_native_token_command.cpp",
+    "../../src/command/update_remote_hap_token_command.cpp",
+    "../../src/device/device_info_manager.cpp",
+    "../../src/device/device_info_repository.cpp",
+    "../../src/remote/remote_command_executor.cpp",
+    "../../src/remote/remote_command_factory.cpp",
+    "../../src/remote/remote_command_manager.cpp",
+    "../../src/remote/soft_bus_channel.cpp",
+    "../../src/remote/soft_bus_device_connection_listener.cpp",
+    "../../src/remote/soft_bus_manager.cpp",
+    "../../src/remote/soft_bus_socket_listener.cpp",
+    "../../src/service/token_sync_manager_service.cpp",
+    "../../src/service/token_sync_manager_stub.cpp",
+    "../mock/src/constant_mock.cpp",
+    "../mock/src/soft_bus_center_mock.cpp",
+    "../mock/src/soft_bus_socket_mock.cpp",
     "token_sync_service_test.cpp",
   ]
 
   include_dirs = [
-    "../../../include/service",
-    "../../../include/remote",
-    "../../../include/command",
-    "../../../include/common",
-    "../../../include/device",
-    "../../../include/protocol",
-    "../../mock/include",
+    "../../include/service",
+    "../../include/remote",
+    "../../include/command",
+    "../../include/common",
+    "../../include/device",
+    "../../include/protocol",
+    "../mock/include",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
@@ -94,9 +94,4 @@ ohos_unittest("libtoken_sync_service_sdk_test") {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]
   }
-}
-
-group("unittest") {
-  testonly = true
-  deps = [ ":libtoken_sync_service_sdk_test" ]
 }

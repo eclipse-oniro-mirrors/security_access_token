@@ -72,6 +72,27 @@ HWTEST_F(DatabaseTest, PutInt64001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: PutVariant001
+ * @tc.desc: Verify the GenericValues put and get variant value function.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(DatabaseTest, PutVariant001, TestSize.Level1)
+{
+    GenericValues genericValues;
+    std::string key = "databasetest";
+    int64_t testValue = 1;
+    VariantValue Test(testValue);
+    genericValues.Put(key, Test);
+    VariantValue outdata = genericValues.Get(key);
+    EXPECT_EQ(outdata.GetInt64(), testValue);
+    outdata = genericValues.Get("key");
+    EXPECT_EQ(DEFAULT_VALUE, outdata.GetInt64());
+    genericValues.Remove(key);
+    genericValues.Remove("key");
+}
+
+/**
  * @tc.name: RollbackTransaction001
  * @tc.desc: RollbackTransaction001 Abnormal branch res != SQLITE_OK
  * @tc.type: FUNC
