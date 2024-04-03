@@ -18,6 +18,7 @@ PERMISSION_VERIFY_REPORT:
   CODE: {type: INT32, desc: error code}
   CALLER_TOKENID: {type: UINT32, desc: caller token id}
   PERMISSION_NAME: {type: STRING, desc: permission name}
+  INTERFACE: {type: STRING, desc: interface information}
 
 PERMISSION_CHECK:
   __BASE: {type: FAULT, level: CRITICAL, desc: permission check error}
@@ -55,3 +56,9 @@ DEL_HAP:
   USERID: {type: INT32, desc: user id}
   BUNDLENAME: {type: STRING, desc: bundle name}
   INSTINDEX: {type: INT32, desc: inst index}
+
+PERM_DIALOG_STATUS_INFO:
+  __BASE: {type: STATISTIC, level: MINOR, desc: status information of permission dialog}
+  USERID: {type: INT32, desc: user id}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+  TOGGLE_STATUS: {type: UINT32, desc: toggle status of permission dialog}

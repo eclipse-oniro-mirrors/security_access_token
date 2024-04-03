@@ -1039,6 +1039,30 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }
 
+int32_t AccessTokenManagerProxy::DumpPermDefInfo(std::string& dumpInfo)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    if (!reply.ReadString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    return result;
+}
+
 int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable)
 {
     MessageParcel data;
