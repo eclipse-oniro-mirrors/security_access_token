@@ -495,7 +495,6 @@ void PermissionRecordManager::ExecuteDeletePermissionRecordTask()
 int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
 {
     int64_t interval = days * Constant::ONE_DAY_MILLISECONDS;
-    Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     GenericValues countValue;
     PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
     int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);

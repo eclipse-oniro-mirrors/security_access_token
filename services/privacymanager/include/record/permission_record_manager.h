@@ -168,7 +168,6 @@ private:
     OHOS::Utils::RWLock rwLock_;
     std::mutex startRecordListMutex_;
     std::vector<PermissionRecord> startRecordList_;
-    std::mutex cameraMutex_;
     std::mutex cameraCallbackMutex_;
     SafeMap<AccessTokenID, sptr<IRemoteObject>> cameraCallbackMap_;
 
