@@ -396,7 +396,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest03, TestSize.Level1)
     permsList.emplace_back(perm);
     PermissionGrantInfo info;
     AccessTokenKit::GetSelfPermissionsState(permsList, info);
-    EXPECT_EQ(permsList[0].state, FORBIDDEN_OPER);
+    EXPECT_EQ(permsList[0].state, INVALID_OPER);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
@@ -464,7 +464,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
     EXPECT_EQ(permsList[1].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
     AccessTokenKit::GetSelfPermissionsState(permsList, info);
-    EXPECT_EQ(permsList[1].state, FORBIDDEN_OPER);
+    EXPECT_EQ(permsList[1].state, INVALID_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RevokePermission(tokenCommon, PERMISSION_NONE, PERMISSION_USER_FIXED));
@@ -474,10 +474,10 @@ HWTEST_F(SharePermissionTest, PermissionShareTest004, TestSize.Level1)
     EXPECT_EQ(permsList[2].state, SETTING_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullControl));
     AccessTokenKit::GetSelfPermissionsState(permsList, info);
-    EXPECT_EQ(permsList[2].state, FORBIDDEN_OPER);
+    EXPECT_EQ(permsList[2].state, INVALID_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
     AccessTokenKit::GetSelfPermissionsState(permsList, info);
-    EXPECT_EQ(permsList[2].state, FORBIDDEN_OPER);
+    EXPECT_EQ(permsList[2].state, INVALID_OPER);
 
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenCommon));
     EXPECT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenFullControl));
@@ -521,7 +521,7 @@ HWTEST_F(SharePermissionTest, PermissionShareTest005, TestSize.Level1)
     EXPECT_EQ(permsList[1].state, DYNAMIC_OPER);
     ASSERT_EQ(0, SetSelfTokenID(tokenFullRead));
     AccessTokenKit::GetSelfPermissionsState(permsList, info);
-    EXPECT_EQ(permsList[1].state, FORBIDDEN_OPER);
+    EXPECT_EQ(permsList[1].state, INVALID_OPER);
 
     ASSERT_EQ(0, SetSelfTokenID(tokenId));
     AccessTokenKit::RevokePermission(tokenFullControl, PERMISSION_ALL, PERMISSION_USER_FIXED);
