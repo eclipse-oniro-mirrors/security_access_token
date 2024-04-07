@@ -375,7 +375,7 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         return;
     }
     if (IsPermissionRestrictedByRules(permState.permissionName)) {
-        permState.state = FORBIDDEN_OPER;
+        permState.state = INVALID_OPER;
         return;
     }
 
