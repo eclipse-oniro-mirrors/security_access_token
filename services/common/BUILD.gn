@@ -55,6 +55,7 @@ ohos_static_library("accesstoken_service_common") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "sqlite:sqlite",
@@ -104,6 +105,7 @@ ohos_shared_library("accesstoken_ability_manager_access") {
       "c_utils:utils",
       "hilog:libhilog",
       "ipc:ipc_core",
+      "json:nlohmann_json_static",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
     ]

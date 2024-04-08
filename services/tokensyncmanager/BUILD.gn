@@ -99,11 +99,13 @@ if (token_sync_enable == true) {
     ]
 
     external_deps = [
+      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "dsoftbus:softbus_client",
       "hilog:libhilog",
       "ipc:ipc_core",
       "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
       "zlib:shared_libz",
     ]
     if (eventhandler_enable == true) {
