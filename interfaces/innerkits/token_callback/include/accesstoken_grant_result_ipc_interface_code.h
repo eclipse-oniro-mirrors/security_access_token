@@ -21,6 +21,7 @@ namespace Security {
 namespace AccessToken {
 enum class AccesstokenGrantResultInterfaceCode {
     GRANT_RESULT_CALLBACK = 0,
+    WINDOW_DESTORY_CALLBACK,
 };
 } // namespace AccessToken
 } // namespace Security

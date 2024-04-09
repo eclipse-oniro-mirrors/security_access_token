@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
-#define  INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
+#ifndef INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
+#define INTERFACES_PRIVACY_KITS_NAPI_CONTEXT_COMMON_H
 
 #include <memory>
 #include <uv.h>

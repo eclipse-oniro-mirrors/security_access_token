@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H
-#define  INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H
+#ifndef INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H
+#define INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H
 
 #include <string>
 #include <vector>
@@ -64,7 +64,7 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo);
 napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info cbInfo);
 napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbInfo);
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
-#endif /*  INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H */
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
+#endif /* INTERFACES_KITS_PERMISSION_USED_MANAGER_NAPI_H */

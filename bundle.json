@@ -144,7 +144,6 @@
         }
       ],
       "test": [
-        "//base/security/access_token/interfaces/kits/accesstoken/test/benchmarktest:benchmarktest",
         "//base/security/access_token:accesstoken_build_fuzz_test",
         "//base/security/access_token:accesstoken_build_module_test"
       ]
