@@ -31,8 +31,7 @@ ohos_fuzztest("GetAccessTokenIdFuzzTest") {
   include_dirs =
       [ "${access_token_path}/interfaces/innerkits/nativetoken/include" ]
 
-  deps =
-      [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken" ]
+  deps = [ "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared" ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 

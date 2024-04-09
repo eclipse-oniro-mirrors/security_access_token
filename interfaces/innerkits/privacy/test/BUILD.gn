@@ -50,9 +50,9 @@ ohos_unittest("libprivacy_sdk_test") {
   deps = [
     "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   external_deps = [
     "c_utils:utils",
@@ -105,8 +105,8 @@ ohos_unittest("libprivacy_mock_test") {
     "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
-    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken",
-    "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]

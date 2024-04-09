@@ -107,6 +107,15 @@
           }
         },
         {
+          "name": "//base/security/access_token/interfaces/innerkits/nativetoken:libnativetoken_shared",
+          "header": {
+            "header_files": [
+              "nativetoken_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/nativetoken/include"
+          }
+        },
+        {
           "name": "//base/security/access_token/interfaces/innerkits/privacy:libprivacy_sdk",
           "header": {
             "header_files": [
@@ -126,6 +135,15 @@
         },
         {
           "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtoken_setproc",
+          "header": {
+            "header_files": [
+              "token_setproc.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/token_setproc/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/token_setproc:libtokensetproc_shared",
           "header": {
             "header_files": [
               "token_setproc.h"

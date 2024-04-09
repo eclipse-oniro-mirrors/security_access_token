@@ -35,7 +35,7 @@ ohos_unittest("libnativetoken_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
-    "../:libnativetoken",
+    "../:libnativetoken_shared",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
