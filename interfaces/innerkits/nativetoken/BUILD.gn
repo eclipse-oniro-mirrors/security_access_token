@@ -64,7 +64,7 @@ if (is_standard_system) {
       debug = false
     }
     branch_protector_ret = "pac_ret"
-
+    innerapi_tags = [ "platformsdk" ]
     public_configs = [ ":accesstokenlib" ]
 
     cflags = [ "-Wall" ]
