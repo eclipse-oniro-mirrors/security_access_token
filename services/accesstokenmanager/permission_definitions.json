@@ -3743,6 +3743,16 @@
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_access_nearlink",
             "description": "$string:ohos_desc_access_nearlink"
+        },
+        {
+            "name": "ohos.permission.PRELOAD_APPLICATION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
