@@ -3249,6 +3249,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.START_SHORTCUT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
