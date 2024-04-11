@@ -70,6 +70,8 @@ int32_t TokenCallbackStub::OnRemoteRequest(
             grantResults.emplace_back(res);
         }
         GrantResultsCallback(permList, grantResults);
+    } else if (msgCode == ITokenCallback::WINDOW_DESTORY_CALLBACK) {
+        WindowShownCallback();
     } else {
         return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
     }

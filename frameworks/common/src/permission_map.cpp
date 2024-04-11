@@ -204,6 +204,9 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ENTERPRISE_MANAGE_USB",               false},
     {"ohos.permission.ENTERPRISE_MANAGE_NETWORK",           false},
     {"ohos.permission.ENTERPRISE_SET_BROWSER_POLICY",       false},
+    {"ohos.permission.ENTERPRISE_OPERATE_DEVICE",           false},
+    {"ohos.permission.ENTERPRISE_ADMIN_MANAGE",             false},
+    {"ohos.permission.ENTERPRISE_CONFIG",                   false},
     {"ohos.permission.NFC_TAG",                             false},
     {"ohos.permission.NFC_CARD_EMULATION",                  false},
     {"ohos.permission.PERMISSION_USED_STATS",               false},
@@ -369,6 +372,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.WRITE_GTOKEN_POLICY",                 false},
     {"ohos.permission.READ_GTOKEN_POLICY",                  false},
     {"ohos.permission.ENABLE_PROFILER",                     false},
+    {"ohos.permission.PRELOAD_APPLICATION",                 false},
     {"ohos.permission.START_SHORTCUT",                      false},
 };
 

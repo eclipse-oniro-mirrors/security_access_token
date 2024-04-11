@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,6 +22,56 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AtManagerAsyncWorkData"
 };
 }
+
+int32_t NapiContextCommon::GetJsErrorCode(uint32_t errCode)
+{
+    int32_t jsCode;
+    switch (errCode) {
+        case RET_SUCCESS:
+            jsCode = JS_OK;
+            break;
+        case ERR_PERMISSION_DENIED:
+            jsCode = JS_ERROR_PERMISSION_DENIED;
+            break;
+        case ERR_NOT_SYSTEM_APP:
+            jsCode = JS_ERROR_NOT_SYSTEM_APP;
+            break;
+        case ERR_PARAM_INVALID:
+            jsCode = JS_ERROR_PARAM_INVALID;
+            break;
+        case ERR_TOKENID_NOT_EXIST:
+            jsCode = JS_ERROR_TOKENID_NOT_EXIST;
+            break;
+        case ERR_PERMISSION_NOT_EXIST:
+            jsCode = JS_ERROR_PERMISSION_NOT_EXIST;
+            break;
+        case ERR_INTERFACE_NOT_USED_TOGETHER:
+        case ERR_CALLBACK_ALREADY_EXIST:
+            jsCode = JS_ERROR_NOT_USE_TOGETHER;
+            break;
+        case ERR_CALLBACKS_EXCEED_LIMITATION:
+            jsCode = JS_ERROR_REGISTERS_EXCEED_LIMITATION;
+            break;
+        case ERR_IDENTITY_CHECK_FAILED:
+            jsCode = JS_ERROR_PERMISSION_OPERATION_NOT_ALLOWED;
+            break;
+        case ERR_SERVICE_ABNORMAL:
+        case ERROR_IPC_REQUEST_FAIL:
+        case ERR_READ_PARCEL_FAILED:
+        case ERR_WRITE_PARCEL_FAILED:
+            jsCode = JS_ERROR_SERVICE_NOT_RUNNING;
+            break;
+        case ERR_MALLOC_FAILED:
+            jsCode = JS_ERROR_OUT_OF_MEMORY;
+            break;
+        default:
+            jsCode = JS_ERROR_INNER;
+            break;
+    }
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetJsErrorCode nativeCode(%{public}d) jsCode(%{public}d).", errCode, jsCode);
+    return jsCode;
+}
+
 AtManagerAsyncWorkData::AtManagerAsyncWorkData(napi_env envValue)
 {
     env = envValue;
