@@ -12,37 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H
-#define  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H
+#ifndef INTERFACES_ACCESSTOKEN_KITS_NAPI_ATMANAGER_H
+#define INTERFACES_ACCESSTOKEN_KITS_NAPI_ATMANAGER_H
 
-#include <pthread.h>
-#include <cstdio>
-#include <cstring>
-#include <unistd.h>
-#include <uv.h>
-#include <thread>
-
-#include "ability.h"
-#include "ability_context.h"
-#include "access_token.h"
 #include "accesstoken_kit.h"
-#include "access_token_error.h"
-#include "napi_common.h"
 #include "napi_error.h"
 #include "napi_context_common.h"
-#include "napi/native_api.h"
-#include "napi/native_node_api.h"
-#include "permission_grant_info.h"
-#include "perm_state_change_callback_customize.h"
-#include "token_callback_stub.h"
-#include "ui_content.h"
-#include "ui_extension_context.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const int AT_PERM_OPERA_FAIL = -1;
-const int AT_PERM_OPERA_SUCC = 0;
 const int32_t PARAM_DEFAULT_VALUE = -1;
 
 enum PermissionStateChangeType {
@@ -52,7 +31,6 @@ enum PermissionStateChangeType {
 
 static thread_local napi_ref g_atManagerRef_;
 const std::string ATMANAGER_CLASS_NAME = "atManager";
-static int32_t curRequestCode_ = 0;
 class RegisterPermStateChangeScopePtr : public std::enable_shared_from_this<RegisterPermStateChangeScopePtr>,
     public PermStateChangeCallbackCustomize {
 public:
@@ -103,7 +81,7 @@ struct AtManagerAsyncContext : public AtManagerAsyncWorkData {
         uint32_t flag = 0;
         uint32_t status;
     };
-    int32_t result = AT_PERM_OPERA_FAIL;
+    int32_t result = RET_FAILED;
     int32_t errorCode = 0;
 };
 
@@ -117,76 +95,6 @@ struct PermissionParamCache {
     int32_t commitIdCache = PARAM_DEFAULT_VALUE;
     int32_t handle = PARAM_DEFAULT_VALUE;
     std::string sysParamCache;
-};
-
-struct RequestAsyncContext : public AtManagerAsyncWorkData {
-    explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env)
-    {
-        this->env = env;
-    }
-
-    AccessTokenID tokenId = 0;
-    bool needDynamicRequest = true;
-    int32_t result = AT_PERM_OPERA_SUCC;
-    std::vector<std::string> permissionList;
-    std::vector<int32_t> permissionsState;
-    napi_value requestResult = nullptr;
-    std::vector<bool> dialogShownResults;
-    std::vector<int32_t> permissionQueryResults;
-    PermissionGrantInfo info;
-    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
-    std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
-    bool uiAbilityFlag = false;
-};
-
-struct RequestAsyncContextHandle {
-    explicit RequestAsyncContextHandle(std::shared_ptr<RequestAsyncContext>& requestAsyncContext)
-    {
-        asyncContextPtr = requestAsyncContext;
-    }
-
-    std::shared_ptr<RequestAsyncContext> asyncContextPtr;
-};
-
-class UIExtensionCallback {
-public:
-    explicit UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext);
-    ~UIExtensionCallback();
-    void SetSessionId(int32_t sessionId);
-    void OnRelease(int32_t releaseCode);
-    void OnResult(int32_t resultCode, const OHOS::AAFwk::Want& result);
-    void OnReceive(const OHOS::AAFwk::WantParams& request);
-    void OnError(int32_t code, const std::string& name, const std::string& message);
-    void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
-    void OnDestroy();
-    void ReleaseOrErrorHandle(int32_t code);
-
-private:
-    int32_t sessionId_ = 0;
-    std::shared_ptr<RequestAsyncContext> reqContext_ = nullptr;
-};
-
-struct ResultCallback {
-    std::vector<std::string> permissions;
-    std::vector<int32_t> grantResults;
-    std::vector<bool> dialogShownResults;
-    int32_t requestCode;
-    std::shared_ptr<RequestAsyncContext> data = nullptr;
-};
-
-class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
-public:
-    AuthorizationResult(int32_t requestCode, std::shared_ptr<RequestAsyncContext>& data)
-        : requestCode_(requestCode), data_(data)
-    {}
-    virtual ~AuthorizationResult() override = default;
-
-    virtual void GrantResultsCallback(const std::vector<std::string>& permissions,
-        const std::vector<int>& grantResults) override;
-
-private:
-    int32_t requestCode_ = 0;
-    std::shared_ptr<RequestAsyncContext> data_ = nullptr;
 };
 
 class NapiAtManager {
@@ -247,24 +155,13 @@ private:
         napi_ref subscriberRef);
     static std::string GetPermParamValue();
     static void UpdatePermissionCache(AtManagerAsyncContext* asyncContext);
-    static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
-    static napi_value GetPermissionsStatus(napi_env env, napi_callback_info info);
-    static bool ParseRequestPermissionFromUser(
-        const napi_env& env, const napi_callback_info& cbInfo, std::shared_ptr<RequestAsyncContext>& asyncContext);
-    static bool ParseInputToGetQueryResult(
-        const napi_env& env, const napi_callback_info& cbInfo, RequestAsyncContext& asyncContext);
-    static void RequestPermissionsFromUserComplete(napi_env env, napi_status status, void* data);
-    static void RequestPermissionsFromUserExecute(napi_env env, void* data);
-    static void GetPermissionsStatusComplete(napi_env env, napi_status status, void* data);
-    static void GetPermissionsStatusExecute(napi_env env, void* data);
-    static bool IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
-}  // namespace AccessToken
-}  // namespace Security
-}  // namespace OHOS
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
 /*
  * function for module exports
  */
 static napi_value Init(napi_env env, napi_value exports);
 
-#endif /*  INTERFACES_KITS_ACCESSTOKEN_NAPI_INCLUDE_NAPI_ATMANAGER_H */
+#endif /* INTERFACES_ACCESSTOKEN_KITS_NAPI_ATMANAGER_H */

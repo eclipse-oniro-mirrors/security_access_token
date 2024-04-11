@@ -60,9 +60,15 @@ public:
     virtual void GrantResultsCallback(
         const std::vector<std::string> &permissions, const std::vector<int> &grantResults) = 0;
 
+    /**
+     * @brief pure virtual fuction.
+     */
+    virtual void WindowShownCallback() {};
+
     /** interface enum */
     enum InterfaceCode {
         GRANT_RESULT_CALLBACK = 0,
+        WINDOW_DESTORY_CALLBACK,
     };
 };
 } // namespace AccessToken
