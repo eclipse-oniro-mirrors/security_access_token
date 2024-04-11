@@ -1221,6 +1221,36 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENTERPRISE_OPERATE_DEVICE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_ADMIN_MANAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "MDM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ENTERPRISE_CONFIG",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.DUMP",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
