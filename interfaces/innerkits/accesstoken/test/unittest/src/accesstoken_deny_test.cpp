@@ -17,6 +17,7 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #include "token_setproc.h"
+#include "token_sync_kit_interface.h"
 
 namespace OHOS {
 namespace Security {
@@ -37,6 +38,24 @@ static HapInfoParams g_InfoParms = {
     .instIndex = 0,
     .appIDDesc = "test.bundle",
     .isSystemApp = true
+};
+
+static const int32_t FAKE_SYNC_RET = 0xabcdef;
+class TokenSyncCallbackImpl : public TokenSyncKitInterface {
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
+    {
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
+    {
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
+    {
+        return FAKE_SYNC_RET;
+    };
 };
 }
 using namespace testing::ext;
@@ -497,6 +516,13 @@ HWTEST_F(AccessTokenDenyTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
 {
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::DeleteRemoteDeviceTokens(device));
+}
+
+HWTEST_F(AccessTokenDenyTest, RegisterTokenSyncCallback001, TestSize.Level1)
+{
+    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::RegisterTokenSyncCallback(callback));
+    EXPECT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::UnRegisterTokenSyncCallback());
 }
 #endif
 

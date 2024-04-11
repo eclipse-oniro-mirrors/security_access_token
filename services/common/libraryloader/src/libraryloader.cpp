@@ -26,6 +26,8 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenLibLoader"};
+typedef void* (*FUNC_CREATE) (void);
+typedef void (*FUNC_DESTROY) (void*);
 }
 
 LibraryLoader::LibraryLoader(const std::string& path)
@@ -64,7 +66,7 @@ bool LibraryLoader::PrintErrorLog(const std::string& targetName)
 
 void LibraryLoader::Create()
 {
-    void* (*create)(void) = (void* (*)(void))dlsym(handle_, "Create");
+    void* (*create)(void) = reinterpret_cast<FUNC_CREATE>(dlsym(handle_, "Create"));
     if (!PrintErrorLog("Create")) {
         return;
     }
@@ -73,7 +75,7 @@ void LibraryLoader::Create()
 
 void LibraryLoader::Destroy()
 {
-    void (*destroy)(void*) = (void (*)(void*))dlsym(handle_, "Destroy");
+    void (*destroy)(void*) = reinterpret_cast<FUNC_DESTROY>(dlsym(handle_, "Destroy"));
     if (!PrintErrorLog("Destroy")) {
         return;
     }

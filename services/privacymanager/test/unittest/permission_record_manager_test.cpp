@@ -607,7 +607,7 @@ HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, Dlopen002, TestSize.Level1)
 {
-    LibraryLoader loader(LibAbilityMngPath);
+    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
     AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
         loader.GetObject<AbilityManagerAccessLoaderInterface>();
     EXPECT_NE(nullptr, loader.handle_);

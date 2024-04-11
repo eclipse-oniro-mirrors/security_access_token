@@ -57,6 +57,8 @@ group("fuzztest") {
     deps += [
       "deleteremotehaptokeninfostub_fuzzer:DeleteRemoteHapTokenInfoStubFuzzTest",
       "getremotehaptokeninfostub_fuzzer:GetRemoteHapTokenInfoStubFuzzTest",
+      "registertokensynccallbackstub_fuzzer:RegisterTokenSyncCallbackStubFuzzTest",
+      "unregistertokensynccallbackstub_fuzzer:UnRegisterTokenSyncCallbackStubFuzzTest",
       "updateremotehaptokeninfostub_fuzzer:UpdateRemoteHapTokenInfoStubFuzzTest",
     ]
   }

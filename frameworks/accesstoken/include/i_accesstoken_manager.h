@@ -97,6 +97,8 @@ public:
     virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
+    virtual int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback) = 0;
+    virtual int32_t UnRegisterTokenSyncCallback() = 0;
 #endif
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;

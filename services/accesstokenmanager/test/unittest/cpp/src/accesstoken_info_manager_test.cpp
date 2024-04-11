@@ -15,9 +15,12 @@
 
 #include "accesstoken_info_manager_test.h"
 
+#include <gmock/gmock.h>
+
 #include "accesstoken_id_manager.h"
 #include "access_token_error.h"
 #define private public
+#include "accesstoken_callback_stubs.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_remote_token_manager.h"
 #include "libraryloader.h"
@@ -105,6 +108,17 @@ static PermissionStateFull g_permState = {
     .resDeviceID = {"dev-001", "dev-001"},
     .grantStatus = {PermissionState::PERMISSION_DENIED, PermissionState::PERMISSION_DENIED},
     .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
+};
+
+static const int32_t FAKE_SYNC_RET = 0xabcdef;
+class TokenSyncCallbackMock : public TokenSyncCallbackStub {
+public:
+    TokenSyncCallbackMock() = default;
+    virtual ~TokenSyncCallbackMock() = default;
+
+    MOCK_METHOD(int32_t, GetRemoteHapTokenInfo, (const std::string&, AccessTokenID), (override));
+    MOCK_METHOD(int32_t, DeleteRemoteHapTokenInfo, (AccessTokenID), (override));
+    MOCK_METHOD(int32_t, UpdateRemoteHapTokenInfo, (const HapTokenInfoForSync&), (override));
 };
 }
 
@@ -847,6 +861,113 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
     TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
 
     TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
+}
+
+/**
+ * @tc.name: RegisterTokenSyncCallback001
+ * @tc.desc: TokenModifyNotifier::RegisterTokenSyncCallback function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level1)
+{
+    sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
+    ASSERT_NE(nullptr, callback);
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
+    EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
+    EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackDeathRecipient_);
+    
+    EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_)).WillOnce(testing::Return(FAKE_SYNC_RET));
+    EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_->GetRemoteHapTokenInfo("", 0));
+    
+    EXPECT_CALL(*callback, DeleteRemoteHapTokenInfo(testing::_)).WillOnce(testing::Return(FAKE_SYNC_RET));
+    EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(0));
+    
+    HapTokenInfoForSync tokenInfo;
+    EXPECT_CALL(*callback, UpdateRemoteHapTokenInfo(testing::_)).WillOnce(testing::Return(FAKE_SYNC_RET));
+    EXPECT_EQ(FAKE_SYNC_RET,
+        TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(tokenInfo));
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->UnRegisterTokenSyncCallback());
+    EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
+    EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackDeathRecipient_);
+}
+
+/**
+ * @tc.name: RegisterTokenSyncCallback002
+ * @tc.desc: TokenModifyNotifier::RegisterTokenSyncCallback function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level1)
+{
+    sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
+    ASSERT_NE(nullptr, callback);
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
+    EXPECT_NE(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
+    EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_))
+        .WillOnce(testing::Return(FAKE_SYNC_RET));
+    EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance().GetRemoteHapTokenInfo("", 0));
+
+    std::vector<AccessTokenID> modifiedTokenList =
+        TokenModifyNotifier::GetInstance().modifiedTokenList_; // backup
+    std::vector<AccessTokenID> deleteTokenList = TokenModifyNotifier::GetInstance().deleteTokenList_;
+    TokenModifyNotifier::GetInstance().modifiedTokenList_.clear();
+    TokenModifyNotifier::GetInstance().deleteTokenList_.clear();
+
+    // add a hap token
+    AccessTokenIDEx tokenIdEx = {123};
+    int32_t result = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
+        g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams1, tokenIdEx);
+    EXPECT_EQ(RET_SUCCESS, result);
+
+    HapTokenInfoForSync hapSync;
+    result = AccessTokenInfoManager::GetInstance().GetHapTokenSync(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
+    ASSERT_EQ(result, RET_SUCCESS);
+    TokenModifyNotifier::GetInstance().modifiedTokenList_.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(true, TokenModifyNotifier::GetInstance().modifiedTokenList_.size() > 0);
+    TokenModifyNotifier::GetInstance().deleteTokenList_.clear();
+
+    EXPECT_CALL(*callback, UpdateRemoteHapTokenInfo(testing::_)) // 0 is a test ret
+        .WillOnce(testing::Return(0));
+    TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
+
+    TokenModifyNotifier::GetInstance().deleteTokenList_.emplace_back(tokenIdEx.tokenIdExStruct.tokenID);
+    ASSERT_EQ(true, TokenModifyNotifier::GetInstance().deleteTokenList_.size() > 0);
+    EXPECT_CALL(*callback, DeleteRemoteHapTokenInfo(testing::_)) // 0 is a test ret
+        .WillOnce(testing::Return(0));
+    TokenModifyNotifier::GetInstance().NotifyTokenSyncTask();
+
+    TokenModifyNotifier::GetInstance().modifiedTokenList_ = modifiedTokenList; // recovery
+    TokenModifyNotifier::GetInstance().deleteTokenList_ = deleteTokenList;
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->UnRegisterTokenSyncCallback());
+}
+
+/**
+ * @tc.name: GetRemoteHapTokenInfo001
+ * @tc.desc: TokenModifyNotifier::GetRemoteHapTokenInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
+{
+    sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
+    ASSERT_NE(nullptr, callback);
+    EXPECT_EQ(RET_SUCCESS, atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
+    EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_))
+        .WillOnce(testing::Return(FAKE_SYNC_RET));
+    EXPECT_EQ(FAKE_SYNC_RET, TokenModifyNotifier::GetInstance()
+        .GetRemoteHapTokenInfo("invalid_id", 0)); // this is a test input
+    
+    EXPECT_CALL(*callback, GetRemoteHapTokenInfo(testing::_, testing::_))
+        .WillOnce(testing::Return(TOKEN_SYNC_OPENSOURCE_DEVICE));
+    EXPECT_EQ(TOKEN_SYNC_IPC_ERROR, TokenModifyNotifier::GetInstance()
+        .GetRemoteHapTokenInfo("invalid_id", 0)); // this is a test input
+    EXPECT_EQ(RET_SUCCESS,
+        atManagerService_->UnRegisterTokenSyncCallback());
 }
 #endif
 
@@ -2305,7 +2426,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
 {
-    LibraryLoader loader(LibTokenSyncPath);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     EXPECT_NE(nullptr, loader.handle_);
     EXPECT_NE(nullptr, tokenSyncKit);

@@ -72,6 +72,8 @@ private:
     void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
+    void RegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply);
+    void UnRegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply);
     void SetTokenSyncFuncInMap();
 #endif
     void SetPermissionOpFuncInMap();

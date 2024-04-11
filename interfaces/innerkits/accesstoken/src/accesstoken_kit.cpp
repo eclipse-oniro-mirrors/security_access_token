@@ -535,6 +535,18 @@ AccessTokenID AccessTokenKit::GetRemoteNativeTokenID(const std::string& deviceID
         ConstantCommon::EncryptDevId(deviceID).c_str(), tokenID);
     return AccessTokenManagerClient::GetInstance().GetRemoteNativeTokenID(deviceID, tokenID);
 }
+
+int32_t AccessTokenKit::RegisterTokenSyncCallback(const std::shared_ptr<TokenSyncKitInterface>& syncCallback)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call RegisterTokenSyncCallback.");
+    return AccessTokenManagerClient::GetInstance().RegisterTokenSyncCallback(syncCallback);
+}
+
+int32_t AccessTokenKit::UnRegisterTokenSyncCallback()
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call UnRegisterTokenSyncCallback.");
+    return AccessTokenManagerClient::GetInstance().UnRegisterTokenSyncCallback();
+}
 #endif
 
 void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,7 +34,6 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
-#include "libraryloader.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
@@ -42,7 +41,6 @@
 #include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
-#include "token_sync_kit_loader.h"
 #endif
 
 namespace OHOS {
@@ -987,13 +985,7 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     if (mapID != 0) {
         return mapID;
     }
-    LibraryLoader loader(LibTokenSyncPath);
-    TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
-    if (tokenSyncKit == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
-        return ERR_LOAD_SO_FAILED;
-    }
-    int ret = tokenSyncKit->GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
+    int ret = TokenModifyNotifier::GetInstance().GetRemoteHapTokenInfo(remoteUdid, remoteTokenID);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s token %{public}u sync failed",
             ConstantCommon::EncryptDevId(remoteUdid).c_str(), remoteTokenID);

@@ -53,6 +53,9 @@
 #include "permission_state_change_info.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "token_sync_kit_interface.h"
+#endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -382,6 +385,18 @@ public:
      * @return error code, see access_token_error.h
      */
     static int DeleteRemoteDeviceTokens(const std::string& deviceID);
+    /**
+     * @brief Regist a token sync service callback
+     * @param syncCallback token sync class
+     * @return error code, see access_token_error.h
+     */
+    static int32_t RegisterTokenSyncCallback(const std::shared_ptr<TokenSyncKitInterface>& syncCallback);
+    /**
+     * @brief UnRegist a token sync service callback
+     * @param syncCallback token sync class
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UnRegisterTokenSyncCallback();
 #endif
     /**
      * @brief Dump all token infos in the cache.

@@ -747,7 +747,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
-    LibraryLoader loader(LibAbilityMngPath);
+    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
     AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
         loader.GetObject<AbilityManagerAccessLoaderInterface>();
     if (abilityManagerAccessLoader == nullptr) {

@@ -33,9 +33,12 @@
 #include "nocopyable.h"
 #include "permission_def.h"
 #include "permission_grant_info.h"
-#include "permission_state_change_callback.h"
+#include "accesstoken_callbacks.h"
 #include "permission_state_full.h"
 #include "perm_state_change_callback_customize.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "token_sync_kit_interface.h"
+#endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -89,6 +92,8 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
+    int32_t RegisterTokenSyncCallback(const std::shared_ptr<TokenSyncKitInterface>& syncCallback);
+    int32_t UnRegisterTokenSyncCallback();
 #endif
 
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
@@ -110,6 +115,12 @@ private:
     sptr<IAccessTokenManager> GetProxy();
     std::mutex callbackMutex_;
     std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, sptr<PermissionStateChangeCallback>> callbackMap_;
+
+#ifdef TOKEN_SYNC_ENABLE
+    std::mutex tokenSyncCallbackMutex_;
+    std::shared_ptr<TokenSyncKitInterface> syncCallbackImpl_ = nullptr;
+    sptr<TokenSyncCallback> tokenSyncCallback_ = nullptr;
+#endif // TOKEN_SYNC_ENABLE
 };
 } // namespace AccessToken
 } // namespace Security

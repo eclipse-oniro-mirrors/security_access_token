@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,17 +13,20 @@
  * limitations under the License.
  */
 
-#include "perm_state_callback_death_recipient.h"
+#include "callback_death_recipients.h"
 
 #include "access_token.h"
 #include "callback_manager.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "token_modify_notifier.h"
+#endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermStateCallbackDeathRecipient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackDeathRecipients"
 };
 }
 
@@ -43,6 +46,19 @@ void PermStateCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& re
     CallbackManager::GetInstance().RemoveCallback(object);
     ACCESSTOKEN_LOG_INFO(LABEL, "end");
 }
+
+#ifdef TOKEN_SYNC_ENABLE
+void TokenSyncCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& remote)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Call OnRemoteDied.");
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr.");
+        return;
+    }
+    TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Call UnRegisterTokenSyncCallback end.");
+}
+#endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

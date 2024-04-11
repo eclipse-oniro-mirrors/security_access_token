@@ -26,8 +26,8 @@
 #include "accesstoken_info_manager.h"
 #include "permission_definition_cache.h"
 #undef private
-#include "permission_state_change_callback_stub.h"
-#include "perm_state_callback_death_recipient.h"
+#include "accesstoken_callback_stubs.h"
+#include "callback_death_recipients.h"
 
 using namespace testing::ext;
 using namespace OHOS;
