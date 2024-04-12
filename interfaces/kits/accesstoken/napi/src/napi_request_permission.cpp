@@ -274,9 +274,9 @@ void AuthorizationResult::WindowShownCallback()
     } else {
         uiContent = asyncContext->uiExtensionContext->GetUIContent();
     }
-    if (uiContent == nullptr) {
+    // get uiContent failed when request or when callback called
+    if ((uiContent == nullptr) || !(asyncContext->uiContentFlag)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
-        asyncContext->result = RET_FAILED;
         return;
     }
     int32_t instanceId = uiContent->GetInstanceId();
@@ -322,16 +322,33 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
 static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     Ace::UIContent* uiContent = nullptr;
+    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     if (asyncContext->uiAbilityFlag) {
-        uiContent = asyncContext->abilityContext->GetUIContent();
+        while (true) {
+            uiContent = asyncContext->abilityContext->GetUIContent();
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
+                break;
+            }
+        }
     } else {
-        uiContent = asyncContext->uiExtensionContext->GetUIContent();
+        while (true) {
+            uiContent = asyncContext->uiExtensionContext->GetUIContent();
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
+                break;
+            }
+        }
     }
     if (uiContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
-        asyncContext->result = RET_FAILED;
+        CreateServiceExtension(asyncContext);
         return;
     }
+    asyncContext->uiContentFlag = true;
     int32_t instanceId = uiContent->GetInstanceId();
     RequestAsyncInstanceControl::AddCallbackByInstanceId(instanceId, asyncContext);
 }
