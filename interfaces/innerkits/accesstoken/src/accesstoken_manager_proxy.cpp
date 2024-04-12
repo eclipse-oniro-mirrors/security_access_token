@@ -73,7 +73,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
+        return PERMISSION_DENIED;
     }
 
     int32_t result = reply.ReadInt32();
