@@ -47,7 +47,6 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/tokensync/include",
-      "${access_token_path}/interfaces/innerkits/token_setproc/include",
       "src",
     ]
 
@@ -66,7 +65,6 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
-      "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
     ]
 
     external_deps = [

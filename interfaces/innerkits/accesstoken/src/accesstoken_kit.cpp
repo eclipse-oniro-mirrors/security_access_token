@@ -562,14 +562,9 @@ int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
     return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
 }
 
-int32_t AccessTokenKit::GetVersion(void)
+int32_t AccessTokenKit::GetVersion(uint32_t& version)
 {
-    uint64_t fullTokenId = GetSelfTokenID();
-    bool isSystemApp = TokenIdKit::IsSystemAppByFullTokenID(fullTokenId);
-    if ((GetTokenTypeFlag(fullTokenId) == TOKEN_HAP) && (!isSystemApp)) {
-        return ERR_NOT_SYSTEM_APP;
-    }
-    return DEFAULT_TOKEN_VERSION;
+    return AccessTokenManagerClient::GetInstance().GetVersion(version);
 }
 
 int32_t AccessTokenKit::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable)

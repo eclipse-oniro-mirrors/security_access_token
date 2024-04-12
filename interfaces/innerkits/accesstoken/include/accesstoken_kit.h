@@ -305,9 +305,10 @@ public:
     static int32_t UnRegisterPermStateChangeCallback(const std::shared_ptr<PermStateChangeCallbackCustomize>& callback);
     /**
      * @brief Get current version.
+     * @param version access token version.
      * @return error code, see access_token_error.h
      */
-    static int32_t GetVersion(void);
+    static int32_t GetVersion(uint32_t& version);
     /**
      * @brief Get hap dlp flag by input tokenID.
      * @param tokenID token id

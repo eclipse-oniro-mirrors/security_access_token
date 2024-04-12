@@ -1113,6 +1113,29 @@ int32_t AccessTokenManagerProxy::DumpPermDefInfo(std::string& dumpInfo)
     return result;
 }
 
+int32_t AccessTokenManagerProxy::GetVersion(uint32_t& version)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_VERSION, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = reply.ReadInt32();
+    if (result != RET_SUCCESS) {
+        return result;
+    }
+    if (!reply.ReadUint32(version)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadUint32 failed.");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    return result;
+}
+
 int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable)
 {
     MessageParcel data;
