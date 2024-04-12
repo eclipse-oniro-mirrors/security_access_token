@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,19 +23,12 @@
 
 #include "access_token.h"
 #include "hap_token_info_for_sync_parcel.h"
+#include "token_sync_kit_interface.h"
 #include "token_sync_service_ipc_interface_code.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum TokenSyncError {
-    TOKEN_SYNC_SUCCESS = 0,
-    TOKEN_SYNC_IPC_ERROR,
-    TOKEN_SYNC_PARAMS_INVALID,
-    TOKEN_SYNC_REMOTE_DEVICE_INVALID,
-    TOKEN_SYNC_COMMAND_EXECUTE_FAILED,
-};
-
 class ITokenSyncManager : public IRemoteBroker {
 public:
     static const int SA_ID_TOKENSYNC_MANAGER_SERVICE = 3504;

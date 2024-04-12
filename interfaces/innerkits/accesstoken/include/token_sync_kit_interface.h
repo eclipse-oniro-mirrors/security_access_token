@@ -24,6 +24,15 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+enum TokenSyncError {
+    TOKEN_SYNC_SUCCESS = 0,
+    TOKEN_SYNC_IPC_ERROR,
+    TOKEN_SYNC_PARAMS_INVALID,
+    TOKEN_SYNC_REMOTE_DEVICE_INVALID,
+    TOKEN_SYNC_COMMAND_EXECUTE_FAILED,
+    TOKEN_SYNC_OPENSOURCE_DEVICE,
+};
+
 class TokenSyncKitInterface {
 public:
     TokenSyncKitInterface() {};

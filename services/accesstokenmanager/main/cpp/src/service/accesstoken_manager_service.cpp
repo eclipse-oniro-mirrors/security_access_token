@@ -51,6 +51,9 @@
 #include "string_ex.h"
 #include "system_ability_definition.h"
 #include "permission_definition_parser.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "token_modify_notifier.h"
+#endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -526,6 +529,18 @@ int AccessTokenManagerService::DeleteRemoteDeviceTokens(const std::string& devic
     int ret = AccessTokenInfoManager::GetInstance().DeleteRemoteDeviceTokens(deviceID);
     DumpTokenIfNeeded();
     return ret;
+}
+
+int32_t AccessTokenManagerService::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Call token sync callback registed.");
+    return TokenModifyNotifier::GetInstance().RegisterTokenSyncCallback(callback);
+}
+
+int32_t AccessTokenManagerService::UnRegisterTokenSyncCallback()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Call token sync callback unregisted.");
+    return TokenModifyNotifier::GetInstance().UnRegisterTokenSyncCallback();
 }
 #endif
 

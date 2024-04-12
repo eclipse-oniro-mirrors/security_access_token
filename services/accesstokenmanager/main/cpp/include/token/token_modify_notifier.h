@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,11 +21,13 @@
 #include <vector>
 
 #include "access_token.h"
+#include "i_token_sync_callback.h"
 #include "nocopyable.h"
 #include "rwlock.h"
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
 #include "thread_pool.h"
 #endif
+#include "callback_death_recipients.h"
 
 namespace OHOS {
 namespace Security {
@@ -39,7 +41,9 @@ public:
     void NotifyTokenModify(AccessTokenID tokenID);
     void NotifyTokenChangedIfNeed();
     void NotifyTokenSyncTask();
-
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID);
+    int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback);
+    int32_t UnRegisterTokenSyncCallback();
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     int32_t GetCurTaskNum();
     void AddCurTaskNum();
@@ -61,6 +65,8 @@ private:
     std::set<AccessTokenID> observationSet_;
     std::vector<AccessTokenID> deleteTokenList_;
     std::vector<AccessTokenID> modifiedTokenList_;
+    sptr<ITokenSyncCallback> tokenSyncCallbackObject_ = nullptr;
+    sptr<TokenSyncCallbackDeathRecipient> tokenSyncCallbackDeathRecipient_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

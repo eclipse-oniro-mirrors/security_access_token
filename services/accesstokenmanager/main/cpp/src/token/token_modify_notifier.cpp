@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 
 #include "token_modify_notifier.h"
 
+#include "accesstoken_callback_proxys.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
@@ -105,13 +106,16 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
     ACCESSTOKEN_LOG_INFO(LABEL, "called!");
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
-    LibraryLoader loader(LibTokenSyncPath);
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     if (tokenSyncKit == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
         return;
     }
     for (AccessTokenID deleteToken : deleteTokenList_) {
+        if (tokenSyncCallbackObject_ != nullptr) {
+            tokenSyncCallbackObject_->DeleteRemoteHapTokenInfo(deleteToken);
+        }
         tokenSyncKit->DeleteRemoteHapTokenInfo(deleteToken);
     }
 
@@ -122,12 +126,53 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
             ACCESSTOKEN_LOG_ERROR(LABEL, "the hap token 0x%{public}x need to sync is not found!", modifyToken);
             continue;
         }
+        if (tokenSyncCallbackObject_ != nullptr) {
+            tokenSyncCallbackObject_->UpdateRemoteHapTokenInfo(hapSync);
+        }
         tokenSyncKit->UpdateRemoteHapTokenInfo(hapSync);
     }
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
 
     ACCESSTOKEN_LOG_INFO(LABEL, "over!");
+}
+
+int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
+{
+    if (tokenSyncCallbackObject_ != nullptr) {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+        int32_t ret = tokenSyncCallbackObject_->GetRemoteHapTokenInfo(deviceID, tokenID);
+        if (ret != TOKEN_SYNC_OPENSOURCE_DEVICE) {
+            return ret;
+        }
+    }
+
+    LibraryLoader loader(TOKEN_SYNC_LIBPATH);
+    TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
+    if (tokenSyncKit == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libtokensync_sdk failed.");
+        return ERR_LOAD_SO_FAILED;
+    }
+    return tokenSyncKit->GetRemoteHapTokenInfo(deviceID, tokenID);
+}
+
+int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    tokenSyncCallbackObject_ = iface_cast<ITokenSyncCallback>(callback);
+    tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>(new TokenSyncCallbackDeathRecipient);
+    callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Register token sync callback successful.");
+    return ERR_OK;
+}
+
+int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
+{
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    tokenSyncCallbackObject_ = nullptr;
+    tokenSyncCallbackDeathRecipient_ = nullptr;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Unregister token sync callback successful.");
+    return ERR_OK;
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE

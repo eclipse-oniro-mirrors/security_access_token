@@ -1019,6 +1019,56 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
     return result;
 }
+
+int32_t AccessTokenManagerProxy::RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write WriteInterfaceToken failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteRemoteObject(callback)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write remote object failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(
+        AccessTokenInterfaceCode::REGISTER_TOKEN_SYNC_CALLBACK, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::UnRegisterTokenSyncCallback()
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write WriteInterfaceToken failed.");
+        return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(
+        AccessTokenInterfaceCode::UNREGISTER_TOKEN_SYNC_CALLBACK, data, reply)) {
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
 #endif
 
 void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,7 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "perm_state_callback_death_recipient.h"
+#include "callback_death_recipients.h"
 
 
 namespace OHOS {

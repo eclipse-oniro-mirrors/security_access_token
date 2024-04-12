@@ -26,7 +26,7 @@
 #include "native_token_info.h"
 #include "parameter.h"
 #include "permission_grant_info_parcel.h"
-#include "permission_state_change_callback.h"
+#include "accesstoken_callbacks.h"
 
 namespace OHOS {
 namespace Security {
@@ -601,6 +601,47 @@ int AccessTokenManagerClient::DeleteRemoteDeviceTokens(const std::string& device
     int res = proxy->DeleteRemoteDeviceTokens(deviceID);
     return res;
 }
+
+int32_t AccessTokenManagerClient::RegisterTokenSyncCallback(
+    const std::shared_ptr<TokenSyncKitInterface>& syncCallback)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    if (syncCallback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input callback is null.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    
+    sptr<TokenSyncCallback> callback = sptr<TokenSyncCallback>(new TokenSyncCallback(syncCallback));
+
+    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+    int32_t res = proxy->RegisterTokenSyncCallback(callback->AsObject());
+    if (res == RET_SUCCESS) {
+        tokenSyncCallback_ = callback;
+        syncCallbackImpl_ = syncCallback;
+    }
+    return res;
+}
+
+int32_t AccessTokenManagerClient::UnRegisterTokenSyncCallback()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    std::lock_guard<std::mutex> lock(tokenSyncCallbackMutex_);
+    int32_t res = proxy->UnRegisterTokenSyncCallback();
+    if (res == RET_SUCCESS) {
+        tokenSyncCallback_ = nullptr;
+        syncCallbackImpl_ = nullptr;
+    }
+    return res;
+}
 #endif
 
 void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
@@ -659,6 +700,12 @@ void AccessTokenManagerClient::OnRemoteDiedHandle()
     std::lock_guard<std::mutex> lock(proxyMutex_);
     proxy_ = nullptr;
     InitProxy();
+
+#ifdef TOKEN_SYNC_ENABLE
+    if (syncCallbackImpl_ != nullptr) {
+        RegisterTokenSyncCallback(syncCallbackImpl_); // re-register callback when AT crashes
+    }
+#endif // TOKEN_SYNC_ENABLE
 }
 
 sptr<IAccessTokenManager> AccessTokenManagerClient::GetProxy()

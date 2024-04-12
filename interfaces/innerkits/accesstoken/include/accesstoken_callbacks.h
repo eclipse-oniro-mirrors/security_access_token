@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,13 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef PERMISSION_STATE_CHANGE_CALLBACK_H
-#define PERMISSION_STATE_CHANGE_CALLBACK_H
+#ifndef ACCESSTOKEN_CALLBACKS_H
+#define ACCESSTOKEN_CALLBACKS_H
 
 
-#include "permission_state_change_callback_stub.h"
+#include "accesstoken_callback_stubs.h"
 #include "perm_state_change_callback_customize.h"
-
+#ifdef TOKEN_SYNC_ENABLE
+#include "token_sync_kit_interface.h"
+#endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
 namespace Security {
@@ -36,7 +38,22 @@ public:
 private:
     std::shared_ptr<PermStateChangeCallbackCustomize> customizedCallback_;
 };
+
+#ifdef TOKEN_SYNC_ENABLE
+class TokenSyncCallback : public TokenSyncCallbackStub {
+public:
+    explicit TokenSyncCallback(const std::shared_ptr<TokenSyncKitInterface>& tokenSyncCallback);
+    ~TokenSyncCallback() override;
+
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override;
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override;
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override;
+
+private:
+    std::shared_ptr<TokenSyncKitInterface> tokenSyncCallback_;
+};
+#endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PERMISSION_STATE_CHANGE_CALLBACK_H
+#endif // ACCESSTOKEN_CALLBACKS_H

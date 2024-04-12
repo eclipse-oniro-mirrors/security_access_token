@@ -16,8 +16,8 @@ import("../../../access_token.gni")
 
 accesstoken_manager_service_source = [
   "../main/cpp/src/callback/callback_manager.cpp",
-  "../main/cpp/src/callback/perm_state_callback_death_recipient.cpp",
-  "../main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
+  "../main/cpp/src/callback/callback_death_recipients.cpp",
+  "../main/cpp/src/callback/accesstoken_callback_proxys.cpp",
   "../main/cpp/src/database/access_token_db.cpp",
   "../main/cpp/src/database/data_translator.cpp",
   "../main/cpp/src/database/token_field_const.cpp",
@@ -45,6 +45,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     cfi = true
     cfi_cross_dso = true
     debug = false
+    blocklist = "${access_token_path}/cfi_blocklist.txt"
   }
   branch_protector_ret = "pac_ret"
 
@@ -101,6 +102,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "${access_token_path}/services/common:accesstoken_service_common",
+    "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
   ]
 

@@ -26,7 +26,7 @@ namespace AccessToken {
 namespace {
     const int32_t DEFAULT_VALUE = -1;
 }
-const static std::string LibAbilityMngPath = "libaccesstoken_ability_manager_access.z.so";
+const static std::string ABILITY_MANAGER_LIBPATH = "libaccesstoken_ability_manager_access.z.so";
 
 class AbilityManagerAccessLoaderInterface {
 public:

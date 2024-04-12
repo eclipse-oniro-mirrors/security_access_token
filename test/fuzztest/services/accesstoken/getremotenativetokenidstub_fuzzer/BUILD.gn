@@ -56,6 +56,7 @@ ohos_fuzztest("GetRemoteNativeTokenIDStubFuzzTest") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/accesstoken/include",
+    "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/privacy/include",
     "${access_token_path}/interfaces/innerkits/tokensync/src",
     "${access_token_path}/services/common/app_manager/include",
@@ -68,9 +69,9 @@ ohos_fuzztest("GetRemoteNativeTokenIDStubFuzzTest") {
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
   sources += [
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/perm_state_callback_death_recipient.cpp",
-    "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/permission_state_change_callback_proxy.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",

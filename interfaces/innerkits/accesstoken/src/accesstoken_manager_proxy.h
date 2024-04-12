@@ -91,6 +91,8 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
+    int32_t RegisterTokenSyncCallback(const sptr<IRemoteObject>& callback) override;
+    int32_t UnRegisterTokenSyncCallback() override;
 #endif
 
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;

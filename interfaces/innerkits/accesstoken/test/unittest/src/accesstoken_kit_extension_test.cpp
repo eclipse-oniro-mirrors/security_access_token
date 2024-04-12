@@ -2080,6 +2080,182 @@ HWTEST_F(AccessTokenKitExtensionTest, GetRenderTokenIDTest002, TestSize.Level1)
     retTokenId = TokenIdKit::GetRenderTokenID(invalidTokenID);
     ASSERT_EQ(invalidTokenID, retTokenId);
 }
+
+#ifdef TOKEN_SYNC_ENABLE
+namespace {
+class TokenSyncCallbackStubTest : public TokenSyncCallbackStub {
+public:
+    TokenSyncCallbackStubTest() = default;
+    virtual ~TokenSyncCallbackStubTest() = default;
+
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) override
+    {
+        return 0;
+    };
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) override
+    {
+        return 0;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) override
+    {
+        return 0;
+    };
+};
+
+static const int32_t FAKE_SYNC_RET = 0xabcdef;
+class TokenSyncCallbackImpl : public TokenSyncKitInterface {
+public:
+    ~TokenSyncCallbackImpl()
+    {}
+
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+};
+};
+
+/**
+ * @tc.name: TokenSyncCallbackStubTest001
+ * @tc.desc: TokenSyncCallbackStub OnRemoteRequest deny test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest001, TestSize.Level1)
+{
+    TokenSyncCallbackStubTest callback;
+
+    OHOS::MessageParcel data;
+    std::string descriptor = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(descriptor));
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL,
+        callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option)); // descriptor false
+}
+
+/**
+ * @tc.name: TokenSyncCallbackStubTest002
+ * @tc.desc: TokenSyncCallbackStub OnRemoteRequest err code
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest002, TestSize.Level1)
+{
+    TokenSyncCallbackStubTest callback;
+    OHOS::MessageParcel data;
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    EXPECT_NE(0, callback.OnRemoteRequest(static_cast<uint32_t>(0xff), // code false
+        data, reply, option));
+}
+
+/**
+ * @tc.name: TokenSyncCallbackStubTest003
+ * @tc.desc: TokenSyncCallbackStub OnRemoteRequest deny call
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest003, TestSize.Level1)
+{
+    TokenSyncCallbackStubTest callback;
+    OHOS::MessageParcel data;
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
+
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
+
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
+}
+
+/**
+ * @tc.name: TokenSyncCallbackStubTest004
+ * @tc.desc: TokenSyncCallbackStub OnRemoteRequest normal call
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest004, TestSize.Level1)
+{
+    setuid(3020); // ACCESSTOKEN_UID
+
+    TokenSyncCallbackStubTest callback;
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    data.WriteString("test deviceID"); // test deviceID
+    data.WriteUint32(0); // test tokenid
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(0, reply.ReadInt32());
+
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    data.WriteUint32(0); // test tokenid
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(0, reply.ReadInt32());
+
+    data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
+    HapTokenInfoForSync info;
+    HapTokenInfoForSyncParcel tokenInfoParcel;
+    tokenInfoParcel.hapTokenInfoForSyncParams = info;
+    data.WriteParcelable(&tokenInfoParcel);
+    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
+        data, reply, option));
+    EXPECT_EQ(0, reply.ReadInt32());
+    setuid(0); // root uid
+}
+
+/**
+ * @tc.name: TokenSyncCallbackTest001
+ * @tc.desc: TokenSyncCallback inner call
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackTest001, TestSize.Level1)
+{
+    TokenSyncCallback callback(nullptr);
+    EXPECT_EQ(nullptr, callback.tokenSyncCallback_); // test input
+
+    std::shared_ptr<TokenSyncKitInterface> ptr = std::make_shared<TokenSyncCallbackImpl>();
+    std::shared_ptr<TokenSyncCallback> callbackImpl = std::make_shared<TokenSyncCallback>(ptr);
+    EXPECT_NE(nullptr, callbackImpl->tokenSyncCallback_);
+    EXPECT_EQ(FAKE_SYNC_RET, callbackImpl->GetRemoteHapTokenInfo("test", 0)); // test input
+    EXPECT_EQ(FAKE_SYNC_RET, callbackImpl->DeleteRemoteHapTokenInfo(0)); // test input
+    HapTokenInfoForSync info;
+    EXPECT_EQ(FAKE_SYNC_RET, callbackImpl->UpdateRemoteHapTokenInfo(info)); // test input
+}
+#endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

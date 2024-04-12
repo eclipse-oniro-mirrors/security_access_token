@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const static std::string LibTokenSyncPath = "libtokensync_sdk.z.so";
+const static std::string TOKEN_SYNC_LIBPATH = "libtokensync_sdk.z.so";
 
 class TokenSyncManagerLoader final : public TokenSyncKitInterface {
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override;

@@ -770,6 +770,36 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
     int result = this->DeleteRemoteDeviceTokens(deviceID);
     reply.WriteInt32(result);
 }
+
+void AccessTokenManagerStub::RegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAccessTokenCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, tokenID=%{public}d", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    if (callback == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback read failed.");
+        reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    int32_t result = this->RegisterTokenSyncCallback(callback);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::UnRegisterTokenSyncCallbackInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsAccessTokenCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied, tokenID=%{public}d", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    int32_t result = this->UnRegisterTokenSyncCallback();
+    reply.WriteInt32(result);
+}
 #endif
 
 void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
@@ -896,6 +926,10 @@ void AccessTokenManagerStub::SetTokenSyncFuncInMap()
         &AccessTokenManagerStub::DeleteRemoteDeviceTokensInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_REMOTE_TOKEN)] =
         &AccessTokenManagerStub::GetRemoteNativeTokenIDInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REGISTER_TOKEN_SYNC_CALLBACK)] =
+        &AccessTokenManagerStub::RegisterTokenSyncCallbackInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UNREGISTER_TOKEN_SYNC_CALLBACK)] =
+        &AccessTokenManagerStub::UnRegisterTokenSyncCallbackInner;
 }
 #endif
 

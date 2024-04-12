@@ -21,7 +21,7 @@
 #undef private
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
-#include "permission_state_change_callback.h"
+#include "accesstoken_callbacks.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;

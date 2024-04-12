@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,16 @@ public:
 
     virtual void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
 };
+
+#ifdef TOKEN_SYNC_ENABLE
+class TokenSyncCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+public:
+    TokenSyncCallbackDeathRecipient() = default;
+    virtual ~TokenSyncCallbackDeathRecipient() override = default;
+
+    virtual void OnRemoteDied(const wptr<IRemoteObject>& remote) override;
+};
+#endif // TOKEN_SYNC_ENABLE
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -116,6 +116,31 @@ void NativeTokenGet()
     ASSERT_NE(tokenId, INVALID_TOKENID);
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
+
+static const int32_t FAKE_SYNC_RET = 0xabcdef;
+class TokenSyncCallbackImpl : public TokenSyncKitInterface {
+public:
+    ~TokenSyncCallbackImpl()
+    {}
+
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "GetRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "DeleteRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
+    {
+        ACCESSTOKEN_LOG_INFO(LABEL, "UpdateRemoteHapTokenInfo called.");
+        return FAKE_SYNC_RET;
+    };
+};
 }
 
 void RemoteTokenKitTest::SetUpTestCase()
@@ -1108,5 +1133,31 @@ HWTEST_F(RemoteTokenKitTest, DeleteRemoteToken001, TestSize.Level1)
 
     res = AccessTokenKit::DeleteRemoteToken(deviceId, tokenID);
     ASSERT_NE(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: RegisterTokenSyncCallback001
+ * @tc.desc: set token sync callback with invalid pointer
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(RemoteTokenKitTest, RegisterTokenSyncCallback001, TestSize.Level1)
+{
+    int32_t ret = AccessTokenKit::RegisterTokenSyncCallback(nullptr);
+    EXPECT_EQ(ERR_PARAM_INVALID, ret);
+}
+
+/**
+ * @tc.name: RegisterTokenSyncCallback002
+ * @tc.desc: set token sync callback with right pointer
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(RemoteTokenKitTest, RegisterTokenSyncCallback002, TestSize.Level1)
+{
+    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::RegisterTokenSyncCallback(callback));
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::AllocLocalTokenID(networkId_, 0)); // invalid input, would ret 0
+    EXPECT_EQ(RET_SUCCESS, AccessTokenKit::UnRegisterTokenSyncCallback());
 }
 #endif
