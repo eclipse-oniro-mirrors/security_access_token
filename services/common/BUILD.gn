@@ -14,6 +14,17 @@
 import("//build/ohos.gni")
 import("../../access_token.gni")
 
+config("accesstoken_service_common_public_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "app_manager/include",
+    "database/include",
+    "handler/include",
+    "libraryloader/include",
+    "random/include",
+  ]
+}
+
 ohos_static_library("accesstoken_service_common") {
   subsystem_name = "security"
   part_name = "access_token"
@@ -26,11 +37,9 @@ ohos_static_library("accesstoken_service_common") {
   include_dirs = [
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
-    "app_manager/include",
-    "database/include",
-    "handler/include",
-    "libraryloader/include",
   ]
+
+  public_configs = [ ":accesstoken_service_common_public_config" ]
 
   sources = [
     "app_manager/src/app_manager_access_client.cpp",
@@ -45,6 +54,7 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/statement.cpp",
     "database/src/variant_value.cpp",
     "libraryloader/src/libraryloader.cpp",
+    "random/src/random_openssl.cpp",
   ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
@@ -56,6 +66,7 @@ ohos_static_library("accesstoken_service_common") {
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
     "json:nlohmann_json_static",
+    "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "sqlite:sqlite",
