@@ -15,6 +15,7 @@
 
 #include "accesstoken_info_manager.h"
 
+#include <cinttypes>
 #include <securec.h>
 #include "access_token.h"
 #include "accesstoken_dfx_define.h"
@@ -34,11 +35,13 @@
 #endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
+#include "ipc_skeleton.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "softbus_bus_center.h"
 #include "access_token_db.h"
 #include "token_field_const.h"
+#include "token_setproc.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
@@ -978,8 +981,11 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
             "REMOTE_ID", ConstantCommon::EncryptDevId(remoteDeviceID), "ERROR_REASON", "deviceID error");
         return 0;
     }
+    uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
+    SetFirstCallerTokenID(fullTokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Set first caller %{public}" PRIu64 ".", fullTokenId);
     std::string remoteUdid = GetUdidByNodeId(remoteDeviceID);
-    ACCESSTOKEN_LOG_ERROR(LABEL, "device %{public}s remoteUdid", ConstantCommon::EncryptDevId(remoteUdid).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s remoteUdid.", ConstantCommon::EncryptDevId(remoteUdid).c_str());
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);
     if (mapID != 0) {

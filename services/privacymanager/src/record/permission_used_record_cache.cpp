@@ -352,7 +352,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead = std::make_shared<PermissionUsedRecordNode>();
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferEnd = nullptr;
     int32_t countPersistPendingNode = 0;
-    AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     TransferToOpcode(opCodeList, permissionList);
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
@@ -396,7 +396,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
 void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<int32_t>& opCodeList,
     const GenericValues& andConditionValues, std::vector<GenericValues>& findRecordsValues, int32_t cache2QueryCount)
 {
-    AccessTokenID tokenId = andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    AccessTokenID tokenId = static_cast<AccessTokenID>(andConditionValues.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     std::shared_ptr<PermissionUsedRecordNode> curFindPos;
     {
         Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
