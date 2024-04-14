@@ -156,7 +156,7 @@ int32_t PermissionUsedRecordDb::Remove(DataType type, const GenericValues& condi
     return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
 }
 
-int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList, 
+int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<int32_t>& opCodeList,
     const GenericValues& andConditions, std::vector<GenericValues>& results, int32_t databaseQueryCount)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
@@ -426,6 +426,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
         }
         sql.append("0)");
     }
+    sql.append(" order by timestamp desc");
     sql.append(" limit " + std::to_string(databaseQueryCount));
     return sql;
 }

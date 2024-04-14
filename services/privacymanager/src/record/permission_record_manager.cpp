@@ -227,7 +227,7 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
         }
     } else {
         // not empty means there is permission used type record exsit, update it if needed
-        int32_t dbType = results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+        uint32_t dbType = static_cast<int32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
         ACCESSTOKEN_LOG_DEBUG(LABEL, "Record exsit, type is %{public}d.", dbType);
 
         if ((dbType & inputType) == inputType) {
@@ -343,9 +343,9 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
 {
     int32_t tokenTotalSuccCount = 0;
     int32_t tokenTotalFailCount = 0;
-    for (const auto& PermissionRecord : bundleRecord.permissionRecords) {
-        tokenTotalSuccCount += PermissionRecord.accessCount;
-        tokenTotalFailCount += PermissionRecord.rejectCount;
+    for (const auto& permissionRecord : bundleRecord.permissionRecords) {
+        tokenTotalSuccCount += permissionRecord.accessCount;
+        tokenTotalFailCount += permissionRecord.rejectCount;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
         " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), currentCount, tokenTotalSuccCount,
@@ -994,7 +994,7 @@ void PermissionRecordManager::AddDataValueToResults(const GenericValues value,
     PermissionUsedTypeInfo info;
     info.tokenId = static_cast<AccessTokenID>(value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE), info.permissionName);
-    int32_t type = value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+    uint32_t type = value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
     if ((type & NORMAL_TYPE_ADD_VALUE) == NORMAL_TYPE_ADD_VALUE) { // normal first
         info.type = PermissionUsedType::NORMAL_TYPE;
         results.emplace_back(info);

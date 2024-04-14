@@ -43,7 +43,7 @@ namespace AccessToken {
  */
 typedef enum PermissionUsedTypeValue {
     /** invalid type */
-    INVALID_USED_TYPE = 0,
+    INVALID_USED_TYPE = -1,
     /** normal type for permision request */
     NORMAL_TYPE,
     /** picker type for permision request */

@@ -437,6 +437,7 @@ HWTEST_F(PermissionRecordManagerTest, AddPermissionUsedRecord001, TestSize.Level
     info.permissionName = "com.ohos.test";
     info.successCount = 1;
     info.failCount = 0;
+
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().AddPermissionUsedRecord(
         info)); // invaild permission error
 

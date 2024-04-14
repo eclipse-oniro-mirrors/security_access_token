@@ -90,7 +90,7 @@ public:
     void CallbackExecute(AccessTokenID tokenId, const std::string& permissionName, int32_t status);
     int32_t PermissionListFilter(const std::vector<std::string>& listSrc, std::vector<std::string>& listRes);
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
-    int32_t GetPermissionUsedTypeInfos(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
 
     void NotifyMicChange(bool isMute);
@@ -139,7 +139,7 @@ private:
     void NotifyCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
 
-    void TransformEnumToBitValue(const PermissionUsedType type, int32_t& value);
+    void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
     void RemovePermissionUsedType(AccessTokenID tokenId);

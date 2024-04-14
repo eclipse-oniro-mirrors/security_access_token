@@ -28,14 +28,13 @@ using namespace OHOS::Security::AccessToken;
 namespace OHOS {
 bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
 {
-    PermUsedTypeEnum type = PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
     AccessTokenID tokenId = static_cast<AccessTokenID>(size);
     std::string permissionName(reinterpret_cast<const char*>(data), size);
-    
-    type = AccessTokenKit::GetUserGrantedPermissionUsedType(tokenId, permissionName);
+
+    PermUsedTypeEnum type = AccessTokenKit::GetUserGrantedPermissionUsedType(tokenId, permissionName);
 
     return type != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
 }

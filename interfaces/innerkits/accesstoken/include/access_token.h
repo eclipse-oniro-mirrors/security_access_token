@@ -56,9 +56,9 @@ static const AccessTokenID INVALID_TOKENID = 0;
  */
 enum class PermUsedTypeEnum {
     /** invalid type */
-    INVALID_USED_TYPE = 0,
+    INVALID_USED_TYPE = -1,
     /** normal type for permision request */
-    NORMAL_TYPE = 1,
+    NORMAL_TYPE,
     /** picker type for permision request */
     PICKER_TYPE,
     /** security component type for permision request */
