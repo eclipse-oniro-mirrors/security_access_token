@@ -16,6 +16,9 @@
 #include "accesstoken_info_manager.h"
 
 #include <cinttypes>
+#include <cstdint>
+#include <fcntl.h>
+#include <unistd.h>
 #include <securec.h>
 #include "access_token.h"
 #include "accesstoken_dfx_define.h"
@@ -23,6 +26,7 @@
 #include "accesstoken_log.h"
 #include "accesstoken_remote_token_manager.h"
 #include "access_token_error.h"
+#include "atm_tools_param_info_parcel.h"
 #include "callback_manager.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -53,6 +57,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManager"};
 static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
+const std::string DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -1293,6 +1298,36 @@ void AccessTokenInfoManager::DumpAllNativeTokenInfo(std::string& dumpInfo)
             dumpInfo.append("\n");
         }
     }
+}
+
+int32_t AccessTokenInfoManager::GetCurDumpTaskNum()
+{
+    return dumpTaskNum_.load();
+}
+
+void AccessTokenInfoManager::AddDumpTaskNum()
+{
+    dumpTaskNum_++;
+}
+
+void AccessTokenInfoManager::ReduceDumpTaskNum()
+{
+    dumpTaskNum_--;
+}
+
+void AccessTokenInfoManager::DumpToken()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "AccessToken Dump");
+    int32_t fd = open(DUMP_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (fd < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
+        return;
+    }
+    std::string dumpStr;
+    AtmToolsParamInfoParcel infoParcel;
+    DumpTokenInfo(infoParcel.info, dumpStr);
+    dprintf(fd, "%s\n", dumpStr.c_str());
+    close(fd);
 }
 
 void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo)
