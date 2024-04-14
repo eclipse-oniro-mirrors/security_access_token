@@ -1121,6 +1121,11 @@ HWTEST_F(PermissionManagerTest, SetPermissionRequestToggleStatus001, TestSize.Le
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
         permissionName, status, userID));
 
+    // Permission is system_grant.
+    permissionName = "ohos.permission.USE_BLUETOOTH";
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().SetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
     // Status is invalid.
     status = -1;
     permissionName = "ohos.permission.CAMERA";
@@ -1173,6 +1178,11 @@ HWTEST_F(PermissionManagerTest, GetPermissionRequestToggleStatus001, TestSize.Le
     // PermissionName is not defined.
     permissionName = "ohos.permission.invalid";
     ASSERT_EQ(ERR_PERMISSION_NOT_EXIST, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
+        permissionName, status, userID));
+
+    // Permission is system_grant.
+    permissionName = "ohos.permission.USE_BLUETOOTH";
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().GetPermissionRequestToggleStatus(
         permissionName, status, userID));
 }
 

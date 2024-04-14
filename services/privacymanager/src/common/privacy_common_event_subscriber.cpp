@@ -88,7 +88,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         PermissionRecordManager::GetInstance().SetScreenOn(false);
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
-        uint32_t tokenId = want.GetParams().GetIntParam("accessTokenId", 0);
+        uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));
         ACCESSTOKEN_LOG_INFO(LABEL, "Receive package uninstall: tokenId=%{public}d.", tokenId);
         PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "");
     } else {

@@ -76,9 +76,9 @@ static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_t
 static const std::string GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
 static const std::string GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
 #endif
-static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
-static const int32_t PICKER_TYPE_ADD_VALUE = 2;
-static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
+static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
+static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
+static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
@@ -183,7 +183,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::TransformEnumToBitValue(const PermissionUsedType type, int32_t& value)
+void PermissionRecordManager::TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value)
 {
     if (type == PermissionUsedType::NORMAL_TYPE) {
         value = NORMAL_TYPE_ADD_VALUE;
@@ -197,7 +197,7 @@ void PermissionRecordManager::TransformEnumToBitValue(const PermissionUsedType t
 bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
     const PermissionUsedType type)
 {
-    int32_t inputType = 0;
+    uint32_t inputType = 0;
     TransformEnumToBitValue(type, inputType);
 
     GenericValues conditionValue;
@@ -227,8 +227,8 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
         }
     } else {
         // not empty means there is permission used type record exsit, update it if needed
-        uint32_t dbType = static_cast<int32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Record exsit, type is %{public}d.", dbType);
+        uint32_t dbType = static_cast<uint32_t>(results[0].GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Record exsit, type is %{public}u.", dbType);
 
         if ((dbType & inputType) == inputType) {
             // true means visitTypeEnum has exsits, no need to add
@@ -239,10 +239,10 @@ bool PermissionRecordManager::AddOrUpdateUsedTypeIfNeeded(const AccessTokenID to
             dbType |= inputType;
 
             // false means visitTypeEnum not exsits, update record
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type not add, generate new %{public}d.", dbType);
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Used type not add, generate new %{public}u.", dbType);
 
             GenericValues newValue;
-            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, dbType);
+            newValue.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int32_t>(dbType));
             return PermissionRecordRepository::GetInstance().Update(
                 PermissionUsedRecordDb::DataType::PERMISSION_USED_TYPE, newValue, results[0]);
         }
@@ -499,7 +499,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
     PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
     int64_t total = countValue.GetInt64(FIELD_COUNT_NUMBER);
     if (total > recordSizeMaximum_) {
-        uint32_t excessiveSize = total - recordSizeMaximum_;
+        uint32_t excessiveSize = static_cast<uint32_t>(total) - static_cast<uint32_t>(recordSizeMaximum_);
         if (!PermissionRecordRepository::GetInstance().DeleteExcessiveSizeRecordValues(excessiveSize)) {
             return Constant::FAILURE;
         }
@@ -994,7 +994,7 @@ void PermissionRecordManager::AddDataValueToResults(const GenericValues value,
     PermissionUsedTypeInfo info;
     info.tokenId = static_cast<AccessTokenID>(value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     Constant::TransferOpcodeToPermission(value.GetInt(PrivacyFiledConst::FIELD_PERMISSION_CODE), info.permissionName);
-    uint32_t type = value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE);
+    uint32_t type = static_cast<uint32_t>(value.GetInt(PrivacyFiledConst::FIELD_USED_TYPE));
     if ((type & NORMAL_TYPE_ADD_VALUE) == NORMAL_TYPE_ADD_VALUE) { // normal first
         info.type = PermissionUsedType::NORMAL_TYPE;
         results.emplace_back(info);

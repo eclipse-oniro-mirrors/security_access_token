@@ -32,6 +32,7 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
 
   include_dirs = [
     "${access_token_path}/services/common/handler/include",
+    "${access_token_path}/services/common/random/include",
     "${access_token_path}/services/tokensyncmanager/include/service",
     "${access_token_path}/services/tokensyncmanager/include/remote",
     "${access_token_path}/services/tokensyncmanager/include/command",
@@ -46,6 +47,7 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
   ]
 
   sources += [
+    "${access_token_path}/services/common/random/src/random_openssl.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/base_remote_command.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/delete_remote_token_command.cpp",
     "${access_token_path}/services/tokensyncmanager/src/command/sync_remote_hap_token_command.cpp",
@@ -83,6 +85,7 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
     "hilog:libhilog",
     "ipc:ipc_core",
     "json:nlohmann_json_static",
+    "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:shared_libz",

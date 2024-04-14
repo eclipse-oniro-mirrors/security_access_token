@@ -45,6 +45,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
     bool uiExtensionFlag = false;
+    bool uiContentFlag = false;
 };
 
 struct RequestAsyncContextHandle {

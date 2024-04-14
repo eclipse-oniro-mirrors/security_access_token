@@ -25,7 +25,6 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "ipc_skeleton.h"
 #include "token_sync_service_ipc_interface_code.h"
-#include "native_token_info_for_sync_parcel.h"
 #endif // TOKEN_SYNC_ENABLE
 
 namespace OHOS {
@@ -75,7 +74,7 @@ int32_t TokenSyncCallbackStub::OnRemoteRequest(
             Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
-    int32_t msgCode =  static_cast<int32_t>(code);
+    int32_t msgCode = static_cast<int32_t>(code);
     switch (msgCode) {
         case static_cast<int32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO):
             GetRemoteHapTokenInfoInner(data, reply);

@@ -35,7 +35,7 @@ void PermissionRecord::TranslationIntoGenericValues(const PermissionRecord& reco
 
 void PermissionRecord::TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record)
 {
-    record.tokenId = values.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    record.tokenId = static_cast<uint32_t>(values.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
     record.opCode = values.GetInt(PrivacyFiledConst::FIELD_OP_CODE);
     record.status = values.GetInt(PrivacyFiledConst::FIELD_STATUS);
     record.timestamp = values.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);

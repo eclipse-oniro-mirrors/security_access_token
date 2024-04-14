@@ -540,6 +540,10 @@ int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& p
             LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
+    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to set.");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
     if (!PermissionValidator::IsToggleStatusValid(status)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Status is invalid.");
         return AccessTokenError::ERR_PARAM_INVALID;
@@ -578,6 +582,10 @@ int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& p
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "Permission=%{public}s is not defined.", permissionName.c_str());
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
+    }
+    if (PermissionDefinitionCache::GetInstance().IsSystemGrantedPermission(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Only support permissions of user_grant to get.");
+        return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     bool ret = FindPermRequestToggleStatusFromDb(userID, permissionName);
@@ -865,7 +873,7 @@ bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
 bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
     LocationIndex& locationIndex)
 {
-    int index = 0;
+    uint32_t index = 0;
     bool hasFound = false;
 
     for (const auto& perm : reqPermList) {
