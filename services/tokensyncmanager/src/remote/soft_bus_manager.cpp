@@ -23,10 +23,12 @@
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "dm_device_info.h"
+#include "ipc_skeleton.h"
 #include "remote_command_manager.h"
 #include "softbus_bus_center.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
+#include "token_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -338,8 +340,6 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
     if (socketFd_ <= Constant::INVALID_SOCKET_FD) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "create client socket faild.");
         return ERROR_CREATE_SOCKET_FAIL;
-    } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "create client socket[%{public}d] success.", socketFd);
     }
 
     {
@@ -353,12 +353,15 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
         }
     }
 
-    // set service qos
     QosTV clientQos[] = {
         { .qos = QOS_TYPE_MIN_BW,      .value = MIN_BW },
         { .qos = QOS_TYPE_MAX_LATENCY, .value = MAX_LATENCY },
         { .qos = QOS_TYPE_MIN_LATENCY, .value = MIN_LATENCY },
     };
+
+    AccessTokenID firstCaller = IPCSkeleton::GetFirstTokenID();
+    SetFirstCallerTokenID(firstCaller);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Bind service and setFirstCaller %{public}u.", firstCaller);
 
     // retry 10 times or bind success
     int32_t retryTimes = 0;

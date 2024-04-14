@@ -873,7 +873,7 @@ bool PermissionManager::IsPermissionVaild(const std::string& permissionName)
 bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList,
     LocationIndex& locationIndex)
 {
-    int index = 0;
+    uint32_t index = 0;
     bool hasFound = false;
 
     for (const auto& perm : reqPermList) {

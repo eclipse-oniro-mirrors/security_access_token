@@ -139,7 +139,7 @@ private:
     void NotifyCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
 
-    void TransformEnumToBitValue(const PermissionUsedType type, int32_t& value);
+    void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
     bool AddOrUpdateUsedTypeIfNeeded(const AccessTokenID tokenId, const int32_t opCode,
         const PermissionUsedType type);
     void RemovePermissionUsedType(AccessTokenID tokenId);
