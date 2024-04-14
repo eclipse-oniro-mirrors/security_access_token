@@ -44,7 +44,7 @@ if (is_standard_system) {
 
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "cJSON:cjson",
+      "cJSON:cjson_static",
       "hilog:libhilog",
     ]
 
@@ -79,7 +79,7 @@ if (is_standard_system) {
 
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "cJSON:cjson",
+      "cJSON:cjson_static",
       "hilog:libhilog",
     ]
 

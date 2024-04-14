@@ -83,7 +83,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
         ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
-    
+
     auto itFunc = requestMap_.find(code);
     if (itFunc != requestMap_.end()) {
         auto requestFunc = itFunc->second;
@@ -438,7 +438,7 @@ bool PrivacyManagerStub::IsSystemAppCalling() const
 bool PrivacyManagerStub::VerifyPermission(const std::string& permission) const
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission, true) == PERMISSION_DENIED) {
+    if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission) == PERMISSION_DENIED) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(callingTokenID=%{public}d)", callingTokenID);
         return false;
     }

@@ -343,9 +343,9 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
 {
     int32_t tokenTotalSuccCount = 0;
     int32_t tokenTotalFailCount = 0;
-    for (const auto& PermissionRecord : bundleRecord.permissionRecords) {
-        tokenTotalSuccCount += PermissionRecord.accessCount;
-        tokenTotalFailCount += PermissionRecord.rejectCount;
+    for (const auto& permissionRecord : bundleRecord.permissionRecords) {
+        tokenTotalSuccCount += permissionRecord.accessCount;
+        tokenTotalFailCount += permissionRecord.rejectCount;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
         " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), currentCount, tokenTotalSuccCount,

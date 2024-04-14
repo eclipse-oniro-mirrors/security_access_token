@@ -32,7 +32,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyKit"};
 } // namespace
 
-// tmp interface
 int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
@@ -47,7 +46,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::st
 
 int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s,",
         info.tokenId, info.permissionName.c_str());
     if ((!DataValidator::IsTokenIDValid(info.tokenId)) ||
         (!DataValidator::IsPermissionNameValid(info.permissionName)) ||

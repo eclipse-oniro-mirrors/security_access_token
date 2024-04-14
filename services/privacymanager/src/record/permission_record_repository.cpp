@@ -53,7 +53,7 @@ bool PermissionRecordRepository::Add(const PermissionUsedRecordDb::DataType type
     return true;
 }
 
-bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList, 
+bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList,
     const GenericValues& andConditionValues, std::vector<GenericValues>& recordValues, int32_t databaseQueryCount)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,

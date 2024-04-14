@@ -148,8 +148,8 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
         permissionList.append(perm);
         permissionList.append(" ");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, beginTime: %{public}" PRId64 ", endTime: %{public}" PRId64
-        ", flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, timestamp: [%{public}" PRId64 "-%{public}" PRId64
+        "], flag: %{public}d, perm: %{public}s", request.request.tokenId, request.request.beginTimeMillis,
         request.request.endTimeMillis, request.request.flag, permissionList.c_str());
 
     PermissionUsedResult permissionRecord;
