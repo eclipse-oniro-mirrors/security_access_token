@@ -28,7 +28,7 @@ namespace AccessToken {
 namespace {
 
 static const int32_t RET_OK = 0;
-static inline float g_virtualPixelRatio_ = 1.0;
+static inline float g_virtualPixelRatio = 1.0;
 static inline std::shared_ptr<AbilityRuntime::AbilityContext> g_abilityContext_ = nullptr;
 }
 
@@ -73,7 +73,7 @@ static sptr<Rosen::Window> CreateAppFloatingWindow(Rosen::WindowType type, Rosen
 
 static inline Rosen::Rect GetRectWithVpr(int32_t x, int32_t y, uint32_t w, uint32_t h)
 {
-    auto vpr = g_virtualPixelRatio_;
+    auto vpr = g_virtualPixelRatio;
     return {x, y, static_cast<uint32_t>(w * vpr), static_cast<uint32_t>(h * vpr)};
 }
 
