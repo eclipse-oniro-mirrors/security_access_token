@@ -35,7 +35,9 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenCallbackStubs"
 };
+#ifdef TOKEN_SYNC_ENABLE
 static const int32_t ACCESSTOKEN_UID = 3020;
+#endif // TOKEN_SYNC_ENABLE
 }
 
 int32_t PermissionStateChangeCallbackStub::OnRemoteRequest(
