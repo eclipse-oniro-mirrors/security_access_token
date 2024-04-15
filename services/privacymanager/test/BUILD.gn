@@ -15,7 +15,6 @@ group("unittest") {
   testonly = true
   deps = [
     "coverage:libprivacy_manager_service_coverage_test",
-    "tool:CreateCameraWindowTest",
     "unittest:libprivacy_manager_service_standard_test",
   ]
 }
