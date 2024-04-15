@@ -24,7 +24,7 @@
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
-void NativeTokenGet()
+static void NativeTokenGet()
 {
     uint64_t tokenID;
     const char **perms = new const char *[5]; // size of array

@@ -161,7 +161,7 @@ void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
  */
 HWTEST_F(TokenSyncServiceTest, CheckAndCopyStr001, TestSize.Level1)
 {
-    std::string test_src = "test_src";
+    std::string test_src = "testSrc";
     ASSERT_FALSE(SoftBusManager::GetInstance().CheckAndCopyStr(nullptr, test_src.length(), test_src));
 }
 
