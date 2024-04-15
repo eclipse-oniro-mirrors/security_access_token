@@ -42,7 +42,6 @@ ohos_fuzztest("DeleteRemoteHapTokenInfoStubFuzzTest") {
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/accesstoken/include",
     "${access_token_path}/frameworks/tokensync/include",
-    "${access_token_path}/frameworks/tokensync/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
   ]
 

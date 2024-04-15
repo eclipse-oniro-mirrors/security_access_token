@@ -15,6 +15,7 @@
 
 # any change to behind files needs to be reviewed by @leonchan5
 frameworks/accesstoken/include/accesstoken_service_ipc_interface_code.h @leonchan5
+frameworks/accesstoken/include/tokensync_callback_ipc_interface_code.h @leonchan5
 frameworks/privacy/include/privacy_active_change_ipc_interface_code.h @leonchan5
 frameworks/privacy/include/privacy_am_service_ipc_interface_code.h @leonchan5
 frameworks/privacy/include/privacy_audio_service_ipc_interface_code.h @leonchan5

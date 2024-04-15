@@ -13,31 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef I_TOKEN_SYNC_CALLBACK_H
-#define I_TOKEN_SYNC_CALLBACK_H
-
-#include <string>
-
-#include "iremote_broker.h"
-#include "errors.h"
-
-#include "access_token.h"
-#include "hap_token_info_for_sync_parcel.h"
-#include "tokensync_callback_ipc_interface_code.h"
+#ifndef TOKENSYNC_CALLBACK_IPC_INTERFACE_CODE_H
+#define TOKENSYNC_CALLBACK_IPC_INTERFACE_CODE_H
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
-class ITokenSyncCallback : public IRemoteBroker {
-public:
-    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.ITokenSyncCallback");
-
-    virtual int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) = 0;
-    virtual int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) = 0;
-    virtual int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) = 0;
+enum class TokenSyncCallbackInterfaceCode {
+    GET_REMOTE_HAP_TOKEN_INFO = 0x0000,
+    DELETE_REMOTE_HAP_TOKEN_INFO,
+    UPDATE_REMOTE_HAP_TOKEN_INFO,
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // I_TOKEN_SYNC_CALLBACK_H
+#endif // TOKENSYNC_CALLBACK_IPC_INTERFACE_CODE_H
