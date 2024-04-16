@@ -657,7 +657,7 @@ void AccessTokenManagerClient::DumpTokenInfo(const AtmToolsParamInfo& info, std:
     proxy->DumpTokenInfo(infoParcel, dumpInfo);
 }
 
-int32_t  AccessTokenManagerClient::DumpPermDefInfo(std::string& dumpInfo)
+int32_t AccessTokenManagerClient::DumpPermDefInfo(std::string& dumpInfo)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -666,6 +666,17 @@ int32_t  AccessTokenManagerClient::DumpPermDefInfo(std::string& dumpInfo)
     }
 
     return proxy->DumpPermDefInfo(dumpInfo);
+}
+
+int32_t AccessTokenManagerClient::GetVersion(uint32_t& version)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+
+    return proxy->GetVersion(version);
 }
 
 void AccessTokenManagerClient::InitProxy()

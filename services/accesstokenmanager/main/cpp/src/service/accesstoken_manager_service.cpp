@@ -558,6 +558,13 @@ int32_t AccessTokenManagerService::DumpPermDefInfo(std::string& dumpInfo)
     return PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo);
 }
 
+int32_t AccessTokenManagerService::GetVersion(uint32_t& version)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    version = DEFAULT_TOKEN_VERSION;
+    return RET_SUCCESS;
+}
+
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)
 {
     AccessTokenIDEx tokenIdEx = AccessTokenInfoManager::GetInstance().GetHapTokenID(
