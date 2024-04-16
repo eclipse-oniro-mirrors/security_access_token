@@ -2137,7 +2137,7 @@ HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest001, TestSize.Lev
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
     EXPECT_EQ(ERROR_IPC_REQUEST_FAIL,
-        callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+        callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
         data, reply, option)); // descriptor false
 }
 
@@ -2173,17 +2173,20 @@ HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest003, TestSize.Lev
 
     OHOS::MessageParcel reply;
     OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
 
     data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
 
     data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(ERR_IDENTITY_CHECK_FAILED, reply.ReadInt32());
 }
@@ -2206,13 +2209,15 @@ HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest004, TestSize.Lev
     data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
     data.WriteString("test deviceID"); // test deviceID
     data.WriteUint32(0); // test tokenid
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(0, reply.ReadInt32());
 
     data.WriteInterfaceToken(ITokenSyncCallback::GetDescriptor());
     data.WriteUint32(0); // test tokenid
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(0, reply.ReadInt32());
 
@@ -2221,7 +2226,8 @@ HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackStubTest004, TestSize.Lev
     HapTokenInfoForSyncParcel tokenInfoParcel;
     tokenInfoParcel.hapTokenInfoForSyncParams = info;
     data.WriteParcelable(&tokenInfoParcel);
-    EXPECT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
+    EXPECT_EQ(0, callback.OnRemoteRequest(
+        static_cast<uint32_t>(TokenSyncCallbackInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO),
         data, reply, option));
     EXPECT_EQ(0, reply.ReadInt32());
     setuid(0); // root uid
