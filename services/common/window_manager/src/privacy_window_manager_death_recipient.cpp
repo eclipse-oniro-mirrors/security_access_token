@@ -22,7 +22,7 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerDeathRecipient"};
-} // namespaceY
+} // namespace
 
 void PrivacyWindowManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {

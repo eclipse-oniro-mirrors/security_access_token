@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef WINDOW_MANAGER_PRIVACY_AGENT_H
-#define WINDOW_MANAGER_PRIVACY_AGENT_H
+#ifndef PRIVACY_WINDOW_MANAGER_AGENT_H
+#define PRIVACY_WINDOW_MANAGER_AGENT_H
 
 #include "iremote_stub.h"
 #include "nocopyable.h"
@@ -38,5 +38,5 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // WINDOW_MANAGER_PRIVACY_AGENT_H
+#endif // PRIVACY_WINDOW_MANAGER_AGENT_H
 

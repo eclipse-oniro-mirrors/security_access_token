@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef SCENE_SESSION_MANAGER_PRIVACY_PROXY_H
-#define SCENE_SESSION_MANAGER_PRIVACY_PROXY_H
+#ifndef PRIVACY_SCENE_SESSION_MANAGER_PROXY_H
+#define PRIVACY_SCENE_SESSION_MANAGER_PROXY_H
 
 #include <iremote_proxy.h>
 #include "privacy_window_manager_interface.h"
@@ -54,4 +54,4 @@ private:
 }
 }
 }
-#endif // SCENE_SESSION_MANAGER_PRIVACY_PROXY_H
+#endif // PRIVACY_SCENE_SESSION_MANAGER_PROXY_H

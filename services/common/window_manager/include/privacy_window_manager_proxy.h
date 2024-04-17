@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef OHOS_WINDOW_MANAGER_PRIVACY_PROXY_H
-#define OHOS_WINDOW_MANAGER_PRIVACY_PROXY_H
+#ifndef PRIVACY_OHOS_WINDOW_MANAGER_PROXY_H
+#define PRIVACY_OHOS_WINDOW_MANAGER_PROXY_H
 
 #include <iremote_proxy.h>
 #include "privacy_window_manager_interface.h"
@@ -28,14 +28,14 @@ public:
 
     ~PrivacyWindowManagerProxy() {}
     int32_t RegisterWindowManagerAgent(WindowManagerAgentType type,
-            const sptr<IWindowManagerAgent>& windowManagerAgent) override;
+        const sptr<IWindowManagerAgent>& windowManagerAgent) override;
     int32_t UnregisterWindowManagerAgent(WindowManagerAgentType type,
         const sptr<IWindowManagerAgent>& windowManagerAgent) override;
 
 private:
-    static inline BrokerDelegator<PrivacyWindowManagerProxy> delegator_;
+    static inline BrokerDelegator<PrivacyWindowManagerProxy> delegator_;\
 };
 }
 }
 }
-#endif // OHOS_WINDOW_MANAGER_PRIVACY_PROXY_H
+#endif // PRIVACY_OHOS_WINDOW_MANAGER_PROXY_H

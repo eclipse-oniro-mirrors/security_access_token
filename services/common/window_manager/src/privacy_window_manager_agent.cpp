@@ -12,9 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "accesstoken_log.h"
 #include "privacy_window_manager_agent.h"
+#include "accesstoken_log.h"
 #include "privacy_error.h"
 
 namespace OHOS {
@@ -71,6 +70,6 @@ void PrivacyWindowManagerAgent::UpdateCameraWindowStatus(uint32_t accessTokenId,
     callback_(accessTokenId, isShowing);
 }
 } // namespace AccessToken
-}
+} // namespace Security
 } // namespace OHOS
 

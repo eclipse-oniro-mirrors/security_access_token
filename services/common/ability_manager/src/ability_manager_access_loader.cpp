@@ -33,7 +33,10 @@ void* Create()
 
 void Destroy(void* loaderPtr)
 {
-    delete reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
+    AbilityManagerAccessLoaderInterface* loader = reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
 }
 }
 } // namespace AccessToken

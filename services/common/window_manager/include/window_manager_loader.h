@@ -45,9 +45,14 @@ class WindowManagerLoader final: public WindowManagerLoaderInterface {
     void AddDeathCallback(void (*callback)());
 };
 
+#ifdef __cplusplus
 extern "C" {
+#endif
     void* Create();
     void Destroy(void* loaderPtr);
+#ifdef __cplusplus
+}
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

@@ -1089,7 +1089,7 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
     {
         std::lock_guard<std::mutex> lock(appStateMutex_);
         if (appStateCallback_ == nullptr) {
-            appStateCallback_ = new(std::nothrow) PrivacyAppStateObserver();
+            appStateCallback_ = new (std::nothrow) PrivacyAppStateObserver();
             if (appStateCallback_ == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
                 return false;
@@ -1112,7 +1112,7 @@ bool PermissionRecordManager::Register()
     {
         std::lock_guard<std::mutex> lock(micCallbackMutex_);
         if (micMuteCallback_ == nullptr) {
-            micMuteCallback_ = new(std::nothrow) AudioRoutingManagerListenerStub();
+            micMuteCallback_ = new (std::nothrow) AudioRoutingManagerListenerStub();
             if (micMuteCallback_ == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "register micMuteCallback failed.");
                 return false;
@@ -1125,7 +1125,7 @@ bool PermissionRecordManager::Register()
     {
         std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
         if (camMuteCallback_ == nullptr) {
-            camMuteCallback_ = new(std::nothrow) CameraServiceCallbackStub();
+            camMuteCallback_ = new (std::nothrow) CameraServiceCallbackStub();
             if (camMuteCallback_ == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "register camMuteCallback failed.");
                 return false;
@@ -1146,7 +1146,7 @@ bool PermissionRecordManager::Register()
     {
         std::lock_guard<std::mutex> lock(floatWinMutex_);
         if (floatWindowCallback_ == nullptr) {
-            floatWindowCallback_ = new(std::nothrow) WindowManagerPrivacyAgent();
+            floatWindowCallback_ = new (std::nothrow) WindowManagerPrivacyAgent();
             if (floatWindowCallback_ == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "register floatWindowCallback failed.");
                 return false;

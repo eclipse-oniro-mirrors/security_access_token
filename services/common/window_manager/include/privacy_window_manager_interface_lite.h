@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef PRIVACY_WINDOW_MANAGER_NTERFACE_LITE_H
 #define PRIVACY_WINDOW_MANAGER_NTERFACE_LITE_H
 
@@ -21,7 +20,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-
 class IWindowManagerLite : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.IWindowManagerLite");

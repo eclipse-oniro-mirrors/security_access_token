@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef WINDOW_MANAGER_PRIVACY_CLIENT_H
-#define WINDOW_MANAGER_PRIVACY_CLIENT_H
+#ifndef PRIVACY_WINDOW_MANAGER_CLIENT_H
+#define PRIVACY_WINDOW_MANAGER_CLIENT_H
 
 #include <mutex>
 #include <string>
@@ -75,5 +75,5 @@ private:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // WINDOW_MANAGER_PRIVACY_CLIENT_H
+#endif // PRIVACY_WINDOW_MANAGER_CLIENT_H
 

@@ -41,10 +41,14 @@ class AbilityManagerAccessLoader final: public AbilityManagerAccessLoaderInterfa
         int32_t requestCode = DEFAULT_VALUE, int32_t userId = DEFAULT_VALUE) override;
 };
 
+#ifdef __cplusplus
 extern "C" {
+#endif
     void* Create();
     void Destroy(void* loaderPtr);
-};
+#ifdef __cplusplus
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

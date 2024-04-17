@@ -120,9 +120,9 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
     sptr<ISystemAbilityManager> systemAbilityManager =
         SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!systemAbilityManager) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get system ability mgr.");
-            return;
-        }
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get system ability mgr.");
+        return;
+    }
     sptr<IRemoteObject> remoteObject = systemAbilityManager->GetSystemAbility(WINDOW_MANAGER_SERVICE_ID);
     if (!remoteObject) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
@@ -173,7 +173,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add death recipient");
         return;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "InitSceneSessionManagerProxy end.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitSceneSessionManagerProxy end.");
 }
 
 void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
@@ -205,7 +205,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add death recipient");
         return;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "InitSceneSessionManagerLiteProxy end.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitSceneSessionManagerLiteProxy end.");
 }
 
 sptr<ISceneSessionManager> PrivacyWindowManagerClient::GetSSMProxy()
@@ -249,9 +249,9 @@ void PrivacyWindowManagerClient::InitWMSProxy()
     wmsProxy_ = iface_cast<IWindowManager>(windowManagerSa);
     if (wmsProxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "wmsProxy_ is null.");
+        return;
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "InitWMSProxy end.");
-    return;
+    ACCESSTOKEN_LOG_INFO
 }
 
 sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()

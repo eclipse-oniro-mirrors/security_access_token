@@ -12,10 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-#ifndef WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-#define WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+#ifndef PRIVACY_WINDOW_MANAGER_DEATH_RECIPIENT_H
+#define PRIVACY_WINDOW_MANAGER_DEATH_RECIPIENT_H
 
 #include "iremote_object.h"
 
@@ -31,5 +29,5 @@ public:
 }  // namespace AccessToken
 } // namespace Security
 }  // namespace OHOS
-#endif  // WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+#endif  // PRIVACY_WINDOW_MANAGER_DEATH_RECIPIENT_H
 

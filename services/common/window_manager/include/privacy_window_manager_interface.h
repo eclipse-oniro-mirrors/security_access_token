@@ -12,9 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef WINDOW_MANAGER_PRIVACY_NTERFACE_H
-#define WINDOW_MANAGER_PRIVACY_NTERFACE_H
+#ifndef PRIVACY_WINDOW_MANAGER_NTERFACE_H
+#define PRIVACY_WINDOW_MANAGER_NTERFACE_H
 
 #include <iremote_broker.h>
 
@@ -43,7 +42,6 @@ public:
 class IWindowManager : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.IWindowManager");
-
     enum class WindowManagerMessage : uint32_t {
         TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT = 7,
         TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT = 8,
@@ -57,4 +55,4 @@ public:
 }
 }
 }
-#endif // WINDOW_MANAGER_PRIVACY_NTERFACE_H
+#endif // PRIVACY_WINDOW_MANAGER_NTERFACE_H

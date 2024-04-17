@@ -30,7 +30,7 @@ static sptr<PrivacyWindowManagerAgent> g_pipWindowCallback = nullptr;
 int32_t WindowManagerLoader::RegisterFloatWindowListener(const WindowChangeCallback& callback)
 {
     if (g_floatWindowCallback == nullptr) {
-        g_floatWindowCallback = new(std::nothrow) PrivacyWindowManagerAgent(callback);
+        g_floatWindowCallback = new (std::nothrow) PrivacyWindowManagerAgent(callback);
         if (g_floatWindowCallback == nullptr) {
             return ERR_MALLOC_FAILED;
         }
@@ -51,7 +51,7 @@ int32_t WindowManagerLoader::RegisterPipWindowListener(const WindowChangeCallbac
         return 0;
     }
     if (g_pipWindowCallback == nullptr) {
-        g_pipWindowCallback = new(std::nothrow) PrivacyWindowManagerAgent(callback);
+        g_pipWindowCallback = new (std::nothrow) PrivacyWindowManagerAgent(callback);
         if (g_pipWindowCallback == nullptr) {
             return ERR_MALLOC_FAILED;
         }
@@ -82,7 +82,10 @@ void* Create()
 
 void Destroy(void* loaderPtr)
 {
-    delete reinterpret_cast<WindowManagerLoaderInterface*>(loaderPtr);
+    WindowManagerLoaderInterface* loader = reinterpret_cast<WindowManagerLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
 }
 }
 } // namespace AccessToken

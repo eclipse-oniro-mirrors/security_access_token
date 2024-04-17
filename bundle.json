@@ -55,6 +55,7 @@
         "screenlock_mgr",
         "selinux_adapter",
         "sqlite",
+        "window_manager",
         "zlib"
       ],
       "third_party": []
@@ -75,7 +76,7 @@
           "//base/security/access_token/services/privacymanager:privacymanager",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac",
-          "//base/security/access_token/services/common:accesstoken_common"
+          "//base/security/access_token/services/common:accesstoken_ability_manager_access"
         ]
       },
       "inner_kits": [
