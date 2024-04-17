@@ -32,9 +32,9 @@ public:
     virtual int OnRemoteRequest(
         uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override;
 
-    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override {};
-    virtual void OnProcessDied(const ProcessData &processData) override {};
-    virtual void OnApplicationStateChanged(const AppStateData &appStateData) override {};
+    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) override {}
+    virtual void OnProcessDied(const ProcessData &processData) override {}
+    virtual void OnApplicationStateChanged(const AppStateData &appStateData) override {}
     DISALLOW_COPY_AND_MOVE(ApplicationStateObserverStub);
 private:
     int32_t HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply);

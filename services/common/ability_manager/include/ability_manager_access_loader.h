@@ -30,8 +30,8 @@ const static std::string ABILITY_MANAGER_LIBPATH = "libaccesstoken_ability_manag
 
 class AbilityManagerAccessLoaderInterface {
 public:
-    AbilityManagerAccessLoaderInterface() {};
-    virtual ~AbilityManagerAccessLoaderInterface() {};
+    AbilityManagerAccessLoaderInterface() {}
+    virtual ~AbilityManagerAccessLoaderInterface() {}
     virtual int32_t StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
         int32_t requestCode = DEFAULT_VALUE, int32_t userId = DEFAULT_VALUE);
 };

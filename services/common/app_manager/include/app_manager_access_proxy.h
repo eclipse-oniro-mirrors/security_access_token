@@ -57,7 +57,7 @@ public:
 
 class AppManagerAccessProxy : public IRemoteProxy<IAppMgr> {
 public:
-    explicit AppManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAppMgr>(impl) {};
+    explicit AppManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAppMgr>(impl) {}
 
     virtual ~AppManagerAccessProxy() = default;
 

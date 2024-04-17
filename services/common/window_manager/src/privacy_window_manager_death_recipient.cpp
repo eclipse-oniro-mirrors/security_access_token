@@ -12,30 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ability_manager_access_loader.h"
-
-#include "ability_manager_access_client.h"
+#include "privacy_window_manager_death_recipient.h"
+#include "accesstoken_log.h"
+#include "privacy_window_manager_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-int32_t AbilityManagerAccessLoader::StartAbility(
-    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int32_t requestCode, int32_t userId)
-{
-    return AbilityManagerAccessClient::GetInstance().StartAbility(want, callerToken, requestCode, userId);
-}
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyWindowManagerDeathRecipient"};
+} // namespaceY
 
-extern "C" {
-void* Create()
+void PrivacyWindowManagerDeathRecipient::OnRemoteDied(const wptr<IRemoteObject>& object)
 {
-    return reinterpret_cast<void*>(new AbilityManagerAccessLoader);
+    ACCESSTOKEN_LOG_INFO(LABEL, "WindowManger died.");
+    PrivacyWindowManagerClient::GetInstance().OnRemoteDiedHandle();
 }
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
 
-void Destroy(void* loaderPtr)
-{
-    delete reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
-}
-}
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS

@@ -12,30 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ability_manager_access_loader.h"
 
-#include "ability_manager_access_client.h"
+#ifndef PRIVACY_WINDOW_MANAGER_NTERFACE_LITE_H
+#define PRIVACY_WINDOW_MANAGER_NTERFACE_LITE_H
+
+#include <iremote_broker.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-int32_t AbilityManagerAccessLoader::StartAbility(
-    const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int32_t requestCode, int32_t userId)
-{
-    return AbilityManagerAccessClient::GetInstance().StartAbility(want, callerToken, requestCode, userId);
-}
 
-extern "C" {
-void* Create()
-{
-    return reinterpret_cast<void*>(new AbilityManagerAccessLoader);
+class IWindowManagerLite : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.IWindowManagerLite");
+    // do not need enum
+    virtual int32_t RegisterWindowManagerAgent(WindowManagerAgentType type,
+        const sptr<IWindowManagerAgent>& windowManagerAgent) = 0;
+    virtual int32_t UnregisterWindowManagerAgent(WindowManagerAgentType type,
+        const sptr<IWindowManagerAgent>& windowManagerAgent) = 0;
+};
 }
-
-void Destroy(void* loaderPtr)
-{
-    delete reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
 }
 }
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+#endif // PRIVACY_WINDOW_MANAGER_NTERFACE_LITE_H

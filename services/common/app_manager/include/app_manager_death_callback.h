@@ -26,9 +26,9 @@ namespace Security {
 namespace AccessToken {
 class AppManagerDeathCallback {
 public:
-    AppManagerDeathCallback() {};
+    AppManagerDeathCallback() {}
     virtual ~AppManagerDeathCallback() = default;
-    virtual void NotifyAppManagerDeath() {};
+    virtual void NotifyAppManagerDeath() {}
 };
 } // namespace AccessToken
 } // namespace Security
