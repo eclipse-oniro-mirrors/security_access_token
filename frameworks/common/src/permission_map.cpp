@@ -301,6 +301,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.PERCEIVE_TRAIL",                      false},
     {"ohos.permission.DISABLE_PERMISSION_DIALOG",           false},
     {"ohos.permission.EXECUTE_INSIGHT_INTENT",              false},
+    {"ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",        false},
     {"ohos.permission.MANAGE_ACTIVATION_LOCK",              false},
     {"ohos.permission.VERIFY_ACTIVATION_LOCK",              false},
     {"ohos.permission.MANAGE_PRIVATE_PHOTOS",               false},
