@@ -23,7 +23,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 }
 
-int32_t NapiContextCommon::GetJsErrorCode(uint32_t errCode)
+int32_t NapiContextCommon::GetJsErrorCode(int32_t errCode)
 {
     int32_t jsCode;
     switch (errCode) {

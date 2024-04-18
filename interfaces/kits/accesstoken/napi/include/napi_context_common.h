@@ -34,7 +34,7 @@ public:
     static constexpr int32_t MAX_WAIT_TIME = 1000;
     static constexpr int32_t VALUE_MAX_LEN = 32;
 
-    static int32_t GetJsErrorCode(uint32_t errCode);
+    static int32_t GetJsErrorCode(int32_t errCode);
 };
 struct AtManagerAsyncWorkData {
     explicit AtManagerAsyncWorkData(napi_env envValue);
