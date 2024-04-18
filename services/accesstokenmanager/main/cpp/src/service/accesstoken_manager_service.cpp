@@ -15,8 +15,6 @@
 
 #include "accesstoken_manager_service.h"
 
-#include <fcntl.h>
-#include <cstdint>
 #include <unistd.h>
 
 #include "access_token.h"
@@ -66,7 +64,6 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
-const std::string TEST_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
@@ -610,34 +607,30 @@ int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& a
     return ERR_OK;
 }
 
-void AccessTokenManagerService::DumpToken()
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessToken Dump");
-    int32_t fd = open(TEST_JSON_PATH.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP);
-    if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
-        close(fd);
-        return;
-    }
-    std::string dumpStr;
-    AtmToolsParamInfoParcel infoParcel;
-    AccessTokenInfoManager::GetInstance().DumpTokenInfo(infoParcel.info, dumpStr);
-    dprintf(fd, "%s\n", dumpStr.c_str());
-    close(fd);
-}
-
 void AccessTokenManagerService::DumpTokenIfNeeded()
 {
-    if (tokenDumpWorker_.GetCurTaskNum() > 1) {
+#ifdef EVENTHANDLER_ENABLE
+    if (AccessTokenInfoManager::GetInstance().GetCurDumpTaskNum() > 1) {
         ACCESSTOKEN_LOG_INFO(LABEL, "has refresh task!");
         return;
     }
+    AccessTokenInfoManager::GetInstance().AddDumpTaskNum();
+    if (dumpEventHandler_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler.");
+        AccessTokenInfoManager::GetInstance().ReduceDumpTaskNum();
+        return;
+    }
 
-    tokenDumpWorker_.AddTask([this]() {
-        DumpToken();
-        // Sleep for one minute to avoid frequent refresh of the database.
+    std::function<void()> delayed = ([]() {
+        AccessTokenInfoManager::GetInstance().DumpToken();
+        ACCESSTOKEN_LOG_INFO(LABEL, "Dump token end.");
+        // Sleep for one minute to avoid frequent refresh of the file.
         std::this_thread::sleep_for(std::chrono::minutes(1));
+        AccessTokenInfoManager::GetInstance().ReduceDumpTaskNum();
     });
+
+    dumpEventHandler_->ProxyPostTask(delayed);
+#endif
 }
 
 void AccessTokenManagerService::AccessTokenServiceParamSet() const
@@ -740,7 +733,13 @@ bool AccessTokenManagerService::Initialize()
         ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
         return false;
     }
+    dumpEventRunner_ = AppExecFwk::EventRunner::Create(true);
+    if (!dumpEventRunner_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
+        return false;
+    }
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
+    dumpEventHandler_ = std::make_shared<AccessEventHandler>(dumpEventRunner_);
     TempPermissionObserver::GetInstance().InitEventHandler(eventHandler_);
 #endif
 
