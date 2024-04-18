@@ -378,7 +378,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.USE_CLOUD_BACKUP_SERVICE",            false},
     {"ohos.permission.USE_CLOUD_COMMON_SERVICE",            false},
     {"ohos.permission.START_SHORTCUT",                      false},
-    {"ohos.permission.INPUT_INFRARED_EMITTE",               false},
+    {"ohos.permission.MANAGE_INPUT_INFRARED_EMITTER",       false},
     {"ohos.permission.SET_PROCESS_CACHE_STATE",             false},
 };
 
