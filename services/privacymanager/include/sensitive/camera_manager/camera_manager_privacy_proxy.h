@@ -41,7 +41,7 @@ public:
 
 class CameraManagerPrivacyProxy : public IRemoteProxy<ICameraService> {
 public:
-    explicit CameraManagerPrivacyProxy(const sptr<IRemoteObject> &impl) : IRemoteProxy<ICameraService>(impl) {};
+    explicit CameraManagerPrivacyProxy(const sptr<IRemoteObject> &impl) : IRemoteProxy<ICameraService>(impl) {}
 
     virtual ~CameraManagerPrivacyProxy() = default;
 

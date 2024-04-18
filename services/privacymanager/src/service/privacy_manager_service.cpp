@@ -316,7 +316,7 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
 #ifdef POWER_MANAGER_ENABLE
     if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
         if (powerShutDownCallback_ == nullptr) {
-            powerShutDownCallback_ = new(std::nothrow) PrivacyPowerShutDownCallback();
+            powerShutDownCallback_ = new (std::nothrow) PrivacyPowerShutDownCallback();
             if (powerShutDownCallback_ == nullptr) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "failed to new shutdown callback.");
                 return;

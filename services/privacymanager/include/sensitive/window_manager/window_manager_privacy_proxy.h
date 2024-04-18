@@ -58,9 +58,9 @@ public:
 
 class WindowManagerPrivacyProxy : public IRemoteProxy<IWindowManager> {
 public:
-    explicit WindowManagerPrivacyProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IWindowManager>(impl) {};
+    explicit WindowManagerPrivacyProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IWindowManager>(impl) {}
 
-    ~WindowManagerPrivacyProxy() {};
+    ~WindowManagerPrivacyProxy() {}
     bool RegisterWindowManagerAgent(WindowManagerAgentType type,
             const sptr<IWindowManagerAgent>& windowManagerAgent) override;
     bool UnregisterWindowManagerAgent(WindowManagerAgentType type,
