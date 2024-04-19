@@ -72,7 +72,11 @@ bool JsonParser::GetBoolFromJson(const nlohmann::json& j, const std::string& tag
 
 int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
 {
-    int32_t fd = open(file.c_str(), O_RDONLY);
+    char filePath[PATH_MAX + 1] = {0};
+    if (realpath(file.c_str(), filePath) == NULL) {
+        return ERR_FILE_OPERATE_FAILED;
+    }
+    int32_t fd = open(filePath, O_RDONLY);
     if (fd < 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
         return ERR_FILE_OPERATE_FAILED;
@@ -103,7 +107,6 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
         rawData.append(buff, readLen);
     }
     close(fd);
-
     if (readLen == 0) {
         return RET_SUCCESS;
     }

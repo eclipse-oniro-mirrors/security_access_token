@@ -47,7 +47,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManagerNapi"};
 } // namespace
 
-static int32_t GetJsErrorCode(uint32_t errCode)
+static int32_t GetJsErrorCode(int32_t errCode)
 {
     int32_t jsCode;
     switch (errCode) {
