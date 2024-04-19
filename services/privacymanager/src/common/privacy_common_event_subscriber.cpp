@@ -19,6 +19,7 @@
 
 #include "common_event_subscribe_info.h"
 #include "permission_record_manager.h"
+#include "permission_used_record_cache.h"
 
 #include "want.h"
 
@@ -50,6 +51,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN);
     auto info = std::make_shared<EventFwk::CommonEventSubscribeInfo>(*skill);
     g_subscriber = std::make_shared<PrivacyCommonEventSubscriber>(*info);
     const auto result = EventFwk::CommonEventManager::SubscribeCommonEvent(g_subscriber);
@@ -91,6 +93,9 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));
         ACCESSTOKEN_LOG_INFO(LABEL, "Receive package uninstall: tokenId=%{public}d.", tokenId);
         PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, "");
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SHUTDOWN) {
+        // when receive shut down power event, store the cache data to database immediately
+        PermissionUsedRecordCache::GetInstance().PersistPendingRecordsImmediately();
     } else {
         ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }
