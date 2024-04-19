@@ -3031,6 +3031,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_PRIVATE_SPACE_MANAGER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.ACCESS_PRIVATE_SPACE_PASSWORD_PROTECT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.QUERY_PASSWORD_VAULT_DATA",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -3835,7 +3855,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.INPUT_INFRARED_EMITTE",
+            "name": "ohos.permission.MANAGE_INPUT_INFRARED_EMITTER",
             "grantMode": "system_grant",
             "availableLevel": "normal",
             "availableType": "SYSTEM",

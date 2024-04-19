@@ -32,7 +32,7 @@ public:
 
 class AudioManagerPrivacyProxy : public IRemoteProxy<IAudioPolicy> {
 public:
-    explicit AudioManagerPrivacyProxy(const sptr<IRemoteObject> &impl) : IRemoteProxy<IAudioPolicy>(impl) {};
+    explicit AudioManagerPrivacyProxy(const sptr<IRemoteObject> &impl) : IRemoteProxy<IAudioPolicy>(impl) {}
 
     virtual ~AudioManagerPrivacyProxy() = default;
 

@@ -68,6 +68,10 @@ public:
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
     bool GetPermDialogCap(AccessTokenID tokenID);
     int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
+    void DumpToken();
+    int32_t GetCurDumpTaskNum();
+    void AddDumpTaskNum();
+    void ReduceDumpTaskNum();
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -122,6 +126,7 @@ private:
     OHOS::ThreadPool tokenDataWorker_;
 #endif
     bool hasInited_;
+    std::atomic_int32_t dumpTaskNum_;
 
     OHOS::Utils::RWLock hapTokenInfoLock_;
     OHOS::Utils::RWLock nativeTokenInfoLock_;

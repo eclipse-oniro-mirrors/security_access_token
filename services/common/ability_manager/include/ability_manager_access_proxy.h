@@ -35,9 +35,9 @@ public:
 
 class AbilityManagerAccessProxy : public IRemoteProxy<IAbilityManager> {
 public:
-    explicit AbilityManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAbilityManager>(impl) {};
+    explicit AbilityManagerAccessProxy(const sptr<IRemoteObject>& impl) : IRemoteProxy<IAbilityManager>(impl) {}
 
-    ~AbilityManagerAccessProxy() {};
+    ~AbilityManagerAccessProxy() {}
     int StartAbility(const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken,
         int requestCode = DEFAULT_INVAL_VALUE, int32_t userId = DEFAULT_INVAL_VALUE) override;
 

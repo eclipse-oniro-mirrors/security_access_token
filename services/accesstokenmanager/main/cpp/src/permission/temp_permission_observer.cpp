@@ -89,7 +89,7 @@ TempPermissionObserver::~TempPermissionObserver()
 void TempPermissionObserver::RegisterCallback()
 {
     if (appStateCallback_ == nullptr) {
-        appStateCallback_ = new(std::nothrow) PermissionAppStateObserver();
+        appStateCallback_ = new (std::nothrow) PermissionAppStateObserver();
         if (appStateCallback_ == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
             return;

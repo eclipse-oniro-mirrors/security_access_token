@@ -12,9 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ABILITY_MANAGER_ACCESS_LOADER_CPP
-#define ABILITY_MANAGER_ACCESS_LOADER_CPP
-
 #include "ability_manager_access_loader.h"
 
 #include "ability_manager_access_client.h"
@@ -36,10 +33,12 @@ void* Create()
 
 void Destroy(void* loaderPtr)
 {
-    delete reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
+    AbilityManagerAccessLoaderInterface* loader = reinterpret_cast<AbilityManagerAccessLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
 }
 }
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // ABILITY_MANAGER_ACCESS_LOADER_CPP

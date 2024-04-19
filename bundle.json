@@ -55,6 +55,7 @@
         "screenlock_mgr",
         "selinux_adapter",
         "sqlite",
+        "window_manager",
         "zlib"
       ],
       "third_party": []
