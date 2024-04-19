@@ -92,13 +92,6 @@ if (!defined(global_parts_info) ||
 }
 
 if (!defined(global_parts_info) ||
-    defined(global_parts_info.powermgr_power_manager)) {
-  power_manager_enable = true
-} else {
-  power_manager_enable = false
-}
-
-if (!defined(global_parts_info) ||
     defined(global_parts_info.security_security_component_enhance)) {
   security_component_enhance_enable = true
 } else {

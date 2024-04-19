@@ -24,9 +24,6 @@
 #include "privacy_manager_stub.h"
 #include "iremote_object.h"
 #include "nocopyable.h"
-#ifdef POWER_MANAGER_ENABLE
-#include "shutdown/iasync_shutdown_callback.h"
-#endif
 #include "singleton.h"
 #include "system_ability.h"
 
@@ -73,9 +70,6 @@ private:
 
     ServiceRunningState state_;
 
-#ifdef POWER_MANAGER_ENABLE
-    sptr<PowerMgr::IAsyncShutdownCallback> powerShutDownCallback_ = nullptr;
-#endif
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
