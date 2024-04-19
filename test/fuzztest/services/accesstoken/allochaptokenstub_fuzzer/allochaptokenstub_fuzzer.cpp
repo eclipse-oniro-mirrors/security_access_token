@@ -14,6 +14,8 @@
  */
 
 #include "allochaptokenstub_fuzzer.h"
+#include <sys/types.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -25,16 +27,12 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
+static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    bool AllocHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    void ConstructorParam(const std::string& testName, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
     {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        std::string testName(reinterpret_cast<const char *>(data), size);
-
         PermissionDef testPermDef = {
             .permissionName = testName,
             .bundleName = testName,
@@ -56,16 +54,32 @@ namespace OHOS {
             .bundleName = testName,
             .instIndex = 0,
             .appIDDesc = testName};
+        std::vector<std::string> aclRequestedList = {testName};
+        PreAuthorizationInfo info1 = {
+            .permissionName = testName,
+            .userCancelable = true
+        };
+        std::vector<PreAuthorizationInfo> preAuthorizationInfo = {info1};
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
             .permList = {testPermDef},
             .permStateList = {TestState}};
 
-        HapInfoParcel hapInfoParcel;
-        HapPolicyParcel hapPolicyParcel;
         hapInfoParcel.hapInfoParameter = TestInfoParms;
         hapPolicyParcel.hapPolicyParameter = TestPolicyPrams;
+    }
+
+    bool AllocHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    {
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+
+        std::string testName(reinterpret_cast<const char *>(data), size);
+        HapInfoParcel hapInfoParcel;
+        HapPolicyParcel hapPolicyParcel;
+        ConstructorParam(testName, hapInfoParcel, hapPolicyParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -81,7 +95,12 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        setuid(ROOT_UID);
 
         return true;
     }

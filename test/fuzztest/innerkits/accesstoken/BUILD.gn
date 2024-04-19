@@ -26,6 +26,7 @@ group("fuzztest") {
     "deleteremotetoken_fuzzer:DeleteRemoteTokenFuzzTest",
     "deletetoken_fuzzer:DeleteTokenFuzzTest",
     "dumptokeninfo_fuzzer:DumpTokenInfoFuzzTest",
+    "getallnativetokeninfo_fuzzer:GetAllNativeTokenInfoFuzzTest",
     "getdefpermission_fuzzer:GetDefPermissionFuzzTest",
     "getdefpermissions_fuzzer:GetDefPermissionsFuzzTest",
     "gethapdlpflag_fuzzer:GetHapDlpFlagFuzzTest",

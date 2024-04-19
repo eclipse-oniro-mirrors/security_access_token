@@ -15,15 +15,37 @@
 
 #include "grantpermissionstub_fuzzer.h"
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <string>
 #include <thread>
 #include <vector>
 #undef private
+#include "access_token.h"
+#include "accesstoken_info_manager.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+static HapInfoParams g_InfoParms = {
+    .userID = 1,
+    .bundleName = "GrantPermissionStubFuzzTest",
+    .instIndex = 0,
+    .appIDDesc = "test.bundle",
+    .isSystemApp = false
+};
+static HapPolicyParams g_PolicyPrams = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain",
+    .permList = {},
+    .permStateList = {}
+};
+const int CONSTANTS_NUMBER_TWO = 2;
+const int CONSTANTS_NUMBER_THREE = 3;
+static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
     bool GrantPermissionStubFuzzTest(const uint8_t* data, size_t size)
@@ -46,7 +68,25 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        AccessTokenID tokenIdHap;
+        bool enable2 = ((size % CONSTANTS_NUMBER_THREE) == 0);
+        if (enable2) {
+            AccessTokenIDEx tokenIdEx = AccessTokenKit::AllocHapToken(g_InfoParms, g_PolicyPrams);
+            tokenIdHap = tokenIdEx.tokenIDEx;
+            SetSelfTokenID(tokenIdHap);
+            AccessTokenInfoManager::GetInstance().Init();
+        }
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        setuid(ROOT_UID);
+        if (enable2) {
+            AccessTokenKit::DeleteToken(tokenIdHap);
+            AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
+            SetSelfTokenID(hdcd);
+        }
 
         return true;
     }

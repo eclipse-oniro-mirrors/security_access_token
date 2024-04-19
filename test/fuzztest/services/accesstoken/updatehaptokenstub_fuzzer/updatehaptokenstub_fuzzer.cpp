@@ -15,6 +15,8 @@
 
 #include "updatehaptokenstub_fuzzer.h"
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -25,15 +27,12 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
+static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    bool UpdateHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    void ConstructorParam(const std::string& testName, AccessTokenID tokenId, HapPolicyParcel& hapPolicyParcel)
     {
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
         PermissionDef testPermDef = {.permissionName = testName,
             .bundleName = testName,
             .grantMode = 1,
@@ -51,9 +50,19 @@ namespace OHOS {
             .domain = testName,
             .permList = {testPermDef},
             .permStateList = {testState}};
+        hapPolicyParcel.hapPolicyParameter = policy;
+    }
+    bool UpdateHapTokenStubFuzzTest(const uint8_t* data, size_t size)
+    {
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        std::string testName(reinterpret_cast<const char*>(data), size);
         int32_t apiVersion = 8;
         HapPolicyParcel hapPolicyParcel;
-        hapPolicyParcel.hapPolicyParameter = policy;
+        ConstructorParam(testName, tokenId, hapPolicyParcel);
+
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
         if (!datas.WriteUint32(tokenId)) {
@@ -74,7 +83,12 @@ namespace OHOS {
         uint32_t code = static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_HAP_TOKEN);
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        setuid(ROOT_UID);
         return true;
     }
 }

@@ -19,11 +19,15 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_info_manager.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
 
 namespace OHOS {
     bool DeleteRemoteTokenStubFuzzTest(const uint8_t* data, size_t size)
@@ -50,7 +54,15 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            AccessTokenID accesstoken = AccessTokenKit::GetNativeTokenId("token_sync_service");
+            SetSelfTokenID(accesstoken);
+            AccessTokenInfoManager::GetInstance().Init();
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
+        SetSelfTokenID(hdcd);
 
         return true;
     #else
