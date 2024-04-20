@@ -61,7 +61,7 @@ class RequestAsyncInstanceControl {
     public:
         static void AddCallbackByInstanceId(int32_t id, std::shared_ptr<RequestAsyncContext>& asyncContext);
         static void ExecCallback(int32_t id);
-        static bool CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext);
+        static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
     private:
         static std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> instanceIdMap_;
         static std::mutex instanceIdMutex_;
