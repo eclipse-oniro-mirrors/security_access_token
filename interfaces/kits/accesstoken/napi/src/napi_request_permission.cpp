@@ -252,8 +252,8 @@ void AuthorizationResult::GrantResultsCallback(const std::vector<std::string>& p
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(asyncContext->env,
-        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_default));
+    NAPI_CALL_RETURN_VOID(asyncContext->env, uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
 
     uvWorkPtr.release();
     callbackPtr.release();
@@ -422,8 +422,8 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(data->env,
-        uv_queue_work_with_qos(loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_default));
+    NAPI_CALL_RETURN_VOID(data->env, uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
 
     uvWorkPtr.release();
     callbackPtr.release();
@@ -878,37 +878,42 @@ void NapiRequestPermission::GetPermissionsStatusComplete(napi_env env, napi_stat
     ReturnPromiseResult(env, asyncContext->result, asyncContext->deferred, result);
 }
 
-bool RequestAsyncInstanceControl::CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext)
+void RequestAsyncInstanceControl::CheckDynamicRequest(
+    std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic)
 {
     asyncContext->permissionsState.clear();
     asyncContext->dialogShownResults.clear();
     if (!NapiRequestPermission::IsDynamicRequest(asyncContext)) {
         ACCESSTOKEN_LOG_INFO(LABEL, "it does not need to request permission exsion");
-        if ((asyncContext->permissionsState.empty()) &&
-            (asyncContext->result == JsErrorCode::JS_OK)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "grantResults empty");
-            asyncContext->result = RET_FAILED;
+        auto* retCB = new (std::nothrow) ResultCallback();
+        if (retCB == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+            return;
         }
-        napi_value requestResult = WrapRequestResult(asyncContext->env, asyncContext->permissionList,
-            asyncContext->permissionsState, asyncContext->dialogShownResults);
-        if (requestResult == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "wrap requestResult failed");
-            if (asyncContext->result == JsErrorCode::JS_OK) {
-                asyncContext->result = RET_FAILED;
-            }
-        } else {
-            asyncContext->requestResult = requestResult;
+        std::unique_ptr<ResultCallback> callbackPtr {retCB};
+        retCB->data = asyncContext;
+
+        uv_loop_s* loop = nullptr;
+        NAPI_CALL_RETURN_VOID(asyncContext->env, napi_get_uv_event_loop(asyncContext->env, &loop));
+        if (loop == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+            return;
         }
-        if (asyncContext->deferred != nullptr) {
-            ReturnPromiseResult(
-                asyncContext->env, asyncContext->result, asyncContext->deferred, asyncContext->requestResult);
-        } else {
-            ReturnCallbackResult(asyncContext->env, asyncContext->result,
-                asyncContext->callbackRef, asyncContext->requestResult);
+        uv_work_t* work = new (std::nothrow) uv_work_t;
+        if (work == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+            return;
         }
-        return false;
+        std::unique_ptr<uv_work_t> uvWorkPtr {work};
+        work->data = reinterpret_cast<void *>(retCB);
+        NAPI_CALL_RETURN_VOID(asyncContext->env, uv_queue_work_with_qos(
+            loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
+
+        uvWorkPtr.release();
+        callbackPtr.release();
+        return;
     }
-    return true;
+    isDynamic = true;
 }
 
 void RequestAsyncInstanceControl::AddCallbackByInstanceId(
@@ -941,23 +946,24 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
         ACCESSTOKEN_LOG_INFO(LABEL, "instance id: %{public}d not existed.", id);
         return;
     }
+    while (!iter->second.empty()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Instance id map size: %{public}zu.", iter->second.size());
+        auto asyncContext = iter->second[0];
+        iter->second.erase(iter->second.begin());
+        bool isDynamic = false;
+        CheckDynamicRequest(asyncContext, isDynamic);
+        if (isDynamic) {
+            if (asyncContext->uiExtensionFlag) {
+                CreateUIExtension(asyncContext);
+            } else {
+                CreateServiceExtension(asyncContext);
+            }
+            break;
+        }
+    }
     if (iter->second.empty()) {
         instanceIdMap_.erase(id);
         return;
-    }
-    auto asyncContext = iter->second[0];
-    iter->second.erase(iter->second.begin());
-    ACCESSTOKEN_LOG_INFO(LABEL, "instance id map size: %{public}zu not existed.", iter->second.size());
-    if (!CheckDynamicRequest(asyncContext)) {
-        if (iter->second.empty()) {
-            instanceIdMap_.erase(id);
-            return;
-        }
-    }
-    if (asyncContext->uiExtensionFlag) {
-        CreateUIExtension(asyncContext);
-    } else {
-        CreateServiceExtension(asyncContext);
     }
 }
 }  // namespace AccessToken
