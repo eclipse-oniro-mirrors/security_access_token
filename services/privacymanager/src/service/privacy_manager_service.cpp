@@ -30,10 +30,6 @@
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
-#ifdef POWER_MANAGER_ENABLE
-#include "privacy_power_shutdown_callback.h"
-#include "shutdown/shutdown_client.h"
-#endif
 #include "system_ability_definition.h"
 #include "string_ex.h"
 
@@ -74,10 +70,6 @@ void PrivacyManagerService::OnStart()
         return;
     }
 
-#ifdef POWER_MANAGER_ENABLE
-    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
-#endif
-
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
 #endif
@@ -95,13 +87,6 @@ void PrivacyManagerService::OnStop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
-
-#ifdef POWER_MANAGER_ENABLE
-    if (powerShutDownCallback_ != nullptr) {
-        PowerMgr::ShutdownClient::GetInstance().UnRegisterShutdownCallback(powerShutDownCallback_);
-        powerShutDownCallback_ = nullptr;
-    }
-#endif
 }
 
 int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
@@ -312,24 +297,6 @@ int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID to
 void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const std::string& deviceId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "systemAbilityId is %{public}d", systemAbilityId);
-
-#ifdef POWER_MANAGER_ENABLE
-    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
-        if (powerShutDownCallback_ == nullptr) {
-            powerShutDownCallback_ = new (std::nothrow) PrivacyPowerShutDownCallback();
-            if (powerShutDownCallback_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "failed to new shutdown callback.");
-                return;
-            }
-
-            PowerMgr::ShutdownClient::GetInstance().RegisterShutdownCallback(powerShutDownCallback_,
-                PowerMgr::ShutdownPriority::HIGH);
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "register power shutdown callback complete!");
-        }
-    }
-#endif
-
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         PrivacyCommonEventSubscriber::RegisterEvent();

@@ -261,11 +261,10 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
     return true;
 }
 
-#ifdef POWER_MANAGER_ENABLE
 void PermissionUsedRecordCache::PersistPendingRecordsImmediately()
 {
     std::shared_ptr<PermissionUsedRecordNode> persistPendingBufferHead = std::make_shared<PermissionUsedRecordNode>();
-    // this function can be use only when receive shut down callback
+    // this function can be use only when receive power shut down common event
     {
         Utils::UniqueWriteGuard<Utils::RWLock> lock1(this->cacheLock1_);
         DeepCopyFromHead(recordBufferHead_, persistPendingBufferHead, readableSize_);
@@ -277,7 +276,6 @@ void PermissionUsedRecordCache::PersistPendingRecordsImmediately()
 
     PersistPendingRecords();
 }
-#endif
 
 int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
 {

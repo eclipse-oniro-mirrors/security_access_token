@@ -75,7 +75,7 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
     char *buff = (char *)malloc((size_t)(fileSize + 1));
     if (buff == NULL) {
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:memory alloc failed.", __func__);
-        fclose(cfgFd);
+        (void)fclose(cfgFd);
         return ATRET_FAILED;
     }
 
@@ -83,12 +83,12 @@ int32_t GetFileBuff(const char *cfg, char **retBuff)
         NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:fread failed.", __func__);
         free(buff);
         buff = NULL;
-        fclose(cfgFd);
+        (void)fclose(cfgFd);
         return ATRET_FAILED;
     }
     buff[fileSize] = '\0';
     *retBuff = buff;
-    fclose(cfgFd);
+    (void)fclose(cfgFd);
     return ATRET_SUCCESS;
 }
 
