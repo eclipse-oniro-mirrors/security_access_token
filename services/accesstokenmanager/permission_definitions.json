@@ -2591,6 +2591,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_TEXTAUTOFILL_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_LOWPOWER_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
