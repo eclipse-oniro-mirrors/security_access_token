@@ -20,23 +20,21 @@
 #include <vector>
 #undef private
 #include "access_token.h"
+#include "accesstoken_info_manager.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
 #include "permission_state_full.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
 
 namespace OHOS {
-    bool SetRemoteHapTokenInfoStubFuzzTest(const uint8_t* data, size_t size)
-    {
     #ifdef TOKEN_SYNC_ENABLE
-        if ((data == nullptr) || (size == 0)) {
-            return false;
-        }
-
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+    void ConstructorParam(const std::string& testName, AccessTokenID tokenId, HapTokenInfoForSyncParcel& hapSyncParcel)
+    {
         HapTokenInfo baseInfo = {
             .apl = APL_NORMAL,
             .ver = 1,
@@ -54,15 +52,33 @@ namespace OHOS {
             .isGeneral = true,
             .permissionName = testName,
             .resDeviceID = {testName}};
+        PermissionStateFull infoManagerTestState2 = {
+            .grantFlags = {PermissionFlag::PERMISSION_USER_SET},
+            .grantStatus = {PermissionState::PERMISSION_DENIED},
+            .isGeneral = true,
+            .permissionName = testName,
+            .resDeviceID = {testName}};
         std::vector<PermissionStateFull> permStateList;
         permStateList.emplace_back(infoManagerTestState);
         HapTokenInfoForSync remoteTokenInfo = {
             .baseInfo = baseInfo,
             .permStateList = permStateList
         };
-
-        HapTokenInfoForSyncParcel hapSyncParcel;
         hapSyncParcel.hapTokenInfoForSyncParams = remoteTokenInfo;
+    }
+    #endif
+
+    bool SetRemoteHapTokenInfoStubFuzzTest(const uint8_t* data, size_t size)
+    {
+    #ifdef TOKEN_SYNC_ENABLE
+        if ((data == nullptr) || (size == 0)) {
+            return false;
+        }
+
+        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        HapTokenInfoForSyncParcel hapSyncParcel;
+        ConstructorParam(testName, tokenId, hapSyncParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -78,7 +94,15 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            AccessTokenID accesstoken = AccessTokenKit::GetNativeTokenId("token_sync_service");
+            SetSelfTokenID(accesstoken);
+            AccessTokenInfoManager::GetInstance().Init();
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        AccessTokenID hdcd = AccessTokenKit::GetNativeTokenId("hdcd");
+        SetSelfTokenID(hdcd);
 
         return true;
     #else

@@ -19,13 +19,41 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "access_token.h"
+#include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
+#include "nativetoken_kit.h"
+#include "securec.h"
+#include "token_setproc.h"
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
+    void GetNativeToken()
+    {
+        uint64_t tokenId;
+        const char **perms = new const char *[1];
+        perms[0] = "ohos.permission.DISABLE_PERMISSION_DIALOG"; // 3 means the third permission
+
+        NativeTokenInfoParams infoInstance = {
+            .dcapsNum = 0,
+            .permsNum = 1,
+            .aclsNum = 0,
+            .dcaps = nullptr,
+            .perms = perms,
+            .acls = nullptr,
+            .processName = "setpermdialogcap_fuzzer",
+            .aplStr = "system_core",
+        };
+
+        tokenId = GetAccessTokenId(&infoInstance);
+        SetSelfTokenID(tokenId);
+        AccessTokenKit::ReloadNativeTokenInfo();
+        delete[] perms;
+    }
+
     bool SetPermDialogCapFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
@@ -47,6 +75,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        GetNativeToken();
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         return true;
     }

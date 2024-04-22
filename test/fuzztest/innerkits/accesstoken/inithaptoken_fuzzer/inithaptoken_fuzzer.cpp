@@ -15,6 +15,8 @@
 
 #include "inithaptoken_fuzzer.h"
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <iostream>
 #include <thread>
 #include <string>
@@ -24,6 +26,8 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
+static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
     bool InitHapTokenFuzzTest(const uint8_t* data, size_t size)
@@ -63,7 +67,12 @@ namespace OHOS {
             .permStateList = {testState}
         };
 
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
         int32_t res = AccessTokenKit::InitHapToken(TestInfoParms, TestPolicyPrams, tokenIdEx);
+        setuid(ROOT_UID);
 
         return res == 0;
     }

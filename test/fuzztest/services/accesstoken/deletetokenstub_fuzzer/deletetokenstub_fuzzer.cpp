@@ -15,6 +15,8 @@
 
 #include "deletetokenstub_fuzzer.h"
 
+#include <sys/types.h>
+#include <unistd.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,6 +26,8 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+const int CONSTANTS_NUMBER_TWO = 2;
+static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
     bool DeleteTokenStubFuzzTest(const uint8_t* data, size_t size)
@@ -44,7 +48,12 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
+        bool enable = ((size % CONSTANTS_NUMBER_TWO) == 0);
+        if (enable) {
+            setuid(CONSTANTS_NUMBER_TWO);
+        }
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
+        setuid(ROOT_UID);
 
         return true;
     }
