@@ -62,3 +62,9 @@ PERM_DIALOG_STATUS_INFO:
   USERID: {type: INT32, desc: user id}
   PERMISSION_NAME: {type: STRING, desc: permission name}
   TOGGLE_STATUS: {type: UINT32, desc: toggle status of permission dialog}
+
+CPU_SCENE_ENTRY:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: CPU Scenario Code, preserve: true}
+  PACKAGE_NAME: {type: STRING, desc: package name}
+  SCENE_ID: {type: STRING, desc: customized application scenario id}
+  HAPPEN_TIME: {type: UINT16, desc: timestamp}

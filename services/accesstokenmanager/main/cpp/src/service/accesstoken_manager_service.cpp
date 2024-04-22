@@ -49,6 +49,7 @@
 #include "string_ex.h"
 #include "system_ability_definition.h"
 #include "permission_definition_parser.h"
+#include "time_util.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif // TOKEN_SYNC_ENABLE
@@ -64,6 +65,7 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
+static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
@@ -724,6 +726,12 @@ void AccessTokenManagerService::GetConfigValue()
 
 bool AccessTokenManagerService::Initialize()
 {
+    // accesstoken_service add CPU_SCENE_ENTRY system event in OnStart, avoid CPU statistics
+    long id = 1 << 1;
+    int64_t time = TimeUtil::GetCurrentTimestamp();
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CPU_SCENE_ENTRY",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME,
+        "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 
