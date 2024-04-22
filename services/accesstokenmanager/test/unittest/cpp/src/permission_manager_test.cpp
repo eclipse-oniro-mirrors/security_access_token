@@ -894,6 +894,10 @@ HWTEST_F(PermissionManagerTest, VerifyAccessToken002, TestSize.Level1)
     tokenId = 940572671; // 940572671 is max butt tokenId: 001 11 0 000000 11111111111111111111
     // permissionName invalid
     ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
+
+    // tokenID invalid
+    permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(PERMISSION_DENIED, PermissionManager::GetInstance().VerifyAccessToken(tokenId, permissionName));
 }
 
 /**
@@ -1079,6 +1083,49 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState002, TestSize.Level1)
     // flag is PERMISSION_POLICY_FIXED | PERMISSION_USER_SET and state is granted, return PASS_OPER
     PermissionManager::GetInstance().GetSelfPermissionState(permsList4, permState4, apiVersion);
     ASSERT_EQ(PermissionOper::PASS_OPER, permState4.state);
+}
+
+/**
+ * @tc.name: GetSelfPermissionState003
+ * @tc.desc: PermissionManager::GetSelfPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
+{
+    std::vector<PermissionStateFull> permsList1;
+    permsList1.emplace_back(g_permState2);
+    PermissionListState permState1;
+    permState1.permissionName = "ohos.permission.CAMERA";
+    int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
+
+    uint32_t oriStatus;
+    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permState1.permissionName, oriStatus, 0);
+
+    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permState1.permissionName,
+        PermissionRequestToggleStatus::CLOSED, 0);
+    uint32_t status;
+    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permState1.permissionName, status, 0);
+    ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
+
+    // permission has been set request toggle, return SETTING_OPER
+    PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
+    ASSERT_EQ(PermissionOper::SETTING_OPER, permState1.state);
+    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permState1.permissionName, oriStatus, 0);
+}
+
+/**
+ * @tc.name: GetLocationPermissionStateBackGroundVersion001
+ * @tc.desc: GetLocationPermissionStateBackGroundVersion function test with no location permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetLocationPermissionStateBackGroundVersion001, TestSize.Level1)
+{
+    std::vector<PermissionListStateParcel> reqPermList;
+    std::vector<PermissionStateFull> permsList;
+    ASSERT_FALSE(PermissionManager::GetInstance().GetLocationPermissionStateBackGroundVersion(
+        reqPermList, permsList, DEFAULT_API_VERSION_VAGUE));
 }
 
 /**

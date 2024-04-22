@@ -392,6 +392,110 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo008, TestSize.Level1)
 }
 
 /**
+ * @tc.name: InitHapToken001
+ * @tc.desc: InitHapToken function test with invalid userID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken001, TestSize.Level1)
+{
+    HapInfoParcel hapinfoParcel;
+    hapinfoParcel.hapInfoParameter = {
+        .userID = -1,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+    };
+    HapPolicyParcel hapPolicyParcel;
+    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+    AccessTokenIDEx tokenIdEx;
+    ASSERT_EQ(ERR_PARAM_INVALID, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+}
+
+/**
+ * @tc.name: InitHapToken002
+ * @tc.desc: InitHapToken function test with invalid userID
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken002, TestSize.Level1)
+{
+    HapInfoParcel hapinfoParcel;
+    hapinfoParcel.hapInfoParameter = {
+        .userID = -1,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .dlpType = DLP_READ,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+    };
+    HapPolicyParcel hapPolicyParcel;
+    hapPolicyParcel.hapPolicyParameter.apl = ATokenAplEnum::APL_NORMAL;
+    hapPolicyParcel.hapPolicyParameter.domain = "test.domain";
+    AccessTokenIDEx tokenIdEx;
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(hapinfoParcel, hapPolicyParcel, tokenIdEx));
+}
+
+/**
+ * @tc.name: InitHapToken003
+ * @tc.desc: InitHapToken function test with invalid apl permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, InitHapToken003, TestSize.Level1)
+{
+    HapInfoParcel info;
+    info.hapInfoParameter = {
+        .userID = 0,
+        .bundleName = "accesstoken_test",
+        .instIndex = 0,
+        .dlpType = DLP_COMMON,
+        .appIDDesc = "testtesttesttest",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false,
+    };
+    HapPolicyParcel policy;
+    PermissionStateFull permissionStateA = {
+        .permissionName = "ohos.permission.GET_ALL_APP_ACCOUNTS",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {1},
+        .grantFlags = {1}
+    };
+    PermissionStateFull permissionStateB = {
+        .permissionName = "ohos.permission.PRELOAD_APPLICATION",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {1},
+        .grantFlags = {1}
+    };
+    PermissionStateFull permissionStateC = {
+        .permissionName = "ohos.permission.test",
+        .isGeneral = true,
+        .resDeviceID = {"local"},
+        .grantStatus = {1},
+        .grantFlags = {1}
+    };
+    policy.hapPolicyParameter = {
+        .apl = APL_NORMAL,
+        .domain = "test",
+        .permList = {},
+        .permStateList = { permissionStateA }
+    };
+    AccessTokenIDEx fullTokenId = {0};
+    ASSERT_EQ(ERR_PERM_REQUEST_CFG_FAILED, atManagerService_->InitHapToken(info, policy, fullTokenId));
+
+    policy.hapPolicyParameter.permStateList = { permissionStateB, permissionStateC };
+    policy.hapPolicyParameter.aclRequestedList = { "ohos.permission.PRELOAD_APPLICATION" };
+    ASSERT_EQ(RET_SUCCESS, atManagerService_->InitHapToken(info, policy, fullTokenId));
+}
+
+/**
  * @tc.name: IsTokenIdExist001
  * @tc.desc: Verify the IsTokenIdExist exist accesstokenid.
  * @tc.type: FUNC
