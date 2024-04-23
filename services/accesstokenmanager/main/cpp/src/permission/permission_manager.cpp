@@ -48,7 +48,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionManager"};
 static const char* PERMISSION_STATUS_CHANGE_KEY = "accesstoken.permission.change";
 static constexpr int32_t VALUE_MAX_LEN = 32;
-static constexpr int32_t ROOT_UID = 0;
 static constexpr int32_t BASE_USER_RANGE = 200000;
 static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.ANSWER_CALL",
@@ -650,7 +649,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
     if (flag == PERMISSION_ALLOW_THIS_TIME) {
         if (isGranted) {
-            if (!IsAllowGrantTempPermission(tokenID, permissionName)) {
+            if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(tokenID, permissionName)) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
                     tokenID, permissionName.c_str());
                 return ERR_IDENTITY_CHECK_FAILED;
@@ -688,37 +687,6 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 #endif
     AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
     return RET_SUCCESS;
-}
-
-bool PermissionManager::IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
-{
-    HapTokenInfo tokenInfo;
-    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenID);
-        return false;
-    }
-    bool isForeground = false;
-    std::vector<AppStateData> foreGroundAppList;
-    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
-
-    if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
-        [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
-        isForeground = true;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get app state permissionName:%{public}s, isForeground:%{public}d",
-        permissionName.c_str(), isForeground);
-    bool userEnable = true;
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    int callingUid = IPCSkeleton::GetCallingUid();
-    if (callingUid == ROOT_UID) {
-        userEnable = false;
-    }
-#endif
-    if ((!userEnable) || (isForeground)) {
-        TempPermissionObserver::GetInstance().AddTempPermTokenToList(tokenID, permissionName);
-        return true;
-    }
-    return false;
 }
 
 int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,

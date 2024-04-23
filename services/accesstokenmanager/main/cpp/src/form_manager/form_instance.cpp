@@ -31,7 +31,14 @@ bool FormInstance::ReadFromParcel(Parcel &parcel)
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt64 failed.");
         return false;
     }
-    formHostName_ = Str16ToStr8(parcel.ReadString16());
+
+    std::u16string u16FormHostName;
+    if (!parcel.ReadString16(u16FormHostName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+        return false;
+    }
+    formHostName_ = Str16ToStr8(u16FormHostName);
+
     int32_t formVisiblity;
     if (!parcel.ReadInt32(formVisiblity)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
@@ -42,18 +49,27 @@ bool FormInstance::ReadFromParcel(Parcel &parcel)
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
         return false;
     }
-    bundleName_ = Str16ToStr8(parcel.ReadString16());
-    moduleName_ = Str16ToStr8(parcel.ReadString16());
-    abilityName_ = Str16ToStr8(parcel.ReadString16());
-    formName_ = Str16ToStr8(parcel.ReadString16());
+
+    std::u16string u16BundleName;
+    std::u16string u16ModuleName;
+    std::u16string u16AbilityName;
+    std::u16string u16FormName;
+    if (!parcel.ReadString16(u16BundleName) || (!parcel.ReadString16(u16ModuleName)) ||
+        (!parcel.ReadString16(u16AbilityName)) || (!parcel.ReadString16(u16FormName))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+        return false;
+    }
+    bundleName_ = Str16ToStr8(u16BundleName);
+    moduleName_ = Str16ToStr8(u16ModuleName);
+    abilityName_ = Str16ToStr8(u16AbilityName);
+    formName_ = Str16ToStr8(u16FormName);
+
     int32_t formUsageState;
     if (!parcel.ReadInt32(formUsageState)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
         return false;
     }
     formUsageState_ = static_cast<FormUsageState>(formUsageState);
-
-    description_ = Str16ToStr8(parcel.ReadString16());
     return true;
 }
 
@@ -101,11 +117,6 @@ bool FormInstance::Marshalling(Parcel &parcel) const
 
     if (!parcel.WriteInt32(static_cast<int32_t>(formUsageState_))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
-        return false;
-    }
-
-    if (!parcel.WriteString16(Str8ToStr16(description_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
         return false;
     }
     return true;

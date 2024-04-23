@@ -31,6 +31,7 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
 static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
+static const std::string TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
 
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
 static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
@@ -60,6 +61,21 @@ void AccessTokenConfigPolicy::GetConfigFilePathList(std::vector<std::string>& pa
     }
 
     FreeCfgDirList(dirs); // free
+}
+
+void from_json(const nlohmann::json& j, AccessTokenServiceConfig& a)
+{
+    if (!JsonParser::GetStringFromJson(j, PERMISSION_MANAGER_BUNDLE_NAME_KEY, a.grantBundleName)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, GRANT_ABILITY_NAME_KEY, a.grantAbilityName)) {
+        return;
+    }
+
+    if (!JsonParser::GetIntFromJson(j, TEMP_PERM_CANCLE_TIME_KEY, a.cancleTime)) {
+        return;
+    }
 }
 
 void from_json(const nlohmann::json& j, PrivacyServiceConfig& p)
@@ -98,16 +114,12 @@ bool AccessTokenConfigPolicy::GetConfigValueFromFile(const ServiceType& type, co
     }
 
     if (type == ServiceType::ACCESSTOKEN_SERVICE) {
-        if (!JsonParser::GetStringFromJson(jsonRes, PERMISSION_MANAGER_BUNDLE_NAME_KEY,
-            config.atConfig.grantBundleName)) {
+        if ((jsonRes.find("accesstoken") != jsonRes.end()) && (jsonRes.at("accesstoken").is_object())) {
+            config.atConfig = jsonRes.at("accesstoken").get<nlohmann::json>();
+            return true;
+        } else {
             return false;
         }
-
-        if (!JsonParser::GetStringFromJson(jsonRes, GRANT_ABILITY_NAME_KEY, config.atConfig.grantAbilityName)) {
-            return false;
-        }
-
-        return true;
     } else if (type == ServiceType::PRIVACY_SERVICE) {
         if ((jsonRes.find("privacy") != jsonRes.end()) && (jsonRes.at("privacy").is_object())) {
             config.pConfig = jsonRes.at("privacy").get<nlohmann::json>();

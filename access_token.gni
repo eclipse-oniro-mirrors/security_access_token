@@ -132,6 +132,13 @@ if (!defined(global_parts_info) ||
   eventhandler_enable = false
 }
 
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.resourceschedule_background_task_mgr)) {
+  access_token_background_task_mgr_continuous_task_enable = true
+} else {
+  access_token_background_task_mgr_continuous_task_enable = false
+}
+
 declare_args() {
   access_token_camera_float_window_enable = true
   access_token_feature_dtmf_tone = true

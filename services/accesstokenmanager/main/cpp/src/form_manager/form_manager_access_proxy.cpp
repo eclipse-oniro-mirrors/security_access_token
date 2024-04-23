@@ -87,6 +87,11 @@ bool FormManagerAccessProxy::HasFormVisible(const uint32_t tokenId)
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
         return false;
     }
+    if (!data.WriteUint32(tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenId.");
+        return false;
+    }
+
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_HAS_FORM_VISIBLE_WITH_TOKENID), data, reply, option);
     if (error != ERR_NONE) {
