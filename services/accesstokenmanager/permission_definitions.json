@@ -3933,6 +3933,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.KILL_APP_PROCESSES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
