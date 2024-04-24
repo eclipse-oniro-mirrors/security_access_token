@@ -387,6 +387,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_SYSTEM_APP_CERT",              false},
     {"ohos.permission.ACCESS_USER_TRUSTED_CERT",            false},
     {"ohos.permission.CAST_AUDIO_OUTPUT",                   false},
+    {"ohos.permission.GRANT_URI_PERMISSION_PRIVILEGED",     false},
     {"ohos.permission.UPDATE_APP_CONFIGURATION",            false},
     {"ohos.permission.KILL_APP_PROCESSES",                  false},
 };
