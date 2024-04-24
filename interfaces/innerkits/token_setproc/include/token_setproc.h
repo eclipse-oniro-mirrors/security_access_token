@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-uint64_t GetSelfTokenID();
+uint64_t GetSelfTokenID(void);
 int SetSelfTokenID(uint64_t tokenID);
-uint64_t GetFirstCallerTokenID();
+uint64_t GetFirstCallerTokenID(void);
 int SetFirstCallerTokenID(uint64_t tokenID);
 
 #ifdef __cplusplus
