@@ -50,7 +50,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapDlpFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(unsigned int)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetSelfPermissionsState(std::__h::vector<OHOS::Security::AccessToken::PermissionListState, std::__h::allocator<OHOS::Security::AccessToken::PermissionListState>>&, OHOS::Security::AccessToken::PermissionGrantInfo&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetVersion()";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetVersion(unsigned int&)";
         "OHOS::Security::AccessToken::PermissionStateChangeCallback::PermissionStateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermStateChangeCallbackCustomize> const&)";
         "OHOS::Security::AccessToken::PermissionStateChangeCallbackStub::OnRemoteRequest(unsigned int, OHOS::MessageParcel&, OHOS::MessageParcel&, OHOS::MessageOption&)";
         "OHOS::Security::AccessToken::AccessTokenManagerClient::GetInstance()";

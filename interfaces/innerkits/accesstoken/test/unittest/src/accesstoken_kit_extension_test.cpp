@@ -1474,48 +1474,39 @@ HWTEST_F(AccessTokenKitExtensionTest, UnRegisterPermStateChangeCallback003, Test
 
 /**
  * @tc.name: GetVersion001
- * @tc.desc: GetVersion001 test.
- * @tc.type: FUNC
- * @tc.require: issueI5NT1X
- */
-HWTEST_F(AccessTokenKitExtensionTest, GetVersion001, TestSize.Level1)
-{
-    int32_t res = AccessTokenKit::GetVersion();
-    ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
-}
-
-/**
- * @tc.name: GetVersion002
  * @tc.desc: GetVersion caller is normal app.
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(AccessTokenKitExtensionTest, GetVersion002, TestSize.Level1)
+HWTEST_F(AccessTokenKitExtensionTest, GetVersion001, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    int32_t res = AccessTokenKit::GetVersion();
+    uint32_t version;
+    int32_t res = AccessTokenKit::GetVersion(version);
     ASSERT_EQ(ERR_NOT_SYSTEM_APP, res);
 }
 
 /**
- * @tc.name: GetVersion003
+ * @tc.name: GetVersion002
  * @tc.desc: GetVersion caller is system app.
  * @tc.type: FUNC
  * @tc.require: issueI5NT1X
  */
-HWTEST_F(AccessTokenKitExtensionTest, GetVersion003, TestSize.Level1)
+HWTEST_F(AccessTokenKitExtensionTest, GetVersion002, TestSize.Level1)
 {
     AccessTokenIDEx tokenIdEx = {0};
     tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
     ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
 
-    int32_t res = AccessTokenKit::GetVersion();
-    ASSERT_EQ(DEFAULT_TOKEN_VERSION, res);
+    uint32_t version;
+    int32_t res = AccessTokenKit::GetVersion(version);
+    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(DEFAULT_TOKEN_VERSION, version);
 }
 
 /**

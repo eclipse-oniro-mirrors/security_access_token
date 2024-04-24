@@ -72,6 +72,7 @@ private:
     void SetPermissionOpFuncInMap();
     void SetLocalTokenOpFuncInMap();
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void GetVersionInner(MessageParcel& data, MessageParcel& reply);
     void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
