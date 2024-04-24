@@ -689,7 +689,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switc
     std::vector<PermissionRecord> recordList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
-        PermissionRecord record = *it;
+        PermissionRecord& record = *it;
         if ((record.opCode) != static_cast<int32_t>(opCode)) {
             continue;
         }

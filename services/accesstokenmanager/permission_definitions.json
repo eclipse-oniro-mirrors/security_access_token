@@ -2591,6 +2591,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_TEXTAUTOFILL_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_LOWPOWER_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -3351,7 +3361,17 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.MANAGE_SYSTEM_ABILITY",
+            "name": "ohos.permission.GRANT_URI_PERMISSION_PRIVILEGED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.UPDATE_APP_CONFIGURATION",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
@@ -3359,6 +3379,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_SYSTEM_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
         },
         {
             "name": "ohos.permission.ACCESS_EXT_SYSTEM_ABILITY",
@@ -3933,6 +3963,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.KILL_APP_PROCESSES",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
