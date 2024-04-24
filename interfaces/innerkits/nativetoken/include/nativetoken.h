@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-#include <stdint.h>
-
 #ifndef NATIVE_TOKEN_H
 #define NATIVE_TOKEN_H
+
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
