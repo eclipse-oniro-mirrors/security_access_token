@@ -619,14 +619,14 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     ACCESSTOKEN_LOG_INFO(LABEL, "isUpdated");
     int32_t changeType = isGranted ? GRANTED : REVOKED;
 
+    // set to kernel(grant/revoke)
+    SetPermToKernel(tokenID, permissionName, isGranted);
+
     // To notify the listener register.
     CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, permissionName, changeType);
 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
-
-    // set to kernel(grant/revoke)
-    SetPermToKernel(tokenID, permissionName, isGranted);
 
     // DFX.
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
@@ -1085,10 +1085,10 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     std::vector<std::string> grantedPermListAfter;
     permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
 
-    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
-
     // clear
     AddPermToKernel(tokenID, permPolicySet);
+
+    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
     return RET_SUCCESS;
 }
 

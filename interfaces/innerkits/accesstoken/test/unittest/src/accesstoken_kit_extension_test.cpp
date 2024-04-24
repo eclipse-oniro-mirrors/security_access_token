@@ -1047,6 +1047,8 @@ public:
     virtual void PermStateChangeCallback(PermStateChangeInfo& result)
     {
         ready_ = true;
+        int32_t status = (result.permStateChangeType == 1) ? PERMISSION_GRANTED : PERMISSION_DENIED;
+        ASSERT_EQ(status, AccessTokenKit::VerifyAccessToken(result.tokenID, result.permissionName));
     }
 
     bool ready_;
