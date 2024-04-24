@@ -3388,7 +3388,7 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.ACCESS_EXT_SYSTEM_ABILITY",
