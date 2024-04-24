@@ -404,9 +404,9 @@ int AccessTokenInfoManager::RemoveHapTokenInfo(AccessTokenID id)
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "remove hap token %{public}u ok!", id);
     RemoveHapTokenInfoFromDb(id);
-    PermissionStateNotify(info, id);
     // remove hap to kernel
     PermissionManager::GetInstance().RemovePermFromKernel(id);
+    PermissionStateNotify(info, id);
 #ifdef TOKEN_SYNC_ENABLE
     TokenModifyNotifier::GetInstance().NotifyTokenDelete(id);
 #endif

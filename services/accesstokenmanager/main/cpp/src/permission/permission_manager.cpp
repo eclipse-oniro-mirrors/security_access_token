@@ -1085,10 +1085,10 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     std::vector<std::string> grantedPermListAfter;
     permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
 
-    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
-
     // clear
     AddPermToKernel(tokenID, permPolicySet);
+
+    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
     return RET_SUCCESS;
 }
 
