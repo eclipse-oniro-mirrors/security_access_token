@@ -759,7 +759,7 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
         asyncContext->errorCode = result;
         return;
     }
-    asyncContext->result = version;
+    asyncContext->result = static_cast<int32_t>(version);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 }
 

@@ -33,8 +33,8 @@ public:
 
 class PrivacyMockSessionManagerProxy : public IRemoteProxy<IMockSessionManagerInterface> {
 public:
-    explicit PrivacyMockSessionManagerProxy(const sptr<IRemoteObject>& impl) :
-        IRemoteProxy<IMockSessionManagerInterface>(impl) {}
+    explicit PrivacyMockSessionManagerProxy(const sptr<IRemoteObject>& impl)
+        : IRemoteProxy<IMockSessionManagerInterface>(impl) {}
     ~PrivacyMockSessionManagerProxy() {}
     sptr<IRemoteObject> GetSessionManagerService() override;
 private:
