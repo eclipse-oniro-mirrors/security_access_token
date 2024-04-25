@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -54,17 +54,18 @@ namespace OHOS {
             .bundleName = testName,
             .instIndex = 0,
             .appIDDesc = testName};
-        std::vector<std::string> aclRequestedList = {testName};
         PreAuthorizationInfo info1 = {
             .permissionName = testName,
             .userCancelable = true
         };
-        std::vector<PreAuthorizationInfo> preAuthorizationInfo = {info1};
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
             .permList = {testPermDef},
-            .permStateList = {TestState}};
+            .permStateList = {TestState},
+            .aclRequestedList = {testName},
+            .preAuthorizationInfo = {info1}
+        };
 
         hapInfoParcel.hapInfoParameter = TestInfoParms;
         hapPolicyParcel.hapPolicyParameter = TestPolicyPrams;
