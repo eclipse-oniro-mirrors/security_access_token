@@ -13,7 +13,8 @@
     "name": "access_token",
     "subsystem": "security",
     "syscap": [
-      "SystemCapability.Security.AccessToken"
+      "SystemCapability.Security.AccessToken",
+      "SystemCapability.Security.ScreenLockFileManager"
     ],
     "hisysevent_config": [
       "//base/security/access_token/hisysevent.yaml"
@@ -66,17 +67,19 @@
           "//base/security/access_token/tools:tools_atm"
         ],
         "fwk_group": [
-          "//base/security/access_token/interfaces/kits:napi_packages"
+          "//base/security/access_token/interfaces/kits:napi_packages",
+          "//base/security/access_token/interfaces/kits:cj_packages"
         ],
         "service_group": [
           "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
           "//base/security/access_token/services/accesstokenmanager:accesstoken_manager_service",
           "//base/security/access_token/services/accesstokenmanager/main/sa_profile:accesstoken_sa_profile_standard",
+          "//base/security/access_token/services/el5filekeymanager:el5filekeymanager",
           "//base/security/access_token/services/tokensyncmanager:tokensyncmanager",
           "//base/security/access_token/services/privacymanager:privacymanager",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac",
-          "//base/security/access_token/services/common:accesstoken_ability_manager_access"
+          "//base/security/access_token/services/common:accesstoken_common"
         ]
       },
       "inner_kits": [
@@ -159,6 +162,25 @@
               "code_signature_analysis_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/analysis_model/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/kits/accesstoken:cj_ability_access_ctrl_ffi",
+          "header": {
+            "header_files": [
+              "ability_access_ctrl_ffi.h",
+              "at_manager_impl.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/kits/accesstoken/cj"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk",
+          "header": {
+            "header_files": [
+              "el5_filekey_manager_kit.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/innerkits/el5filekeymanager/include"
           }
         }
       ],
