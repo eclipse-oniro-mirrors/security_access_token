@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getpermissionusedrecords_fuzzer.h"
+#include "updateseccompenhance_fuzzer.h"
 
 #include <iostream>
 #include <thread>
@@ -26,33 +26,15 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-    bool GetPermissionUsedRecordsFuzzTest(const uint8_t* data, size_t size)
+    bool UpdateSecCompEnhanceFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        std::vector<std::string> permissionList;
-        permissionList.emplace_back(testName);
-        int64_t beginTimeMillis = static_cast<int64_t>(size);
-        int64_t endTimeMillis = static_cast<int64_t>(size);
-
-        PermissionUsedRequest request = {
-            .tokenId = tokenId,
-            .isRemote = false,
-            .deviceId = testName,
-            .bundleName = testName,
-            .permissionList = permissionList,
-            .beginTimeMillis = beginTimeMillis,
-            .endTimeMillis = endTimeMillis,
-            .flag = static_cast<PermissionUsageFlag>(size)
-        };
-
-        PermissionUsedResult res;
-
-        int32_t result = PrivacyKit::GetPermissionUsedRecords(request, res);
+        int32_t pid = static_cast<int32_t>(size);
+        int32_t seqNum = static_cast<int32_t>(size);
+        int32_t result = PrivacyKit::UpdateSecCompEnhance(pid, seqNum);
 
         return result == RET_SUCCESS;
     }
@@ -62,6 +44,6 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetPermissionUsedRecordsFuzzTest(data, size);
+    OHOS::UpdateSecCompEnhanceFuzzTest(data, size);
     return 0;
 }

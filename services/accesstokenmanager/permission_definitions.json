@@ -3975,6 +3975,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.WRITE_RINGTONE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
