@@ -18,6 +18,7 @@
 #include <thread>
 #include <pthread.h>
 
+#include "accesstoken_config_policy.h"
 #include "accesstoken_log.h"
 #include "constant.h"
 #include "constant_common.h"
@@ -35,6 +36,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusManager"};
+static constexpr int32_t DEFAULT_SEND_REQUEST_REPEAT_TIMES = 5;
 }
 namespace {
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
@@ -197,6 +199,32 @@ int32_t SoftBusManager::ServiceSocketInit()
     return ERR_OK;
 }
 
+int32_t SoftBusManager::GetRepeatTimes()
+{
+    // this value only set in service OnStart, no need lock when set and get
+    return sendRequestRepeatTimes_;
+}
+
+void SoftBusManager::SetDefaultConfigValue()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
+
+    sendRequestRepeatTimes_ = DEFAULT_SEND_REQUEST_REPEAT_TIMES;
+}
+
+void SoftBusManager::GetConfigValue()
+{
+    AccessTokenConfigPolicy policy;
+    AccessTokenConfigValue value;
+    if (policy.GetConfigValue(ServiceType::TOKENSYNC_SERVICE, value)) {
+        sendRequestRepeatTimes_ = value.tsConfig.sendRequestRepeatTimes;
+    } else {
+        SetDefaultConfigValue();
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "sendRequestRepeatTimes_ is %{public}d.", sendRequestRepeatTimes_);
+}
+
 void SoftBusManager::Initialize()
 {
     bool inited = false;
@@ -205,6 +233,8 @@ void SoftBusManager::Initialize()
         ACCESSTOKEN_LOG_DEBUG(LABEL, "already initialized, skip");
         return;
     }
+
+    GetConfigValue();
 
     std::function<void()> runner = [&]() {
         std::string name = "SoftBusMagInit";

@@ -20,16 +20,13 @@
 #include <numeric>
 
 #include "ability_manager_access_loader.h"
+#include "accesstoken_config_policy.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #include "app_manager_access_client.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "config_policy_utils.h"
-#include "json_parser.h"
-#endif
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -69,13 +66,6 @@ static const std::string DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.p
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
-static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
-static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
-static const std::string GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
-static const std::string GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
-#endif
 static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
@@ -1242,68 +1232,6 @@ bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
 }
 #endif
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-void PermissionRecordManager::GetConfigFilePathList(std::vector<std::string>& pathList)
-{
-    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
-    if (dirs != nullptr) {
-        for (const auto& path : dirs->paths) {
-            if (path == nullptr) {
-                continue;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
-            pathList.emplace_back(path);
-        }
-
-        FreeCfgDirList(dirs); // free
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can't get cfg file path");
-    }
-}
-
-// nlohmann json need the function named from_json to parse
-void from_json(const nlohmann::json& j, PermissionRecordConfig& p)
-{
-    if (!JsonParser::GetIntFromJson(j, RECORD_SIZE_MAXIMUM_KEY, p.sizeMaxImum)) {
-        return;
-    }
-
-    if (!JsonParser::GetIntFromJson(j, RECORD_AGING_TIME_KEY, p.agingTime)) {
-        return;
-    }
-
-    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_BUNDLE_NAME_KEY, p.globalDialogBundleName)) {
-        return;
-    }
-
-    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_ABILITY_NAME_KEY, p.globalDialogAbilityName)) {
-        return;
-    }
-}
-
-bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
-{
-    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
-    if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return false;
-    }
-
-    if ((jsonRes.find("privacy") != jsonRes.end()) && (jsonRes.at("privacy").is_object())) {
-        PermissionRecordConfig p = jsonRes.at("privacy").get<nlohmann::json>();
-        recordSizeMaximum_ = p.sizeMaxImum;
-        recordAgingTime_ = p.agingTime;
-        globalDialogBundleName_ = p.globalDialogBundleName;
-        globalDialogAbilityName_ = p.globalDialogAbilityName;
-    } else {
-        return false;
-    }
-
-    return true;
-}
-#endif
-
 void PermissionRecordManager::SetDefaultConfigValue()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
@@ -1316,32 +1244,15 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    std::vector<std::string> pathList;
-    GetConfigFilePathList(pathList);
-
-    for (const auto& path : pathList) {
-        if (!JsonParser::IsDirExsit(path)) {
-            continue;
-        }
-
-        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
-        std::string fileContent;
-        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
-        if (res != Constant::SUCCESS) {
-            continue;
-        }
-
-        if (GetConfigValueFromFile(fileContent)) {
-            break; // once get the config value, break the loop
-        }
-    }
-#endif
-    // when config file list empty or can not get two value from config file, set default value
-    if ((recordSizeMaximum_ == 0) ||
-        (recordAgingTime_ == 0) ||
-        (globalDialogBundleName_.empty()) ||
-        (globalDialogAbilityName_.empty())) {
+    AccessTokenConfigPolicy policy;
+    AccessTokenConfigValue value;
+    if (policy.GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
+        // set value from config
+        recordSizeMaximum_ = value.pConfig.sizeMaxImum;
+        recordAgingTime_ = value.pConfig.agingTime;
+        globalDialogBundleName_ = value.pConfig.globalDialogBundleName;
+        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName;
+    } else {
         SetDefaultConfigValue();
     }
 

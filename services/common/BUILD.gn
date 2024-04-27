@@ -18,12 +18,15 @@ config("accesstoken_service_common_public_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "app_manager/include",
+    "config_policy/include",
     "database/include",
-    "handler/include",
     "libraryloader/include",
     "random/include",
     "utils/include",
   ]
+  if (eventhandler_enable) {
+    include_dirs += [ "handler/include" ]
+  }
 }
 
 ohos_static_library("accesstoken_service_common") {
@@ -49,6 +52,7 @@ ohos_static_library("accesstoken_service_common") {
     "app_manager/src/app_state_data.cpp",
     "app_manager/src/app_status_change_callback.cpp",
     "app_manager/src/process_data.cpp",
+    "config_policy/src/accesstoken_config_policy.cpp",
     "database/src/generic_values.cpp",
     "database/src/memory_guard.cpp",
     "database/src/sqlite_helper.cpp",
@@ -77,6 +81,10 @@ ohos_static_library("accesstoken_service_common") {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     sources += [ "handler/src/access_event_handler.cpp" ]
     external_deps += [ "eventhandler:libeventhandler" ]
+  }
+  if (customization_config_policy_enable) {
+    cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+    external_deps += [ "config_policy:configpolicy_util" ]
   }
 
   if (use_musl) {

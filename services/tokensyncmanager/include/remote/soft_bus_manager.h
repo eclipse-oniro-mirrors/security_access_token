@@ -101,6 +101,8 @@ public:
 
     bool GetNetworkIdBySocket(const int32_t socket, std::string& networkId);
 
+    int32_t GetRepeatTimes();
+
 public:
     static const std::string SESSION_NAME;
 
@@ -131,6 +133,9 @@ private:
     std::string GetUuidByNodeId(const std::string &nodeId) const;
     std::string GetUdidByNodeId(const std::string &nodeId) const;
 
+    void SetDefaultConfigValue();
+    void GetConfigValue();
+
     // soft bus session server opened flag
     bool isSoftBusServiceBindSuccess_;
     std::atomic_bool inited_;
@@ -147,6 +152,9 @@ private:
     // soft bus client socket with networkId map
     std::mutex clientSocketMutex_;
     std::map<int32_t, std::string> clientSocketMap_;
+
+    // remote request overtime repeat times
+    int32_t sendRequestRepeatTimes_ = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security

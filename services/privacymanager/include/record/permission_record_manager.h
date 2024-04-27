@@ -41,10 +41,6 @@
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
 #include "window_manager_privacy_agent.h"
 #endif
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "nlohmann/json.hpp"
-#include "permission_record_config.h"
-#endif
 
 namespace OHOS {
 namespace Security {
@@ -155,11 +151,6 @@ private:
     bool RegisterApplicationStateObserver();
     void Unregister();
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    void GetConfigFilePathList(std::vector<std::string> &pathList);
-    void from_json(const nlohmann::json& j, PermissionRecordConfig& p);
-    bool GetConfigValueFromFile(std::string& fileContent);
-#endif
     void SetDefaultConfigValue();
     void GetConfigValue();
 private:

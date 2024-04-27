@@ -1469,42 +1469,6 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     CameraManagerPrivacyClient::GetInstance().MuteCamera(isMuteCamera);
 }
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-/*
- * @tc.name: GetConfigValueFromFile001
- * @tc.desc: parse failed with invalid param
- * @tc.type: FUNC
- * @tc.require: issueI5RWXF
- */
-HWTEST_F(PermissionRecordManagerTest, GetConfigValueFromFile001, TestSize.Level1)
-{
-    std::string fileContent = R"({"privacy": {)"\
-        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
-        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
-    EXPECT_TURE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
-
-    fileContent = R"({"privacy": {)"\
-        R"("permission_used_record_size_maximum":"500000","permission_used_record_aging_time":7},)"\
-        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
-
-    fileContent = R"({"privacy": {)"\
-        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":"7"},)"\
-        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":"PermissionAbility"})";
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
-
-    fileContent = R"({"privacy": {)"\
-        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
-        R"("permission_manager_bundle_name":1, "grant_ability_name":"PermissionAbility"})";
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
-
-    fileContent = R"({"privacy": {)"\
-        R"("permission_used_record_size_maximum":500000,"permission_used_record_aging_time":7},)"\
-        R"("permission_manager_bundle_name":"com.ohos.permissionmanager", "grant_ability_name":1})";
-    EXPECT_FALSE(PermissionRecordManager::GetInstance().GetConfigValueFromFile(fileContent));
-}
-#endif
-
 /*
  * @tc.name: Abnormal001
  * @tc.desc: PermissionRecordRepository::Add | Remove | Update | Query function abnormal branch

@@ -104,7 +104,7 @@ public:
 private:
     void GetValidConfigFilePathList(std::vector<std::string>& pathList);
     bool GetConfigGrantValueFromFile(std::string& fileContent);
-    void SetDefaultConfigGrantValue();
+    void SetDefaultConfigValue();
     void GetConfigValue();
     bool Initialize();
     void DumpTokenIfNeeded();
