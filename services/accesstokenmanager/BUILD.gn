@@ -117,7 +117,6 @@ if (is_standard_system) {
     deps += [ "etc:param_files" ]
 
     external_deps = [
-      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "dsoftbus:softbus_client",
       "hilog:libhilog",
@@ -129,6 +128,10 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
       "sqlite:sqlite",
     ]
+
+    if (ohos_indep_compiler_enable) {
+      external_deps += [ "bounds_checking_function:libsec_shared" ]
+    }
 
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
