@@ -43,6 +43,7 @@ if (token_sync_enable == true) {
 
     if (!use_clang_coverage) {
       version_script = "tokensync_manager_service.map"
+      shlib_type = "sa"
     }
 
     include_dirs = [
@@ -117,9 +118,6 @@ if (token_sync_enable == true) {
     if (token_sync_enable == true) {
       cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
       external_deps += [ "device_manager:devicemanagersdk" ]
-    }
-    if (!use_clang_coverage) {
-      shlib_type = "sa"
     }
   }
 }

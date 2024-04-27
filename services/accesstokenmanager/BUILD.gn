@@ -40,6 +40,7 @@ if (is_standard_system) {
     branch_protector_ret = "pac_ret"
     if (!use_clang_coverage) {
       version_script = "accesstoken_manager_service.map"
+      shlib_type = "sa"
     }
 
     include_dirs = [
@@ -160,17 +161,6 @@ if (is_standard_system) {
     if (resourceschedule_ffrt_enable) {
       external_deps += [ "ffrt:libffrt" ]
       cflags_cc += [ "-DRESOURCESCHEDULE_FFRT_ENABLE" ]
-    }
-
-    if (customization_config_policy_enable) {
-      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
-      deps +=
-          [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
-    }
-
-    if (!use_clang_coverage) {
-      shlib_type = "sa"
     }
   }
 }

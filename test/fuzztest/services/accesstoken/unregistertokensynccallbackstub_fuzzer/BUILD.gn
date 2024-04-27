@@ -37,6 +37,7 @@ ohos_fuzztest("UnRegisterTokenSyncCallbackStubFuzzTest") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
+    "${access_token_path}/services/common:accesstoken_service_common",
   ]
 
   configs = [ "${access_token_path}/config:coverage_flags" ]

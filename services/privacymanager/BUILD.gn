@@ -150,10 +150,5 @@ if (is_standard_system && ability_base_enable == true) {
         "src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
       ]
     }
-
-    if (customization_config_policy_enable) {
-      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
-    }
   }
 }
