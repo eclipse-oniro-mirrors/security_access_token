@@ -14,7 +14,7 @@
  */
 #include "ability_manager_access_loader.h"
 
-#include "ability_manager_access_client.h"
+#include "ability_manager_client.h"
 
 namespace OHOS {
 namespace Security {
@@ -22,7 +22,11 @@ namespace AccessToken {
 int32_t AbilityManagerAccessLoader::StartAbility(
     const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int32_t requestCode, int32_t userId)
 {
-    return AbilityManagerAccessClient::GetInstance().StartAbility(want, callerToken, requestCode, userId);
+#ifdef ABILITY_RUNTIME_ENABLE
+    return AAFwk::AbilityManagerClient::GetInstance()->StartAbility(want, callerToken, requestCode, userId);
+#else
+    return 0;
+#endif
 }
 
 extern "C" {

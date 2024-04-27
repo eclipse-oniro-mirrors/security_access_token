@@ -243,20 +243,6 @@ HWTEST_F(SensitiveManagerServiceTest, RegisterAppObserverTest002, TestSize.Level
 
     ASSERT_EQ(0, AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(listener));
 }
-
-#ifdef ABILITY_RUNTIME_ENABLE
-/*
- * @tc.name: AbilityManagerPrivacyCode001
- * @tc.desc: test api function
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerServiceTest, AbilityManagerPrivacyCode001, TestSize.Level1)
-{
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AbilityManagerInterfaceCode::START_ABILITY_ADD_CALLER),
-        static_cast<uint32_t>(AccessAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER)); // 1005
-}
-#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
