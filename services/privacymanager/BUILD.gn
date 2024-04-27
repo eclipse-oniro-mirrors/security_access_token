@@ -107,16 +107,21 @@ if (is_standard_system && ability_base_enable == true) {
 
     external_deps = [
       "ability_base:want",
-      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "ipc:ipc_single",
-      "json:nlohmann_json_static",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
       "sqlite:sqlite",
     ]
+
+    if (ohos_indep_compiler_enable) {
+      external_deps += [
+        "bounds_checking_function:libsec_shared",
+        "json:nlohmann_json_static",
+      ]
+    }
 
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]

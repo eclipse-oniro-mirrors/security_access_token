@@ -54,17 +54,18 @@ namespace OHOS {
             .bundleName = testName,
             .instIndex = 0,
             .appIDDesc = testName};
-        std::vector<std::string> aclRequestedList = {testName};
         PreAuthorizationInfo info1 = {
             .permissionName = testName,
             .userCancelable = true
         };
-        std::vector<PreAuthorizationInfo> preAuthorizationInfo = {info1};
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
             .domain = testName,
             .permList = {testPermDef},
-            .permStateList = {TestState}};
+            .permStateList = {TestState},
+            .aclRequestedList = {testName},
+            .preAuthorizationInfo = {info1}
+        };
 
         hapInfoParcel.hapInfoParameter = TestInfoParms;
         hapPolicyParcel.hapPolicyParameter = TestPolicyPrams;
