@@ -15,7 +15,7 @@ import("//build/ohos.gni")
 import("../../../access_token.gni")
 
 ohos_shared_library("accesstoken_window_manager") {
-  if (is_standard_system) {
+  if (is_standard_system && window_manager_enable == true) {
     subsystem_name = "security"
     part_name = "access_token"
     sanitize = {

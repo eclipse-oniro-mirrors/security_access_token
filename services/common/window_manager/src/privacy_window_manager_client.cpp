@@ -81,7 +81,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgent(WindowManagerAg
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
+    return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
 }
 
 int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgentLite(WindowManagerAgentType type,
@@ -103,7 +103,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgentLite(WindowManag
         ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
-    return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
+    return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
 }
 
 void PrivacyWindowManagerClient::AddDeathCallback(void (*callback)())
@@ -251,7 +251,7 @@ void PrivacyWindowManagerClient::InitWMSProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "wmsProxy_ is null.");
         return;
     }
-    ACCESSTOKEN_LOG_INFO
+    ACCESSTOKEN_LOG_INFO(LABEL, "InitWMSProxy end.");
 }
 
 sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()

@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -99,6 +99,9 @@ group("accesstoken_common") {
     deps = [
       ":accesstoken_service_common",
       "ability_manager:accesstoken_ability_manager_adapter",
+      "power_manager:accesstoken_power_manager",
+      "screenlock_manager:accesstoken_screenlock_manager",
+      "window_manager:accesstoken_window_manager",
     ]
   }
 }

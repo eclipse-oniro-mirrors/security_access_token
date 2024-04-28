@@ -286,7 +286,8 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     CameraManagerPrivacyClient::GetInstance().MuteCamera(false);
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
@@ -316,7 +317,8 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
     PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
@@ -345,7 +347,8 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
 
@@ -374,7 +377,8 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
     };
     PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
     PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,25 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H
-#define PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H
+#include "screenlock_manager_access_loader.h"
+#include "screenlock_manager.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class PrivacyWindowServiceInterfaceCode {
-    TRANS_ID_UPDATE_FOCUS  = 1,
-    TRANS_ID_UPDATE_SYSTEM_BAR_PROPS,
-    TRANS_ID_UPDATE_WINDOW_STATUS,
-    TRANS_ID_UPDATE_WINDOW_VISIBILITY,
-    TRANS_ID_UPDATE_WINDOW_DRAWING_STATE,
-    TRANS_ID_UPDATE_CAMERA_FLOAT,
-    TRANS_ID_UPDATE_WATER_MARK_FLAG,
-    TRANS_ID_UPDATE_GESTURE_NAVIGATION_ENABLED,
-};
+bool ScreenLockManagerAccessLoader::IsScreenLocked()
+{
+    return ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked();
+}
+
+extern "C" {
+void* Create()
+{
+    return reinterpret_cast<void*>(new ScreenLockManagerAccessLoader);
+}
+
+void Destroy(void* loaderPtr)
+{
+    ScreenLockManagerAccessLoaderInterface* loader =
+        reinterpret_cast<ScreenLockManagerAccessLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
+}
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-
-#endif // PRIVACY_WINDOW_SERVICE_IPC_INTERFACE_CODE_H

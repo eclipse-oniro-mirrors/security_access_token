@@ -33,7 +33,7 @@ public:
         const sptr<IWindowManagerAgent>& windowManagerAgent) override;
 
 private:
-    static inline BrokerDelegator<PrivacyWindowManagerProxy> delegator_;\
+    static inline BrokerDelegator<PrivacyWindowManagerProxy> delegator_;
 };
 }
 }

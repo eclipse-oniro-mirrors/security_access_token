@@ -226,9 +226,17 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, LOCATION_PERMISSION_NAME));
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, false);
+    // not pip
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
-    PermissionRecordManager::GetInstance().NotifyCameraFloatWindowChange(tokenId, true);
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, true);
+    ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
+    // pip
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
+    ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, true);
     ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 #endif
     PermissionRecordManager::GetInstance().SetScreenOn(initScreenOn);

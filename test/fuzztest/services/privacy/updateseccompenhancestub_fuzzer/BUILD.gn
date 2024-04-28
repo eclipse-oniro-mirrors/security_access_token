@@ -49,6 +49,8 @@ ohos_fuzztest("UpdateSecCompEnhanceStubFuzzTest") {
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/libraryloader/include",
+    "${access_token_path}/services/common/power_manager/include",
+    "${access_token_path}/services/common/screenlock_manager/include",
   ]
 
   sources += [
@@ -124,15 +126,10 @@ ohos_fuzztest("UpdateSecCompEnhanceStubFuzzTest") {
     sources += [ "${access_token_path}/services/privacymanager/src/common/privacy_common_event_subscriber.cpp" ]
   }
 
-  if (access_token_camera_float_window_enable) {
+  if (window_manager_enable && access_token_camera_float_window_enable) {
     cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
-    include_dirs += [ "${access_token_path}/services/privacymanager/include/sensitive/window_manager" ]
-    sources += [
-      "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_agent.cpp",
-      "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_client.cpp",
-      "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_death_recipient.cpp",
-      "${access_token_path}/services/privacymanager/src/sensitive/window_manager/window_manager_privacy_proxy.cpp",
-    ]
+    include_dirs +=
+        [ "${access_token_path}/services/common/window_manager/include" ]
   }
 
   if (theme_screenlock_mgr_enable) {

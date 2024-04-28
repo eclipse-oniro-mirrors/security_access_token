@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,24 +12,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "power_manager_access_loader.h"
 
-
-#ifndef WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-#define WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
-
-#include "iremote_object.h"
+#include "power_mgr_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class WindowManagerPrivacyDeathRecipient : public IRemoteObject::DeathRecipient {
-public:
-    WindowManagerPrivacyDeathRecipient() {}
-    virtual ~WindowManagerPrivacyDeathRecipient() override = default;
-    void OnRemoteDied(const wptr<IRemoteObject>& object) override;
-};
-}  // namespace AccessToken
-} // namespace Security
-}  // namespace OHOS
-#endif  // WINDOW_MANAGER_PRIVACY_DEATH_RECIPIENT_H
+bool PowerManagerLoader::IsScreenOn()
+{
+    return PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
+}
 
+extern "C" {
+void* Create()
+{
+    return reinterpret_cast<void*>(new PowerManagerLoader);
+}
+
+void Destroy(void* loaderPtr)
+{
+    PowerManagerLoaderInterface* loader = reinterpret_cast<PowerManagerLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
+}
+}
+} // namespace AccessToken
+} // namespace Security
+} // namespace OHOS
