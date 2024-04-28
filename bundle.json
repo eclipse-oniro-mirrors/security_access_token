@@ -76,7 +76,7 @@
           "//base/security/access_token/services/privacymanager:privacymanager",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para",
           "//base/security/access_token/services/accesstokenmanager/etc:access_token.para.dac",
-          "//base/security/access_token/services/common:accesstoken_ability_manager_access"
+          "//base/security/access_token/services/common:accesstoken_common"
         ]
       },
       "inner_kits": [
