@@ -106,6 +106,8 @@ int RemoteCommandManager::ProcessDeviceCommandImmediately(const std::string &udi
         return Constant::FAILURE;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "start with udid:%{public}s ", ConstantCommon::EncryptDevId(udid).c_str());
+
+    std::unique_lock<std::mutex> lock(mutex_);
     auto executorIt = executors_.find(udid);
     if (executorIt == executors_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "no executor found, udid:%{public}s", ConstantCommon::EncryptDevId(udid).c_str());
@@ -127,6 +129,7 @@ int RemoteCommandManager::ProcessDeviceCommandImmediately(const std::string &udi
 int RemoteCommandManager::Loop()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "start");
+    std::unique_lock<std::mutex> lock(mutex_);
     for (auto it = executors_.begin(); it != executors_.end(); it++) {
         ACCESSTOKEN_LOG_INFO(LABEL, "udid:%{public}s", ConstantCommon::EncryptDevId(it->first).c_str());
         (*it).second->ProcessBufferedCommandsWithThread();
@@ -142,6 +145,7 @@ void RemoteCommandManager::Clear()
     ACCESSTOKEN_LOG_INFO(LABEL, "remove all remote command executors.");
 
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>> dummy;
+    std::unique_lock<std::mutex> lock(mutex_);
     executors_.swap(dummy);
     executors_.clear();
 }
@@ -253,6 +257,8 @@ std::shared_ptr<RpcChannel> RemoteCommandManager::GetExecutorChannel(const std::
             LABEL, "converted udid is invalid, nodeId:%{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return nullptr;
     }
+
+    std::unique_lock<std::mutex> lock(mutex_);
     std::map<std::string, std::shared_ptr<RemoteCommandExecutor>>::iterator iter = executors_.find(udid);
     if (iter == executors_.end()) {
         ACCESSTOKEN_LOG_INFO(LABEL, "executor not found");
