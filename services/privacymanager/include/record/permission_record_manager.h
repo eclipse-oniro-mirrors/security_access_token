@@ -142,6 +142,7 @@ private:
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool HasUsingCamera();
+    void ClearWindowShowing();
 #endif
     bool IsCameraWindowShow(AccessTokenID tokenId);
     bool RegisterWindowCallback();
@@ -155,7 +156,6 @@ private:
 
     void SetDefaultConfigValue();
     void GetConfigValue();
-    void ClearWindowShowing();
 
 private:
     OHOS::ThreadPool deleteTaskWorker_;

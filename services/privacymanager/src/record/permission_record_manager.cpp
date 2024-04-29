@@ -1313,6 +1313,7 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
     }
 
     RemoveRecordFromStartListByOp(Constant::OP_CAMERA);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     ClearWindowShowing();
     {
         std::lock_guard<std::mutex> lock(windowLoaderMutex_);
@@ -1321,6 +1322,7 @@ void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
             windowLoader_ = nullptr;
         }
     }
+#endif
 }
 
 bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
