@@ -617,6 +617,26 @@ void AccessTokenManagerStub::DeleteRemoteDeviceTokensInner(MessageParcel& data, 
 }
 #endif
 
+void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingToken) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    uint32_t version;
+    int32_t result = this->GetVersion(version);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
+    }
+    if (result != RET_SUCCESS) {
+        return;
+    }
+    if (!reply.WriteUint32(version)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write Uint32 failed.");
+    }
+}
+
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsShellProcessCalling()) {
@@ -778,6 +798,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_VERSION)] =
+        &AccessTokenManagerStub::GetVersionInner;
 }
 
 AccessTokenManagerStub::AccessTokenManagerStub()

@@ -2717,20 +2717,6 @@ HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag002, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetTokenTypeFlag003
- * @tc.desc: cannot get token type with tokenID.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, GetTokenTypeFlag003, TestSize.Level1)
-{
-    FullTokenID tokenID = 0;
-    EXPECT_EQ(0, SetSelfTokenID(tokenID));
-    AccessTokenKit::GetVersion();
-    ASSERT_EQ(RET_SUCCESS, SetSelfTokenID(selfTokenId_));
-}
-
-/**
  * @tc.name: SetPermDialogCap001
  * @tc.desc: Set permission dialog capability with noexist app.
  * @tc.type: FUNC

@@ -88,6 +88,7 @@ public:
 #endif
 
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
+    int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
 

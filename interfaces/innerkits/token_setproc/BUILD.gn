@@ -34,6 +34,26 @@ if (is_standard_system) {
     sources = [ "src/token_setproc.c" ]
   }
 
+  ohos_shared_library("libtokensetproc_shared") {
+    subsystem_name = "security"
+    part_name = "access_token"
+    output_name = "libtokensetproc_shared"
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
+    branch_protector_ret = "pac_ret"
+
+    public_configs = [ ":setproc_config" ]
+
+    cflags = [ "-Wall" ]
+
+    include_dirs = [ "src" ]
+
+    sources = [ "src/token_setproc.c" ]
+  }
+
   ohos_static_library("libperm_setproc") {
     subsystem_name = "security"
     part_name = "access_token"

@@ -85,6 +85,7 @@ public:
 
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
+    int32_t GetVersion(uint32_t& version) override;
 
 private:
     bool SendRequest(AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply);

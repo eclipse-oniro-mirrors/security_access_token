@@ -23,6 +23,7 @@
 
 #include "ability.h"
 #include "ability_manager_client.h"
+#include "access_token.h"
 #include "access_token_error.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -818,7 +819,13 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
     if (asyncContext == nullptr) {
         return;
     }
-    asyncContext->result = AccessTokenKit::GetVersion();
+    uint32_t version;
+    int32_t result = AccessTokenKit::GetVersion(version);
+    if (result != RET_SUCCESS) {
+        asyncContext->errorCode = result;
+        return;
+    }
+    asyncContext->result = version;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 }
 
@@ -826,12 +833,12 @@ void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *d
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
-    napi_value result;
+    napi_value result = nullptr;
 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
-    NAPI_CALL_RETURN_VOID(env, napi_resolve_deferred(env, asyncContext->deferred, result));
+    ReturnPromiseResult(env, asyncContext->errorCode, asyncContext->deferred, result);
 }
 
 napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback_info info)

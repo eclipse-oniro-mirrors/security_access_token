@@ -86,6 +86,7 @@ public:
 
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
+    int32_t GetVersion(uint32_t& version) override;
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
 private:

@@ -33,7 +33,7 @@ ohos_unittest("libtoken_setproc_test") {
 
   deps = [
     "../:libperm_setproc",
-    "../:libtoken_setproc",
+    "../:libtokensetproc_shared",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
   ]
