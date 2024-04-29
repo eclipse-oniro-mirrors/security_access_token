@@ -3191,6 +3191,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS_AS_USER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.READ_FINDSERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
