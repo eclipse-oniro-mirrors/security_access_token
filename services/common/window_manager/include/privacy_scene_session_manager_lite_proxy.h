@@ -28,8 +28,8 @@ public:
     DECLARE_INTERFACE_DESCRIPTOR(u"OHOS.ISceneSessionManagerLite");
 
     enum class SceneSessionManagerLiteMessage : uint32_t {
-        TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT = 21,
-        TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT = 22,
+        TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT = 22,
+        TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT = 23,
     };
 
     virtual int32_t RegisterWindowManagerAgent(WindowManagerAgentType type,

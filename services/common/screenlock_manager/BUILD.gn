@@ -19,9 +19,8 @@ config("accesstoken_service_common_abillity_manager_config") {
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("accesstoken_ability_manager_adapter") {
-  if (is_standard_system && ability_base_enable &&
-      !ohos_indep_compiler_enable) {
+ohos_shared_library("accesstoken_screenlock_manager") {
+  if (is_standard_system && theme_screenlock_mgr_enable) {
     subsystem_name = "security"
     part_name = "access_token"
     sanitize = {
@@ -33,17 +32,16 @@ ohos_shared_library("accesstoken_ability_manager_adapter") {
 
     include_dirs = [ "include" ]
 
-    sources = [ "src/ability_manager_access_loader.cpp" ]
+    sources = [ "src/screenlock_manager_access_loader.cpp" ]
 
     cflags_cc = []
     configs = [ "${access_token_path}/config:coverage_flags" ]
     public_configs = [ ":accesstoken_service_common_abillity_manager_config" ]
 
     external_deps = [
-      "ability_base:want",
-      "ability_runtime:ability_manager",
       "c_utils:utils",
       "ipc:ipc_core",
+      "screenlock_mgr:screenlock_client",
     ]
   }
 }

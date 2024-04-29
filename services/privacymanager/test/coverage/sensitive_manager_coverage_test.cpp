@@ -29,13 +29,6 @@
 #include "camera_manager_privacy_proxy.h"
 #include "camera_service_callback_stub.h"
 #include "token_setproc.h"
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "window_manager_privacy_agent.h"
-#define private public
-#include "window_manager_privacy_client.h"
-#undef private
-#include "window_manager_privacy_proxy.h"
-#endif
 
 using namespace testing::ext;
 
@@ -65,87 +58,6 @@ void SensitiveManagerCoverageTest::TearDown()
 {
 }
 
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-class TestCallBack1 : public WindowManagerPrivacyAgent {
-public:
-    TestCallBack1() = default;
-    virtual ~TestCallBack1() = default;
-
-    void UpdateCameraFloatWindowStatus(uint32_t accessTokenId, bool isShowing)
-    {
-        GTEST_LOG_(INFO) << "UpdateCameraFloatWindowStatus,  accessTokenId is "
-            << accessTokenId << ", isShowing is " << isShowing << ".";
-    }
-};
-
-/**
- * @tc.name: OnRemoteRequest001
- * @tc.desc: WindowManagerPrivacyAgent::OnRemoteRequest function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
-{
-    uint32_t accessTokenId = 123; // 123 is random input
-    bool isShowing = false;
-    TestCallBack1 callback;
-
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(IWindowManagerAgent::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(accessTokenId));
-    ASSERT_EQ(true, data.WriteBool(isShowing));
-    uint32_t code = 10;
-    ASSERT_EQ(0, callback.OnRemoteRequest(code, data, reply, option)); // descriptor true + msgId default
-}
-
-/**
- * @tc.name: OnRemoteRequest002
- * @tc.desc: WindowManagerPrivacyAgent::OnRemoteRequest function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
-{
-    uint32_t accessTokenId = 123; // 123 is random input
-    bool isShowing = false;
-    TestCallBack1 callback;
-
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(IWindowManagerAgent::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteUint32(accessTokenId));
-    ASSERT_EQ(true, data.WriteBool(isShowing));
-    // descriptor flase + msgId = 5
-    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        PrivacyWindowServiceInterfaceCode::TRANS_ID_UPDATE_CAMERA_FLOAT), data, reply, option));
-}
-
-/**
- * @tc.name: GetProxy001
- * @tc.desc: WindowManagerPrivacyClient::GetProxy function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, GetProxy001, TestSize.Level1)
-{
-    sptr<IWindowManager> proxy = WindowManagerPrivacyClient::GetInstance().proxy_; // backup
-    ASSERT_NE(nullptr, proxy);
-
-    // WindowManagerPrivacyClient::GetInstance().proxy_ = nullptr;
-    WindowManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
-    EXPECT_EQ(nullptr, WindowManagerPrivacyClient::GetInstance().proxy_);
-    WindowManagerPrivacyClient::GetInstance().GetProxy();
-    ASSERT_NE(nullptr, WindowManagerPrivacyClient::GetInstance().proxy_);
-
-    WindowManagerPrivacyClient::GetInstance().proxy_ = proxy; // recovery
-}
-#endif
-
 class TestCallBack2 : public ApplicationStateObserverStub {
 public:
     TestCallBack2() = default;
@@ -159,12 +71,12 @@ public:
 };
 
 /**
- * @tc.name: OnRemoteRequest003
+ * @tc.name: OnRemoteRequest001
  * @tc.desc: ApplicationStateObserverStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 {
     AppStateData appData;
     TestCallBack2 callback;
@@ -180,12 +92,12 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
 }
 
 /**
- * @tc.name: OnRemoteRequest004
+ * @tc.name: OnRemoteRequest002
  * @tc.desc: ApplicationStateObserverStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
 {
     AppStateData appData;
     TestCallBack2 callback;
@@ -203,12 +115,12 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
 }
 
 /**
- * @tc.name: OnRemoteRequest005
+ * @tc.name: OnRemoteRequest003
  * @tc.desc: ApplicationStateObserverStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest005, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
 {
     AppStateData appData;
     TestCallBack2 callback;
@@ -238,12 +150,12 @@ public:
 };
 
 /**
- * @tc.name: OnRemoteRequest006
+ * @tc.name: OnRemoteRequest004
  * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest006, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
 {
     bool muteMode = false;
     TestCallBack3 callback;
@@ -259,12 +171,12 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest006, TestSize.Level1)
 }
 
 /**
- * @tc.name: OnRemoteRequest007
+ * @tc.name: OnRemoteRequest005
  * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest007, TestSize.Level1)
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest005, TestSize.Level1)
 {
     bool muteMode = false;
     TestCallBack3 callback;
