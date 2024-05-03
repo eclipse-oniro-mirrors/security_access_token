@@ -63,6 +63,7 @@ constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
+static constexpr char ADD_DOMAIN[] = "PERFORMANCE";
 }
 
 const bool REGISTER_RESULT =
@@ -665,9 +666,9 @@ bool AccessTokenManagerService::Initialize()
     // accesstoken_service add CPU_SCENE_ENTRY system event in OnStart, avoid CPU statistics
     long id = 1 << 0; // first scene
     int64_t time = TimeUtil::GetCurrentTimestamp();
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CPU_SCENE_ENTRY",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME,
-        "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
+
+    HiSysEventWrite(ADD_DOMAIN, "CPU_SCENE_ENTRY", HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME, "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 

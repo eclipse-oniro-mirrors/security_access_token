@@ -19,7 +19,7 @@
 #include <cinttypes>
 #include <numeric>
 
-#include "ability_manager_access_loader.h"
+#include "ability_manager_access_client.h"
 #include "accesstoken_config_policy.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -767,14 +767,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
-    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
-    AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
-        loader.GetObject<AbilityManagerAccessLoaderInterface>();
-    if (abilityManagerAccessLoader == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_ability_manager_access failed.");
-        return false;
-    }
-    ErrCode err = abilityManagerAccessLoader->StartAbility(want, nullptr);
+    ErrCode err = AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;

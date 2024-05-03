@@ -87,6 +87,18 @@ ohos_static_library("accesstoken_service_common") {
     external_deps += [ "config_policy:configpolicy_util" ]
   }
 
+  if (ability_base_enable == true) {
+    include_dirs += [ "ability_manager/include" ]
+
+    sources += [
+      "ability_manager/src/ability_manager_access_client.cpp",
+      "ability_manager/src/ability_manager_access_death_recipient.cpp",
+      "ability_manager/src/ability_manager_access_proxy.cpp",
+    ]
+
+    external_deps += [ "ability_base:want" ]
+  }
+
   if (use_musl) {
     if (use_jemalloc && use_jemalloc_dfx_intf) {
       cflags_cc += [ "-DCONFIG_USE_JEMALLOC_DFX_INTF" ]
@@ -98,7 +110,6 @@ group("accesstoken_common") {
   if (is_standard_system) {
     deps = [
       ":accesstoken_service_common",
-      "ability_manager:accesstoken_ability_manager_adapter",
       "power_manager:accesstoken_power_manager",
       "screenlock_manager:accesstoken_screenlock_manager",
       "window_manager:accesstoken_window_manager",
