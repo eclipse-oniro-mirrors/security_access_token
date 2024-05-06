@@ -25,7 +25,8 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AudioRoutingManagerListenerStub"};
 
-static const uint32_t UPDATE_CALLBACK_CLIENT = 0;
+static constexpr uint32_t UPDATE_CALLBACK_CLIENT = 0;
+static constexpr int32_t ON_MIC_STATE_UPDATED = 6; // audio_policy_client.h | ON_MIC_STATE_UPDATED
 }
 AudioRoutingManagerListenerStub::AudioRoutingManagerListenerStub()
 {
@@ -47,6 +48,12 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
     switch (code) {
         case UPDATE_CALLBACK_CLIENT: {
             MicStateChangeEvent micStateChangeEvent = {};
+
+            int32_t clientCode = data.ReadInt32();
+            if (clientCode != ON_MIC_STATE_UPDATED) {
+                ACCESSTOKEN_LOG_INFO(LABEL, "ClientCode %{public}d is not ON_MIC_STATE_UPDATED-6, ignore", clientCode);
+                return NO_ERROR;
+            }
 
             micStateChangeEvent.mute = data.ReadBool();
             OnMicStateUpdated(micStateChangeEvent);

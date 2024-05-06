@@ -263,11 +263,6 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
 {
     // only support remove by tokenId(local)
     std::string device = GetDeviceId(tokenId);
-    if (device.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId = %{public}d", tokenId);
-        return;
-    }
-
     if (!deviceID.empty() && device != deviceID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "deviceID mismatch");
         return;
@@ -635,7 +630,7 @@ void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessToken
 
 void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d", opCode);
+    ACCESSTOKEN_LOG_INFO(LABEL, "opCode %{public}d", opCode);
     bool isUsingCamera = (opCode == Constant::OP_CAMERA);
     std::string perm;
     Constant::TransferOpcodeToPermission(opCode, perm);

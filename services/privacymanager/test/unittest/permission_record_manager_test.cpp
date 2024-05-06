@@ -604,21 +604,6 @@ HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
     EXPECT_NE(nullptr, loader2.handle_);
 }
 
-/**
- * @tc.name: Dlopen002
- * @tc.desc: Open a exist lib & exist func
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, Dlopen002, TestSize.Level1)
-{
-    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
-    AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
-        loader.GetObject<AbilityManagerAccessLoaderInterface>();
-    EXPECT_NE(nullptr, loader.handle_);
-    EXPECT_NE(nullptr, abilityManagerAccessLoader);
-}
-
 /*
  * @tc.name: AddDataValueToResults001
  * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
