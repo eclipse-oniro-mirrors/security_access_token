@@ -23,7 +23,7 @@ namespace AccessToken {
 
 enum class WindowManagerAgentType : uint32_t {
     WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT = 5,
-    WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW = 9,
+    WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW = 10,
 };
 
 enum class PrivacyWindowServiceInterfaceCode {
