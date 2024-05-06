@@ -67,6 +67,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/power_manager/include",
       "${access_token_path}/services/common/screenlock_manager/include",
+      "${audio_framework_path}/services/audio_policy/common/include",
     ]
 
     sources = [
@@ -97,6 +98,7 @@ if (is_standard_system && ability_base_enable == true) {
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [ "${access_token_path}/config:coverage_flags" ]
+    defines = [ "FEATURE_DTMF_TONE" ]
 
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
