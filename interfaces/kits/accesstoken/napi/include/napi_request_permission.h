@@ -46,6 +46,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiAbilityFlag = false;
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
+    bool releaseFlag = false;
 };
 
 struct RequestAsyncContextHandle {
