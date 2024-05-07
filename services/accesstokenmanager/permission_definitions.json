@@ -1367,7 +1367,7 @@
             "availableType": "SYSTEM",
             "since": 10,
             "deprecated": "",
-            "provisionEnable": false,
+            "provisionEnable": true,
             "distributedSceneEnable": false
         },
         {
