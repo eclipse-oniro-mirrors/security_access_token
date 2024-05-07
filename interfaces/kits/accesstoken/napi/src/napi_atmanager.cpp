@@ -579,6 +579,7 @@ void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
 
 napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info info)
 {
+    static int64_t selfTokenId = GetSelfTokenID();
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
@@ -600,7 +601,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
         NAPI_CALL(env, napi_throw(env, GenerateBusinessError(env, JS_ERROR_PARAM_INVALID, errMsg)));
         return nullptr;
     }
-    if (asyncContext->tokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
+    if (asyncContext->tokenId != static_cast<AccessTokenID>(selfTokenId)) {
         asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         napi_value result = nullptr;
         NAPI_CALL(env, napi_create_int32(env, asyncContext->result, &result));
