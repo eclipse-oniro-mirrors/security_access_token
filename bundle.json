@@ -66,7 +66,8 @@
           "//base/security/access_token/tools:tools_atm"
         ],
         "fwk_group": [
-          "//base/security/access_token/interfaces/kits:napi_packages"
+          "//base/security/access_token/interfaces/kits:napi_packages",
+          "//base/security/access_token/interfaces/kits:cj_packages"
         ],
         "service_group": [
           "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",
@@ -159,6 +160,16 @@
               "code_signature_analysis_kit.h"
             ],
             "header_base": "//base/security/access_token/interfaces/innerkits/analysis_model/include"
+          }
+        },
+        {
+          "name": "//base/security/access_token/interfaces/kits/accesstoken:cj_ability_access_ctrl_ffi",
+          "header": {
+            "header_files": [
+              "ability_access_ctrl_ffi.h",
+              "at_manager_impl.h"
+            ],
+            "header_base": "//base/security/access_token/interfaces/kits/accesstoken/cj"
           }
         }
       ],
