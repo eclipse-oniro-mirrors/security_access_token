@@ -401,6 +401,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.GET_ACCOUNT_MINORS_INFO",             false},
     {"ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS_AS_USER", false},
     {"ohos.permission.ACCESS_LOCAL_THEME",                  false},
+    {"ohos.permission.ACCESS_SHADER_CACHE_DIR",             false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
