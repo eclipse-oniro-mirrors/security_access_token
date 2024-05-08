@@ -178,7 +178,8 @@ int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dc
     return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
 }
 
-AccessTokenID AccessTokenKit::GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex)
+AccessTokenID AccessTokenKit::GetHapTokenID(
+    int32_t userID, const std::string& bundleName, int32_t instIndex) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
         userID, bundleName.c_str(), instIndex);
