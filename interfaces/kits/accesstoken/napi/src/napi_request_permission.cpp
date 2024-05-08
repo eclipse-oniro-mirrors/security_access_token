@@ -431,16 +431,19 @@ static void GrantResultsCallbackUI(const std::vector<std::string>& permissionLis
 
 void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
 {
+    this->reqContext_->releaseFlag = true;
     Ace::UIContent* uiContent = nullptr;
     if (this->reqContext_->uiAbilityFlag) {
         uiContent = this->reqContext_->abilityContext->GetUIContent();
     } else {
         uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
     }
-    if (uiContent != nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "close uiextension component");
-        uiContent->CloseModalUIExtension(this->sessionId_);
+    if (uiContent == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
+        return;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "close uiextension component");
+    uiContent->CloseModalUIExtension(this->sessionId_);
     int32_t instanceId = uiContent->GetInstanceId();
     RequestAsyncInstanceControl::ExecCallback(instanceId);
     if (code == 0) {
@@ -533,6 +536,22 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
+    if (this->reqContext_->releaseFlag) {
+        return;
+    }
+    Ace::UIContent* uiContent = nullptr;
+    if (this->reqContext_->uiAbilityFlag) {
+        uiContent = this->reqContext_->abilityContext->GetUIContent();
+    } else {
+        uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
+    }
+    if (uiContent == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "get ui content failed!");
+        return;
+    }
+
+    int32_t instanceId = uiContent->GetInstanceId();
+    RequestAsyncInstanceControl::ExecCallback(instanceId);
 }
 
 static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
