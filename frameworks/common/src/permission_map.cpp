@@ -320,6 +320,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.USE_SECURITY_PRIVACY_MESSAGER",       false},
     {"ohos.permission.GET_PRIVACY_INDICATOR",               false},
     {"ohos.permission.SET_PRIVACY_INDICATOR",               false},
+    {"ohos.permission.EXEMPT_PRIVACY_INDICATOR",            false},
     {"ohos.permission.GET_SUPER_PRIVACY",                   false},
     {"ohos.permission.SET_SUPER_PRIVACY",                   false},
     {"ohos.permission.RECORD_VOICE_CALL",                   false},
