@@ -173,22 +173,31 @@ public:
     unsigned int permissionFlags);
     static int32_t RevokeUserGrantedPermission(unsigned int tokenID, const char* cPermissionName,
     unsigned int permissionFlags);
-    static int32_t RegisterPermStateChangeCallback(const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
+    static int32_t RegisterPermStateChangeCallback(
+        const char* cType,
+        CArrUI32 cTokenIDList,
+        CArrString cPermissionList,
         std::function<void(CPermStateChangeInfo)> *callback,
         const std::function<void(CPermStateChangeInfo)>& callbackRef);
-    static int32_t UnregisterPermStateChangeCallback(const char* cType, CArrUI32 cTokenIDList,
-        CArrString cPermissionList, std::function<void(CPermStateChangeInfo)> *callback,
+    static int32_t UnregisterPermStateChangeCallback(
+        const char* cType, CArrUI32 cTokenIDList,
+        CArrString cPermissionList,
+        std::function<void(CPermStateChangeInfo)> *callback,
         const std::function<void(CPermStateChangeInfo)>& callbackRef);
     static void RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
         const std::function<void(RetDataCPermissionRequestResult)>& callbackRef);
 private:
     static std::string GetPermParamValue();
-    static int32_t FillPermStateChangeInfo(const std::string& type,
-        CArrUI32 cTokenIDList, CArrString cPermissionList,
+    static int32_t FillPermStateChangeInfo(
+        const std::string& type,
+        CArrUI32 cTokenIDList,
+        CArrString cPermissionList,
         RegisterCallback callback,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
-    static int32_t FillUnregisterPermStateChangeInfo(const std::string& type,
-        CArrUI32 cTokenIDList, CArrString cPermissionList,
+    static int32_t FillUnregisterPermStateChangeInfo(
+        const std::string& type,
+        CArrUI32 cTokenIDList,
+        CArrString cPermissionList,
         RegisterCallback callback,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
@@ -202,7 +211,6 @@ private:
         const std::function<void(RetDataCPermissionRequestResult)>& callbackRef,
         std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
-
 }
 }
 

@@ -125,12 +125,12 @@ static bool CompareCallbackRef(std::function<void(CPermStateChangeInfo)>* subscr
     return subscriberRef == unsubscriberRef;
 }
 
-static std::vector<std::string> CArrStringToVector(CArrString cArr)
+static std::vector<std::string> CArrStringToVector(const CArrString& cArr)
 {
     LOGI("ACCESS_CTRL_TEST:: CArrStringToVector start");
     std::vector<std::string> ret;
     for (int64_t i = 0; i < cArr.size; i++) {
-        ret.push_back(std::string(cArr.head[i]));
+        ret.emplace_back(std::string(cArr.head[i]));
     }
     LOGI("ACCESS_CTRL_TEST:: CArrStringToVector end");
     return ret;
@@ -150,7 +150,7 @@ char* MallocCString(const std::string& stdString)
     return std::char_traits<char>::copy(ret, stdString.c_str(), length);
 }
 
-static char** VectorToCArrString(std::vector<std::string> &vec)
+static char** VectorToCArrString(const std::vector<std::string>& vec)
 {
     char** result = static_cast<char**>(malloc(sizeof(char*) * vec.size()));
     if (result == nullptr) {
@@ -163,7 +163,7 @@ static char** VectorToCArrString(std::vector<std::string> &vec)
     return result;
 }
 
-static int32_t* VectorToCArrInt32(std::vector<int32_t> &vec)
+static int32_t* VectorToCArrInt32(const std::vector<int32_t>& vec)
 {
     int32_t* result = static_cast<int32_t*>(malloc(sizeof(int32_t) * vec.size()));
     if (result == nullptr) {
@@ -179,7 +179,8 @@ static int32_t* VectorToCArrInt32(std::vector<int32_t> &vec)
 int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* cPermissionName)
 {
     LOGI("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync START");
-    if (tokenID != static_cast<AccessTokenID>(GetSelfTokenID())) {
+    static AccessTokenID selgTokenId = GetSelfTokenID();
+    if (tokenID != selgTokenId) {
         auto result = AccessTokenKit::VerifyAccessToken(tokenID, cPermissionName);
         LOGI("ACCESS_CTRL_TEST::AtManagerImpl::VerifyAccessTokenSync end.");
         return result;
@@ -276,7 +277,9 @@ int32_t AtManagerImpl::RevokeUserGrantedPermission(unsigned int tokenID, const c
 }
 
 int32_t AtManagerImpl::RegisterPermStateChangeCallback(
-    const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
+    const char* cType,
+    CArrUI32 cTokenIDList,
+    CArrString cPermissionList,
     std::function<void(CPermStateChangeInfo)>* callback,
     const std::function<void(CPermStateChangeInfo)>& callbackRef)
 {
@@ -303,8 +306,7 @@ int32_t AtManagerImpl::RegisterPermStateChangeCallback(
     if (result != CJ_OK) {
         LOGE("RegisterPermStateChangeCallback failed");
         registerPermStateChangeInfo->errCode = result;
-        int32_t cjCode = GetCjErrorCode(result);
-        return cjCode;
+        return GetCjErrorCode(result);
     }
     {
         std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
@@ -353,8 +355,7 @@ int32_t AtManagerImpl::UnregisterPermStateChangeCallback(
             DeleteRegisterFromVector(scopeInfo, item->callbackRef);
         } else {
             LOGE("Batch UnregisterPermActiveChangeCompleted failed");
-            int32_t cjCode = GetCjErrorCode(result);
-            return cjCode;
+            return GetCjErrorCode(result);
         }
     }
     return CJ_OK;
@@ -671,8 +672,10 @@ void AtManagerImpl::RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* co
     }
 }
 
-int32_t AtManagerImpl::FillPermStateChangeInfo(const std::string& type,
-    CArrUI32 cTokenIDList, CArrString cPermissionList,
+int32_t AtManagerImpl::FillPermStateChangeInfo(
+    const std::string& type,
+    CArrUI32 cTokenIDList,
+    CArrString cPermissionList,
     RegisterCallback callback,
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
@@ -703,8 +706,10 @@ int32_t AtManagerImpl::FillPermStateChangeInfo(const std::string& type,
     return CJ_OK;
 }
 
-int32_t AtManagerImpl::FillUnregisterPermStateChangeInfo(const std::string& type,
-    CArrUI32 cTokenIDList, CArrString cPermissionList,
+int32_t AtManagerImpl::FillUnregisterPermStateChangeInfo(
+    const std::string& type,
+    CArrUI32 cTokenIDList,
+    CArrString cPermissionList,
     RegisterCallback callback,
     UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo)
 {
