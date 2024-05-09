@@ -119,7 +119,6 @@ private:
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
-    OHOS::ThreadPool tokenDumpWorker_;
 };
 } // namespace AccessToken
 } // namespace Security
