@@ -28,6 +28,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySecCompEnhanceAgent"
 };
+std::recursive_mutex g_instanceMutex;
 }
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
@@ -46,8 +47,14 @@ void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
 
 PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
 {
-    static PrivacySecCompEnhanceAgent instance;
-    return instance;
+    static PrivacySecCompEnhanceAgent* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PrivacySecCompEnhanceAgent();
+        }
+    }
+    return *instance;
 }
 
 void PrivacySecCompEnhanceAgent::InitAppObserver()

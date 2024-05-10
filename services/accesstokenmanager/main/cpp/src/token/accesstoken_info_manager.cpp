@@ -54,6 +54,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManager"};
 static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
@@ -1020,8 +1021,14 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
 
 AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
 {
-    static AccessTokenInfoManager instance;
-    return instance;
+    static AccessTokenInfoManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenInfoManager();
+        }
+    }
+    return *instance;
 }
 
 void AccessTokenInfoManager::StoreAllTokenInfo()

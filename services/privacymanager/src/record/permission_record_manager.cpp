@@ -66,11 +66,18 @@ static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
 static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
+std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
-    static PermissionRecordManager instance;
-    return instance;
+    static PermissionRecordManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionRecordManager();
+        }
+    }
+    return *instance;
 }
 
 PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false) {}

@@ -20,10 +20,20 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+std::recursive_mutex g_instanceMutex;
+}
+
 RemoteCommandFactory &RemoteCommandFactory::GetInstance()
 {
-    static RemoteCommandFactory instance;
-    return instance;
+    static RemoteCommandFactory* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new RemoteCommandFactory();
+        }
+    }
+    return *instance;
 }
 
 std::shared_ptr<SyncRemoteHapTokenCommand> RemoteCommandFactory::NewSyncRemoteHapTokenCommand(

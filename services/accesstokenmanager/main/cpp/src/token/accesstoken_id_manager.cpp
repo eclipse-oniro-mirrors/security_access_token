@@ -14,6 +14,7 @@
  */
 
 #include "accesstoken_id_manager.h"
+#include <mutex>
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
@@ -23,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenIDManager"};
 }
 
@@ -133,8 +135,14 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 
 AccessTokenIDManager& AccessTokenIDManager::GetInstance()
 {
-    static AccessTokenIDManager instance;
-    return instance;
+    static AccessTokenIDManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenIDManager();
+        }
+    }
+    return *instance;
 }
 } // namespace AccessToken
 } // namespace Security

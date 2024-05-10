@@ -35,12 +35,19 @@ static const uint32_t MAX_CALLBACK_SIZE = 1024;
 static const time_t MAX_TIMEOUT_SEC = 30;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 #endif
+std::recursive_mutex g_instanceMutex;
 }
 
 CallbackManager& CallbackManager::GetInstance()
 {
-    static CallbackManager instance;
-    return instance;
+    static CallbackManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new CallbackManager();
+        }
+    }
+    return *instance;
 }
 
 CallbackManager::CallbackManager() : callbackDeathRecipient_(sptr<IRemoteObject::DeathRecipient>(

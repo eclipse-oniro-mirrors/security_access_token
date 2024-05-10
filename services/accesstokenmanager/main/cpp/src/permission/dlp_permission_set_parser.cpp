@@ -31,6 +31,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DlpPermissionSetParser"};
+std::recursive_mutex g_instanceMutex;
 }
 
 // nlohmann json need the function named from_json to parse
@@ -145,8 +146,14 @@ int32_t DlpPermissionSetParser::Init()
 
 DlpPermissionSetParser& DlpPermissionSetParser::GetInstance()
 {
-    static DlpPermissionSetParser instance;
-    return instance;
+    static DlpPermissionSetParser* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new DlpPermissionSetParser();
+        }
+    }
+    return *instance;
 }
 } // namespace AccessToken
 } // namespace Security
