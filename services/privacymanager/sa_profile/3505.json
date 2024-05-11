@@ -6,6 +6,7 @@
             "libpath": "libprivacy_manager_service.z.so",
             "run-on-create": true,
             "distributed": true,
+            "depend": [ 3503 ],
             "dump_level": 1
         }
     ]
