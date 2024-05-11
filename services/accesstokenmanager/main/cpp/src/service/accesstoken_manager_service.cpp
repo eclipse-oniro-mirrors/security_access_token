@@ -78,7 +78,6 @@ AccessTokenManagerService::AccessTokenManagerService()
 AccessTokenManagerService::~AccessTokenManagerService()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "~AccessTokenManagerService()");
-    tokenDumpWorker_.Stop();
 }
 
 void AccessTokenManagerService::OnStart()
@@ -697,7 +696,6 @@ bool AccessTokenManagerService::Initialize()
     PermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
-    tokenDumpWorker_.Start(1);
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
     return true;
 }
