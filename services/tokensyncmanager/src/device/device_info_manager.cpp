@@ -21,11 +21,18 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DeviceInfoManager"};
+std::recursive_mutex g_instanceMutex;
 }
 DeviceInfoManager &DeviceInfoManager::GetInstance()
 {
-    static DeviceInfoManager instance;
-    return instance;
+    static DeviceInfoManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new DeviceInfoManager();
+        }
+    }
+    return *instance;
 }
 
 bool DeviceInfoManager::GetDeviceInfo(

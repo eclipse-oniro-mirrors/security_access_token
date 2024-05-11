@@ -58,6 +58,7 @@ static const int32_t ERROR_CLIENT_HAS_BIND_ALREADY = -4;
 
 static const int32_t BIND_SERVICE_MAX_RETRY_TIMES = 10;
 static const int32_t BIND_SERVICE_SLEEP_TIMES_MS = 100; // 0.1s
+std::recursive_mutex g_instanceMutex;
 } // namespace
 
 SoftBusManager::SoftBusManager() : isSoftBusServiceBindSuccess_(false), inited_(false), mutex_(), fulfillMutex_()
@@ -72,8 +73,14 @@ SoftBusManager::~SoftBusManager()
 
 SoftBusManager &SoftBusManager::GetInstance()
 {
-    static SoftBusManager instance;
-    return instance;
+    static SoftBusManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new SoftBusManager();
+        }
+    }
+    return *instance;
 }
 
 int SoftBusManager::AddTrustedDeviceInfo()

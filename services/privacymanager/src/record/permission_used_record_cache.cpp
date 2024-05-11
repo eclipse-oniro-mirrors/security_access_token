@@ -31,6 +31,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordCache"
 };
+std::recursive_mutex g_instanceMutex;
 }
 PermissionUsedRecordCache::PermissionUsedRecordCache()
     : hasInited_(false), readRecordBufferTaskWorker_("PermissionUsedRecordCache") {}
@@ -46,16 +47,22 @@ PermissionUsedRecordCache::~PermissionUsedRecordCache()
 
 PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
 {
-    static PermissionUsedRecordCache instance;
-
-    if (!instance.hasInited_) {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance.initLock_);
-        if (!instance.hasInited_) {
-            instance.readRecordBufferTaskWorker_.Start(1);
-            instance.hasInited_ = true;
+    static PermissionUsedRecordCache* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionUsedRecordCache();
         }
     }
-    return instance;
+
+    if (!instance->hasInited_) {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance->initLock_);
+        if (!instance->hasInited_) {
+            instance->readRecordBufferTaskWorker_.Start(1);
+            instance->hasInited_ = true;
+        }
+    }
+    return *instance;
 }
 
 bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2)

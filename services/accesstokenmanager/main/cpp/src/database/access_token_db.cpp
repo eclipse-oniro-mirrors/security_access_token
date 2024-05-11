@@ -15,6 +15,7 @@
 
 #include "access_token_db.h"
 
+#include <mutex>
 #include "accesstoken_log.h"
 
 namespace OHOS {
@@ -24,12 +25,19 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDb"};
 static const std::string INTEGER_STR = " integer not null,";
 static const std::string TEXT_STR = " text not null,";
+std::recursive_mutex g_instanceMutex;
 }
 
 AccessTokenDb& AccessTokenDb::GetInstance()
 {
-    static AccessTokenDb instance;
-    return instance;
+    static AccessTokenDb* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenDb();
+        }
+    }
+    return *instance;
 }
 
 AccessTokenDb::~AccessTokenDb()

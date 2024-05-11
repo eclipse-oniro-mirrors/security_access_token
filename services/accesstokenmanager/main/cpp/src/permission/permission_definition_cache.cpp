@@ -29,12 +29,19 @@ static const int32_t EXTENSION_PERMISSION_ID = 0;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "PermissionDefinitionCache"
 };
+std::recursive_mutex g_instanceMutex;
 }
 
 PermissionDefinitionCache& PermissionDefinitionCache::GetInstance()
 {
-    static PermissionDefinitionCache instance;
-    return instance;
+    static PermissionDefinitionCache* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionDefinitionCache();
+        }
+    }
+    return *instance;
 }
 
 PermissionDefinitionCache::PermissionDefinitionCache()

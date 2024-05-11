@@ -30,12 +30,19 @@ static const std::string TASK_NAME_TEMP_PERMISSION = "atm_permission_manager_tem
 #ifdef EVENTHANDLER_ENABLE
 static constexpr int32_t WAIT_MILLISECONDS = 10 * 1000; // 10s
 #endif
+std::recursive_mutex g_instanceMutex;
 }
 
 TempPermissionObserver& TempPermissionObserver::GetInstance()
 {
-    static TempPermissionObserver instance;
-    return instance;
+    static TempPermissionObserver* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new TempPermissionObserver();
+        }
+    }
+    return *instance;
 }
 
 void PermissionAppStateObserver::OnProcessDied(const ProcessData &processData)

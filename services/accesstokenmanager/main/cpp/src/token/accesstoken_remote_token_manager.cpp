@@ -24,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenRemoteTokenManager"};
 }
@@ -36,8 +37,14 @@ AccessTokenRemoteTokenManager::~AccessTokenRemoteTokenManager()
 
 AccessTokenRemoteTokenManager& AccessTokenRemoteTokenManager::GetInstance()
 {
-    static AccessTokenRemoteTokenManager instance;
-    return instance;
+    static AccessTokenRemoteTokenManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenRemoteTokenManager();
+        }
+    }
+    return *instance;
 }
 
 AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const std::string& deviceID,

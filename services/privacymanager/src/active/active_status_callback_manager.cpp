@@ -32,12 +32,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "ActiveStatusCallbackManager"
 };
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
+std::recursive_mutex g_instanceMutex;
 }
 
 ActiveStatusCallbackManager& ActiveStatusCallbackManager::GetInstance()
 {
-    static ActiveStatusCallbackManager instance;
-    return instance;
+    static ActiveStatusCallbackManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new ActiveStatusCallbackManager();
+        }
+    }
+    return *instance;
 }
 
 ActiveStatusCallbackManager::ActiveStatusCallbackManager()
