@@ -21,7 +21,6 @@
 #include <cstring>
 #include <pthread.h>
 #include <unistd.h>
-#include <uv.h>
 #include <thread>
 
 #include "accesstoken_kit.h"
@@ -139,7 +138,7 @@ struct PermStateChangeContext {
     int32_t errCode = 0;
     std::string permStateChangeType;
     AccessTokenKit* accessTokenKit = nullptr;
-    std::thread::id threadId_;
+    std::thread::id threadId;
     std::shared_ptr<RegisterPermStateChangeScopePtr> subscriber = nullptr;
 };
 

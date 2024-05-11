@@ -702,7 +702,7 @@ int32_t AtManagerImpl::FillPermStateChangeInfo(
     registerPermStateChangeInfo.permStateChangeType = type;
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
     registerPermStateChangeInfo.subscriber->SetCallbackRef(callback.callbackRef);
-    registerPermStateChangeInfo.threadId_ = std::this_thread::get_id();
+    registerPermStateChangeInfo.threadId = std::this_thread::get_id();
     return CJ_OK;
 }
 
@@ -734,7 +734,7 @@ int32_t AtManagerImpl::FillUnregisterPermStateChangeInfo(
     unregisterPermStateChangeInfo.callbackRef = callback.callback;
     unregisterPermStateChangeInfo.permStateChangeType = type;
     unregisterPermStateChangeInfo.scopeInfo = changeScopeInfo;
-    unregisterPermStateChangeInfo.threadId_ = std::this_thread::get_id();
+    unregisterPermStateChangeInfo.threadId = std::this_thread::get_id();
     return CJ_OK;
 }
 
@@ -746,12 +746,12 @@ bool AtManagerImpl::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* 
     std::vector<std::string> targetPermList = unregisterPermStateChangeInfo->scopeInfo.permList;
     for (const auto& item : g_permStateChangeRegisters) {
         if (unregisterPermStateChangeInfo->callbackRef != nullptr) {
-            if (!CompareCallbackRef(item->callbackRef, unregisterPermStateChangeInfo->callbackRef, item->threadId_)) {
+            if (!CompareCallbackRef(item->callbackRef, unregisterPermStateChangeInfo->callbackRef, item->threadId)) {
                 continue;
             }
         } else {
             // batch delete currentThread callback
-            if (!IsCurrentThread(item->threadId_)) {
+            if (!IsCurrentThread(item->threadId)) {
                 continue;
             }
         }
@@ -780,7 +780,7 @@ void AtManagerImpl::DeleteRegisterFromVector(const PermStateChangeScope& scopeIn
         PermStateChangeScope stateChangeScope;
         (*item)->subscriber->GetScope(stateChangeScope);
         if ((stateChangeScope.tokenIDs == targetTokenIDs) && (stateChangeScope.permList == targetPermList) &&
-            CompareCallbackRef((*item)->callbackRef, subscriberRef, (*item)->threadId_)) {
+            CompareCallbackRef((*item)->callbackRef, subscriberRef, (*item)->threadId)) {
             LOGI("Find subscribers in vector, delete");
             delete *item;
             *item = nullptr;
@@ -869,7 +869,7 @@ bool AtManagerImpl::IsExistRegister(const RegisterPermStateChangeInfo* registerP
         }
 
         if (hasTokenIdIntersection && hasPermIntersection &&
-            CompareCallbackRef(item->callbackRef, registerPermStateChangeInfo->callbackRef, item->threadId_)) {
+            CompareCallbackRef(item->callbackRef, registerPermStateChangeInfo->callbackRef, item->threadId)) {
             return true;
         }
     }
