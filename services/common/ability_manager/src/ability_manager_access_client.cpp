@@ -44,7 +44,10 @@ AbilityManagerAccessClient::AbilityManagerAccessClient()
 {}
 
 AbilityManagerAccessClient::~AbilityManagerAccessClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t AbilityManagerAccessClient::StartAbility(
     const AAFwk::Want &want, const sptr<IRemoteObject> &callerToken, int requestCode, int32_t userId)
@@ -72,7 +75,7 @@ void AbilityManagerAccessClient::InitProxy()
         return;
     }
 
-    serviceDeathObserver_ = new (std::nothrow) AbilityManagerAccessDeathRecipient();
+    serviceDeathObserver_ = sptr<AbilityManagerAccessDeathRecipient>::MakeSptr();
     if (serviceDeathObserver_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Create AbilityManagerAccessDeathRecipient failed");
         return;
@@ -96,7 +99,7 @@ void AbilityManagerAccessClient::InitProxy()
 void AbilityManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
 }
 
 sptr<IAbilityManager> AbilityManagerAccessClient::GetProxy()
@@ -106,6 +109,15 @@ sptr<IAbilityManager> AbilityManagerAccessClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void AbilityManagerAccessClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

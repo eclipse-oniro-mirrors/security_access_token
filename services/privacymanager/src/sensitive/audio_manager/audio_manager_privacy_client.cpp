@@ -45,7 +45,10 @@ AudioManagerPrivacyClient::AudioManagerPrivacyClient()
 {}
 
 AudioManagerPrivacyClient::~AudioManagerPrivacyClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t AudioManagerPrivacyClient::SetMicStateChangeCallback(const sptr<AudioRoutingManagerListenerStub>& callback)
 {
@@ -100,7 +103,7 @@ void AudioManagerPrivacyClient::InitProxy()
         return;
     }
 
-    serviceDeathObserver_ = new (std::nothrow) AudioMgrDeathRecipient();
+    serviceDeathObserver_ = sptr<AudioMgrDeathRecipient>::MakeSptr();
     if (serviceDeathObserver_ != nullptr) {
         audioManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
@@ -114,7 +117,7 @@ void AudioManagerPrivacyClient::InitProxy()
 void AudioManagerPrivacyClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
 }
 
 sptr<IAudioPolicy> AudioManagerPrivacyClient::GetProxy()
@@ -124,6 +127,15 @@ sptr<IAudioPolicy> AudioManagerPrivacyClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void AudioManagerPrivacyClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

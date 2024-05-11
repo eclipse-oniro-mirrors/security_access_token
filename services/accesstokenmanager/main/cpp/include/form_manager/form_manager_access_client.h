@@ -43,6 +43,7 @@ private:
 
     void InitProxy();
     sptr<IFormMgr> GetProxy();
+    void ReleaseProxy();
 
     sptr<FormMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

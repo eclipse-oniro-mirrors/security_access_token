@@ -44,7 +44,10 @@ CameraManagerPrivacyClient::CameraManagerPrivacyClient()
 {}
 
 CameraManagerPrivacyClient::~CameraManagerPrivacyClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t CameraManagerPrivacyClient::SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback)
 {
@@ -92,7 +95,7 @@ void CameraManagerPrivacyClient::InitProxy()
         return;
     }
 
-    serviceDeathObserver_ = new (std::nothrow) CameraManagerPrivacyDeathRecipient();
+    serviceDeathObserver_ = sptr<CameraManagerPrivacyDeathRecipient>::MakeSptr();
     if (serviceDeathObserver_ != nullptr) {
         cameraManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
@@ -106,7 +109,7 @@ void CameraManagerPrivacyClient::InitProxy()
 void CameraManagerPrivacyClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
 }
 
 sptr<ICameraService> CameraManagerPrivacyClient::GetProxy()
@@ -116,6 +119,15 @@ sptr<ICameraService> CameraManagerPrivacyClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void CameraManagerPrivacyClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

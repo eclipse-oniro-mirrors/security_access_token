@@ -45,7 +45,10 @@ AppManagerAccessClient::AppManagerAccessClient()
 {}
 
 AppManagerAccessClient::~AppManagerAccessClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
 {
@@ -101,7 +104,7 @@ void AppManagerAccessClient::InitProxy()
         return;
     }
 
-    serviceDeathObserver_ = new (std::nothrow) AppMgrDeathRecipient();
+    serviceDeathObserver_ = sptr<AppMgrDeathRecipient>::MakeSptr();
     if (serviceDeathObserver_ != nullptr) {
         appManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
@@ -133,8 +136,10 @@ void AppManagerAccessClient::OnRemoteDiedHandle()
     for (size_t i = 0; i < tmpCallbackList.size(); i++) {
         tmpCallbackList[i]->NotifyAppManagerDeath();
     }
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(proxyMutex_);
+        ReleaseProxy();
+    }
 }
 
 sptr<IAppMgr> AppManagerAccessClient::GetProxy()
@@ -144,6 +149,15 @@ sptr<IAppMgr> AppManagerAccessClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void AppManagerAccessClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -74,6 +74,7 @@ private:
     sptr<PrivacyDeathRecipient> serviceDeathObserver_ = nullptr;
     void InitProxy();
     sptr<IPrivacyManager> GetProxy();
+    void ReleaseProxy();
 
 private:
     std::mutex activeCbkMutex_;

@@ -44,7 +44,10 @@ BackgourndTaskManagerAccessClient::BackgourndTaskManagerAccessClient()
 {}
 
 BackgourndTaskManagerAccessClient::~BackgourndTaskManagerAccessClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
 {
@@ -113,7 +116,7 @@ void BackgourndTaskManagerAccessClient::InitProxy()
 void BackgourndTaskManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
 }
 
 sptr<IBackgroundTaskMgr> BackgourndTaskManagerAccessClient::GetProxy()
@@ -123,6 +126,15 @@ sptr<IBackgroundTaskMgr> BackgourndTaskManagerAccessClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void BackgourndTaskManagerAccessClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security
