@@ -406,6 +406,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_SHADER_CACHE_DIR",             false},
     {"ohos.permission.INSTALL_CLONE_BUNDLE",                false},
     {"ohos.permission.UNINSTALL_CLONE_BUNDLE",              false},
+    {"ohos.permission.PROTECT_SCREEN_LOCK_DATA",            false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
