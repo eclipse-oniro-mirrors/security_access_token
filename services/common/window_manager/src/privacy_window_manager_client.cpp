@@ -50,7 +50,7 @@ PrivacyWindowManagerClient& PrivacyWindowManagerClient::GetInstance()
     return *instance;
 }
 
-PrivacyWindowManagerClient::PrivacyWindowManagerClient()
+PrivacyWindowManagerClient::PrivacyWindowManagerClient() : deathCallback_(nullptr)
 {}
 
 PrivacyWindowManagerClient::~PrivacyWindowManagerClient()
