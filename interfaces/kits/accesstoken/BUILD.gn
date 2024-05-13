@@ -89,7 +89,8 @@ ohos_shared_library("cj_ability_access_ctrl_ffi") {
     defines = []
   }
 
-  if (product_name != "ohos-sdk" && product_name != "qemu-arm-linux-min") {
+  if (!ohos_indep_compiler_enable && product_name != "ohos-sdk" &&
+      product_name != "qemu-arm-linux-min") {
     sources = [
       "cj/ability_access_ctrl_ffi.cpp",
       "cj/at_manager_impl.cpp",
