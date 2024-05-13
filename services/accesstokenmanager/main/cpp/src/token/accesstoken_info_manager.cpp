@@ -478,7 +478,9 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
         ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, info.dlpType);
+    int32_t dlpFlag = (info.dlpType > DLP_COMMON) ? 1 : 0;
+    int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
+    AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
     if (tokenId == 0) {
         ACCESSTOKEN_LOG_INFO(LABEL, "token Id create failed");
         return ERR_TOKENID_CREATE_FAILED;
@@ -1362,8 +1364,6 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
 
-    std::string bundleName;
-    int32_t userID;
     auto infoIter = hapTokenInfoMap_.find(tokenId);
     if (infoIter == hapTokenInfoMap_.end()) {
         return;
@@ -1372,15 +1372,25 @@ void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std
         ACCESSTOKEN_LOG_ERROR(LABEL, "HapTokenInfoInner is nullptr");
         return;
     }
-    bundleName = infoIter->second->GetBundleName();
-    userID = infoIter->second->GetUserID();
+    std::string bundleName = infoIter->second->GetBundleName();
+    int32_t userID = infoIter->second->GetUserID();
+    int32_t index = infoIter->second->GetInstIndex();
+    int32_t dlpType = infoIter->second->GetDlpType();
+    // the permissions of a common application whose index is not equal 0 are managed independently.
+    if ((dlpType == DLP_COMMON) && (index != 0)) {
+        return;
+    }
 
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); ++iter) {
-        if (iter->second != nullptr) {
-            if ((bundleName == iter->second->GetBundleName()) && (userID == iter->second->GetUserID()) &&
-                (tokenId != iter->second->GetTokenID())) {
-                tokenIdList.emplace_back(iter->second->GetTokenID());
+        if (iter->second == nullptr) {
+            continue;
+        }
+        if ((bundleName == iter->second->GetBundleName()) && (userID == iter->second->GetUserID()) &&
+            (tokenId != iter->second->GetTokenID())) {
+            if ((iter->second->GetDlpType() == DLP_COMMON) && (iter->second->GetInstIndex() != 0)) {
+                continue;
             }
+            tokenIdList.emplace_back(iter->second->GetTokenID());
         }
     }
 }
