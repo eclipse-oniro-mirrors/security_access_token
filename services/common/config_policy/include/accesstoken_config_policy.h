@@ -25,6 +25,7 @@ namespace AccessToken {
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
+    int32_t cancleTime;
 };
 
 struct PrivacyServiceConfig final {

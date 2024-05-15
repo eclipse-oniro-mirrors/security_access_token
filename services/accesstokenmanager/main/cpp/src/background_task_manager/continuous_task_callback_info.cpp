@@ -98,11 +98,6 @@ bool ContinuousTaskCallbackInfo::ReadFromParcel(Parcel &parcel)
         return false;
     }
 
-    if (!parcel.ReadInt32(creatorUid_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
-        return false;
-    }
-
     int32_t pid;
     if (!parcel.ReadInt32(pid)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");

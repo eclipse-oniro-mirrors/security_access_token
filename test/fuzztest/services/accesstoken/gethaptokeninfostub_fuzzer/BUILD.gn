@@ -51,6 +51,8 @@ ohos_fuzztest("GetHapTokenInfoStubFuzzTest") {
   include_dirs += [
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/callback",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/service",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/form_manager",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/permission",
     "${access_token_path}/services/accesstokenmanager/main/cpp/include/database",
@@ -74,6 +76,11 @@ ohos_fuzztest("GetHapTokenInfoStubFuzzTest") {
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_client.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_access_proxy.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_manager_death_recipient.cpp",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_status_change_callback.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_cache.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
     "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
@@ -150,6 +157,16 @@ ohos_fuzztest("GetHapTokenInfoStubFuzzTest") {
     include_dirs += [
       "${access_token_path}/interfaces/innerkits/tokensync/include",
       "${access_token_path}/services/common/libraryloader/include",
+    ]
+  }
+  if (access_token_background_task_mgr_continuous_task_enable == true) {
+    include_dirs += [ "${access_token_path}/services/accesstokenmanager/main/cpp/include/background_task_manager" ]
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
     ]
   }
 }

@@ -31,39 +31,47 @@ bool RunningFormInfo::ReadFromParcel(Parcel &parcel)
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
         return false;
     }
-    formName_ = Str16ToStr8(parcel.ReadString16());
-    bundleName_ = Str16ToStr8(parcel.ReadString16());
-    moduleName_ = Str16ToStr8(parcel.ReadString16());
-    abilityName_ = Str16ToStr8(parcel.ReadString16());
-    if (!parcel.ReadString(description_)) {
+    std::u16string u16FormName;
+    std::u16string u16BundleName;
+    std::u16string u16ModuleName;
+    std::u16string u16AbilityName;
+    if ((!parcel.ReadString16(u16FormName)) || (!parcel.ReadString16(u16BundleName)) ||
+        (!parcel.ReadString16(u16ModuleName)) || (!parcel.ReadString16(u16AbilityName))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+        return false;
+    }
+    formName_ = Str16ToStr8(u16FormName);
+    bundleName_ = Str16ToStr8(u16BundleName);
+    moduleName_ = Str16ToStr8(u16ModuleName);
+    abilityName_ = Str16ToStr8(u16AbilityName);
+
+    if (!parcel.ReadString(description_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
         return false;
     }
 
     if (!parcel.ReadInt32(dimension_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return false;
+    }
+
+    std::u16string u16HostBundleName;
+    if (!parcel.ReadString16(u16HostBundleName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
         return false;
     }
-    hostBundleName_ = Str16ToStr8(parcel.ReadString16());
+    hostBundleName_ = Str16ToStr8(u16HostBundleName);
+
     int32_t formVisiblity;
-    if (!parcel.ReadInt32(formVisiblity)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+    int32_t formUsageState;
+    int32_t formLocation;
+    if ((!parcel.ReadInt32(formVisiblity)) || (!parcel.ReadInt32(formUsageState)) ||
+        (!parcel.ReadInt32(formLocation))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
         return false;
     }
     formVisiblity_ = static_cast<FormVisibilityType>(formVisiblity);
-
-    int32_t formUsageState;
-    if (!parcel.ReadInt32(formUsageState)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
-        return false;
-    }
     formUsageState_ = static_cast<FormUsageState>(formUsageState);
-
-    int32_t formLocation;
-    if (!parcel.ReadInt32(formLocation)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
-        return false;
-    }
     formLocation_ = static_cast<FormLocation>(formLocation);
     return true;
 }

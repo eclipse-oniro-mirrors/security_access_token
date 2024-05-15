@@ -23,6 +23,7 @@ namespace AccessToken {
 namespace {
 constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgroundTaskManagerAccessProxy"};
 static constexpr int32_t ERROR = -1;
+static constexpr int32_t MAX_CALLBACK_NUM = 10 * 1024;
 }
 
 int32_t BackgroundTaskManagerAccessProxy::SubscribeBackgroundTask(const sptr<IBackgroundTaskSubscriber>& subscriber)
@@ -99,6 +100,23 @@ int32_t BackgroundTaskManagerAccessProxy::GetContinuousTaskApps(
     if (!reply.ReadInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
         return ERROR;
+    }
+    if (result != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetContinuousTaskApps failed.");
+        return result;
+    }
+    int32_t infoSize = reply.ReadInt32();
+    if ((infoSize < 0) || (infoSize > MAX_CALLBACK_NUM)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize:%{public}d invalid.", infoSize);
+        return ERROR;
+    }
+    for (int32_t i = 0; i < infoSize; i++) {
+        auto info = reply.ReadParcelable<ContinuousTaskCallbackInfo>();
+        if (info == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Read Parcelable infos.");
+            return ERROR;
+        }
+        list.emplace_back(info);
     }
     return result;
 }

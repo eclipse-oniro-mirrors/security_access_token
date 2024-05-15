@@ -62,3 +62,9 @@ PERM_DIALOG_STATUS_INFO:
   USERID: {type: INT32, desc: user id}
   PERMISSION_NAME: {type: STRING, desc: permission name}
   TOGGLE_STATUS: {type: UINT32, desc: toggle status of permission dialog}
+
+GRANT_TEMP_PERMISSION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: grant temp permission}
+  TOKENID: {type: UINT32, desc: tokenID}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
