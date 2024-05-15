@@ -137,10 +137,6 @@ void AppManagerAccessClient::OnRemoteDiedHandle()
     proxy_ = nullptr;
 }
 
-#ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-    PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
-#endif
-
 sptr<IAppMgr> AppManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);

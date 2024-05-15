@@ -26,6 +26,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifdef COMMON_EVENT_SERVICE_ENABLE
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
@@ -100,6 +101,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
     }
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

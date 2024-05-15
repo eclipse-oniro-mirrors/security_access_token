@@ -15,6 +15,7 @@
 
 #include "permission_used_record_db.h"
 
+#include <mutex>
 #include "accesstoken_log.h"
 #include "active_change_response_info.h"
 #include "constant.h"
@@ -30,12 +31,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const std::string FIELD_COUNT_NUMBER = "count";
 static const std::string INTEGER_STR = " integer not null,";
+std::recursive_mutex g_instanceMutex;
 }
 
 PermissionUsedRecordDb& PermissionUsedRecordDb::GetInstance()
 {
-    static PermissionUsedRecordDb instance;
-    return instance;
+    static PermissionUsedRecordDb* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionUsedRecordDb();
+        }
+    }
+    return *instance;
 }
 
 PermissionUsedRecordDb::~PermissionUsedRecordDb()

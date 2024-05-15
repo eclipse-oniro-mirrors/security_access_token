@@ -23,6 +23,5 @@ frameworks/privacy/include/privacy_camera_service_ipc_interface_code.h @leonchan
 frameworks/privacy/include/privacy_service_ipc_interface_code.h @leonchan5
 frameworks/privacy/include/privacy_state_change_ipc_interface_code.h @leonchan5
 frameworks/tokensync/include/token_sync_service_ipc_interface_code.h @leonchan5
-frameworks/privacy/include/privacy_window_service_ipc_interface_code.h @leonchan5
 interfaces/innerkits/privacy/include/privacy_permission_record_ipc_interface_code.h @leonchan5
 interfaces/innerkits/token_callback/include/accesstoken_grant_result_ipc_interface_code.h @leonchan5

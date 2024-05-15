@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,9 +27,11 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
+#include "power_manager_access_loader.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
+#include "screenlock_manager_access_loader.h"
 #include "system_ability_definition.h"
 #include "string_ex.h"
 
@@ -70,9 +72,9 @@ void PrivacyManagerService::OnStart()
         return;
     }
 
-#ifdef COMMON_EVENT_SERVICE_ENABLE
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
-#endif
+    AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
+    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
 
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
@@ -300,8 +302,28 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
 #ifdef COMMON_EVENT_SERVICE_ENABLE
     if (systemAbilityId == COMMON_EVENT_SERVICE_ID) {
         PrivacyCommonEventSubscriber::RegisterEvent();
+        return;
     }
 #endif //COMMON_EVENT_SERVICE_ENABLE
+
+    if (systemAbilityId == SCREENLOCK_SERVICE_ID) {
+        LibraryLoader loader(SCREENLOCK_MANAGER_LIBPATH);
+        ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
+            loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
+        if (screenlockManagerLoader != nullptr) {
+            PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
+        }
+        return;
+    }
+
+    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
+        LibraryLoader loader(POWER_MANAGER_LIBPATH);
+        PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
+        if (powerManagerLoader != nullptr) {
+            PermissionRecordManager::GetInstance().SetScreenOn(powerManagerLoader->IsScreenOn());
+        }
+        return;
+    }
 }
 
 bool PrivacyManagerService::Initialize()

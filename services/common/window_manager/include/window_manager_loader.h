@@ -53,7 +53,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

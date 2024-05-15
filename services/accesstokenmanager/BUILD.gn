@@ -40,6 +40,7 @@ if (is_standard_system) {
     branch_protector_ret = "pac_ret"
     if (!use_clang_coverage) {
       version_script = "accesstoken_manager_service.map"
+      shlib_type = "sa"
     }
 
     include_dirs = [
@@ -55,6 +56,7 @@ if (is_standard_system) {
       "${access_token_path}/services/common/libraryloader/include",
       "main/cpp/include/callback",
       "main/cpp/include/service",
+      "main/cpp/include/form_manager",
       "main/cpp/include/token",
       "main/cpp/include/permission",
       "main/cpp/include/database",
@@ -69,6 +71,12 @@ if (is_standard_system) {
       "main/cpp/src/database/access_token_db.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
+      "main/cpp/src/form_manager/form_instance.cpp",
+      "main/cpp/src/form_manager/form_manager_access_client.cpp",
+      "main/cpp/src/form_manager/form_manager_access_proxy.cpp",
+      "main/cpp/src/form_manager/form_manager_death_recipient.cpp",
+      "main/cpp/src/form_manager/form_status_change_callback.cpp",
+      "main/cpp/src/form_manager/running_form_info.cpp",
       "main/cpp/src/permission/permission_definition_cache.cpp",
       "main/cpp/src/permission/permission_definition_parser.cpp",
       "main/cpp/src/permission/permission_grant_event.cpp",
@@ -116,7 +124,6 @@ if (is_standard_system) {
     deps += [ "etc:param_files" ]
 
     external_deps = [
-      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "dsoftbus:softbus_client",
       "hilog:libhilog",
@@ -128,6 +135,10 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
       "sqlite:sqlite",
     ]
+
+    if (ohos_indep_compiler_enable) {
+      external_deps += [ "bounds_checking_function:libsec_shared" ]
+    }
 
     if (eventhandler_enable == true) {
       cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
@@ -162,15 +173,16 @@ if (is_standard_system) {
       cflags_cc += [ "-DRESOURCESCHEDULE_FFRT_ENABLE" ]
     }
 
-    if (customization_config_policy_enable) {
-      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-      external_deps += [ "config_policy:configpolicy_util" ]
-      deps +=
-          [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
-    }
-
-    if (!use_clang_coverage) {
-      shlib_type = "sa"
+    if (access_token_background_task_mgr_continuous_task_enable == true) {
+      cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
+      include_dirs += [ "main/cpp/include/background_task_manager" ]
+      sources += [
+        "main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
+        "main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
+        "main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
+        "main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
+        "main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
+      ]
     }
   }
 }

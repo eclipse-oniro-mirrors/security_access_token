@@ -17,9 +17,16 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "accesstoken_config_policy.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
 #include "app_manager_access_client.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+#include "background_task_manager_access_client.h"
+#endif
+#include "form_manager_access_client.h"
+#include "hisysevent.h"
+#include "ipc_skeleton.h"
 
 namespace OHOS {
 namespace Security {
@@ -27,22 +34,45 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TempPermissionObserver"};
 static const std::string TASK_NAME_TEMP_PERMISSION = "atm_permission_manager_temp_permission";
+static const std::string FORM_INVISIBLE_NAME = "#0";
+static const std::string FORM_VISIBLE_NAME = "#1";
+static constexpr int32_t ROOT_UID = 0;
+static constexpr int32_t FOREGROUND_FLAG = 0;
+static constexpr int32_t FORMS_FLAG = 1;
+static constexpr int32_t CONTINUOUS_TASK_FLAG = 2;
 #ifdef EVENTHANDLER_ENABLE
-static constexpr int32_t WAIT_MILLISECONDS = 10 * 1000; // 10s
+static constexpr int32_t DEFAULT_CANCLE_MILLISECONDS = 10 * 1000; // 10s
 #endif
+std::recursive_mutex g_instanceMutex;
+static const std::vector<std::string> g_tempPermission = {
+    "ohos.permission.READ_PASTEBOARD",
+    "ohos.permission.APPROXIMATELY_LOCATION",
+    "ohos.permission.LOCATION",
+    "ohos.permission.LOCATION_IN_BACKGROUND"
+};
 }
 
 TempPermissionObserver& TempPermissionObserver::GetInstance()
 {
-    static TempPermissionObserver instance;
-    return instance;
+    static TempPermissionObserver* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new TempPermissionObserver();
+        }
+    }
+    return *instance;
 }
 
 void PermissionAppStateObserver::OnProcessDied(const ProcessData &processData)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnProcessDied die accessTokenId %{public}d", processData.accessTokenId);
-
     uint32_t tokenID = processData.accessTokenId;
+    std::vector<bool> list;
+    if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID:%{public}d not use temp permission", tokenID);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID:%{public}d died.", tokenID);
     // cancle task when process die
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
     TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
@@ -51,22 +81,106 @@ void PermissionAppStateObserver::OnProcessDied(const ProcessData &processData)
 
 void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateData &appStateData)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
-        appStateData.accessTokenId, appStateData.state);
     uint32_t tokenID = appStateData.accessTokenId;
+    std::vector<bool> list;
+    if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID:%{public}d not use temp permission", tokenID);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)", tokenID, appStateData.state);
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
+        TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, true);
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
         if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
+            ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
         }
     } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
+        TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, false);
+        if (list[FORMS_FLAG] || list[CONTINUOUS_TASK_FLAG]) {
+            ACCESSTOKEN_LOG_WARN(LABEL, "Has continuoustask or form don't delayRevokePermission!");
+            return;
+        }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
         if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "DelayRevokePermission failed!!!");
+            ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
         }
     }
 }
 
+int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
+    const std::string &bundleName, std::vector<FormInstance> &formInstances)
+{
+    for (size_t i = 0; i < formInstances.size(); i++) {
+        AccessTokenID tokenID;
+        if (!TempPermissionObserver::GetInstance().GetTokenIDByBundle(formInstances[i].bundleName_, tokenID)) {
+            continue;
+        }
+        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s, tokenID: %{public}d, formVisiblity:%{public}d",
+            formInstances[i].bundleName_.c_str(), tokenID, formInstances[i].formVisiblity_);
+        std::vector<bool> list;
+        if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID:%{public}d not use temp permission", tokenID);
+            continue;
+        }
+        if (formInstances[i].formVisiblity_ == FormVisibilityType::VISIBLE) {
+            TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, true);
+            std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+            if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
+                ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
+            }
+        } else if (formInstances[i].formVisiblity_ == FormVisibilityType::INVISIBLE) {
+            TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, false);
+            if (list[FOREGROUND_FLAG] || list[CONTINUOUS_TASK_FLAG]) {
+                ACCESSTOKEN_LOG_WARN(LABEL, "Has continuoustask or inForeground don't delayRevokePermission!");
+                continue;
+            }
+            std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+            if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
+                ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
+            }
+        }
+    }
+    return RET_SUCCESS;
+}
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+void PermissionBackgroundTaskObserver::OnContinuousTaskStart(
+    const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
+{
+    AccessTokenID tokenID = static_cast<AccessTokenID>(continuousTaskCallbackInfo->GetFullTokenId());
+    std::vector<bool> list;
+    if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID:%{public}d not use temp permission", tokenID);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}d", tokenID);
+    TempPermissionObserver::GetInstance().ModifyAppState(tokenID, CONTINUOUS_TASK_FLAG, true);
+    std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+    if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
+    }
+}
+
+void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
+    const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
+{
+    AccessTokenID tokenID = static_cast<AccessTokenID>(continuousTaskCallbackInfo->GetFullTokenId());
+    std::vector<bool> list;
+    if (!TempPermissionObserver::GetInstance().GetAppStateListByTokenID(tokenID, list)) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID:%{public}d not use temp permission", tokenID);
+        return;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}d", tokenID);
+    TempPermissionObserver::GetInstance().ModifyAppState(tokenID, CONTINUOUS_TASK_FLAG, false);
+    if (list[FOREGROUND_FLAG] || list[FORMS_FLAG]) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Has form or inForeground don't delayRevokePermission!");
+        return;
+    }
+    std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+    if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
+    }
+}
+#endif
 void PermissionAppManagerDeathCallback::NotifyAppManagerDeath()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TempPermissionObserver AppManagerDeath called");
@@ -79,61 +193,212 @@ TempPermissionObserver::TempPermissionObserver()
 
 TempPermissionObserver::~TempPermissionObserver()
 {
-    std::lock_guard<std::mutex> lock(tempPermissionMutex_);
-    if (appStateCallback_ != nullptr) {
-        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
-        appStateCallback_= nullptr;
-    }
+    UnRegisterCallback();
 }
 
 void TempPermissionObserver::RegisterCallback()
 {
-    if (appStateCallback_ == nullptr) {
-        appStateCallback_ = new (std::nothrow) PermissionAppStateObserver();
-        if (appStateCallback_ == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
-            return;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(backgroundTaskCallbackMutex_);
+        if (backgroundTaskCallback_ == nullptr) {
+            backgroundTaskCallback_ = new (std::nothrow) PermissionBackgroundTaskObserver();
+            if (backgroundTaskCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register backgroundTaskCallback failed.");
+                return;
+            }
+            int ret = BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(backgroundTaskCallback_);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Register backgroundTaskCallback %{public}d.", ret);
         }
-        AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
     }
-    if (appManagerDeathCallback_ == nullptr) {
-        appManagerDeathCallback_ = std::make_shared<PermissionAppManagerDeathCallback>();
-        AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+#endif
+    {
+        std::lock_guard<std::mutex> lock(formStateCallbackMutex_);
+        if (formVisibleCallback_ == nullptr) {
+            formVisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
+            if (formVisibleCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register formStateCallback failed.");
+                return;
+            }
+            int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
+                FORM_VISIBLE_NAME, formVisibleCallback_->AsObject());
+            ACCESSTOKEN_LOG_INFO(LABEL, "Register formStateCallback %{public}d.", ret);
+        }
+        if (formInvisibleCallback_ == nullptr) {
+            formInvisibleCallback_ = new (std::nothrow) PermissionFormStateObserver();
+            if (formInvisibleCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register formStateCallback failed.");
+                formVisibleCallback_ = nullptr;
+                return;
+            }
+            int ret = FormManagerAccessClient::GetInstance().RegisterAddObserver(
+                FORM_INVISIBLE_NAME, formInvisibleCallback_->AsObject());
+            ACCESSTOKEN_LOG_INFO(LABEL, "Register formStateCallback %{public}d.", ret);
+        }
+    }
+    RegisterAppStatusListener();
+}
+
+void TempPermissionObserver::RegisterAppStatusListener()
+{
+    {
+        std::lock_guard<std::mutex> lock(appStateCallbackMutex_);
+        if (appStateCallback_ == nullptr) {
+            appStateCallback_ = new (std::nothrow) PermissionAppStateObserver();
+            if (appStateCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register appStateCallback failed.");
+                return;
+            }
+            int ret = AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Register appStateCallback %{public}d.", ret);
+        }
+    }
+    // app manager death callback register
+    {
+        std::lock_guard<std::mutex> lock(appManagerDeathMutex_);
+        if (appManagerDeathCallback_ == nullptr) {
+            appManagerDeathCallback_ = std::make_shared<PermissionAppManagerDeathCallback>();
+            if (appManagerDeathCallback_ == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "register appManagerDeathCallback failed.");
+                return;
+            }
+            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+        }
     }
 }
 
-void TempPermissionObserver::AddTempPermTokenToList(AccessTokenID tokenID, const std::string& permissionName)
+void TempPermissionObserver::UnRegisterCallback()
 {
-    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
-    RegisterCallback();
-    auto iter = std::find_if(tempPermTokenList_.begin(), tempPermTokenList_.end(), [tokenID](const AccessTokenID& id) {
-        return tokenID == id;
-    });
-    if (iter != tempPermTokenList_.end()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "tokenID:%{public}d has existed in tokenList", tokenID);
-        return;
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID:%{public}d added in tokenList", tokenID);
-    tempPermTokenList_.emplace_back(tokenID);
-}
-
-void TempPermissionObserver::DeleteTempPermFromList(AccessTokenID tokenID, const std::string& permissionName)
-{
-    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
-    auto iter = std::find_if(tempPermTokenList_.begin(), tempPermTokenList_.end(), [tokenID](const AccessTokenID& id) {
-        return tokenID == id;
-    });
-    if (iter == tempPermTokenList_.end()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID:%{public}d not exist in tokenList", tokenID);
-        return;
-    }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permission:%{public}s has been erased from permList", permissionName.c_str());
-    tempPermTokenList_.erase(iter);
-    if (tempPermTokenList_.empty()) {
+    {
+        std::lock_guard<std::mutex> lock(appStateCallbackMutex_);
         if (appStateCallback_ != nullptr) {
             AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
             appStateCallback_= nullptr;
         }
+    }
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    {
+        std::lock_guard<std::mutex> lock(backgroundTaskCallbackMutex_);
+        if (backgroundTaskCallback_ != nullptr) {
+            BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(backgroundTaskCallback_);
+            backgroundTaskCallback_= nullptr;
+        }
+    }
+#endif
+    {
+        std::lock_guard<std::mutex> lock(formStateCallbackMutex_);
+        if (formVisibleCallback_ != nullptr) {
+            FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_VISIBLE_NAME, formVisibleCallback_);
+            formVisibleCallback_ = nullptr;
+        }
+        if (formInvisibleCallback_ != nullptr) {
+            FormManagerAccessClient::GetInstance().RegisterRemoveObserver(FORM_INVISIBLE_NAME, formInvisibleCallback_);
+            formInvisibleCallback_ = nullptr;
+        }
+    }
+}
+
+bool TempPermissionObserver::GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list)
+{
+    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
+    auto iter = tempPermTokenMap_.find(tokenID);
+    if (iter == tempPermTokenMap_.end()) {
+        return false;
+    }
+    list = iter->second;
+    return true;
+}
+
+void TempPermissionObserver::ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag)
+{
+    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
+    auto iter = tempPermTokenMap_.find(tokenID);
+    if (iter == tempPermTokenMap_.end()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID:%{public}d not exist in map", tokenID);
+        return;
+    }
+    iter->second[index] = flag;
+}
+
+bool TempPermissionObserver::GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID)
+{
+    std::unique_lock<std::mutex> lck(formTokenMutex_);
+    auto iter = formTokenMap_.find(bundleName);
+    if (iter == formTokenMap_.end()) {
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "bundleName:%{public}s not exist in map", bundleName.c_str());
+        return false;
+    }
+    tokenID = iter->second;
+    return true;
+}
+
+bool TempPermissionObserver::IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName)
+{
+    HapTokenInfo tokenInfo;
+    if (AccessTokenInfoManager::GetInstance().GetHapTokenInfo(tokenID, tokenInfo) != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId(%{public}d)", tokenID);
+        return false;
+    }
+    auto iterator = std::find(g_tempPermission.begin(), g_tempPermission.end(), permissionName);
+    if (iterator == g_tempPermission.end()) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "permission is not available to temp grant: %{public}s!", permissionName.c_str());
+        return false;
+    }
+
+    bool isForeground = false;
+    std::vector<AppStateData> foreGroundAppList;
+    AppManagerAccessClient::GetInstance().GetForegroundApplications(foreGroundAppList);
+    if (std::any_of(foreGroundAppList.begin(), foreGroundAppList.end(),
+        [=](const auto& foreGroundApp) { return foreGroundApp.bundleName == tokenInfo.bundleName; })) {
+        isForeground = true;
+    }
+    bool isContinuousTaskExist = false;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+    std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
+    BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
+    if (std::any_of(continuousTaskList.begin(), continuousTaskList.end(),
+        [=](const auto& callbackInfo) { return static_cast<AccessTokenID>(callbackInfo->tokenId_) == tokenID; })) {
+        isContinuousTaskExist = true;
+    }
+#endif
+    bool isFormVisible = FormManagerAccessClient::GetInstance().HasFormVisible(tokenID);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID:%{public}d, isForeground:%{public}d, isFormVisible:%{public}d,"
+        "isContinuousTaskExist:%{public}d",
+        tokenID, isForeground, isFormVisible, isContinuousTaskExist);
+    bool userEnable = true;
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    int callingUid = IPCSkeleton::GetCallingUid();
+    if (callingUid == ROOT_UID) {
+        userEnable = false;
+    }
+#endif
+    if (!userEnable || isForeground || isFormVisible || isContinuousTaskExist) {
+        std::vector<bool> list;
+        list.emplace_back(isForeground);
+        list.emplace_back(isFormVisible);
+        list.emplace_back(isContinuousTaskExist);
+        AddTempPermTokenToList(tokenID, tokenInfo.bundleName, permissionName, list);
+        return true;
+    }
+    return false;
+}
+
+void TempPermissionObserver::AddTempPermTokenToList(AccessTokenID tokenID,
+    const std::string& bundleName, const std::string& permissionName, const std::vector<bool>& list)
+{
+    RegisterCallback();
+    {
+        std::unique_lock<std::mutex> lck(tempPermissionMutex_);
+        tempPermTokenMap_[tokenID] = list;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID:%{public}d, bundleName:%{public}s, permissionName:%{public}s",
+        tokenID, bundleName.c_str(), permissionName.c_str());
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "GRANT_TEMP_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID,
+        "BUNDLENAME", bundleName, "PERMISSION_NAME", permissionName);
+    {
+        std::unique_lock<std::mutex> lck(formTokenMutex_);
+        formTokenMap_[bundleName] = tokenID;
     }
 }
 
@@ -161,20 +426,15 @@ bool TempPermissionObserver::GetPermissionStateFull(AccessTokenID tokenID,
 
 void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
 {
-    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
-    auto iter = std::find_if(tempPermTokenList_.begin(), tempPermTokenList_.end(), [tokenID](const AccessTokenID& id) {
-        return tokenID == id;
-    });
-    if (iter == tempPermTokenList_.end()) {
+    std::vector<bool> list;
+    if (!GetAppStateListByTokenID(tokenID, list)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID:%{public}d not exist in permList", tokenID);
         return;
     }
-    tempPermTokenList_.erase(iter);
-    if (tempPermTokenList_.empty()) {
-        if (appStateCallback_ != nullptr) {
-            AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
-            appStateCallback_= nullptr;
-        }
+    std::unique_lock<std::mutex> lck(tempPermissionMutex_);
+    tempPermTokenMap_.erase(tokenID);
+    if (tempPermTokenMap_.empty()) {
+        UnRegisterCallback();
     }
 
     std::vector<PermissionStateFull> tmpList;
@@ -197,20 +457,20 @@ void TempPermissionObserver::RevokeAllTempPermission(AccessTokenID tokenID)
 void TempPermissionObserver::OnAppMgrRemoteDiedHandle()
 {
     std::unique_lock<std::mutex> lck(tempPermissionMutex_);
-    for (auto iter = tempPermTokenList_.begin(); iter != tempPermTokenList_.end(); ++iter) {
+    for (auto iter = tempPermTokenMap_.begin(); iter != tempPermTokenMap_.end(); ++iter) {
         std::vector<PermissionStateFull> tmpList;
-        GetPermissionStateFull(*iter, tmpList);
+        GetPermissionStateFull(iter->first, tmpList);
         for (const auto& permissionState : tmpList) {
             if (permissionState.grantFlags[0] == PERMISSION_ALLOW_THIS_TIME) {
                 PermissionManager::GetInstance().RevokePermission(
-                    *iter, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME);
+                    iter->first, permissionState.permissionName, PERMISSION_ALLOW_THIS_TIME);
             }
         }
-        std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(*iter);
+        std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(iter->first);
         TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
     }
-    tempPermTokenList_.clear();
-    ACCESSTOKEN_LOG_INFO(LABEL, "tempPermTokenList_ clear!");
+    tempPermTokenMap_.clear();
+    ACCESSTOKEN_LOG_INFO(LABEL, "tempPermTokenMap_ clear!");
     appStateCallback_= nullptr;
 }
 
@@ -235,8 +495,8 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
         ACCESSTOKEN_LOG_INFO(LABEL, "token: %{public}d, delay revoke permission end", tokenID);
     });
-
-    eventHandler_->ProxyPostTask(delayed, taskName, WAIT_MILLISECONDS);
+    GetConfigValue();
+    eventHandler_->ProxyPostTask(delayed, taskName, cancleTimes_);
     return true;
 #else
     return false;
@@ -258,6 +518,27 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
     return false;
 #endif
 }
+#ifdef EVENTHANDLER_ENABLE
+void TempPermissionObserver::GetConfigValue()
+{
+    AccessTokenConfigPolicy policy;
+    AccessTokenConfigValue value;
+    if (policy.GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+        cancleTimes_ = value.atConfig.cancleTime;
+    } else {
+        SetDefaultConfigValue();
+    }
+
+    ACCESSTOKEN_LOG_INFO(LABEL, "cancleTimes_ is %{public}d.", cancleTimes_);
+}
+
+void TempPermissionObserver::SetDefaultConfigValue()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
+
+    cancleTimes_ = DEFAULT_CANCLE_MILLISECONDS;
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

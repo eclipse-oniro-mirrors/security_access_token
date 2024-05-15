@@ -18,10 +18,19 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+std::recursive_mutex g_instanceMutex;
+}
 DeviceInfoRepository &DeviceInfoRepository::GetInstance()
 {
-    static DeviceInfoRepository instance;
-    return instance;
+    static DeviceInfoRepository* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new DeviceInfoRepository();
+        }
+    }
+    return *instance;
 }
 
 std::vector<DeviceInfo> DeviceInfoRepository::ListDeviceInfo()

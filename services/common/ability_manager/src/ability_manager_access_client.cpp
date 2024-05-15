@@ -72,8 +72,8 @@ void AbilityManagerAccessClient::InitProxy()
         return;
     }
 
-    auto deathRecipient_ = sptr<IRemoteObject::DeathRecipient>(new AbilityManagerAccessDeathRecipient());
-    if (deathRecipient_ == nullptr) {
+    serviceDeathObserver_ = new (std::nothrow) AbilityManagerAccessDeathRecipient();
+    if (serviceDeathObserver_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Create AbilityManagerAccessDeathRecipient failed");
         return;
     }
@@ -82,7 +82,7 @@ void AbilityManagerAccessClient::InitProxy()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not proxy object");
         return;
     }
-    if (!abilityManagerSa->AddDeathRecipient(deathRecipient_)) {
+    if (!abilityManagerSa->AddDeathRecipient(serviceDeathObserver_)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Add death recipient failed");
         return;
     }

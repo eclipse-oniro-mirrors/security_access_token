@@ -23,12 +23,12 @@ namespace AccessToken {
 
 enum class WindowManagerAgentType : uint32_t {
     WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT = 5,
-    WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW = 8,
+    WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW = 9,
 };
 
 enum class PrivacyWindowServiceInterfaceCode {
     TRANS_ID_UPDATE_CAMERA_FLOAT = 6,
-    TRANS_ID_UPDATE_CAMERA_WINDOW_STATUS = 9,
+    TRANS_ID_UPDATE_CAMERA_WINDOW_STATUS = 10,
 };
 
 class IWindowManagerAgent : public IRemoteBroker {

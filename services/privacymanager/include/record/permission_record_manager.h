@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,7 @@
 #include "audio_global_switch_change_stub.h"
 #include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
+#include "libraryloader.h"
 #include "nocopyable.h"
 #include "on_permission_used_record_callback.h"
 #include "permission_record.h"
@@ -38,13 +39,6 @@
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "window_manager_privacy_agent.h"
-#endif
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "nlohmann/json.hpp"
-#include "permission_record_config.h"
-#endif
 
 namespace OHOS {
 namespace Security {
@@ -102,13 +96,14 @@ public:
     bool IsScreenOn();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    void NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing);
-    void OnWindowMgrRemoteDiedHandle();
+    void NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing);
+    void OnWindowMgrRemoteDied();
 #endif
     void OnAppMgrRemoteDiedHandle();
     void OnAudioMgrRemoteDiedHandle();
     void OnCameraMgrRemoteDiedHandle();
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
+    void RemoveRecordFromStartListByOp(int32_t opCode);
 
 private:
     PermissionRecordManager();
@@ -126,7 +121,7 @@ private:
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
-    void ExecuteAndUpdateRecord(uint32_t opCode, bool switchStatus);
+    void ExecuteAndUpdateRecordByOp(uint32_t opCode, bool switchStatus);
     void RemoveRecordFromStartList(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
     bool AddRecordToStartList(const PermissionRecord& record);
@@ -136,7 +131,7 @@ private:
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     bool ShowGlobalDialog(const std::string& permissionName);
 
-    void NotifyCameraExecuteCallback();
+    void ExecuteAllCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
@@ -146,29 +141,28 @@ private:
     void AddDataValueToResults(const GenericValues value, std::vector<PermissionUsedTypeInfo>& results);
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    bool IsFlowWindowShow(AccessTokenID tokenId);
+    bool HasUsingCamera();
+    void ClearWindowShowing();
 #endif
+    bool IsCameraWindowShow(AccessTokenID tokenId);
+    bool RegisterWindowCallback();
+    bool UnRegisterWindowCallback();
     int32_t GetAppStatus(AccessTokenID tokenId);
 
-    bool RegisterAppStatusAndLockScreenStatusListener();
+    bool RegisterAppStatusListener();
     bool Register();
     bool RegisterApplicationStateObserver();
     void Unregister();
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    void GetConfigFilePathList(std::vector<std::string> &pathList);
-    void from_json(const nlohmann::json& j, PermissionRecordConfig& p);
-    bool GetConfigValueFromFile(std::string& fileContent);
-#endif
     void SetDefaultConfigValue();
     void GetConfigValue();
+
 private:
     OHOS::ThreadPool deleteTaskWorker_;
     bool hasInited_;
     OHOS::Utils::RWLock rwLock_;
     std::mutex startRecordListMutex_;
     std::vector<PermissionRecord> startRecordList_;
-    std::mutex cameraCallbackMutex_;
     SafeMap<AccessTokenID, sptr<IRemoteObject>> cameraCallbackMap_;
 
     // microphone
@@ -179,6 +173,7 @@ private:
 
     // camera
     std::mutex camMuteMutex_;
+    std::mutex cameraCallbackMutex_;
     bool isCameraMute_ = false;
     sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
 
@@ -195,12 +190,20 @@ private:
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
     bool isScreenOn_ = false;
 
-    // camera float window
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    AccessTokenID floatWindowTokenId_ = 0;
+    bool isAutoClose = false;
+    std::mutex windowLoaderMutex_;
+    bool isWmRegistered = false;
+    LibraryLoader* windowLoader_ = nullptr;
+
+    std::mutex windowStausMutex_;
+    // camera float window
     bool camFloatWindowShowing_ = false;
-    std::mutex floatWinMutex_;
-    sptr<WindowManagerPrivacyAgent> floatWindowCallback_ = nullptr;
+    AccessTokenID floatWindowTokenId_ = 0;
+
+    // pip window
+    bool pipWindowShowing_ = false;
+    AccessTokenID pipWindowTokenId_ = 0;
 #endif
 
     // record config

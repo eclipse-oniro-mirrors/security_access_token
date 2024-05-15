@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,17 +19,14 @@
 #include <cinttypes>
 #include <numeric>
 
-#include "ability_manager_access_loader.h"
+#include "ability_manager_access_client.h"
+#include "accesstoken_config_policy.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #include "app_manager_access_client.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "config_policy_utils.h"
-#include "json_parser.h"
-#endif
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -42,15 +39,12 @@
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-#include "screenlock_manager.h"
-#endif
 #include "state_change_callback_proxy.h"
 #include "system_ability_definition.h"
 #include "time_util.h"
 #include "want.h"
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-#include "window_manager_privacy_client.h"
+#include "window_manager_loader.h"
 #endif
 
 namespace OHOS {
@@ -69,21 +63,21 @@ static const std::string DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.p
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM = 500000;
 static const int32_t DEFAULT_PERMISSION_USED_RECORD_AGING_TIME = 7;
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
-static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
-static const std::string RECORD_AGING_TIME_KEY = "permission_used_record_aging_time";
-static const std::string GLOBAL_DIALOG_BUNDLE_NAME_KEY = "global_dialog_bundle_name";
-static const std::string GLOBAL_DIALOG_ABILITY_NAME_KEY = "global_dialog_ability_name";
-#endif
 static const uint32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const uint32_t PICKER_TYPE_ADD_VALUE = 2;
 static const uint32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
+std::recursive_mutex g_instanceMutex;
 }
 PermissionRecordManager& PermissionRecordManager::GetInstance()
 {
-    static PermissionRecordManager instance;
-    return instance;
+    static PermissionRecordManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionRecordManager();
+        }
+    }
+    return *instance;
 }
 
 PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false) {}
@@ -119,11 +113,8 @@ void PrivacyAppStateObserver::OnApplicationStateChanged(const AppStateData &appS
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
         appStateData.accessTokenId, appStateData.state);
 
-    uint32_t tokenId = appStateData.accessTokenId;
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
-        ActiveChangeType status = PERM_INACTIVE;
-        PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
-        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+        PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(appStateData.accessTokenId);
     }
 }
 
@@ -132,15 +123,12 @@ void PrivacyAppStateObserver::OnProcessDied(const ProcessData &processData)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(accessTokenId=%{public}d, state=%{public}d)",
         processData.accessTokenId, processData.state);
 
-    uint32_t tokenId = processData.accessTokenId;
-    ActiveChangeType status = PERM_INACTIVE;
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(processData.accessTokenId);
 }
 
 void PrivacyAppManagerDeathCallback::NotifyAppManagerDeath()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermissionRecordManager AppManagerDeath called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AppManagerDeath called");
 
     PermissionRecordManager::GetInstance().OnAppMgrRemoteDiedHandle();
 }
@@ -176,7 +164,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     record.accessCount = info.successCount;
     record.rejectCount = info.failCount;
     record.opCode = opCode;
-    record.timestamp = TimeUtil::GetCurrentTimestamp();
+    record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     record.type = info.type;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
@@ -282,11 +270,6 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
 {
     // only support remove by tokenId(local)
     std::string device = GetDeviceId(tokenId);
-    if (device.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenId = %{public}d", tokenId);
-        return;
-    }
-
     if (!deviceID.empty() && device != deviceID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "deviceID mismatch");
         return;
@@ -295,6 +278,8 @@ void PermissionRecordManager::RemovePermissionUsedRecords(AccessTokenID tokenId,
     Utils::UniqueWriteGuard<Utils::RWLock> lk(this->rwLock_);
     PermissionUsedRecordCache::GetInstance().RemoveRecords(tokenId); // remove from cache and database
     RemovePermissionUsedType(tokenId);
+
+    RemoveRecordFromStartListByToken(tokenId);
 }
 
 int32_t PermissionRecordManager::GetPermissionUsedRecords(
@@ -505,7 +490,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
         }
     }
     GenericValues andConditionValues;
-    int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - interval;
+    int64_t deleteTimestamp = AccessToken::TimeUtil::GetCurrentTimestamp() - interval;
     andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
     if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
         return Constant::FAILURE;
@@ -543,17 +528,14 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveCha
             }
 
             // app use camera background without float window
-            bool isShow = true;
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-            isShow = IsFlowWindowShow(tokenId);
-#endif
+            bool isShow = IsCameraWindowShow(tokenId);
             if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
                 camPermList.emplace_back(perm);
                 continue;
             }
             permList.emplace_back(perm);
-            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+            int64_t curStamp = AccessToken::TimeUtil::GetCurrentTimestamp();
 
             // update status to input and timestamp to now in cache
             it->status = status;
@@ -603,7 +585,7 @@ void PermissionRecordManager::SetScreenOn(bool isScreenOn)
         isScreenOn_ = isScreenOn;
     }
     if (!isScreenOn) {
-        NotifyCameraExecuteCallback();
+        ExecuteAllCameraExecuteCallback();
     }
 }
 
@@ -628,14 +610,54 @@ void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& 
 void PermissionRecordManager::RemoveRecordFromStartListByToken(const AccessTokenID tokenId)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d", tokenId);
-    std::lock_guard<std::mutex> lock(startRecordListMutex_);
-    for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
-        if (it->tokenId == tokenId) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "opCode %{public}d", it->opCode);
+    bool isUsingCamera = false;
+    {
+        std::vector<std::string> permList;
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
+            if (it->tokenId != tokenId) {
+                it++;
+                continue;
+            }
+            isUsingCamera = (it->opCode == Constant::OP_CAMERA);
+            std::string perm;
+            Constant::TransferOpcodeToPermission(it->opCode, perm);
+            permList.emplace_back(perm);
             it = startRecordList_.erase(it);
-        } else {
-            it++;
         }
+        for (const auto& perm : permList) {
+            CallbackExecute(tokenId, perm, PERM_INACTIVE);
+        }
+    }
+    if (isUsingCamera) {
+        cameraCallbackMap_.Erase(tokenId);
+        UnRegisterWindowCallback(); // unregister window linstener
+    }
+}
+
+void PermissionRecordManager::RemoveRecordFromStartListByOp(int32_t opCode)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "opCode %{public}d", opCode);
+    bool isUsingCamera = (opCode == Constant::OP_CAMERA);
+    std::string perm;
+    Constant::TransferOpcodeToPermission(opCode, perm);
+    {
+        std::vector<AccessTokenID> tokenList;
+        std::lock_guard<std::mutex> lock(startRecordListMutex_);
+        for (auto it = startRecordList_.begin(); it != startRecordList_.end();) {
+            if (it->opCode != opCode) {
+                it++;
+                continue;
+            }
+            tokenList.emplace_back(it->tokenId);
+            it = startRecordList_.erase(it);
+        }
+        for (size_t i = 0; i < tokenList.size(); ++i) {
+            CallbackExecute(tokenList[i], perm, PERM_INACTIVE);
+        }
+    }
+    if (isUsingCamera) {
+        UnRegisterWindowCallback(); // unregister window linstener
     }
 }
 
@@ -646,7 +668,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
         if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
             it->accessCount = 1;
             record = *it;
-            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            record.accessDuration = AccessToken::TimeUtil::GetCurrentTimestamp() - record.timestamp;
             startRecordList_.erase(it);
             return true;
         }
@@ -682,7 +704,7 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
  */
-void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switchStatus)
+void PermissionRecordManager::ExecuteAndUpdateRecordByOp(uint32_t opCode, bool switchStatus)
 {
     std::string perm;
     Constant::TransferOpcodeToPermission(opCode, perm);
@@ -701,7 +723,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t opCode, bool switc
             ACCESSTOKEN_LOG_INFO(LABEL, "global switch is close, update record to inactive");
             record.status = PERM_INACTIVE;
         }
-        recordList.emplace_back(record);
+        recordList.emplace_back(*it);
     }
     // each permission sends a status change notice
     for (const auto& record : recordList) {
@@ -717,7 +739,7 @@ void PermissionRecordManager::NotifyMicChange(bool isMute)
         isMicMute_ = isMute;
     }
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    ExecuteAndUpdateRecord(Constant::OP_MICROPHONE, !isMute);
+    ExecuteAndUpdateRecordByOp(Constant::OP_MICROPHONE, !isMute);
 }
 
 void PermissionRecordManager::NotifyCameraChange(bool isMute)
@@ -729,7 +751,7 @@ void PermissionRecordManager::NotifyCameraChange(bool isMute)
     }
 
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    ExecuteAndUpdateRecord(Constant::OP_CAMERA, !isMute);
+    ExecuteAndUpdateRecordByOp(Constant::OP_CAMERA, !isMute);
 }
 
 bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
@@ -747,14 +769,7 @@ bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName
     AAFwk::Want want;
     want.SetElementName(globalDialogBundleName_, globalDialogAbilityName_);
     want.SetParam(RESOURCE_KEY, resource);
-    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
-    AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
-        loader.GetObject<AbilityManagerAccessLoaderInterface>();
-    if (abilityManagerAccessLoader == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_ability_manager_access failed.");
-        return false;
-    }
-    ErrCode err = abilityManagerAccessLoader->StartAbility(want, nullptr);
+    ErrCode err = AbilityManagerAccessClient::GetInstance().StartAbility(want, nullptr);
     if (err != ERR_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to StartAbility, err:%{public}d", err);
         return false;
@@ -801,7 +816,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::NotifyCameraExecuteCallback()
+void PermissionRecordManager::ExecuteAllCameraExecuteCallback()
 {
     std::vector<AccessTokenID> tokenList;
     {
@@ -832,7 +847,6 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
             }
         };
         this->cameraCallbackMap_.Iterate(it);
-        this->cameraCallbackMap_.Erase(tokenId);
     };
     std::thread executeThread(task);
     executeThread.detach();
@@ -868,10 +882,14 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (AddRecordToStartList(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
+    if (!RegisterWindowCallback()) {
+        return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
+    }
     if (!GetGlobalSwitchStatus(permissionName)) {
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
             RemoveRecordFromStartList(record);
+            UnRegisterWindowCallback();
             return ERR_SERVICE_ABNORMAL;
         }
     } else {
@@ -905,6 +923,8 @@ int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, cons
     if (record.status != PERM_INACTIVE) {
         CallbackExecute(tokenId, permissionName, PERM_INACTIVE);
     }
+    // clear callback
+    UnRegisterWindowCallback();
     return Constant::SUCCESS;
 }
 
@@ -964,11 +984,9 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsFlowWindowShow(tokenId);
+        return IsCameraWindowShow(tokenId);
     }
-#endif
     return false;
 }
 
@@ -1071,7 +1089,7 @@ int32_t PermissionRecordManager::GetAppStatus(AccessTokenID tokenId)
     return status;
 }
 
-bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
+bool PermissionRecordManager::RegisterAppStatusListener()
 {
     // app manager death callback register
     {
@@ -1097,13 +1115,122 @@ bool PermissionRecordManager::RegisterAppStatusAndLockScreenStatusListener()
             AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(appStateCallback_);
         }
     }
-#ifdef THEME_SCREENLOCK_MGR_ENABLE
-    int32_t lockScreenStatus = ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked() ?
-        LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED : LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    SetLockScreenStatus(lockScreenStatus);
-    // lockscreen status change call back register
+    return true;
+}
+
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+bool PermissionRecordManager::HasUsingCamera()
+{
+    std::lock_guard<std::mutex> lock(startRecordListMutex_);
+    bool hasCamera = std::any_of(startRecordList_.begin(), startRecordList_.end(),
+        [](const auto& record) { return record.opCode == Constant::OP_CAMERA; });
+    return hasCamera;
+}
+
+void UpdateCameraFloatWindowStatus(AccessTokenID tokenId, bool isShowing)
+{
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, isShowing);
+}
+
+void UpdatePipWindowStatus(AccessTokenID tokenId, bool isShowing)
+{
+    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, isShowing);
+}
+
+/* Handle window manager die */
+void HandleWindowDied()
+{
+    PermissionRecordManager::GetInstance().OnWindowMgrRemoteDied();
+}
+#endif
+
+bool PermissionRecordManager::RegisterWindowCallback()
+{
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    std::lock_guard<std::mutex> lock(windowLoaderMutex_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Begin to RegisterWindowCallback.");
+    if (windowLoader_ != nullptr) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "WindowCallback has already been registered.");
+        return true;
+    }
+    if (!HasUsingCamera()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Camera is not using.");
+        return true;
+    }
+    windowLoader_ = new (std::nothrow) LibraryLoader(WINDOW_MANAGER_PATH);
+    if (windowLoader_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to new %{public}s.", WINDOW_MANAGER_PATH.c_str());
+        return false;
+    }
+    WindowManagerLoaderInterface* winManagerLoader = windowLoader_->GetObject<WindowManagerLoaderInterface>();
+    if (winManagerLoader == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to dlopen %{public}s.", WINDOW_MANAGER_PATH.c_str());
+        delete windowLoader_;
+        windowLoader_ = nullptr;
+        return false;
+    }
+    WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
+    ErrCode err = winManagerLoader->RegisterFloatWindowListener(floatCallback);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register float window listener, err:%{public}d", err);
+        delete windowLoader_;
+        windowLoader_ = nullptr;
+        return false;
+    }
+    WindowChangeCallback pipCallback = UpdatePipWindowStatus;
+    err = winManagerLoader->RegisterPipWindowListener(pipCallback);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to register pip window listener, err:%{public}d", err);
+        winManagerLoader->UnregisterFloatWindowListener(floatCallback);
+        delete windowLoader_;
+        windowLoader_ = nullptr;
+        return false;
+    }
+    winManagerLoader->AddDeathCallback(HandleWindowDied);
 #endif
     return true;
+}
+
+bool PermissionRecordManager::UnRegisterWindowCallback()
+{
+    bool isSuccess = true;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    if (!isAutoClose) {
+        return true;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Begin to UnRegisterWindowCallback.");
+    std::lock_guard<std::mutex> lock(windowLoaderMutex_);
+    if (windowLoader_ == nullptr) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "WindowCallback has already been unregistered.");
+        return true;
+    }
+    if (HasUsingCamera()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Camera is using.");
+        return true;
+    }
+    WindowManagerLoaderInterface* winManagerLoader = windowLoader_->GetObject<WindowManagerLoaderInterface>();
+    if (winManagerLoader == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to dlopen %{public}s.", WINDOW_MANAGER_PATH.c_str());
+        delete windowLoader_;
+        windowLoader_ = nullptr;
+        return false;
+    }
+    WindowChangeCallback floatCallback = UpdateCameraFloatWindowStatus;
+    ErrCode err = winManagerLoader->UnregisterFloatWindowListener(floatCallback);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to unregister float window, err:%{public}d", err);
+        isSuccess = false;
+    }
+    WindowChangeCallback pipCallback = UpdatePipWindowStatus;
+    err = winManagerLoader->UnregisterPipWindowListener(pipCallback);
+    if (err != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to unregister pip window, err:%{public}d", err);
+        isSuccess = false;
+    }
+    delete windowLoader_;
+    windowLoader_ = nullptr;
+#endif
+    return isSuccess;
 }
 
 bool PermissionRecordManager::Register()
@@ -1118,9 +1245,12 @@ bool PermissionRecordManager::Register()
                 return false;
             }
             AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
+            {
+                std::lock_guard<std::mutex> lock(micMuteMutex_);
+                isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+            }
         }
     }
-
     // camera mute
     {
         std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
@@ -1131,57 +1261,24 @@ bool PermissionRecordManager::Register()
                 return false;
             }
             CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
-        }
-    }
-    {
-        std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
-    }
-    {
-        std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
-    }
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    // float window status change callback register
-    {
-        std::lock_guard<std::mutex> lock(floatWinMutex_);
-        if (floatWindowCallback_ == nullptr) {
-            floatWindowCallback_ = new (std::nothrow) WindowManagerPrivacyAgent();
-            if (floatWindowCallback_ == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "register floatWindowCallback failed.");
-                return false;
+            {
+                std::lock_guard<std::mutex> lock(camMuteMutex_);
+                isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
             }
-            WindowManagerPrivacyClient::GetInstance().RegisterWindowManagerAgent(
-                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
         }
     }
-#endif
     // app state change and lockscreen state change callback register
-    return RegisterAppStatusAndLockScreenStatusListener();
+    return RegisterAppStatusListener();
 }
 
 void PermissionRecordManager::Unregister()
 {
     // app state change callback unregister
-    {
-        std::lock_guard<std::mutex> lock(appStateMutex_);
-        if (appStateCallback_ != nullptr) {
-            AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
-            appStateCallback_= nullptr;
-        }
+    std::lock_guard<std::mutex> lock(appStateMutex_);
+    if (appStateCallback_ != nullptr) {
+        AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
+        appStateCallback_= nullptr;
     }
-
-#ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    // float window status change callback unregister
-    {
-        std::lock_guard<std::mutex> lock(floatWinMutex_);
-        if (floatWindowCallback_ != nullptr) {
-            WindowManagerPrivacyClient::GetInstance().UnregisterWindowManagerAgent(
-                WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, floatWindowCallback_);
-            floatWindowCallback_ = nullptr;
-        }
-    }
-#endif
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
@@ -1204,103 +1301,83 @@ void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
-    {
-        std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isCameraMute_ = false;
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle camera fwk died.");
     {
         std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
         camMuteCallback_ = nullptr;
     }
+
+    RemoveRecordFromStartListByOp(Constant::OP_CAMERA);
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    ClearWindowShowing();
+    {
+        std::lock_guard<std::mutex> lock(windowLoaderMutex_);
+        if (windowLoader_ != nullptr) {
+            delete windowLoader_;
+            windowLoader_ = nullptr;
+        }
+    }
+#endif
+}
+
+bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
+{
+    bool isShow = true;
+#ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    std::lock_guard<std::mutex> lock(windowStausMutex_);
+    isShow = (floatWindowTokenId_ == tokenId) && camFloatWindowShowing_;
+    isShow |= ((pipWindowTokenId_ == tokenId) && pipWindowShowing_);
+#endif
+    return isShow;
 }
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
 /*
  * when camera float window is not show, notice camera service to use StopUsingPermission
  */
-void PermissionRecordManager::NotifyCameraFloatWindowChange(AccessTokenID tokenId, bool isShowing)
+void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID tokenId, bool isShowing)
 {
-    camFloatWindowShowing_ = isShowing;
-    floatWindowTokenId_ = tokenId;
-    if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) && !isShowing) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is close!");
-        ExecuteCameraCallbackAsync(tokenId);
-    } else {
-        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is show!");
-    }
-}
-
-void PermissionRecordManager::OnWindowMgrRemoteDiedHandle()
-{
-    std::lock_guard<std::mutex> lock(floatWinMutex_);
-    floatWindowCallback_ = nullptr;
-}
-
-bool PermissionRecordManager::IsFlowWindowShow(AccessTokenID tokenId)
-{
-    return floatWindowTokenId_ == tokenId && camFloatWindowShowing_;
-}
-#endif
-
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-void PermissionRecordManager::GetConfigFilePathList(std::vector<std::string>& pathList)
-{
-    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
-    if (dirs != nullptr) {
-        for (const auto& path : dirs->paths) {
-            if (path == nullptr) {
-                continue;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
-            pathList.emplace_back(path);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Update window, isPip(%{public}d), token(%{public}d), status(%{public}d)",
+        isPip, tokenId, isShowing);
+    {
+        std::lock_guard<std::mutex> lock(windowStausMutex_);
+        if (isPip) {
+            pipWindowShowing_ = isShowing;
+            pipWindowTokenId_ = tokenId;
+        } else {
+            camFloatWindowShowing_ = isShowing;
+            floatWindowTokenId_ = tokenId;
         }
-
-        FreeCfgDirList(dirs); // free
+    }
+    if (isShowing) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "camera float window is showing!");
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can't get cfg file path");
+        if ((GetAppStatus(tokenId) == ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND) &&
+            !IsCameraWindowShow(tokenId)) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Token(%{public}d) is background, pip and float window is not show.", tokenId);
+            ExecuteCameraCallbackAsync(tokenId);
+        }
     }
 }
 
-// nlohmann json need the function named from_json to parse
-void from_json(const nlohmann::json& j, PermissionRecordConfig& p)
+void PermissionRecordManager::ClearWindowShowing()
 {
-    if (!JsonParser::GetIntFromJson(j, RECORD_SIZE_MAXIMUM_KEY, p.sizeMaxImum)) {
-        return;
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Clear window show status.");
+    {
+        std::lock_guard<std::mutex> lock(windowStausMutex_);
+        camFloatWindowShowing_ = false;
+        floatWindowTokenId_ = 0;
 
-    if (!JsonParser::GetIntFromJson(j, RECORD_AGING_TIME_KEY, p.agingTime)) {
-        return;
-    }
-
-    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_BUNDLE_NAME_KEY, p.globalDialogBundleName)) {
-        return;
-    }
-
-    if (!JsonParser::GetStringFromJson(j, GLOBAL_DIALOG_ABILITY_NAME_KEY, p.globalDialogAbilityName)) {
-        return;
+        pipWindowShowing_ = false;
+        pipWindowTokenId_ = 0;
     }
 }
 
-bool PermissionRecordManager::GetConfigValueFromFile(std::string& fileContent)
+/* Handle window manager die */
+void PermissionRecordManager::OnWindowMgrRemoteDied()
 {
-    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
-    if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return false;
-    }
-
-    if ((jsonRes.find("privacy") != jsonRes.end()) && (jsonRes.at("privacy").is_object())) {
-        PermissionRecordConfig p = jsonRes.at("privacy").get<nlohmann::json>();
-        recordSizeMaximum_ = p.sizeMaxImum;
-        recordAgingTime_ = p.agingTime;
-        globalDialogBundleName_ = p.globalDialogBundleName;
-        globalDialogAbilityName_ = p.globalDialogAbilityName;
-    } else {
-        return false;
-    }
-
-    return true;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Handle window manager died.");
+    ClearWindowShowing();
 }
 #endif
 
@@ -1316,32 +1393,15 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    std::vector<std::string> pathList;
-    GetConfigFilePathList(pathList);
-
-    for (const auto& path : pathList) {
-        if (!JsonParser::IsDirExsit(path)) {
-            continue;
-        }
-
-        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
-        std::string fileContent;
-        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
-        if (res != Constant::SUCCESS) {
-            continue;
-        }
-
-        if (GetConfigValueFromFile(fileContent)) {
-            break; // once get the config value, break the loop
-        }
-    }
-#endif
-    // when config file list empty or can not get two value from config file, set default value
-    if ((recordSizeMaximum_ == 0) ||
-        (recordAgingTime_ == 0) ||
-        (globalDialogBundleName_.empty()) ||
-        (globalDialogAbilityName_.empty())) {
+    AccessTokenConfigPolicy policy;
+    AccessTokenConfigValue value;
+    if (policy.GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
+        // set value from config
+        recordSizeMaximum_ = value.pConfig.sizeMaxImum;
+        recordAgingTime_ = value.pConfig.agingTime;
+        globalDialogBundleName_ = value.pConfig.globalDialogBundleName;
+        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName;
+    } else {
         SetDefaultConfigValue();
     }
 

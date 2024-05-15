@@ -24,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE,
     SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenRemoteTokenManager"};
 }
@@ -36,8 +37,14 @@ AccessTokenRemoteTokenManager::~AccessTokenRemoteTokenManager()
 
 AccessTokenRemoteTokenManager& AccessTokenRemoteTokenManager::GetInstance()
 {
-    static AccessTokenRemoteTokenManager instance;
-    return instance;
+    static AccessTokenRemoteTokenManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenRemoteTokenManager();
+        }
+    }
+    return *instance;
 }
 
 AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const std::string& deviceID,
@@ -54,7 +61,8 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
             LABEL, "token %{public}x type is invalid.", remoteID);
         return 0;
     }
-    int dlpType = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(remoteID);
+    int32_t dlpFlag = AccessTokenIDManager::GetInstance().GetTokenIdDlpFlag(remoteID);
+    int32_t cloneFlag = AccessTokenIDManager::GetInstance().GetTokenIdCloneFlag(remoteID);
 
     AccessTokenID mapID = 0;
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->remoteDeviceLock_);
@@ -64,7 +72,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         if (device.MappingTokenIDPairMap_.count(remoteID) > 0) {
             mapID = device.MappingTokenIDPairMap_[remoteID];
             ACCESSTOKEN_LOG_ERROR(
-                LABEL, "device %{public}s token %{public}x has already mapped, maptokenID is %{public}x.",
+                LABEL, "device %{public}s token %{public}x has already mapped, map tokenID is %{public}x.",
                 ConstantCommon::EncryptDevId(deviceID).c_str(), remoteID, mapID);
             return mapID;
         }
@@ -76,7 +84,7 @@ AccessTokenID AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal(const s
         mapPtr = &remoteDeviceMap_[deviceID].MappingTokenIDPairMap_;
     }
 
-    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpType);
+    mapID = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(tokeType, dlpFlag, cloneFlag);
     if (mapID == 0) {
         ACCESSTOKEN_LOG_ERROR(
             LABEL, "device %{public}s token %{public}x map local Token failed.",

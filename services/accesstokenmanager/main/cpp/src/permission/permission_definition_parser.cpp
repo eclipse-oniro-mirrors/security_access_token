@@ -34,6 +34,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static const int32_t EXTENSION_PERMISSION_ID = 0;
 static const std::string PERMISSION_NAME = "name";
 static const std::string PERMISSION_GRANT_MODE = "grantMode";
@@ -253,8 +254,14 @@ int32_t PermissionDefinitionParser::Init()
 
 PermissionDefinitionParser& PermissionDefinitionParser::GetInstance()
 {
-    static PermissionDefinitionParser instance;
-    return instance;
+    static PermissionDefinitionParser* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionDefinitionParser();
+        }
+    }
+    return *instance;
 }
 } // namespace AccessToken
 } // namespace Security

@@ -21,6 +21,12 @@ accesstoken_manager_service_source = [
   "../main/cpp/src/database/access_token_db.cpp",
   "../main/cpp/src/database/data_translator.cpp",
   "../main/cpp/src/database/token_field_const.cpp",
+  "../main/cpp/src/form_manager/form_instance.cpp",
+  "../main/cpp/src/form_manager/form_manager_access_client.cpp",
+  "../main/cpp/src/form_manager/form_manager_access_proxy.cpp",
+  "../main/cpp/src/form_manager/form_manager_death_recipient.cpp",
+  "../main/cpp/src/form_manager/form_status_change_callback.cpp",
+  "../main/cpp/src/form_manager/running_form_info.cpp",
   "../main/cpp/src/permission/permission_definition_cache.cpp",
   "../main/cpp/src/permission/permission_grant_event.cpp",
   "../main/cpp/src/permission/permission_manager.cpp",
@@ -65,6 +71,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "../main/cpp/include/callback",
     "../main/cpp/include/database",
     "../main/cpp/include/device",
+    "../main/cpp/include/form_manager",
     "../main/cpp/include/permission",
     "../main/cpp/include/service",
     "../main/cpp/include/token",
@@ -134,6 +141,17 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]
+  }
+  if (access_token_background_task_mgr_continuous_task_enable == true) {
+    cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
+    include_dirs += [ "../main/cpp/include/background_task_manager" ]
+    sources += [
+      "../main/cpp/src/background_task_manager/background_task_manager_access_client.cpp",
+      "../main/cpp/src/background_task_manager/background_task_manager_access_proxy.cpp",
+      "../main/cpp/src/background_task_manager/background_task_manager_death_recipient.cpp",
+      "../main/cpp/src/background_task_manager/continuous_task_callback_info.cpp",
+      "../main/cpp/src/background_task_manager/continuous_task_change_callback.cpp",
+    ]
   }
 }
 

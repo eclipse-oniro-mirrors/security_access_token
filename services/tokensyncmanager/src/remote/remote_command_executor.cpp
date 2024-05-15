@@ -21,6 +21,7 @@
 #include "device_info_manager.h"
 #include "singleton.h"
 #include "soft_bus_channel.h"
+#include "soft_bus_manager.h"
 #include "token_sync_manager_service.h"
 
 namespace OHOS {
@@ -236,11 +237,8 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     const std::shared_ptr<BaseRemoteCommand>& ptrCommand, const bool isRemote)
 {
     std::string uniqueId = ptrCommand->remoteProtocol_.uniqueId;
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "targetNodeId %{public}s, uniqueId %{public}s, remote %{public}d: start to execute",
-        ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
-        uniqueId.c_str(),
-        isRemote);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TargetNodeId %{public}s, uniqueId %{public}s, remote %{public}d: start to execute.",
+        ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str(), isRemote);
 
     ptrCommand->remoteProtocol_.statusCode = Constant::STATUS_CODE_BEFORE_RPC;
 
@@ -248,24 +246,30 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
         // Local device, play myself.
         ptrCommand->Execute();
         int code = ClientProcessResult(ptrCommand);
-        ACCESSTOKEN_LOG_DEBUG(LABEL,
-            "command finished with status: %{public}d, message: %{public}s",
-            ptrCommand->remoteProtocol_.statusCode,
-            ptrCommand->remoteProtocol_.message.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Command finished with status: %{public}d, message: %{public}s.",
+            ptrCommand->remoteProtocol_.statusCode, ptrCommand->remoteProtocol_.message.c_str());
         return code;
     }
 
-    std::string responseString =
-        ptrChannel_->ExecuteCommand(ptrCommand->remoteProtocol_.commandName, ptrCommand->ToJsonPayload());
-    ACCESSTOKEN_LOG_INFO(LABEL, "command executed uniqueId %{public}s", uniqueId.c_str());
-    if (responseString.empty()) {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Command executed uniqueId %{public}s.", uniqueId.c_str());
+
+    std::string responseString;
+    int32_t repeatTimes = SoftBusManager::GetInstance().GetRepeatTimes(); // repeat 5 times if responseString empty
+    for (int32_t i = 0; i < repeatTimes; ++i) {
+        responseString = ptrChannel_->ExecuteCommand(ptrCommand->remoteProtocol_.commandName,
+            ptrCommand->ToJsonPayload());
+        if (!responseString.empty()) {
+            break; // when responseString is not empty, break the loop
+        }
+
         ACCESSTOKEN_LOG_WARN(LABEL,
-            "targetNodeId %{public}s, uniqueId %{public}s, execute remote command error, response is empty.",
-            ConstantCommon::EncryptDevId(targetNodeId_).c_str(),
-            uniqueId.c_str());
-        // if command send failed, also try to close session
+            "TargetNodeId %{public}s, uniqueId %{public}s, execute remote command error, response is empty.",
+            ConstantCommon::EncryptDevId(targetNodeId_).c_str(), uniqueId.c_str());
+    }
+    
+    if (responseString.empty()) {
         if (commands_.empty()) {
-            ptrChannel_->CloseConnection();
+            ptrChannel_->CloseConnection(); // if command send failed, also try to close session
         }
         return Constant::FAILURE;
     }
@@ -274,7 +278,7 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
         RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(
             ptrCommand->remoteProtocol_.commandName, responseString);
     if (ptrResponseCommand == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "targetNodeId %{public}s, get null response command!",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TargetNodeId %{public}s, get null response command!",
             ConstantCommon::EncryptDevId(targetNodeId_).c_str());
         return Constant::FAILURE;
     }
@@ -282,10 +286,8 @@ int RemoteCommandExecutor::ExecuteRemoteCommand(
     if (commands_.empty()) {
         ptrChannel_->CloseConnection();
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "command finished with status: %{public}d, message: %{public}s",
-        ptrResponseCommand->remoteProtocol_.statusCode,
-        ptrResponseCommand->remoteProtocol_.message.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Command finished with status: %{public}d, message: %{public}s.",
+        ptrResponseCommand->remoteProtocol_.statusCode, ptrResponseCommand->remoteProtocol_.message.c_str());
     return result;
 }
 

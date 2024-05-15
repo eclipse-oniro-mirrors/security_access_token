@@ -31,6 +31,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordCache"
 };
+std::recursive_mutex g_instanceMutex;
 }
 PermissionUsedRecordCache::PermissionUsedRecordCache()
     : hasInited_(false), readRecordBufferTaskWorker_("PermissionUsedRecordCache") {}
@@ -46,22 +47,28 @@ PermissionUsedRecordCache::~PermissionUsedRecordCache()
 
 PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
 {
-    static PermissionUsedRecordCache instance;
-
-    if (!instance.hasInited_) {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance.initLock_);
-        if (!instance.hasInited_) {
-            instance.readRecordBufferTaskWorker_.Start(1);
-            instance.hasInited_ = true;
+    static PermissionUsedRecordCache* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PermissionUsedRecordCache();
         }
     }
-    return instance;
+
+    if (!instance->hasInited_) {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance->initLock_);
+        if (!instance->hasInited_) {
+            instance->readRecordBufferTaskWorker_.Start(1);
+            instance->hasInited_ = true;
+        }
+    }
+    return *instance;
 }
 
 bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2)
 {
     // timestamp in the same minute
-    if (!TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
+    if (!AccessToken::TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
         return false;
     }
 
@@ -295,7 +302,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
                 }
                 DeleteRecordNode(curFindDeletePos);
                 readableSize_--;
-            } else if (TimeUtil::GetCurrentTimestamp() - curFindDeletePos->record.timestamp >= INTERVAL) {
+            } else if (AccessToken::TimeUtil::GetCurrentTimestamp() - curFindDeletePos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindDeletePos;
                 countPersistPendingNode++;
             }
@@ -366,7 +373,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
                 findRecordsValues.emplace_back(recordValues);
                 cache1QueryCount--;
             }
-            if (TimeUtil::GetCurrentTimestamp() - curFindPos->record.timestamp >= INTERVAL) {
+            if (AccessToken::TimeUtil::GetCurrentTimestamp() - curFindPos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindPos;
                 countPersistPendingNode++;
             }

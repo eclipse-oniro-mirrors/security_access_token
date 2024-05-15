@@ -12,7 +12,6 @@
 # limitations under the License.
 
 access_token_path = "//base/security/access_token"
-ace_engine_path = "//foundation/arkui/ace_engine"
 audio_framework_path = "//foundation/multimedia/audio_framework"
 module_output_path_interface_privacy =
     "access_token/access_token/interface_privacy"
@@ -133,7 +132,28 @@ if (!defined(global_parts_info) ||
   eventhandler_enable = false
 }
 
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.resourceschedule_background_task_mgr)) {
+  access_token_background_task_mgr_continuous_task_enable = true
+} else {
+  access_token_background_task_mgr_continuous_task_enable = false
+}
+
 declare_args() {
   access_token_camera_float_window_enable = true
   access_token_feature_dtmf_tone = true
+}
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.window_window_manager)) {
+  window_manager_enable = true
+} else {
+  window_manager_enable = false
+}
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.powermgr_power_manager)) {
+  power_manager_enable = true
+} else {
+  power_manager_enable = false
 }

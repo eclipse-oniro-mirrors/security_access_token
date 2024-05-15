@@ -1408,6 +1408,19 @@ HWTEST_F(TokenSyncServiceTest, DeleteRemoteHapTokenInfo001, TestSize.Level1)
     ASSERT_EQ(TokenSyncError::TOKEN_SYNC_SUCCESS, tokenSyncManagerService_->UpdateRemoteHapTokenInfo(tokenInfo));
 }
 
+/**
+ * @tc.name: ExistDeviceInfo001
+ * @tc.desc: TokenSyncManagerService::ExistDeviceInfo function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ExistDeviceInfo001, TestSize.Level1)
+{
+    std::string nodeId = "111";
+    DeviceIdType type = DeviceIdType::NETWORK_ID;
+    EXPECT_FALSE(DeviceInfoManager::GetInstance().ExistDeviceInfo(nodeId, type));
+}
+
 class TestStub : public TokenSyncManagerStub {
 public:
     TestStub() = default;

@@ -19,14 +19,11 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
+#include "accesstoken_config_policy.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-#include "config_policy_utils.h"
-#include "json_parser.h"
-#endif
 #include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_parser.h"
@@ -66,11 +63,7 @@ constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
-static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
-static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
-#endif
+static constexpr char ADD_DOMAIN[] = "PERFORMANCE";
 }
 
 const bool REGISTER_RESULT =
@@ -85,7 +78,6 @@ AccessTokenManagerService::AccessTokenManagerService()
 AccessTokenManagerService::~AccessTokenManagerService()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "~AccessTokenManagerService()");
-    tokenDumpWorker_.Stop();
 }
 
 void AccessTokenManagerService::OnStart()
@@ -644,51 +636,7 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     ACCESSTOKEN_LOG_INFO(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY success");
 }
 
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-void AccessTokenManagerService::GetValidConfigFilePathList(std::vector<std::string>& pathList)
-{
-    CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
-    if (dirs != nullptr) {
-        for (const auto& path : dirs->paths) {
-            if ((path == nullptr) || (!JsonParser::IsDirExsit(path))) {
-                continue;
-            }
-
-            ACCESSTOKEN_LOG_INFO(LABEL, "accesstoken cfg dir: %{public}s", path);
-            pathList.emplace_back(path);
-        }
-
-        FreeCfgDirList(dirs); // free
-    } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "can't get valid cfg file path");
-    }
-}
-
-// nlohmann json need the function named from_json to parse
-void from_json(const nlohmann::json& j, std::string& bundleName, std::string& abilityName)
-{}
-
-bool AccessTokenManagerService::GetConfigGrantValueFromFile(std::string& fileContent)
-{
-    nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
-    if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
-        return false;
-    }
-
-    if (!JsonParser::GetStringFromJson(jsonRes, PERMISSION_MANAGER_BUNDLE_NAME_KEY, grantBundleName_)) {
-        return false;
-    }
-
-    if (!JsonParser::GetStringFromJson(jsonRes, GRANT_ABILITY_NAME_KEY, grantAbilityName_)) {
-        return false;
-    }
-
-    return true;
-}
-#endif
-
-void AccessTokenManagerService::SetDefaultConfigGrantValue()
+void AccessTokenManagerService::SetDefaultConfigValue()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
 
@@ -698,26 +646,14 @@ void AccessTokenManagerService::SetDefaultConfigGrantValue()
 
 void AccessTokenManagerService::GetConfigValue()
 {
-#ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-    std::vector<std::string> pathList;
-    GetValidConfigFilePathList(pathList);
-
-    for (const auto& path : pathList) {
-        std::string filePath = path + ACCESSTOKEN_CONFIG_FILE;
-        std::string fileContent;
-        int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
-        if (res != ERR_OK) {
-            continue;
-        }
-
-        if (GetConfigGrantValueFromFile(fileContent)) {
-            break; // once get the config value, break the loop
-        }
-    }
-#endif
-    // when config file list empty or can not get two value from config file, set default value
-    if ((grantBundleName_.empty()) || (grantAbilityName_.empty())) {
-        SetDefaultConfigGrantValue();
+    AccessTokenConfigPolicy policy;
+    AccessTokenConfigValue value;
+    if (policy.GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+        // set value from config
+        grantBundleName_ = value.atConfig.grantBundleName;
+        grantAbilityName_ = value.atConfig.grantAbilityName;
+    } else {
+        SetDefaultConfigValue();
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "grantBundleName_ is %{public}s, grantAbilityName_ is %{public}s",
@@ -727,11 +663,11 @@ void AccessTokenManagerService::GetConfigValue()
 bool AccessTokenManagerService::Initialize()
 {
     // accesstoken_service add CPU_SCENE_ENTRY system event in OnStart, avoid CPU statistics
-    long id = 1 << 1;
-    int64_t time = TimeUtil::GetCurrentTimestamp();
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CPU_SCENE_ENTRY",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME,
-        "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
+    long id = 1 << 0; // first scene
+    int64_t time = AccessToken::TimeUtil::GetCurrentTimestamp();
+
+    HiSysEventWrite(ADD_DOMAIN, "CPU_SCENE_ENTRY", HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+        "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME, "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 
@@ -760,7 +696,6 @@ bool AccessTokenManagerService::Initialize()
     PermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
-    tokenDumpWorker_.Start(1);
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
     return true;
 }

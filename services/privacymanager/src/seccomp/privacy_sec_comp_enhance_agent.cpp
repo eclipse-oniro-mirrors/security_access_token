@@ -28,6 +28,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacySecCompEnhanceAgent"
 };
+std::recursive_mutex g_instanceMutex;
 }
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
@@ -46,8 +47,14 @@ void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
 
 PrivacySecCompEnhanceAgent& PrivacySecCompEnhanceAgent::GetInstance()
 {
-    static PrivacySecCompEnhanceAgent instance;
-    return instance;
+    static PrivacySecCompEnhanceAgent* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PrivacySecCompEnhanceAgent();
+        }
+    }
+    return *instance;
 }
 
 void PrivacySecCompEnhanceAgent::InitAppObserver()
@@ -123,6 +130,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
+    enhance.key = enhanceData.key;
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));

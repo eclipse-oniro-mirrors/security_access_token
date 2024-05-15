@@ -14,6 +14,7 @@
  */
 
 #include "accesstoken_id_manager.h"
+#include <mutex>
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "data_validator.h"
@@ -23,6 +24,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenIDManager"};
 }
 
@@ -36,6 +38,12 @@ int AccessTokenIDManager::GetTokenIdDlpFlag(AccessTokenID id)
 {
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
     return idInner->dlpFlag;
+}
+
+int AccessTokenIDManager::GetTokenIdCloneFlag(AccessTokenID id)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    return idInner->cloneFlag;
 }
 
 ATokenTypeEnum AccessTokenIDManager::GetTokenIdType(AccessTokenID id)
@@ -78,7 +86,7 @@ void AccessTokenIDManager::GetHapTokenIdList(std::vector<AccessTokenID>& idList)
     }
 }
 
-AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpType) const
+AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag) const
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
@@ -90,19 +98,20 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int dlpTy
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
     innerId.res = 0;
+    innerId.cloneFlag = cloneFlag;
     innerId.renderFlag = 0;
-    innerId.dlpFlag = (dlpType == 0) ? 0 : 1;
+    innerId.dlpFlag = dlpFlag;
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
     AccessTokenID tokenId = *reinterpret_cast<AccessTokenID *>(&innerId);
     return tokenId;
 }
 
-AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type, int dlpType)
+AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type, int32_t dlpFlag, int32_t cloneFlag)
 {
     AccessTokenID tokenId = 0;
     // random maybe repeat, retry twice.
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
-        tokenId = CreateTokenId(type, dlpType);
+        tokenId = CreateTokenId(type, dlpFlag, cloneFlag);
         if (tokenId == INVALID_TOKENID) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "create tokenId failed");
             return INVALID_TOKENID;
@@ -133,8 +142,14 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 
 AccessTokenIDManager& AccessTokenIDManager::GetInstance()
 {
-    static AccessTokenIDManager instance;
-    return instance;
+    static AccessTokenIDManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new AccessTokenIDManager();
+        }
+    }
+    return *instance;
 }
 } // namespace AccessToken
 } // namespace Security

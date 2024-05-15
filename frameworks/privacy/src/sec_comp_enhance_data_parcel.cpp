@@ -26,6 +26,7 @@ bool SecCompEnhanceDataParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint64(this->enhanceData.challenge));
     RETURN_IF_FALSE(out.WriteInt32(this->enhanceData.sessionId));
     RETURN_IF_FALSE(out.WriteInt32(this->enhanceData.seqNum));
+    RETURN_IF_FALSE(out.WriteString(this->enhanceData.key));
     RETURN_IF_FALSE((static_cast<MessageParcel*>(&out))->WriteRemoteObject(this->enhanceData.callback));
     return true;
 }
@@ -42,6 +43,7 @@ SecCompEnhanceDataParcel* SecCompEnhanceDataParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint64(enhanceDataParcel->enhanceData.challenge), enhanceDataParcel);
     RELEASE_IF_FALSE(in.ReadInt32(enhanceDataParcel->enhanceData.sessionId), enhanceDataParcel);
     RELEASE_IF_FALSE(in.ReadInt32(enhanceDataParcel->enhanceData.seqNum), enhanceDataParcel);
+    RELEASE_IF_FALSE(in.ReadString(enhanceDataParcel->enhanceData.key), enhanceDataParcel);
 
     enhanceDataParcel->enhanceData.callback = (static_cast<MessageParcel*>(&in))->ReadRemoteObject();
     if (enhanceDataParcel->enhanceData.callback == nullptr) {

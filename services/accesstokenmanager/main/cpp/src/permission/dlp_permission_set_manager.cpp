@@ -15,6 +15,7 @@
 #include "dlp_permission_set_manager.h"
 
 #include <memory>
+#include <mutex>
 
 #include "access_token.h"
 #include "accesstoken_log.h"
@@ -27,12 +28,19 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DlpPermissionSetManager"};
+std::recursive_mutex g_instanceMutex;
 }
 
 DlpPermissionSetManager& DlpPermissionSetManager::GetInstance()
 {
-    static DlpPermissionSetManager instance;
-    return instance;
+    static DlpPermissionSetManager* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new DlpPermissionSetManager();
+        }
+    }
+    return *instance;
 }
 
 DlpPermissionSetManager::DlpPermissionSetManager()

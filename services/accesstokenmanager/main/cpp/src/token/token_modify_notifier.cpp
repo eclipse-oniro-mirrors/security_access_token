@@ -29,6 +29,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenModifyNotifier"};
 }
 
@@ -86,19 +87,25 @@ void TokenModifyNotifier::NotifyTokenModify(AccessTokenID tokenID)
 
 TokenModifyNotifier& TokenModifyNotifier::GetInstance()
 {
-    static TokenModifyNotifier instance;
-
-    if (!instance.hasInited_) {
-        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance.initLock_);
-        if (!instance.hasInited_) {
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
-            instance.notifyTokenWorker_.Start(1);
-#endif
-            instance.hasInited_ = true;
+    static TokenModifyNotifier* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new TokenModifyNotifier();
         }
     }
 
-    return instance;
+    if (!instance->hasInited_) {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance->initLock_);
+        if (!instance->hasInited_) {
+#ifndef RESOURCESCHEDULE_FFRT_ENABLE
+            instance->notifyTokenWorker_.Start(1);
+#endif
+            instance->hasInited_ = true;
+        }
+    }
+
+    return *instance;
 }
 
 void TokenModifyNotifier::NotifyTokenSyncTask()

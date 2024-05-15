@@ -56,6 +56,10 @@ constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
 constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t RANDOM_TOKENID = 123;
+static constexpr int32_t FIRST_INDEX = 0;
+static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
+static const int32_t PICKER_TYPE_ADD_VALUE = 2;
+static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -600,20 +604,58 @@ HWTEST_F(PermissionRecordManagerTest, Dlopen001, TestSize.Level1)
     EXPECT_NE(nullptr, loader2.handle_);
 }
 
-/**
- * @tc.name: Dlopen002
- * @tc.desc: Open a exist lib & exist func
+/*
+ * @tc.name: AddDataValueToResults001
+ * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionRecordManagerTest, Dlopen002, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults001, TestSize.Level1)
 {
-    LibraryLoader loader(ABILITY_MANAGER_LIBPATH);
-    AbilityManagerAccessLoaderInterface* abilityManagerAccessLoader =
-        loader.GetObject<AbilityManagerAccessLoaderInterface>();
-    EXPECT_NE(nullptr, loader.handle_);
-    EXPECT_NE(nullptr, abilityManagerAccessLoader);
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, NORMAL_TYPE_ADD_VALUE);
+    std::vector<PermissionUsedTypeInfo> results;
+
+    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, results[FIRST_INDEX].type);
 }
+
+/*
+ * @tc.name: AddDataValueToResults002
+ * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults002, TestSize.Level1)
+{
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, PICKER_TYPE_ADD_VALUE);
+    std::vector<PermissionUsedTypeInfo> results;
+
+    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    ASSERT_EQ(PermissionUsedType::PICKER_TYPE, results[FIRST_INDEX].type);
+}
+
+/*
+ * @tc.name: AddDataValueToResults003
+ * @tc.desc: PermissionRecordManager::AddDataValueToResults function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
+{
+    GenericValues value;
+    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, RANDOM_TOKENID);
+    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, SEC_COMPONENT_TYPE_ADD_VALUE);
+    std::vector<PermissionUsedTypeInfo> results;
+
+    PermissionRecordManager::GetInstance().AddDataValueToResults(value, results);
+    ASSERT_EQ(PermissionUsedType::SECURITY_COMPONENT_TYPE, results[FIRST_INDEX].type);
+    ASSERT_EQ(0, GetFirstCallerTokenID());
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -24,3 +24,10 @@ group("napi_packages") {
     ]
   }
 }
+
+group("cj_packages") {
+  deps = []
+  if (support_jsapi) {
+    deps += [ "accesstoken:cj_ability_access_ctrl_ffi" ]
+  }
+}

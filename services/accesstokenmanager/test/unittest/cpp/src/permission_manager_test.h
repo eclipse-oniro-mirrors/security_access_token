@@ -36,7 +36,9 @@ public:
     void TearDown();
 
     sptr<AccessTokenManagerService> accessTokenService_ = nullptr;
-    std::shared_ptr<PermissionAppStateObserver> observer_ = nullptr;
+    std::shared_ptr<PermissionAppStateObserver> appStateObserver_ = nullptr;
+    std::shared_ptr<PermissionBackgroundTaskObserver> backgroundTaskObserver_ = nullptr;
+    std::shared_ptr<PermissionFormStateObserver> formStateObserver_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

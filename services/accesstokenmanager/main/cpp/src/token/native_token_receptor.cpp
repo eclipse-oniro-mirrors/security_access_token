@@ -31,6 +31,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "NativeTokenReceptor"};
 static const std::string DEFAULT_DEVICEID = "0";
 static const std::string JSON_PROCESS_NAME = "processName";
@@ -178,8 +179,14 @@ int NativeTokenReceptor::Init()
 
 NativeTokenReceptor& NativeTokenReceptor::GetInstance()
 {
-    static NativeTokenReceptor instance;
-    return instance;
+    static NativeTokenReceptor* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new NativeTokenReceptor();
+        }
+    }
+    return *instance;
 }
 } // namespace AccessToken
 } // namespace Security
