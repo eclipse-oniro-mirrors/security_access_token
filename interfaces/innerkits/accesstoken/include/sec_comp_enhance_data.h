@@ -69,6 +69,10 @@ struct SecCompEnhanceData {
      * sequence number of session.
      */
     int32_t seqNum;
+    /**
+     * key to encrypt ipc message.
+     */
+    std::string key;
 };
 
 } // namespace AccessToken

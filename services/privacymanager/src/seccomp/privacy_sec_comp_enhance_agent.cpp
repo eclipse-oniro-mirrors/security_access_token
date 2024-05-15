@@ -130,6 +130,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
+    enhance.key = enhanceData.key;
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
