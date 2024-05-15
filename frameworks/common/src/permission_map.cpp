@@ -115,6 +115,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UPDATE_SYSTEM",           false},
     {"ohos.permission.FACTORY_RESET",           false},
     {"ohos.permission.UPDATE_MIGRATE",          false},
+    {"ohos.permission.ASSIST_DEVICE_UPDATE",    false},
     {"ohos.permission.GRANT_SENSITIVE_PERMISSIONS", false},
     {"ohos.permission.REVOKE_SENSITIVE_PERMISSIONS", false},
     {"ohos.permission.GET_SENSITIVE_PERMISSIONS", false},

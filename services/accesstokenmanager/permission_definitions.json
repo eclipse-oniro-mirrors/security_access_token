@@ -1331,6 +1331,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ASSIST_DEVICE_UPDATE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.CLOUDFILE_SYNC_MANAGER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
