@@ -164,7 +164,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
     record.accessCount = info.successCount;
     record.rejectCount = info.failCount;
     record.opCode = opCode;
-    record.timestamp = TimeUtil::GetCurrentTimestamp();
+    record.timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
     record.accessDuration = 0;
     record.type = info.type;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "record status: %{public}d", record.status);
@@ -490,7 +490,7 @@ int32_t PermissionRecordManager::DeletePermissionRecord(int32_t days)
         }
     }
     GenericValues andConditionValues;
-    int64_t deleteTimestamp = TimeUtil::GetCurrentTimestamp() - interval;
+    int64_t deleteTimestamp = AccessToken::TimeUtil::GetCurrentTimestamp() - interval;
     andConditionValues.Put(PrivacyFiledConst::FIELD_TIMESTAMP_END, deleteTimestamp);
     if (!PermissionRecordRepository::GetInstance().DeleteExpireRecordsValues(andConditionValues)) {
         return Constant::FAILURE;
@@ -535,7 +535,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveCha
                 continue;
             }
             permList.emplace_back(perm);
-            int64_t curStamp = TimeUtil::GetCurrentTimestamp();
+            int64_t curStamp = AccessToken::TimeUtil::GetCurrentTimestamp();
 
             // update status to input and timestamp to now in cache
             it->status = status;
@@ -668,7 +668,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
         if ((it->opCode == opCode) && (it->tokenId == tokenId)) {
             it->accessCount = 1;
             record = *it;
-            record.accessDuration = TimeUtil::GetCurrentTimestamp() - record.timestamp;
+            record.accessDuration = AccessToken::TimeUtil::GetCurrentTimestamp() - record.timestamp;
             startRecordList_.erase(it);
             return true;
         }

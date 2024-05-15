@@ -715,7 +715,7 @@ HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck001, TestSize.Level1)
     int32_t lockScreenStatus1 = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     int32_t lockScreenStatus2 = static_cast<int32_t>(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
 
-    int64_t timestamp1 = TimeUtil::GetCurrentTimestamp();
+    int64_t timestamp1 = AccessToken::TimeUtil::GetCurrentTimestamp();
     PermissionRecord record1 = {
         .timestamp = timestamp1,
     };
@@ -767,7 +767,7 @@ HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck002, TestSize.Level1)
     int32_t rejectCount2 = 0;
     int32_t rejectCount3 = 8; // random input, diff from accessCount1
 
-    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+    int64_t timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
 
     // same minute + same tokenID + same opcode + same status + same lockScreenStatus
     PermissionRecord record1 = g_record;
@@ -835,7 +835,7 @@ HWTEST_F(PermissionRecordManagerTest, RecordMergeCheck003, TestSize.Level1)
     int32_t rejectCount1 = 0; // random input
     int32_t rejectCount2 = 0;
 
-    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+    int64_t timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
 
     PermissionRecord record1 = g_record;
     record1.timestamp = timestamp;
@@ -942,7 +942,7 @@ HWTEST_F(PermissionRecordManagerTest, GetRecords002, TestSize.Level1)
 
 static void GeneratePermissionRecord(AccessTokenID tokenID)
 {
-    int64_t timestamp = TimeUtil::GetCurrentTimestamp();
+    int64_t timestamp = AccessToken::TimeUtil::GetCurrentTimestamp();
 
     std::vector<GenericValues> values;
     GenericValues value;
