@@ -22,6 +22,7 @@ group("accesstoken_build_module_test") {
       "frameworks/test/unittest:unittest",
       "interfaces/innerkits/accesstoken/test:unittest",
       "interfaces/innerkits/analysis_model/test:unittest",
+      "interfaces/innerkits/el5filekeymanager/test:unittest",
       "interfaces/innerkits/nativetoken/test:unittest",
       "interfaces/innerkits/privacy/test:unittest",
       "interfaces/innerkits/token_callback/test:unittest",
@@ -30,7 +31,10 @@ group("accesstoken_build_module_test") {
       "services/common/database/test:unittest",
     ]
     if (ability_base_enable == true) {
-      deps += [ "services/privacymanager/test:unittest" ]
+      deps += [
+        "services/el5filekeymanager/test:unittest",
+        "services/privacymanager/test:unittest",
+      ]
     }
   }
   if (token_sync_enable == true) {
