@@ -68,7 +68,7 @@ PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
 bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2)
 {
     // timestamp in the same minute
-    if (!TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
+    if (!AccessToken::TimeUtil::IsTimeStampsSameMinute(record1.timestamp, record2.timestamp)) {
         return false;
     }
 
@@ -302,7 +302,7 @@ int32_t PermissionUsedRecordCache::RemoveRecords(const AccessTokenID tokenId)
                 }
                 DeleteRecordNode(curFindDeletePos);
                 readableSize_--;
-            } else if (TimeUtil::GetCurrentTimestamp() - curFindDeletePos->record.timestamp >= INTERVAL) {
+            } else if (AccessToken::TimeUtil::GetCurrentTimestamp() - curFindDeletePos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindDeletePos;
                 countPersistPendingNode++;
             }
@@ -373,7 +373,7 @@ void PermissionUsedRecordCache::GetRecords(const std::vector<std::string>& permi
                 findRecordsValues.emplace_back(recordValues);
                 cache1QueryCount--;
             }
-            if (TimeUtil::GetCurrentTimestamp() - curFindPos->record.timestamp >= INTERVAL) {
+            if (AccessToken::TimeUtil::GetCurrentTimestamp() - curFindPos->record.timestamp >= INTERVAL) {
                 persistPendingBufferEnd = curFindPos;
                 countPersistPendingNode++;
             }

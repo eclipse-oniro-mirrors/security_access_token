@@ -67,6 +67,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/common/libraryloader/include",
       "${access_token_path}/services/common/power_manager/include",
       "${access_token_path}/services/common/screenlock_manager/include",
+      "${access_token_path}/services/common/utils/include",
       "${audio_framework_path}/services/audio_policy/common/include",
     ]
 

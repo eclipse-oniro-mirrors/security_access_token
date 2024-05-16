@@ -54,6 +54,7 @@ if (is_standard_system) {
       "${access_token_path}/services/common/database/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",
+      "${access_token_path}/services/common/utils/include",
       "main/cpp/include/callback",
       "main/cpp/include/service",
       "main/cpp/include/form_manager",

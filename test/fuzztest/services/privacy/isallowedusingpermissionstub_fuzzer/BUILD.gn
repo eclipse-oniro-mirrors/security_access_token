@@ -50,6 +50,7 @@ ohos_fuzztest("IsAllowedUsingPermissionStubFuzzTest") {
     "${access_token_path}/services/common/libraryloader/include",
     "${access_token_path}/services/common/power_manager/include",
     "${access_token_path}/services/common/screenlock_manager/include",
+    "${access_token_path}/services/common/utils/include",
   ]
 
   sources += [

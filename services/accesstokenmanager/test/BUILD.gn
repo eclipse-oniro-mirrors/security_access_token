@@ -68,6 +68,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_test") {
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/services/common/libraryloader/include",
+    "${access_token_path}/services/common/utils/include",
     "../main/cpp/include/callback",
     "../main/cpp/include/database",
     "../main/cpp/include/device",
