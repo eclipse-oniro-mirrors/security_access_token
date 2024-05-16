@@ -1325,8 +1325,8 @@ bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
     bool isShow = true;
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     std::lock_guard<std::mutex> lock(windowStausMutex_);
-    isShow = (floatWindowTokenId_ == tokenId) && camFloatWindowShowing_;
-    isShow |= ((pipWindowTokenId_ == tokenId) && pipWindowShowing_);
+    isShow = (((floatWindowTokenId_ == tokenId) && camFloatWindowShowing_) ||
+        ((pipWindowTokenId_ == tokenId) && pipWindowShowing_));
 #endif
     return isShow;
 }
