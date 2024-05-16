@@ -251,12 +251,12 @@ void PermissionManagerTest::SetUp()
         return;
     }
     appStateObserver_ = std::make_shared<PermissionAppStateObserver>();
-
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
     if (backgroundTaskObserver_ != nullptr) {
         return;
     }
     backgroundTaskObserver_ = std::make_shared<PermissionBackgroundTaskObserver>();
-
+#endif
     if (formStateObserver_ != nullptr) {
         return;
     }
@@ -1770,7 +1770,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
-
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /**
  * @tc.name: GrantTempPermission006
  * @tc.desc: Test grant temp permission switching to background and have a background task
@@ -2073,7 +2073,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
-
+#endif
 /**
  * @tc.name: GrantTempPermission0013
  * @tc.desc: Test grant temp permission process died
@@ -2194,7 +2194,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
-
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /**
  * @tc.name: GrantTempPermission0017
  * @tc.desc: Test tokenID not in the list
@@ -2231,7 +2231,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0017, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
-
+#endif
 /**
  * @tc.name: GrantTempPermission0018
  * @tc.desc: Test invalid permissionName
