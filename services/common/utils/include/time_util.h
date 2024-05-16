@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef BASE_SECURITY_ACCESS_TOKEN_TIME_UTIL_H
-#define BASE_SECURITY_ACCESS_TOKEN_TIME_UTIL_H
+#ifndef TIME_UTIL_H
+#define TIME_UTIL_H
 #include <string>
 namespace OHOS {
 namespace Security {
@@ -28,4 +28,4 @@ public:
 } // namespace Security
 } // namespace OHOS
 
-#endif // BASE_SECURITY_ACCESS_TOKEN_TIME_UTIL_H
+#endif // TIME_UTIL_H
