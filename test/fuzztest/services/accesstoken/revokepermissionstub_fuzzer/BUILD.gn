@@ -62,6 +62,7 @@ ohos_fuzztest("RevokePermissionStubFuzzTest") {
     "${access_token_path}/services/common/app_manager/include",
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
+    "${access_token_path}/services/common/utils/include",
   ]
 
   include_dirs += access_token_impl_include_dirs
