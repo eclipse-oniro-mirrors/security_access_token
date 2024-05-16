@@ -39,9 +39,9 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     }
 
     if (begin == 0 && end == 0) {
-        int64_t beginTime = AccessToken::TimeUtil::GetCurrentTimestamp() - LATEST_RECORD_TIME;
+        int64_t beginTime = TimeUtil::GetCurrentTimestamp() - LATEST_RECORD_TIME;
         begin = (beginTime < 0) ? 0 : beginTime;
-        end = AccessToken::TimeUtil::GetCurrentTimestamp();
+        end = TimeUtil::GetCurrentTimestamp();
     }
 
     if (begin != 0) {

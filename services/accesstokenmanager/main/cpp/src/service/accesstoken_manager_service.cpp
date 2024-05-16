@@ -664,7 +664,7 @@ bool AccessTokenManagerService::Initialize()
 {
     // accesstoken_service add CPU_SCENE_ENTRY system event in OnStart, avoid CPU statistics
     long id = 1 << 0; // first scene
-    int64_t time = AccessToken::TimeUtil::GetCurrentTimestamp();
+    int64_t time = TimeUtil::GetCurrentTimestamp();
 
     HiSysEventWrite(ADD_DOMAIN, "CPU_SCENE_ENTRY", HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         "PACKAGE_NAME", ACCESSTOKEN_PROCESS_NAME, "SCENE_ID", std::to_string(id).c_str(), "HAPPEN_TIME", time);
