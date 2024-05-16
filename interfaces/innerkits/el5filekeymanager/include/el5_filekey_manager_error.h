@@ -37,6 +37,8 @@ enum El5FilekeyManagerErrCode {
     EFM_ERR_CALL_POLICY_FAILED,
     EFM_ERR_CALL_POLICY_ERROR,
     EFM_ERR_DATABASE_FAILED,
+    EFM_ERR_OPEN_FILE_FAILED,
+    EFM_ERR_IOCTL_FAILED,
 };
 }  // namespace AccessToken
 }  // namespace Security

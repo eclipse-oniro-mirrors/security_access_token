@@ -50,6 +50,11 @@ int32_t El5FilekeyManagerKit::ChangeUserAppkeysLoadInfo(int32_t userId,
 {
     return El5FilekeyManagerClient::GetInstance().ChangeUserAppkeysLoadInfo(userId, loadInfos);
 }
+
+int32_t El5FilekeyManagerKit::SetFilePathPolicy()
+{
+    return El5FilekeyManagerClient::GetInstance().SetFilePathPolicy();
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
