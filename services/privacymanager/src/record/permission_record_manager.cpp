@@ -26,6 +26,10 @@
 #include "active_status_callback_manager.h"
 #include "app_manager_access_client.h"
 #include "audio_manager_privacy_client.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+#include "background_task_manager_access_client.h"
+#include "continuous_task_callback_info.h"
+#endif
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
 #include "constant_common.h"
@@ -973,16 +977,36 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
         return false;
     }
 
+    int32_t status = GetAppStatus(tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
+
     if ((permissionName == CAMERA_PERMISSION_NAME) && !IsScreenOn()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Screen is off.");
         return false;
     }
 
-    int32_t status = GetAppStatus(tokenId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
-
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
+    }
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        bool isContinuousTaskExist = false;
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+        std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
+        BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
+        for (const auto& callbackInfo : continuousTaskList) {
+            if (callbackInfo == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "callbackInfo is NULL.");
+                continue;
+            }
+            AccessTokenID tokenID = static_cast<AccessTokenID>(callbackInfo->tokenId_);
+            ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, typeId is %{public}d", tokenID, callbackInfo->typeId_);
+            if ((tokenID == tokenId) && (static_cast<BackgroundMode>(callbackInfo->typeId_) == BackgroundMode::VOIP)) {
+                isContinuousTaskExist = true;
+                break;
+            }
+        }
+#endif
+        return isContinuousTaskExist;
     }
     if (permissionName == CAMERA_PERMISSION_NAME) {
         return IsCameraWindowShow(tokenId);
