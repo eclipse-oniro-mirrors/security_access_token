@@ -130,4 +130,16 @@ ohos_fuzztest("StopUsingPermissionStubFuzzTest") {
     cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
     external_deps += [ "screenlock_mgr:screenlock_client" ]
   }
+
+  if (access_token_background_task_mgr_continuous_task_enable == true) {
+    cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
+    include_dirs += [ "${access_token_path}/services/privacymanager/include/background_task_manager" ]
+    sources += [
+      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_access_client.cpp",
+      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_access_proxy.cpp",
+      "${access_token_path}/services/privacymanager/src/background_task_manager/background_task_manager_death_recipient.cpp",
+      "${access_token_path}/services/privacymanager/src/background_task_manager/continuous_task_callback_info.cpp",
+      "${access_token_path}/services/privacymanager/src/background_task_manager/continuous_task_change_callback.cpp",
+    ]
+  }
 }
