@@ -25,7 +25,10 @@ config("accesstoken_communication_adapter_cxx_public_config") {
 
 ohos_shared_library("accesstoken_communication_adapter_cxx") {
   subsystem_name = "security"
-  innerapi_tags = [ "platformsdk_indirect" ]
+  innerapi_tags = [
+    "platformsdk_indirect",
+    "chipsetsdk_indirect",
+  ]
   part_name = "access_token"
   sanitize = {
     cfi = true
