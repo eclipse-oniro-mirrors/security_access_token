@@ -98,9 +98,9 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
     innerId.version = DEFAULT_TOKEN_VERSION;
     innerId.type = type;
     innerId.res = 0;
-    innerId.cloneFlag = cloneFlag;
+    innerId.cloneFlag = static_cast<uint32_t>(cloneFlag);
     innerId.renderFlag = 0;
-    innerId.dlpFlag = dlpFlag;
+    innerId.dlpFlag = static_cast<uint32_t>(dlpFlag);
     innerId.tokenUniqueID = rand & TOKEN_RANDOM_MASK;
     AccessTokenID tokenId = *reinterpret_cast<AccessTokenID *>(&innerId);
     return tokenId;

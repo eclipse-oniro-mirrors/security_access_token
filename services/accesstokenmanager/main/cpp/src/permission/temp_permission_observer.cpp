@@ -188,7 +188,7 @@ void PermissionAppManagerDeathCallback::NotifyAppManagerDeath()
     TempPermissionObserver::GetInstance().OnAppMgrRemoteDiedHandle();
 }
 
-TempPermissionObserver::TempPermissionObserver()
+TempPermissionObserver::TempPermissionObserver() : cancleTimes_(DEFAULT_CANCLE_MILLISECONDS)
 {}
 
 TempPermissionObserver::~TempPermissionObserver()
