@@ -51,10 +51,16 @@ PrivacyWindowManagerClient& PrivacyWindowManagerClient::GetInstance()
 }
 
 PrivacyWindowManagerClient::PrivacyWindowManagerClient() : deathCallback_(nullptr)
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    serviceDeathObserver_ = sptr<PrivacyWindowManagerDeathRecipient>::MakeSptr();
+}
 
 PrivacyWindowManagerClient::~PrivacyWindowManagerClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    RemoveDeathRecipient();
+}
 
 int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgent(WindowManagerAgentType type,
     const sptr<IWindowManagerAgent>& windowManagerAgent)
@@ -164,7 +170,6 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         ACCESSTOKEN_LOG_WARN(LABEL, "sceneSessionManagerProxy_ is null.");
         return;
     }
-    serviceDeathObserver_ = new (std::nothrow) PrivacyWindowManagerDeathRecipient();
     if (!serviceDeathObserver_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create death Recipient ptr WMSDeathRecipient");
         return;
@@ -196,7 +201,6 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         ACCESSTOKEN_LOG_WARN(LABEL, "sceneSessionManagerLiteProxy_ is null.");
         return;
     }
-    serviceDeathObserver_ = new (std::nothrow) PrivacyWindowManagerDeathRecipient();
     if (!serviceDeathObserver_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create death Recipient ptr WMSDeathRecipient");
         return;
@@ -241,7 +245,6 @@ void PrivacyWindowManagerClient::InitWMSProxy()
         return;
     }
 
-    serviceDeathObserver_ = new (std::nothrow) PrivacyWindowManagerDeathRecipient();
     if (serviceDeathObserver_ != nullptr) {
         windowManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
@@ -264,6 +267,7 @@ sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()
 void PrivacyWindowManagerClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
+    RemoveDeathRecipient();
     mockSessionManagerServiceProxy_ = nullptr;
     sessionManagerServiceProxy_ = nullptr;
     sceneSessionManagerProxy_ = nullptr;
@@ -299,6 +303,25 @@ sptr<IWindowManager> PrivacyWindowManagerClient::GetProxy()
         return GetSSMProxy();
     }
     return GetWMSProxy();
+}
+
+void PrivacyWindowManagerClient::RemoveDeathRecipient()
+{
+    if (serviceDeathObserver_ == nullptr) {
+        return;
+    }
+    // remove SceneSessionManager
+    if (sceneSessionManagerProxy_ != nullptr) {
+        sceneSessionManagerProxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    //remove SceneSessionManagerLite
+    if (sceneSessionManagerLiteProxy_ != nullptr) {
+        sceneSessionManagerLiteProxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    // remove WMSProxy
+    if (wmsProxy_ != nullptr) {
+        wmsProxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
 }
 } // namespace AccessToken
 } // namespace Security

@@ -43,6 +43,7 @@ private:
 
     void InitProxy();
     sptr<IBackgroundTaskMgr> GetProxy();
+    void ReleaseProxy();
 
     sptr<BackgroundTaskMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

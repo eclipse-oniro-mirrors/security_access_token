@@ -42,6 +42,7 @@ private:
 
     void InitProxy();
     sptr<IAbilityManager> GetProxy();
+    void ReleaseProxy();
 
     sptr<AbilityManagerAccessDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

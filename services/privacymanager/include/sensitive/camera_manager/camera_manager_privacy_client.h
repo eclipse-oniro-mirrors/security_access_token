@@ -42,6 +42,7 @@ private:
 
     void InitProxy();
     sptr<ICameraService> GetProxy();
+    void ReleaseProxy();
 
     sptr<CameraManagerPrivacyDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

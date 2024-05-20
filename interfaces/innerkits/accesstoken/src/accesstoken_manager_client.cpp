@@ -59,6 +59,8 @@ AccessTokenManagerClient::AccessTokenManagerClient()
 AccessTokenManagerClient::~AccessTokenManagerClient()
 {
     ACCESSTOKEN_LOG_ERROR(LABEL, "~AccessTokenManagerClient");
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
 }
 
 PermUsedTypeEnum AccessTokenManagerClient::GetUserGrantedPermissionUsedType(
@@ -695,7 +697,7 @@ void AccessTokenManagerClient::InitProxy()
             return;
         }
 
-        serviceDeathObserver_ = new (std::nothrow) AccessTokenDeathRecipient();
+        serviceDeathObserver_ = sptr<AccessTokenDeathRecipient>::MakeSptr();
         if (serviceDeathObserver_ != nullptr) {
             accesstokenSa->AddDeathRecipient(serviceDeathObserver_);
         }
@@ -708,9 +710,11 @@ void AccessTokenManagerClient::InitProxy()
 
 void AccessTokenManagerClient::OnRemoteDiedHandle()
 {
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
-    InitProxy();
+    {
+        std::lock_guard<std::mutex> lock(proxyMutex_);
+        ReleaseProxy();
+        InitProxy();
+    }
 
 #ifdef TOKEN_SYNC_ENABLE
     if (syncCallbackImpl_ != nullptr) {
@@ -738,6 +742,15 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
     HapBaseInfoParcel hapBaseInfoParcel;
     hapBaseInfoParcel.hapBaseInfo = hapBaseInfo;
     return proxy->SetPermDialogCap(hapBaseInfoParcel, enable);
+}
+
+void AccessTokenManagerClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security
