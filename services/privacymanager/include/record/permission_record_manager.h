@@ -92,7 +92,6 @@ public:
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus();
-    void SetScreenOn(bool isScreenOn);
     bool IsScreenOn();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -104,10 +103,14 @@ public:
     void OnCameraMgrRemoteDiedHandle();
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
     void RemoveRecordFromStartListByOp(int32_t opCode);
+    void ExecuteAllCameraExecuteCallback();
 
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
+
+    bool IsAllowedUsingCamera(AccessTokenID tokenId);
+    bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
 
     void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
@@ -131,7 +134,6 @@ private:
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     bool ShowGlobalDialog(const std::string& permissionName);
 
-    void ExecuteAllCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
@@ -188,7 +190,6 @@ private:
     // lockScreenState
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    bool isScreenOn_ = false;
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool isAutoClose = false;

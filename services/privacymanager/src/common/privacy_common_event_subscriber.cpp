@@ -29,7 +29,7 @@ namespace AccessToken {
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "LockScreenStatusObserver"
+    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PrivacyCommonEventSubscriber"
 };
 
 static bool g_isRegistered = false;
@@ -48,7 +48,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
     auto skill = std::make_shared<EventFwk::MatchingSkills>();
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED);
-    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON);
+    skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED);
     skill->AddEvent(EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED);
@@ -85,10 +85,10 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_LOCKED) {
         PermissionRecordManager::GetInstance()
             .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED);
-    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_ON) {
-        PermissionRecordManager::GetInstance().SetScreenOn(true);
+    } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_USER_SWITCHED) {
+        PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_OFF) {
-        PermissionRecordManager::GetInstance().SetScreenOn(false);
+        PermissionRecordManager::GetInstance().ExecuteAllCameraExecuteCallback();
     } else if (action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_REMOVED ||
         action == EventFwk::CommonEventSupport::COMMON_EVENT_PACKAGE_FULLY_REMOVED) {
         uint32_t tokenId = static_cast<uint32_t>(want.GetParams().GetIntParam("accessTokenId", 0));
