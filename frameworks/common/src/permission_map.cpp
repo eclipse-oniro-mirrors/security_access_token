@@ -409,6 +409,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.UNINSTALL_CLONE_BUNDLE",              false},
     {"ohos.permission.PROTECT_SCREEN_LOCK_DATA",            false},
     {"ohos.permission.MANAGE_SETTINGS",                     false},
+    {"ohos.permission.ACCESS_DEVICE_COLLABORATION_PRIVATE_ABILITY",                     false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
