@@ -24,6 +24,11 @@ bool PowerManagerLoader::IsScreenOn()
     return PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
 }
 
+void PowerManagerLoader::WakeupDevice()
+{
+    PowerMgr::PowerMgrClient::GetInstance().WakeupDevice();
+}
+
 extern "C" {
 void* Create()
 {

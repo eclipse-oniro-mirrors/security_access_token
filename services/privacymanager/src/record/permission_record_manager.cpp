@@ -40,6 +40,7 @@
 #include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
+#include "power_manager_access_loader.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
@@ -581,22 +582,15 @@ int32_t PermissionRecordManager::GetLockScreenStatus()
     return lockScreenStatus_;
 }
 
-void PermissionRecordManager::SetScreenOn(bool isScreenOn)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Screen status %{public}d", isScreenOn);
-    {
-        std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-        isScreenOn_ = isScreenOn;
-    }
-    if (!isScreenOn) {
-        ExecuteAllCameraExecuteCallback();
-    }
-}
-
 bool PermissionRecordManager::IsScreenOn()
 {
-    std::lock_guard<std::mutex> lock(lockScreenStateMutex_);
-    return isScreenOn_;
+    LibraryLoader loader(POWER_MANAGER_LIBPATH);
+    PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
+    if (powerManagerLoader == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to load powermanager so.");
+        return false;
+    }
+    return powerManagerLoader->IsScreenOn();
 }
 
 void PermissionRecordManager::RemoveRecordFromStartList(const PermissionRecord& record)
@@ -963,54 +957,59 @@ int32_t PermissionRecordManager::PermissionListFilter(
     return Constant::SUCCESS;
 }
 
-bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 {
-    // when app in foreground, return true, only for camera and microphone
-    if ((permissionName != CAMERA_PERMISSION_NAME) && (permissionName != MICROPHONE_PERMISSION_NAME)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d).", tokenId);
-        return false;
-    }
+    int32_t status = GetAppStatus(tokenId);
+    bool isScreenOn = IsScreenOn();
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId(%{public}d), appStatus(%{public}d), isScreenOn(%{public}d)",
+        tokenId, status, isScreenOn);
 
-    HapTokenInfo tokenInfo;
-    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenId(%{public}d)。", tokenId);
-        return false;
-    }
+    return (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenOn;
+}
 
+bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
+{
     int32_t status = GetAppStatus(tokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, status is %{public}d", tokenId, status);
-
-    if ((permissionName == CAMERA_PERMISSION_NAME) && !IsScreenOn()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Screen is off.");
-        return false;
-    }
 
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
-    if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        bool isContinuousTaskExist = false;
+
+    bool isContinuousTaskExist = false;
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
-        std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
-        BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
-        for (const auto& callbackInfo : continuousTaskList) {
-            if (callbackInfo == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "callbackInfo is NULL.");
-                continue;
-            }
-            AccessTokenID tokenID = static_cast<AccessTokenID>(callbackInfo->tokenId_);
-            ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, typeId is %{public}d", tokenID, callbackInfo->typeId_);
-            if ((tokenID == tokenId) && (static_cast<BackgroundMode>(callbackInfo->typeId_) == BackgroundMode::VOIP)) {
-                isContinuousTaskExist = true;
-                break;
-            }
+    std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
+    BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
+    for (const auto& callbackInfo : continuousTaskList) {
+        if (callbackInfo == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "callbackInfo is NULL.");
+            continue;
         }
+        AccessTokenID conTaskTokenID = static_cast<AccessTokenID>(callbackInfo->tokenId_);
+        ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}d, typeId is %{public}d", conTaskTokenID, callbackInfo->typeId_);
+        if ((conTaskTokenID == tokenId) &&
+            (static_cast<BackgroundMode>(callbackInfo->typeId_) == BackgroundMode::VOIP)) {
+            isContinuousTaskExist = true;
+            break;
+        }
+    }
 #endif
-        return isContinuousTaskExist;
+    return isContinuousTaskExist;
+}
+
+bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+{
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId(%{public}d) is not hap.", tokenId);
+        return false;
     }
+
     if (permissionName == CAMERA_PERMISSION_NAME) {
-        return IsCameraWindowShow(tokenId);
+        return IsAllowedUsingCamera(tokenId);
+    } else if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        return IsAllowedUsingMicrophone(tokenId);
     }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
 }
 
