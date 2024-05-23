@@ -171,7 +171,7 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
 }

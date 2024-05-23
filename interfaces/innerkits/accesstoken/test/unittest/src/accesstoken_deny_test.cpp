@@ -213,7 +213,7 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfo001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenDenyTest, GetNativeTokenInfo001, TestSize.Level1)
 {
-    AccessTokenID tokenId = 123;
+    AccessTokenID tokenId = 805920561; //805920561 is a native tokenId.
     NativeTokenInfo tokenInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenInfo(tokenId, tokenInfo));
 }

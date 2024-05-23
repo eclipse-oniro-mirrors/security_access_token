@@ -207,8 +207,8 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
 int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
-    if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+    if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -218,8 +218,8 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
 int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
-    if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+    if (GetTokenTypeFlag(tokenID) != TOKEN_NATIVE && GetTokenTypeFlag(tokenID) != TOKEN_SHELL) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
