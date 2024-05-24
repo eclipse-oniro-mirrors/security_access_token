@@ -447,21 +447,33 @@ void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
     if (code == 0) {
         return; // code is 0 means request has return by OnResult
     }
-
-    napi_handle_scope scope = nullptr;
-    napi_open_handle_scope(this->reqContext_->env, &scope);
-    if (scope == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_open_handle_scope failed");
+    auto* retCB = new (std::nothrow) ResultCallback();
+    if (retCB == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
         return;
     }
+    std::unique_ptr<ResultCallback> callbackPtr {retCB};
+    retCB->data = this->reqContext_;
 
-    napi_value result = GetNapiNull(this->reqContext_->env);
-    if (this->reqContext_->deferred != nullptr) {
-        ReturnPromiseResult(this->reqContext_->env, code, this->reqContext_->deferred, result);
-    } else {
-        ReturnCallbackResult(this->reqContext_->env, code, this->reqContext_->callbackRef, result);
+    uv_loop_s* loop = nullptr;
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_get_uv_event_loop(this->reqContext_->env, &loop));
+    if (loop == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        return;
     }
-    napi_close_handle_scope(this->reqContext_->env, scope);
+    uv_work_t* work = new (std::nothrow) uv_work_t;
+    if (work == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        return;
+    }
+    std::unique_ptr<uv_work_t> uvWorkPtr {work};
+    work->data = reinterpret_cast<void *>(retCB);
+    NAPI_CALL_RETURN_VOID(this->reqContext_->env, uv_queue_work_with_qos(
+        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
+
+    uvWorkPtr.release();
+    callbackPtr.release();
+    return;
 }
 
 UIExtensionCallback::UIExtensionCallback(const std::shared_ptr<RequestAsyncContext>& reqContext)
@@ -906,6 +918,9 @@ void RequestAsyncInstanceControl::CheckDynamicRequest(
             return;
         }
         std::unique_ptr<ResultCallback> callbackPtr {retCB};
+        retCB->permissions = asyncContext->permissionList;
+        retCB->grantResults = asyncContext->permissionsState;
+        retCB->dialogShownResults = asyncContext->dialogShownResults;
         retCB->data = asyncContext;
 
         uv_loop_s* loop = nullptr;
