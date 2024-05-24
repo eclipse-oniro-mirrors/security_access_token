@@ -2521,6 +2521,36 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.EXEMPT_CAMERA_PRIVACY_INDICATOR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.EXEMPT_MICROPHONE_PRIVACY_INDICATOR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.EXEMPT_LOCATION_PRIVACY_INDICATOR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GET_SUPER_PRIVACY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
