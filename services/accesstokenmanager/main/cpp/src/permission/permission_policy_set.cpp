@@ -140,7 +140,7 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
             iter->resDeviceID.emplace_back(state.resDeviceID[0]);
             iter->grantStatus.emplace_back(state.grantStatus[0]);
             iter->grantFlags.emplace_back(state.grantFlags[0]);
-            ACCESSTOKEN_LOG_INFO(LABEL, "update permission: %{public}s.", state.permissionName.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "update permission: %{public}s.", state.permissionName.c_str());
             return;
         }
     }

@@ -53,6 +53,8 @@ PrivacyManagerClient::PrivacyManagerClient()
 PrivacyManagerClient::~PrivacyManagerClient()
 {
     ACCESSTOKEN_LOG_ERROR(LABEL, "~PrivacyManagerClient");
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
 }
 
 int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
@@ -369,7 +371,7 @@ void PrivacyManagerClient::InitProxy()
             return;
         }
 
-        serviceDeathObserver_ = new (std::nothrow) PrivacyDeathRecipient();
+        serviceDeathObserver_ = sptr<PrivacyDeathRecipient>::MakeSptr();
         if (serviceDeathObserver_ != nullptr) {
             privacySa->AddDeathRecipient(serviceDeathObserver_);
         }
@@ -383,7 +385,7 @@ void PrivacyManagerClient::InitProxy()
 void PrivacyManagerClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
     InitProxy();
 }
 
@@ -394,6 +396,15 @@ sptr<IPrivacyManager> PrivacyManagerClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void PrivacyManagerClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

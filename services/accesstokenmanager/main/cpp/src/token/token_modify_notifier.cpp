@@ -167,7 +167,7 @@ int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     tokenSyncCallbackObject_ = iface_cast<ITokenSyncCallback>(callback);
-    tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>(new TokenSyncCallbackDeathRecipient);
+    tokenSyncCallbackDeathRecipient_ = sptr<TokenSyncCallbackDeathRecipient>::MakeSptr();
     callback->AddDeathRecipient(tokenSyncCallbackDeathRecipient_);
     ACCESSTOKEN_LOG_INFO(LABEL, "Register token sync callback successful.");
     return ERR_OK;
@@ -176,6 +176,9 @@ int32_t TokenModifyNotifier::RegisterTokenSyncCallback(const sptr<IRemoteObject>
 int32_t TokenModifyNotifier::UnRegisterTokenSyncCallback()
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
+    if (tokenSyncCallbackObject_ != nullptr && tokenSyncCallbackDeathRecipient_ != nullptr) {
+        tokenSyncCallbackObject_->AsObject()->RemoveDeathRecipient(tokenSyncCallbackDeathRecipient_);
+    }
     tokenSyncCallbackObject_ = nullptr;
     tokenSyncCallbackDeathRecipient_ = nullptr;
     ACCESSTOKEN_LOG_INFO(LABEL, "Unregister token sync callback successful.");

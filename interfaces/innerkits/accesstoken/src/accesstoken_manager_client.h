@@ -114,6 +114,7 @@ private:
     sptr<AccessTokenDeathRecipient> serviceDeathObserver_ = nullptr;
     void InitProxy();
     sptr<IAccessTokenManager> GetProxy();
+    void ReleaseProxy();
     std::mutex callbackMutex_;
     std::map<std::shared_ptr<PermStateChangeCallbackCustomize>, sptr<PermissionStateChangeCallback>> callbackMap_;
 

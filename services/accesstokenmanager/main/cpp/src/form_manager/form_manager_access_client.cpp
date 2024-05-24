@@ -45,7 +45,10 @@ FormManagerAccessClient::FormManagerAccessClient()
 {}
 
 FormManagerAccessClient::~FormManagerAccessClient()
-{}
+{
+    std::lock_guard<std::mutex> lock(proxyMutex_);
+    ReleaseProxy();
+}
 
 int32_t FormManagerAccessClient::RegisterAddObserver(
     const std::string &bundleName, const sptr<IRemoteObject> &callerToken)
@@ -115,7 +118,7 @@ void FormManagerAccessClient::InitProxy()
 void FormManagerAccessClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    ReleaseProxy();
 }
 
 sptr<IFormMgr> FormManagerAccessClient::GetProxy()
@@ -125,6 +128,15 @@ sptr<IFormMgr> FormManagerAccessClient::GetProxy()
         InitProxy();
     }
     return proxy_;
+}
+
+void FormManagerAccessClient::ReleaseProxy()
+{
+    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
+        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
+    }
+    proxy_ = nullptr;
+    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

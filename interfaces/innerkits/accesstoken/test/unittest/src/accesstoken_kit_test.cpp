@@ -3118,10 +3118,37 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo001, TestSize.Level1)
     NativeTokenInfo findInfo;
     int ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
     ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+}
 
-    tokenID = 0xff;
-    ret = AccessTokenKit::GetNativeTokenInfo(tokenID, findInfo);
-    ASSERT_EQ(ret, AccessTokenError::ERR_TOKENID_NOT_EXIST);
+/**
+ * @tc.name: GetNativeTokenInfo002
+ * @tc.desc: cannot get native token with invalid tokenID.
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AccessTokenKitTest, GetNativeTokenInfo002, TestSize.Level1)
+{
+    AccessTokenID tokenHap = GetAccessTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    ASSERT_NE(INVALID_TOKENID, tokenHap);
+
+    NativeTokenInfo nativeInfo;
+    HapTokenInfo hapInfo;
+    int ret = AccessTokenKit::GetNativeTokenInfo(tokenHap, nativeInfo);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+
+    ret = AccessTokenKit::GetHapTokenInfo(tokenHap, hapInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    AccessTokenID tokenNative = AccessTokenKit::GetNativeTokenId("token_sync_service");
+    ASSERT_NE(INVALID_TOKENID, tokenNative);
+
+    ret = AccessTokenKit::GetNativeTokenInfo(tokenNative, nativeInfo);
+    ASSERT_EQ(ret, RET_SUCCESS);
+
+    ret = AccessTokenKit::GetHapTokenInfo(tokenNative, hapInfo);
+    ASSERT_EQ(ret, AccessTokenError::ERR_PARAM_INVALID);
+
+    AccessTokenKit::DeleteToken(tokenHap);
 }
 
 /**

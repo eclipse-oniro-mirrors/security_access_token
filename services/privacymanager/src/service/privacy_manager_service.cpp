@@ -27,7 +27,6 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
-#include "power_manager_access_loader.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
@@ -74,7 +73,6 @@ void PrivacyManagerService::OnStart()
 
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
-    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
 
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
@@ -312,15 +310,6 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
             PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
-        }
-        return;
-    }
-
-    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
-        LibraryLoader loader(POWER_MANAGER_LIBPATH);
-        PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
-        if (powerManagerLoader != nullptr) {
-            PermissionRecordManager::GetInstance().SetScreenOn(powerManagerLoader->IsScreenOn());
         }
         return;
     }

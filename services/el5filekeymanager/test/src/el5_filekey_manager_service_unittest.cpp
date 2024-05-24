@@ -21,57 +21,6 @@
 using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
-namespace {
-static constexpr int32_t DEFAUTL_API_VERSION = 12;
-static PermissionStateFull mediaGranted = {
-    .permissionName = "ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {1}
-};
-
-static PermissionStateFull allGranted = {
-    .permissionName = "ohos.permission.ACCESS_SCREEN_LOCK_ALL_DATA",
-    .isGeneral = true,
-    .resDeviceID = {"local"},
-    .grantStatus = {PermissionState::PERMISSION_GRANTED},
-    .grantFlags = {1}
-};
-
-static HapPolicyParams hapPolicyParamsMedia = {
-    .apl = APL_SYSTEM_CORE,
-    .domain = "test.domain.A",
-    .permList = {},
-    .permStateList = {mediaGranted}
-};
-
-static HapPolicyParams hapPolicyParamsAll = {
-    .apl = APL_SYSTEM_CORE,
-    .domain = "test.domain.B",
-    .permList = {},
-    .permStateList = {allGranted}
-};
-
-static HapPolicyParams hapPolicyParamsDefault = {
-    .apl = APL_NORMAL,
-    .domain = "test.domain.C",
-    .permList = {},
-    .permStateList = {}
-};
-
-static HapInfoParams info = {
-    .userID = 100,
-    .bundleName = "ohos.el5_filekey_test.app",
-    .instIndex = 0,
-    .apiVersion = DEFAUTL_API_VERSION,
-    .appIDDesc = "el5_filekey_test.app",
-    .isSystemApp = true
-};
-
-static AccessTokenIDEx g_tokenID = {0};
-}
-
 void El5FilekeyManagerServiceTest::SetUpTestCase()
 {
 }
@@ -84,7 +33,6 @@ void El5FilekeyManagerServiceTest::SetUp()
 {
     el5FilekeyManagerService_ = DelayedSingleton<El5FilekeyManagerService>::GetInstance();
     el5FilekeyManagerService_->Init();
-    selfTokenId_ = GetSelfTokenID();
 }
 
 void El5FilekeyManagerServiceTest::TearDown()
@@ -93,42 +41,23 @@ void El5FilekeyManagerServiceTest::TearDown()
 
 /**
  * @tc.name: AcquireAccess001
- * @tc.desc: Acquire default type data access.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
-{
-    g_tokenID = AccessTokenKit::AllocHapToken(info, hapPolicyParamsDefault);
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to normal app
-
-    DataLockType type = DEFAULT_DATA;
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(static_cast<DataLockType>(type)), EFM_SUCCESS);
-
-    SetSelfTokenID(selfTokenId_);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(info.userID, info.bundleName, info.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-}
-
-/**
- * @tc.name: AcquireAccess002
  * @tc.desc: Acquire media type data access without permission.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
-HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
 {
     DataLockType type = MEDIA_DATA;
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
 /**
- * @tc.name: AcquireAccess003
+ * @tc.name: AcquireAccess002
  * @tc.desc: Acquire all type data access without permission.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
-HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess003, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess002, TestSize.Level1)
 {
     DataLockType type = ALL_DATA;
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
@@ -136,42 +65,23 @@ HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess003, TestSize.Level1)
 
 /**
  * @tc.name: ReleaseAccess001
- * @tc.desc: Release default type data access.
- * @tc.type: FUNC
- * @tc.require: issueI9JGMV
- */
-HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
-{
-    g_tokenID = AccessTokenKit::AllocHapToken(info, hapPolicyParamsDefault);
-    SetSelfTokenID(g_tokenID.tokenIDEx); // set self tokenID to normal app
-
-    DataLockType type = DEFAULT_DATA;
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(static_cast<DataLockType>(type)), EFM_SUCCESS);
-
-    SetSelfTokenID(selfTokenId_);
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(info.userID, info.bundleName, info.instIndex);
-    AccessTokenKit::DeleteToken(tokenId);
-}
-
-/**
- * @tc.name: ReleaseAccess002
  * @tc.desc: Release media type data access without permission.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
-HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess002, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
 {
     DataLockType type = MEDIA_DATA;
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
 /**
- * @tc.name: ReleaseAccess003
+ * @tc.name: ReleaseAccess002
  * @tc.desc: Release all type data access without permission.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
-HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess003, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess002, TestSize.Level1)
 {
     DataLockType type = ALL_DATA;
     ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);

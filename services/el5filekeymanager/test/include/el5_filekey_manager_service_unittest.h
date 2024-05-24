@@ -35,7 +35,6 @@ public:
     void TearDown();
 
     std::shared_ptr<El5FilekeyManagerService> el5FilekeyManagerService_;
-    uint64_t selfTokenId_;
 };
 } // namespace AccessToken
 } // namespace Security

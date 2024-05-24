@@ -80,8 +80,9 @@ bool ParseDataType(const napi_env &env, napi_value args, int32_t &dataLockType)
 
 bool CheckDataType(napi_env env, int32_t dataLockType)
 {
-    if ((dataLockType != DEFAULT_DATA) && (dataLockType != MEDIA_DATA) &&
-        (dataLockType != ALL_DATA)) {
+    if ((static_cast<DataLockType>(dataLockType) != DEFAULT_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != MEDIA_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != ALL_DATA)) {
         ThrowError(env, EFM_ERR_INVALID_DATATYPE);
         return false;
     }

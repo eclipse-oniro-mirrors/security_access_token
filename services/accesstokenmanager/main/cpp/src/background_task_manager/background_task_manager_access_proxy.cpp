@@ -111,7 +111,7 @@ int32_t BackgroundTaskManagerAccessProxy::GetContinuousTaskApps(
         return ERROR;
     }
     for (int32_t i = 0; i < infoSize; i++) {
-        auto info = reply.ReadParcelable<ContinuousTaskCallbackInfo>();
+        auto info = ContinuousTaskCallbackInfo::Unmarshalling(reply);
         if (info == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Read Parcelable infos.");
             return ERROR;

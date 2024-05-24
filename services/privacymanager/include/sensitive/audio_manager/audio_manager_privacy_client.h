@@ -43,6 +43,7 @@ private:
 
     void InitProxy();
     sptr<IAudioPolicy> GetProxy();
+    void ReleaseProxy();
 
     sptr<AudioMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;

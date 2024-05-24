@@ -26,10 +26,12 @@ public:
     PowerManagerLoaderInterface() {}
     virtual ~PowerManagerLoaderInterface() {}
     virtual bool IsScreenOn();
+    virtual void WakeupDevice();
 };
 
 class PowerManagerLoader final: public PowerManagerLoaderInterface {
     bool IsScreenOn() override;
+    void WakeupDevice() override;
 };
 
 #ifdef __cplusplus
