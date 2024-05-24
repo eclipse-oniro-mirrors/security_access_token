@@ -117,6 +117,7 @@ int32_t SqliteHelper::CommitTransaction() const
         result = GENERAL_ERROR;
     }
     sqlite3_free(errorMessage);
+    sqlite3_db_cacheflush(db_);
     return result;
 }
 
