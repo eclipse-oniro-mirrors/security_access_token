@@ -120,7 +120,7 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
 }
 
-ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
+ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
@@ -204,7 +204,8 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
 
-int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
+int AccessTokenKit::GetHapTokenInfo(
+    AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -215,7 +216,8 @@ int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapToke
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes);
 }
 
-int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
+int AccessTokenKit::GetNativeTokenInfo(
+    AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_NATIVE && GetTokenTypeFlag(tokenID) != TOKEN_SHELL) {
@@ -318,7 +320,8 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
     return ret;
 }
 
-int AccessTokenKit::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permDefList)
+int AccessTokenKit::GetDefPermissions(
+    AccessTokenID tokenID, std::vector<PermissionDef>& permDefList) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
