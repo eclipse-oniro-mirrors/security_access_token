@@ -165,16 +165,6 @@
           }
         },
         {
-          "name": "//base/security/access_token/interfaces/kits/accesstoken:cj_ability_access_ctrl_ffi",
-          "header": {
-            "header_files": [
-              "ability_access_ctrl_ffi.h",
-              "at_manager_impl.h"
-            ],
-            "header_base": "//base/security/access_token/interfaces/kits/accesstoken/cj"
-          }
-        },
-        {
           "name": "//base/security/access_token/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk",
           "header": {
             "header_files": [
