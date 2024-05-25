@@ -27,6 +27,7 @@ enum class EFMInterfaceCode {
     RELEASE_ACCESS,
     GET_USER_APP_KEY,
     CHANGE_USER_APP_KEYS_LOAD_INFO,
+    SET_FILE_PATH_POLICY,
 };
 } // namespace AccessToken
 } // namespace Security

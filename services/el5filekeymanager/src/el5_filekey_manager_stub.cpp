@@ -48,6 +48,8 @@ void El5FilekeyManagerStub::SetFuncInMap()
         &El5FilekeyManagerStub::GetUserAppKeyInner;
     requestMap_[static_cast<uint32_t>(EFMInterfaceCode::CHANGE_USER_APP_KEYS_LOAD_INFO)] =
         &El5FilekeyManagerStub::ChangeUserAppkeysLoadInfoInner;
+    requestMap_[static_cast<uint32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY)] =
+        &El5FilekeyManagerStub::SetFilePathPolicyInner;
 }
 
 int32_t El5FilekeyManagerStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
@@ -116,6 +118,10 @@ void El5FilekeyManagerStub::ChangeUserAppkeysLoadInfoInner(MessageParcel &data, 
     reply.WriteInt32(ret);
 }
 
+void El5FilekeyManagerStub::SetFilePathPolicyInner(MessageParcel &data, MessageParcel &reply)
+{
+    reply.WriteInt32(this->SetFilePathPolicy());
+}
 
 void El5FilekeyManagerStub::MarshallingKeyInfos(MessageParcel &reply,
     std::vector<std::pair<int32_t, std::string>>& keyInfos)
