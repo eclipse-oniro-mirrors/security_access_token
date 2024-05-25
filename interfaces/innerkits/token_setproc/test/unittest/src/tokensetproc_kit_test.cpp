@@ -71,6 +71,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel002, TestSize.Level1)
     std::vector<uint32_t> opcodeList = {0, 1, 2};
     std::vector<bool> statusList = {0, 0};
     ASSERT_EQ(ACCESS_TOKEN_PARAM_INVALID, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
 }
 
@@ -86,6 +87,7 @@ HWTEST_F(TokensetprocKitTest, AddPermissionToKernel003, TestSize.Level1)
     std::vector<uint32_t> opcodeList;
     std::vector<bool> statusList;
     ASSERT_EQ(ACCESS_TOKEN_OK, AddPermissionToKernel(g_tokeId, opcodeList, statusList));
+    ASSERT_EQ(ACCESS_TOKEN_OK, RemovePermissionFromKernel(g_tokeId));
     setuid(g_gelfUid);
 }
 

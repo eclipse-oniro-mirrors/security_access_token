@@ -21,12 +21,15 @@ namespace Security {
 namespace AccessToken {
 bool PowerManagerLoader::IsScreenOn()
 {
-    return PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
+    bool isScreenOn = PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
+    delete &PowerMgr::PowerMgrClient::GetInstance();
+    return isScreenOn;
 }
 
 void PowerManagerLoader::WakeupDevice()
 {
     PowerMgr::PowerMgrClient::GetInstance().WakeupDevice();
+    delete &PowerMgr::PowerMgrClient::GetInstance();
 }
 
 extern "C" {

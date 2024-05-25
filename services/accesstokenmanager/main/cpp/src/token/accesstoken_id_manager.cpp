@@ -82,7 +82,10 @@ void AccessTokenIDManager::GetHapTokenIdList(std::vector<AccessTokenID>& idList)
     Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
-        idList.emplace_back(*it);
+        AccessTokenID tokenId = *it;
+        if (TOKEN_HAP == GetTokenIdTypeEnum(tokenId)) {
+            idList.emplace_back(*it);
+        }
     }
 }
 
