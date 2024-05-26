@@ -340,7 +340,7 @@ void PrivacyManagerStub::UpdateSecCompEnhanceInner(MessageParcel& data, MessageP
 
     int32_t pid = data.ReadInt32();
     
-    int32_t seqNum = data.ReadInt32();
+    uint32_t seqNum = data.ReadUint32();
 
     int32_t result = this->UpdateSecCompEnhance(pid, seqNum);
     reply.WriteInt32(result);

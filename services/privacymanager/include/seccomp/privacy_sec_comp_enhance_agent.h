@@ -49,7 +49,7 @@ public:
     virtual ~PrivacySecCompEnhanceAgent();
 
     int32_t RegisterSecCompEnhance(const SecCompEnhanceData& enhanceData);
-    int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum);
+    int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceData& enhanceData);
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceData>& enhanceList);

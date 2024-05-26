@@ -137,7 +137,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     return RET_SUCCESS;
 }
 
-int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+int32_t PrivacySecCompEnhanceAgent::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
     std::lock_guard<std::mutex> lock(secCompEnhanceMutex_);
     InitAppObserver();
