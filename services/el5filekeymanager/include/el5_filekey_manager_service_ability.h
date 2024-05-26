@@ -38,7 +38,7 @@ public:
     virtual ~El5FilekeyManagerServiceAbility() final;
 
 private:
-    void OnStart() final;
+    void OnStart(const SystemAbilityOnDemandReason &startReason) final;
     void OnStop() final;
 
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerServiceAbility);
