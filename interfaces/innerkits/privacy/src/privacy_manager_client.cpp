@@ -290,7 +290,7 @@ int32_t PrivacyManagerClient::RegisterSecCompEnhance(const SecCompEnhanceData& e
     return proxy->RegisterSecCompEnhance(registerParcel);
 }
 
-int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+int32_t PrivacyManagerClient::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {

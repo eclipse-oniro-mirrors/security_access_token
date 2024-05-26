@@ -64,11 +64,11 @@ struct SecCompEnhanceData {
     /**
      * sessionId for register.
      */
-    int32_t sessionId;
+    uint32_t sessionId;
     /**
      * sequence number of session.
      */
-    int32_t seqNum;
+    uint32_t seqNum;
     /**
      * key to encrypt ipc message.
      */

@@ -154,7 +154,7 @@ public:
      * @param seqNum sequence number
      * @return error code, see privacy_error.h
      */
-    static int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum);
+    static int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum);
     /**
      * @brief get security component enhance data
      * @param pid process id

@@ -315,7 +315,7 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
     return result;
 }
 
-int32_t PrivacyManagerProxy::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
+int32_t PrivacyManagerProxy::UpdateSecCompEnhance(int32_t pid, uint32_t seqNum)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -327,8 +327,8 @@ int32_t PrivacyManagerProxy::UpdateSecCompEnhance(int32_t pid, int32_t seqNum)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid=%{public}d.", pid);
         return false;
     }
-    if (!data.WriteInt32(seqNum)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write seqNum=%{public}d.", seqNum);
+    if (!data.WriteUint32(seqNum)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write seqNum=%{public}u.", seqNum);
         return false;
     }
     if (!SendRequest(PrivacyInterfaceCode::UPDATE_SEC_COMP_ENHANCE, data, reply)) {

@@ -33,7 +33,7 @@ namespace OHOS {
         }
 
         int32_t pid = static_cast<int32_t>(size);
-        int32_t seqNum = static_cast<int32_t>(size);
+        uint32_t seqNum = static_cast<uint32_t>(size);
         int32_t result = PrivacyKit::UpdateSecCompEnhance(pid, seqNum);
 
         return result == RET_SUCCESS;
