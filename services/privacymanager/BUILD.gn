@@ -115,6 +115,7 @@ if (is_standard_system && ability_base_enable == true) {
       "c_utils:utils",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
+      "init:libbegetutil",
       "ipc:ipc_single",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",

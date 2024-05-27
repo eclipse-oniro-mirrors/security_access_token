@@ -35,6 +35,7 @@
 #ifndef INTERFACES_INNER_KITS_PRIVACY_KIT_H
 #define INTERFACES_INNER_KITS_PRIVACY_KIT_H
 
+#include <stdint.h>
 #include <string>
 
 #include "access_token.h"
@@ -44,6 +45,7 @@
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
 #include "perm_active_status_customized_cbk.h"
+#include "privacy_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data.h"
 #endif
@@ -180,6 +182,14 @@ public:
      */
     static int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+    /**
+     * @brief try set mute policy.
+     * @param policyType policy type, see privacy_param.h
+     * @param caller caller type, see privacy_param.h
+     * @param isMute mute or unmute
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -22,6 +22,7 @@
 #include "privacy_error.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
+#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
@@ -73,6 +74,8 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
 #endif
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_TYPE_INFOS)] =
         &PrivacyManagerStub::GetPermissionUsedTypeInfosInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_MUTE_POLICY)] =
+        &PrivacyManagerStub::SetMutePolicyInner;
 }
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
@@ -420,6 +423,24 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
     reply.WriteUint32(resultsParcel.size());
     for (const auto& parcel : resultsParcel) {
         reply.WriteParcelable(&parcel);
+    }
+}
+
+void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    uint32_t policyType = data.ReadUint32();
+    uint32_t callerType = data.ReadUint32();
+    bool isMute = data.ReadBool();
+
+    int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32 calltype: %{public}d", callerType);
+        return;
     }
 }
 
