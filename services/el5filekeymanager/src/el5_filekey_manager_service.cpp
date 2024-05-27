@@ -332,6 +332,17 @@ bool El5FilekeyManagerService::VerifyHapCallingProcess(int32_t userId, const std
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(userId, validCaller, 0);
     return tokenId == callerTokenId;
 }
+
+int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
+{
+    LOG_INFO("service SetPolicyScreenLocked");
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+    return service_->SetPolicyScreenLocked();
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
