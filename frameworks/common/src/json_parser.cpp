@@ -78,24 +78,24 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
     }
     int32_t fd = open(filePath, O_RDONLY);
     if (fd < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "open failed errno %{public}d.", errno);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Open failed errno %{public}d.", errno);
         return ERR_FILE_OPERATE_FAILED;
     }
     struct stat statBuffer;
 
     if (fstat(fd, &statBuffer) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fstat failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fstat failed.");
         close(fd);
         return ERR_FILE_OPERATE_FAILED;
     }
 
     if (statBuffer.st_size == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is invalid.");
         close(fd);
         return ERR_PARAM_INVALID;
     }
     if (statBuffer.st_size > MAX_NATIVE_CONFIG_FILE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "config file size is too large.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Config file size is too large.");
         close(fd);
         return ERR_OVERSIZE;
     }
@@ -116,18 +116,18 @@ int32_t JsonParser::ReadCfgFile(const std::string& file, std::string& rawData)
 bool JsonParser::IsDirExsit(const std::string& file)
 {
     if (file.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "file path is empty");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "File path is empty");
         return false;
     }
 
     struct stat buf;
     if (stat(file.c_str(), &buf) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get file attributes failed, errno %{public}d.", errno);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get file attributes failed, errno %{public}d.", errno);
         return false;
     }
 
     if (!S_ISDIR(buf.st_mode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "file mode is not directory.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "File mode is not directory.");
         return false;
     }
 

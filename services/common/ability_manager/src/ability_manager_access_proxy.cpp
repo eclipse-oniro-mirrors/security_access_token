@@ -37,26 +37,26 @@ int AbilityManagerAccessProxy::StartAbility(const AAFwk::Want &want, const sptr<
     }
 
     if (!data.WriteParcelable(&want)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "want write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Want write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (callerToken) {
         if (!data.WriteBool(true) || !data.WriteRemoteObject(callerToken)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "callerToken and flag write failed.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "CallerToken and flag write failed.");
             return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
         }
     } else {
         if (!data.WriteBool(false)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "flag write failed.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Flag write failed.");
             return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
         }
     }
     if (!data.WriteInt32(userId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "userId write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserId write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteInt32(requestCode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "requestCode write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RequestCode write failed.");
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 

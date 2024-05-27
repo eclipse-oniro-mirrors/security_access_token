@@ -109,7 +109,7 @@ bool PermissionUsedRecordCache::RecordMergeCheck(const PermissionRecord& record1
 void PermissionUsedRecordCache::DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
     std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode, int32_t copyCount)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "deep copy count is %{public}d.", copyCount);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Deep copy count is %{public}d.", copyCount);
 
     std::shared_ptr<PermissionUsedRecordNode> head = oriHeadNode;
     std::shared_ptr<PermissionUsedRecordNode> currentNode = copyHeadNode;
@@ -161,7 +161,7 @@ void PermissionUsedRecordCache::AddRecordToBuffer(const PermissionRecord& record
         remainCount++;
         // when current record timestamp more than last record timestamp 15mins
         if ((remainCount >= MAX_PERSIST_SIZE) || (persistPendingBufferEnd != nullptr)) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "reset record count: %{public}d", remainCount);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Reset record count: %{public}d", remainCount);
             /*
              * when remainCount reach the max, move all data from cache1 to cache2
              * otherwise copyCount should be readableSize_ - remainCount beause curFindMergePos match from tail to head
@@ -228,7 +228,7 @@ int32_t PermissionUsedRecordCache::PersistPendingRecords()
         isEmpty = persistPendingBufferQueue_.empty();
         persistIsRunning_ = true;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "add %{public}d record node", readableSize_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add %{public}d record node", readableSize_);
     while (!isEmpty) {
         {
             Utils::UniqueWriteGuard<Utils::RWLock> lock2(this->cacheLock2_);
@@ -428,7 +428,7 @@ void PermissionUsedRecordCache::GetFromPersistQueueAndDatabase(const std::set<in
 
     if (!PermissionRecordRepository::GetInstance().FindRecordValues(opCodeList, andConditionValues,
         findRecordsValues, cache2QueryCount)) { // find records from database
-        ACCESSTOKEN_LOG_ERROR(LABEL, "find records from database failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Find records from database failed");
     }
 }
 

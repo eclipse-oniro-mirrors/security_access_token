@@ -36,11 +36,11 @@ int32_t AppManagerAccessProxy::RegisterApplicationStateObserver(const sptr<IAppl
         return ERROR;
     }
     if (!data.WriteRemoteObject(observer->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "observer write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
         return ERROR;
     }
     if (!data.WriteStringVector(bundleNameList)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "bundleNameList write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "BundleNameList write failed.");
         return ERROR;
     }
     int32_t error = Remote()->SendRequest(
@@ -63,13 +63,13 @@ int32_t AppManagerAccessProxy::UnregisterApplicationStateObserver(
         return ERROR;
     }
     if (!data.WriteRemoteObject(observer->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "observer write failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
         return ERROR;
     }
     int32_t error = Remote()->SendRequest(
         static_cast<uint32_t>(IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "set microphoneMute failed, error: %d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
         return error;
     }
     return reply.ReadInt32();
@@ -92,7 +92,7 @@ int32_t AppManagerAccessProxy::GetForegroundApplications(std::vector<AppStateDat
     }
     uint32_t infoSize = reply.ReadUint32();
     if (infoSize > CYCLE_LIMIT) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "infoSize is too large");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "InfoSize is too large");
         return ERROR;
     }
     for (uint32_t i = 0; i < infoSize; i++) {

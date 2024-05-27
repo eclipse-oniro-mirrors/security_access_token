@@ -80,7 +80,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
     MemoryGuard cacheGuard;
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != IPrivacyManager::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -144,7 +144,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
     std::string permissionName = data.ReadString();
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -219,7 +219,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
     }
     sptr<OnPermissionUsedRecordCallback> callback = iface_cast<OnPermissionUsedRecordCallback>(data.ReadRemoteObject());
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -240,7 +240,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     }
     uint32_t permListSize = data.ReadUint32();
     if (permListSize > PERM_LIST_SIZE_MAX) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read permListSize fail");
         reply.WriteInt32(PrivacyError::ERR_OVERSIZE);
         return;
     }
@@ -251,7 +251,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read ReadRemoteObject fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read ReadRemoteObject fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -272,7 +272,7 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
     }
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read scopeParcel fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read scopeParcel fail");
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
@@ -439,7 +439,7 @@ bool PrivacyManagerStub::VerifyPermission(const std::string& permission) const
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     if (AccessTokenKit::VerifyAccessToken(callingTokenID, permission) == PERMISSION_DENIED) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(callingTokenID=%{public}d)", callingTokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(callingTokenID=%{public}d)", callingTokenID);
         return false;
     }
     return true;

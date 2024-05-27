@@ -46,7 +46,7 @@ UpdateRemoteHapTokenCommand::UpdateRemoteHapTokenCommand(const std::string &json
 {
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -68,12 +68,12 @@ void UpdateRemoteHapTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "end as: UpdateRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "End as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: UpdateRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: UpdateRemoteHapTokenCommand");
 
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
@@ -97,7 +97,7 @@ void UpdateRemoteHapTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: UpdateRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: UpdateRemoteHapTokenCommand");
 }
 
 void UpdateRemoteHapTokenCommand::Finish()

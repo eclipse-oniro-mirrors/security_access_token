@@ -66,7 +66,7 @@ void TokenModifyNotifier::NotifyTokenDelete(AccessTokenID tokenID)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     if (observationSet_.count(tokenID) <= 0) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "hap token is not observed");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Hap token is not observed");
         return;
     }
     observationSet_.erase(tokenID);
@@ -78,7 +78,7 @@ void TokenModifyNotifier::NotifyTokenModify(AccessTokenID tokenID)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     if (observationSet_.count(tokenID) <= 0) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "hap token is not observed");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Hap token is not observed");
         return;
     }
     modifiedTokenList_.emplace_back(tokenID);
@@ -110,7 +110,7 @@ TokenModifyNotifier& TokenModifyNotifier::GetInstance()
 
 void TokenModifyNotifier::NotifyTokenSyncTask()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called!");
 
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->Notifylock_);
     LibraryLoader loader(TOKEN_SYNC_LIBPATH);
@@ -130,7 +130,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
         HapTokenInfoForSync hapSync;
         int ret = AccessTokenInfoManager::GetInstance().GetHapTokenSync(modifyToken, hapSync);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "the hap token 0x%{public}x need to sync is not found!", modifyToken);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "The hap token 0x%{public}x need to sync is not found!", modifyToken);
             continue;
         }
         if (tokenSyncCallbackObject_ != nullptr) {
@@ -141,7 +141,7 @@ void TokenModifyNotifier::NotifyTokenSyncTask()
     deleteTokenList_.clear();
     modifiedTokenList_.clear();
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "over!");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Over!");
 }
 
 int32_t TokenModifyNotifier::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID)
@@ -208,7 +208,7 @@ void TokenModifyNotifier::NotifyTokenChangedIfNeed()
 {
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     if (GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "has notify task! taskNum is %{public}d.", GetCurTaskNum());
+        ACCESSTOKEN_LOG_INFO(LABEL, "Has notify task! taskNum is %{public}d.", GetCurTaskNum());
         return;
     }
 

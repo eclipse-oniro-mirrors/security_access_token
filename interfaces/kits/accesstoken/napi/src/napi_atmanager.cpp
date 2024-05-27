@@ -103,7 +103,7 @@ static void NotifyPermStateChanged(RegisterPermStateChangeWorker* registerPermSt
 static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
 {
     if (work == nullptr || work->data == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work == nullptr || work->data == nullptr");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
@@ -114,7 +114,7 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(registerPermStateChangeData->env, &scope);
     if (scope == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to open scope");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to open scope");
         return;
     }
     NotifyPermStateChanged(registerPermStateChangeData);
@@ -124,7 +124,7 @@ static void UvQueueWorkPermStateChanged(uv_work_t* work, int status)
 
 static bool IsPermissionFlagValid(uint32_t flag)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permission flag is %{public}d", flag);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission flag is %{public}d", flag);
     return (flag == PermissionFlag::PERMISSION_USER_SET) || (flag == PermissionFlag::PERMISSION_USER_FIXED) ||
         (flag == PermissionFlag::PERMISSION_ALLOW_THIS_TIME);
 };
@@ -146,25 +146,25 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
 {
     std::lock_guard<std::mutex> lock(validMutex_);
     if (!valid_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "object is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is invalid.");
         return;
     }
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     RegisterPermStateChangeWorker* registerPermStateChangeWorker =
         new (std::nothrow) RegisterPermStateChangeWorker();
     if (registerPermStateChangeWorker == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for RegisterPermStateChangeWorker!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeWorker};
@@ -204,10 +204,10 @@ PermStateChangeContext::~PermStateChangeContext()
 void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
 {
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr : %{public}d", work == nullptr);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work == nullptr : %{public}d", work == nullptr);
         return;
     } else if (work->data == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work->data == nullptr : %{public}d", work->data == nullptr);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work->data == nullptr : %{public}d", work->data == nullptr);
         return;
     }
     RegisterPermStateChangeWorker* registerPermStateChangeWorker =
@@ -228,12 +228,12 @@ void RegisterPermStateChangeScopePtr::DeleteNapiRef()
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
         return;
     }
 
@@ -241,7 +241,7 @@ void RegisterPermStateChangeScopePtr::DeleteNapiRef()
     RegisterPermStateChangeWorker* registerPermStateChangeWorker =
         new (std::nothrow) RegisterPermStateChangeWorker();
     if (registerPermStateChangeWorker == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for RegisterPermStateChangeWorker!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<RegisterPermStateChangeWorker> workPtr {registerPermStateChangeWorker};
@@ -265,7 +265,7 @@ void NapiAtManager::SetNamedProperty(napi_env env, napi_value dstObj, const int3
 
 napi_value NapiAtManager::Init(napi_env env, napi_value exports)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter init.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Enter init.");
 
     napi_property_descriptor descriptor[] = { DECLARE_NAPI_FUNCTION("createAtManager", CreateAtManager) };
 
@@ -341,7 +341,7 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
 
 napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter JsConstructor");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Enter JsConstructor");
 
     napi_value thisVar = nullptr;
     NAPI_CALL(env, napi_get_cb_info(env, cbinfo, nullptr, nullptr, &thisVar, nullptr));
@@ -350,7 +350,7 @@ napi_value NapiAtManager::JsConstructor(napi_env env, napi_callback_info cbinfo)
 
 napi_value NapiAtManager::CreateAtManager(napi_env env, napi_callback_info cbInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "enter CreateAtManager");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Enter CreateAtManager");
 
     napi_value instance = nullptr;
     napi_value cons = nullptr;
@@ -397,7 +397,7 @@ bool NapiAtManager::ParseInputVerifyPermissionOrGetFlag(const napi_env env, cons
         return false;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID = %{public}d, permissionName = %{public}s", asyncContext.tokenId,
         asyncContext.permissionName.c_str());
     return true;
 }
@@ -417,7 +417,7 @@ void NapiAtManager::VerifyAccessTokenComplete(napi_env env, napi_status status, 
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result;
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId = %{public}d, permissionName = %{public}s, verify result = %{public}d.",
         asyncContext->tokenId, asyncContext->permissionName.c_str(), asyncContext->result);
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result)); // verify result
@@ -430,7 +430,7 @@ napi_value NapiAtManager::VerifyAccessToken(napi_env env, napi_callback_info inf
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct failed.");
         return nullptr;
     }
 
@@ -495,7 +495,7 @@ napi_value NapiAtManager::CheckAccessToken(napi_env env, napi_callback_info info
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -525,7 +525,7 @@ std::string NapiAtManager::GetPermParamValue()
 {
     long long sysCommitId = GetSystemCommitId();
     if (sysCommitId == g_paramCache.sysCommitIdCache) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "sysCommitId = %{public}lld", sysCommitId);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "SysCommitId = %{public}lld", sysCommitId);
         return g_paramCache.sysParamCache;
     }
     g_paramCache.sysCommitIdCache = sysCommitId;
@@ -543,7 +543,7 @@ std::string NapiAtManager::GetPermParamValue()
         char value[NapiContextCommon::VALUE_MAX_LEN] = {0};
         auto ret = GetParameterValue(g_paramCache.handle, value, NapiContextCommon::VALUE_MAX_LEN - 1);
         if (ret < 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "return default value, ret=%{public}d", ret);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
             return "-1";
         }
         std::string resStr(value);
@@ -572,7 +572,7 @@ void NapiAtManager::UpdatePermissionCache(AtManagerAsyncContext* asyncContext)
         asyncContext->result = AccessTokenKit::VerifyAccessToken(asyncContext->tokenId, asyncContext->permissionName);
         g_cache[asyncContext->permissionName].status = asyncContext->result;
         g_cache[asyncContext->permissionName].paramValue = GetPermParamValue();
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "g_cacheParam set %{public}s",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "G_cacheParam set %{public}s",
             g_cache[asyncContext->permissionName].paramValue.c_str());
     }
 }
@@ -582,7 +582,7 @@ napi_value NapiAtManager::VerifyAccessTokenSync(napi_env env, napi_callback_info
     static uint64_t selfTokenId = GetSelfTokenID();
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -665,7 +665,7 @@ bool NapiAtManager::ParseInputGrantOrRevokePermission(const napi_env env, const 
         }
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID = %{public}d, permissionName = %{public}s, flag = %{public}d",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID = %{public}d, permissionName = %{public}s, flag = %{public}d",
         asyncContext.tokenId, asyncContext.permissionName.c_str(), asyncContext.flag);
     return true;
 }
@@ -691,7 +691,7 @@ void NapiAtManager::GrantUserGrantedPermissionExecute(napi_env env, void *data)
         return;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
@@ -728,7 +728,7 @@ napi_value NapiAtManager::GetVersion(napi_env env, napi_callback_info info)
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
@@ -761,7 +761,7 @@ void NapiAtManager::GetVersionExecute(napi_env env, void *data)
         return;
     }
     asyncContext->result = static_cast<int32_t>(version);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Version result = %{public}d.", asyncContext->result);
 }
 
 void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *data)
@@ -769,7 +769,7 @@ void NapiAtManager::GetVersionComplete(napi_env env, napi_status status, void *d
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
     napi_value result = nullptr;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "version result = %{public}d.", asyncContext->result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Version result = %{public}d.", asyncContext->result);
 
     NAPI_CALL_RETURN_VOID(env, napi_create_int32(env, asyncContext->result, &result));
     ReturnPromiseResult(env, asyncContext->errorCode, asyncContext->deferred, result);
@@ -781,7 +781,7 @@ napi_value NapiAtManager::GrantUserGrantedPermission(napi_env env, napi_callback
 
     auto* context = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (context == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -834,7 +834,7 @@ void NapiAtManager::RevokeUserGrantedPermissionExecute(napi_env env, void *data)
         return;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "permissionName = %{public}s, grantmode = %{public}d.",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName = %{public}s, grantmode = %{public}d.",
         asyncContext->permissionName.c_str(), permissionDef.grantMode);
 
     if (!IsPermissionFlagValid(asyncContext->flag)) {
@@ -871,7 +871,7 @@ napi_value NapiAtManager::RevokeUserGrantedPermission(napi_env env, napi_callbac
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env); // for async work deliver data
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -926,7 +926,7 @@ napi_value NapiAtManager::GetPermissionFlags(napi_env env, napi_callback_info in
 
     auto* asyncContext = new (std::nothrow) AtManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -1154,7 +1154,7 @@ bool NapiAtManager::FillPermStateChangeInfo(const napi_env env, const napi_value
         new (std::nothrow) std::shared_ptr<RegisterPermStateChangeScopePtr>(
             registerPermStateChangeInfo.subscriber);
     if (subscriber == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create subscriber");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create subscriber");
         return false;
     }
     napi_wrap(env, thisVar, reinterpret_cast<void*>(subscriber), [](napi_env nev, void *data, void *hint) {
@@ -1182,13 +1182,13 @@ bool NapiAtManager::ParseInputToRegister(const napi_env env, const napi_callback
         return false;
     }
     if (thisVar == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ThisVar is nullptr");
         return false;
     }
     napi_valuetype valueTypeOfThis = napi_undefined;
     NAPI_CALL_BASE(env, napi_typeof(env, thisVar, &valueTypeOfThis), false);
     if (valueTypeOfThis == napi_undefined) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "thisVar is undefined");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ThisVar is undefined");
         return false;
     }
     // 0: the first parameter of argv
@@ -1210,7 +1210,7 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     RegisterPermStateChangeInfo* registerPermStateChangeInfo =
         new (std::nothrow) RegisterPermStateChangeInfo();
     if (registerPermStateChangeInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for subscribeCBInfo!");
         return nullptr;
     }
     std::unique_ptr<RegisterPermStateChangeInfo> callbackPtr {registerPermStateChangeInfo};
@@ -1235,7 +1235,7 @@ napi_value NapiAtManager::RegisterPermStateChangeCallback(napi_env env, napi_cal
     {
         std::lock_guard<std::mutex> lock(g_lockForPermStateChangeRegisters);
         g_permStateChangeRegisters.emplace_back(registerPermStateChangeInfo);
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "add g_PermStateChangeRegisters.size = %{public}zu",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Add g_PermStateChangeRegisters.size = %{public}zu",
             g_permStateChangeRegisters.size());
     }
     callbackPtr.release();
@@ -1251,7 +1251,7 @@ bool NapiAtManager::ParseInputToUnregister(const napi_env env, napi_callback_inf
     napi_ref callback = nullptr;
     std::string errMsg;
     if (napi_get_cb_info(env, cbInfo, &argc, argv, &thisVar, nullptr) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_get_cb_info failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_get_cb_info failed");
         return false;
     }
     // 1: off required minnum argc
@@ -1303,7 +1303,7 @@ napi_value NapiAtManager::UnregisterPermStateChangeCallback(napi_env env, napi_c
     UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo =
         new (std::nothrow) UnregisterPermStateChangeInfo();
     if (unregisterPermStateChangeInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for subscribeCBInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for subscribeCBInfo!");
         return nullptr;
     }
     std::unique_ptr<UnregisterPermStateChangeInfo> callbackPtr {unregisterPermStateChangeInfo};
@@ -1355,7 +1355,7 @@ bool NapiAtManager::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* 
         PermStateChangeScope scopeInfo;
         item->subscriber->GetScope(scopeInfo);
         if (scopeInfo.tokenIDs == targetTokenIDs && scopeInfo.permList == targetPermList) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "find subscriber in map");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Find subscriber in map");
             unregisterPermStateChangeInfo->subscriber = item->subscriber;
             batchPermStateChangeRegisters.emplace_back(item);
         }
@@ -1415,7 +1415,7 @@ bool NapiAtManager::IsExistRegister(const napi_env env, const RegisterPermStateC
             return true;
         }
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "cannot find subscriber in vector");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Cannot find subscriber in vector");
     return false;
 }
 

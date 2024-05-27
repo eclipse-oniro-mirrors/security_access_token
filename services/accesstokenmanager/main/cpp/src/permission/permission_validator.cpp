@@ -61,31 +61,31 @@ bool PermissionValidator::IsToggleStatusValid(const uint32_t status)
 bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 {
     if (!DataValidator::IsLabelValid(permDef.label)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "label invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Label invalid.");
         return false;
     }
     if (!DataValidator::IsDescValid(permDef.description)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "desc invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Desc invalid.");
         return false;
     }
     if (!DataValidator::IsBundleNameValid(permDef.bundleName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "bundleName invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "BundleName invalid.");
         return false;
     }
     if (!DataValidator::IsPermissionNameValid(permDef.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName invalid.");
         return false;
     }
     if (!IsGrantModeValid(permDef.grantMode)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "grantMode invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantMode invalid.");
         return false;
     }
     if (!DataValidator::IsAvailableTypeValid(permDef.availableType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "availableType invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableType invalid.");
         return false;
     }
     if (!DataValidator::IsAplNumValid(permDef.availableLevel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "availableLevel invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AvailableLevel invalid.");
         return false;
     }
     return true;
@@ -93,7 +93,7 @@ bool PermissionValidator::IsPermissionDefValid(const PermissionDef& permDef)
 
 bool PermissionValidator::IsPermissionAvailable(ATokenTypeEnum tokenType, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenType is %{public}d.", tokenType);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenType is %{public}d.", tokenType);
     if (tokenType == TOKEN_HAP) {
         if (!PermissionDefinitionCache::GetInstance().HasHapPermissionDefinitionForHap(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is not defined for hap.", permissionName.c_str());
@@ -121,7 +121,7 @@ bool PermissionValidator::IsPermissionStateValid(const PermissionStateFull& perm
     for (uint32_t i = 0; i < resDevIdSize; i++) {
         if (!IsGrantStatusValid(permState.grantStatus[i]) ||
             !IsPermissionFlagValid(permState.grantFlags[i])) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus or grantFlags is invalid");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "GrantStatus or grantFlags is invalid");
             return false;
         }
     }

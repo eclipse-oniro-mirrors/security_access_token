@@ -46,13 +46,13 @@ bool AccessTokenManagerProxy::SendRequest(
 
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "code: %{public}d remote service null.", code);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Code: %{public}d remote service null.", code);
         return false;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(code), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "code: %{public}d request fail, result: %{public}d", code, requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Code: %{public}d request fail, result: %{public}d", code, requestResult);
         return false;
     }
     return true;
@@ -110,7 +110,7 @@ int AccessTokenManagerProxy::VerifyAccessToken(AccessTokenID tokenID, const std:
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -130,13 +130,13 @@ int AccessTokenManagerProxy::GetDefPermission(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     sptr<PermissionDefParcel> resultSptr = reply.ReadParcelable<PermissionDefParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read permission def parcel fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read permission def parcel fail");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
     permissionDefResult = *resultSptr;
@@ -159,13 +159,13 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     uint32_t defPermSize = reply.ReadUint32();
     if (defPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", defPermSize);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size = %{public}d get from request is invalid", defPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < defPermSize; i++) {
@@ -197,13 +197,13 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     uint32_t reqPermSize = reply.ReadUint32();
     if (reqPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", reqPermSize);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size = %{public}d get from request is invalid", reqPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
@@ -296,7 +296,7 @@ int AccessTokenManagerProxy::GetPermissionFlag(AccessTokenID tokenID, const std:
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -328,11 +328,11 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
     PermissionOper result = static_cast<PermissionOper>(reply.ReadInt32());
     size_t size = reply.ReadUint32();
     if (size != permListParcel.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permListParcel size from server is invalid!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermListParcel size from server is invalid!");
         return INVALID_OPER;
     }
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}zu get from request is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size = %{public}zu get from request is invalid", size);
         return INVALID_OPER;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -344,12 +344,12 @@ PermissionOper AccessTokenManagerProxy::GetSelfPermissionsState(std::vector<Perm
 
     sptr<PermissionGrantInfoParcel> resultSptr = reply.ReadParcelable<PermissionGrantInfoParcel>();
     if (resultSptr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read permission grant info parcel fail");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read permission grant info parcel fail");
         return INVALID_OPER;
     }
     infoParcel = *resultSptr;
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -382,13 +382,13 @@ int32_t AccessTokenManagerProxy::GetPermissionsStatus(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     size_t size = reply.ReadUint32();
     if (size != permListParcel.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permListParcel size from server is invalid!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermListParcel size from server is invalid!");
         return ERR_SIZE_NOT_EQUAL;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -423,7 +423,7 @@ int AccessTokenManagerProxy::GrantPermission(AccessTokenID tokenID, const std::s
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -450,7 +450,7 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -469,7 +469,7 @@ int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID token
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -499,7 +499,7 @@ int32_t AccessTokenManagerProxy::RegisterPermStateChangeCallback(
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", ret);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", ret);
     return ret;
 }
 
@@ -526,7 +526,7 @@ int32_t AccessTokenManagerProxy::UnRegisterPermStateChangeCallback(const sptr<IR
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 fail");
         return AccessTokenError::ERR_READ_PARCEL_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -616,7 +616,7 @@ int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID = %{public}u, result = %{public}d", tokenID, result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID = %{public}u, result = %{public}d", tokenID, result);
     return result;
 }
 
@@ -636,7 +636,7 @@ int AccessTokenManagerProxy::GetTokenType(AccessTokenID tokenID)
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -659,7 +659,7 @@ int AccessTokenManagerProxy::CheckNativeDCap(AccessTokenID tokenID, const std::s
     }
 
     int result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -687,7 +687,7 @@ AccessTokenIDEx AccessTokenManagerProxy::GetHapTokenID(int32_t userID, const std
     }
 
     tokenIdEx.tokenIDEx = reply.ReadUint64();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}llu", tokenIdEx.tokenIDEx);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}llu", tokenIdEx.tokenIDEx);
     return tokenIdEx;
 }
 
@@ -711,7 +711,7 @@ AccessTokenID AccessTokenManagerProxy::AllocLocalTokenID(
     }
 
     AccessTokenID result = reply.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -730,7 +730,7 @@ int AccessTokenManagerProxy::GetNativeTokenInfo(AccessTokenID tokenID, NativeTok
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -758,7 +758,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -802,7 +802,7 @@ int32_t AccessTokenManagerProxy::UpdateHapToken(
     }
     int32_t result = reply.ReadInt32();
     tokenIdEx.tokenIdExStruct.tokenAttr = reply.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -820,7 +820,7 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 #endif
@@ -843,10 +843,10 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
     }
     AccessTokenID result;
     if (!reply.ReadUint32(result)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "readInt32 failed, result: %{public}d", result);
+        ACCESSTOKEN_LOG_INFO(LABEL, "ReadInt32 failed, result: %{public}d", result);
         return INVALID_TOKENID;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -866,7 +866,7 @@ int AccessTokenManagerProxy::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -890,13 +890,13 @@ int AccessTokenManagerProxy::GetAllNativeTokenInfo(std::vector<NativeTokenInfoFo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
     uint32_t size = reply.ReadUint32();
     if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size = %{public}d get from request is invalid", size);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -927,7 +927,7 @@ int AccessTokenManagerProxy::SetRemoteHapTokenInfo(const std::string& deviceID,
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -954,7 +954,7 @@ int AccessTokenManagerProxy::SetRemoteNativeTokenInfo(const std::string& deviceI
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -976,7 +976,7 @@ int AccessTokenManagerProxy::DeleteRemoteToken(const std::string& deviceID, Acce
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -998,7 +998,7 @@ AccessTokenID AccessTokenManagerProxy::GetRemoteNativeTokenID(const std::string&
     }
 
     AccessTokenID result = reply.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -1016,7 +1016,7 @@ int AccessTokenManagerProxy::DeleteRemoteDeviceTokens(const std::string& deviceI
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -1086,7 +1086,7 @@ void AccessTokenManagerProxy::DumpTokenInfo(const AtmToolsParamInfoParcel& infoP
     if (!reply.ReadString(dumpInfo)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server dumpInfo = %{public}s", dumpInfo.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server dumpInfo = %{public}s", dumpInfo.c_str());
 }
 
 int32_t AccessTokenManagerProxy::DumpPermDefInfo(std::string& dumpInfo)
@@ -1102,7 +1102,7 @@ int32_t AccessTokenManagerProxy::DumpPermDefInfo(std::string& dumpInfo)
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -1142,17 +1142,17 @@ int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBa
     data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
 
     if (!data.WriteParcelable(&hapBaseInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "write hapBaseInfo failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write hapBaseInfo failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteBool(enable)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "write enable failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write enable failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
 
     MessageParcel reply;
     if (!SendRequest(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY, data, reply)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "read replay failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
         return ERR_SERVICE_ABNORMAL;
     }
     return reply.ReadInt32();

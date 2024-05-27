@@ -53,7 +53,7 @@ int32_t CameraManagerPrivacyClient::SetMuteCallback(const sptr<ICameraMuteServic
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->SetMuteCallback(callback);
@@ -63,7 +63,7 @@ int32_t CameraManagerPrivacyClient::MuteCamera(bool muteMode)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->MuteCamera(muteMode);
@@ -73,7 +73,7 @@ bool CameraManagerPrivacyClient::IsCameraMuted()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return false;
     }
     bool muteMode = false;
@@ -102,7 +102,7 @@ void CameraManagerPrivacyClient::InitProxy()
 
     proxy_ = iface_cast<ICameraService>(cameraManagerSa);
     if (proxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

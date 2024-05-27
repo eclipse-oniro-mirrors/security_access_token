@@ -46,13 +46,13 @@ int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::st
 
 int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s,",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=0x%{public}x, permissionName=%{public}s,",
         info.tokenId, info.permissionName.c_str());
     if ((!DataValidator::IsTokenIDValid(info.tokenId)) ||
         (!DataValidator::IsPermissionNameValid(info.permissionName)) ||
         (info.successCount < 0 || info.failCount < 0) ||
         (!DataValidator::IsPermissionUsedTypeValid(info.type))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
@@ -64,10 +64,10 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -80,10 +80,10 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
     const std::shared_ptr<StateCustomizedCbk>& callback)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s, callback",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=0x%{public}x, permissionName=%{public}s, callback",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -95,10 +95,10 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
 
 int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, permissionName=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=0x%{public}x, permissionName=%{public}s",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -110,10 +110,10 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "tokenID=0x%{public}x, deviceID=%{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=0x%{public}x, deviceID=%{public}s",
         tokenID, ConstantCommon::EncryptDevId(deviceID).c_str());
     if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsDeviceIdValid(deviceID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     if (AccessTokenKit::GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
@@ -163,7 +163,7 @@ int32_t PrivacyKit::UnRegisterPermActiveStatusCallback(const std::shared_ptr<Per
 bool PrivacyKit::IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) && !DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return false;
     }
     return PrivacyManagerClient::GetInstance().IsAllowedUsingPermission(tokenID, permissionName);
@@ -201,7 +201,7 @@ int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, cons
     }
 
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return PrivacyError::ERR_PARAM_INVALID;
     }
     return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);

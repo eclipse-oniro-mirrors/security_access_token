@@ -31,7 +31,7 @@ int32_t CameraManagerPrivacyProxy::SetMuteCallback(const sptr<ICameraMuteService
     MessageOption option;
 
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
         return ERROR;
     }
 

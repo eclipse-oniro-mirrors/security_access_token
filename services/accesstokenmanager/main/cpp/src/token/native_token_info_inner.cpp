@@ -48,8 +48,7 @@ NativeTokenInfoInner::NativeTokenInfoInner(NativeTokenInfo& native,
 
 NativeTokenInfoInner::~NativeTokenInfoInner()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL,
-        "tokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}u destruction", tokenInfoBasic_.tokenID);
 }
 
 int NativeTokenInfoInner::Init(const TokenInfo& tokenInfo, const std::vector<std::string>& dcap,

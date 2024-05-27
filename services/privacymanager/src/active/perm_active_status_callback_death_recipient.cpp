@@ -28,19 +28,19 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 }
 void PermActiveStatusCallbackDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "enter");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter");
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote object is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote object is nullptr");
         return;
     }
 
     sptr<IRemoteObject> object = remote.promote();
     if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "object is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Object is nullptr");
         return;
     }
     ActiveStatusCallbackManager::GetInstance().RemoveCallback(object);
-    ACCESSTOKEN_LOG_INFO(LABEL, "end");
+    ACCESSTOKEN_LOG_INFO(LABEL, "End");
 }
 } // namespace AccessToken
 } // namespace Security

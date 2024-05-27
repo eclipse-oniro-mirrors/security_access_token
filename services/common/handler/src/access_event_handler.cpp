@@ -28,7 +28,7 @@ AccessEventHandler::AccessEventHandler(
     const std::shared_ptr<AppExecFwk::EventRunner>& runner)
     : AppExecFwk::EventHandler(runner)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "enter");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter");
 }
 AccessEventHandler::~AccessEventHandler() = default;
 

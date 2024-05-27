@@ -50,7 +50,7 @@ int CameraServiceCallbackStub::OnRemoteRequest(
             return 0;
         }
         default: {
-            ACCESSTOKEN_LOG_INFO(LABEL, "default case, need check AudioListenerStub");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }
