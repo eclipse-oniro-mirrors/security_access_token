@@ -458,12 +458,12 @@ void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_get_uv_event_loop(this->reqContext_->env, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
