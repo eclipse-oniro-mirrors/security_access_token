@@ -67,7 +67,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 {
     auto it = dlpPermissionModeMap_.find(permissionName);
     if (it == dlpPermissionModeMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "can not find permission: %{public}s in dlp permission cfg",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Can not find permission: %{public}s in dlp permission cfg",
             permissionName.c_str());
         return DLP_PERM_ALL;
     }
@@ -77,7 +77,7 @@ int32_t DlpPermissionSetManager::GetPermDlpMode(const std::string& permissionNam
 void DlpPermissionSetManager::UpdatePermStateWithDlpInfo(int32_t hapDlpType,
     std::vector<PermissionStateFull>& permStateList)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d", hapDlpType);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d", hapDlpType);
     for (auto iter = permStateList.begin(); iter != permStateList.end(); ++iter) {
         if (iter->grantStatus[0] == PERMISSION_DENIED) {
             continue;
@@ -99,7 +99,7 @@ bool DlpPermissionSetManager::IsPermissionAvailableToDlpHap(int32_t hapDlpType,
 
 bool DlpPermissionSetManager::IsPermDlpModeAvailableToDlpHap(int32_t hapDlpType, int32_t permDlpMode)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "dlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "DlpType: %{public}d dlpMode %{public}d", hapDlpType, permDlpMode);
 
     /* permission is available to all dlp hap */
     if ((hapDlpType == DLP_COMMON) || (permDlpMode == DLP_PERM_ALL)) {

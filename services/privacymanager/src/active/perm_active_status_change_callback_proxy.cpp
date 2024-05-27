@@ -50,13 +50,13 @@ void PermActiveStatusChangeCallbackProxy::ActiveStatusChangeCallback(ActiveChang
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return;
     }
     int32_t requestResult = remote->SendRequest(
         static_cast<uint32_t>(PrivacyActiveChangeInterfaceCode::PERM_ACTIVE_STATUS_CHANGE), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return;
     }
 

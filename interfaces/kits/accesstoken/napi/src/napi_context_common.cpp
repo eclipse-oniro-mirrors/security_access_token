@@ -80,7 +80,7 @@ AtManagerAsyncWorkData::AtManagerAsyncWorkData(napi_env envValue)
 AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
 {
     if (env == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid env");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid env");
         return;
     }
     std::unique_ptr<uv_work_t> workPtr = std::make_unique<uv_work_t>();
@@ -88,7 +88,7 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
     uv_loop_s *loop = nullptr;
     napi_get_uv_event_loop(env, &loop);
     if ((loop == nullptr) || (workPtr == nullptr) || (workDataRel == nullptr)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to init execution environment");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to init execution environment");
         return;
     }
     workDataRel->env = env;
@@ -98,12 +98,12 @@ AtManagerAsyncWorkData::~AtManagerAsyncWorkData()
     NAPI_CALL_RETURN_VOID(env, uv_queue_work_with_qos(loop, workPtr.get(), [] (uv_work_t *work) {},
         [] (uv_work_t *work, int status) {
             if (work == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "work is nullptr");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Work is nullptr");
                 return;
             }
             auto workDataRel = reinterpret_cast<AtManagerAsyncWorkDataRel *>(work->data);
             if (workDataRel == nullptr) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "workDataRel is nullptr");
+                ACCESSTOKEN_LOG_ERROR(LABEL, "WorkDataRel is nullptr");
                 delete work;
                 return;
             }

@@ -54,7 +54,7 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParce
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -77,7 +77,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -106,7 +106,7 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -129,7 +129,7 @@ int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const st
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -152,7 +152,7 @@ int32_t PrivacyManagerProxy::RemovePermissionUsedRecords(AccessTokenID tokenID, 
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -172,7 +172,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     }
 
     int32_t ret = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", ret);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", ret);
     if (ret != RET_SUCCESS) {
         return ret;
     }
@@ -205,7 +205,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedRecords(const PermissionUsedReques
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -240,7 +240,7 @@ int32_t PrivacyManagerProxy::RegisterPermActiveStatusCallback(
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -262,7 +262,7 @@ int32_t PrivacyManagerProxy::UnRegisterPermActiveStatusCallback(const sptr<IRemo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -287,7 +287,7 @@ bool PrivacyManagerProxy::IsAllowedUsingPermission(AccessTokenID tokenID, const 
     }
 
     bool result = reply.ReadBool();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -311,7 +311,7 @@ int32_t PrivacyManagerProxy::RegisterSecCompEnhance(const SecCompEnhanceDataParc
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 
@@ -357,7 +357,7 @@ int32_t PrivacyManagerProxy::GetSecCompEnhance(int32_t pid, SecCompEnhanceDataPa
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -389,14 +389,14 @@ int32_t PrivacyManagerProxy::GetSpecialSecCompEnhance(const std::string& bundleN
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     if (result != RET_SUCCESS) {
         return result;
     }
 
     uint32_t size = reply.ReadUint32();
     if (size > MAX_SEC_COMP_ENHANCE_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "size = %{public}d get from request is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size = %{public}d get from request is invalid", size);
         return PrivacyError::ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < size; i++) {
@@ -432,7 +432,7 @@ int32_t PrivacyManagerProxy::GetPermissionUsedTypeInfos(const AccessTokenID toke
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server is %{public}d.", result);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server is %{public}d.", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -463,7 +463,7 @@ bool PrivacyManagerProxy::SendRequest(
     MessageOption option(flag);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return false;
     }
 

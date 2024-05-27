@@ -138,7 +138,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
         }
         int ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s.", SpitError().c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, errorMsg: %{public}s.", SpitError().c_str());
             isExecuteSuccessfully = false;
         }
         statement.Reset();

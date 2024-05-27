@@ -60,7 +60,7 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_INFO(LABEL, "default case, need check AudioListenerStub");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }

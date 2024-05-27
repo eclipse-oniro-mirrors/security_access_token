@@ -41,7 +41,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Entry, code: 0x%{public}x", code);
     std::u16string descriptor = data.ReadInterfaceToken();
     if (descriptor != ITokenCallback::GetDescriptor()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get unexpect descriptor: %{public}s", Str16ToStr8(descriptor).c_str());
         return ERROR_IPC_REQUEST_FAIL;
     }
 
@@ -49,7 +49,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
     if (msgCode == ITokenCallback::GRANT_RESULT_CALLBACK) {
         uint32_t permListSize = data.ReadUint32();
         if (permListSize > LIST_SIZE_MAX) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read permListSize fail %{public}u", permListSize);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read permListSize fail %{public}u", permListSize);
             return FAILED;
         }
         std::vector<std::string> permList;
@@ -61,7 +61,7 @@ int32_t TokenCallbackStub::OnRemoteRequest(
 
         uint32_t statusListSize = data.ReadUint32();
         if (statusListSize != permListSize) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "read statusListSize fail %{public}u", statusListSize);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read statusListSize fail %{public}u", statusListSize);
             return FAILED;
         }
         std::vector<int32_t> grantResults;

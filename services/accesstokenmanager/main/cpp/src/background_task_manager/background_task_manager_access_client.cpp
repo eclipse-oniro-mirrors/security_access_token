@@ -57,7 +57,7 @@ int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IB
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->SubscribeBackgroundTask(subscriber);
@@ -71,7 +71,7 @@ int32_t BackgourndTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->UnsubscribeBackgroundTask(subscriber);
@@ -82,7 +82,7 @@ int32_t BackgourndTaskManagerAccessClient::GetContinuousTaskApps(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->GetContinuousTaskApps(list);
@@ -109,7 +109,7 @@ void BackgourndTaskManagerAccessClient::InitProxy()
 
     proxy_ = iface_cast<IBackgroundTaskMgr>(backgroundTaskManagerSa);
     if (proxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

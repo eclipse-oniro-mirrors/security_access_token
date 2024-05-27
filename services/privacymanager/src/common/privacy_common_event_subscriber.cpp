@@ -41,7 +41,7 @@ void PrivacyCommonEventSubscriber::RegisterEvent()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "RegisterEvent start");
     if (g_isRegistered) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "status observer already registered");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Status observer already registered");
         return;
     }
 
@@ -78,7 +78,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
 {
     const auto want = event.GetWant();
     const auto action = want.GetAction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "receive event(%{public}s)", action.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Receive event(%{public}s)", action.c_str());
     if (action == EventFwk::CommonEventSupport::COMMON_EVENT_SCREEN_UNLOCKED) {
         PermissionRecordManager::GetInstance()
             .SetLockScreenStatus(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
@@ -98,7 +98,7 @@ void PrivacyCommonEventSubscriber::OnReceiveEvent(const EventFwk::CommonEventDat
         // when receive shut down power event, store the cache data to database immediately
         PermissionUsedRecordCache::GetInstance().PersistPendingRecordsImmediately();
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "action is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Action is invalid.");
     }
 }
 #endif

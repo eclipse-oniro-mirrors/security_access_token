@@ -509,7 +509,7 @@ napi_value AddPermissionUsedRecord(napi_env env, napi_callback_info cbinfo)
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -571,7 +571,7 @@ napi_value StartUsingPermission(napi_env env, napi_callback_info cbinfo)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "StartUsingPermission begin.");
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -634,7 +634,7 @@ napi_value StopUsingPermission(napi_env env, napi_callback_info cbinfo)
 
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -697,7 +697,7 @@ napi_value GetPermissionUsedRecords(napi_env env, napi_callback_info cbinfo)
     ACCESSTOKEN_LOG_DEBUG(LABEL, "GetPermissionUsedRecords begin.");
     auto *asyncContext = new (std::nothrow) RecordManagerAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 
@@ -903,7 +903,7 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     RegisterPermActiveChangeContext* registerPermActiveChangeContext =
         new (std::nothrow) RegisterPermActiveChangeContext();
     if (registerPermActiveChangeContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for registerPermActiveChangeContext!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for registerPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<RegisterPermActiveChangeContext> callbackPtr {registerPermActiveChangeContext};
@@ -927,7 +927,7 @@ napi_value RegisterPermActiveChangeCallback(napi_env env, napi_callback_info cbI
     {
         std::lock_guard<std::mutex> lock(g_lockForPermActiveChangeSubscribers);
         if (g_permActiveChangeSubscribers.size() >= MAX_CALLBACK_SIZE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "subscribers size has reached max value");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Subscribers size has reached max value");
             return nullptr;
         }
         g_permActiveChangeSubscribers.emplace_back(registerPermActiveChangeContext);
@@ -941,7 +941,7 @@ napi_value UnregisterPermActiveChangeCallback(napi_env env, napi_callback_info c
     UnregisterPermActiveChangeContext* unregisterPermActiveChangeContext =
         new (std::nothrow) UnregisterPermActiveChangeContext();
     if (unregisterPermActiveChangeContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for unregisterPermActiveChangeContext!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for unregisterPermActiveChangeContext!");
         return nullptr;
     }
     std::unique_ptr<UnregisterPermActiveChangeContext> callbackPtr {unregisterPermActiveChangeContext};
@@ -1041,7 +1041,7 @@ static void ConvertPermissionUsedTypeInfo(const napi_env& env, napi_value& value
 static void ProcessPermissionUsedTypeInfoResult(const napi_env& env, napi_value& value,
     const std::vector<PermissionUsedTypeInfo>& results)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "size is %{public}zu", results.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Size is %{public}zu", results.size());
     size_t index = 0;
     NAPI_CALL_RETURN_VOID(env, napi_create_array(env, &value));
     for (const auto& result : results) {
@@ -1079,7 +1079,7 @@ napi_value GetPermissionUsedTypeInfos(napi_env env, napi_callback_info cbinfo)
 
     auto *asyncContext = new (std::nothrow) PermissionUsedTypeAsyncContext(env);
     if (asyncContext == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new struct fail.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New struct fail.");
         return nullptr;
     }
 

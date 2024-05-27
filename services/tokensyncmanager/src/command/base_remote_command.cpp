@@ -125,7 +125,7 @@ nlohmann::json BaseRemoteCommand::ToNativeTokenInfoJson(const NativeTokenInfoFor
 void BaseRemoteCommand::ToPermStateJson(nlohmann::json& permStateJson, const PermissionStateFull& state)
 {
     if (state.resDeviceID.size() != state.grantStatus.size() || state.resDeviceID.size() != state.grantFlags.size()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "state grant config size is invalid");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "State grant config size is invalid");
         return;
     }
     nlohmann::json permConfigsJson;

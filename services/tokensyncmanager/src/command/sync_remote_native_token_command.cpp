@@ -45,7 +45,7 @@ SyncRemoteNativeTokenCommand::SyncRemoteNativeTokenCommand(const std::string &js
 {
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -76,12 +76,12 @@ void SyncRemoteNativeTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "end as: SyncRemoteNativeTokenCommand");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "End as: SyncRemoteNativeTokenCommand");
 }
 
 void SyncRemoteNativeTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteNativeTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: SyncRemoteNativeTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -94,7 +94,7 @@ void SyncRemoteNativeTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: SyncRemoteNativeTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: SyncRemoteNativeTokenCommand");
 }
 
 void SyncRemoteNativeTokenCommand::Finish()

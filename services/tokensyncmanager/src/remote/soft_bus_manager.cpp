@@ -100,7 +100,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
         std::string uuid = GetUuidByNodeId(device.networkId);
         std::string udid = GetUdidByNodeId(device.networkId);
         if (uuid.empty() || udid.empty()) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
                 ConstantCommon::EncryptDevId(uuid).c_str(), ConstantCommon::EncryptDevId(udid).c_str());
             continue;
         }
@@ -176,11 +176,11 @@ int32_t SoftBusManager::ServiceSocketInit()
     };
     int32_t ret = ::Socket(info); // create service socket id
     if (ret <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "create service socket faild, ret is %{public}d.", ret);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create service socket faild, ret is %{public}d.", ret);
         return ERROR_CREATE_SOCKET_FAIL;
     } else {
         socketFd_ = ret;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "create service socket[%{public}d] success.", socketFd_);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Create service socket[%{public}d] success.", socketFd_);
     }
 
     // set service qos, no need to regist OnQos now, regist it
@@ -197,10 +197,10 @@ int32_t SoftBusManager::ServiceSocketInit()
 
     ret = ::Listen(socketFd_, serverQos, QOS_LEN, &listener);
     if (ret != ERR_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "create listener failed, ret is %{public}d.", ret);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create listener failed, ret is %{public}d.", ret);
         return ERROR_CREATE_LISTENER_FAIL;
     } else {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "create listener success.");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Create listener success.");
     }
 
     return ERR_OK;
@@ -214,7 +214,7 @@ int32_t SoftBusManager::GetRepeatTimes()
 
 void SoftBusManager::SetDefaultConfigValue()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "no config file or config file is not valid, use default values");
+    ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
 
     sendRequestRepeatTimes_ = DEFAULT_SEND_REQUEST_REPEAT_TIMES;
 }
@@ -229,7 +229,7 @@ void SoftBusManager::GetConfigValue()
         SetDefaultConfigValue();
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "sendRequestRepeatTimes_ is %{public}d.", sendRequestRepeatTimes_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequestRepeatTimes_ is %{public}d.", sendRequestRepeatTimes_);
 }
 
 void SoftBusManager::Initialize()
@@ -237,7 +237,7 @@ void SoftBusManager::Initialize()
     bool inited = false;
     // cas failed means already inited.
     if (!inited_.compare_exchange_strong(inited, true)) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "already initialized, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Already initialized, skip");
         return;
     }
 
@@ -275,17 +275,17 @@ void SoftBusManager::Initialize()
 
 void SoftBusManager::Destroy()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, init: %{public}d, isSoftBusServiceBindSuccess: %{public}d", inited_.load(),
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Destroy, init: %{public}d, isSoftBusServiceBindSuccess: %{public}d", inited_.load(),
         isSoftBusServiceBindSuccess_);
 
     if (!inited_.load()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not inited, skip");
         return;
     }
 
     std::unique_lock<std::mutex> lock(mutex_);
     if (!inited_.load()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "not inited, skip");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not inited, skip");
         return;
     }
 
@@ -315,7 +315,7 @@ void SoftBusManager::Destroy()
 
     inited_.store(false);
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "destroy, done");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Destroy, done");
 }
 
 int32_t SoftBusManager::InitSocketAndListener(const std::string& networkId, ISocketListener& listener)
@@ -360,13 +360,13 @@ int32_t SoftBusManager::InitSocketAndListener(const std::string& networkId, ISoc
 int32_t SoftBusManager::BindService(const std::string &deviceId)
 {
 #ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:start bind service");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Api_performance:start bind service");
 #endif
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(deviceId, DeviceIdType::UNKNOWN, info);
     if (!result) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "device info not found for deviceId %{public}s",
+        ACCESSTOKEN_LOG_WARN(LABEL, "Device info not found for deviceId %{public}s",
             ConstantCommon::EncryptDevId(deviceId).c_str());
         return Constant::FAILURE;
     }
@@ -375,7 +375,7 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
     ISocketListener listener;
     int32_t socketFd = InitSocketAndListener(networkId, listener);
     if (socketFd_ <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "create client socket faild.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Create client socket faild.");
         return ERROR_CREATE_SOCKET_FAIL;
     }
 
@@ -385,7 +385,7 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
         if (iter == clientSocketMap_.end()) {
             clientSocketMap_.insert(std::pair<int32_t, std::string>(socketFd, networkId));
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "client socket has bind already");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Client socket has bind already");
             return ERROR_CLIENT_HAS_BIND_ALREADY;
         }
     }
@@ -420,7 +420,7 @@ int32_t SoftBusManager::BindService(const std::string &deviceId)
 int SoftBusManager::CloseSocket(int socketFd)
 {
     if (socketFd <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "socket is invalid");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Socket is invalid");
         return Constant::FAILURE;
     }
 
@@ -432,7 +432,7 @@ int SoftBusManager::CloseSocket(int socketFd)
         clientSocketMap_.erase(iter);
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "close socket");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Close socket");
 
     return Constant::SUCCESS;
 }
@@ -451,20 +451,20 @@ bool SoftBusManager::GetNetworkIdBySocket(const int32_t socket, std::string& net
 std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return "";
     }
 
     std::string uuid = GetUuidByNodeId(nodeId);
     if (uuid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Softbus return null or empty string");
         return "";
     }
 
     DeviceInfo info;
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(uuid, DeviceIdType::UNIVERSALLY_UNIQUE_ID, info);
     if (!result) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "local device info not found for uuid %{public}s",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Local device info not found for uuid %{public}s",
             ConstantCommon::EncryptDevId(uuid).c_str());
     } else {
         std::string dimUuid = info.deviceId.universallyUniqueId;
@@ -482,12 +482,12 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
 std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
         return "";
     }
     std::string udid = GetUdidByNodeId(nodeId);
     if (udid.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "softbus return null or empty string: %{public}s",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Softbus return null or empty string: %{public}s",
             ConstantCommon::EncryptDevId(udid).c_str());
         return "";
     }
@@ -505,7 +505,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
 {
     uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
@@ -518,7 +518,7 @@ std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
     }
     std::string uuid(reinterpret_cast<char *>(info));
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished. nodeId(in): %{public}s, uuid: %{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished. nodeId(in): %{public}s, uuid: %{public}s",
         ConstantCommon::EncryptDevId(nodeId).c_str(), ConstantCommon::EncryptDevId(uuid).c_str());
     return uuid;
 }
@@ -527,7 +527,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
 {
     uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
     if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", UDID_MAX_LENGTH);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", UDID_MAX_LENGTH);
         return "";
     }
     (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
@@ -540,7 +540,7 @@ std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
     }
     std::string udid(reinterpret_cast<char *>(info));
     delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished: nodeId(in): %{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished: nodeId(in): %{public}s",
         ConstantCommon::EncryptDevId(nodeId).c_str());
     return udid;
 }
@@ -561,7 +561,7 @@ int SoftBusManager::FulfillLocalDeviceInfo()
         return Constant::FAILURE;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "call softbus finished, type:%{public}d", info.deviceTypeId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished, type:%{public}d", info.deviceTypeId);
 
     std::string uuid = GetUuidByNodeId(info.networkId);
     std::string udid = GetUdidByNodeId(info.networkId);

@@ -59,7 +59,7 @@ int32_t FormManagerAccessClient::RegisterAddObserver(
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return -1;
     }
     return proxy->RegisterAddObserver(bundleName, callerToken);
@@ -74,7 +74,7 @@ int32_t FormManagerAccessClient::RegisterRemoveObserver(
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return -1;
     }
     return proxy->RegisterRemoveObserver(bundleName, callerToken);
@@ -84,7 +84,7 @@ bool FormManagerAccessClient::HasFormVisible(const uint32_t tokenId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return false;
     }
     return proxy->HasFormVisible(tokenId);
@@ -111,7 +111,7 @@ void FormManagerAccessClient::InitProxy()
 
     proxy_ = iface_cast<IFormMgr>(formManagerSa);
     if (proxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null.");
     }
 }
 

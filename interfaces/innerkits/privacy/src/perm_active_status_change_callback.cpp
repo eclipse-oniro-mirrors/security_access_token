@@ -35,7 +35,7 @@ PermActiveStatusChangeCallback::~PermActiveStatusChangeCallback()
 void PermActiveStatusChangeCallback::ActiveStatusChangeCallback(ActiveChangeResponse& result)
 {
     if (customizedCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCallback_ is nullptr");
         return;
     }
 

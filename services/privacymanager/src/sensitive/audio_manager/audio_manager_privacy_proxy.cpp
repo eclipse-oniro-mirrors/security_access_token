@@ -57,7 +57,7 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
     int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
         AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE_AUDIO_CONFIG), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "set microphoneMute failed, error: %d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
         return error;
     }
     return reply.ReadInt32();

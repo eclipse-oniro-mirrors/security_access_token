@@ -26,7 +26,7 @@ bool IsCurrentThread(std::thread::id threadId)
 {
     std::thread::id currentThread = std::this_thread::get_id();
     if (threadId != currentThread) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "napi_ref can not be compared,different threadId");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Napi_ref can not be compared,different threadId");
         return false;
     }
     return true;
@@ -53,7 +53,7 @@ bool CheckType(const napi_env& env, const napi_value& value, const napi_valuetyp
     napi_valuetype valuetype = napi_undefined;
     napi_typeof(env, value, &valuetype);
     if (valuetype != type) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "value type dismatch, [%{public}d]->[%{public}d]", valuetype, type);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Value type dismatch, [%{public}d]->[%{public}d]", valuetype, type);
         return false;
     }
     return true;
@@ -66,7 +66,7 @@ bool ParseBool(const napi_env& env, const napi_value& value, bool& result)
     }
 
     if (napi_get_value_bool(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value bool");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value bool");
         return false;
     }
     return true;
@@ -78,7 +78,7 @@ bool ParseInt32(const napi_env& env, const napi_value& value, int32_t& result)
         return false;
     }
     if (napi_get_value_int32(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int32");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value int32");
         return false;
     }
     return true;
@@ -90,7 +90,7 @@ bool ParseInt64(const napi_env& env, const napi_value& value, int64_t& result)
         return false;
     }
     if (napi_get_value_int64(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value int64");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value int64");
         return false;
     }
     return true;
@@ -102,7 +102,7 @@ bool ParseUint32(const napi_env& env, const napi_value& value, uint32_t& result)
         return false;
     }
     if (napi_get_value_uint32(env, value, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value uint32");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value uint32");
         return false;
     }
     return true;
@@ -115,13 +115,13 @@ bool ParseString(const napi_env& env, const napi_value& value, std::string& resu
     }
     size_t size;
     if (napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get string size");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get string size");
         return false;
     }
     result.reserve(size + 1);
     result.resize(size);
     if (napi_get_value_string_utf8(env, value, result.data(), size + 1, &size) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value string");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value string");
         return false;
     }
     return true;
@@ -136,10 +136,10 @@ bool ParseStringArray(const napi_env& env, const napi_value& value, std::vector<
     uint32_t length = 0;
     napi_get_array_length(env, value, &length);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "array size is %{public}d", length);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Array size is %{public}d", length);
 
     if (length == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "array is empty");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Array is empty");
         return true;
     }
 
@@ -213,7 +213,7 @@ bool ParseCallback(const napi_env& env, const napi_value& value, napi_ref& resul
         return false;
     }
     if (napi_create_reference(env, value, 1, &result) != napi_ok) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "cannot get value callback");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Cannot get value callback");
         return false;
     }
     return true;

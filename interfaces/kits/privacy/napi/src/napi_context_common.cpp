@@ -56,10 +56,10 @@ PermActiveStatusPtr::~PermActiveStatusPtr()
 void UvQueueWorkDeleteRef(uv_work_t *work, int32_t status)
 {
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr : %{public}d", work == nullptr);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work == nullptr : %{public}d", work == nullptr);
         return;
     } else if (work->data == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work->data == nullptr : %{public}d", work->data == nullptr);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work->data == nullptr : %{public}d", work->data == nullptr);
         return;
     }
     PermActiveStatusWorker* permActiveStatusWorker =
@@ -80,12 +80,12 @@ void PermActiveStatusPtr::DeleteNapiRef()
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
         return;
     }
 
@@ -93,7 +93,7 @@ void PermActiveStatusPtr::DeleteNapiRef()
     PermActiveStatusWorker* permActiveStatusWorker =
         new (std::nothrow) PermActiveStatusWorker();
     if (permActiveStatusWorker == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for RegisterPermStateChangeWorker!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusWorker};
@@ -123,18 +123,18 @@ void PermActiveStatusPtr::ActiveStatusChangeCallback(ActiveChangeResponse& resul
     uv_loop_s* loop = nullptr;
     NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
     if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "loop instance is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
         return;
     }
     uv_work_t* work = new (std::nothrow) uv_work_t;
     if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for work!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
     PermActiveStatusWorker* permActiveStatusWorker = new (std::nothrow) PermActiveStatusWorker();
     if (permActiveStatusWorker == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "insufficient memory for RegisterPermStateChangeWorker!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for RegisterPermStateChangeWorker!");
         return;
     }
     std::unique_ptr<PermActiveStatusWorker> workPtr {permActiveStatusWorker};
@@ -156,7 +156,7 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
 {
     (void)status;
     if (work == nullptr || work->data == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "work == nullptr || work->data == nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Work == nullptr || work->data == nullptr");
         return;
     }
     std::unique_ptr<uv_work_t> uvWorkPtr {work};
@@ -166,7 +166,7 @@ void UvQueueWorkActiveStatusChange(uv_work_t* work, int status)
     napi_handle_scope scope = nullptr;
     napi_open_handle_scope(permActiveStatusData->env, &scope);
     if (scope == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "scope is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope is null");
         return;
     }
     NotifyChangeResponse(permActiveStatusData);

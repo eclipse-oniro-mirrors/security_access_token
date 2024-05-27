@@ -68,13 +68,13 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input is nullptr");
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (callbackDataList_.size() >= MAX_CALLBACK_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "list size has reached max value");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "List size has reached max value");
         return PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
     callback->AddDeathRecipient(callbackDeathRecipient_);
@@ -85,13 +85,13 @@ int32_t ActiveStatusCallbackManager::AddCallback(
 
     callbackDataList_.emplace_back(recordInstance);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "recordInstance is added");
+    ACCESSTOKEN_LOG_INFO(LABEL, "RecordInstance is added");
     return RET_SUCCESS;
 }
 
 int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
         return PrivacyError::ERR_PARAM_INVALID;
@@ -101,7 +101,7 @@ int32_t ActiveStatusCallbackManager::RemoveCallback(const sptr<IRemoteObject>& c
 
     for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "find callback");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
@@ -132,7 +132,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, permName)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "tokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
+                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
                 continue;
             }
             list.emplace_back((*it).callbackObject_);
@@ -165,20 +165,20 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
 
 #ifdef EVENTHANDLER_ENABLE
     if (eventHandler_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
     std::string taskName = permName + std::to_string(tokenId);
-    ACCESSTOKEN_LOG_INFO(LABEL, "add permission task name:%{public}s", taskName.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([tokenId, permName, deviceId, changeType]() {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(tokenId, permName, deviceId, changeType);
-        ACCESSTOKEN_LOG_INFO(LABEL, "token: %{public}d, ActiveStatusChange end", tokenId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token: %{public}d, ActiveStatusChange end", tokenId);
     });
     eventHandler_->ProxyPostTask(task, taskName);
     ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");
     return;
 #else
-    ACCESSTOKEN_LOG_INFO(LABEL, "event handler is unenabled");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Event handler is unenabled");
     return;
 #endif
 }

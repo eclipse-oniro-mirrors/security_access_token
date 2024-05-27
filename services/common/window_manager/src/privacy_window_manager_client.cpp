@@ -70,7 +70,7 @@ int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgent(WindowManagerAgen
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
@@ -84,7 +84,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgent(WindowManagerAg
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
@@ -95,7 +95,7 @@ int32_t PrivacyWindowManagerClient::RegisterWindowManagerAgentLite(WindowManager
 {
     auto proxy = GetLiteProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->RegisterWindowManagerAgent(type, windowManagerAgent);
@@ -106,7 +106,7 @@ int32_t PrivacyWindowManagerClient::UnregisterWindowManagerAgentLite(WindowManag
 {
     auto proxy = GetLiteProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return ERR_SERVICE_ABNORMAL;
     }
     return proxy->UnregisterWindowManagerAgent(type, windowManagerAgent);
@@ -146,7 +146,7 @@ void PrivacyWindowManagerClient::InitSessionManagerServiceProxy()
     }
     sessionManagerServiceProxy_ = iface_cast<ISessionManagerService>(remoteObject2);
     if (!sessionManagerServiceProxy_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sessionManagerServiceProxy_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
     }
 }
 
@@ -156,7 +156,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
         return;
     }
     if (!sessionManagerServiceProxy_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sessionManagerServiceProxy_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
         return;
     }
 
@@ -167,7 +167,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerProxy()
     }
     sceneSessionManagerProxy_ = iface_cast<ISceneSessionManager>(remoteObject);
     if (sceneSessionManagerProxy_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "sceneSessionManagerProxy_ is null.");
+        ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerProxy_ is null.");
         return;
     }
     if (!serviceDeathObserver_) {
@@ -187,7 +187,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
         return;
     }
     if (!sessionManagerServiceProxy_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "sessionManagerServiceProxy_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SessionManagerServiceProxy_ is nullptr");
         return;
     }
 
@@ -198,7 +198,7 @@ void PrivacyWindowManagerClient::InitSceneSessionManagerLiteProxy()
     }
     sceneSessionManagerLiteProxy_ = iface_cast<ISceneSessionManagerLite>(remoteObject);
     if (sceneSessionManagerLiteProxy_ == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "sceneSessionManagerLiteProxy_ is null.");
+        ACCESSTOKEN_LOG_WARN(LABEL, "SceneSessionManagerLiteProxy_ is null.");
         return;
     }
     if (!serviceDeathObserver_) {
@@ -251,7 +251,7 @@ void PrivacyWindowManagerClient::InitWMSProxy()
 
     wmsProxy_ = iface_cast<IWindowManager>(windowManagerSa);
     if (wmsProxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "wmsProxy_ is null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WmsProxy_ is null.");
         return;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "InitWMSProxy end.");

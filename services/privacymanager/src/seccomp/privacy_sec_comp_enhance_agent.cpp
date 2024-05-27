@@ -64,11 +64,11 @@ void PrivacySecCompEnhanceAgent::InitAppObserver()
     }
     observer_ = new (std::nothrow) PrivacyAppUsingSecCompStateObserver();
     if (observer_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "new observer failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "New observer failed.");
         return;
     }
     if (AppManagerAccessClient::GetInstance().RegisterApplicationStateObserver(observer_) != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "register observer failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Register observer failed.");
         observer_ = nullptr;
         return;
     }
@@ -105,11 +105,11 @@ void PrivacySecCompEnhanceAgent::RemoveSecCompEnhance(int pid)
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             secCompEnhanceData_.erase(iter);
-            ACCESSTOKEN_LOG_INFO(LABEL, "remove pid %{public}d data.", pid);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Remove pid %{public}d data.", pid);
             return;
         }
     }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "not found pid %{public}d data.", pid);
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Not found pid %{public}d data.", pid);
     return;
 }
 
@@ -120,7 +120,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     int pid = IPCSkeleton::GetCallingPid();
     if (std::any_of(secCompEnhanceData_.begin(), secCompEnhanceData_.end(),
         [pid](const auto& e) { return e.pid == pid; })) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "register sec comp enhance exist, pid %{public}d.", pid);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Register sec comp enhance exist, pid %{public}d.", pid);
             return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     }
     SecCompEnhanceData enhance;
@@ -132,7 +132,7 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.seqNum = enhanceData.seqNum;
     enhance.key = enhanceData.key;
     secCompEnhanceData_.emplace_back(enhance);
-    ACCESSTOKEN_LOG_INFO(LABEL, "register sec comp enhance success, pid %{public}d, total %{public}u.",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
     return RET_SUCCESS;
 }
@@ -158,7 +158,7 @@ int32_t PrivacySecCompEnhanceAgent::GetSecCompEnhance(int32_t pid, SecCompEnhanc
     for (auto iter = secCompEnhanceData_.begin(); iter != secCompEnhanceData_.end(); ++iter) {
         if (iter->pid == pid) {
             enhanceData = *iter;
-            ACCESSTOKEN_LOG_INFO(LABEL, "get pid %{public}d data.", pid);
+            ACCESSTOKEN_LOG_INFO(LABEL, "Get pid %{public}d data.", pid);
             return RET_SUCCESS;
         }
     }
