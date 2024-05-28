@@ -43,7 +43,7 @@ const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITI
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
 #ifdef HICOLLIE_ENABLE
-constexpr uint32_t TIMEOUT = 20; // 20s
+constexpr uint32_t TIMEOUT = 40; // 40s
 #endif // HICOLLIE_ENABLE
 }
 
