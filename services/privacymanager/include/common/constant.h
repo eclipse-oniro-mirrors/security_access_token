@@ -67,6 +67,7 @@ public:
         OP_READ_WRITE_DOCUMENTS_DIRECTORY = 38,
         OP_READ_WRITE_DESKTOP_DIRECTORY = 39,
         OP_ACCESS_NEARLINK = 40,
+        OP_CAPTURE_SCREEN = 41,
     };
 
     enum ErrorCode {
