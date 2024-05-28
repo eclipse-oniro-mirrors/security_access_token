@@ -76,7 +76,7 @@ int DataTranslator::TranslationIntoGenericValues(const PermissionStateFull& inPe
 {
     if (grantIndex >= inPermissionState.resDeviceID.size() || grantIndex >= inPermissionState.grantStatus.size() ||
         grantIndex >= inPermissionState.grantFlags.size()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "perm status grant size is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Perm status grant size is wrong");
         return ERR_PARAM_INVALID;
     }
     outGenericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, inPermissionState.permissionName);
@@ -95,7 +95,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
         ((inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_IS_GENERAL) == 1) ? true : false);
     outPermissionState.permissionName = inGenericValues.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
     if (!DataValidator::IsPermissionNameValid(outPermissionState.permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission name is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission name is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission name error");
@@ -104,7 +104,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     std::string devID = inGenericValues.GetString(TokenFiledConst::FIELD_DEVICE_ID);
     if (!DataValidator::IsDeviceIdValid(devID)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "devID is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "DevID is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission deviceId error");
@@ -114,7 +114,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     int grantFlag = (PermissionFlag)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_FLAG);
     if (!PermissionValidator::IsPermissionFlagValid(grantFlag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "grantFlag is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantFlag is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant flag error");
@@ -125,7 +125,7 @@ int DataTranslator::TranslationIntoPermissionStateFull(const GenericValues& inGe
 
     int grantStatus = (PermissionState)inGenericValues.GetInt(TokenFiledConst::FIELD_GRANT_STATE);
     if (!PermissionValidator::IsGrantStatusValid(grantStatus)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "grantStatus is wrong");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GrantStatus is wrong");
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
             HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", LOAD_DATABASE_ERROR,
             "ERROR_REASON", "permission grant status error");

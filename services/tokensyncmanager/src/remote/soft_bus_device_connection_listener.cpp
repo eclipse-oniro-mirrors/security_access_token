@@ -66,7 +66,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
             networkId, uuid, udid, info.deviceName, std::to_string(info.deviceTypeId));
         RemoteCommandManager::GetInstance().NotifyDeviceOnline(udid);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "uuid or udid is empty, online failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid or udid is empty, online failed.");
     }
     // no need to load local permissions by now.
 }
@@ -124,13 +124,13 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 void SoftBusDeviceConnectionListener::OnDeviceReady(const DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 
 void SoftBusDeviceConnectionListener::OnDeviceChanged(const DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
-    ACCESSTOKEN_LOG_INFO(LABEL, "networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 }  // namespace AccessToken
 }  // namespace Security

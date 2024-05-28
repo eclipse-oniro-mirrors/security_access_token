@@ -46,7 +46,7 @@ PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
         tokenID, permissionName.c_str());
     if ((tokenID == INVALID_TOKENID) || (!DataValidator::IsPermissionNameValid(permissionName))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
     return AccessTokenManagerClient::GetInstance().GetUserGrantedPermissionUsedType(tokenID, permissionName);
@@ -55,13 +55,13 @@ PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
 {
     AccessTokenIDEx res = {0};
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName :%{public}s, \
+    ACCESSTOKEN_LOG_INFO(LABEL, "UserID: %{public}d, bundleName :%{public}s, \
 permList: %{public}zu, stateList: %{public}zu",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return res;
     }
     return AccessTokenManagerClient::GetInstance().AllocHapToken(info, policy);
@@ -70,13 +70,13 @@ permList: %{public}zu, stateList: %{public}zu",
 int32_t AccessTokenKit::InitHapToken(const HapInfoParams& info, HapPolicyParams& policy,
     AccessTokenIDEx& fullTokenId)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "userID: %{public}d, bundleName :%{public}s, \
+    ACCESSTOKEN_LOG_INFO(LABEL, "UserID: %{public}d, bundleName :%{public}s, \
 permList: %{public}zu, stateList: %{public}zu",
         info.userID, info.bundleName.c_str(), policy.permList.size(), policy.permStateList.size());
     if ((!DataValidator::IsUserIdValid(info.userID)) || !DataValidator::IsAppIDDescValid(info.appIDDesc) ||
         !DataValidator::IsBundleNameValid(info.bundleName) || !DataValidator::IsAplNumValid(policy.apl) ||
         !DataValidator::IsDomainValid(policy.domain) || !DataValidator::IsDlpTypeValid(info.dlpType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().InitHapToken(info, policy, fullTokenId);
@@ -84,12 +84,12 @@ permList: %{public}zu, stateList: %{public}zu",
 
 AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "deviceID=%{public}s, tokenID=%{public}d",
+    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID=%{public}s, tokenID=%{public}d",
         ConstantCommon::EncryptDevId(remoteDeviceID).c_str(), remoteTokenID);
 #ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "api_performance:start call");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Api_performance:start call");
     AccessTokenID resID = AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "api_performance:end call");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Api_performance:end call");
     return resID;
 #else
     return AccessTokenManagerClient::GetInstance().AllocLocalTokenID(remoteDeviceID, remoteTokenID);
@@ -99,12 +99,12 @@ AccessTokenID AccessTokenKit::AllocLocalTokenID(const std::string& remoteDeviceI
 int32_t AccessTokenKit::UpdateHapToken(
     AccessTokenIDEx& tokenIdEx, const UpdateHapInfoParams& info, const HapPolicyParams& policy)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "tokenID: %{public}d, isSystemApp: %{public}d, \
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, isSystemApp: %{public}d, \
 permList: %{public}zu, stateList: %{public}zu",
         tokenIdEx.tokenIdExStruct.tokenID, info.isSystemApp, policy.permList.size(), policy.permStateList.size());
     if ((tokenIdEx.tokenIdExStruct.tokenID == INVALID_TOKENID) || (!DataValidator::IsAppIDDescValid(info.appIDDesc)) ||
         (!DataValidator::IsAplNumValid(policy.apl))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input param failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().UpdateHapToken(tokenIdEx, info, policy);
@@ -114,13 +114,13 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
 }
 
-ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID)
+ATokenTypeEnum AccessTokenKit::GetTokenType(AccessTokenID tokenID) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
@@ -134,7 +134,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return TOKEN_INVALID;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
@@ -146,7 +146,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenType(FullTokenID tokenID)
     AccessTokenID id = tokenID & TOKEN_ID_LOWMASK;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", id);
     if (id == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return TOKEN_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetTokenType(id);
@@ -157,7 +157,7 @@ ATokenTypeEnum AccessTokenKit::GetTokenTypeFlag(FullTokenID tokenID)
     AccessTokenID id = tokenID & TOKEN_ID_LOWMASK;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", id);
     if (id == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return TOKEN_INVALID;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
@@ -168,11 +168,11 @@ int AccessTokenKit::CheckNativeDCap(AccessTokenID tokenID, const std::string& dc
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, dcap=%{public}s.", tokenID, dcap.c_str());
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsDcapValid(dcap)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "dcap is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dcap is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().CheckNativeDCap(tokenID, dcap);
@@ -184,7 +184,7 @@ AccessTokenID AccessTokenKit::GetHapTokenID(
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
         userID, bundleName.c_str(), instIndex);
     if ((!DataValidator::IsUserIdValid(userID)) || (!DataValidator::IsBundleNameValid(bundleName))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token param check failed");
         return INVALID_TOKENID;
     }
     AccessTokenIDEx tokenIdEx =
@@ -198,28 +198,30 @@ AccessTokenIDEx AccessTokenKit::GetHapTokenIDEx(int32_t userID, const std::strin
     ACCESSTOKEN_LOG_DEBUG(LABEL, "UserID=%{public}d, bundleName=%{public}s, instIndex=%{public}d.",
         userID, bundleName.c_str(), instIndex);
     if ((!DataValidator::IsUserIdValid(userID)) || (!DataValidator::IsBundleNameValid(bundleName))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "hap token param check failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token param check failed");
         return tokenIdEx;
     }
     return AccessTokenManagerClient::GetInstance().GetHapTokenID(userID, bundleName, instIndex);
 }
 
-int AccessTokenKit::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes)
+int AccessTokenKit::GetHapTokenInfo(
+    AccessTokenID tokenID, HapTokenInfo& hapTokenInfoRes) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID =%{public}d is invalid", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfo(tokenID, hapTokenInfoRes);
 }
 
-int AccessTokenKit::GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes)
+int AccessTokenKit::GetNativeTokenInfo(
+    AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (GetTokenTypeFlag(tokenID) != TOKEN_NATIVE && GetTokenTypeFlag(tokenID) != TOKEN_SHELL) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID =%{public}d is invalid", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID =%{public}d is invalid", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenInfo(tokenID, nativeTokenInfoRes);
@@ -236,7 +238,7 @@ int32_t AccessTokenKit::GetPermissionsStatus(AccessTokenID tokenID, std::vector<
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permList.size=%{public}zu.", tokenID, permList.size());
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionsStatus(tokenID, permList);
@@ -247,7 +249,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, crossIpc=%{public}d.",
         tokenID, permissionName.c_str(), crossIpc);
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
         return PERMISSION_DENIED;
     }
 
@@ -283,7 +285,7 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
         tokenID, permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
         return PERMISSION_DENIED;
     }
     return AccessTokenKit::VerifyAccessToken(tokenID, permissionName, false);
@@ -308,7 +310,7 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PermissionName=%{public}s.", permissionName.c_str());
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -318,11 +320,12 @@ int AccessTokenKit::GetDefPermission(const std::string& permissionName, Permissi
     return ret;
 }
 
-int AccessTokenKit::GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permDefList)
+int AccessTokenKit::GetDefPermissions(
+    AccessTokenID tokenID, std::vector<PermissionDef>& permDefList) __attribute__((no_sanitize("cfi")))
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -334,7 +337,7 @@ int AccessTokenKit::GetReqPermissions(
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, isSystemGrant=%{public}d.", tokenID, isSystemGrant);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -346,11 +349,11 @@ int AccessTokenKit::GetPermissionFlag(AccessTokenID tokenID, const std::string& 
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
         tokenID, permissionName.c_str());
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
@@ -361,15 +364,15 @@ int AccessTokenKit::GrantPermission(AccessTokenID tokenID, const std::string& pe
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
         tokenID, permissionName.c_str(), flag);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "flag is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Flag is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().GrantPermission(tokenID, permissionName, flag);
@@ -380,15 +383,15 @@ int AccessTokenKit::RevokePermission(AccessTokenID tokenID, const std::string& p
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s, flag=%{public}d.",
         tokenID, permissionName.c_str(), flag);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid tokenID");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenID");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid permissionName");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permissionName");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!DataValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid flag");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid flag");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().RevokePermission(tokenID, permissionName, flag);
@@ -398,7 +401,7 @@ int AccessTokenKit::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().ClearUserGrantedPermissionState(tokenID);
@@ -443,14 +446,14 @@ int32_t AccessTokenKit::GetPermissionRequestToggleStatus(const std::string& perm
 int32_t AccessTokenKit::RegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     return AccessTokenManagerClient::GetInstance().RegisterPermStateChangeCallback(callback);
 }
 
 int32_t AccessTokenKit::UnRegisterPermStateChangeCallback(
     const std::shared_ptr<PermStateChangeCallbackCustomize>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     return AccessTokenManagerClient::GetInstance().UnRegisterPermStateChangeCallback(callback);
 }
 
@@ -458,7 +461,7 @@ int32_t AccessTokenKit::GetHapDlpFlag(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return INVALID_DLP_TOKEN_FLAG;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&tokenID);
@@ -477,7 +480,7 @@ int32_t AccessTokenKit::ReloadNativeTokenInfo()
 AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 {
     if (!DataValidator::IsProcessNameValid(processName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "processName is invalid, processName=%{public}s", processName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ProcessName is invalid, processName=%{public}s", processName.c_str());
         return INVALID_TOKENID;
     }
     return AccessTokenManagerClient::GetInstance().GetNativeTokenId(processName);
@@ -488,7 +491,7 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
@@ -497,7 +500,7 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
 
 int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
 
     return AccessTokenManagerClient::GetInstance().GetAllNativeTokenInfo(nativeTokenInfosRes);
 }

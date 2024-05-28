@@ -62,7 +62,7 @@ CallbackManager::~CallbackManager()
 int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "input is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input is nullptr");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     auto callbackScopePtr = std::make_shared<PermStateChangeScope>(scopeRes);
@@ -73,7 +73,7 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
     std::lock_guard<std::mutex> lock(mutex_);
 #endif
     if (callbackInfoList_.size() >= MAX_CALLBACK_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "callback size has reached limitation");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback size has reached limitation");
         return AccessTokenError::ERR_CALLBACKS_EXCEED_LIMITATION;
     }
     callback->AddDeathRecipient(callbackDeathRecipient_);
@@ -84,7 +84,7 @@ int32_t CallbackManager::AddCallback(const PermStateChangeScope& scopeRes, const
 
     callbackInfoList_.emplace_back(recordInstance);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "recordInstance is added");
+    ACCESSTOKEN_LOG_INFO(LABEL, "RecordInstance is added");
     return RET_SUCCESS;
 }
 
@@ -103,7 +103,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
 
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         if (callback == (*it).callbackObject_) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "find callback");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Find callback");
             if (callbackDeathRecipient_ != nullptr) {
                 callback->RemoveDeathRecipient(callbackDeathRecipient_);
             }
@@ -112,7 +112,7 @@ int32_t CallbackManager::RemoveCallback(const sptr<IRemoteObject>& callback)
             break;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "callbackInfoList_ %{public}u", (uint32_t)callbackInfoList_.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallbackInfoList_ %{public}u", (uint32_t)callbackInfoList_.size());
     return RET_SUCCESS;
 }
 
@@ -143,20 +143,20 @@ void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, 
         auto callbackSingle = [it, tokenID, permName, changeType]() {
             auto callback = iface_cast<IPermissionStateCallback>(*it);
             if (callback != nullptr) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "callback execute");
+                ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
                 PermStateChangeInfo resInfo;
                 resInfo.permStateChangeType = changeType;
                 resInfo.permissionName = permName;
                 resInfo.tokenID = tokenID;
                 callback->PermStateChangeCallback(resInfo);
-                ACCESSTOKEN_LOG_INFO(LABEL, "callback execute end");
+                ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute end");
             }
         };
         ffrt::submit(callbackSingle, {}, {}, ffrt::task_attr().qos(ffrt::qos_default));
 #else
         auto callback = iface_cast<IPermissionStateCallback>(*it);
         if (callback != nullptr) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "callback execute");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Callback execute");
             PermStateChangeInfo resInfo;
             resInfo.permStateChangeType = changeType;
             resInfo.permissionName = permName;
@@ -181,7 +181,7 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
     for (auto it = callbackInfoList_.begin(); it != callbackInfoList_.end(); ++it) {
         std::shared_ptr<PermStateChangeScope> scopePtr = (*it).scopePtr_;
         if (scopePtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "scopePtr is nullptr");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "ScopePtr is nullptr");
             continue;
         }
         if (!CalledAccordingToTokenIdLlist(scopePtr->tokenIDs, tokenID) ||
@@ -196,9 +196,9 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
 
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "entry");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     auto callbackStart = [&]() {
-        ACCESSTOKEN_LOG_INFO(LABEL, "callbackStart");
+        ACCESSTOKEN_LOG_INFO(LABEL, "CallbackStart");
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
         std::string name = "AtmCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
@@ -221,7 +221,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Waiting for the callback execution complete...");
     std::future_status status = fut.wait_for(std::chrono::seconds(MAX_TIMEOUT_SEC));
     if (status == std::future_status::timeout) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "callbackTask callback execution timeout");
+        ACCESSTOKEN_LOG_WARN(LABEL, "CallbackTask callback execution timeout");
         return;
     }
 #endif

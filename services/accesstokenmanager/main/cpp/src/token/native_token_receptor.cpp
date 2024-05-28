@@ -54,7 +54,7 @@ int32_t NativeReqPermsGet(
     }
     permReqList = j.at(JSON_PERMS).get<std::vector<std::string>>();
     if (permReqList.size() > MAX_REQ_PERM_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission num oversize.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission num oversize.");
         return ERR_OVERSIZE;
     }
     std::set<std::string> permRes;
@@ -117,7 +117,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
     native.dcap = j.at(JSON_DCAPS).get<std::vector<std::string>>();
     if (native.dcap.size() > MAX_DCAPS_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "native dcap oversize.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Native dcap oversize.");
         return;
     }
 
@@ -126,7 +126,7 @@ void from_json(const nlohmann::json& j, std::shared_ptr<NativeTokenInfoInner>& p
     }
     native.nativeAcls = j.at(JSON_ACLS).get<std::vector<std::string>>();
     if (native.nativeAcls.size() > MAX_REQ_PERM_NUM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission num oversize.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission num oversize.");
         return;
     }
 
@@ -143,7 +143,7 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
 {
     nlohmann::json jsonRes = nlohmann::json::parse(nativeRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
     for (auto it = jsonRes.begin(); it != jsonRes.end(); it++) {
@@ -151,7 +151,7 @@ int32_t NativeTokenReceptor::ParserNativeRawData(const std::string& nativeRawDat
         if (token != nullptr) {
             tokenInfos.emplace_back(token);
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "token is invalid.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Token is invalid.");
         }
     }
     return RET_SUCCESS;
@@ -162,7 +162,7 @@ int NativeTokenReceptor::Init()
     std::string nativeRawData;
     int ret = JsonParser::ReadCfgFile(NATIVE_TOKEN_CONFIG_FILE, nativeRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
         return ret;
     }
     std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
@@ -173,7 +173,7 @@ int NativeTokenReceptor::Init()
     }
     AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "init ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok.");
     return RET_SUCCESS;
 }
 

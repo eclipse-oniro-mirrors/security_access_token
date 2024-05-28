@@ -131,17 +131,17 @@ int32_t PermissionUsedRecordDb::Add(DataType type, const std::vector<GenericValu
         }
         int32_t ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "failed, errorMsg: %{public}s", SpitError().c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, errorMsg: %{public}s", SpitError().c_str());
             isAddSuccessfully = false;
         }
         statement.Reset();
     }
     if (!isAddSuccessfully) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "rollback transaction.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "commit transaction.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Commit transaction.");
     CommitTransaction();
     return SUCCESS;
 }
@@ -580,7 +580,7 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS + "=" +
         std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
     int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -591,7 +591,7 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
         .append(" integer default ")
         .append(std::to_string(LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED));
     int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d", insertResult);
     return insertResult;
 }
 
@@ -606,7 +606,7 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
         PrivacyFiledConst::FIELD_USED_TYPE + "=" +
         std::to_string(PermissionUsedType::NORMAL_TYPE);
     int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "check result:%{public}d", checkResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
     if (checkResult != -1) {
         return SUCCESS;
     }
@@ -617,7 +617,7 @@ int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
         .append(" integer default ")
         .append(std::to_string(PermissionUsedType::NORMAL_TYPE));
     int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "insert column result:%{public}d", insertResult);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d", insertResult);
     return insertResult;
 }
 } // namespace AccessToken

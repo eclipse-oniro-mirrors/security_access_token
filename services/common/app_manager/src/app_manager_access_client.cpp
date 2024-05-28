@@ -59,7 +59,7 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     std::vector<std::string> bundleNameList;
@@ -74,7 +74,7 @@ int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IA
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->UnregisterApplicationStateObserver(observer);
@@ -84,7 +84,7 @@ int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateDa
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
     return proxy->GetForegroundApplications(list);
@@ -111,7 +111,7 @@ void AppManagerAccessClient::InitProxy()
 
     proxy_ = iface_cast<IAppMgr>(appManagerSa);
     if (proxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

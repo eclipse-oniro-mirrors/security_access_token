@@ -54,7 +54,7 @@ int32_t AbilityManagerAccessClient::StartAbility(
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Start ability %{public}s, userId:%{public}d",
@@ -92,7 +92,7 @@ void AbilityManagerAccessClient::InitProxy()
 
     proxy_ = iface_cast<IAbilityManager>(abilityManagerSa);
     if (proxy_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 

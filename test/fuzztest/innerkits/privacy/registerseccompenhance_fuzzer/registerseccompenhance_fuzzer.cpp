@@ -37,8 +37,8 @@ namespace OHOS {
         secData.pid = static_cast<int32_t>(size);
         secData.token = static_cast<AccessTokenID>(size);
         secData.challenge = static_cast<uint64_t>(size);
-        secData.sessionId = static_cast<int32_t>(size);
-        secData.seqNum = static_cast<int32_t>(size);
+        secData.sessionId = static_cast<uint32_t>(size);
+        secData.seqNum = static_cast<uint32_t>(size);
 
         int32_t result = PrivacyKit::RegisterSecCompEnhance(secData);
         return result == RET_SUCCESS;

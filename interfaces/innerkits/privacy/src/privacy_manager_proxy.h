@@ -45,7 +45,7 @@ public:
     bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) override;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhance) override;
-    int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum) override;
+    int32_t UpdateSecCompEnhance(int32_t pid, uint32_t seqNum) override;
     int32_t GetSecCompEnhance(int32_t pid, SecCompEnhanceDataParcel& enhanceParcel) override;
     int32_t GetSpecialSecCompEnhance(const std::string& bundleName,
         std::vector<SecCompEnhanceDataParcel>& enhanceParcelList) override;

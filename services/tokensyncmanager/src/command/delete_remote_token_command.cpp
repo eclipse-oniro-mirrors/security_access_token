@@ -48,7 +48,7 @@ DeleteRemoteTokenCommand::DeleteRemoteTokenCommand(const std::string& json)
     deleteTokenId_ = 0;
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -62,7 +62,7 @@ std::string DeleteRemoteTokenCommand::ToJsonPayload()
 {
     nlohmann::json j = BaseRemoteCommand::ToRemoteProtocolJson();
     if (j.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "j is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "J is invalid.");
         return "";
     }
     j["tokenId"] = deleteTokenId_;
@@ -73,12 +73,12 @@ void DeleteRemoteTokenCommand::Prepare()
 {
     remoteProtocol_.statusCode = Constant::SUCCESS;
     remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
-    ACCESSTOKEN_LOG_INFO(LABEL, "end as: DeleteRemoteTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "End as: DeleteRemoteTokenCommand");
 }
 
 void DeleteRemoteTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: DeleteRemoteTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: DeleteRemoteTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -86,7 +86,7 @@ void DeleteRemoteTokenCommand::Execute()
     bool result = DeviceInfoManager::GetInstance().GetDeviceInfo(remoteProtocol_.srcDeviceId,
         DeviceIdType::UNKNOWN, devInfo);
     if (!result) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "error: get remote uniqueDeviceId failed");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Error: get remote uniqueDeviceId failed");
         remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
         return;
     }
@@ -101,7 +101,7 @@ void DeleteRemoteTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: DeleteRemoteTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: DeleteRemoteTokenCommand");
 }
 
 void DeleteRemoteTokenCommand::Finish()

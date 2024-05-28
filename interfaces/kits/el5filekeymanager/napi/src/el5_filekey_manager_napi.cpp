@@ -64,7 +64,7 @@ void ThrowError(napi_env env, int32_t errCode)
     napi_throw(env, businessError);
 }
 
-bool ParseDataType(const napi_env &env, napi_value args, int32_t &data_lock_type)
+bool ParseDataType(const napi_env &env, napi_value args, int32_t &dataLockType)
 {
     // data-lock-type
     napi_valuetype valuetype = napi_undefined;
@@ -74,15 +74,15 @@ bool ParseDataType(const napi_env &env, napi_value args, int32_t &data_lock_type
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
         return false;
     }
-    napi_get_value_int32(env, args, &data_lock_type);
+    napi_get_value_int32(env, args, &dataLockType);
     return true;
 }
 
-bool CheckDataType(napi_env env, int32_t data_lock_type)
+bool CheckDataType(napi_env env, int32_t dataLockType)
 {
-    if ((static_cast<DataLockType>(data_lock_type) != DEFAULT_DATA) &&
-        (static_cast<DataLockType>(data_lock_type) != MEDIA_DATA) &&
-        (static_cast<DataLockType>(data_lock_type) != ALL_DATA)) {
+    if ((static_cast<DataLockType>(dataLockType) != DEFAULT_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != MEDIA_DATA) &&
+        (static_cast<DataLockType>(dataLockType) != ALL_DATA)) {
         ThrowError(env, EFM_ERR_INVALID_DATATYPE);
         return false;
     }
@@ -104,17 +104,17 @@ napi_value AcquireAccess(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    int32_t data_lock_type = DEFAULT_DATA;
-    if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], data_lock_type)) {
+    int32_t dataLockType = DEFAULT_DATA;
+    if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
         return nullptr;
     }
 
-    if (!CheckDataType(env, data_lock_type)) {
+    if (!CheckDataType(env, dataLockType)) {
         LOG_ERROR("Invalid DataType.");
         return nullptr;
     }
 
-    int32_t retCode = El5FilekeyManagerKit::AcquireAccess(static_cast<DataLockType>(data_lock_type));
+    int32_t retCode = El5FilekeyManagerKit::AcquireAccess(static_cast<DataLockType>(dataLockType));
     if (retCode != EFM_SUCCESS) {
         ThrowError(env, retCode);
         retCode = ACCESS_DENIED;
@@ -140,17 +140,17 @@ napi_value ReleaseAccess(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
-    int32_t data_lock_type = DEFAULT_DATA;
-    if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], data_lock_type)) {
+    int32_t dataLockType = DEFAULT_DATA;
+    if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
         return nullptr;
     }
 
-    if (!CheckDataType(env, data_lock_type)) {
+    if (!CheckDataType(env, dataLockType)) {
         LOG_ERROR("Invalid DataType.");
         return nullptr;
     }
 
-    int32_t retCode = El5FilekeyManagerKit::ReleaseAccess(static_cast<DataLockType>(data_lock_type));
+    int32_t retCode = El5FilekeyManagerKit::ReleaseAccess(static_cast<DataLockType>(dataLockType));
     if (retCode != EFM_SUCCESS) {
         ThrowError(env, retCode);
         retCode = RELEASE_DENIED;

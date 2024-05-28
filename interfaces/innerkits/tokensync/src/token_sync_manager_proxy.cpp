@@ -49,18 +49,18 @@ int TokenSyncManagerProxy::GetRemoteHapTokenInfo(const std::string& deviceID, Ac
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::GET_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get result from server data = %{public}d", result);
     return result;
 }
 
@@ -77,18 +77,18 @@ int TokenSyncManagerProxy::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::DELETE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get result from server data = %{public}d", result);
     return result;
 }
 
@@ -109,18 +109,18 @@ int TokenSyncManagerProxy::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& t
     MessageOption option(MessageOption::TF_SYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "remote service null.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
         return TOKEN_SYNC_IPC_ERROR;
     }
     int32_t requestResult = remote->SendRequest(static_cast<uint32_t>(
         TokenSyncInterfaceCode::UPDATE_REMOTE_HAP_TOKEN_INFO), data, reply, option);
     if (requestResult != NO_ERROR) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request fail, result: %{public}d", requestResult);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return TOKEN_SYNC_IPC_ERROR;
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "get result from server data = %{public}d", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get result from server data = %{public}d", result);
     return result;
 }
 } // namespace AccessToken

@@ -34,6 +34,7 @@ public:
     int32_t DeleteAppKey(const std::string& keyId) override;
     int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos) override;
     int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) override;
+    int32_t SetFilePathPolicy() override;
 private:
     static inline BrokerDelegator<El5FilekeyManagerProxy> delegator_;
 };

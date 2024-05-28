@@ -33,7 +33,7 @@ StateChangeCallback::~StateChangeCallback()
 void StateChangeCallback::StateChangeNotify(AccessTokenID tokenId, bool isShowing)
 {
     if (customizedCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCallback_ is nullptr");
         return;
     }
 

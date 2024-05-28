@@ -36,10 +36,10 @@ std::map<int32_t, std::string> SoftBusSocketListener::socketBindMap_;
 
 void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd is %{public}d.", socket);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd is %{public}d.", socket);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
         return;
     }
 
@@ -55,10 +55,10 @@ void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
 
 void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d shutdown because %{public}u.", socket, reason);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd %{public}d shutdown because %{public}u.", socket, reason);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
         return;
     }
 
@@ -73,7 +73,7 @@ void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
 bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::string& networkId)
 {
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
         return false;
     }
 
@@ -88,17 +88,17 @@ bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::stri
 
 void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint32_t dataLen)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d, recv len %{public}d.", socket, dataLen);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
     if ((socket <= Constant::INVALID_SOCKET_FD) || (data == nullptr) ||
         (dataLen == 0) || (dataLen > MAX_ONBYTES_RECEIVED_DATA_LEN)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Params invalid.");
         return;
     }
 
     std::string networkId;
     if (!GetNetworkIdBySocket(socket, networkId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket invalid, bind service first.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket invalid, bind service first.");
         return;
     }
 
@@ -113,11 +113,11 @@ void SoftBusSocketListener::OnClientBytes(int32_t socket, const void *data, uint
 
 void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uint32_t dataLen)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "socket fd %{public}d, recv len %{public}d.", socket, dataLen);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd %{public}d, recv len %{public}d.", socket, dataLen);
 
     if ((socket <= Constant::INVALID_SOCKET_FD) || (data == nullptr) ||
         (dataLen == 0) || (dataLen > MAX_ONBYTES_RECEIVED_DATA_LEN)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "params invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Params invalid.");
         return;
     }
 
@@ -131,7 +131,7 @@ void SoftBusSocketListener::OnServiceBytes(int32_t socket, const void *data, uin
         }
         channel->HandleDataReceived(socket, static_cast<unsigned char *>(const_cast<void *>(data)), dataLen);
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "unkonow socket.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Unkonow socket.");
     }
 }
 

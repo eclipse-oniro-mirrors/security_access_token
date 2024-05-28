@@ -82,7 +82,10 @@ void AccessTokenIDManager::GetHapTokenIdList(std::vector<AccessTokenID>& idList)
     Utils::UniqueReadGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
 
     for (std::set<AccessTokenID>::iterator it = tokenIdSet_.begin(); it != tokenIdSet_.end(); ++it) {
-        idList.emplace_back(*it);
+        AccessTokenID tokenId = *it;
+        if (TOKEN_HAP == GetTokenIdTypeEnum(tokenId)) {
+            idList.emplace_back(*it);
+        }
     }
 }
 
@@ -90,7 +93,7 @@ AccessTokenID AccessTokenIDManager::CreateTokenId(ATokenTypeEnum type, int32_t d
 {
     unsigned int rand = GetRandomUint32();
     if (rand == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "get random failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get random failed");
         return 0;
     }
 
@@ -113,7 +116,7 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
     for (int i = 0; i < MAX_CREATE_TOKEN_ID_RETRY; i++) {
         tokenId = CreateTokenId(type, dlpFlag, cloneFlag);
         if (tokenId == INVALID_TOKENID) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "create tokenId failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Create tokenId failed");
             return INVALID_TOKENID;
         }
 
@@ -121,9 +124,9 @@ AccessTokenID AccessTokenIDManager::CreateAndRegisterTokenId(ATokenTypeEnum type
         if (ret == RET_SUCCESS) {
             break;
         } else if (i < MAX_CREATE_TOKEN_ID_RETRY - 1) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "reigster tokenId failed, maybe repeat, retry");
+            ACCESSTOKEN_LOG_WARN(LABEL, "Reigster tokenId failed, maybe repeat, retry");
         } else {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "reigster tokenId finally failed");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Reigster tokenId finally failed");
             tokenId = INVALID_TOKENID;
         }
     }
@@ -134,7 +137,7 @@ void AccessTokenIDManager::ReleaseTokenId(AccessTokenID id)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> idGuard(this->tokenIdLock_);
     if (tokenIdSet_.count(id) == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "id %{public}x is not exist", id);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Id %{public}x is not exist", id);
         return;
     }
     tokenIdSet_.erase(id);

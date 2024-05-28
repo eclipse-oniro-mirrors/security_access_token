@@ -67,7 +67,7 @@ void TokenSyncManagerService::OnStart()
 
 void TokenSyncManagerService::OnStop()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "stop service");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Stop service");
     state_ = ServiceRunningState::STATE_NOT_START;
     SoftBusManager::GetInstance().Destroy();
 }
@@ -107,7 +107,7 @@ int TokenSyncManagerService::GetRemoteHapTokenInfo(const std::string& deviceID, 
             "RemoteExecutorManager executeCommand SyncRemoteHapTokenCommand failed, return %{public}d", resultCode);
         return TOKEN_SYNC_COMMAND_EXECUTE_FAILED;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get resultCode: %{public}d", resultCode);
     return TOKEN_SYNC_SUCCESS;
 }
 
@@ -122,7 +122,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
     std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
+            ACCESSTOKEN_LOG_INFO(LABEL, "No need notify local device");
             continue;
         }
         const std::shared_ptr<DeleteRemoteTokenCommand> deleteRemoteTokenCommand =
@@ -136,7 +136,7 @@ int TokenSyncManagerService::DeleteRemoteHapTokenInfo(AccessTokenID tokenID)
                 "RemoteExecutorManager executeCommand DeleteRemoteTokenCommand failed, return %{public}d", resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Get resultCode: %{public}d", resultCode);
     }
     return TOKEN_SYNC_SUCCESS;
 }
@@ -147,7 +147,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
     std::string localUdid = ConstantCommon::GetLocalDeviceId();
     for (const DeviceInfo& device : devices) {
         if (device.deviceId.uniqueDeviceId == localUdid) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "no need notify local device");
+            ACCESSTOKEN_LOG_INFO(LABEL, "No need notify local device");
             continue;
         }
 
@@ -163,7 +163,7 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
                 resultCode);
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "get resultCode: %{public}d", resultCode);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Get resultCode: %{public}d", resultCode);
     }
 
     return TOKEN_SYNC_SUCCESS;
@@ -174,14 +174,14 @@ bool TokenSyncManagerService::Initialize()
 #ifdef EVENTHANDLER_ENABLE
     sendRunner_ = AppExecFwk::EventRunner::Create(true);
     if (!sendRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a sendRunner.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a sendRunner.");
         return false;
     }
 
     sendHandler_ = std::make_shared<AccessEventHandler>(sendRunner_);
     recvRunner_ = AppExecFwk::EventRunner::Create(true);
     if (!recvRunner_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to create a recvRunner.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
         return false;
     }
 

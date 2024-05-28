@@ -102,6 +102,16 @@ int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
     return proxy->ChangeUserAppkeysLoadInfo(userId, loadInfos);
 }
 
+int32_t El5FilekeyManagerClient::SetFilePathPolicy()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOG_ERROR("Get proxy failed, proxy is null.");
+        return EFM_ERR_SA_GET_PROXY;
+    }
+    return proxy->SetFilePathPolicy();
+}
+
 sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
 {
     std::unique_lock<std::mutex> lock(proxyMutex_);

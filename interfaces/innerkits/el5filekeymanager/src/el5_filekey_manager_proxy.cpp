@@ -239,6 +239,32 @@ int32_t El5FilekeyManagerProxy::ChangeUserAppkeysLoadInfo(int32_t userId,
     }
     return result;
 }
+
+int32_t El5FilekeyManagerProxy::SetFilePathPolicy()
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
+        LOG_ERROR("Failed to write WriteInterfaceToken.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOG_ERROR("Remote service is null.");
+        return EFM_ERR_REMOTE_CONNECTION;
+    }
+
+    int32_t result = remote->SendRequest(
+        static_cast<int32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY), data, reply, option);
+    if (result != NO_ERROR) {
+        LOG_ERROR("SendRequest failed, result: %{public}d.", result);
+    } else {
+        result = reply.ReadInt32();
+    }
+    return result;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

@@ -57,7 +57,7 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "default case, need check AudioListenerStub");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }

@@ -36,7 +36,7 @@ PermissionStateChangeCallback::~PermissionStateChangeCallback()
 void PermissionStateChangeCallback::PermStateChangeCallback(PermStateChangeInfo& result)
 {
     if (customizedCallback_ == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "customizedCallback_ is nullptr");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "CustomizedCallback_ is nullptr");
         return;
     }
 

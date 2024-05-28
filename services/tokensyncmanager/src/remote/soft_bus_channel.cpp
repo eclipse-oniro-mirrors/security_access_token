@@ -62,16 +62,16 @@ int SoftBusChannel::BuildConnection()
 
     std::unique_lock<std::mutex> lock(socketMutex_);
     if (socketFd_ != Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "socket is exist, no need open again.");
+        ACCESSTOKEN_LOG_INFO(LABEL, "Socket is exist, no need open again.");
         return Constant::SUCCESS;
     }
 
     if (socketFd_ == Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "bind service with device: %{public}s",
+        ACCESSTOKEN_LOG_INFO(LABEL, "Bind service with device: %{public}s",
             ConstantCommon::EncryptDevId(deviceId_).c_str());
         int socket = SoftBusManager::GetInstance().BindService(deviceId_);
         if (socket == Constant::INVALID_SOCKET_FD) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "bind service failed.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Bind service failed.");
             return Constant::FAILURE;
         }
         socketFd_ = socket;
@@ -81,7 +81,7 @@ int SoftBusChannel::BuildConnection()
 
 void SoftBusChannel::CloseConnection()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "close connection");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Close connection");
     std::unique_lock<std::mutex> lock(mutex_);
     if (isDelayClosing_) {
         return;
@@ -91,7 +91,7 @@ void SoftBusChannel::CloseConnection()
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
 #endif
@@ -99,17 +99,17 @@ void SoftBusChannel::CloseConnection()
     std::function<void()> delayed = ([thisPtr]() {
         std::unique_lock<std::mutex> lock(thisPtr->socketMutex_);
         if (thisPtr->isSocketUsing_) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "socket is in using, cancel close socket");
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Socket is in using, cancel close socket");
         } else {
             SoftBusManager::GetInstance().CloseSocket(thisPtr->socketFd_);
             thisPtr->socketFd_ = Constant::INVALID_SESSION;
-            ACCESSTOKEN_LOG_INFO(LABEL, "close socket for device: %{public}s",
+            ACCESSTOKEN_LOG_INFO(LABEL, "Close socket for device: %{public}s",
                 ConstantCommon::EncryptDevId(thisPtr->deviceId_).c_str());
         }
         thisPtr->isDelayClosing_ = false;
     });
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Close socket after %{public}d ms", WAIT_SESSION_CLOSE_MILLISECONDS);
 #ifdef EVENTHANDLER_ENABLE
     handler->ProxyPostTask(delayed, TASK_NAME_CLOSE_SESSION, WAIT_SESSION_CLOSE_MILLISECONDS);
 #endif
@@ -123,7 +123,7 @@ void SoftBusChannel::Release()
     std::shared_ptr<AccessEventHandler> handler =
         DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetSendEventHandler();
     if (handler == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
         return;
     }
     handler->ProxyRemoveTask(TASK_NAME_CLOSE_SESSION);
@@ -137,7 +137,7 @@ std::string SoftBusChannel::GetUuid()
     char uuidbuf[uuidStrLen];
     RandomUuid(uuidbuf, uuidStrLen);
     std::string uuid(uuidbuf);
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "generated message uuid: %{public}s", ConstantCommon::EncryptDevId(uuid).c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Generated message uuid: %{public}s", ConstantCommon::EncryptDevId(uuid).c_str());
 
     return uuid;
 }
@@ -148,7 +148,7 @@ void SoftBusChannel::InsertCallback(int result, std::string &uuid)
     std::function<void(const std::string &)> callback = [&](const std::string &result) {
         responseResult_ = std::string(result);
         loadedCond_.notify_all();
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "onResponse called end");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "OnResponse called end");
     };
     callbacks_.insert(std::pair<std::string, std::function<void(std::string)>>(uuid, callback));
 
@@ -159,7 +159,7 @@ void SoftBusChannel::InsertCallback(int result, std::string &uuid)
 std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const std::string &jsonPayload)
 {
     if (commandName.empty() || jsonPayload.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params, commandName: %{public}s", commandName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params, commandName: %{public}s", commandName.c_str());
         return "";
     }
 
@@ -168,7 +168,7 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
     unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", len);
         return "";
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
@@ -186,15 +186,15 @@ std::string SoftBusChannel::ExecuteCommand(const std::string &commandName, const
 
     std::unique_lock<std::mutex> lock2(socketMutex_);
     if (retCode != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "send request data failed: %{public}d ", retCode);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Send request data failed: %{public}d ", retCode);
         callbacks_.erase(uuid);
         isSocketUsing_ = false;
         return "";
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "wait command response");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Wait command response");
     if (loadedCond_.wait_for(lock2, std::chrono::milliseconds(EXECUTE_COMMAND_TIME_OUT)) == std::cv_status::timeout) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "time out to wait response.");
+        ACCESSTOKEN_LOG_WARN(LABEL, "Time out to wait response.");
         callbacks_.erase(uuid);
         isSocketUsing_ = false;
         return "";
@@ -208,24 +208,24 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "HandleDataReceived");
 #ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:recieve message from softbus");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Api_performance:recieve message from softbus");
 #endif
     if (socket <= 0 || length <= 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid params: socket: %{public}d, data length: %{public}d", socket, length);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params: socket: %{public}d, data length: %{public}d", socket, length);
         return;
     }
     std::string receiveData = Decompress(bytes, length);
     if (receiveData.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid parameter bytes");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid parameter bytes");
         return;
     }
     std::shared_ptr<SoftBusMessage> message = SoftBusMessage::FromJson(receiveData);
     if (message == nullptr) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid json string");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Invalid json string");
         return;
     }
     if (!message->IsValid()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "invalid data, has empty field");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Invalid data, has empty field");
         return;
     }
 
@@ -239,7 +239,7 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
         std::shared_ptr<AccessEventHandler> handler =
             DelayedSingleton<TokenSyncManagerService>::GetInstance()->GetRecvEventHandler();
         if (handler == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "fail to get EventHandler");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler");
             return;
         }
         handler->ProxyPostTask(delayed, "HandleDataReceived_HandleRequest");
@@ -247,7 +247,7 @@ void SoftBusChannel::HandleDataReceived(int socket, const unsigned char *bytes, 
     } else if (RESPONSE_TYPE == (type)) {
         HandleResponse(message->GetId(), message->GetJsonPayload());
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "invalid type: %{public}s ", type.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type: %{public}s ", type.c_str());
     }
 }
 
@@ -273,10 +273,10 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
     int result = compress(const_cast<Byte *>(compressedBytes), &len,
         reinterpret_cast<unsigned char *>(const_cast<char *>(json.c_str())), json.size() + 1);
     if (result != Z_OK) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "compress failed! error code: %{public}d", result);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Compress failed! error code: %{public}d", result);
         return result;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "compress complete. compress %{public}d bytes to %{public}d", compressedLength,
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Compress complete. compress %{public}d bytes to %{public}d", compressedLength,
         static_cast<int32_t>(len));
     compressedLength = static_cast<int32_t>(len);
     return Constant::SUCCESS;
@@ -284,11 +284,11 @@ int SoftBusChannel::Compress(const std::string &json, const unsigned char *compr
 
 std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int length)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "input length: %{public}d", length);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Input length: %{public}d", length);
     uLong len = RPC_TRANSFER_BYTES_MAX_LENGTH;
     unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory!");
         return "";
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
@@ -309,26 +309,26 @@ std::string SoftBusChannel::Decompress(const unsigned char *bytes, const int len
 int SoftBusChannel::SendRequestBytes(const unsigned char *bytes, const int bytesLength)
 {
     if (bytesLength == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "bytes data is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Bytes data is invalid.");
         return Constant::FAILURE;
     }
 
     std::unique_lock<std::mutex> lock(socketMutex_);
     if (CheckSessionMayReopenLocked() != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "socket invalid and reopen failed!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket invalid and reopen failed!");
         return Constant::FAILURE;
     }
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "send len (after compress len)= %{public}d", bytesLength);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Send len (after compress len)= %{public}d", bytesLength);
 #ifdef DEBUG_API_PERFORMANCE
-    ACCESSTOKEN_LOG_INFO(LABEL, "api_performance:send command to softbus");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Api_performance:send command to softbus");
 #endif
     int result = ::SendBytes(socketFd_, bytes, bytesLength);
     if (result != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to send! result= %{public}d", result);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to send! result= %{public}d", result);
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "send successfully.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Send successfully.");
     return Constant::SUCCESS;
 }
 
@@ -357,7 +357,7 @@ void SoftBusChannel::CancelCloseConnectionIfNeeded()
     if (!isDelayClosing_) {
         return;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "cancel close connection");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Cancel close connection");
 
     Release();
     isDelayClosing_ = false;
@@ -370,12 +370,12 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
         RemoteCommandFactory::GetInstance().NewRemoteCommandFromJson(commandName, jsonPayload);
     if (command == nullptr) {
         // send result back directly
-        ACCESSTOKEN_LOG_WARN(LABEL, "command %{public}s cannot get from json", commandName.c_str());
+        ACCESSTOKEN_LOG_WARN(LABEL, "Command %{public}s cannot get from json", commandName.c_str());
 
         int sendlen = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + jsonPayload.length());
         unsigned char *sendbuf = new (std::nothrow) unsigned char[sendlen + 1];
         if (sendbuf == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", sendlen);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", sendlen);
             return;
         }
         (void)memset_s(sendbuf, sendlen + 1, 0, sendlen + 1);
@@ -389,13 +389,13 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
         }
         int sendResultCode = SendResponseBytes(socket, sendbuf, info.bytesLength);
         delete[] sendbuf;
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d ", sendResultCode);
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Send response result= %{public}d ", sendResultCode);
         return;
     }
 
     // execute command
     command->Execute();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "command uniqueId: %{public}s, finish with status: %{public}d, message: %{public}s",
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Command uniqueId: %{public}s, finish with status: %{public}d, message: %{public}s",
         ConstantCommon::EncryptDevId(command->remoteProtocol_.uniqueId).c_str(), command->remoteProtocol_.statusCode,
         command->remoteProtocol_.message.c_str());
 
@@ -404,7 +404,7 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
     int len = static_cast<int32_t>(RPC_TRANSFER_HEAD_BYTES_LENGTH + resultJsonPayload.length());
     unsigned char *buf = new (std::nothrow) unsigned char[len + 1];
     if (buf == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "no enough memory: %{public}d", len);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", len);
         return;
     }
     (void)memset_s(buf, len + 1, 0, len + 1);
@@ -418,7 +418,7 @@ void SoftBusChannel::HandleRequest(int socket, const std::string &id, const std:
     }
     int retCode = SendResponseBytes(socket, buf, info.bytesLength);
     delete[] buf;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "send response result= %{public}d", retCode);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Send response result= %{public}d", retCode);
 }
 
 void SoftBusChannel::HandleResponse(const std::string &id, const std::string &jsonPayload)
@@ -433,13 +433,13 @@ void SoftBusChannel::HandleResponse(const std::string &id, const std::string &js
 
 int SoftBusChannel::SendResponseBytes(int socket, const unsigned char *bytes, const int bytesLength)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "send len (after compress len)= %{public}d", bytesLength);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Send len (after compress len)= %{public}d", bytesLength);
     int result = ::SendBytes(socket, bytes, bytesLength);
     if (result != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "fail to send! result= %{public}d", result);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to send! result= %{public}d", result);
         return Constant::FAILURE;
     }
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "send successfully.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Send successfully.");
     return Constant::SUCCESS;
 }
 
@@ -451,7 +451,7 @@ std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &json
     }
     json = json.parse(jsonString, nullptr, false);
     if (json.is_discarded() || (!json.is_object())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to parse jsonString");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to parse jsonString");
         return nullptr;
     }
 
@@ -472,7 +472,7 @@ std::shared_ptr<SoftBusMessage> SoftBusMessage::FromJson(const std::string &json
         json.at("jsonPayload").get_to(jsonPayload);
     }
     if (type.empty() || id.empty() || commandName.empty() || jsonPayload.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "failed to get json string(json format error)");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get json string(json format error)");
         return nullptr;
     }
     std::shared_ptr<SoftBusMessage> message = std::make_shared<SoftBusMessage>(type, id, commandName, jsonPayload);

@@ -31,7 +31,7 @@ static const uint64_t TOKEN_ID_LOWMASK = 0xffffffff;
 
 bool TokenIdKit::IsSystemAppByFullTokenID(uint64_t tokenId)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called, tokenId=%{public}" PRId64, tokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called, tokenId=%{public}" PRId64, tokenId);
     return (tokenId & SYSTEM_APP_MASK) == SYSTEM_APP_MASK;
 }
 
@@ -39,7 +39,7 @@ uint64_t TokenIdKit::GetRenderTokenID(uint64_t tokenId)
 {
     AccessTokenID id = tokenId & TOKEN_ID_LOWMASK;
     if (id == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenID is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return tokenId;
     }
     AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);

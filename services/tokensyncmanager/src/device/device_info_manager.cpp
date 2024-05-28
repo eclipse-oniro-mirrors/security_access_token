@@ -53,7 +53,7 @@ void DeviceInfoManager::AddDeviceInfo(const std::string &networkId, const std::s
     if (!DataValidator::IsDeviceIdValid(networkId) ||
         !DataValidator::IsDeviceIdValid(universallyUniqueId) ||
         !DataValidator::IsDeviceIdValid(uniqueDeviceId) || deviceName.empty() || deviceType.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "addDeviceInfo: input param is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddDeviceInfo: input param is invalid");
         return;
     }
     DeviceInfoRepository::GetInstance().SaveDeviceInfo(
@@ -74,7 +74,7 @@ void DeviceInfoManager::RemoveAllRemoteDeviceInfo()
 void DeviceInfoManager::RemoveRemoteDeviceInfo(const std::string &nodeId, DeviceIdType deviceIdType)
 {
     if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "removeDeviceInfoByNetworkId: nodeId is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "RemoveDeviceInfoByNetworkId: nodeId is invalid");
     } else {
         DeviceInfo deviceInfo;
         std::string localDevice = ConstantCommon::GetLocalDeviceId();

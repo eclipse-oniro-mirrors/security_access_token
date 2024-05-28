@@ -51,16 +51,17 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
 
             int32_t clientCode = data.ReadInt32();
             if (clientCode != ON_MIC_STATE_UPDATED) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "ClientCode %{public}d is not ON_MIC_STATE_UPDATED-6, ignore", clientCode);
                 return NO_ERROR;
             }
+
+            ACCESSTOKEN_LOG_INFO(LABEL, "Only handle ClientCode 6-ON_MIC_STATE_UPDATED, others ignore.");
 
             micStateChangeEvent.mute = data.ReadBool();
             OnMicStateUpdated(micStateChangeEvent);
             return NO_ERROR;
         }
         default: {
-            ACCESSTOKEN_LOG_INFO(LABEL, "default case, need check AudioListenerStub");
+            ACCESSTOKEN_LOG_INFO(LABEL, "Default case, need check AudioListenerStub");
             return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
         }
     }

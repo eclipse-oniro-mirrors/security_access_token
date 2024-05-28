@@ -47,7 +47,9 @@ public:
     int32_t DeleteAppKey(const std::string& keyId) override;
     int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos) override;
     int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) override;
-
+    int32_t SetFilePathPolicy() override;
+    
+    int32_t SetPolicyScreenLocked();
     void PostDelayedUnloadTask(uint32_t delayedTime);
     void CancelDelayedUnloadTask();
 
@@ -56,7 +58,8 @@ private:
 
     bool IsSystemApp();
     int32_t CheckReqLockPermission(DataLockType type, bool& isApp);
-    bool VerifyCallingProcess(const std::string &validCaller, const AccessTokenID &callerTokenId);
+    bool VerifyNativeCallingProcess(const std::string &validCaller, const AccessTokenID &callerTokenId);
+    bool VerifyHapCallingProcess(int32_t userId, const std::string &validCaller, const AccessTokenID &callerTokenId);
 
     El5FilekeyServiceExtInterface* service_ = nullptr;
 #ifdef COMMON_EVENT_SERVICE_ENABLE

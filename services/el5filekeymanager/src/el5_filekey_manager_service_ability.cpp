@@ -36,9 +36,11 @@ El5FilekeyManagerServiceAbility::~El5FilekeyManagerServiceAbility()
     LOG_INFO("El5FilekeyManagerServiceAbility stop.");
 }
 
-void El5FilekeyManagerServiceAbility::OnStart()
+void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason &startReason)
 {
     LOG_INFO("OnStart called.");
+    std::string reasonName = startReason.GetName();
+    LOG_INFO("El5FilekeyManager onStart reason name:%{public}s", reasonName.c_str());
     if (service_ != nullptr) {
         LOG_ERROR("The El5FilekeyManagerService has existed.");
         return;
@@ -49,6 +51,10 @@ void El5FilekeyManagerServiceAbility::OnStart()
     if (ret != EFM_SUCCESS) {
         LOG_ERROR("Failed to init the El5FilekeyManagerService instance.");
         return;
+    }
+
+    if (reasonName == "usual.event.SCREEN_LOCKED") {
+        service_->SetPolicyScreenLocked();
     }
 
     if (!Publish(service_.get())) {

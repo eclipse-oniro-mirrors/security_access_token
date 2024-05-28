@@ -50,10 +50,10 @@ TokenSyncManagerClient::~TokenSyncManagerClient()
 
 int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->GetRemoteHapTokenInfo(deviceID, tokenID);
@@ -61,10 +61,10 @@ int TokenSyncManagerClient::GetRemoteHapTokenInfo(const std::string& deviceID, A
 
 int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->DeleteRemoteHapTokenInfo(tokenID);
@@ -72,10 +72,10 @@ int TokenSyncManagerClient::DeleteRemoteHapTokenInfo(AccessTokenID tokenID) cons
 
 int TokenSyncManagerClient::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "called");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return TOKEN_SYNC_IPC_ERROR;
     }
     return proxy->UpdateRemoteHapTokenInfo(tokenInfo);
@@ -98,7 +98,7 @@ sptr<ITokenSyncManager> TokenSyncManagerClient::GetProxy() const
 
     auto proxy = iface_cast<ITokenSyncManager>(tokensyncSa);
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "iface_cast get null");
+        ACCESSTOKEN_LOG_WARN(LABEL, "Iface_cast get null");
         return nullptr;
     }
     return proxy;

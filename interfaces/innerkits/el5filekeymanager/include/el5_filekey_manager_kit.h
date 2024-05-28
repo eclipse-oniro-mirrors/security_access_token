@@ -71,6 +71,11 @@ public:
      * @return error code, see el5_filekey_manager_error.h
      */
     static int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos);
+    /**
+     * @brief Set file path policy.
+     * @return error code, see el5_filekey_manager_error.h
+     */
+    static int32_t SetFilePathPolicy();
 };
 }  // namespace AccessToken
 }  // namespace Security

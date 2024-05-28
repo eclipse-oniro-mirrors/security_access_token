@@ -38,9 +38,11 @@ static const std::string MEDIA_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_
 static const std::string ALL_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_ALL_DATA";
 static const std::string TASK_ID = "el5FilekeyManagerUnload";
 static const std::string STORAGE_DAEMON = "storage_daemon";
+static const std::string SET_POLICY_CALLER = "com.ohos.medialibrary.medialibrarydata";
 static const uint32_t INSTALLS_UID = 3060;
 static const uint32_t API_DELAY_TIME = 5 * 1000; // 5s
 static const uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
+static const uint32_t USERID_MASK = 200000;
 }
 
 El5FilekeyManagerService::El5FilekeyManagerService()
@@ -214,7 +216,7 @@ int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, std::vector<std:
         LOG_ERROR("UserId is invalid!");
         return EFM_ERR_INVALID_PARAMETER;
     }
-    if (!VerifyCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
+    if (!VerifyNativeCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
         LOG_ERROR("Get user app key permission denied.");
         return EFM_ERR_NO_PERMISSION;
     }
@@ -236,7 +238,7 @@ int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
         LOG_ERROR("UserId is invalid!");
         return EFM_ERR_INVALID_PARAMETER;
     }
-    if (!VerifyCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
+    if (!VerifyNativeCallingProcess(STORAGE_DAEMON, IPCSkeleton::GetCallingTokenID())) {
         LOG_ERROR("Change user load infos permission denied.");
         return EFM_ERR_NO_PERMISSION;
     }
@@ -248,6 +250,24 @@ int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
     }
 
     return service_->ChangeUserAppkeysLoadInfo(userId, loadInfos);
+}
+
+int32_t El5FilekeyManagerService::SetFilePathPolicy()
+{
+    int32_t userId = IPCSkeleton::GetCallingUid() / USERID_MASK;
+    LOG_DEBUG("Set user %{public}d file path policy.", userId);
+    if (!VerifyHapCallingProcess(userId, SET_POLICY_CALLER, IPCSkeleton::GetCallingTokenID())) {
+        LOG_ERROR("Set file path policy permission denied.");
+        return EFM_ERR_NO_PERMISSION;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+
+    return service_->SetFilePathPolicy(userId);
 }
 
 bool El5FilekeyManagerService::IsSystemApp()
@@ -299,10 +319,29 @@ int32_t El5FilekeyManagerService::CheckReqLockPermission(DataLockType type, bool
     return ret;
 }
 
-bool El5FilekeyManagerService::VerifyCallingProcess(const std::string &validCaller, const AccessTokenID &callerTokenId)
+bool El5FilekeyManagerService::VerifyNativeCallingProcess(const std::string &validCaller,
+    const AccessTokenID &callerTokenId)
 {
     AccessTokenID tokenId = AccessTokenKit::GetNativeTokenId(validCaller);
     return tokenId == callerTokenId;
+}
+
+bool El5FilekeyManagerService::VerifyHapCallingProcess(int32_t userId, const std::string &validCaller,
+    const AccessTokenID &callerTokenId)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(userId, validCaller, 0);
+    return tokenId == callerTokenId;
+}
+
+int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
+{
+    LOG_INFO("service SetPolicyScreenLocked");
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+    return service_->SetPolicyScreenLocked();
 }
 }  // namespace AccessToken
 }  // namespace Security

@@ -55,7 +55,7 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(info.permissionName);
     if (it != permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "info for permission: %{public}s has been insert, please check!",
+        ACCESSTOKEN_LOG_WARN(LABEL, "Info for permission: %{public}s has been insert, please check!",
             info.permissionName.c_str());
         return false;
     }
@@ -93,7 +93,7 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(permissionName);
     if (it == permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "can not find definition info for permission: %{public}s",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Can not find definition info for permission: %{public}s",
             permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
@@ -192,7 +192,7 @@ int32_t PermissionDefinitionCache::RestorePermDefInfo(std::vector<GenericValues>
         AccessTokenID tokenId = (AccessTokenID)defValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         int32_t ret = DataTranslator::TranslationIntoPermissionDef(defValue, def);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenId 0x%{public}x permDef is wrong.", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId 0x%{public}x permDef is wrong.", tokenId);
             return ret;
         }
         Insert(def, tokenId);

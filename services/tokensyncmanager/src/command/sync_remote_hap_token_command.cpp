@@ -66,7 +66,7 @@ SyncRemoteHapTokenCommand::SyncRemoteHapTokenCommand(const std::string &json)
 
     nlohmann::json jsonObject = nlohmann::json::parse(json, nullptr, false);
     if (jsonObject.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonObject is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonObject is invalid.");
         return;
     }
     BaseRemoteCommand::FromRemoteProtocolJson(jsonObject);
@@ -97,7 +97,7 @@ void SyncRemoteHapTokenCommand::Prepare()
 
 void SyncRemoteHapTokenCommand::Execute()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: start as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: start as: SyncRemoteHapTokenCommand");
     remoteProtocol_.responseDeviceId = ConstantCommon::GetLocalDeviceId();
     remoteProtocol_.responseVersion = Constant::DISTRIBUTED_ACCESS_TOKEN_SERVICE_VERSION;
 
@@ -110,7 +110,7 @@ void SyncRemoteHapTokenCommand::Execute()
         remoteProtocol_.message = Constant::COMMAND_RESULT_SUCCESS;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "execute: end as: SyncRemoteHapTokenCommand");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Execute: end as: SyncRemoteHapTokenCommand");
 }
 
 void SyncRemoteHapTokenCommand::Finish()

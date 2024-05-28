@@ -36,6 +36,7 @@ public:
     virtual int32_t DeleteAppKey(const std::string& keyId) = 0;
     virtual int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos) = 0;
     virtual int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) = 0;
+    virtual int32_t SetFilePathPolicy() = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security

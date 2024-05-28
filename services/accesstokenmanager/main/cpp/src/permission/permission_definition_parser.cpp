@@ -181,7 +181,7 @@ int32_t PermissionDefinitionParser::GetPermissionDefList(const nlohmann::json& j
     const std::string& type, std::vector<PermissionDef>& permDefList)
 {
     if ((json.find(type) == json.end()) || (!json.at(type).is_array())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "json is not array.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Json is not array.");
         return ERR_PARAM_INVALID;
     }
 
@@ -206,7 +206,7 @@ int32_t PermissionDefinitionParser::ParserPermsRawData(const std::string& permsR
 {
     nlohmann::json jsonRes = nlohmann::json::parse(permsRawData, nullptr, false);
     if (jsonRes.is_discarded()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "jsonRes is invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "JsonRes is invalid.");
         return ERR_PARAM_INVALID;
     }
 
@@ -225,7 +225,7 @@ int32_t PermissionDefinitionParser::ParserPermsRawData(const std::string& permsR
 
 int32_t PermissionDefinitionParser::Init()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "system permission set begin.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "System permission set begin.");
     if (ready_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, " system permission has been set.");
         return RET_SUCCESS;
@@ -234,7 +234,7 @@ int32_t PermissionDefinitionParser::Init()
     std::string permsRawData;
     int32_t ret = JsonParser::ReadCfgFile(DEFINE_PERMISSION_FILE, permsRawData);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "readCfgFile failed.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadCfgFile failed.");
         return ERR_FILE_OPERATE_FAILED;
     }
     std::vector<PermissionDef> permDefList;
@@ -248,7 +248,7 @@ int32_t PermissionDefinitionParser::Init()
         PermissionDefinitionCache::GetInstance().Insert(perm, EXTENSION_PERMISSION_ID);
     }
     ready_ = true;
-    ACCESSTOKEN_LOG_INFO(LABEL, "init ok.");
+    ACCESSTOKEN_LOG_INFO(LABEL, "Init ok.");
     return RET_SUCCESS;
 }
 
