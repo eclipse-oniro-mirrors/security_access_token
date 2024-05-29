@@ -237,6 +237,8 @@ int32_t AtlibInit(void)
 
     if (g_tokenListHead->next == NULL) {
         if (CreateCfgFile() != ATRET_SUCCESS) {
+            free(g_tokenListHead);
+            g_tokenListHead = NULL;
             return ATRET_FAILED;
         }
     }
