@@ -22,4 +22,5 @@ FFI_EXPORT int FfiOHOSAbilityAccessCtrlRevokeUserGrantedPermission = 0;
 FFI_EXPORT int FfiOHOSAbilityAccessCtrlOn = 0;
 FFI_EXPORT int FfiOHOSAbilityAccessCtrlOff = 0;
 FFI_EXPORT int FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser = 0;
+FFI_EXPORT int FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc = 0;
 }
