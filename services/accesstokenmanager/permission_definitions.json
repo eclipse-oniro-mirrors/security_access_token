@@ -2703,7 +2703,7 @@
         {
             "name": "ohos.permission.FILE_ACCESS_PERSIST",
             "grantMode": "system_grant",
-            "availableLevel": "system_basic",
+            "availableLevel": "normal",
             "availableType": "NORMAL",
             "since": 11,
             "deprecated": "",
@@ -3979,7 +3979,7 @@
         {
             "name": "ohos.permission.READ_WRITE_DOWNLOAD_DIRECTORY",
             "grantMode": "user_grant",
-            "availableLevel": "system_basic",
+            "availableLevel": "normal",
             "availableType": "NORMAL",
             "since": 11,
             "deprecated": "",
@@ -3991,7 +3991,7 @@
         {
             "name": "ohos.permission.READ_WRITE_DOCUMENTS_DIRECTORY",
             "grantMode": "user_grant",
-            "availableLevel": "system_basic",
+            "availableLevel": "normal",
             "availableType": "NORMAL",
             "since": 11,
             "deprecated": "",
@@ -4006,7 +4006,7 @@
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
             "since": 11,
-            "deprecated": "",
+            "deprecated": "since 12",
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_write_desktop_directory",
@@ -4044,7 +4044,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
-        {    
+        {
             "name":"ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
@@ -4054,7 +4054,7 @@
             "provisionEnable":true,
             "distributedSceneEnable":false
         },
-        {    
+        {
             "name":"ohos.permission.ACCESS_LOCAL_BACKUP",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
