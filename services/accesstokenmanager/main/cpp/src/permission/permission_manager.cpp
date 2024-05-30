@@ -216,14 +216,8 @@ PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Not user grant for permission=%{public}s.", permissionName.c_str());
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-
-    std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
-        AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, can not find tokenInfo.", tokenID);
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
+    std::shared_ptr<PermissionPolicySet> permPolicySet =
+        AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, invalid params.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
@@ -263,12 +257,6 @@ int PermissionManager::GetDefPermission(const std::string& permissionName, Permi
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
         return AccessTokenError::ERR_PARAM_INVALID;
-    }
-    // all permissions can be obtained.
-    if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "No definition for permission: %{public}s!", permissionName.c_str());
-        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     return PermissionDefinitionCache::GetInstance().FindByPermissionName(permissionName, permissionDefResult);
 }
