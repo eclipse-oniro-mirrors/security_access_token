@@ -78,9 +78,15 @@ int32_t FfiOHOSAbilityAccessCtrlOff(const char* cType, CArrUI32 cTokenIDList, CA
 void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context,
     CArrString cPermissionList, void (*callbackRef)(RetDataCPermissionRequestResult infoRef))
 {
-    LOGI("ACCESS_CTRL_TEST::FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser START");
     auto onChange = [lambda = CJLambda::Create(callbackRef)]
         (RetDataCPermissionRequestResult infoRef) -> void { lambda(infoRef); };
+    AtManagerImpl::RequestPermissionsFromUser(context, cPermissionList, onChange);
+}
+
+void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRuntime::Context* context,
+    CArrString cPermissionList, const std::function<void (RetDataCPermissionRequestResult)> *callbackPtr)
+{
+    auto onChange = *callbackPtr;
     AtManagerImpl::RequestPermissionsFromUser(context, cPermissionList, onChange);
 }
 }
