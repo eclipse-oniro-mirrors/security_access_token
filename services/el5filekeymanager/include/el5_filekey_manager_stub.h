@@ -40,6 +40,7 @@ private:
     void GetUserAppKeyInner(MessageParcel &data, MessageParcel &reply);
     void ChangeUserAppkeysLoadInfoInner(MessageParcel &data, MessageParcel &reply);
     void SetFilePathPolicyInner(MessageParcel &data, MessageParcel &reply);
+    void RegisterCallbackInner(MessageParcel &data, MessageParcel &reply);
 
     void MarshallingKeyInfos(MessageParcel &reply, std::vector<std::pair<int32_t, std::string>>& keyInfos);
     int32_t UnmarshallingLoadInfos(MessageParcel &data, std::vector<std::pair<std::string, bool>> &loadInfos);

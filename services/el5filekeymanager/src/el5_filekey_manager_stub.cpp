@@ -50,6 +50,8 @@ void El5FilekeyManagerStub::SetFuncInMap()
         &El5FilekeyManagerStub::ChangeUserAppkeysLoadInfoInner;
     requestMap_[static_cast<uint32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY)] =
         &El5FilekeyManagerStub::SetFilePathPolicyInner;
+    requestMap_[static_cast<uint32_t>(EFMInterfaceCode::REGISTER_CALLBACK)] =
+        &El5FilekeyManagerStub::RegisterCallbackInner;
 }
 
 int32_t El5FilekeyManagerStub::OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply,
@@ -121,6 +123,17 @@ void El5FilekeyManagerStub::ChangeUserAppkeysLoadInfoInner(MessageParcel &data, 
 void El5FilekeyManagerStub::SetFilePathPolicyInner(MessageParcel &data, MessageParcel &reply)
 {
     reply.WriteInt32(this->SetFilePathPolicy());
+}
+
+void El5FilekeyManagerStub::RegisterCallbackInner(MessageParcel &data, MessageParcel &reply)
+{
+    auto callback = iface_cast<El5FilekeyCallbackInterface>(data.ReadRemoteObject());
+    if ((callback == nullptr) || (!callback->AsObject())) {
+        LOG_ERROR("Read callback failed.");
+        reply.WriteInt32(EFM_ERR_IPC_READ_DATA);
+        return;
+    }
+    reply.WriteInt32(this->RegisterCallback(callback));
 }
 
 void El5FilekeyManagerStub::MarshallingKeyInfos(MessageParcel &reply,

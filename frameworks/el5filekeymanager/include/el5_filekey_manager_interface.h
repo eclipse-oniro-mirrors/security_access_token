@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "data_lock_type.h"
+#include "el5_filekey_callback_interface.h"
 #include "el5_filekey_manager_interface_code.h"
 #include "el5_filekey_manager_error.h"
 #include "iremote_broker.h"
@@ -37,6 +38,7 @@ public:
     virtual int32_t GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos) = 0;
     virtual int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) = 0;
     virtual int32_t SetFilePathPolicy() = 0;
+    virtual int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security

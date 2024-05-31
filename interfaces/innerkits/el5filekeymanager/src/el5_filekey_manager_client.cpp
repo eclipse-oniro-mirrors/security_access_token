@@ -112,6 +112,16 @@ int32_t El5FilekeyManagerClient::SetFilePathPolicy()
     return proxy->SetFilePathPolicy();
 }
 
+int32_t El5FilekeyManagerClient::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOG_ERROR("Get proxy failed, proxy is null.");
+        return EFM_ERR_SA_GET_PROXY;
+    }
+    return proxy->RegisterCallback(callback);
+}
+
 sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
 {
     std::unique_lock<std::mutex> lock(proxyMutex_);

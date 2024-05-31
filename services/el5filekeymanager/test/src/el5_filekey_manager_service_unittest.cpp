@@ -16,6 +16,7 @@
 #include "el5_filekey_manager_service_unittest.h"
 
 #include "accesstoken_kit.h"
+#include "el5_filekey_callback_stub.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -38,6 +39,14 @@ void El5FilekeyManagerServiceTest::SetUp()
 void El5FilekeyManagerServiceTest::TearDown()
 {
 }
+
+class TestEl5FilekeyCallback : public El5FilekeyCallbackStub {
+public:
+    void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos)
+    {
+        GTEST_LOG_(INFO) << "OnRegenerateAppKey.";
+    }
+};
 
 /**
  * @tc.name: AcquireAccess001
@@ -138,4 +147,26 @@ HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo001, TestSize.Le
     std::vector<std::pair<std::string, bool>> loadInfos;
     loadInfos.emplace_back(std::make_pair("", true));
     ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: SetFilePathPolicy001
+ * @tc.desc: Set path policy without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, SetFilePathPolicy001, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->SetFilePathPolicy(), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: RegisterCallback001
+ * @tc.desc: Register app key generation callback without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, RegisterCallback001, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->RegisterCallback((new TestEl5FilekeyCallback())), EFM_ERR_NO_PERMISSION);
 }

@@ -50,5 +50,4 @@ private:
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS
-
 #endif // EL5_FILEKEY_MANAGER_SERVICE_ABILITY_H
