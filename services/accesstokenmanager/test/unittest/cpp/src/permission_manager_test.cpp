@@ -29,6 +29,8 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#include "continuous_task_callback_info.h"
+#include "running_form_info.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -41,6 +43,8 @@ static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
 static constexpr int32_t DEFAULT_API_VERSION_VAGUE = 9;
+static constexpr int32_t RANDOM_INPUT_32 = 123;
+static constexpr int64_t RANDOM_INPUT_64 = 123;
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static bool g_hasHapPermissionDefinition;
 static PermissionDef g_infoManagerTestPermDef1 = {
@@ -2262,6 +2266,66 @@ HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level1)
 {
     PermStateChangeScope scope;
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, CallbackManager::GetInstance().AddCallback(scope, nullptr));
+}
+
+/*
+ * @tc.name: RunningFormInfoParcel001
+ * @tc.desc: RunningFormInfo::Marshalling | Unmarshalling
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, RunningFormInfoParcel001, TestSize.Level1)
+{
+    RunningFormInfo info;
+    info.formId_ = RANDOM_INPUT_64;
+    info.formName_ = "formName";
+    info.bundleName_ = "bundleName";
+    info.moduleName_ = "moduleName";
+    info.abilityName_ = "abilityName";
+    info.description_ = "description";
+    info.dimension_ = RANDOM_INPUT_32;
+    info.hostBundleName_ = "hostBundleName";
+    info.formLocation_ = FormLocation::DESKTOP;
+
+    Parcel parcel;
+    EXPECT_EQ(true, info.Marshalling(parcel));
+
+    auto p = RunningFormInfo::Unmarshalling(parcel);
+    EXPECT_NE(nullptr, p);
+    EXPECT_EQ(info.formId_, p->formId_);
+    EXPECT_EQ(info.formName_, p->formName_);
+    EXPECT_EQ(info.bundleName_, p->bundleName_);
+    EXPECT_EQ(info.moduleName_, p->moduleName_);
+    EXPECT_EQ(info.abilityName_, p->abilityName_);
+    EXPECT_EQ(info.description_, p->description_);
+    EXPECT_EQ(info.dimension_, p->dimension_);
+    EXPECT_EQ(info.hostBundleName_, p->hostBundleName_);
+    EXPECT_EQ(info.formLocation_, p->formLocation_);
+}
+
+/*
+ * @tc.name: ContinuousTaskCallbackInfoParcel001
+ * @tc.desc: ContinuousTaskCallbackInfo::Marshalling | Unmarshalling
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Level1)
+{
+    ContinuousTaskCallbackInfo info;
+    Parcel parcel;
+    EXPECT_EQ(true, info.Marshalling(parcel));
+
+    auto p = ContinuousTaskCallbackInfo::Unmarshalling(parcel);
+    EXPECT_NE(nullptr, p);
+    EXPECT_EQ(info.typeId_, p->typeId_);
+    EXPECT_EQ(info.creatorUid_, p->creatorUid_);
+    EXPECT_EQ(info.creatorPid_, p->creatorPid_);
+    EXPECT_EQ(info.abilityName_, p->abilityName_);
+    EXPECT_EQ(info.isFromWebview_, p->isFromWebview_);
+    EXPECT_EQ(info.isBatchApi_, p->isBatchApi_);
+    EXPECT_EQ(info.typeIds_, p->typeIds_);
+    EXPECT_EQ(info.abilityId_, p->abilityId_);
+    EXPECT_EQ(info.tokenId_, p->tokenId_);
 }
 } // namespace AccessToken
 } // namespace Security

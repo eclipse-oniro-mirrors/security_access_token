@@ -706,7 +706,7 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
         isOpen = !isCamMixMute_;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     return isOpen;
 }
 
