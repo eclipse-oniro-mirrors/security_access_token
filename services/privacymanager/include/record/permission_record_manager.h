@@ -162,6 +162,7 @@ private:
     bool Register();
     bool RegisterApplicationStateObserver();
     void Unregister();
+    bool GetMuteParameter(const char* key, bool& isMute);
 
     void SetDefaultConfigValue();
     void GetConfigValue();

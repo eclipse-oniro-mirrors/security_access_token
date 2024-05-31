@@ -210,7 +210,7 @@ int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, cons
 int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
 {
     if (!DataValidator::IsPolicyTypeValid(policyType) && !DataValidator::IsCallerTypeValid(callerType)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "parameter is invalid");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
         return false;
     }
     return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute);

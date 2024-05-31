@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <cinttypes>
 #include <numeric>
-#include <stdint.h>
 
 #include "ability_manager_access_client.h"
 #include "access_token.h"
@@ -92,17 +91,10 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
 
 PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false)
 {
-    // get EDM
-    char value[VALUE_MAX_LEN] = {0};
-    int32_t ret = GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
-    if (ret < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
-        return;
-    }
     bool isEdmMute = false;
-    if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "EDM not allow.");
-        isEdmMute = true;
+    if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
+        return;
     }
     ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
 }
@@ -996,20 +988,18 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
 {
-    char value[VALUE_MAX_LEN] = {0};
-    int32_t ret = GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
-    if (ret < 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
+    bool isEdmMute = false;
+    if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
         return false;
     }
-    
-    if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
+    if (isEdmMute) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
         return false;
     }
+
     int32_t status = GetAppStatus(tokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}d, status is %{public}d", tokenId, status);
-
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
@@ -1059,6 +1049,9 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
         permissionName = MICROPHONE_PERMISSION_NAME;
     } else if (callerType == CAMERA) {
         permissionName = CAMERA_PERMISSION_NAME;
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type: %{public}d.", callerType);
+        return PrivacyError::ERR_PARAM_INVALID;
     }
 
     if (policyType == EDM) {
@@ -1095,10 +1088,9 @@ int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissi
     } else {
         if (GetMuteStatus(permissionName, EDM)) {
             isMute = true;
-            return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;;
+            return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
         }
         ModifyMuteStatus(permissionName, MIXED, isMute);
-        
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     return RET_SUCCESS;
@@ -1149,10 +1141,10 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     bool isMute = false;
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMute = index == EDM ? isMicEdmMute_ : isMicMixMute_;
+        isMute = (index == EDM) ? isMicEdmMute_ : isMicMixMute_;
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isMute = index == EDM ? isCamEdmMute_ : isCamMixMute_;
+        isMute = (index == EDM) ? isCamEdmMute_ : isCamMixMute_;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
         permissionName.c_str(), isMute, index);
@@ -1417,16 +1409,10 @@ bool PermissionRecordManager::Register()
             bool isMicMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
             ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
             // get EDM
-            char value[VALUE_MAX_LEN] = {0};
-            int32_t ret = GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
-            if (ret < 0) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
-                return false;
-            }
             bool isEdmMute = false;
-            if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "EDM not allow.");
-                isEdmMute = true;
+            if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
+                return false;
             }
             ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
         }
@@ -1457,6 +1443,22 @@ void PermissionRecordManager::Unregister()
         AppManagerAccessClient::GetInstance().UnregisterApplicationStateObserver(appStateCallback_);
         appStateCallback_= nullptr;
     }
+}
+
+bool PermissionRecordManager::GetMuteParameter(const char* key, bool& isMute)
+{
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(key, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
+        return false;
+    }
+    isMute = false;
+    if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "EDM not allow.");
+        isMute = true;
+    }
+    return true;
 }
 
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()

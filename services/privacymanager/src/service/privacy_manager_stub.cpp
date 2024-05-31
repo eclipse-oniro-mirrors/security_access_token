@@ -22,7 +22,6 @@
 #include "privacy_error.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
-#include <stdint.h>
 
 namespace OHOS {
 namespace Security {
@@ -432,14 +431,28 @@ void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& 
         reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
         return;
     }
-
-    uint32_t policyType = data.ReadUint32();
-    uint32_t callerType = data.ReadUint32();
-    bool isMute = data.ReadBool();
+    uint32_t policyType;
+    if (!data.ReadUint32(policyType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read policyType.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    uint32_t callerType;
+    if (!data.ReadUint32(callerType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read callerType.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    bool isMute;
+    if (!data.ReadBool(isMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isMute.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
 
     int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
     if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32 calltype: %{public}d", callerType);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;
     }
 }

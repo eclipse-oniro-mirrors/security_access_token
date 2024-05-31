@@ -35,7 +35,6 @@
 #ifndef INTERFACES_INNER_KITS_PRIVACY_KIT_H
 #define INTERFACES_INNER_KITS_PRIVACY_KIT_H
 
-#include <stdint.h>
 #include <string>
 
 #include "access_token.h"

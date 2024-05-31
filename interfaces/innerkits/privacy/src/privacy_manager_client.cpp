@@ -360,7 +360,7 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetMutePolicy(policyType, callerType, isMute);

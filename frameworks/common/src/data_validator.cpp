@@ -19,7 +19,6 @@
 #include "permission_used_request.h"
 #include "permission_used_type.h"
 #include "privacy_param.h"
-#include <stdint.h>
 
 namespace OHOS {
 namespace Security {

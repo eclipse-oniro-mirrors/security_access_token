@@ -363,7 +363,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     auto callback = std::make_shared<CbCustomizeTest2>(permList);
-    ASSERT_EQ(RET_SUCCESS,PrivacyKit::RegisterPermActiveStatusCallback(callback));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -394,7 +394,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     auto callback = std::make_shared<CbCustomizeTest2>(permList);
-    ASSERT_EQ(RET_SUCCESS,PrivacyKit::RegisterPermActiveStatusCallback(callback));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -425,7 +425,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
 
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
     auto callback = std::make_shared<CbCustomizeTest2>(permList);
-    ASSERT_EQ(RET_SUCCESS,PrivacyKit::RegisterPermActiveStatusCallback(callback));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -812,7 +812,7 @@ HWTEST_F(PermissionRecordManagerTest, AddDataValueToResults003, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest001
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -835,7 +835,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest001, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest002
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -858,7 +858,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest002, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest003
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -881,7 +881,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest003, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest004
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -896,7 +896,8 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
-    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
+    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED,
+        PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
 
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
     PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
@@ -904,7 +905,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest004, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest005
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -927,7 +928,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest005, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest006
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -950,7 +951,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest006, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest007
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
@@ -965,7 +966,8 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
-    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED, PrivacyKit::SetMutePolicy(TEMPORARY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
+    EXPECT_EQ(ERR_EDM_POLICY_CHECK_FAILED,
+        PrivacyKit::SetMutePolicy(TEMPORARY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
 
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
     PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
@@ -973,13 +975,12 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest008
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
 HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
 {
-    // EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
     bool isMicEdmMute = PermissionRecordManager::GetInstance().isMicEdmMute_;
     bool isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
 
@@ -989,7 +990,8 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
-    EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED, PrivacyKit::SetMutePolicy(TEMPORARY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
+    EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED,
+        PrivacyKit::SetMutePolicy(TEMPORARY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
 
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
     PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
@@ -997,7 +999,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
 
 /*
  * @tc.name: SetMutePolicyTest009
- * @tc.desc: 
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require:
  */
