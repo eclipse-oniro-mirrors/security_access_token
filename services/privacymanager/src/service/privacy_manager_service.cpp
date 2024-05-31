@@ -92,7 +92,7 @@ void PrivacyManagerService::OnStop()
 int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel,
     bool asyncMode)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d,"
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId: %{public}d, permissionName: %{public}s, successCount: %{public}d,"
         " failCount: %{public}d, type: %{public}d", infoParcel.info.tokenId, infoParcel.info.permissionName.c_str(),
         infoParcel.info.successCount, infoParcel.info.failCount, infoParcel.info.type);
     AddPermParamInfo info = infoParcel.info;
@@ -146,7 +146,7 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 int32_t PrivacyManagerService::GetPermissionUsedRecords(
     const PermissionUsedRequestParcel& request, const sptr<OnPermissionUsedRecordCallback>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId: %{public}d", request.request.tokenId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId: %{public}d", request.request.tokenId);
     return PermissionRecordManager::GetInstance().GetPermissionUsedRecordsAsync(request.request, callback);
 }
 
@@ -277,7 +277,7 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
     const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
 
     std::vector<PermissionUsedTypeInfo> results;
     int32_t res = PermissionRecordManager::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);

@@ -99,7 +99,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -120,7 +120,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -155,7 +155,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -185,7 +185,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -230,7 +230,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -262,7 +262,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
 void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
