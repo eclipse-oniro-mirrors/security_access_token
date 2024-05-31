@@ -2288,3 +2288,37 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos006, TestSize.Level1)
 
     g_infoParmsC.bundleName = tmpBundleName;
 }
+
+/**
+ * @tc.name: SetMutePolicyTest001
+ * @tc.desc: Test SetMutePolicy with invalid param
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest001, TestSize.Level1)
+{
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM - 1, CallerType::MICROPHONE, true));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::SetMutePolicy(PolicyType::MIXED, CallerType::MICROPHONE, true));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE - 1, true));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::CAMERA + 1, true));
+}
+
+/**
+ * @tc.name: SetMutePolicyTest002
+ * @tc.desc: Test SetMutePolicy without PERMISSION_USED_STATE
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoParmsD, g_policyPramsD);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without PERMISSION_USED_STATE
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
+        PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+}
