@@ -343,6 +343,33 @@ int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
     }
     return service_->SetPolicyScreenLocked();
 }
+
+int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
+{
+    LOG_INFO("El5FilekeyManager Dump");
+    if (fd < 0) {
+        return EFM_ERR_INVALID_PARAMETER;
+    }
+
+    dprintf(fd, "El5FilekeyManager Dump:\n");
+    std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
+    if (arg0.compare("-h") == 0) {
+        dprintf(fd, "Usage:\n");
+        dprintf(fd, "       -h: command help\n");
+        dprintf(fd, "       -a: dump all el5 data information \n");
+        return EFM_SUCCESS;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+    LOG_INFO("start dump data");
+    service_->DumpData(fd, args);
+
+    return EFM_SUCCESS;
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

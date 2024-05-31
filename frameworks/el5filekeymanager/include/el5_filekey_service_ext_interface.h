@@ -33,6 +33,7 @@ public:
     virtual int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) = 0;
     virtual int32_t SetFilePathPolicy(int32_t userId) = 0;
     virtual int32_t SetPolicyScreenLocked() = 0;
+    virtual int32_t DumpData(int fd, const std::vector<std::u16string>& args) = 0;
 };
 }  // namespace AccessToken
 }  // namespace Security
