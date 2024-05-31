@@ -64,6 +64,7 @@ public:
 #endif
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute);
 
 private:
     PrivacyManagerClient();

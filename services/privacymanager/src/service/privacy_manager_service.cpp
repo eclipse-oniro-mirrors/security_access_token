@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstring>
 
+#include "access_token.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
@@ -272,6 +273,13 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId: %{public}d, permissionName: %{public}s", tokenId, permissionName.c_str());
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
+}
+
+int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    return PermissionRecordManager::GetInstance().SetMutePolicy(
+        static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
 }
 
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
