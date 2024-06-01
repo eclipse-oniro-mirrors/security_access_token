@@ -1492,6 +1492,42 @@ HWTEST_F(PermissionRecordManagerTest, Abnormal001, TestSize.Level1)
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Update(type, modifyValue, conditionValue));
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
 }
+
+/*
+ * @tc.name: CreatePermissionUsedTypeTable001
+ * @tc.desc: PermissionUsedRecordDb::CreatePermissionUsedTypeTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize.Level1)
+{
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+}
+
+/*
+ * @tc.name: InsertPermissionUsedTypeColumn001
+ * @tc.desc: PermissionUsedRecordDb::InsertPermissionUsedTypeColumn function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSize.Level1)
+{
+    ASSERT_EQ(Constant::SUCCESS, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

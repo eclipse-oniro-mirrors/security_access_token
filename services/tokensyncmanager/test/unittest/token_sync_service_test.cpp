@@ -39,7 +39,9 @@
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 #include "i_token_sync_manager.h"
+#define private public
 #include "remote_command_manager.h"
+#undef private
 #include "socket.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
@@ -1589,6 +1591,43 @@ HWTEST_F(TokenSyncServiceTest, RemoteCommandManager003, TestSize.Level1)
     ret = RemoteCommandManager::GetInstance().NotifyDeviceOnline(nodeId);
     ASSERT_EQ(Constant::SUCCESS, ret);
     SoftBusSocketListener::OnShutdown(OUT_OF_MAP_SOCKET, SHUTDOWN_REASON_UNKNOWN);
+}
+
+/**
+ * @tc.name: ProcessDeviceCommandImmediately001
+ * @tc.desc: ProcessDeviceCommandImmediately function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessDeviceCommandImmediately001, TestSize.Level1)
+{
+    std::string udid = "test_udId_1";
+    RemoteCommandManager::GetInstance().executors_[udid] = nullptr;
+    int32_t ret = RemoteCommandManager::GetInstance().ProcessDeviceCommandImmediately(udid);
+    ASSERT_EQ(Constant::FAILURE, ret);
+    ASSERT_EQ(1, RemoteCommandManager::GetInstance().executors_.erase(udid));
+}
+
+/**
+ * @tc.name: ProcessBufferedCommandsWithThread001
+ * @tc.desc: RemoteCommandExecutor::ProcessBufferedCommandsWithThread function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(TokenSyncServiceTest, ProcessBufferedCommandsWithThread001, TestSize.Level1)
+{
+    std::string nodeId = "test_nodeId";
+    auto executor = std::make_shared<RemoteCommandExecutor>(nodeId);
+    executor->ProcessBufferedCommandsWithThread();
+    EXPECT_FALSE(executor->running_);
+    auto cmd = std::make_shared<TestBaseRemoteCommand>();
+    cmd->remoteProtocol_.statusCode = Constant::FAILURE_BUT_CAN_RETRY;
+    executor->commands_.emplace_back(cmd);
+    executor->running_ = true;
+    executor->ProcessBufferedCommandsWithThread();
+    executor->running_ = false;
+    executor->ProcessBufferedCommandsWithThread();
+    EXPECT_TRUE(executor->running_);
 }
 
 namespace {
