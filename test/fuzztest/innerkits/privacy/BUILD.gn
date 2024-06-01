@@ -23,6 +23,7 @@ group("fuzztest") {
       "isallowedusingpermission_fuzzer:IsAllowedUsingPermissionFuzzTest",
       "registerpermactivestatuscallback_fuzzer:RegisterPermActiveStatusCallbackFuzzTest",
       "removepermissionusedrecords_fuzzer:RemovePermissionUsedRecordsFuzzTest",
+      "setmutepolicy_fuzzer:SetMutePolicyFuzzTest",
       "startusingpermission001_fuzzer:StartUsingPermission001FuzzTest",
       "startusingpermission_fuzzer:StartUsingPermissionFuzzTest",
       "stopusingpermission_fuzzer:StopUsingPermissionFuzzTest",

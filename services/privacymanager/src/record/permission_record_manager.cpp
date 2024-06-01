@@ -1050,7 +1050,7 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
     } else if (callerType == CAMERA) {
         permissionName = CAMERA_PERMISSION_NAME;
     } else {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type: %{public}d.", callerType);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid caller type: %{public}d.", callerType);
         return PrivacyError::ERR_PARAM_INVALID;
     }
 
@@ -1065,7 +1065,8 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
     if (policyType == TEMPORARY) {
         return SetTempMutePolicy(permissionName, isMute);
     }
-    return RET_FAILED;
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid policy type: %{public}d.", policyType);
+    return ERR_PARAM_INVALID;
 }
 
 int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool& isMute)

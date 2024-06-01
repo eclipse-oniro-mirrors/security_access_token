@@ -188,12 +188,12 @@ void PermissionRecordManagerTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
-class CbCustomizeTest1 : public StateCustomizedCbk {
+class PermissionRecordManagerCoverTestCb1 : public StateCustomizedCbk {
 public:
-    CbCustomizeTest1()
+    PermissionRecordManagerCoverTestCb1()
     {}
 
-    ~CbCustomizeTest1()
+    ~PermissionRecordManagerCoverTestCb1()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -203,12 +203,12 @@ public:
     {}
 };
 
-class CbCustomizeTest2 : public IRemoteObject {
+class PermissionRecordManagerCoverTestCb2 : public IRemoteObject {
 public:
-    CbCustomizeTest2()
+    PermissionRecordManagerCoverTestCb2()
     {}
 
-    ~CbCustomizeTest2()
+    ~PermissionRecordManagerCoverTestCb2()
     {}
 };
 
@@ -400,7 +400,7 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -421,15 +421,15 @@ void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChange
 {
 }
 
-class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
+class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusCustomizedCbk {
 public:
-    explicit CbCustomizeTest3(const std::vector<std::string> &permList)
+    explicit PermissionRecordManagerCoverTestCb3(const std::vector<std::string> &permList)
         : PermActiveStatusCustomizedCbk(permList)
     {
-        GTEST_LOG_(INFO) << "CbCustomizeTest3 create";
+        GTEST_LOG_(INFO) << "PermissionRecordManagerCoverTestCb3 create";
     }
 
-    ~CbCustomizeTest3()
+    ~PermissionRecordManagerCoverTestCb3()
     {}
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
@@ -485,7 +485,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     PrivacyAppStateObserver observer;
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb3>(permList);
     callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
 
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
@@ -1459,7 +1459,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     bool isMuteCamera = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     CameraManagerPrivacyClient::GetInstance().MuteCamera(true); // true means close
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
