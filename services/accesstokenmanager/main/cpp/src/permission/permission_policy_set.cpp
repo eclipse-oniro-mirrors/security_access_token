@@ -203,23 +203,23 @@ uint32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, 
 PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.permissionName != permissionName) {
-            continue;
-        }
-
-        if (!perm.isGeneral) {
+    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
+        [permissionName](const PermissionStateFull& permState) {
+            return permissionName == permState.permissionName;
+        });
+    if (iter != permStateList_.end()) {
+        if (!iter->isGeneral) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is not general.",
                 permissionName.c_str(), tokenId_);
             return PermUsedTypeEnum::INVALID_USED_TYPE;
         }
 
-        if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
+        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission is granted by seccomp, tokenID=%{public}d.", tokenId_);
             return PermUsedTypeEnum::SEC_COMPONENT_TYPE;
         }
 
-        if (perm.grantStatus[0] != PERMISSION_GRANTED) {
+        if (iter->grantStatus[0] != PERMISSION_GRANTED) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s of %{public}d is requested, not granted.",
                 permissionName.c_str(), tokenId_);
             return PermUsedTypeEnum::INVALID_USED_TYPE;
@@ -241,20 +241,21 @@ PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std
 int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
-    for (const auto& perm : permStateList_) {
-        if (perm.permissionName != permissionName) {
-            continue;
-        }
-        if (!perm.isGeneral) {
+    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
+        [permissionName](const PermissionStateFull& permState) {
+            return permissionName == permState.permissionName;
+        });
+    if (iter != permStateList_.end()) {
+        if (!iter->isGeneral) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not general",
                 tokenId_, permissionName.c_str());
             return PERMISSION_DENIED;
         }
-        if (IsPermGrantedBySecComp(perm.grantFlags[0])) {
+        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
             ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission is granted by seccomp", tokenId_);
             return PERMISSION_GRANTED;
         }
-        if (perm.grantStatus[0] != PERMISSION_GRANTED) {
+        if (iter->grantStatus[0] != PERMISSION_GRANTED) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted",
                 tokenId_, permissionName.c_str());
             return PERMISSION_DENIED;
