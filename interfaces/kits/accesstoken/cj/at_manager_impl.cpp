@@ -186,7 +186,7 @@ int32_t AtManagerImpl::VerifyAccessTokenSync(unsigned int tokenID, const char* c
         return result;
     }
 
-    int32_t result = AT_PERM_OPERA_FAIL;
+    int32_t result;
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_cache.find(cPermissionName);
     if (iter != g_cache.end()) {
@@ -429,7 +429,7 @@ static int32_t StartServiceExtension(std::shared_ptr<RequestAsyncContext>& async
 
 bool AtManagerImpl::ParseRequestPermissionFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
     const std::function<void(RetDataCPermissionRequestResult)>& callbackRef,
-    std::shared_ptr<RequestAsyncContext>& asyncContext)
+    const std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     // context : AbilityContext
     auto contextSharedPtr = context->shared_from_this();
@@ -680,8 +680,6 @@ int32_t AtManagerImpl::FillPermStateChangeInfo(
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
     PermStateChangeScope scopeInfo;
-    std::string errMsg;
-
     // 1: ParseAccessTokenIDArray
     for (int64_t i = 0; i < cTokenIDList.size; i++) {
         uint32_t res = cTokenIDList.head[i];
@@ -930,7 +928,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     CPermStateChangeInfo info;
     info.permStateChangeType = result.permStateChangeType;
     info.tokenID = result.tokenID;
-    info.permissionName = (char*)result.permissionName.c_str();
+    info.permissionName = const_cast<char*>(result.permissionName.c_str());
     ref_(info);
 }
 
