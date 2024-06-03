@@ -25,6 +25,7 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "BackgourndTaskManagerAccessClient"
 };
+static constexpr int32_t ERROR = -1;
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -53,12 +54,12 @@ int32_t BackgourndTaskManagerAccessClient::SubscribeBackgroundTask(const sptr<IB
 {
     if (subscriber == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
+        return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
+        return ERROR;
     }
     return proxy->SubscribeBackgroundTask(subscriber);
 }
@@ -67,12 +68,12 @@ int32_t BackgourndTaskManagerAccessClient::UnsubscribeBackgroundTask(const sptr<
 {
     if (subscriber == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
+        return ERROR;
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
+        return ERROR;
     }
     return proxy->UnsubscribeBackgroundTask(subscriber);
 }
@@ -83,7 +84,7 @@ int32_t BackgourndTaskManagerAccessClient::GetContinuousTaskApps(
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
+        return ERROR;
     }
     return proxy->GetContinuousTaskApps(list);
 }
