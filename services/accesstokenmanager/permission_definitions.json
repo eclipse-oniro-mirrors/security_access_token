@@ -3411,6 +3411,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.START_DLP_CRED",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.START_SHORTCUT",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
@@ -4223,6 +4233,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
         }
     ]
 }

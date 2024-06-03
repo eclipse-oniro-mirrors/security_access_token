@@ -38,6 +38,7 @@ enum class PrivacyInterfaceCode {
     GET_SPECIAL_SEC_COMP_ENHANCE,
 #endif
     GET_PERMISSION_USED_TYPE_INFOS,
+    SET_MUTE_POLICY,
 };
 } // namespace AccessToken
 } // namespace Security

@@ -36,6 +36,8 @@ extern "C" {
         void (*callbackRef)(OHOS::CJSystemapi::CPermStateChangeInfo infoRef));
     FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context,
         CArrString cPermissionList, void (*callbackRef)(RetDataCPermissionRequestResult infoRef));
+    FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRuntime::Context* context,
+        CArrString cPermissionList, const std::function<void (RetDataCPermissionRequestResult)> *callbackPtr);
 }
 
 #endif // OHOS_ABILITY_ACCESS_CTRL_FFI_H

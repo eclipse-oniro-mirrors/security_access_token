@@ -22,6 +22,7 @@
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
+#include "continuous_task_callback_info.h"
 #include "data_translator.h"
 #include "permission_record.h"
 #define private public
@@ -187,12 +188,12 @@ void PermissionRecordManagerTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
-class CbCustomizeTest1 : public StateCustomizedCbk {
+class PermissionRecordManagerCoverTestCb1 : public StateCustomizedCbk {
 public:
-    CbCustomizeTest1()
+    PermissionRecordManagerCoverTestCb1()
     {}
 
-    ~CbCustomizeTest1()
+    ~PermissionRecordManagerCoverTestCb1()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -202,12 +203,12 @@ public:
     {}
 };
 
-class CbCustomizeTest2 : public IRemoteObject {
+class PermissionRecordManagerCoverTestCb2 : public IRemoteObject {
 public:
-    CbCustomizeTest2()
+    PermissionRecordManagerCoverTestCb2()
     {}
 
-    ~CbCustomizeTest2()
+    ~PermissionRecordManagerCoverTestCb2()
     {}
 };
 
@@ -399,7 +400,7 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -420,15 +421,15 @@ void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChange
 {
 }
 
-class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
+class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusCustomizedCbk {
 public:
-    explicit CbCustomizeTest3(const std::vector<std::string> &permList)
+    explicit PermissionRecordManagerCoverTestCb3(const std::vector<std::string> &permList)
         : PermActiveStatusCustomizedCbk(permList)
     {
-        GTEST_LOG_(INFO) << "CbCustomizeTest3 create";
+        GTEST_LOG_(INFO) << "PermissionRecordManagerCoverTestCb3 create";
     }
 
-    ~CbCustomizeTest3()
+    ~PermissionRecordManagerCoverTestCb3()
     {}
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
@@ -484,7 +485,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     PrivacyAppStateObserver observer;
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb3>(permList);
     callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
 
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
@@ -1458,7 +1459,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     bool isMuteCamera = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     CameraManagerPrivacyClient::GetInstance().MuteCamera(true); // true means close
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -1491,6 +1492,31 @@ HWTEST_F(PermissionRecordManagerTest, Abnormal001, TestSize.Level1)
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Update(type, modifyValue, conditionValue));
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
+}
+
+/*
+ * @tc.name: ContinuousTaskCallbackInfoParcel001
+ * @tc.desc: ContinuousTaskCallbackInfo::Marshalling | Unmarshalling
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Level1)
+{
+    ContinuousTaskCallbackInfo info;
+    Parcel parcel;
+    EXPECT_EQ(true, info.Marshalling(parcel));
+
+    auto p = ContinuousTaskCallbackInfo::Unmarshalling(parcel);
+    EXPECT_NE(nullptr, p);
+    EXPECT_EQ(info.typeId_, p->typeId_);
+    EXPECT_EQ(info.creatorUid_, p->creatorUid_);
+    EXPECT_EQ(info.creatorPid_, p->creatorPid_);
+    EXPECT_EQ(info.abilityName_, p->abilityName_);
+    EXPECT_EQ(info.isFromWebview_, p->isFromWebview_);
+    EXPECT_EQ(info.isBatchApi_, p->isBatchApi_);
+    EXPECT_EQ(info.typeIds_, p->typeIds_);
+    EXPECT_EQ(info.abilityId_, p->abilityId_);
+    EXPECT_EQ(info.tokenId_, p->tokenId_);
 }
 } // namespace AccessToken
 } // namespace Security

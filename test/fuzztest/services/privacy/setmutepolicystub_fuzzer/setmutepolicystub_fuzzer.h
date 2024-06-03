@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2023 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,14 +13,9 @@
  * limitations under the License.
  */
 
-#include "cj_common_ffi.h"
+#ifndef TEST_FUZZTEST_ISALLOWEDUSINGPERMISSIONSTUB_FUZZER_H
+#define TEST_FUZZTEST_ISALLOWEDUSINGPERMISSIONSTUB_FUZZER_H
 
-extern "C" {
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlCheckAccessTokenSync = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlGrantUserGrantedPermission = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlRevokeUserGrantedPermission = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlOn = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlOff = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser = 0;
-FFI_EXPORT int FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc = 0;
-}
+#define FUZZ_PROJECT_NAME "isallowedusingpermissionstub_fuzzer"
+
+#endif // TEST_FUZZTEST_ISALLOWEDUSINGPERMISSIONSTUB_FUZZER_H

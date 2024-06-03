@@ -20,6 +20,7 @@
 #include <numeric>
 
 #include "ability_manager_access_client.h"
+#include "access_token.h"
 #include "accesstoken_config_policy.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
@@ -37,6 +38,7 @@
 #include "i_state_change_callback.h"
 #include "iservice_registry.h"
 #include "libraryloader.h"
+#include "parameter.h"
 #include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
@@ -59,10 +61,12 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordManager"
 };
+static const int32_t VALUE_MAX_LEN = 32;
 static const std::string DEFAULT_DEVICEID = "0";
 static const std::string FIELD_COUNT_NUMBER = "count";
 constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
+constexpr const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 static const std::string DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
 static const std::string DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY = "com.ohos.permissionmanager.GlobalExtAbility";
 static const std::string RESOURCE_KEY = "ohos.sensitive.resource";
@@ -85,7 +89,15 @@ PermissionRecordManager& PermissionRecordManager::GetInstance()
     return *instance;
 }
 
-PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false) {}
+PermissionRecordManager::PermissionRecordManager() : deleteTaskWorker_("DeleteRecord"), hasInited_(false)
+{
+    bool isEdmMute = false;
+    if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
+        return;
+    }
+    ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
+}
 
 PermissionRecordManager::~PermissionRecordManager()
 {
@@ -159,7 +171,7 @@ int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& inf
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm(%{public}s)", info.permissionName.c_str());
         return PrivacyError::ERR_PERMISSION_NOT_EXIST;
     }
-    if (!GetGlobalSwitchStatus(info.permissionName)) {
+    if ((GetMuteStatus(info.permissionName, EDM)) || (!GetGlobalSwitchStatus(info.permissionName))) {
         record.status = PERM_INACTIVE;
     } else {
         record.status = GetAppStatus(info.tokenId);
@@ -528,7 +540,7 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, ActiveCha
         if ((it->tokenId == tokenId) && ((it->status) != PERM_INACTIVE) && ((it->status) != status)) {
             std::string perm;
             Constant::TransferOpcodeToPermission(it->opCode, perm);
-            if (!GetGlobalSwitchStatus(perm)) {
+            if ((GetMuteStatus(perm, EDM)) || (!GetGlobalSwitchStatus(perm))) {
                 continue;
             }
 
@@ -689,12 +701,12 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     bool isOpen = true;
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
-        isOpen = !isMicMute_;
+        isOpen = !isMicMixMute_;
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
-        isOpen = !isCameraMute_;
+        isOpen = !isCamMixMute_;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     return isOpen;
 }
 
@@ -702,10 +714,10 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
  */
-void PermissionRecordManager::ExecuteAndUpdateRecordByOp(uint32_t opCode, bool switchStatus)
+void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus)
 {
-    std::string perm;
-    Constant::TransferOpcodeToPermission(opCode, perm);
+    int32_t opCode;
+    Constant::TransferPermissionToOpcode(permissionName, opCode);
     std::vector<PermissionRecord> recordList;
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     for (auto it = startRecordList_.begin(); it != startRecordList_.end(); ++it) {
@@ -725,31 +737,29 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByOp(uint32_t opCode, bool s
     }
     // each permission sends a status change notice
     for (const auto& record : recordList) {
-        CallbackExecute(record.tokenId, perm, record.status);
+        CallbackExecute(record.tokenId, permissionName, record.status);
     }
 }
 
 void PermissionRecordManager::NotifyMicChange(bool isMute)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnMicStateChange(%{public}d)", isMute);
-    {
-        std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMicMute_ = isMute;
+    if (SetPrivacyMutePolicy(MICROPHONE_PERMISSION_NAME, isMute) != RET_SUCCESS) {
+        return;
     }
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    ExecuteAndUpdateRecordByOp(Constant::OP_MICROPHONE, !isMute);
+    ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
 }
 
 void PermissionRecordManager::NotifyCameraChange(bool isMute)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnCameraStateChange(%{public}d)", isMute);
-    {
-        std::lock_guard<std::mutex> lock(camMuteMutex_);
-        isCameraMute_ = isMute;
+    if (SetPrivacyMutePolicy(CAMERA_PERMISSION_NAME, isMute) != RET_SUCCESS) {
+        return;
     }
 
     // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    ExecuteAndUpdateRecordByOp(Constant::OP_CAMERA, !isMute);
+    ExecuteAndUpdateRecordByPerm(CAMERA_PERMISSION_NAME, !isMute);
 }
 
 bool PermissionRecordManager::ShowGlobalDialog(const std::string& permissionName)
@@ -779,6 +789,10 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry, tokenId=0x%{public}x, permissionName=%{public}s",
         tokenId, permissionName.c_str());
+    if (GetMuteStatus(permissionName, EDM)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
+        return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+    }
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
@@ -806,6 +820,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Show permission dialog failed.");
             RemoveRecordFromStartList(record);
+            UnRegisterWindowCallback();
             return ERR_SERVICE_ABNORMAL;
         }
     } else {
@@ -860,6 +875,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         ACCESSTOKEN_LOG_ERROR(LABEL, "ERR_PARAM_INVALID is null.");
         return PrivacyError::ERR_PARAM_INVALID;
     }
+
     if (!Register()) {
         return PrivacyError::ERR_MALLOC_FAILED;
     }
@@ -972,9 +988,18 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
 {
+    bool isEdmMute = false;
+    if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
+        return false;
+    }
+    if (isEdmMute) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
+        return false;
+    }
+
     int32_t status = GetAppStatus(tokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}d, status is %{public}d", tokenId, status);
-
     if (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) {
         return true;
     }
@@ -1014,6 +1039,117 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permission(%{public}s).", permissionName.c_str());
     return false;
+}
+
+int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    std::string permissionName;
+    if (callerType == MICROPHONE) {
+        permissionName = MICROPHONE_PERMISSION_NAME;
+    } else if (callerType == CAMERA) {
+        permissionName = CAMERA_PERMISSION_NAME;
+    } else {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid caller type: %{public}d.", callerType);
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+
+    if (policyType == EDM) {
+        return SetEdmMutePolicy(permissionName, isMute);
+    }
+
+    if (policyType == PRIVACY) {
+        return SetPrivacyMutePolicy(permissionName, isMute);
+    }
+
+    if (policyType == TEMPORARY) {
+        return SetTempMutePolicy(permissionName, isMute);
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid policy type: %{public}d.", policyType);
+    return ERR_PARAM_INVALID;
+}
+
+int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool& isMute)
+{
+    if (isMute) {
+        ModifyMuteStatus(permissionName, EDM, isMute);
+        ModifyMuteStatus(permissionName, MIXED, isMute);
+    } else {
+        ModifyMuteStatus(permissionName, EDM, isMute);
+        isMute = GetMuteStatus(permissionName, MIXED);
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissionName, bool& isMute)
+{
+    if (isMute) {
+        ModifyMuteStatus(permissionName, MIXED, isMute);
+    } else {
+        if (GetMuteStatus(permissionName, EDM)) {
+            isMute = true;
+            return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+        }
+        ModifyMuteStatus(permissionName, MIXED, isMute);
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionName, bool& isMute)
+{
+    if (!isMute) {
+        if (GetMuteStatus(permissionName, EDM)) {
+            return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
+        }
+        if (GetMuteStatus(permissionName, MIXED)) {
+            if (!ShowGlobalDialog(permissionName)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
+                return ERR_SERVICE_ABNORMAL;
+            }
+            isMute = true;
+            return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
+    return RET_SUCCESS;
+}
+
+void PermissionRecordManager::ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute)
+{
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        if (index == EDM) {
+            isMicEdmMute_ = isMute;
+        } else {
+            isMicMixMute_ = isMute;
+        }
+    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        if (index == EDM) {
+            isCamEdmMute_ = isMute;
+        } else {
+            isCamMixMute_ = isMute;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
+        permissionName.c_str(), isMute, index);
+}
+
+bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, int32_t index)
+{
+    bool isMute = false;
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        std::lock_guard<std::mutex> lock(micMuteMutex_);
+        isMute = (index == EDM) ? isMicEdmMute_ : isMicMixMute_;
+    } else if (permissionName == CAMERA_PERMISSION_NAME) {
+        std::lock_guard<std::mutex> lock(camMuteMutex_);
+        isMute = (index == EDM) ? isCamEdmMute_ : isCamMixMute_;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
+        permissionName.c_str(), isMute, index);
+    return isMute;
 }
 
 int32_t PermissionRecordManager::RegisterPermActiveStatusCallback(
@@ -1271,10 +1407,15 @@ bool PermissionRecordManager::Register()
                 return false;
             }
             AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
-            {
-                std::lock_guard<std::mutex> lock(micMuteMutex_);
-                isMicMute_ = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+            bool isMicMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+            ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
+            // get EDM
+            bool isEdmMute = false;
+            if (!GetMuteParameter(EDM_MIC_MUTE_KEY, isEdmMute)) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Get param failed");
+                return false;
             }
+            ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, EDM, isEdmMute);
         }
     }
     // camera mute
@@ -1287,10 +1428,8 @@ bool PermissionRecordManager::Register()
                 return false;
             }
             CameraManagerPrivacyClient::GetInstance().SetMuteCallback(camMuteCallback_);
-            {
-                std::lock_guard<std::mutex> lock(camMuteMutex_);
-                isCameraMute_ = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
-            }
+            bool isCameraMute = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
+            ModifyMuteStatus(CAMERA_PERMISSION_NAME, MIXED, isCameraMute);
         }
     }
     // app state change and lockscreen state change callback register
@@ -1307,6 +1446,22 @@ void PermissionRecordManager::Unregister()
     }
 }
 
+bool PermissionRecordManager::GetMuteParameter(const char* key, bool& isMute)
+{
+    char value[VALUE_MAX_LEN] = {0};
+    int32_t ret = GetParameter(key, "", value, VALUE_MAX_LEN - 1);
+    if (ret < 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Return default value, ret=%{public}d", ret);
+        return false;
+    }
+    isMute = false;
+    if (strncmp(value, "true", VALUE_MAX_LEN) == 0) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "EDM not allow.");
+        isMute = true;
+    }
+    return true;
+}
+
 void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(appStateMutex_);
@@ -1316,10 +1471,6 @@ void PermissionRecordManager::OnAppMgrRemoteDiedHandle()
 void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 {
     {
-        std::lock_guard<std::mutex> lock(micMuteMutex_);
-        isMicMute_ = false;
-    }
-    {
         std::lock_guard<std::mutex> lock(micCallbackMutex_);
         micMuteCallback_ = nullptr;
     }
@@ -1328,10 +1479,6 @@ void PermissionRecordManager::OnAudioMgrRemoteDiedHandle()
 void PermissionRecordManager::OnCameraMgrRemoteDiedHandle()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Handle camera fwk died.");
-    {
-        std::lock_guard<std::mutex> lock(cameraCallbackMutex_);
-        camMuteCallback_ = nullptr;
-    }
 
     RemoveRecordFromStartListByOp(Constant::OP_CAMERA);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE

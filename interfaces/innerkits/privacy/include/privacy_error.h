@@ -60,6 +60,8 @@ enum PrivacyError {
     ERR_PERMISSION_NOT_START_USING,
     ERR_FILE_OPERATE_FAILED,
     ERR_WINDOW_CALLBACK_FAILED,
+    ERR_EDM_POLICY_CHECK_FAILED,
+    ERR_PRIVACY_POLICY_CHECK_FAILED,
 };
 } // namespace AccessToken
 } // namespace Security

@@ -208,7 +208,7 @@ private:
         std::function<void(CPermStateChangeInfo)>* subscriberRef);
     static bool ParseRequestPermissionFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
         const std::function<void(RetDataCPermissionRequestResult)>& callbackRef,
-        std::shared_ptr<RequestAsyncContext>& asyncContext);
+        const std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
 }
 }
