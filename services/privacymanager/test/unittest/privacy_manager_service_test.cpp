@@ -333,6 +333,10 @@ public:
     {
         return RET_SUCCESS;
     }
+    int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+    {
+        return RET_SUCCESS;
+    }
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
     {
@@ -557,12 +561,12 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionInner003, TestSize.Level
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED, reply.ReadInt32());
 }
 
-class CbCustomizeTest2 : public StateCustomizedCbk {
+class PrivacyManagerServiceTestCb1 : public StateCustomizedCbk {
 public:
-    CbCustomizeTest2()
+    PrivacyManagerServiceTestCb1()
     {}
 
-    ~CbCustomizeTest2()
+    ~PrivacyManagerServiceTestCb1()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -579,7 +583,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
 {
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName = "ohos.permission.test";
-    auto callbackPtr = std::make_shared<CbCustomizeTest2>();
+    auto callbackPtr = std::make_shared<PrivacyManagerServiceTestCb1>();
     ASSERT_NE(nullptr, callbackPtr);
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -612,7 +616,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
 {
     AccessTokenID tokenID = 123; // 123 is random input
     std::string permissionName = "ohos.permission.test";
-    auto callbackPtr = std::make_shared<CbCustomizeTest2>();
+    auto callbackPtr = std::make_shared<PrivacyManagerServiceTestCb1>();
     ASSERT_NE(nullptr, callbackPtr);
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -860,28 +864,6 @@ public:
     }
 };
 
-class CbCustomizeTest1 : public PermActiveStatusCustomizedCbk {
-public:
-    explicit CbCustomizeTest1(const std::vector<std::string> &permList)
-        : PermActiveStatusCustomizedCbk(permList)
-    {}
-
-    ~CbCustomizeTest1()
-    {}
-
-    virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
-    {
-        type_ = result.type;
-        GTEST_LOG_(INFO) << "CbCustomizeTest1 ActiveChangeResponse";
-        GTEST_LOG_(INFO) << "CbCustomizeTest1 tokenid " << result.tokenID;
-        GTEST_LOG_(INFO) << "CbCustomizeTest1 permissionName " << result.permissionName;
-        GTEST_LOG_(INFO) << "CbCustomizeTest1 deviceId " << result.deviceId;
-        GTEST_LOG_(INFO) << "CbCustomizeTest1 type " << result.type;
-    }
-
-    ActiveChangeType type_ = PERM_INACTIVE;
-};
-
 /**
  * @tc.name: RegisterPermActiveStatusCallbackInner001
  * @tc.desc: RegisterPermActiveStatusCallbackInner test.
@@ -891,10 +873,6 @@ public:
 HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, TestSize.Level1)
 {
     std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
 
     TestPrivacyManagerStub testSub;
     MessageParcel data;
@@ -918,11 +896,6 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner001, Te
 HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, TestSize.Level1)
 {
     std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
-
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;
@@ -949,12 +922,6 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner002, Te
  */
 HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, TestSize.Level1)
 {
-    std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
-
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;
@@ -979,12 +946,6 @@ HWTEST_F(PrivacyManagerServiceTest, RegisterPermActiveStatusCallbackInner003, Te
  */
 HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, TestSize.Level1)
 {
-    std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
-
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;
@@ -1004,12 +965,6 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner001, 
  */
 HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, TestSize.Level1)
 {
-    std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
-
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;
@@ -1035,12 +990,6 @@ HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner002, 
  */
 HWTEST_F(PrivacyManagerServiceTest, UnRegisterPermActiveStatusCallbackInner003, TestSize.Level1)
 {
-    std::vector<std::string> permList = {};
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>(permList);
-    ASSERT_NE(callbackPtr, nullptr);
-    auto callbackWrap = new (std::nothrow) PermActiveStatusChangeCallback(callbackPtr);
-    ASSERT_NE(callbackWrap, nullptr);
-
     TestPrivacyManagerStub testSub;
     MessageParcel data;
     MessageParcel reply;

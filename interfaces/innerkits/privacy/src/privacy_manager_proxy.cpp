@@ -451,6 +451,35 @@ int32_t PrivacyManagerProxy::GetPermissionUsedTypeInfos(const AccessTokenID toke
     return result;
 }
 
+int32_t PrivacyManagerProxy::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteUint32(policyType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", policyType);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(callerType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", callerType);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteBool(isMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}d)", isMute);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!SendRequest(PrivacyInterfaceCode::SET_MUTE_POLICY, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "result from server is %{public}d.", result);
+    return result;
+}
+
 bool PrivacyManagerProxy::SendRequest(
     PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode)
 {

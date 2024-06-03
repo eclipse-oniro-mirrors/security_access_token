@@ -53,6 +53,8 @@ public:
     static bool IsDlpTypeValid(int dlpType);
     static bool IsPermissionUsedFlagValid(uint32_t flag);
     static bool IsPermissionUsedTypeValid(uint32_t type);
+    static bool IsPolicyTypeValid(uint32_t type);
+    static bool IsCallerTypeValid(uint32_t type);
 
 private:
     const static int MAX_LENGTH = 256;

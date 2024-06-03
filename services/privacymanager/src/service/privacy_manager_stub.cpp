@@ -73,6 +73,8 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
 #endif
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_TYPE_INFOS)] =
         &PrivacyManagerStub::GetPermissionUsedTypeInfosInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_MUTE_POLICY)] =
+        &PrivacyManagerStub::SetMutePolicyInner;
 }
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
@@ -99,7 +101,7 @@ int32_t PrivacyManagerStub::OnRemoteRequest(
 void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -120,7 +122,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -155,7 +157,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -185,7 +187,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -230,7 +232,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -262,7 +264,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
 void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
-    if ((AccessTokenKit::GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+    if ((AccessTokenKit::GetTokenTypeFlag(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
         reply.WriteInt32(PrivacyError::ERR_NOT_SYSTEM_APP);
         return;
     }
@@ -420,6 +422,38 @@ void PrivacyManagerStub::GetPermissionUsedTypeInfosInner(MessageParcel& data, Me
     reply.WriteUint32(resultsParcel.size());
     for (const auto& parcel : resultsParcel) {
         reply.WriteParcelable(&parcel);
+    }
+}
+
+void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!VerifyPermission(PERMISSION_USED_STATS)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    uint32_t policyType;
+    if (!data.ReadUint32(policyType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read policyType.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    uint32_t callerType;
+    if (!data.ReadUint32(callerType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read callerType.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    bool isMute;
+    if (!data.ReadBool(isMute)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isMute.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+
+    int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
+        return;
     }
 }
 
