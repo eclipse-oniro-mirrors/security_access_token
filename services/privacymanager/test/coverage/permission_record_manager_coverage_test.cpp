@@ -1176,7 +1176,7 @@ HWTEST_F(PermissionRecordManagerTest, PermissionUsedRecordCacheTest001, TestSize
 HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Level1)
 {
     PermissionUsedRequest request;
-    request.tokenId = g_selfTokenId;
+    request.tokenId = 0;
     request.isRemote = false;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
     PermissionUsedResult result;

@@ -15,17 +15,23 @@
 
 #include <gtest/gtest.h>
 
+#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "app_manager_access_client.h"
 #include "app_manager_access_proxy.h"
 #include "app_state_data.h"
 #define private public
 #include "audio_manager_privacy_client.h"
-#undef private
-#include "audio_manager_privacy_proxy.h"
-#define private public
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+#include "background_task_manager_access_client.h"
+#include "continuous_task_callback_info.h"
+#endif
 #include "camera_manager_privacy_client.h"
 #undef private
+#include "audio_manager_privacy_proxy.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+#include "background_task_manager_access_proxy.h"
+#endif
 #include "camera_manager_privacy_proxy.h"
 #include "camera_service_callback_stub.h"
 #include "token_setproc.h"
@@ -58,10 +64,10 @@ void SensitiveManagerCoverageTest::TearDown()
 {
 }
 
-class TestCallBack2 : public ApplicationStateObserverStub {
+class SensitiveManagerCoverageTestCb1 : public ApplicationStateObserverStub {
 public:
-    TestCallBack2() = default;
-    virtual ~TestCallBack2() = default;
+    SensitiveManagerCoverageTestCb1() = default;
+    virtual ~SensitiveManagerCoverageTestCb1() = default;
 
     void OnForegroundApplicationChanged(const AppStateData &appStateData)
     {
@@ -79,7 +85,7 @@ public:
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -100,7 +106,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest001, TestSize.Level1)
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -123,7 +129,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest002, TestSize.Level1)
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
 {
     AppStateData appData;
-    TestCallBack2 callback;
+    SensitiveManagerCoverageTestCb1 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -137,10 +143,10 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
         IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
 }
 
-class TestCallBack3 : public CameraServiceCallbackStub {
+class SensitiveManagerCoverageTestCb2 : public CameraServiceCallbackStub {
 public:
-    TestCallBack3() = default;
-    virtual ~TestCallBack3() = default;
+    SensitiveManagerCoverageTestCb2() = default;
+    virtual ~SensitiveManagerCoverageTestCb2() = default;
 
     int32_t OnCameraMute(bool muteMode)
     {
@@ -158,7 +164,7 @@ public:
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
 {
     bool muteMode = false;
-    TestCallBack3 callback;
+    SensitiveManagerCoverageTestCb2 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -179,7 +185,7 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
 HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest005, TestSize.Level1)
 {
     bool muteMode = false;
-    TestCallBack3 callback;
+    SensitiveManagerCoverageTestCb2 callback;
 
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -215,6 +221,95 @@ HWTEST_F(SensitiveManagerCoverageTest, CameraRemoteDiedHandle001, TestSize.Level
     CameraManagerPrivacyClient::GetInstance().OnRemoteDiedHandle();
     EXPECT_EQ(CameraManagerPrivacyClient::GetInstance().proxy_, nullptr);
 }
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
+/*
+ * @tc.name: SubscribeBackgroundTaskTest001
+ * @tc.desc: regist back ground task
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(SensitiveManagerCoverageTest, SubscribeBackgroundTaskTest001, TestSize.Level1)
+{
+    system("setenforce 0");
+    sptr<BackgroundTaskSubscriberStub> bgTaskCallback = new (std::nothrow) BackgroundTaskSubscriberStub();
+    ASSERT_NE(bgTaskCallback, nullptr);
+    ASSERT_EQ(RET_SUCCESS, BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(bgTaskCallback));
+    ASSERT_EQ(RET_FAILED, BackgourndTaskManagerAccessClient::GetInstance().SubscribeBackgroundTask(nullptr));
+
+    ASSERT_EQ(RET_FAILED, BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(nullptr));
+    ASSERT_EQ(RET_SUCCESS, BackgourndTaskManagerAccessClient::GetInstance().UnsubscribeBackgroundTask(bgTaskCallback));
+    system("setenforce 1");
+}
+
+/*
+ * @tc.name: BackgourndTaskManagerDiedHandle001
+ * @tc.desc: test back ground task manager remote die
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWXF
+ */
+HWTEST_F(SensitiveManagerCoverageTest, BackgourndTaskManagerDiedHandle001, TestSize.Level1)
+{
+    BackgourndTaskManagerAccessClient::GetInstance().OnRemoteDiedHandle();
+    ASSERT_EQ(nullptr, BackgourndTaskManagerAccessClient::GetInstance().proxy_);
+    ASSERT_EQ(nullptr, BackgourndTaskManagerAccessClient::GetInstance().serviceDeathObserver_);
+}
+
+class SensitiveManagerCoverageTestCb3 : public BackgroundTaskSubscriberStub {
+public:
+    SensitiveManagerCoverageTestCb3() = default;
+    virtual ~SensitiveManagerCoverageTestCb3() = default;
+
+    void OnContinuousTaskStart(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
+    {
+        GTEST_LOG_(INFO) << "OnContinuousTaskStart tokenID is " << continuousTaskCallbackInfo->GetFullTokenId();
+    }
+
+    void OnContinuousTaskStop(const std::shared_ptr<ContinuousTaskCallbackInfo> &continuousTaskCallbackInfo)
+    {
+        GTEST_LOG_(INFO) << "OnContinuousTaskStart  tokenID is " << continuousTaskCallbackInfo->GetFullTokenId();
+    }
+};
+
+/**
+ * @tc.name: OnRemoteRequest006
+ * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest006, TestSize.Level1)
+{
+    SensitiveManagerCoverageTestCb3 callback;
+
+    MessageParcel reply;
+    MessageOption option;
+    std::shared_ptr<ContinuousTaskCallbackInfo> info = std::make_shared<ContinuousTaskCallbackInfo>();
+    MessageParcel data1;
+    data1.WriteInterfaceToken(IBackgroundTaskSubscriber::GetDescriptor());
+    EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(
+        static_cast<uint32_t>(IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_START), data1, reply, option));
+    MessageParcel data2;
+    data2.WriteInterfaceToken(IBackgroundTaskSubscriber::GetDescriptor());
+    data2.WriteParcelable(info.get());
+    EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(
+        static_cast<uint32_t>(IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_START), data2, reply, option));
+
+    MessageParcel data3;
+    data3.WriteInterfaceToken(IBackgroundTaskSubscriber::GetDescriptor());
+    EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(
+        static_cast<uint32_t>(IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_STOP), data3, reply, option));
+    MessageParcel data4;
+    data4.WriteInterfaceToken(IBackgroundTaskSubscriber::GetDescriptor());
+    data4.WriteParcelable(info.get());
+    EXPECT_EQ(RET_SUCCESS, callback.OnRemoteRequest(
+        static_cast<uint32_t>(IBackgroundTaskSubscriber::Message::ON_CONTINUOUS_TASK_STOP), data4, reply, option));
+
+    MessageParcel data5;
+    data5.WriteInterfaceToken(IBackgroundTaskSubscriber::GetDescriptor());
+    data5.WriteParcelable(info.get());
+    uint32_t code = -1;
+    EXPECT_NE(RET_SUCCESS, callback.OnRemoteRequest(code, data5, reply, option));
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

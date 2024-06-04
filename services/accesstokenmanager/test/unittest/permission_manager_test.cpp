@@ -1611,6 +1611,8 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     TempPermissionObserver::GetInstance().UnRegisterCallback();
+    // UnRegisterCallback twice
+    TempPermissionObserver::GetInstance().UnRegisterCallback();
     // remove hap
     int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
     ASSERT_EQ(RET_SUCCESS, ret);

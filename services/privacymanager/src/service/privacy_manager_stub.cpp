@@ -300,27 +300,6 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
-bool PrivacyManagerStub::HandleSecCompReq(uint32_t code, MessageParcel& data, MessageParcel& reply)
-{
-    switch (code) {
-        case static_cast<uint32_t>(PrivacyInterfaceCode::REGISTER_SEC_COMP_ENHANCE):
-            RegisterSecCompEnhanceInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::UPDATE_SEC_COMP_ENHANCE):
-            UpdateSecCompEnhanceInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_SEC_COMP_ENHANCE):
-            GetSecCompEnhanceInner(data, reply);
-            break;
-        case static_cast<uint32_t>(PrivacyInterfaceCode::GET_SPECIAL_SEC_COMP_ENHANCE):
-            GetSpecialSecCompEnhanceInner(data, reply);
-            break;
-        default:
-            return false;
-    }
-    return true;
-}
-
 void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
 {
     sptr<SecCompEnhanceDataParcel> requestParcel = data.ReadParcelable<SecCompEnhanceDataParcel>();
@@ -346,9 +325,6 @@ void PrivacyManagerStub::UpdateSecCompEnhanceInner(MessageParcel& data, MessageP
 
     int32_t result = this->UpdateSecCompEnhance(pid, seqNum);
     reply.WriteInt32(result);
-    if (result != RET_SUCCESS) {
-        return;
-    }
 }
 
 void PrivacyManagerStub::GetSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)

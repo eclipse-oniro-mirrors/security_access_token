@@ -945,6 +945,26 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync002, TestSize.Level1)
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, callback));
 }
 
+/**
+ * @tc.name: GetPermissionUsedRecordsAsync003
+ * @tc.desc: cannot GetPermissionUsedRecordsAsync without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI5P4IU
+ */
+HWTEST_F(PrivacyKitTest, GetPermissionUsedRecordsAsync003, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_systemInfoParms, g_policyPramsA);
+    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
+    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
+
+    PermissionUsedRequest request;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdA, GetLocalDeviceUdid(), "", permissionList, request);
+    OHOS::sptr<TestCallBack> callback(new TestCallBack());
+    ASSERT_EQ(ERR_PERMISSION_DENIED, PrivacyKit::GetPermissionUsedRecords(request, callback));
+}
+
 class CbCustomizeTest1 : public PermActiveStatusCustomizedCbk {
 public:
     explicit CbCustomizeTest1(const std::vector<std::string> &permList)
