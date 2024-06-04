@@ -129,6 +129,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_SHORTCUTS",        false},
     {"ohos.permission.radio.ACCESS_FM_AM",      false},
     {"ohos.permission.SET_TELEPHONY_STATE",     false},
+    {"ohos.permission.ACCESS_HWBOOSTER_SERVICE", false},
     {"ohos.permission.START_ABILIIES_FROM_BACKGROUND", false},
     {"ohos.permission.START_ABILITIES_FROM_BACKGROUND", false},
     {"ohos.permission.BUNDLE_ACTIVE_INFO",      false},
