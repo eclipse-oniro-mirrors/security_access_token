@@ -43,6 +43,7 @@ static const uint32_t INSTALLS_UID = 3060;
 static const uint32_t API_DELAY_TIME = 5 * 1000; // 5s
 static const uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
 static const uint32_t USERID_MASK = 200000;
+typedef El5FilekeyServiceExtInterface* (*GetExtInstance)(void);
 }
 
 El5FilekeyManagerService::El5FilekeyManagerService()
@@ -95,8 +96,7 @@ int32_t El5FilekeyManagerService::Init()
         return EFM_SUCCESS;
     }
 
-    El5FilekeyServiceExtInterface* (*getExtInstance)(void) =
-        (El5FilekeyServiceExtInterface* (*)(void)) dlsym(handler, "GetExtInstance");
+    GetExtInstance getExtInstance = reinterpret_cast<GetExtInstance>(dlsym(handler, "GetExtInstance"));
     if (getExtInstance == nullptr) {
         LOG_ERROR("GetExtInstance failed.");
         return EFM_ERR_CALL_POLICY_FAILED;
