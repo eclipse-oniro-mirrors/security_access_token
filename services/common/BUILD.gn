@@ -18,7 +18,6 @@ config("accesstoken_service_common_public_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "app_manager/include",
-    "config_policy/include",
     "database/include",
     "libraryloader/include",
     "random/include",
@@ -52,7 +51,6 @@ ohos_static_library("accesstoken_service_common") {
     "app_manager/src/app_state_data.cpp",
     "app_manager/src/app_status_change_callback.cpp",
     "app_manager/src/process_data.cpp",
-    "config_policy/src/accesstoken_config_policy.cpp",
     "database/src/generic_values.cpp",
     "database/src/memory_guard.cpp",
     "database/src/sqlite_helper.cpp",
@@ -71,7 +69,6 @@ ohos_static_library("accesstoken_service_common") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "ipc:ipc_core",
-    "json:nlohmann_json_static",
     "openssl:libcrypto_shared",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
@@ -81,10 +78,6 @@ ohos_static_library("accesstoken_service_common") {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     sources += [ "handler/src/access_event_handler.cpp" ]
     external_deps += [ "eventhandler:libeventhandler" ]
-  }
-  if (customization_config_policy_enable) {
-    cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
-    external_deps += [ "config_policy:configpolicy_util" ]
   }
 
   if (ability_base_enable == true) {
@@ -110,6 +103,7 @@ group("accesstoken_common") {
   if (is_standard_system) {
     deps = [
       ":accesstoken_service_common",
+      "config_policy:accesstoken_config_policy",
       "power_manager:accesstoken_power_manager",
       "screenlock_manager:accesstoken_screenlock_manager",
       "window_manager:accesstoken_window_manager",

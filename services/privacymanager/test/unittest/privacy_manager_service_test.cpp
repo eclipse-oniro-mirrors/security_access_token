@@ -24,7 +24,7 @@
 #undef private
 #include "perm_active_status_change_callback_stub.h"
 #include "perm_active_status_change_callback.h"
-#include "power_manager_access_loader.h"
+#include "power_manager_loader.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "privacy_manager_service.h"

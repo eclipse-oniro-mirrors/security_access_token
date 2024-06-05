@@ -19,11 +19,11 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_config_policy.h"
 #include "accesstoken_dfx_define.h"
 #include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "config_policy_loader.h"
 #include "constant_common.h"
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_parser.h"
@@ -35,6 +35,7 @@
 #include "hitrace_meter.h"
 #endif
 #include "ipc_skeleton.h"
+#include "libraryloader.h"
 #include "native_token_info_inner.h"
 #include "native_token_receptor.h"
 #include "parameter.h"
@@ -646,9 +647,14 @@ void AccessTokenManagerService::SetDefaultConfigValue()
 
 void AccessTokenManagerService::GetConfigValue()
 {
-    AccessTokenConfigPolicy policy;
+    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        return;
+    }
     AccessTokenConfigValue value;
-    if (policy.GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+    if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
         // set value from config
         grantBundleName_ = value.atConfig.grantBundleName;
         grantAbilityName_ = value.atConfig.grantAbilityName;

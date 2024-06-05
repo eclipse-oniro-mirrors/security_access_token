@@ -12,8 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "accesstoken_config_policy.h"
+#include "config_policy_loader.h"
 
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
 #include "accesstoken_log.h"
@@ -26,7 +25,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenConfigPolicy"};
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ConfigPolicLoader"};
 static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoken_config.json";
 
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
@@ -43,7 +42,7 @@ static const std::string SEND_REQUEST_REPEAT_TIMES_KEY = "send_request_repeat_ti
 }
 
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
-void AccessTokenConfigPolicy::GetConfigFilePathList(std::vector<std::string>& pathList)
+void ConfigPolicLoader::GetConfigFilePathList(std::vector<std::string>& pathList)
 {
     CfgDir *dirs = GetCfgDirList(); // malloc a CfgDir point, need to free later
     if (dirs == nullptr) {
@@ -104,7 +103,7 @@ void from_json(const nlohmann::json& j, TokenSyncServiceConfig& t)
     }
 }
 
-bool AccessTokenConfigPolicy::GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
+bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
     AccessTokenConfigValue& config)
 {
     nlohmann::json jsonRes = nlohmann::json::parse(fileContent, nullptr, false);
@@ -137,7 +136,7 @@ bool AccessTokenConfigPolicy::GetConfigValueFromFile(const ServiceType& type, co
     }
 }
 
-bool AccessTokenConfigPolicy::IsConfigValueValid(const ServiceType& type, const AccessTokenConfigValue& config)
+bool ConfigPolicLoader::IsConfigValueValid(const ServiceType& type, const AccessTokenConfigValue& config)
 {
     if (type == ServiceType::ACCESSTOKEN_SERVICE) {
         return ((!config.atConfig.grantAbilityName.empty()) && (!config.atConfig.grantBundleName.empty()));
@@ -152,7 +151,7 @@ bool AccessTokenConfigPolicy::IsConfigValueValid(const ServiceType& type, const 
 }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 
-bool AccessTokenConfigPolicy::GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config)
+bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config)
 {
     bool successFlag = false;
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
@@ -178,6 +177,21 @@ bool AccessTokenConfigPolicy::GetConfigValue(const ServiceType& type, AccessToke
     }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
     return successFlag;
+}
+
+extern "C" {
+void* Create()
+{
+    return reinterpret_cast<void*>(new ConfigPolicLoader);
+}
+
+void Destroy(void* loaderPtr)
+{
+    ConfigPolicyLoaderInterface* loader = reinterpret_cast<ConfigPolicyLoaderInterface*>(loaderPtr);
+    if (loader != nullptr) {
+        delete loader;
+    }
+}
 }
 } // namespace AccessToken
 } // namespace Security

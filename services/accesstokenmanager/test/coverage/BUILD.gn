@@ -65,6 +65,7 @@ ohos_unittest("libaccesstoken_manager_service_standard_coverage_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/src",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/services/common/app_manager/include",
+    "${access_token_path}/services/common/config_policy/include",
     "${access_token_path}/services/common/database/include",
     "${access_token_path}/services/common/handler/include",
     "${access_token_path}/services/common/libraryloader/include",

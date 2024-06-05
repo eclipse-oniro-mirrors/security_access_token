@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "power_manager_access_loader.h"
+#include "power_manager_loader.h"
 
 #include "power_mgr_client.h"
 

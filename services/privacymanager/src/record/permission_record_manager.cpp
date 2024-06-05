@@ -21,7 +21,6 @@
 
 #include "ability_manager_access_client.h"
 #include "access_token.h"
-#include "accesstoken_config_policy.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
@@ -32,6 +31,7 @@
 #include "continuous_task_callback_info.h"
 #endif
 #include "camera_manager_privacy_client.h"
+#include "config_policy_loader.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "data_translator.h"
@@ -42,7 +42,7 @@
 #include "parcel_utils.h"
 #include "permission_record_repository.h"
 #include "permission_used_record_cache.h"
-#include "power_manager_access_loader.h"
+#include "power_manager_loader.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
 #include "refbase.h"
@@ -1566,9 +1566,14 @@ void PermissionRecordManager::SetDefaultConfigValue()
 
 void PermissionRecordManager::GetConfigValue()
 {
-    AccessTokenConfigPolicy policy;
+    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        return;
+    }
     AccessTokenConfigValue value;
-    if (policy.GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
+    if (policy->GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
         // set value from config
         recordSizeMaximum_ = value.pConfig.sizeMaxImum;
         recordAgingTime_ = value.pConfig.agingTime;

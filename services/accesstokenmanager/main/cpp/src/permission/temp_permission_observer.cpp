@@ -17,9 +17,10 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_config_policy.h"
+#include "config_policy_loader.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "libraryloader.h"
 #include "app_manager_access_client.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
@@ -511,9 +512,14 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
 #ifdef EVENTHANDLER_ENABLE
 void TempPermissionObserver::GetConfigValue()
 {
-    AccessTokenConfigPolicy policy;
+    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        return;
+    }
     AccessTokenConfigValue value;
-    if (policy.GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+    if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
         cancleTimes_ = value.atConfig.cancleTime;
     } else {
         SetDefaultConfigValue();
