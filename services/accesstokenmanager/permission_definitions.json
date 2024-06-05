@@ -4258,7 +4258,7 @@
             "name": "ohos.permission.INJECT_INPUT_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
-            "availableType": "SERVICE",
+            "availableType": "SYSTEM",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
