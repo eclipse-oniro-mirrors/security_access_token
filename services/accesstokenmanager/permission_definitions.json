@@ -4115,7 +4115,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.ACCESS_HWBOOSTER_SERVICE",
+            "name": "ohos.permission.ACCESS_BOOSTER_SERVICE",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
