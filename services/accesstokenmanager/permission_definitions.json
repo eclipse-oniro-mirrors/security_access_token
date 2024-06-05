@@ -4064,7 +4064,7 @@
             "provisionEnable": true,
             "distributedSceneEnable": false
         },
-        {    
+        {
             "name":"ohos.permission.PRELOAD_UI_EXTENSION_ABILITY",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
@@ -4074,7 +4074,7 @@
             "provisionEnable":true,
             "distributedSceneEnable":false
         },
-        {    
+        {
             "name":"ohos.permission.ACCESS_LOCAL_BACKUP",
             "grantMode":"system_grant",
             "availableLevel":"system_basic",
@@ -4249,6 +4249,16 @@
             "grantMode": "system_grant",
             "availableLevel": "system_core",
             "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.INJECT_INPUT_EVENT",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SYSTEM",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
