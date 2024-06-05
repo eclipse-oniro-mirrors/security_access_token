@@ -4262,7 +4262,7 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": false
         }
     ]
 }
