@@ -359,6 +359,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.TRIGGER_ACTIVATIONLOCK",              false},
     {"ohos.permission.MANAGE_USB_CONFIG",                   false},
     {"ohos.permission.WRITE_PRIVACY_PUSH_DATA",             false},
+    {"ohos.permission.READ_PRIVACY_PUSH_DATA",              false},
     {"ohos.permission.MANAGE_HAP_TOKENID",                  false},
     {"ohos.permission.REPORT_RESOURCE_SCHEDULE_EVENT",      false},
     {"ohos.permission.SEND_TASK_COMPLETE_EVENT",            false},
