@@ -144,7 +144,7 @@ void PermissionPolicySet::MergePermissionStateFull(std::vector<PermissionStateFu
             return;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add permission: %{public}s.", state.permissionName.c_str());
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Add permission: %{public}s.", state.permissionName.c_str());
     permStateList.emplace_back(state);
 }
 
