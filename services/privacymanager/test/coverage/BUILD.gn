@@ -34,6 +34,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/privacy/src",
       "${access_token_path}/services/common/ability_manager/include",
       "${access_token_path}/services/common/app_manager/include",
+      "${access_token_path}/services/common/config_policy/include",
       "${access_token_path}/services/common/database/include",
       "${access_token_path}/services/common/handler/include",
       "${access_token_path}/services/common/libraryloader/include",

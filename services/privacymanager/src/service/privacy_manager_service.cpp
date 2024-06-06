@@ -31,7 +31,7 @@
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
-#include "screenlock_manager_access_loader.h"
+#include "screenlock_manager_loader.h"
 #include "system_ability_definition.h"
 #include "string_ex.h"
 

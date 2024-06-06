@@ -57,7 +57,9 @@ if (token_sync_enable == true) {
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
+      "${access_token_path}/services/common/config_policy/include",
       "${access_token_path}/services/common/handler/include",
+      "${access_token_path}/services/common/libraryloader/include",
     ]
 
     sources = [
@@ -105,6 +107,7 @@ if (token_sync_enable == true) {
       "dsoftbus:softbus_client",
       "hilog:libhilog",
       "ipc:ipc_core",
+      "json:nlohmann_json_static",
       "safwk:system_ability_fwk",
       "zlib:shared_libz",
     ]

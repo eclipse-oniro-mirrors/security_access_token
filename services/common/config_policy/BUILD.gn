@@ -14,13 +14,13 @@
 import("//build/ohos.gni")
 import("../../../access_token.gni")
 
-config("accesstoken_screenlock_config") {
+config("accesstoken_config_policy_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
 
-ohos_shared_library("accesstoken_screenlock_manager") {
-  if (is_standard_system && theme_screenlock_mgr_enable) {
+ohos_shared_library("accesstoken_config_policy") {
+  if (is_standard_system) {
     subsystem_name = "security"
     part_name = "access_token"
     sanitize = {
@@ -30,18 +30,28 @@ ohos_shared_library("accesstoken_screenlock_manager") {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = [ "include" ]
+    include_dirs = [
+      "include",
+      "${access_token_path}/frameworks/common/include",
+    ]
 
-    sources = [ "src/screenlock_manager_loader.cpp" ]
+    sources = [ "src/config_policy_loader.cpp" ]
 
-    cflags_cc = []
+    cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [ "${access_token_path}/config:coverage_flags" ]
-    public_configs = [ ":accesstoken_screenlock_config" ]
+    public_configs = [ ":accesstoken_config_policy_config" ]
+
+    deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
 
     external_deps = [
       "c_utils:utils",
+      "hilog:libhilog",
       "ipc:ipc_core",
-      "screenlock_mgr:screenlock_client",
+      "json:nlohmann_json_static",
     ]
+    if (customization_config_policy_enable) {
+      cflags_cc += [ "-DCUSTOMIZATION_CONFIG_POLICY_ENABLE" ]
+      external_deps += [ "config_policy:configpolicy_util" ]
+    }
   }
 }

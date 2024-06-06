@@ -18,13 +18,14 @@
 #include <thread>
 #include <pthread.h>
 
-#include "accesstoken_config_policy.h"
 #include "accesstoken_log.h"
+#include "config_policy_loader.h"
 #include "constant.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
 #include "dm_device_info.h"
 #include "ipc_skeleton.h"
+#include "libraryloader.h"
 #include "remote_command_manager.h"
 #include "softbus_bus_center.h"
 #include "soft_bus_device_connection_listener.h"
@@ -221,9 +222,14 @@ void SoftBusManager::SetDefaultConfigValue()
 
 void SoftBusManager::GetConfigValue()
 {
-    AccessTokenConfigPolicy policy;
+    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        return;
+    }
     AccessTokenConfigValue value;
-    if (policy.GetConfigValue(ServiceType::TOKENSYNC_SERVICE, value)) {
+    if (policy->GetConfigValue(ServiceType::TOKENSYNC_SERVICE, value)) {
         sendRequestRepeatTimes_ = value.tsConfig.sendRequestRepeatTimes;
     } else {
         SetDefaultConfigValue();

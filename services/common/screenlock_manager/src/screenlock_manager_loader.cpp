@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "screenlock_manager_access_loader.h"
+#include "screenlock_manager_loader.h"
 #include "screenlock_manager.h"
 
 namespace OHOS {
