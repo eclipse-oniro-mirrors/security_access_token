@@ -190,7 +190,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd001, TestSi
     PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
     std::set<int32_t> opCodeList;
     std::vector<std::string> andColumns;
-    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
+    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(0, type, opCodeList,
         andColumns, 10));
 }
 
@@ -209,7 +209,7 @@ HWTEST_F(PermissionRecordDBTest, CreateSelectByConditionPrepareSqlCmd002, TestSi
     andColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN);
     std::vector<std::string> orColumns;
     orColumns.emplace_back(PrivacyFiledConst::FIELD_TIMESTAMP);
-    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(type, opCodeList,
+    ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateSelectByConditionPrepareSqlCmd(0, type, opCodeList,
         andColumns, 10));
 }
 
@@ -267,19 +267,6 @@ HWTEST_F(PermissionRecordDBTest, CreateDeleteExcessiveRecordsPrepareSqlCmd002, T
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     uint32_t excessiveSize = 10;
     ASSERT_NE("", PermissionUsedRecordDb::GetInstance().CreateDeleteExcessiveRecordsPrepareSqlCmd(type, excessiveSize));
-}
-
-/*
- * @tc.name: CreateGetDistinctValue001
- * @tc.desc: PermissionUsedRecordDb::CreateGetDistinctValue function test type not found
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PermissionRecordDBTest, CreateGetDistinctValue001, TestSize.Level1)
-{
-    PermissionUsedRecordDb::DataType type = static_cast<PermissionUsedRecordDb::DataType>(100);
-    std::string conditionColumns;
-    ASSERT_EQ("", PermissionUsedRecordDb::GetInstance().CreateGetDistinctValue(type, conditionColumns));
 }
 
 /*
@@ -373,8 +360,8 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
     int32_t opCode = static_cast<int32_t>(Constant::OpCode::OP_INVALID);
     inGenericValues.Put(PrivacyFiledConst::FIELD_OP_CODE, opCode);
     // TransferOpcodeToPermission fail
-    ASSERT_EQ(Constant::FAILURE,
-        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
+    ASSERT_EQ(Constant::FAILURE, DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
+        FLAG_PERMISSION_USAGE_SUMMARY, inGenericValues, permissionRecord));
     inGenericValues.Remove(PrivacyFiledConst::FIELD_OP_CODE);
 
     opCode = static_cast<int32_t>(Constant::OpCode::OP_CAMERA);
@@ -383,8 +370,8 @@ HWTEST_F(PermissionRecordDBTest, TranslationGenericValuesIntoPermissionUsedRecor
     inGenericValues.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 1);
     inGenericValues.Put(PrivacyFiledConst::FIELD_FLAG, 1);
     // lastRejectTime > 0
-    ASSERT_EQ(Constant::SUCCESS,
-        DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(inGenericValues, permissionRecord));
+    ASSERT_EQ(Constant::SUCCESS, DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(
+        FLAG_PERMISSION_USAGE_DETAIL, inGenericValues, permissionRecord));
 }
 
 /*
@@ -582,54 +569,6 @@ HWTEST_F(PermissionRecordDBTest, FindByConditions002, TestSize.Level1)
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value1));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value2));
     ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value3));
-}
-
-/*
- * @tc.name: GetDistinctValue001
- * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test no column
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PermissionRecordDBTest, GetDistinctValue001, TestSize.Level1)
-{
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::string condition;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
-}
-
-/*
- * @tc.name: GetDistinctValue002
- * @tc.desc: PermissionUsedRecordDb::GetDistinctValue function test field token_id
- * @tc.type: FUNC
- * @tc.require: issueI5YL6H
- */
-HWTEST_F(PermissionRecordDBTest, GetDistinctValue002, TestSize.Level1)
-{
-    GenericValues value;
-    value.Put(PrivacyFiledConst::FIELD_TOKEN_ID, 0);
-    value.Put(PrivacyFiledConst::FIELD_OP_CODE, Constant::OP_MICROPHONE);
-    value.Put(PrivacyFiledConst::FIELD_STATUS, ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND);
-    value.Put(PrivacyFiledConst::FIELD_TIMESTAMP, 123); // 123 is random input
-    value.Put(PrivacyFiledConst::FIELD_ACCESS_DURATION, 123); // 123 is random input
-    value.Put(PrivacyFiledConst::FIELD_ACCESS_COUNT, 1);
-    value.Put(PrivacyFiledConst::FIELD_REJECT_COUNT, 0);
-    value.Put(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS, LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED);
-    value.Put(PrivacyFiledConst::FIELD_USED_TYPE, static_cast<int>(PermissionUsedType::NORMAL_TYPE));
-
-    PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
-    std::vector<GenericValues> values;
-    values.emplace_back(value);
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Add(type, values));
-
-    std::string condition = PrivacyFiledConst::FIELD_TOKEN_ID;
-    std::vector<GenericValues> results;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
-    results.clear();
-
-    condition = PrivacyFiledConst::FIELD_TIMESTAMP;
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().GetDistinctValue(type, condition, results));
-    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));
 }
 
 /*

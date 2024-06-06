@@ -489,7 +489,7 @@ bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const
     const GenericValues& andConditionValues, const PermissionRecord& record)
 {
     // compare tokenId
-    if (record.tokenId != tokenId) {
+    if ((tokenId != 0) && (record.tokenId != tokenId)) {
         return false;
     }
     // compare opCode
@@ -526,35 +526,6 @@ bool PermissionUsedRecordCache::RecordCompare(const AccessTokenID tokenId, const
         }
     }
     return true;
-}
-
-void PermissionUsedRecordCache::FindTokenIdList(std::set<AccessTokenID>& tokenIdList)
-{
-    std::shared_ptr<PermissionUsedRecordNode> curFindPos;
-    {
-        // find tokenIdList from recordBuffer
-        Utils::UniqueReadGuard<Utils::RWLock> lock1(this->cacheLock1_);
-        curFindPos = recordBufferHead_->next;
-        while (curFindPos != nullptr) {
-            auto next = curFindPos->next;
-            tokenIdList.emplace((AccessTokenID)curFindPos->record.tokenId);
-            curFindPos = next;
-        }
-    }
-    {
-        // find tokenIdList from BufferQueue
-        Utils::UniqueReadGuard<Utils::RWLock> lock2(this->cacheLock2_);
-        if (!persistPendingBufferQueue_.empty()) {
-            for (auto persistHead : persistPendingBufferQueue_) {
-                curFindPos = persistHead->next;
-                while (curFindPos != nullptr) {
-                    auto next = curFindPos->next;
-                    tokenIdList.emplace((AccessTokenID)curFindPos->record.tokenId);
-                    curFindPos = next;
-                }
-            }
-        }
-    }
 }
 
 void PermissionUsedRecordCache::AddRecordNode(const PermissionRecord& record)

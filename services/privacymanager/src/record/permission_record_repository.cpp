@@ -85,18 +85,6 @@ bool PermissionRecordRepository::Remove(const PermissionUsedRecordDb::DataType t
     return true;
 }
 
-bool PermissionRecordRepository::GetAllRecordValuesByKey(
-    const std::string& condition, std::vector<GenericValues>& resultValues)
-{
-    int32_t res = PermissionUsedRecordDb::GetInstance().GetDistinctValue(PermissionUsedRecordDb::PERMISSION_RECORD,
-        condition, resultValues);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table add fail");
-        return false;
-    }
-    return true;
-}
-
 void PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
 {
     PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues);

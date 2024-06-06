@@ -325,22 +325,76 @@ int32_t PermissionRecordManager::GetPermissionUsedRecordsAsync(
     return Constant::SUCCESS;
 }
 
-void PermissionRecordManager::GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList)
+void PermissionRecordManager::MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
+    PermissionUsedRecord& outRecord)
 {
-    std::vector<GenericValues> results;
-    {
-        Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
-        // find tokenId from cache
-        PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
-        // find tokenId from database
-        PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(PrivacyFiledConst::FIELD_TOKEN_ID, results);
+    outRecord.accessCount += inRecord.accessCount;
+    outRecord.rejectCount += inRecord.rejectCount;
+
+    // update lastAccessTime、lastRejectTime and lastAccessDuration to the nearer one
+    outRecord.lastAccessTime = (inRecord.lastAccessTime > outRecord.lastAccessTime) ?
+        inRecord.lastAccessTime : outRecord.lastAccessTime;
+    outRecord.lastAccessDuration = (inRecord.lastAccessTime > outRecord.lastAccessTime) ?
+        inRecord.lastAccessDuration : outRecord.lastAccessDuration;
+    outRecord.lastRejectTime = (inRecord.lastRejectTime > outRecord.lastRejectTime) ?
+        inRecord.lastRejectTime : outRecord.lastRejectTime;
+
+    // summary do not handle detail
+    if (flag == FLAG_PERMISSION_USAGE_SUMMARY) {
+        return;
     }
-    for (const auto& res : results) {
-        tokenIdList.emplace(res.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID));
+
+    if (inRecord.lastAccessTime > 0) {
+        outRecord.accessRecords.emplace_back(inRecord.accessRecords[0]);
+    }
+    if (inRecord.lastRejectTime > 0) {
+        outRecord.rejectRecords.emplace_back(inRecord.rejectRecords[0]);
     }
 }
 
-static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bundleRecord, const int32_t currentCount,
+void PermissionRecordManager::FillPermissionUsedRecords(const PermissionUsedRecord& record,
+    const PermissionUsageFlag& flag, std::vector<PermissionUsedRecord>& permissionRecords)
+{
+    // check whether the permission has exsit
+    auto iter = std::find_if(permissionRecords.begin(), permissionRecords.end(),
+        [record](const PermissionUsedRecord& rec) {
+        return record.permissionName == rec.permissionName;
+    });
+    if (iter != permissionRecords.end()) {
+        // permission exsit, merge it
+        MergeSamePermission(flag, record, *iter);
+    } else {
+        // permission not exsit, add it
+        permissionRecords.emplace_back(record);
+    }
+}
+
+bool PermissionRecordManager::FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
+    std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
+    PermissionUsedResult& result)
+{
+    // translate database value into PermissionUsedRecord value
+    PermissionUsedRecord record;
+    if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(flag, value, record) != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform opcode(%{public}d) into permission",
+            value.GetInt(PrivacyFiledConst::FIELD_OP_CODE));
+        return false;
+    }
+
+    // update beginTimeMillis and endTimeMillis if necessary
+    int64_t timestamp = value.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
+    result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
+            timestamp : result.beginTimeMillis;
+    result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
+
+    int32_t tokenId = value.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    FillPermissionUsedRecords(record, flag, tokenIdToBundleMap[tokenId].permissionRecords);
+    tokenIdToCountMap[tokenId] += 1;
+
+    return true;
+}
+
+static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bundleRecord, const int32_t queryCount,
     int32_t& totalSuccCount, int32_t& totalFailCount)
 {
     int32_t tokenTotalSuccCount = 0;
@@ -350,7 +404,7 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
         tokenTotalFailCount += permissionRecord.rejectCount;
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}d[%{public}s] get %{public}d records, success %{public}d,"
-        " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), currentCount, tokenTotalSuccCount,
+        " failure %{public}d", tokenId, bundleRecord.bundleName.c_str(), queryCount, tokenTotalSuccCount,
         tokenTotalFailCount);
     totalSuccCount += tokenTotalSuccCount;
     totalFailCount += tokenTotalFailCount;
@@ -359,47 +413,58 @@ static void AddDebugLog(const AccessTokenID tokenId, const BundleUsedRecord& bun
 bool PermissionRecordManager::GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result)
 {
     GenericValues andConditionValues;
-    if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues)
-        != Constant::SUCCESS) {
+    if (DataTranslator::TranslationIntoGenericValues(request, andConditionValues) != Constant::SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Query time or flag is invalid");
         return false;
-    }
-
-    std::set<AccessTokenID> tokenIdList;
-    if (request.tokenId == 0) {
-        GetLocalRecordTokenIdList(tokenIdList);
-    } else {
-        tokenIdList.emplace(request.tokenId);
     }
 
     // sumarry don't limit querry data num, detail do
     int32_t dataLimitNum = request.flag == FLAG_PERMISSION_USAGE_DETAIL ? MAX_ACCESS_RECORD_SIZE : recordSizeMaximum_;
     int32_t totalSuccCount = 0;
     int32_t totalFailCount = 0;
+    std::vector<GenericValues> findRecordsValues;
 
-    Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
-    for (const auto& tokenId : tokenIdList) {
-        andConditionValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
-        std::vector<GenericValues> findRecordsValues;
-        PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList,
-            andConditionValues, findRecordsValues, dataLimitNum); // find records from cache and database
-        andConditionValues.Remove(PrivacyFiledConst::FIELD_TOKEN_ID);
-        uint32_t currentCount = findRecordsValues.size();
-        dataLimitNum -= static_cast<int32_t>(currentCount);
-        BundleUsedRecord bundleRecord;
-        if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
+    {
+        // find records from cache and database
+        Utils::UniqueReadGuard<Utils::RWLock> lk(this->rwLock_);
+        PermissionUsedRecordCache::GetInstance().GetRecords(request.permissionList, andConditionValues,
+            findRecordsValues, dataLimitNum);
+    }
+
+    uint32_t currentCount = findRecordsValues.size(); // handle query result
+    if (currentCount == 0) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "No record match the condition.");
+        return true;
+    }
+
+    std::set<int32_t> tokenIdList;
+    std::map<int32_t, BundleUsedRecord> tokenIdToBundleMap;
+    std::map<int32_t, int32_t> tokenIdToCountMap;
+
+    for (const auto& recordValue : findRecordsValues) {
+        int32_t tokenId = recordValue.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+        if (tokenIdList.count(tokenId) == 0) {
+            tokenIdList.insert(tokenId); // new tokenId, inset into set
+
+            BundleUsedRecord bundleRecord; // get bundle info
+            if (!CreateBundleUsedRecord(tokenId, bundleRecord)) {
+                continue;
+            }
+
+            tokenIdToBundleMap[tokenId] = bundleRecord; // add into map
+            tokenIdToCountMap[tokenId] = 0;
+        }
+
+        if (!FillBundleUsedRecord(recordValue, request.flag, tokenIdToBundleMap, tokenIdToCountMap, result)) {
             continue;
         }
+    }
 
-        if (currentCount > 0) {
-            GetRecords(request.flag, findRecordsValues, bundleRecord, result);
-            // add debug log when get exsit record
-            AddDebugLog(tokenId, bundleRecord, currentCount, totalSuccCount, totalFailCount);
-        }
+    for (auto iter = tokenIdToBundleMap.begin(); iter != tokenIdToBundleMap.end(); ++iter) {
+        result.bundleRecords.emplace_back(iter->second);
 
-        if (!bundleRecord.permissionRecords.empty()) {
-            result.bundleRecords.emplace_back(bundleRecord);
-        }
+        // add debug log when get exsit record
+        AddDebugLog(iter->first, iter->second, tokenIdToCountMap[iter->first], totalSuccCount, totalFailCount);
     }
 
     if (request.flag == FLAG_PERMISSION_USAGE_SUMMARY) {
@@ -422,62 +487,6 @@ bool PermissionRecordManager::CreateBundleUsedRecord(const AccessTokenID tokenId
     bundleRecord.deviceId = GetDeviceId(tokenId);
     bundleRecord.bundleName = tokenInfo.bundleName;
     return true;
-}
-
-void PermissionRecordManager::GetRecords(
-    int32_t flag, std::vector<GenericValues> recordValues, BundleUsedRecord& bundleRecord, PermissionUsedResult& result)
-{
-    std::vector<PermissionUsedRecord> permissionRecords;
-    for (auto it = recordValues.rbegin(); it != recordValues.rend(); ++it) {
-        GenericValues record = *it;
-        PermissionUsedRecord tmpPermissionRecord;
-        int64_t timestamp = record.GetInt64(PrivacyFiledConst::FIELD_TIMESTAMP);
-        result.beginTimeMillis = ((result.beginTimeMillis == 0) || (timestamp < result.beginTimeMillis)) ?
-            timestamp : result.beginTimeMillis;
-        result.endTimeMillis = (timestamp > result.endTimeMillis) ? timestamp : result.endTimeMillis;
-
-        record.Put(PrivacyFiledConst::FIELD_FLAG, flag);
-        if (DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(record, tmpPermissionRecord)
-            != Constant::SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to transform opcode(%{public}d) into permission",
-                record.GetInt(PrivacyFiledConst::FIELD_OP_CODE));
-            continue;
-        }
-
-        auto iter = std::find_if(permissionRecords.begin(), permissionRecords.end(),
-            [tmpPermissionRecord](const PermissionUsedRecord& rec) {
-            return tmpPermissionRecord.permissionName == rec.permissionName;
-        });
-        if (iter != permissionRecords.end()) {
-            UpdateRecords(flag, tmpPermissionRecord, *iter);
-        } else {
-            permissionRecords.emplace_back(tmpPermissionRecord);
-        }
-    }
-    bundleRecord.permissionRecords = permissionRecords;
-}
-
-void PermissionRecordManager::UpdateRecords(
-    int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord)
-{
-    outBundleRecord.accessCount += inBundleRecord.accessCount;
-    outBundleRecord.rejectCount += inBundleRecord.rejectCount;
-    if (inBundleRecord.lastAccessTime > outBundleRecord.lastAccessTime) {
-        outBundleRecord.lastAccessTime = inBundleRecord.lastAccessTime;
-        outBundleRecord.lastAccessDuration = inBundleRecord.lastAccessDuration;
-    }
-    outBundleRecord.lastRejectTime = (inBundleRecord.lastRejectTime > outBundleRecord.lastRejectTime) ?
-        inBundleRecord.lastRejectTime : outBundleRecord.lastRejectTime;
-
-    if (flag != FLAG_PERMISSION_USAGE_DETAIL) {
-        return;
-    }
-    if (inBundleRecord.lastAccessTime > 0) {
-        outBundleRecord.accessRecords.emplace_back(inBundleRecord.accessRecords[0]);
-    }
-    if (inBundleRecord.lastRejectTime > 0) {
-        outBundleRecord.rejectRecords.emplace_back(inBundleRecord.rejectRecords[0]);
-    }
 }
 
 void PermissionRecordManager::ExecuteDeletePermissionRecordTask()

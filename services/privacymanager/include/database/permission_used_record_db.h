@@ -50,7 +50,6 @@ public:
     void Count(DataType type, GenericValues& result);
     int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
     int32_t DeleteExcessiveRecords(DataType type, uint32_t excessiveSize);
-    int32_t GetDistinctValue(DataType type, const std::string& condition, std::vector<GenericValues>& results);
     int32_t Update(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
     int32_t Query(DataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
 
@@ -72,15 +71,15 @@ private:
     std::string CreateInsertPrepareSqlCmd(DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
         DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
-    std::string CreateSelectByConditionPrepareSqlCmd(DataType type, const std::set<int32_t>& opCodeList,
-        const std::vector<std::string>& andColumns, int32_t databaseQueryCount) const;
+    std::string CreateSelectByConditionPrepareSqlCmd(const int32_t tokenId, DataType type,
+        const std::set<int32_t>& opCodeList, const std::vector<std::string>& andColumns,
+        int32_t databaseQueryCount) const;
     std::string CreateUpdatePrepareSqlCmd(DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateCountPrepareSqlCmd(DataType type) const;
     std::string CreateDeleteExpireRecordsPrepareSqlCmd(DataType type,
         const std::vector<std::string>& andColumns) const;
     std::string CreateDeleteExcessiveRecordsPrepareSqlCmd(DataType type, uint32_t excessiveSize) const;
-    std::string CreateGetDistinctValue(DataType type, const std::string conditionColumns) const;
     std::string CreateQueryPrepareSqlCmd(DataType type, const std::vector<std::string>& conditionColumns) const;
 
 private:

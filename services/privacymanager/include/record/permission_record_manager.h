@@ -117,16 +117,20 @@ private:
     bool IsAllowedUsingCamera(AccessTokenID tokenId);
     bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
 
-    void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
     int32_t DeletePermissionRecord(int32_t days);
+
+    void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
+        PermissionUsedRecord& outRecord);
+    void FillPermissionUsedRecords(const PermissionUsedRecord& record, const PermissionUsageFlag& flag,
+        std::vector<PermissionUsedRecord>& permissionRecords);
+    bool FillBundleUsedRecord(const GenericValues& value, const PermissionUsageFlag& flag,
+        std::map<int32_t, BundleUsedRecord>& tokenIdToBundleMap, std::map<int32_t, int32_t>& tokenIdToCountMap,
+        PermissionUsedResult& result);
     bool GetRecordsFromLocalDB(const PermissionUsedRequest& request, PermissionUsedResult& result);
-    void GetRecords(int32_t flag, std::vector<GenericValues> recordValues,
-        BundleUsedRecord& bundleRecord, PermissionUsedResult& result);
-    void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
     void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
