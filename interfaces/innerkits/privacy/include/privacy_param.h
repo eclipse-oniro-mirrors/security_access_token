@@ -12,37 +12,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "power_manager_access_loader.h"
 
-#include "power_mgr_client.h"
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file permission_used_type.h
+ *
+ * @brief Declares enum PermissionUsedType.
+ *
+ * @since 12.0
+ * @version 12.0
+ */
+
+#ifndef PRIVACY_PARAM_H
+#define PRIVACY_PARAM_H
+
+#include <string>
+#include <vector>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-bool PowerManagerLoader::IsScreenOn()
-{
-    return PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
-}
+/**
+ * @brief policy type
+ */
+enum PolicyType {
+    EDM = 0,
+    PRIVACY = 1,
+    TEMPORARY = 2,
+    MIXED = 3
+};
 
-void PowerManagerLoader::WakeupDevice()
-{
-    PowerMgr::PowerMgrClient::GetInstance().WakeupDevice();
-}
-
-extern "C" {
-void* Create()
-{
-    return reinterpret_cast<void*>(new PowerManagerLoader);
-}
-
-void Destroy(void* loaderPtr)
-{
-    PowerManagerLoaderInterface* loader = reinterpret_cast<PowerManagerLoaderInterface*>(loaderPtr);
-    if (loader != nullptr) {
-        delete loader;
-    }
-}
-}
+/**
+ * @brief caller type
+ */
+enum CallerType {
+    MICROPHONE = 0,
+    CAMERA = 1
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+#endif // PRIVACY_PARAM_H

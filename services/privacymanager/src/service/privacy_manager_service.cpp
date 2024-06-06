@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstring>
 
+#include "access_token.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
@@ -27,7 +28,6 @@
 #include "constant.h"
 #include "ipc_skeleton.h"
 #include "permission_record_manager.h"
-#include "power_manager_access_loader.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "privacy_sec_comp_enhance_agent.h"
 #endif
@@ -74,7 +74,6 @@ void PrivacyManagerService::OnStart()
 
     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
     AddSystemAbilityListener(SCREENLOCK_SERVICE_ID);
-    AddSystemAbilityListener(POWER_MANAGER_SERVICE_ID);
 
     state_ = ServiceRunningState::STATE_RUNNING;
     bool ret = Publish(DelayedSingleton<PrivacyManagerService>::GetInstance().get());
@@ -276,6 +275,13 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
     return PermissionRecordManager::GetInstance().IsAllowedUsingPermission(tokenId, permissionName);
 }
 
+int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    return PermissionRecordManager::GetInstance().SetMutePolicy(
+        static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
+}
+
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
     const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {
@@ -312,15 +318,6 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
             PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
-        }
-        return;
-    }
-
-    if (systemAbilityId == POWER_MANAGER_SERVICE_ID) {
-        LibraryLoader loader(POWER_MANAGER_LIBPATH);
-        PowerManagerLoaderInterface* powerManagerLoader = loader.GetObject<PowerManagerLoaderInterface>();
-        if (powerManagerLoader != nullptr) {
-            PermissionRecordManager::GetInstance().SetScreenOn(powerManagerLoader->IsScreenOn());
         }
         return;
     }

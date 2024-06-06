@@ -36,6 +36,7 @@
 #include "permission_used_request.h"
 #include "permission_used_result.h"
 #include "permission_used_type_info.h"
+#include "privacy_param.h"
 #include "rwlock.h"
 #include "safe_map.h"
 #include "thread_pool.h"
@@ -86,13 +87,16 @@ public:
     bool IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName);
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+    int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute);
+    int32_t SetEdmMutePolicy(const std::string permissionName, bool& isMute);
+    int32_t SetPrivacyMutePolicy(const std::string permissionName, bool& isMute);
+    int32_t SetTempMutePolicy(const std::string permissionName, bool& isMute);
 
     void NotifyMicChange(bool isMute);
     void NotifyCameraChange(bool isMute);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus();
-    void SetScreenOn(bool isScreenOn);
     bool IsScreenOn();
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
@@ -104,10 +108,14 @@ public:
     void OnCameraMgrRemoteDiedHandle();
     void RemoveRecordFromStartListByToken(const AccessTokenID tokenId);
     void RemoveRecordFromStartListByOp(int32_t opCode);
+    void ExecuteAllCameraExecuteCallback();
 
 private:
     PermissionRecordManager();
     DISALLOW_COPY_AND_MOVE(PermissionRecordManager);
+
+    bool IsAllowedUsingCamera(AccessTokenID tokenId);
+    bool IsAllowedUsingMicrophone(AccessTokenID tokenId);
 
     void GetLocalRecordTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void AddRecord(const PermissionRecord& record);
@@ -121,7 +129,7 @@ private:
     void UpdateRecords(int32_t flag, const PermissionUsedRecord& inBundleRecord, PermissionUsedRecord& outBundleRecord);
 
     void ExecuteAndUpdateRecord(uint32_t tokenId, ActiveChangeType status);
-    void ExecuteAndUpdateRecordByOp(uint32_t opCode, bool switchStatus);
+    void ExecuteAndUpdateRecordByPerm(const std::string& permissionName, bool switchStatus);
     void RemoveRecordFromStartList(const PermissionRecord& record);
     bool GetRecordFromStartList(uint32_t tokenId,  int32_t opCode, PermissionRecord& record);
     bool AddRecordToStartList(const PermissionRecord& record);
@@ -130,8 +138,9 @@ private:
     void PermListToString(const std::vector<std::string>& permList);
     bool GetGlobalSwitchStatus(const std::string& permissionName);
     bool ShowGlobalDialog(const std::string& permissionName);
+    void ModifyMuteStatus(const std::string& permissionName, int32_t index, bool isMute);
+    bool GetMuteStatus(const std::string& permissionName, int32_t index);
 
-    void ExecuteAllCameraExecuteCallback();
     void ExecuteCameraCallbackAsync(AccessTokenID tokenId);
 
     void TransformEnumToBitValue(const PermissionUsedType type, uint32_t& value);
@@ -153,6 +162,7 @@ private:
     bool Register();
     bool RegisterApplicationStateObserver();
     void Unregister();
+    bool GetMuteParameter(const char* key, bool& isMute);
 
     void SetDefaultConfigValue();
     void GetConfigValue();
@@ -168,13 +178,15 @@ private:
     // microphone
     std::mutex micMuteMutex_;
     std::mutex micCallbackMutex_;
-    bool isMicMute_ = false;
+    bool isMicEdmMute_ = false;
+    bool isMicMixMute_ = false;
     sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
 
     // camera
     std::mutex camMuteMutex_;
     std::mutex cameraCallbackMutex_;
-    bool isCameraMute_ = false;
+    bool isCamEdmMute_ = false;
+    bool isCamMixMute_ = false;
     sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
 
     // appState
@@ -188,7 +200,6 @@ private:
     // lockScreenState
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
-    bool isScreenOn_ = false;
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool isAutoClose = false;

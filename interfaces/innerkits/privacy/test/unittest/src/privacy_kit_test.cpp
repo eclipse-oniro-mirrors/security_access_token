@@ -17,6 +17,7 @@
 
 #include <chrono>
 
+#include "access_token.h"
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
 #include "on_permission_used_record_callback_stub.h"
