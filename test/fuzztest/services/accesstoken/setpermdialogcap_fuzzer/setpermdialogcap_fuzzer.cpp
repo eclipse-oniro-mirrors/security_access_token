@@ -20,6 +20,7 @@
 #include <vector>
 #undef private
 #include "access_token.h"
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
@@ -60,11 +61,11 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char *>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
         HapBaseInfoParcel baseInfoParcel;
-        baseInfoParcel.hapBaseInfo.userID = static_cast<int32_t>(size);
-        baseInfoParcel.hapBaseInfo.bundleName = testName;
-        baseInfoParcel.hapBaseInfo.instIndex = static_cast<int32_t>(size);
+        baseInfoParcel.hapBaseInfo.userID = fuzzData.GetData<int32_t>();
+        baseInfoParcel.hapBaseInfo.bundleName = fuzzData.GenerateRandomString();
+        baseInfoParcel.hapBaseInfo.instIndex = fuzzData.GetData<int32_t>();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -75,7 +76,7 @@ namespace OHOS {
 
         MessageParcel reply;
         MessageOption option;
-        GetNativeToken();
+
         DelayedSingleton<AccessTokenManagerService>::GetInstance()->OnRemoteRequest(code, datas, reply, option);
         return true;
     }
@@ -85,6 +86,7 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
+    OHOS::GetNativeToken();
     OHOS::SetPermDialogCapFuzzTest(data, size);
     return 0;
 }

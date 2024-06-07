@@ -92,7 +92,7 @@ size_t g_baseFuzzPos = 0;
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        GetNativeToken();
+
         int32_t result = RET_SUCCESS;
         g_baseFuzzData = data;
         g_baseFuzzSize = size;
@@ -117,6 +117,7 @@ size_t g_baseFuzzPos = 0;
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
+    OHOS::GetNativeToken();
     OHOS::GetPermissionsStatusFuzzTest(data, size);
     return 0;
 }

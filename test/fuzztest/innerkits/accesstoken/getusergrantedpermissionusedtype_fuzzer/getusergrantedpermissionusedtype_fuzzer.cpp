@@ -19,6 +19,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -31,10 +32,9 @@ bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
-    AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-    std::string permissionName(reinterpret_cast<const char*>(data), size);
-
-    PermUsedTypeEnum type = AccessTokenKit::GetUserGrantedPermissionUsedType(tokenId, permissionName);
+    AccessTokenFuzzData fuzzData(data, size);
+    PermUsedTypeEnum type = AccessTokenKit::GetUserGrantedPermissionUsedType(
+        fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateRandomString());
 
     return type != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
 }

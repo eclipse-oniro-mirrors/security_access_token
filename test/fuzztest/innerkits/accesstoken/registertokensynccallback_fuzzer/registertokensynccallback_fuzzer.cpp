@@ -59,9 +59,6 @@ namespace OHOS {
             return false;
         }
     #ifdef TOKEN_SYNC_ENABLE
-        if (!NativeTokenGet()) {
-            return false;
-        }
         std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallback>();
         int32_t result = AccessTokenKit::RegisterTokenSyncCallback(callback);
         return result == RET_SUCCESS;
@@ -75,6 +72,9 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
+#ifdef TOKEN_SYNC_ENABLE
+    NativeTokenGet();
+#endif
     OHOS::RegisterTokenSyncCallbackFuzzTest(data, size);
     return 0;
 }

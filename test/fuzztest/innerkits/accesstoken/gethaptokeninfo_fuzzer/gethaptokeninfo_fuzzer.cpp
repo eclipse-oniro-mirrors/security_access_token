@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_kit.h"
 #include "hap_token_info.h"
 
@@ -29,22 +30,9 @@ namespace OHOS {
             return false;
         }
 
-        int num = static_cast<int>(size);
-        char ver = static_cast<char>(size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        HapTokenInfo HapTokenInfotest = {
-            .ver = ver,
-            .userID = num,
-            .bundleName = testName,
-            .instIndex = num,
-            .dlpType = num,
-            .appID = testName,
-            .deviceID = testName,
-            .tokenID = tokenId,
-            .tokenAttr = tokenId,
-        };
-        int32_t result = AccessTokenKit::GetHapTokenInfo(tokenId, HapTokenInfotest);
+        AccessTokenFuzzData fuzzData(data, size);
+        HapTokenInfo HapTokenInfotest;
+        int32_t result = AccessTokenKit::GetHapTokenInfo(fuzzData.GetData<AccessTokenID>(), HapTokenInfotest);
 
         return result == RET_SUCCESS;
     }

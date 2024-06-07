@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
 
@@ -35,9 +36,9 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-
-        std::string testName(reinterpret_cast<const char *>(data), size);
-        int32_t userID = static_cast<int32_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateRandomString());
+        int32_t userID = fuzzData.GetData<int32_t>();
         MessageParcel sendData;
         if (!sendData.WriteInterfaceToken(IAccessTokenManager::GetDescriptor()) ||
             !sendData.WriteString(testName) || !sendData.WriteInt32(userID)) {
