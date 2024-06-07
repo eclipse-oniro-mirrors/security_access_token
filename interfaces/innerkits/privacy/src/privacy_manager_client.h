@@ -39,7 +39,7 @@ public:
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
     int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
-    int32_t CreateStateChangeCbk(const std::shared_ptr<StateCustomizedCbk>& callback,
+    int32_t CreateStateChangeCbk(AccessTokenID tokenId, const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);
     int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
         const std::shared_ptr<StateCustomizedCbk>& callback);
@@ -81,7 +81,7 @@ private:
     std::mutex activeCbkMutex_;
     std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
     std::mutex stateCbkMutex_;
-    sptr<StateChangeCallback> stateChangeCallback_ = nullptr;
+    std::map<AccessTokenID, sptr<StateChangeCallback>> stateChangeCallbackMap_;
 };
 } // namespace AccessToken
 } // namespace Security
