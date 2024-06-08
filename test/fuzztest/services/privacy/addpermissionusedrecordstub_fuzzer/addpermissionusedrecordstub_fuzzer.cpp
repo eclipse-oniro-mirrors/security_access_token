@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "i_privacy_manager.h"
 #include "privacy_manager_service.h"
@@ -32,22 +34,21 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
 
         AddPermParamInfoParcel infoParcel;
-        infoParcel.info.tokenId = static_cast<AccessTokenID>(size);
-        infoParcel.info.permissionName = testName;
-        infoParcel.info.successCount = static_cast<int32_t>(size);
-        infoParcel.info.failCount = static_cast<int32_t>(size);
+        infoParcel.info.tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>());
+        infoParcel.info.permissionName = fuzzData.GenerateRandomString();
+        infoParcel.info.successCount = fuzzData.GetData<int32_t>();
+        infoParcel.info.failCount = fuzzData.GetData<int32_t>();
         if (!datas.WriteParcelable(&infoParcel)) {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(
-            PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD);
+        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::ADD_PERMISSION_USED_RECORD);
 
         MessageParcel reply;
         MessageOption option;

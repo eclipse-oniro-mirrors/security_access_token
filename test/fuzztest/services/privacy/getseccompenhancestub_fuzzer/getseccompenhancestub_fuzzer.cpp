@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "errors.h"
 #include "i_privacy_manager.h"
@@ -36,11 +38,11 @@ namespace OHOS {
             return false;
         }
 
-        int32_t pid = static_cast<int32_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteInt32(pid)) {
+        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
             return false;
         }
 

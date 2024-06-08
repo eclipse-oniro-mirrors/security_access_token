@@ -19,6 +19,8 @@
 #include <thread>
 #include <string>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "privacy_kit.h"
 
@@ -32,11 +34,10 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t policyType = static_cast<uint32_t>(size);
-        uint32_t callerType = static_cast<uint32_t>(size);
-        bool isMute = static_cast<bool>(size);
-        int32_t result = PrivacyKit::SetMutePolicy(policyType, callerType, isMute);
-        return result == RET_SUCCESS;
+        AccessTokenFuzzData fuzzData(data, size);
+
+        return PrivacyKit::SetMutePolicy(fuzzData.GetData<uint32_t>(), fuzzData.GetData<uint32_t>(),
+            fuzzData.GenerateRandomBool()) == RET_SUCCESS;
     }
 }
 

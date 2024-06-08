@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "errors.h"
 #include "i_privacy_manager.h"
@@ -44,22 +46,19 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        std::vector<std::string> permissionList;
-        permissionList.emplace_back(testName);
-        int64_t beginTimeMillis = static_cast<int64_t>(size);
-        int64_t endTimeMillis = static_cast<int64_t>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+
+        std::vector<std::string> permissionList = {fuzzData.GenerateRandomString()};
 
         PermissionUsedRequest request = {
-            .tokenId = tokenId,
-            .isRemote = false,
-            .deviceId = testName,
-            .bundleName = testName,
+            .tokenId = static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
+            .isRemote = fuzzData.GenerateRandomBool(),
+            .deviceId = fuzzData.GenerateRandomString(),
+            .bundleName = fuzzData.GenerateRandomString(),
             .permissionList = permissionList,
-            .beginTimeMillis = beginTimeMillis,
-            .endTimeMillis = endTimeMillis,
-            .flag = FLAG_PERMISSION_USAGE_SUMMARY
+            .beginTimeMillis = fuzzData.GetData<int64_t>(),
+            .endTimeMillis = fuzzData.GetData<int64_t>(),
+            .flag = fuzzData.GenerateRandomEnmu<PermissionUsageFlag>(FLAG_PERMISSION_USAGE_SUMMARY_IN_APP_FOREGROUND)
         };
         PermissionUsedRequestParcel requestParcel;
         requestParcel.request = request;
@@ -75,8 +74,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(
-            PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
+        uint32_t code = static_cast<uint32_t>(PrivacyInterfaceCode::GET_PERMISSION_USED_RECORDS_ASYNC);
 
         MessageParcel reply;
         MessageOption option;
