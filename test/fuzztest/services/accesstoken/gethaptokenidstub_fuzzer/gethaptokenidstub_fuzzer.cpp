@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
@@ -36,9 +37,10 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        int userID = static_cast<int>(size);
-        std::string bundleName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
+        int userID = fuzzData.GetData<int>();
+        std::string bundleName(fuzzData.GenerateRandomString());
         int instIndex = static_cast<int>(size);
 
         MessageParcel sendData;

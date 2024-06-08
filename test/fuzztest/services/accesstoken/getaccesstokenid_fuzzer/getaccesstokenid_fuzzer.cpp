@@ -19,10 +19,12 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "nativetoken.h"
 #include "nativetoken_kit.h"
 
 using namespace std;
+using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
     bool GetAccessTokenIdFuzzTest(const uint8_t* data, size_t size)
@@ -30,6 +32,7 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
+        AccessTokenFuzzData fuzzData(data, size);
         NativeTokenInfoParams infoInstance = {
             .permsNum = 0,
             .aclsNum = 0,
@@ -38,7 +41,7 @@ namespace OHOS {
             .aplStr = "system_core",
         };
         infoInstance.dcapsNum = 0;
-        infoInstance.processName = "GetAccessTokenIdFuzzTest";
+        infoInstance.processName = fuzzData.GenerateRandomString().c_str();
         GetAccessTokenId(&infoInstance);
 
         return true;
