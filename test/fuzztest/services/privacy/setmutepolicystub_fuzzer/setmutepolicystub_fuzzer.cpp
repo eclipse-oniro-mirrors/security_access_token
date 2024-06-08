@@ -18,12 +18,13 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 #include "i_privacy_manager.h"
 #include "privacy_manager_service.h"
 #include "nativetoken_kit.h"
-#include "securec.h"
 #include "token_setproc.h"
 
 using namespace std;
@@ -58,38 +59,18 @@ size_t g_baseFuzzPos = 0;
         delete[] perms;
     }
 
-    /*
-    * describe: get data from outside untrusted data(g_data) which size is according to sizeof(T)
-    * tips: only support basic type
-    */
-    template<class T> T GetData()
-    {
-        T object {};
-        size_t objectSize = sizeof(object);
-        if (g_baseFuzzData == nullptr || objectSize > g_baseFuzzSize - g_baseFuzzPos) {
-            return object;
-        }
-        errno_t ret = memcpy_s(&object, objectSize, g_baseFuzzData + g_baseFuzzPos, objectSize);
-        if (ret != EOK) {
-            return {};
-        }
-        g_baseFuzzPos += objectSize;
-        return object;
-    }
-
     bool SetMutePolicyStubFuzzTest(const uint8_t* data, size_t size)
     {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
         GetNativeToken();
-        g_baseFuzzData = data;
-        g_baseFuzzSize = size;
-        g_baseFuzzPos = 0;
+        AccessTokenFuzzData fuzzData(data, size);
+
         if (size > sizeof(uint32_t) + sizeof(bool)) {
-            uint32_t policyType = GetData<uint32_t>();
-            uint32_t callerType = GetData<uint32_t>();
-            bool isMute = (GetData<char>() % CONSTANTS_NUMBER_TWO) == 0;
+            uint32_t policyType = fuzzData.GetData<uint32_t>();
+            uint32_t callerType = fuzzData.GetData<uint32_t>();
+            bool isMute = fuzzData.GenerateRandomBool();
 
             MessageParcel datas;
             datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
