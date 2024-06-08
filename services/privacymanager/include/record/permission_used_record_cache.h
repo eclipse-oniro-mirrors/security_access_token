@@ -45,7 +45,6 @@ public:
         std::vector<GenericValues>& findRecordsValues, int32_t cache2QueryCount);
     bool RecordCompare(const AccessTokenID tokenId, const std::set<int32_t>& opCodeList,
         const GenericValues& andConditionValues, const PermissionRecord& record);
-    void FindTokenIdList(std::set<AccessTokenID>& tokenIdList);
     void TransferToOpcode(std::set<int32_t>& opCodeList,
         const std::vector<std::string>& permissionList);
     void ResetRecordBuffer(const int32_t remainCount,

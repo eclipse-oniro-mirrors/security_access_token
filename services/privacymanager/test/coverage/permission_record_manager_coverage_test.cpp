@@ -555,39 +555,39 @@ HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
-    int32_t flag = 0;
+    PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
     PermissionUsedRecord inBundleRecord;
     PermissionUsedRecord outBundleRecord;
 
     inBundleRecord.lastAccessTime = 1000;
     outBundleRecord.lastAccessTime = 900;
     // inBundleRecord.lastAccessTime > outBundleRecord.lastAccessTime && flag == 0
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     UsedRecordDetail detail;
     detail.accessDuration = 10;
     detail.status = PERM_ACTIVE_IN_FOREGROUND;
     detail.timestamp = 10000;
-    flag = 1;
+    flag = FLAG_PERMISSION_USAGE_DETAIL;
     inBundleRecord.lastRejectTime = 1000;
     inBundleRecord.accessRecords.emplace_back(detail);
     inBundleRecord.rejectRecords.emplace_back(detail);
     // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() < 10
     // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     std::vector<UsedRecordDetail> accessRecords(11, detail);
     outBundleRecord.accessRecords = accessRecords;
     outBundleRecord.rejectRecords = accessRecords;
     // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() >= 10
     // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() >= 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     inBundleRecord.lastAccessTime = 0;
     inBundleRecord.lastRejectTime = 0;
     // flag != 0 && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.accessRecords.size() >= 10
     // && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.rejectRecords.size() >= 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 }
 
 /*
@@ -1128,19 +1128,6 @@ HWTEST_F(PermissionRecordManagerTest, DeepCopyFromHead001, TestSize.Level1)
 }
 
 /*
- * @tc.name: RecordManagerTest001
- * @tc.desc: GetAllRecordValuesByKey normal case
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, RecordManagerTest001, TestSize.Level1)
-{
-    std::vector<GenericValues> resultValues;
-    EXPECT_EQ(true, PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(
-        PrivacyFiledConst::FIELD_TOKEN_ID, resultValues));
-}
-
-/*
  * @tc.name: PermissionUsedRecordCacheTest001
  * @tc.desc: PermissionUsedRecordCache Func test
  * @tc.type: FUNC
@@ -1148,9 +1135,6 @@ HWTEST_F(PermissionRecordManagerTest, RecordManagerTest001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, PermissionUsedRecordCacheTest001, TestSize.Level1)
 {
-    std::set<AccessTokenID> tokenIdList;
-    PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
-    PermissionRecordManager::GetInstance().GetLocalRecordTokenIdList(tokenIdList);
     std::set<int32_t> opCodeList;
     GenericValues andConditionValues;
     std::vector<GenericValues> findRecordsValues;
@@ -1198,33 +1182,6 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
     request.beginTimeMillis = -1; // -1 is a invalid input
     PermissionUsedResult result;
     EXPECT_EQ(false, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
-}
-
-/**
- * @tc.name: GetRecordsFromLocalDBTest003
- * @tc.desc: test GetRecords: not exist OpCode
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, RecordConverage011, TestSize.Level1)
-{
-    PermissionUsedRequest request;
-    request.tokenId = g_selfTokenId;
-    request.isRemote = false;
-    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
-    request.beginTimeMillis = -1; // -1 is a invalid input
-
-    std::vector<GenericValues> recordValues;
-    GenericValues tmp;
-    int64_t val = 1; // 1 is a test value
-    int32_t notExistOpCode = -2; // -2 is a not exist OpCode
-    tmp.Put(PrivacyFiledConst::FIELD_TIMESTAMP, val);
-    tmp.Put(PrivacyFiledConst::FIELD_OP_CODE, notExistOpCode);
-    recordValues.emplace_back(tmp);
-    int32_t flag = 1; // 1 is a test flag
-    BundleUsedRecord bundleRecord;
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetRecords(flag, recordValues, bundleRecord, result);
 }
 
 /*

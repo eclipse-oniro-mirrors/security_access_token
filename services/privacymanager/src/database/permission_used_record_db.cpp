@@ -169,7 +169,9 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> andColumns = andConditions.GetAllKeys();
-    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, opCodeList, andColumns, databaseQueryCount);
+    int32_t tokenId = andConditions.GetInt(PrivacyFiledConst::FIELD_TOKEN_ID);
+    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(tokenId, type, opCodeList, andColumns,
+        databaseQueryCount);
     if (prepareSql.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
         return FAILURE;
@@ -190,27 +192,6 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, true));
             } else {
                 value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-            }
-        }
-        results.emplace_back(value);
-    }
-    return SUCCESS;
-}
-
-int32_t PermissionUsedRecordDb::GetDistinctValue(DataType type,
-    const std::string& condition, std::vector<GenericValues>& results)
-{
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string getDistinctValueSql = CreateGetDistinctValue(type, condition);
-    auto statement = Prepare(getDistinctValueSql);
-    while (statement.Step() == Statement::State::ROW) {
-        int32_t columnCount = statement.GetColumnCount();
-        GenericValues value;
-        for (int32_t i = 0; i < columnCount; i++) {
-            if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_TOKEN_ID) {
-                value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-            } else if (statement.GetColumnName(i) == PrivacyFiledConst::FIELD_DEVICE_ID) {
-                value.Put(statement.GetColumnName(i), statement.GetColumnString(i));
             }
         }
         results.emplace_back(value);
@@ -399,7 +380,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
     return sql;
 }
 
-std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataType type,
+std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const int32_t tokenId, DataType type,
     const std::set<int32_t>& opCodeList, const std::vector<std::string>& andColumns, int32_t databaseQueryCount) const
 {
     auto it = dataTypeToSqlTable_.find(type);
@@ -418,6 +399,12 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(DataTyp
             sql.append(" and ");
             sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
             sql.append(" <=:" + andColName);
+        } else if (andColName == PrivacyFiledConst::FIELD_TOKEN_ID) {
+            if (tokenId != 0) {
+                sql.append(" and ");
+                sql.append(PrivacyFiledConst::FIELD_TOKEN_ID);
+                sql.append(" <=:" + andColName);
+            }
         } else {
             sql.append(" and ");
             sql.append(andColName + "=:" + andColName);
@@ -494,18 +481,6 @@ std::string PermissionUsedRecordDb::CreateDeleteExcessiveRecordsPrepareSqlCmd(Da
     sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
     sql.append(" limit ");
     sql.append(std::to_string(excessiveSize) + " )");
-    return sql;
-}
-
-std::string PermissionUsedRecordDb::CreateGetDistinctValue(DataType type,
-    const std::string conditionColumns) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "select distinct ";
-    sql.append(conditionColumns + " from "+ it->second.tableName_);
     return sql;
 }
 
