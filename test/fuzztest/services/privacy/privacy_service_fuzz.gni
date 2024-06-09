@@ -15,6 +15,7 @@ import("//build/config/features.gni")
 import("../../../../access_token.gni")
 
 privacy_include_dirs = [
+  "${access_token_path}/frameworks/accesstoken/include",
   "${access_token_path}/frameworks/privacy/include",
   "${access_token_path}/frameworks/common/include",
   "${access_token_path}/interfaces/innerkits/accesstoken/include",
