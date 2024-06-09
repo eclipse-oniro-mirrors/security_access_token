@@ -144,18 +144,18 @@ void SensitiveManagerServiceTest::TearDown()
  */
 HWTEST_F(SensitiveManagerServiceTest, SetMicroMuteTest001, TestSize.Level1)
 {
-    bool initMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+    bool initMute = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false);
-    EXPECT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
+    EXPECT_EQ(false, AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState());
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true);
-    EXPECT_EQ(true, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
+    EXPECT_EQ(true, AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState());
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false);
-    EXPECT_EQ(false, AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute());
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
+    EXPECT_EQ(false, AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState());
 
-    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(initMute, PolicyType::PRIVACY);
 }
 
 /*

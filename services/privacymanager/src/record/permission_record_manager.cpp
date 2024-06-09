@@ -702,11 +702,11 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     // only manage camera and microphone global switch now, other default true
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         isOpen = !isMicMixMute_;
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         isOpen = !isCamMixMute_;
+        ACCESSTOKEN_LOG_INFO(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     }
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Permission is %{public}s, status is %{public}d", permissionName.c_str(), isOpen);
     return isOpen;
 }
 
@@ -739,16 +739,6 @@ void PermissionRecordManager::ExecuteAndUpdateRecordByPerm(const std::string& pe
     for (const auto& record : recordList) {
         CallbackExecute(record.tokenId, permissionName, record.status);
     }
-}
-
-void PermissionRecordManager::NotifyMicChange(bool isMute)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnMicStateChange(%{public}d)", isMute);
-    if (SetPrivacyMutePolicy(MICROPHONE_PERMISSION_NAME, isMute) != RET_SUCCESS) {
-        return;
-    }
-    // find permissions from startRecordList_ by tokenId which status diff from currStatus
-    ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
 }
 
 void PermissionRecordManager::NotifyCameraChange(bool isMute)
@@ -1043,7 +1033,8 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 
 int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, policyType: %{public}d, isMute: %{public}d",
+        callerType, policyType, isMute);
     std::string permissionName;
     if (callerType == MICROPHONE) {
         permissionName = MICROPHONE_PERMISSION_NAME;
@@ -1069,35 +1060,39 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
     return ERR_PARAM_INVALID;
 }
 
-int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool& isMute)
+int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool isMute)
 {
     if (isMute) {
         ModifyMuteStatus(permissionName, EDM, isMute);
         ModifyMuteStatus(permissionName, MIXED, isMute);
     } else {
         ModifyMuteStatus(permissionName, EDM, isMute);
-        isMute = GetMuteStatus(permissionName, MIXED);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
+    }
     return RET_SUCCESS;
 }
 
-int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissionName, bool& isMute)
+int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissionName, bool isMute)
 {
     if (isMute) {
         ModifyMuteStatus(permissionName, MIXED, isMute);
     } else {
         if (GetMuteStatus(permissionName, EDM)) {
-            isMute = true;
             return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
         }
         ModifyMuteStatus(permissionName, MIXED, isMute);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
+    if (permissionName == MICROPHONE_PERMISSION_NAME) {
+        ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
+    }
     return RET_SUCCESS;
 }
 
-int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionName, bool& isMute)
+int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionName, bool isMute)
 {
     if (!isMute) {
         if (GetMuteStatus(permissionName, EDM)) {
@@ -1108,7 +1103,6 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
                 ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
                 return ERR_SERVICE_ABNORMAL;
             }
-            isMute = true;
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
@@ -1143,12 +1137,14 @@ bool PermissionRecordManager::GetMuteStatus(const std::string& permissionName, i
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(micMuteMutex_);
         isMute = (index == EDM) ? isMicEdmMute_ : isMicMixMute_;
+        ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
+            permissionName.c_str(), isMute, index);
     } else if (permissionName == CAMERA_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(camMuteMutex_);
         isMute = (index == EDM) ? isCamEdmMute_ : isCamMixMute_;
+        ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
+            permissionName.c_str(), isMute, index);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d, index: %{public}d",
-        permissionName.c_str(), isMute, index);
     return isMute;
 }
 
@@ -1407,7 +1403,7 @@ bool PermissionRecordManager::Register()
                 return false;
             }
             AudioManagerPrivacyClient::GetInstance().SetMicStateChangeCallback(micMuteCallback_);
-            bool isMicMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
+            bool isMicMute = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
             ModifyMuteStatus(MICROPHONE_PERMISSION_NAME, MIXED, isMicMute);
             // get EDM
             bool isEdmMute = false;

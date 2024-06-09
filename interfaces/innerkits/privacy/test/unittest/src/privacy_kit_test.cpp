@@ -19,6 +19,9 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
+#ifdef AUDIO_FRAMEWORK_ENALBE
+#include "audio_system_manager.h"
+#endif
 #include "nativetoken_kit.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "parameter.h"
@@ -41,6 +44,9 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static AccessTokenID g_nativeToken = 0;
+#ifdef AUDIO_FRAMEWORK_ENALBE
+static bool g_isMicMute = false;
+#endif
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t INVALID_PERMISSIONAME_LENGTH = 257;
 static constexpr int32_t FIRST_INDEX = 0;
@@ -233,6 +239,12 @@ void PrivacyKitTest::SetUpTestCase()
     DeleteTestToken();
     g_selfTokenId = GetSelfTokenID();
     g_nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
+    
+#ifdef AUDIO_FRAMEWORK_ENALBE
+    auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
+        OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
+    g_isMicMute = audioGroupManager->GetPersistentMicMuteState();
+#endif
 }
 
 void PrivacyKitTest::TearDownTestCase()
@@ -241,6 +253,11 @@ void PrivacyKitTest::TearDownTestCase()
 
 void PrivacyKitTest::SetUp()
 {
+#ifdef AUDIO_FRAMEWORK_ENALBE
+    auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
+        OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
+    audioGroupManager->SetMicrophoneMutePersistent(false, OHOS::AudioStandard::PolicyType::PRIVACY_POLCIY_TYPE);
+#endif
     AccessTokenKit::AllocHapToken(g_infoParmsA, g_policyPramsA);
     AccessTokenKit::AllocHapToken(g_infoParmsB, g_policyPramsB);
     AccessTokenKit::AllocHapToken(g_infoParmsC, g_policyPramsC);
@@ -254,6 +271,11 @@ void PrivacyKitTest::SetUp()
 
 void PrivacyKitTest::TearDown()
 {
+#ifdef AUDIO_FRAMEWORK_ENALBE
+    auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
+        OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
+    audioGroupManager->SetMicrophoneMutePersistent(g_isMicMute, OHOS::AudioStandard::PolicyType::PRIVACY_POLCIY_TYPE);
+#endif
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
     DeleteTestToken();
 }

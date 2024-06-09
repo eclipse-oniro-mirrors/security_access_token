@@ -22,7 +22,9 @@
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_callback_info.h"
+#endif
 #include "data_translator.h"
 #include "permission_record.h"
 #define private public
