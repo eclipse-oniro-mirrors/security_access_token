@@ -41,7 +41,9 @@ static const std::string STORAGE_DAEMON = "storage_daemon";
 static const std::string SET_POLICY_CALLER = "com.ohos.medialibrary.medialibrarydata";
 static const uint32_t INSTALLS_UID = 3060;
 static const uint32_t API_DELAY_TIME = 5 * 1000; // 5s
+#ifdef THEME_SCREENLOCK_MGR_ENABLE
 static const uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
+#endif
 static const uint32_t USERID_MASK = 200000;
 }
 
