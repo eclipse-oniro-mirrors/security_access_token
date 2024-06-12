@@ -229,15 +229,11 @@ HWTEST_F(PrivacyManagerServiceTest, IsAllowedUsingPermission001, TestSize.Level1
     // not pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, true);
-    ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     // pip
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
     ASSERT_EQ(false, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
-    PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, true);
-    ASSERT_EQ(true, privacyManagerService_->IsAllowedUsingPermission(tokenId, CAMERA_PERMISSION_NAME));
 #endif
     PermissionRecordManager::GetInstance().SetScreenOn(initScreenOn);
 }

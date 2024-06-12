@@ -883,10 +883,13 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (result != Constant::SUCCESS) {
         return result;
     }
+    cameraCallbackMap_.EnsureInsert(tokenId, callback);
     if (AddRecordToStartList(record)) {
+        cameraCallbackMap_.Erase(tokenId);
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
     if (!RegisterWindowCallback()) {
+        cameraCallbackMap_.Erase(tokenId);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
     if (!GetGlobalSwitchStatus(permissionName)) {
@@ -894,12 +897,12 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             ACCESSTOKEN_LOG_ERROR(LABEL, "show permission dialog failed.");
             RemoveRecordFromStartList(record);
             UnRegisterWindowCallback();
+            cameraCallbackMap_.Erase(tokenId);
             return ERR_SERVICE_ABNORMAL;
         }
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
-    cameraCallbackMap_.EnsureInsert(tokenId, callback);
     return Constant::SUCCESS;
 }
 
