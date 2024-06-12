@@ -37,7 +37,7 @@ namespace OHOS {
         AccessTokenFuzzData fuzzData(data, size);
 
         return PrivacyKit::SetMutePolicy(fuzzData.GetData<uint32_t>(), fuzzData.GetData<uint32_t>(),
-            fuzzData.GenerateRandomBool()) == RET_SUCCESS;
+            fuzzData.GenerateRandomBool()) == 0;
     }
 }
 

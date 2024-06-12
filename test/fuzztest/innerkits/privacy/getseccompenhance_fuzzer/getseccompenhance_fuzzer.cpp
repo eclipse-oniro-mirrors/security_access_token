@@ -38,7 +38,7 @@ namespace OHOS {
 
         SecCompEnhanceData secData;
 
-        return PrivacyKit::GetSecCompEnhance(fuzzData.GetData<int32_t>());
+        return PrivacyKit::GetSecCompEnhance(fuzzData.GetData<int32_t>(), secData) == 0;
     }
 }
 

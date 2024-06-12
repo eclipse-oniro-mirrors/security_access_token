@@ -403,7 +403,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const i
             if (tokenId != 0) {
                 sql.append(" and ");
                 sql.append(PrivacyFiledConst::FIELD_TOKEN_ID);
-                sql.append(" <=:" + andColName);
+                sql.append(" =:" + andColName);
             }
         } else {
             sql.append(" and ");

@@ -49,7 +49,7 @@ namespace OHOS {
 
         PermissionUsedResult res;
 
-        return PrivacyKit::GetPermissionUsedRecords(request, res) == RET_SUCCESS;
+        return PrivacyKit::GetPermissionUsedRecords(request, res) == 0;
     }
 }
 

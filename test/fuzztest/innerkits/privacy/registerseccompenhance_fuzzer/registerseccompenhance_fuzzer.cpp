@@ -44,7 +44,7 @@ namespace OHOS {
         secData.sessionId = fuzzData.GetData<uint32_t>();
         secData.seqNum = fuzzData.GetData<uint32_t>();
 
-        return PrivacyKit::RegisterSecCompEnhance(secData) == RET_SUCCESS;
+        return PrivacyKit::RegisterSecCompEnhance(secData) == 0;
     }
 }
 

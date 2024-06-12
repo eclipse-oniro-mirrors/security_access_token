@@ -58,7 +58,7 @@ namespace OHOS {
         auto callback = std::make_shared<UnRegisterActiveFuzzTest>(permList);
         callback->type_ = PERM_INACTIVE;
 
-        return PrivacyKit::UnRegisterPermActiveStatusCallback(callback) == RET_SUCCESS;
+        return PrivacyKit::UnRegisterPermActiveStatusCallback(callback) == 0;
     }
 }
 
