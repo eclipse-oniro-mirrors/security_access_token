@@ -1080,8 +1080,10 @@ void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared
     std::vector<bool> statusList;
     policy->GetPermissionStateList(opCodeList, statusList);
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
-    ACCESSTOKEN_LOG_INFO(LABEL,
-        "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d", tokenID, opCodeList.size(), ret);
+    if (ret != ACCESS_TOKEN_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
 }
 
 void PermissionManager::RemovePermFromKernel(AccessTokenID tokenID)

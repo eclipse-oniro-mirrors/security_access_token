@@ -223,6 +223,14 @@ std::shared_ptr<PermissionPolicySet> HapTokenInfoInner::GetHapInfoPermissionPoli
     return permPolicySet_;
 }
 
+uint32_t HapTokenInfoInner::GetReqPermissionSize() const
+{
+    if (permPolicySet_ == nullptr) {
+        return static_cast<uint32_t>(0);
+    }
+    return permPolicySet_->GetReqPermissionSize();
+}
+
 int HapTokenInfoInner::GetUserID() const
 {
     return tokenInfoBasic_.userID;
