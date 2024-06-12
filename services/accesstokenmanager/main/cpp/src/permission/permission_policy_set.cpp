@@ -501,6 +501,11 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeLi
     }
 }
 
+uint32_t PermissionPolicySet::GetReqPermissionSize()
+{
+    return static_cast<uint32_t>(permStateList_.size());
+}
+
 void PermissionPolicySet::PermDefToString(const PermissionDef& def, std::string& info) const
 {
     info.append(R"(    {)");

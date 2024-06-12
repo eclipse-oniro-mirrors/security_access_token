@@ -33,7 +33,6 @@ namespace OHOS {
         }
 
         AccessTokenFuzzData fuzzData(data, size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
         int32_t result = AccessTokenKit::VerifyAccessToken(fuzzData.GetData<AccessTokenID>(),
             fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateRandomString(), false);
 

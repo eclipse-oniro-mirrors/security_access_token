@@ -217,6 +217,14 @@ std::shared_ptr<PermissionPolicySet> NativeTokenInfoInner::GetNativeInfoPermissi
     return permPolicySet_;
 }
 
+uint32_t NativeTokenInfoInner::GetReqPermissionSize() const
+{
+    if (permPolicySet_ != nullptr) {
+        return permPolicySet_->GetReqPermissionSize();
+    }
+    return static_cast<uint32_t>(0);
+}
+
 bool NativeTokenInfoInner::IsRemote() const
 {
     return isRemote_;
