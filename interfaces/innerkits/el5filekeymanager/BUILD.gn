@@ -32,9 +32,14 @@ ohos_shared_library("el5_filekey_manager_sdk") {
 
   public_configs = [ ":efm_innerkits" ]
 
-  include_dirs = [ "src" ]
+  include_dirs = [
+    "${access_token_path}/frameworks/common/include",
+    "src",
+  ]
 
   sources = [
+    "src/app_key_info.cpp",
+    "src/el5_filekey_callback_stub.cpp",
     "src/el5_filekey_manager_client.cpp",
     "src/el5_filekey_manager_death_recipient.cpp",
     "src/el5_filekey_manager_kit.cpp",

@@ -34,10 +34,12 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static const std::string PROTECT_DATA_PERMISSION = "ohos.permission.PROTECT_SCREEN_LOCK_DATA";
 static const std::string MEDIA_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA";
 static const std::string ALL_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_ALL_DATA";
 static const std::string TASK_ID = "el5FilekeyManagerUnload";
 static const std::string STORAGE_DAEMON = "storage_daemon";
+static const std::string FOUNDATION = "foundation";
 static const std::string SET_POLICY_CALLER = "com.ohos.medialibrary.medialibrarydata";
 static const uint32_t INSTALLS_UID = 3060;
 static const uint32_t API_DELAY_TIME = 5 * 1000; // 5s
@@ -272,6 +274,23 @@ int32_t El5FilekeyManagerService::SetFilePathPolicy()
     return service_->SetFilePathPolicy(userId);
 }
 
+int32_t El5FilekeyManagerService::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
+{
+    LOG_DEBUG("Register callback.");
+    if (!VerifyNativeCallingProcess(FOUNDATION, IPCSkeleton::GetCallingTokenID())) {
+        LOG_ERROR("Register callback permission denied.");
+        return EFM_ERR_NO_PERMISSION;
+    }
+
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+
+    return service_->RegisterCallback(callback);
+}
+
 bool El5FilekeyManagerService::IsSystemApp()
 {
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
@@ -285,7 +304,11 @@ int32_t El5FilekeyManagerService::CheckReqLockPermission(DataLockType type, bool
     isApp = AccessTokenKit::GetTokenType(callingTokenID) == ATokenTypeEnum::TOKEN_HAP;
     switch (type) {
         case DataLockType::DEFAULT_DATA:
-            if (isApp) {
+            if (!isApp || (AccessTokenKit::VerifyAccessToken(callingTokenID, PROTECT_DATA_PERMISSION) !=
+                PermissionState::PERMISSION_GRANTED)) {
+                LOG_ERROR("Data protection is not enabled.");
+                ret = EFM_ERR_FIND_ACCESS_FAILED;
+            } else {
                 ret = EFM_SUCCESS;
             }
             break;

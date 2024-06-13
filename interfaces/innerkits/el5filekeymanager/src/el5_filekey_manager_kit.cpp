@@ -55,6 +55,11 @@ int32_t El5FilekeyManagerKit::SetFilePathPolicy()
 {
     return El5FilekeyManagerClient::GetInstance().SetFilePathPolicy();
 }
+
+int32_t El5FilekeyManagerKit::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
+{
+    return El5FilekeyManagerClient::GetInstance().RegisterCallback(callback);
+}
 }  // namespace AccessToken
 }  // namespace Security
 }  // namespace OHOS

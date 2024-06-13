@@ -13,25 +13,26 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
-#define EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
+#ifndef EL5FILEKEYMANAGER_INCLUDE_APP_KEY_INFO_H
+#define EL5FILEKEYMANAGER_INCLUDE_APP_KEY_INFO_H
+
+#include <vector>
+
+#include "message_parcel.h"
+#include "iremote_broker.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/* SAID:3503 */
-enum class EFMInterfaceCode {
-    GENERATE_APP_KEY = 0x0000,
-    DELETE_APP_KEY,
-    ACQUIRE_ACCESS,
-    RELEASE_ACCESS,
-    GET_USER_APP_KEY,
-    CHANGE_USER_APP_KEYS_LOAD_INFO,
-    SET_FILE_PATH_POLICY,
-    REGISTER_CALLBACK,
-};
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+struct AppKeyInfo : public Parcelable {
+    uint32_t uid;
+    std::string bundleName;
+    int32_t userId;
 
-#endif // EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
+    bool Marshalling(Parcel &parcel) const override;
+    static AppKeyInfo *Unmarshalling(Parcel &parcel);
+};
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
+#endif // EL5FILEKEYMANAGER_INCLUDE_APP_KEY_INFO_H

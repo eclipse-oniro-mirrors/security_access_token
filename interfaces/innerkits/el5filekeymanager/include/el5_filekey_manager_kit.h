@@ -19,6 +19,7 @@
 #include <string>
 
 #include "data_lock_type.h"
+#include "el5_filekey_callback_interface.h"
 
 namespace OHOS {
 namespace Security {
@@ -76,6 +77,12 @@ public:
      * @return error code, see el5_filekey_manager_error.h
      */
     static int32_t SetFilePathPolicy();
+    /**
+     * @brief Register app key generation callback.
+     * @param callback smart point of class El5FilekeyCallbackInterface quote
+     * @return error code, see el5_filekey_manager_error.h
+     */
+    static int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
 };
 }  // namespace AccessToken
 }  // namespace Security

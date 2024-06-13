@@ -36,7 +36,7 @@ static const std::unordered_map<uint32_t, std::string> ErrMsgMap {
     {EFM_ERR_SYSTEMCAP_NOT_SUPPORT, "The specified SystemCapability name was not found."},
     {EFM_ERR_INVALID_DATATYPE, "Invalid DataType."},
     {EFM_ERR_REMOTE_CONNECTION, "The system ability work abnormally."},
-    {EFM_ERR_FIND_ACCESS_FAILED, "File is not found."},
+    {EFM_ERR_FIND_ACCESS_FAILED, "The application is not enabled the data protection under lock screen."},
     {EFM_ERR_ACCESS_RELEASED, "File access is denied."},
     {EFM_ERR_RELEASE_ACCESS_FAILED, "File access was not acquired."},
 };
