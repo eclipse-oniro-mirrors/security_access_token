@@ -47,6 +47,7 @@ if (is_standard_system && ability_base_enable == true) {
     cflags_cc = []
     defines = []
     sources = [
+      "src/el5_filekey_callback_proxy.cpp",
       "src/el5_filekey_manager_service.cpp",
       "src/el5_filekey_manager_service_ability.cpp",
       "src/el5_filekey_manager_stub.cpp",

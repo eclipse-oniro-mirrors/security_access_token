@@ -25,7 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const int32_t LOAD_SA_TIME_OUT = 500;
+static const int32_t LOAD_SA_TIMEOUT_MS = 5000;
 }
 El5FilekeyManagerClient::El5FilekeyManagerClient()
 {
@@ -81,14 +81,15 @@ int32_t El5FilekeyManagerClient::DeleteAppKey(const std::string& keyId)
     return proxy->DeleteAppKey(keyId);
 }
 
-int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
+    std::vector<std::pair<int32_t, std::string>>& keyInfos)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOG_ERROR("Get proxy failed, proxy is null.");
         return EFM_ERR_SA_GET_PROXY;
     }
-    return proxy->GetUserAppKey(userId, keyInfos);
+    return proxy->GetUserAppKey(userId, getAllFlag, keyInfos);
 }
 
 int32_t El5FilekeyManagerClient::ChangeUserAppkeysLoadInfo(int32_t userId,
@@ -110,6 +111,16 @@ int32_t El5FilekeyManagerClient::SetFilePathPolicy()
         return EFM_ERR_SA_GET_PROXY;
     }
     return proxy->SetFilePathPolicy();
+}
+
+int32_t El5FilekeyManagerClient::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        LOG_ERROR("Get proxy failed, proxy is null.");
+        return EFM_ERR_SA_GET_PROXY;
+    }
+    return proxy->RegisterCallback(callback);
 }
 
 sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
@@ -148,17 +159,21 @@ sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
         return nullptr;
     }
     // wait for LoadSystemAbility
-    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOAD_SA_TIME_OUT),
+    LOG_INFO("wait for LoadSystemAbility");
+    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOAD_SA_TIMEOUT_MS),
         [this]() { return proxy_ != nullptr; });
     if (!waitStatus) {
+        LOG_WARN("wait for LoadSystemAbility timeout");
         return nullptr;
     }
+    LOG_INFO("El5FilekeyManagerClient GetProxy success");
 
     return proxy_;
 }
 
 void El5FilekeyManagerClient::LoadSystemAbilitySuccess(const sptr<IRemoteObject> &remoteObject)
 {
+    LOG_INFO("El5FilekeyManagerClient LoadSystemAbilitySuccess");
     std::lock_guard<std::mutex> lock(proxyMutex_);
     if (remoteObject == nullptr) {
         LOG_ERROR("After loading el5_filekey_service, remoteObject is null.");
@@ -175,6 +190,7 @@ void El5FilekeyManagerClient::LoadSystemAbilitySuccess(const sptr<IRemoteObject>
     if (proxy_ == nullptr) {
         LOG_ERROR("After loading el5_filekey_service, iface_cast get null.");
     }
+    proxyConVar_.notify_one();
 }
 
 void El5FilekeyManagerClient::LoadSystemAbilityFail()
@@ -182,6 +198,7 @@ void El5FilekeyManagerClient::LoadSystemAbilityFail()
     std::lock_guard<std::mutex> lock(proxyMutex_);
     LOG_ERROR("Load el5_filekey_service failed.");
     proxy_ = nullptr;
+    proxyConVar_.notify_one();
 }
 
 void El5FilekeyManagerClient::OnRemoteDiedHandle()

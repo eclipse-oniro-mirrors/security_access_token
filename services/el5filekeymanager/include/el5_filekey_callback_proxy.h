@@ -13,25 +13,25 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
-#define EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
+#ifndef EL5_FILEKEY_CALLBACK_PROXY_H
+#define EL5_FILEKEY_CALLBACK_PROXY_H
+
+#include "el5_filekey_callback_interface.h"
+#include "iremote_proxy.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-/* SAID:3503 */
-enum class EFMInterfaceCode {
-    GENERATE_APP_KEY = 0x0000,
-    DELETE_APP_KEY,
-    ACQUIRE_ACCESS,
-    RELEASE_ACCESS,
-    GET_USER_APP_KEY,
-    CHANGE_USER_APP_KEYS_LOAD_INFO,
-    SET_FILE_PATH_POLICY,
-    REGISTER_CALLBACK,
-};
-} // namespace AccessToken
-} // namespace Security
-} // namespace OHOS
+class El5FilekeyCallbackProxy : public IRemoteProxy<El5FilekeyCallbackInterface> {
+public:
+    explicit El5FilekeyCallbackProxy(const sptr<IRemoteObject>& impl);
+    virtual ~El5FilekeyCallbackProxy();
 
-#endif // EL5_FILEKEY_MANAGER_INTERFACE_CODE_H
+    void OnRegenerateAppKey(std::vector<AppKeyInfo> &infos) override;
+private:
+    static inline BrokerDelegator<El5FilekeyCallbackProxy> delegator_;
+};
+}  // namespace AccessToken
+}  // namespace Security
+}  // namespace OHOS
+#endif // EL5_FILEKEY_CALLBACK_PROXY_H

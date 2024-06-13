@@ -17,14 +17,11 @@
 
 #include "el5_filekey_manager_error.h"
 #include "el5_filekey_manager_log.h"
+#include "parcel_utils.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-namespace {
-static uint32_t MAX_KEY_SIZE = 1000;
-}
-
 El5FilekeyManagerProxy::El5FilekeyManagerProxy(const sptr<IRemoteObject>& impl)
     : IRemoteProxy<El5FilekeyManagerInterface>(impl)
 {
@@ -152,7 +149,8 @@ int32_t El5FilekeyManagerProxy::DeleteAppKey(const std::string& keyId)
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, bool getAllFlag, 
+    std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
@@ -161,6 +159,10 @@ int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, std::vector<std::p
     }
     if (!data.WriteUint32(userId)) {
         LOG_ERROR("Failed to WriteUint32(%{public}d).", userId);
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteBool(getAllFlag)) {
+        LOG_ERROR("Failed to WriteBool");
         return EFM_ERR_IPC_WRITE_DATA;
     }
 
@@ -182,7 +184,7 @@ int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, std::vector<std::p
     result = reply.ReadInt32();
     if (result == EFM_SUCCESS) {
         uint32_t keyInfoSize = reply.ReadUint32();
-        if (keyInfoSize > MAX_KEY_SIZE) {
+        if (keyInfoSize > MAX_RECORD_SIZE) {
             LOG_ERROR("Parse keyInfos failed, results oversize %{public}d.", keyInfoSize);
             return EFM_ERR_IPC_READ_DATA;
         }
@@ -258,6 +260,36 @@ int32_t El5FilekeyManagerProxy::SetFilePathPolicy()
 
     int32_t result = remote->SendRequest(
         static_cast<int32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY), data, reply, option);
+    if (result != NO_ERROR) {
+        LOG_ERROR("SendRequest failed, result: %{public}d.", result);
+    } else {
+        result = reply.ReadInt32();
+    }
+    return result;
+}
+
+int32_t El5FilekeyManagerProxy::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
+        LOG_ERROR("Failed to write WriteInterfaceToken.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteRemoteObject(callback->AsObject())) {
+        LOG_ERROR("Failed to write callback.");
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        LOG_ERROR("Remote service is null.");
+        return EFM_ERR_REMOTE_CONNECTION;
+    }
+
+    int32_t result = remote->SendRequest(
+        static_cast<int32_t>(EFMInterfaceCode::REGISTER_CALLBACK), data, reply, option);
     if (result != NO_ERROR) {
         LOG_ERROR("SendRequest failed, result: %{public}d.", result);
     } else {
