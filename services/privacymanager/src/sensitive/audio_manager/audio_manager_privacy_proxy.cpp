@@ -26,7 +26,7 @@ constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "Aud
 static constexpr int32_t ERROR = -1;
 }
 
-bool AudioManagerPrivacyProxy::IsMicrophoneMute()
+bool AudioManagerPrivacyProxy::GetPersistentMicMuteState()
 {
     MessageParcel data;
     MessageParcel reply;
@@ -36,15 +36,15 @@ bool AudioManagerPrivacyProxy::IsMicrophoneMute()
         return false;
     }
     int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
-        AudioStandard::AudioPolicyInterfaceCode::IS_MICROPHONE_MUTE), data, reply, option);
+        AudioStandard::AudioPolicyInterfaceCode::GET_MICROPHONE_MUTE_PERSISTENT), data, reply, option);
     if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "IsMicrophoneMute failed, error: %{public}d", error);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetPersistentMicMuteState failed, error: %{public}d", error);
         return false;
     }
     return reply.ReadBool();
 }
 
-int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
+int32_t AudioManagerPrivacyProxy::SetMicrophoneMutePersistent(const bool isMute, const PolicyType type)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -54,8 +54,9 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMute(bool isMute)
         return ERROR;
     }
     data.WriteBool(isMute);
+    data.WriteInt32(static_cast<int32_t>(type));
     int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
-        AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE_AUDIO_CONFIG), data, reply, option);
+        AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE_PERSISTENT), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
         return error;

@@ -48,7 +48,6 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
     switch (code) {
         case UPDATE_CALLBACK_CLIENT: {
             MicStateChangeEvent micStateChangeEvent = {};
-
             int32_t clientCode = data.ReadInt32();
             if (clientCode != ON_MIC_STATE_UPDATED) {
                 return NO_ERROR;
@@ -71,7 +70,6 @@ int AudioRoutingManagerListenerStub::OnRemoteRequest(
 void AudioRoutingManagerListenerStub::OnMicStateUpdated(const MicStateChangeEvent &micStateChangeEvent)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "OnMicMute(%{public}d)", micStateChangeEvent.mute);
-    PermissionRecordManager::GetInstance().NotifyMicChange(micStateChangeEvent.mute);
 }
 }
 } // namespace AccessToken

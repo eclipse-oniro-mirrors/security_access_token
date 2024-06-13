@@ -59,6 +59,11 @@ ohos_unittest("libprivacy_sdk_test") {
     "init:libbegetutil",
     "ipc:ipc_core",
   ]
+
+  if (audio_framework_enable) {
+    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENALBE" ]
+    external_deps += [ "audio_framework:audio_client" ]
+  }
 }
 
 ohos_unittest("libprivacy_mock_test") {

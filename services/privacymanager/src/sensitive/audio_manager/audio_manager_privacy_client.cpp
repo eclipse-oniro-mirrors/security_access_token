@@ -69,24 +69,24 @@ int32_t AudioManagerPrivacyClient::SetMicStateChangeCallback(const sptr<AudioRou
     return proxy->SetMicStateChangeCallback(object);
 }
 
-int32_t AudioManagerPrivacyClient::SetMicrophoneMute(bool isMute)
+int32_t AudioManagerPrivacyClient::SetMicrophoneMutePersistent(const bool isMute, const PolicyType type)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
-    return proxy->SetMicrophoneMute(isMute);
+    return proxy->SetMicrophoneMutePersistent(isMute, type);
 }
 
-bool AudioManagerPrivacyClient::IsMicrophoneMute()
+bool AudioManagerPrivacyClient::GetPersistentMicMuteState()
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return false;
     }
-    return proxy->IsMicrophoneMute();
+    return proxy->GetPersistentMicMuteState();
 }
 
 void AudioManagerPrivacyClient::InitProxy()

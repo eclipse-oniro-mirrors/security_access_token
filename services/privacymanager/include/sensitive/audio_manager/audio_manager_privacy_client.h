@@ -33,8 +33,8 @@ public:
     virtual ~AudioManagerPrivacyClient();
 
     int32_t SetMicStateChangeCallback(const sptr<AudioRoutingManagerListenerStub>& callback);
-    int32_t SetMicrophoneMute(bool isMute);
-    bool IsMicrophoneMute();
+    int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type);
+    bool GetPersistentMicMuteState();
     void OnRemoteDiedHandle();
 
 private:

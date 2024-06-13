@@ -88,11 +88,10 @@ public:
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
     int32_t SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute);
-    int32_t SetEdmMutePolicy(const std::string permissionName, bool& isMute);
-    int32_t SetPrivacyMutePolicy(const std::string permissionName, bool& isMute);
-    int32_t SetTempMutePolicy(const std::string permissionName, bool& isMute);
+    int32_t SetEdmMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
 
-    void NotifyMicChange(bool isMute);
     void NotifyCameraChange(bool isMute);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
