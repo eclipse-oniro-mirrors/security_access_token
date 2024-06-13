@@ -18,6 +18,7 @@
 #include "access_token.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
+#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
@@ -124,6 +125,18 @@ bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
 bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
 {
     return ((type == NORMAL_TYPE) || (type == PICKER_TYPE) || (type == SECURITY_COMPONENT_TYPE));
+}
+
+bool DataValidator::IsPolicyTypeValid(uint32_t type)
+{
+    PolicyType policyType = static_cast<PolicyType>(type);
+    return ((policyType == EDM) || (policyType == PRIVACY) || (policyType == TEMPORARY));
+}
+
+bool DataValidator::IsCallerTypeValid(uint32_t type)
+{
+    CallerType callerType = static_cast<CallerType>(type);
+    return ((callerType == MICROPHONE) || (callerType == CAMERA));
 }
 } // namespace AccessToken
 } // namespace Security

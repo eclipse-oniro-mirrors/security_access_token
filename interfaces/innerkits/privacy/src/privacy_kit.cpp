@@ -206,6 +206,15 @@ int32_t PrivacyKit::GetPermissionUsedTypeInfos(const AccessTokenID tokenId, cons
     }
     return PrivacyManagerClient::GetInstance().GetPermissionUsedTypeInfos(tokenId, permissionName, results);
 }
+
+int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
+{
+    if (!DataValidator::IsPolicyTypeValid(policyType) && !DataValidator::IsCallerTypeValid(callerType)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Parameter is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

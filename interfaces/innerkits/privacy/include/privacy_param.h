@@ -13,36 +13,52 @@
  * limitations under the License.
  */
 
-#ifndef POWER_MANAGER_ACCESS_LOADER_H
-#define POWER_MANAGER_ACCESS_LOADER_H
+/**
+ * @addtogroup Privacy
+ * @{
+ *
+ * @brief Provides sensitive data access management.
+ *
+ * @since 8.0
+ * @version 8.0
+ */
+
+/**
+ * @file permission_used_type.h
+ *
+ * @brief Declares enum PermissionUsedType.
+ *
+ * @since 12.0
+ * @version 12.0
+ */
+
+#ifndef PRIVACY_PARAM_H
+#define PRIVACY_PARAM_H
+
 #include <string>
+#include <vector>
+
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-const static std::string POWER_MANAGER_LIBPATH = "libaccesstoken_power_manager.z.so";
-
-class PowerManagerLoaderInterface {
-public:
-    PowerManagerLoaderInterface() {}
-    virtual ~PowerManagerLoaderInterface() {}
-    virtual bool IsScreenOn();
-    virtual void WakeupDevice();
+/**
+ * @brief policy type
+ */
+enum PolicyType {
+    EDM = 0,
+    PRIVACY = 1,
+    TEMPORARY = 2,
+    MIXED = 3
 };
 
-class PowerManagerLoader final: public PowerManagerLoaderInterface {
-    bool IsScreenOn() override;
-    void WakeupDevice() override;
+/**
+ * @brief caller type
+ */
+enum CallerType {
+    MICROPHONE = 0,
+    CAMERA = 1
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-    void* Create();
-    void Destroy(void* loaderPtr);
-#ifdef __cplusplus
-}
-#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // POWER_MANAGER_ACCESS_LOADER_H
+#endif // PRIVACY_PARAM_H

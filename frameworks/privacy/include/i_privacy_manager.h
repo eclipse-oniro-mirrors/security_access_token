@@ -28,6 +28,7 @@
 #include "permission_used_request_parcel.h"
 #include "permission_used_result_parcel.h"
 #include "permission_used_type_info_parcel.h"
+#include "privacy_param.h"
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 #include "sec_comp_enhance_data_parcel.h"
 #endif
@@ -56,6 +57,7 @@ public:
         std::vector<std::string>& permList, const sptr<IRemoteObject>& callback) = 0;
     virtual int32_t UnRegisterPermActiveStatusCallback(const sptr<IRemoteObject>& callback) = 0;
     virtual bool IsAllowedUsingPermission(AccessTokenID tokenID, const std::string& permissionName) = 0;
+    virtual int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) = 0;
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     virtual int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel) = 0;
     virtual int32_t UpdateSecCompEnhance(int32_t pid, int32_t seqNum) = 0;
