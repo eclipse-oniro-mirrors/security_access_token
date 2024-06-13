@@ -17,9 +17,10 @@
 
 #include "access_token.h"
 #include "access_token_error.h"
-#include "accesstoken_config_policy.h"
+#include "config_policy_loader.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_log.h"
+#include "libraryloader.h"
 #include "app_manager_access_client.h"
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "background_task_manager_access_client.h"
@@ -91,9 +92,7 @@ void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateDa
     if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, true);
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
-        }
+        TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
     } else if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND)) {
         TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FOREGROUND_FLAG, false);
         if (list[FORMS_FLAG] || list[CONTINUOUS_TASK_FLAG]) {
@@ -101,9 +100,7 @@ void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateDa
             return;
         }
         std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-        if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
-        }
+        TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
     }
 }
 
@@ -125,9 +122,7 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
         if (formInstances[i].formVisiblity_ == FormVisibilityType::VISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, true);
             std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-            if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
-                ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
-            }
+            TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
         } else if (formInstances[i].formVisiblity_ == FormVisibilityType::INVISIBLE) {
             TempPermissionObserver::GetInstance().ModifyAppState(tokenID, FORMS_FLAG, false);
             if (list[FOREGROUND_FLAG] || list[CONTINUOUS_TASK_FLAG]) {
@@ -135,9 +130,7 @@ int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibil
                 continue;
             }
             std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-            if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
-                ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
-            }
+            TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
         }
     }
     return RET_SUCCESS;
@@ -155,9 +148,7 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStart(
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}d", tokenID);
     TempPermissionObserver::GetInstance().ModifyAppState(tokenID, CONTINUOUS_TASK_FLAG, true);
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    if (!TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "CancleTaskOfPermissionRevoking failed!!!");
-    }
+    TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
 }
 
 void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
@@ -176,9 +167,7 @@ void PermissionBackgroundTaskObserver::OnContinuousTaskStop(
         return;
     }
     std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
-    if (!TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "DelayRevokePermission failed!!!");
-    }
+    TempPermissionObserver::GetInstance().DelayRevokePermission(tokenID, taskName);
 }
 #endif
 void PermissionAppManagerDeathCallback::NotifyAppManagerDeath()
@@ -499,6 +488,7 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
     eventHandler_->ProxyPostTask(delayed, taskName, cancleTimes_);
     return true;
 #else
+    ACCESSTOKEN_LOG_WARN(LABEL, "Eventhandler is not existed");
     return false;
 #endif
 }
@@ -515,15 +505,21 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
     eventHandler_->ProxyRemoveTask(taskName);
     return true;
 #else
+    ACCESSTOKEN_LOG_WARN(LABEL, "Eventhandler is not existed");
     return false;
 #endif
 }
 #ifdef EVENTHANDLER_ENABLE
 void TempPermissionObserver::GetConfigValue()
 {
-    AccessTokenConfigPolicy policy;
+    LibraryLoader loader(CONFIG_POLICY_LIBPATH);
+    ConfigPolicyLoaderInterface* policy = loader.GetObject<ConfigPolicyLoaderInterface>();
+    if (policy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Dlopen libaccesstoken_config_policy failed.");
+        return;
+    }
     AccessTokenConfigValue value;
-    if (policy.GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
+    if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
         cancleTimes_ = value.atConfig.cancleTime;
     } else {
         SetDefaultConfigValue();

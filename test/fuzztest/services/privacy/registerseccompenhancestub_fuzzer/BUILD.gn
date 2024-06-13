@@ -39,7 +39,10 @@ ohos_fuzztest("RegisterSecCompEnhanceStubFuzzTest") {
   defines = privacy_defines
 
   cflags_cc = privacy_cflags_cc
-  cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]
+  cflags_cc += [
+    "-DSECURITY_COMPONENT_ENHANCE_ENABLE",
+    "-DTOKEN_SYNC_ENABLE",
+  ]
 
   deps = privacy_deps
 

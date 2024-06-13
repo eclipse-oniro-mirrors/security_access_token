@@ -48,6 +48,7 @@ public:
         const std::vector<GenericValues>& permStateRes);
 
     std::shared_ptr<PermissionPolicySet> GetHapInfoPermissionPolicySet() const;
+    uint32_t GetReqPermissionSize() const;
     HapTokenInfo GetHapInfoBasic() const;
     int GetUserID() const;
     int GetDlpType() const;

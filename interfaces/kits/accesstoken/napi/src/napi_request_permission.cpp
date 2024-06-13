@@ -286,6 +286,12 @@ void AuthorizationResult::WindowShownCallback()
 
 static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (!asyncContext->uiAbilityFlag) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UIExtension ability can not pop service ablility window!");
+        asyncContext->needDynamicRequest = false;
+        asyncContext->result = RET_FAILED;
+        return;
+    }
     sptr<IRemoteObject> remoteObject = new (std::nothrow) AccessToken::AuthorizationResult(
         curRequestCode_, asyncContext);
     if (remoteObject == nullptr) {

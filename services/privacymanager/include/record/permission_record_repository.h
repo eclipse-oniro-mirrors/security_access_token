@@ -35,7 +35,6 @@ public:
     bool FindRecordValues(const std::set<int32_t>& opCodeList, const GenericValues& andConditionValues,
         std::vector<GenericValues>& recordValues, int32_t databaseQueryCount);
     bool Remove(const PermissionUsedRecordDb::DataType type, const GenericValues& conditionValues);
-    bool GetAllRecordValuesByKey(const std::string& condition, std::vector<GenericValues>& resultValues);
     void CountRecordValues(GenericValues& resultValues);
     bool DeleteExpireRecordsValues(const GenericValues& andConditions);
     bool DeleteExcessiveSizeRecordValues(uint32_t excessiveSize);

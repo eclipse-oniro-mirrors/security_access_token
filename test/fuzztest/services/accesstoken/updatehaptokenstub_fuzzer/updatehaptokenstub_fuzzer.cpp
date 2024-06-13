@@ -23,6 +23,7 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "service/accesstoken_manager_service.h"
 
 using namespace std;
@@ -31,23 +32,24 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    void ConstructorParam(const std::string& testName, AccessTokenID tokenId, HapPolicyParcel& hapPolicyParcel)
+    void ConstructorParam(AccessTokenFuzzData& fuzzData, HapPolicyParcel& hapPolicyParcel)
     {
-        PermissionDef testPermDef = {.permissionName = testName,
-            .bundleName = testName,
+        std::string permissionName(fuzzData.GenerateRandomString());
+        PermissionDef testPermDef = {.permissionName = permissionName,
+            .bundleName = fuzzData.GenerateRandomString(),
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = testName,
+            .label = fuzzData.GenerateRandomString(),
             .labelId = 1,
-            .description = testName,
+            .description = fuzzData.GenerateRandomString(),
             .descriptionId = 1};
-        PermissionStateFull testState = {.permissionName = testName,
+        PermissionStateFull testState = {.permissionName = permissionName,
             .isGeneral = true,
-            .resDeviceID = {testName},
+            .resDeviceID = {fuzzData.GenerateRandomString()},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .grantFlags = {1}};
         HapPolicyParams policy = {.apl = APL_NORMAL,
-            .domain = testName,
+            .domain = fuzzData.GenerateRandomString(),
             .permList = {testPermDef},
             .permStateList = {testState}};
         hapPolicyParcel.hapPolicyParameter = policy;
@@ -57,11 +59,11 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         int32_t apiVersion = 8;
         HapPolicyParcel hapPolicyParcel;
-        ConstructorParam(testName, tokenId, hapPolicyParcel);
+        ConstructorParam(fuzzData, hapPolicyParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
@@ -71,7 +73,7 @@ namespace OHOS {
         if (!datas.WriteBool(false)) {
             return false;
         }
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
             return false;
         }
         if (!datas.WriteInt32(apiVersion)) {

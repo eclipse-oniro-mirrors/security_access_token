@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef ACCESSTOKEN_SERVICE_COMMON_CONFIG_POLICY_H
-#define ACCESSTOKEN_SERVICE_COMMON_CONFIG_POLICY_H
+#ifndef ACCESSTOKEN_CONFIG_POLICY_LOADER_H
+#define ACCESSTOKEN_CONFIG_POLICY_LOADER_H
 
 #include <string>
 #include <vector>
@@ -22,6 +22,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+const static std::string CONFIG_POLICY_LIBPATH = "libaccesstoken_config_policy.z.so";
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
@@ -51,10 +52,15 @@ enum ServiceType {
     TOKENSYNC_SERVICE,
 };
 
-class AccessTokenConfigPolicy final {
+class ConfigPolicyLoaderInterface {
 public:
-    bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+    ConfigPolicyLoaderInterface() {}
+    virtual ~ConfigPolicyLoaderInterface() {}
+    virtual bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
+};
 
+class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
+    bool GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config);
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
@@ -63,7 +69,16 @@ private:
         AccessTokenConfigValue& config);
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    void* Create();
+    void Destroy(void* loaderPtr);
+#ifdef __cplusplus
+}
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif  // ACCESSTOKEN_SERVICE_COMMON_CONFIG_POLICY_H
+#endif // ACCESSTOKEN_CONFIG_POLICY_LOADER_H

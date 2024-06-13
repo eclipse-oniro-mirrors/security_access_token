@@ -157,12 +157,12 @@ void PermissionRecordManagerTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
-class CbCustomizeTest1 : public StateCustomizedCbk {
+class PermissionRecordManagerTestCb1 : public StateCustomizedCbk {
 public:
-    CbCustomizeTest1()
+    PermissionRecordManagerTestCb1()
     {}
 
-    ~CbCustomizeTest1()
+    ~PermissionRecordManagerTestCb1()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -256,7 +256,7 @@ HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, Tes
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Level1)
 {
     std::string permissionName = "ohos.permission.CAMERA";
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -277,7 +277,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -299,6 +299,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
     ASSERT_EQ(Constant::SUCCESS,
         PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
 }
+
 /*
  * @tc.name: StartUsingPermissionTest003
  * @tc.desc:
@@ -308,10 +309,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Level1)
 {
     bool isMicEdmMute = PermissionRecordManager::GetInstance().isMicEdmMute_;
-    bool isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -320,28 +319,27 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Leve
     ASSERT_EQ(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED, PrivacyKit::StartUsingPermission(tokenId, permissionName));
 
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
-    PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
 }
 
-class CbCustomizeTest2 : public PermActiveStatusCustomizedCbk {
+class PermissionRecordManagerTestCb2 : public PermActiveStatusCustomizedCbk {
 public:
-    explicit CbCustomizeTest2(const std::vector<std::string> &permList)
+    explicit PermissionRecordManagerTestCb2(const std::vector<std::string> &permList)
         : PermActiveStatusCustomizedCbk(permList)
     {
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 create";
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 create";
     }
 
-    ~CbCustomizeTest2()
+    ~PermissionRecordManagerTestCb2()
     {}
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
     {
         type_ = result.type;
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 ActiveChangeResponse";
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 tokenid " << result.tokenID;
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 permissionName " << result.permissionName;
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 deviceId " << result.deviceId;
-        GTEST_LOG_(INFO) << "CbCustomizeTest2 type " << result.type;
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 ActiveChangeResponse";
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 tokenid " << result.tokenID;
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 permissionName " << result.permissionName;
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 deviceId " << result.deviceId;
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb2 type " << result.type;
     }
 
     ActiveChangeType type_ = PERM_INACTIVE;
@@ -356,13 +354,13 @@ public:
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Level1)
 {
     bool isMicEdmMute = PermissionRecordManager::GetInstance().isMicEdmMute_;
-    bool isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
+    bool initMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true);
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
-    auto callback = std::make_shared<CbCustomizeTest2>(permList);
+    auto callback = std::make_shared<PermissionRecordManagerTestCb2>(permList);
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -375,7 +373,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
     ASSERT_EQ(Constant::SUCCESS, PrivacyKit::StopUsingPermission(tokenId, permissionName));
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
-    PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
 }
 
 /*
@@ -387,13 +385,13 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Level1)
 {
     bool isMicEdmMute = PermissionRecordManager::GetInstance().isMicEdmMute_;
-    bool isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
+    bool initMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, false));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(false);
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
-    auto callback = std::make_shared<CbCustomizeTest2>(permList);
+    auto callback = std::make_shared<PermissionRecordManagerTestCb2>(permList);
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -406,7 +404,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
     ASSERT_EQ(Constant::SUCCESS, PrivacyKit::StopUsingPermission(tokenId, permissionName));
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
-    PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
 }
 
 /*
@@ -418,13 +416,13 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Level1)
 {
     bool isMicEdmMute = PermissionRecordManager::GetInstance().isMicEdmMute_;
-    bool isMicMixMute = PermissionRecordManager::GetInstance().isMicMixMute_;
+    bool initMute = AudioManagerPrivacyClient::GetInstance().IsMicrophoneMute();
 
     EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(EDM_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
-    EXPECT_EQ(RET_SUCCESS, PrivacyKit::SetMutePolicy(PRIVACY_POLICY_TYPE, MICROPHONE_CALLER_TYPE, true));
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(true);
 
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
-    auto callback = std::make_shared<CbCustomizeTest2>(permList);
+    auto callback = std::make_shared<PermissionRecordManagerTestCb2>(permList);
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callback));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
@@ -437,7 +435,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
     ASSERT_EQ(Constant::SUCCESS, PrivacyKit::StopUsingPermission(tokenId, permissionName));
     PermissionRecordManager::GetInstance().isMicEdmMute_ = isMicEdmMute;
-    PermissionRecordManager::GetInstance().isMicMixMute_ = isMicMixMute;
+    AudioManagerPrivacyClient::GetInstance().SetMicrophoneMute(initMute);
 }
 
 /*

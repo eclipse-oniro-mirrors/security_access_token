@@ -709,6 +709,43 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
 }
+
+/**
+ * @tc.name: AddAvailableTypeColumn001
+ * @tc.desc: test AddAvailableTypeColumn
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, AddAvailableTypeColumn001, TestSize.Level1)
+{
+    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_;
+    EXPECT_TRUE(dataTypeToSqlTable.size() > 0);
+    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().AddAvailableTypeColumn());
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
+    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().AddAvailableTypeColumn());
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable;
+    EXPECT_EQ(dataTypeToSqlTable.size(), AccessTokenDb::GetInstance().dataTypeToSqlTable_.size());
+}
+
+/**
+ * @tc.name: AddPermDialogCapColumn001
+ * @tc.desc: test AddPermDialogCapColumn
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(DatabaseTest, AddPermDialogCapColumn001, TestSize.Level1)
+{
+    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_;
+    EXPECT_TRUE(dataTypeToSqlTable.size() > 0);
+    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().AddPermDialogCapColumn());
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
+    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().AddPermDialogCapColumn());
+    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable;
+    EXPECT_EQ(dataTypeToSqlTable.size(), AccessTokenDb::GetInstance().dataTypeToSqlTable_.size());
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -21,6 +21,7 @@
 #include <thread>
 #include <string>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -37,32 +38,34 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string permissionName(fuzzData.GenerateRandomString());
+        std::string bundleName(fuzzData.GenerateRandomString());
         PermissionDef testPermDef;
-        testPermDef.permissionName = testName;
-        testPermDef.bundleName = testName;
+        testPermDef.permissionName = permissionName;
+        testPermDef.bundleName = bundleName;
         testPermDef.grantMode = 1;
         testPermDef.availableLevel = APL_NORMAL;
-        testPermDef.label = testName;
+        testPermDef.label = fuzzData.GenerateRandomString();
         testPermDef.labelId = 1;
-        testPermDef.description = testName;
+        testPermDef.description = fuzzData.GenerateRandomString();
         testPermDef.descriptionId = 1;
 
         PermissionStateFull testState;
-        testState.permissionName = testName;
+        testState.permissionName = permissionName;
         testState.isGeneral = true;
-        testState.resDeviceID = {testName};
+        testState.resDeviceID = {fuzzData.GenerateRandomString()};
         testState.grantStatus = {PermissionState::PERMISSION_GRANTED};
         testState.grantFlags = {1};
         HapInfoParams TestInfoParms = {
             .userID = 1,
-            .bundleName = testName,
+            .bundleName = bundleName,
             .instIndex = 0,
-            .appIDDesc = testName
+            .appIDDesc = fuzzData.GenerateRandomString()
         };
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
-            .domain = testName,
+            .domain = fuzzData.GenerateRandomString(),
             .permList = {testPermDef},
             .permStateList = {testState}
         };

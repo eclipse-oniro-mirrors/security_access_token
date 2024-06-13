@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_kit.h"
 
@@ -32,22 +33,21 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
         NativeTokenInfoForSync native1 = {
             .baseInfo.apl = APL_NORMAL,
             .baseInfo.ver = 1,
-            .baseInfo.processName = testName,
-            .baseInfo.dcap = {testName, testName},
-            .baseInfo.tokenID = tokenId,
+            .baseInfo.processName = fuzzData.GenerateRandomString(),
+            .baseInfo.dcap = {fuzzData.GenerateRandomString(), fuzzData.GenerateRandomString()},
+            .baseInfo.tokenID = fuzzData.GetData<AccessTokenID>(),
             .baseInfo.tokenAttr = 0,
-            .baseInfo.nativeAcls = {testName},
+            .baseInfo.nativeAcls = {fuzzData.GenerateRandomString()},
         };
 
         std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
         nativeTokenInfoList.emplace_back(native1);
 
-        int32_t result = AccessTokenKit::SetRemoteNativeTokenInfo(testName, nativeTokenInfoList);
+        int32_t result = AccessTokenKit::SetRemoteNativeTokenInfo(fuzzData.GenerateRandomString(), nativeTokenInfoList);
         return result == RET_SUCCESS;
 #else
         return true;

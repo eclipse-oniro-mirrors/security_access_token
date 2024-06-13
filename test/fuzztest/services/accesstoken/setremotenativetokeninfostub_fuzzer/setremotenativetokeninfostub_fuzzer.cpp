@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
@@ -37,23 +38,23 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         NativeTokenInfoForSync native = {
             .baseInfo.apl = APL_NORMAL,
             .baseInfo.ver = 1,
-            .baseInfo.processName = testName,
-            .baseInfo.dcap = {testName, testName, "xxxx"},
+            .baseInfo.processName = fuzzData.GenerateRandomString(),
+            .baseInfo.dcap = {fuzzData.GenerateRandomString(), fuzzData.GenerateRandomString(), "xxxx"},
             .baseInfo.tokenID = tokenId,
             .baseInfo.tokenAttr = 0,
-            .baseInfo.nativeAcls = {testName},
+            .baseInfo.nativeAcls = {fuzzData.GenerateRandomString()},
         };
         NativeTokenInfoForSyncParcel nativeTokenInfoForSyncParcel;
         nativeTokenInfoForSyncParcel.nativeTokenInfoForSyncParams = native;
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
             return false;
         }
         if (!datas.WriteUint32(1)) {
@@ -63,8 +64,7 @@ namespace OHOS {
             return false;
         }
 
-        uint32_t code = static_cast<uint32_t>(
-            AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO);
+        uint32_t code = static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO);
 
         MessageParcel reply;
         MessageOption option;

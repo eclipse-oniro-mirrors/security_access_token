@@ -32,6 +32,7 @@
 #undef private
 #include "permission_validator.h"
 #include "string_ex.h"
+#include "token_setproc.h"
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -2534,6 +2535,34 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
     TokenSyncKitInterface* tokenSyncKit = loader.GetObject<TokenSyncKitInterface>();
     EXPECT_NE(nullptr, loader.handle_);
     EXPECT_NE(nullptr, tokenSyncKit);
+}
+
+/**
+ * @tc.name: OnRemoteRequest001
+ * @tc.desc: Test OnRemoteRequest
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, OnRemoteRequest001, TestSize.Level1)
+{
+    uint32_t code = 0;
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    data.WriteInterfaceToken(u"this is a test interface");
+    EXPECT_EQ(ERROR_IPC_REQUEST_FAIL, atManagerService_->OnRemoteRequest(code, data, reply, option));
+
+    std::map<uint32_t, AccessTokenManagerStub::RequestFuncType> oldMap = atManagerService_->requestFuncMap_;
+    atManagerService_->requestFuncMap_.clear();
+    atManagerService_->requestFuncMap_[1] = nullptr;
+
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    EXPECT_NE(NO_ERROR, atManagerService_->OnRemoteRequest(code, data, reply, option));
+
+    data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());
+    EXPECT_NE(NO_ERROR, atManagerService_->OnRemoteRequest(1, data, reply, option));
+
+    atManagerService_->requestFuncMap_ = oldMap;
 }
 } // namespace AccessToken
 } // namespace Security

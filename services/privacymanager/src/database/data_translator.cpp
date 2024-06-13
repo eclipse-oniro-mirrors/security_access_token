@@ -31,6 +31,9 @@ static const int64_t LATEST_RECORD_TIME = 7 * Constant::ONE_DAY_MILLISECONDS;
 int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest& request,
     GenericValues& andGenericValues)
 {
+    // add tokenId to condition, tokenId may be 0, if 0 ignore it when compare with cache and create the sql
+    andGenericValues.Put(PrivacyFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(request.tokenId));
+
     int64_t begin = request.beginTimeMillis;
     int64_t end = request.endTimeMillis;
 
@@ -70,8 +73,8 @@ int32_t DataTranslator::TranslationIntoGenericValues(const PermissionUsedRequest
     return Constant::SUCCESS;
 }
 
-int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const GenericValues& inGenericValues,
-    PermissionUsedRecord& permissionRecord)
+int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const PermissionUsageFlag& flag,
+    const GenericValues& inGenericValues, PermissionUsedRecord& permissionRecord)
 {
     int32_t accessCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_ACCESS_COUNT);
     int32_t rejectCount = inGenericValues.GetInt(PrivacyFiledConst::FIELD_REJECT_COUNT);
@@ -95,7 +98,7 @@ int32_t DataTranslator::TranslationGenericValuesIntoPermissionUsedRecord(const G
         permissionRecord.lastRejectTime = timestamp;
     }
 
-    if (inGenericValues.GetInt(PrivacyFiledConst::FIELD_FLAG) == 0) {
+    if (flag == FLAG_PERMISSION_USAGE_SUMMARY) {
         return Constant::SUCCESS;
     }
 

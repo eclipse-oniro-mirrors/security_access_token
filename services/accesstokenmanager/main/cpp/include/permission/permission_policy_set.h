@@ -63,6 +63,7 @@ public:
     void GetGrantedPermissionList(std::vector<std::string>& permissionList);
 
     void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
+    uint32_t GetReqPermissionSize();
 private:
     static void MergePermissionStateFull(std::vector<PermissionStateFull>& permStateList,
         PermissionStateFull& state);

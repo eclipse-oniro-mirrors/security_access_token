@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 #undef private
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_manager_service.h"
 #include "i_accesstoken_manager.h"
 #include "permission_def_parcel.h"
@@ -37,8 +38,8 @@ namespace OHOS {
         if ((data == nullptr) || (size == 0)) {
             return false;
         }
-
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
         
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

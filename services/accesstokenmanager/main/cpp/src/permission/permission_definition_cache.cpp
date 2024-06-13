@@ -93,9 +93,9 @@ int PermissionDefinitionCache::FindByPermissionName(const std::string& permissio
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(permissionName);
     if (it == permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Can not find definition info for permission: %{public}s",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Can not find definition info for permission: %{public}s",
             permissionName.c_str());
-        return AccessTokenError::ERR_PARAM_INVALID;
+        return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     info = it->second.permDef;
     return RET_SUCCESS;
@@ -125,7 +125,11 @@ bool PermissionDefinitionCache::IsGrantedModeEqualInner(const std::string& permi
 bool PermissionDefinitionCache::HasDefinition(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
-    return permissionDefinitionMap_.count(permissionName) == 1;
+    auto it = permissionDefinitionMap_.find(permissionName);
+    if (it != permissionDefinitionMap_.end()) {
+        return true;
+    }
+    return false;
 }
 
 bool PermissionDefinitionCache::HasHapPermissionDefinitionForHap(const std::string& permissionName)

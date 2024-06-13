@@ -129,6 +129,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_SHORTCUTS",        false},
     {"ohos.permission.radio.ACCESS_FM_AM",      false},
     {"ohos.permission.SET_TELEPHONY_STATE",     false},
+    {"ohos.permission.ACCESS_BOOSTER_SERVICE", false},
     {"ohos.permission.START_ABILIIES_FROM_BACKGROUND", false},
     {"ohos.permission.START_ABILITIES_FROM_BACKGROUND", false},
     {"ohos.permission.BUNDLE_ACTIVE_INFO",      false},
@@ -358,6 +359,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.TRIGGER_ACTIVATIONLOCK",              false},
     {"ohos.permission.MANAGE_USB_CONFIG",                   false},
     {"ohos.permission.WRITE_PRIVACY_PUSH_DATA",             false},
+    {"ohos.permission.READ_PRIVACY_PUSH_DATA",              false},
     {"ohos.permission.MANAGE_HAP_TOKENID",                  false},
     {"ohos.permission.REPORT_RESOURCE_SCHEDULE_EVENT",      false},
     {"ohos.permission.SEND_TASK_COMPLETE_EVENT",            false},
@@ -417,6 +419,10 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_RINGTONE_RESOURCE",            false},
     {"ohos.permission.ACCESS_FILE_CONTENT_SHARE",           false},
     {"ohos.permission.ACCESS_SEARCH_SERVICE",               false},
+    {"ohos.permission.ACCESS_SCREEN_LOCK",               false},
+    {"ohos.permission.MANAGE_SOFTBUS_NETWORK",              false},
+    {"ohos.permission.INJECT_INPUT_EVENT",              false},
+    {"ohos.permission.PRE_START_ATOMIC_SERVICE",            false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)

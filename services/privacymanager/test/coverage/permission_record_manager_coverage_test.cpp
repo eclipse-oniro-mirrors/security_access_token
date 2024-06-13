@@ -188,12 +188,12 @@ void PermissionRecordManagerTest::TearDown()
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
-class CbCustomizeTest1 : public StateCustomizedCbk {
+class PermissionRecordManagerCoverTestCb1 : public StateCustomizedCbk {
 public:
-    CbCustomizeTest1()
+    PermissionRecordManagerCoverTestCb1()
     {}
 
-    ~CbCustomizeTest1()
+    ~PermissionRecordManagerCoverTestCb1()
     {}
 
     virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
@@ -203,12 +203,12 @@ public:
     {}
 };
 
-class CbCustomizeTest2 : public IRemoteObject {
+class PermissionRecordManagerCoverTestCb2 : public IRemoteObject {
 public:
-    CbCustomizeTest2()
+    PermissionRecordManagerCoverTestCb2()
     {}
 
-    ~CbCustomizeTest2()
+    ~PermissionRecordManagerCoverTestCb2()
     {}
 };
 
@@ -400,7 +400,7 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -421,15 +421,15 @@ void PermActiveStatusChangeCallbackTest::ActiveStatusChangeCallback(ActiveChange
 {
 }
 
-class CbCustomizeTest3 : public PermActiveStatusCustomizedCbk {
+class PermissionRecordManagerCoverTestCb3 : public PermActiveStatusCustomizedCbk {
 public:
-    explicit CbCustomizeTest3(const std::vector<std::string> &permList)
+    explicit PermissionRecordManagerCoverTestCb3(const std::vector<std::string> &permList)
         : PermActiveStatusCustomizedCbk(permList)
     {
-        GTEST_LOG_(INFO) << "CbCustomizeTest3 create";
+        GTEST_LOG_(INFO) << "PermissionRecordManagerCoverTestCb3 create";
     }
 
-    ~CbCustomizeTest3()
+    ~PermissionRecordManagerCoverTestCb3()
     {}
 
     virtual void ActiveStatusChangeCallback(ActiveChangeResponse& result)
@@ -485,7 +485,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     PrivacyAppStateObserver observer;
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest3>(permList);
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb3>(permList);
     callbackPtr->type_ = PERM_ACTIVE_IN_FOREGROUND;
 
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::RegisterPermActiveStatusCallback(callbackPtr));
@@ -555,39 +555,39 @@ HWTEST_F(PermissionRecordManagerTest, UpdateRecords001, TestSize.Level1)
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
-    int32_t flag = 0;
+    PermissionUsageFlag flag = FLAG_PERMISSION_USAGE_SUMMARY;
     PermissionUsedRecord inBundleRecord;
     PermissionUsedRecord outBundleRecord;
 
     inBundleRecord.lastAccessTime = 1000;
     outBundleRecord.lastAccessTime = 900;
     // inBundleRecord.lastAccessTime > outBundleRecord.lastAccessTime && flag == 0
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     UsedRecordDetail detail;
     detail.accessDuration = 10;
     detail.status = PERM_ACTIVE_IN_FOREGROUND;
     detail.timestamp = 10000;
-    flag = 1;
+    flag = FLAG_PERMISSION_USAGE_DETAIL;
     inBundleRecord.lastRejectTime = 1000;
     inBundleRecord.accessRecords.emplace_back(detail);
     inBundleRecord.rejectRecords.emplace_back(detail);
     // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() < 10
     // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() < 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     std::vector<UsedRecordDetail> accessRecords(11, detail);
     outBundleRecord.accessRecords = accessRecords;
     outBundleRecord.rejectRecords = accessRecords;
     // flag != 0 && inBundleRecord.lastRejectTime > 0 && outBundleRecord.accessRecords.size() >= 10
     // && inBundleRecord.lastRejectTime > 0 && outBundleRecord.rejectRecords.size() >= 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 
     inBundleRecord.lastAccessTime = 0;
     inBundleRecord.lastRejectTime = 0;
     // flag != 0 && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.accessRecords.size() >= 10
     // && inBundleRecord.lastRejectTime <= 0 && outBundleRecord.rejectRecords.size() >= 10
-    PermissionRecordManager::GetInstance().UpdateRecords(flag, inBundleRecord, outBundleRecord);
+    PermissionRecordManager::GetInstance().MergeSamePermission(flag, inBundleRecord, outBundleRecord);
 }
 
 /*
@@ -1128,19 +1128,6 @@ HWTEST_F(PermissionRecordManagerTest, DeepCopyFromHead001, TestSize.Level1)
 }
 
 /*
- * @tc.name: RecordManagerTest001
- * @tc.desc: GetAllRecordValuesByKey normal case
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, RecordManagerTest001, TestSize.Level1)
-{
-    std::vector<GenericValues> resultValues;
-    EXPECT_EQ(true, PermissionRecordRepository::GetInstance().GetAllRecordValuesByKey(
-        PrivacyFiledConst::FIELD_TOKEN_ID, resultValues));
-}
-
-/*
  * @tc.name: PermissionUsedRecordCacheTest001
  * @tc.desc: PermissionUsedRecordCache Func test
  * @tc.type: FUNC
@@ -1148,9 +1135,6 @@ HWTEST_F(PermissionRecordManagerTest, RecordManagerTest001, TestSize.Level1)
  */
 HWTEST_F(PermissionRecordManagerTest, PermissionUsedRecordCacheTest001, TestSize.Level1)
 {
-    std::set<AccessTokenID> tokenIdList;
-    PermissionUsedRecordCache::GetInstance().FindTokenIdList(tokenIdList);
-    PermissionRecordManager::GetInstance().GetLocalRecordTokenIdList(tokenIdList);
     std::set<int32_t> opCodeList;
     GenericValues andConditionValues;
     std::vector<GenericValues> findRecordsValues;
@@ -1176,7 +1160,7 @@ HWTEST_F(PermissionRecordManagerTest, PermissionUsedRecordCacheTest001, TestSize
 HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest001, TestSize.Level1)
 {
     PermissionUsedRequest request;
-    request.tokenId = g_selfTokenId;
+    request.tokenId = 0;
     request.isRemote = false;
     request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
     PermissionUsedResult result;
@@ -1198,33 +1182,6 @@ HWTEST_F(PermissionRecordManagerTest, GetRecordsFromLocalDBTest002, TestSize.Lev
     request.beginTimeMillis = -1; // -1 is a invalid input
     PermissionUsedResult result;
     EXPECT_EQ(false, PermissionRecordManager::GetInstance().GetRecordsFromLocalDB(request, result));
-}
-
-/**
- * @tc.name: GetRecordsFromLocalDBTest003
- * @tc.desc: test GetRecords: not exist OpCode
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, RecordConverage011, TestSize.Level1)
-{
-    PermissionUsedRequest request;
-    request.tokenId = g_selfTokenId;
-    request.isRemote = false;
-    request.flag = PermissionUsageFlag::FLAG_PERMISSION_USAGE_SUMMARY_IN_SCREEN_LOCKED;
-    request.beginTimeMillis = -1; // -1 is a invalid input
-
-    std::vector<GenericValues> recordValues;
-    GenericValues tmp;
-    int64_t val = 1; // 1 is a test value
-    int32_t notExistOpCode = -2; // -2 is a not exist OpCode
-    tmp.Put(PrivacyFiledConst::FIELD_TIMESTAMP, val);
-    tmp.Put(PrivacyFiledConst::FIELD_OP_CODE, notExistOpCode);
-    recordValues.emplace_back(tmp);
-    int32_t flag = 1; // 1 is a test flag
-    BundleUsedRecord bundleRecord;
-    PermissionUsedResult result;
-    PermissionRecordManager::GetInstance().GetRecords(flag, recordValues, bundleRecord, result);
 }
 
 /*
@@ -1459,7 +1416,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     bool isMuteCamera = CameraManagerPrivacyClient::GetInstance().IsCameraMuted();
     CameraManagerPrivacyClient::GetInstance().MuteCamera(true); // true means close
 
-    auto callbackPtr = std::make_shared<CbCustomizeTest1>();
+    auto callbackPtr = std::make_shared<PermissionRecordManagerCoverTestCb1>();
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
@@ -1517,6 +1474,42 @@ HWTEST_F(PermissionRecordManagerTest, ContinuousTaskCallbackInfoParcel001, TestS
     EXPECT_EQ(info.typeIds_, p->typeIds_);
     EXPECT_EQ(info.abilityId_, p->abilityId_);
     EXPECT_EQ(info.tokenId_, p->tokenId_);
+}
+
+/*
+ * @tc.name: CreatePermissionUsedTypeTable001
+ * @tc.desc: PermissionUsedRecordDb::CreatePermissionUsedTypeTable function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, CreatePermissionUsedTypeTable001, TestSize.Level1)
+{
+    ASSERT_EQ(0, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().CreatePermissionUsedTypeTable());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
+}
+
+/*
+ * @tc.name: InsertPermissionUsedTypeColumn001
+ * @tc.desc: PermissionUsedRecordDb::InsertPermissionUsedTypeColumn function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, InsertPermissionUsedTypeColumn001, TestSize.Level1)
+{
+    ASSERT_EQ(Constant::SUCCESS, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
+
+    std::map<PermissionUsedRecordDb::DataType, SqliteTable> dataTypeToSqlTable;
+    dataTypeToSqlTable = PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_; // backup
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_.clear();
+
+    ASSERT_EQ(Constant::FAILURE, PermissionUsedRecordDb::GetInstance().InsertPermissionUsedTypeColumn());
+    PermissionUsedRecordDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
 }
 } // namespace AccessToken
 } // namespace Security

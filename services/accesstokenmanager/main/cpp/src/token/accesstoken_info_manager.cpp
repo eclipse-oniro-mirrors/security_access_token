@@ -133,8 +133,9 @@ void AccessTokenInfoManager::InitHapTokenInfos()
             continue;
         }
         ACCESSTOKEN_LOG_INFO(LABEL,
-            " Restore hap token %{public}u bundle name %{public}s user %{public}d inst %{public}d ok!",
-            tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetInstIndex());
+            " Restore hap token %{public}u bundle name %{public}s user %{public}d,"
+            " permSize %{public}d, inst %{public}d ok!",
+            tokenId, hap->GetBundleName().c_str(), hap->GetUserID(), hap->GetReqPermissionSize(), hap->GetInstIndex());
     }
     PermissionDefinitionCache::GetInstance().RestorePermDefInfo(permDefRes);
 }
@@ -176,8 +177,8 @@ void AccessTokenInfoManager::InitNativeTokenInfos()
             continue;
         }
         ACCESSTOKEN_LOG_INFO(LABEL,
-            "restore native token %{public}u process name %{public}s ok!",
-            tokenId, native->GetProcessName().c_str());
+            "restore native token %{public}u process name %{public}s, permSize %{public}d ok!",
+            tokenId, native->GetProcessName().c_str(), native->GetReqPermissionSize());
     }
 }
 

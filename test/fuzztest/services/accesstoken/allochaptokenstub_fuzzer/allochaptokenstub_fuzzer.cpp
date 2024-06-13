@@ -20,6 +20,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_manager_service.h"
 #include "hap_info_parcel.h"
@@ -31,39 +32,41 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-    void ConstructorParam(const std::string& testName, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
+    void ConstructorParam(AccessTokenFuzzData& fuzzData, HapInfoParcel& hapInfoParcel, HapPolicyParcel& hapPolicyParcel)
     {
+        std::string permissionName = fuzzData.GenerateRandomString();
+        std::string bundleName = fuzzData.GenerateRandomString();
         PermissionDef testPermDef = {
-            .permissionName = testName,
-            .bundleName = testName,
+            .permissionName = permissionName,
+            .bundleName = bundleName,
             .grantMode = 1,
             .availableLevel = APL_NORMAL,
-            .label = testName,
+            .label = fuzzData.GenerateRandomString(),
             .labelId = 1,
-            .description = testName,
+            .description = fuzzData.GenerateRandomString(),
             .descriptionId = 1};
         PermissionStateFull TestState = {
-            .permissionName = testName,
+            .permissionName = permissionName,
             .isGeneral = true,
-            .resDeviceID = {testName},
+            .resDeviceID = {fuzzData.GenerateRandomString()},
             .grantStatus = {PermissionState::PERMISSION_GRANTED},
             .grantFlags = {1},
         };
         HapInfoParams TestInfoParms = {
             .userID = 1,
-            .bundleName = testName,
+            .bundleName = bundleName,
             .instIndex = 0,
-            .appIDDesc = testName};
+            .appIDDesc = fuzzData.GenerateRandomString()};
         PreAuthorizationInfo info1 = {
-            .permissionName = testName,
+            .permissionName = permissionName,
             .userCancelable = true
         };
         HapPolicyParams TestPolicyPrams = {
             .apl = APL_NORMAL,
-            .domain = testName,
+            .domain = fuzzData.GenerateRandomString(),
             .permList = {testPermDef},
             .permStateList = {TestState},
-            .aclRequestedList = {testName},
+            .aclRequestedList = {permissionName},
             .preAuthorizationInfo = {info1}
         };
 
@@ -77,10 +80,10 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char *>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
         HapInfoParcel hapInfoParcel;
         HapPolicyParcel hapPolicyParcel;
-        ConstructorParam(testName, hapInfoParcel, hapPolicyParcel);
+        ConstructorParam(fuzzData, hapInfoParcel, hapPolicyParcel);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

@@ -64,6 +64,7 @@ public:
     std::string GetProcessName() const;
     NativeTokenInfo GetNativeTokenInfo() const;
     std::shared_ptr<PermissionPolicySet> GetNativeInfoPermissionPolicySet() const;
+    uint32_t GetReqPermissionSize() const;
     bool IsRemote() const;
     void SetRemote(bool isRemote);
 

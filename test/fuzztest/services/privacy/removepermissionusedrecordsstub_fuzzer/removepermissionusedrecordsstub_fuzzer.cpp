@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "i_privacy_manager.h"
 #include "privacy_manager_service.h"
@@ -32,15 +34,14 @@ namespace OHOS {
             return false;
         }
 
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
-        if (!datas.WriteUint32(tokenId)) {
+        if (!datas.WriteUint32(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()))) {
             return false;
         }
-        if (!datas.WriteString(testName)) {
+        if (!datas.WriteString(fuzzData.GenerateRandomString())) {
             return false;
         }
 

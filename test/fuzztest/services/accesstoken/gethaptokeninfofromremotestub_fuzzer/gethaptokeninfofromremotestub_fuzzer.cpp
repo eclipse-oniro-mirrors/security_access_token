@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 #undef private
-
+#include "accesstoken_fuzzdata.h"
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_manager_service.h"
@@ -35,10 +35,10 @@ namespace OHOS {
     {
     #ifdef TOKEN_SYNC_ENABLE
         if ((data == nullptr) || (size == 0)) {
-        return false;
+            return false;
         }
-
-        AccessTokenID tokenId = static_cast<AccessTokenID>(size);
+        AccessTokenFuzzData fuzzData(data, size);
+        AccessTokenID tokenId = fuzzData.GetData<AccessTokenID>();
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

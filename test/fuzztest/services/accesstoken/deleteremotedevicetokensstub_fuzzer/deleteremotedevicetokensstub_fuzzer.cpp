@@ -18,6 +18,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "accesstoken_fuzzdata.h"
 #undef private
 #include "accesstoken_info_manager.h"
 #include "accesstoken_kit.h"
@@ -37,7 +38,8 @@ namespace OHOS {
             return false;
         }
 
-        std::string testName(reinterpret_cast<const char*>(data), size);
+        AccessTokenFuzzData fuzzData(data, size);
+        std::string testName(fuzzData.GenerateRandomString());
 
         MessageParcel datas;
         datas.WriteInterfaceToken(IAccessTokenManager::GetDescriptor());

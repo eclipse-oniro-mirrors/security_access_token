@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef PRIVACY_CONTINUOUS_TASK_CALLBACK_INFO_H
-#define PRIVACY_CONTINUOUS_TASK_CALLBACK_INFO_H
+#ifndef ACCESS_CONTINUOUS_TASK_CALLBACK_INFO_H
+#define ACCESS_CONTINUOUS_TASK_CALLBACK_INFO_H
 
 #include <singleton.h>
 #include <string>
@@ -36,6 +36,7 @@ enum class BackgroundMode {
     VOIP,
     TASK_KEEPING,
 };
+
 struct ContinuousTaskCallbackInfo : public Parcelable {
     uint32_t typeId_ {0};
     int32_t creatorUid_ {0};
@@ -55,4 +56,4 @@ struct ContinuousTaskCallbackInfo : public Parcelable {
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // PRIVACY_CONTINUOUS_TASK_CALLBACK_INFO_H
+#endif // ACCESS_CONTINUOUS_TASK_CALLBACK_INFO_H

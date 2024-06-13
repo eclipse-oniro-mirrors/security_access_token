@@ -65,9 +65,6 @@ namespace OHOS {
             return false;
         }
     #ifdef TOKEN_SYNC_ENABLE
-        if (!NativeTokenGet()) {
-            return false;
-        }
         sptr<TokenSyncCallbackImpl> callback = new (std::nothrow) TokenSyncCallbackImpl();
         if (callback == nullptr) {
             return false;
@@ -93,6 +90,11 @@ namespace OHOS {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
+#ifdef TOKEN_SYNC_ENABLE
+    if (!NativeTokenGet()) {
+        return 0;
+    }
+#endif
     OHOS::RegisterTokenSyncCallbackStubFuzzTest(data, size);
     return 0;
 }

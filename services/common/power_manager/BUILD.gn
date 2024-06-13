@@ -14,7 +14,7 @@
 import("//build/ohos.gni")
 import("../../../access_token.gni")
 
-config("accesstoken_service_common_abillity_manager_config") {
+config("accesstoken_power_manager_config") {
   visibility = [ ":*" ]
   include_dirs = [ "include" ]
 }
@@ -32,11 +32,11 @@ ohos_shared_library("accesstoken_power_manager") {
 
     include_dirs = [ "include" ]
 
-    sources = [ "src/power_manager_access_loader.cpp" ]
+    sources = [ "src/power_manager_loader.cpp" ]
 
     cflags_cc = []
     configs = [ "${access_token_path}/config:coverage_flags" ]
-    public_configs = [ ":accesstoken_service_common_abillity_manager_config" ]
+    public_configs = [ ":accesstoken_power_manager_config" ]
 
     external_deps = [
       "c_utils:utils",
