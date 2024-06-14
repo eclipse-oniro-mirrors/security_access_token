@@ -149,7 +149,7 @@ int32_t El5FilekeyManagerProxy::DeleteAppKey(const std::string& keyId)
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, bool getAllFlag, 
+int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, bool getAllFlag,
     std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
     MessageParcel data;
