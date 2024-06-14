@@ -36,7 +36,7 @@ namespace OHOS {
 
         AccessTokenFuzzData fuzzData(data, size);
 
-        return PrivacyKit::UpdateSecCompEnhance(fuzzData.GetData<int32_t>());
+        return PrivacyKit::UpdateSecCompEnhance(fuzzData.GetData<int32_t>(), fuzzData.GetData<uint32_t>()) == 0;
     }
 }
 

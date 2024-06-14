@@ -38,7 +38,7 @@ namespace OHOS {
 
         std::vector<SecCompEnhanceData> enhanceList;
 
-        return PrivacyKit::GetSpecialSecCompEnhance(fuzzData.GenerateRandomString());
+        return PrivacyKit::GetSpecialSecCompEnhance(fuzzData.GenerateRandomString(), enhanceList) == 0;
     }
 }
 

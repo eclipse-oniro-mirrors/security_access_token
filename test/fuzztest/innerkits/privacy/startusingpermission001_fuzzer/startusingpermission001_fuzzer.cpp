@@ -56,7 +56,7 @@ namespace OHOS {
         auto callback = std::make_shared<CbCustomizeTest>();
 
         return PrivacyKit::StartUsingPermission(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()),
-            fuzzData.GenerateRandomString());
+            fuzzData.GenerateRandomString()) == 0;
     }
 }
 
