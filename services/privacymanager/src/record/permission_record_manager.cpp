@@ -1071,13 +1071,16 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
 
 int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool isMute)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     if (isMute) {
         ModifyMuteStatus(permissionName, EDM, isMute);
         ModifyMuteStatus(permissionName, MIXED, isMute);
     } else {
         ModifyMuteStatus(permissionName, EDM, isMute);
+        if (GetMuteStatus(permissionName, MIXED)) {
+            return ERR_PRIVACY_POLICY_CHECK_FAILED;
+        }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
     }
@@ -1086,6 +1089,7 @@ int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionNa
 
 int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissionName, bool isMute)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     if (isMute) {
         ModifyMuteStatus(permissionName, MIXED, isMute);
     } else {
@@ -1094,7 +1098,6 @@ int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissi
         }
         ModifyMuteStatus(permissionName, MIXED, isMute);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     if (permissionName == MICROPHONE_PERMISSION_NAME) {
         ExecuteAndUpdateRecordByPerm(MICROPHONE_PERMISSION_NAME, !isMute);
     }
@@ -1103,6 +1106,7 @@ int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissi
 
 int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionName, bool isMute)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     if (!isMute) {
         if (GetMuteStatus(permissionName, EDM)) {
             return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
@@ -1115,7 +1119,6 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "permissionName: %{public}s, isMute: %{public}d", permissionName.c_str(), isMute);
     return RET_SUCCESS;
 }
 
