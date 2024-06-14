@@ -3569,6 +3569,166 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_FORM_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_WORK_SCHEDULER_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_INPUT_METHOD_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_ACCESSIBILITY_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_STATIC_SUBSCRIBER_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_WALLPAPER_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_BACKUP_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_ENTERPRISE_ADMIN_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_FILE_ACCESS_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_PRINT_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_DRIVER_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_APP_ACCOUNT_AUTHORIZATION_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_REMOTE_NOTIFICATION_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_REMOTE_LOCATION_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_VPN_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.KILL_PROCESS_DEPENDED_ON_ARKWEB",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ],
     "userGrantPermissions": [
