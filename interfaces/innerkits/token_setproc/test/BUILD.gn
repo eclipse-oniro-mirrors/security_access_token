@@ -34,8 +34,11 @@ ohos_unittest("libtoken_setproc_test") {
   deps = [
     "../:libperm_setproc",
     "../:libtokensetproc_shared",
-    "//third_party/googletest:gmock",
-    "//third_party/googletest:gtest",
+  ]
+
+  external_deps = [
+    "googletest:gmock",
+    "googletest:gtest",
   ]
 }
 

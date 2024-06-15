@@ -95,7 +95,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
       "${access_token_path}/services/common:accesstoken_service_common",
       "${access_token_path}/services/privacymanager:privacy_manager_service",
-      "//third_party/googletest:gtest_main",
     ]
 
     if (access_token_feature_dtmf_tone) {
@@ -107,6 +106,7 @@ if (is_standard_system && ability_base_enable == true) {
       "access_token:libaccesstoken_sdk",
       "audio_framework:audio_client",
       "c_utils:utils",
+      "googletest:gtest_main",
       "hilog:libhilog",
       "hisysevent:libhisysevent",
       "init:libbegetutil",
