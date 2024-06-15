@@ -34,14 +34,12 @@ ohos_unittest("libnativetoken_test") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [
-    "../:libnativetoken_shared",
-    "//third_party/googletest:gmock",
-    "//third_party/googletest:gtest",
-  ]
+  deps = [ "../:libnativetoken_shared" ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "cJSON:cjson_static",
+    "googletest:gmock",
+    "googletest:gtest",
   ]
 }
 
@@ -71,12 +69,10 @@ ohos_unittest("libnativetoken_mock_test") {
 
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
-  deps = [
-    "//third_party/googletest:gmock",
-    "//third_party/googletest:gtest",
-  ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "googletest:gmock",
+    "googletest:gtest",
     "hilog:libhilog",
   ]
 }

@@ -115,12 +115,12 @@ ohos_unittest("accesstoken_mock_test") {
     "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "../:libtokenid_sdk",
-    "//third_party/googletest:gmock_main",
-    "//third_party/googletest:gtest_main",
   ]
 
   external_deps = [
     "c_utils:utils",
+    "googletest:gmock",
+    "googletest:gtest_main",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "init:libbeget_proxy",
