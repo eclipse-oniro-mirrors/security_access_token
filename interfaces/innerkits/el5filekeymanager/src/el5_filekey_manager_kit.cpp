@@ -42,7 +42,7 @@ int32_t El5FilekeyManagerKit::DeleteAppKey(const std::string& keyId)
 
 int32_t El5FilekeyManagerKit::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
-    return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, keyInfos);
+    return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, false, keyInfos);
 }
 
 int32_t El5FilekeyManagerKit::ChangeUserAppkeysLoadInfo(int32_t userId,
@@ -59,6 +59,11 @@ int32_t El5FilekeyManagerKit::SetFilePathPolicy()
 int32_t El5FilekeyManagerKit::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
 {
     return El5FilekeyManagerClient::GetInstance().RegisterCallback(callback);
+}
+
+int32_t El5FilekeyManagerKit::GetUserAllAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+{
+    return El5FilekeyManagerClient::GetInstance().GetUserAppKey(userId, true, keyInfos);
 }
 }  // namespace AccessToken
 }  // namespace Security

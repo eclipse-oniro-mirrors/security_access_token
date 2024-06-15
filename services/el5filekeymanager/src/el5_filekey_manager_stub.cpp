@@ -104,8 +104,9 @@ void El5FilekeyManagerStub::DeleteAppKeyInner(MessageParcel &data, MessageParcel
 void El5FilekeyManagerStub::GetUserAppKeyInner(MessageParcel &data, MessageParcel &reply)
 {
     int32_t userId = data.ReadInt32();
+    bool getAllFlag = data.ReadBool();
     std::vector<std::pair<int32_t, std::string>> keyInfos;
-    reply.WriteInt32(this->GetUserAppKey(userId, keyInfos));
+    reply.WriteInt32(this->GetUserAppKey(userId, getAllFlag, keyInfos));
     MarshallingKeyInfos(reply, keyInfos);
 }
 

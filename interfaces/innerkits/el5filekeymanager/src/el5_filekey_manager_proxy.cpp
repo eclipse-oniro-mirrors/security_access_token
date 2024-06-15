@@ -149,7 +149,8 @@ int32_t El5FilekeyManagerProxy::DeleteAppKey(const std::string& keyId)
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, bool getAllFlag,
+    std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
@@ -158,6 +159,10 @@ int32_t El5FilekeyManagerProxy::GetUserAppKey(int32_t userId, std::vector<std::p
     }
     if (!data.WriteUint32(userId)) {
         LOG_ERROR("Failed to WriteUint32(%{public}d).", userId);
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteBool(getAllFlag)) {
+        LOG_ERROR("Failed to WriteBool");
         return EFM_ERR_IPC_WRITE_DATA;
     }
 

@@ -132,7 +132,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey001, TestSize.Level1)
 {
     int32_t userId = 100;
     std::vector<std::pair<int32_t, std::string>> keyInfos;
-    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_NO_PERMISSION);
 }
 
 /**

@@ -213,7 +213,8 @@ int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& keyId)
     return service_->DeleteAppKey(keyId);
 }
 
-int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
+int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,
+    std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
     LOG_DEBUG("Get user %{public}d app key.", userId);
     if (userId < 0) {
@@ -231,7 +232,7 @@ int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, std::vector<std:
         return EFM_SUCCESS;
     }
 
-    return service_->GetUserAppKey(userId, keyInfos);
+    return service_->GetUserAppKey(userId, getAllFlag, keyInfos);
 }
 
 int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,

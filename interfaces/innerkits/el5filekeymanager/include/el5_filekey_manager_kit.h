@@ -59,7 +59,7 @@ public:
      */
     static int32_t DeleteAppKey(const std::string& keyId);
     /**
-     * @brief Get key infos of the specified user.
+     * @brief Get key infos of the specified user, the state is unloaded.
      * @param userId The user id
      * @param keyInfos Key infos of the specified user id, as query result
      * @return error code, see el5_filekey_manager_error.h
@@ -83,6 +83,13 @@ public:
      * @return error code, see el5_filekey_manager_error.h
      */
     static int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
+    /**
+     * @brief Get key infos of the specified user.
+     * @param userId The user id
+     * @param keyInfos Key infos of the specified user id, as query result
+     * @return error code, see el5_filekey_manager_error.h
+     */
+    static int32_t GetUserAllAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos);
 };
 }  // namespace AccessToken
 }  // namespace Security
