@@ -476,6 +476,8 @@ bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const 
 
         std::string permission = permRequestToggleStatus.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
         if (permission == permissionName) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, has been forbidden", userID,
+                permissionName.c_str());
             return true;
         }
     }

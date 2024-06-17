@@ -702,6 +702,7 @@ bool AccessTokenManagerService::Initialize()
     PermissionDefinitionParser::GetInstance().Init();
     AccessTokenServiceParamSet();
     GetConfigValue();
+    TempPermissionObserver::GetInstance().GetConfigValue();
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
     return true;
 }

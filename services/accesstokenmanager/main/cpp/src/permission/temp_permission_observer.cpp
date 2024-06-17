@@ -484,7 +484,6 @@ bool TempPermissionObserver::DelayRevokePermission(AccessToken::AccessTokenID to
         TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
         ACCESSTOKEN_LOG_INFO(LABEL, "Token: %{public}d, delay revoke permission end", tokenID);
     });
-    GetConfigValue();
     eventHandler_->ProxyPostTask(delayed, taskName, cancleTimes_);
     return true;
 #else
@@ -509,7 +508,7 @@ bool TempPermissionObserver::CancleTaskOfPermissionRevoking(const std::string& t
     return false;
 #endif
 }
-#ifdef EVENTHANDLER_ENABLE
+
 void TempPermissionObserver::GetConfigValue()
 {
     LibraryLoader loader(CONFIG_POLICY_LIBPATH);
@@ -534,7 +533,6 @@ void TempPermissionObserver::SetDefaultConfigValue()
 
     cancleTimes_ = DEFAULT_CANCLE_MILLISECONDS;
 }
-#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
