@@ -26,8 +26,6 @@
 #include "app_manager_death_callback.h"
 #include "app_manager_death_recipient.h"
 #include "app_status_change_callback.h"
-#include "audio_global_switch_change_stub.h"
-#include "camera_service_callback_stub.h"
 #include "hap_token_info.h"
 #include "libraryloader.h"
 #include "nocopyable.h"
@@ -92,7 +90,6 @@ public:
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
 
-    void NotifyCameraChange(bool isMute);
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
     int32_t GetLockScreenStatus();
@@ -159,6 +156,7 @@ private:
     bool IsCameraWindowShow(AccessTokenID tokenId);
     bool RegisterWindowCallback();
     bool UnRegisterWindowCallback();
+    void InitializeMuteState(const std::string& permissionName);
     int32_t GetAppStatus(AccessTokenID tokenId);
 
     bool RegisterAppStatusListener();
@@ -180,17 +178,17 @@ private:
 
     // microphone
     std::mutex micMuteMutex_;
-    std::mutex micCallbackMutex_;
+    std::mutex micLoadMutex_;
     bool isMicEdmMute_ = false;
     bool isMicMixMute_ = false;
-    sptr<AudioRoutingManagerListenerStub> micMuteCallback_ = nullptr;
+    bool isMicLoad_ = false;
 
     // camera
     std::mutex camMuteMutex_;
-    std::mutex cameraCallbackMutex_;
+    std::mutex camLoadMutex_;
     bool isCamEdmMute_ = false;
     bool isCamMixMute_ = false;
-    sptr<CameraServiceCallbackStub> camMuteCallback_ = nullptr;
+    bool isCamLoad_ = false;
 
     // appState
     std::mutex appStateMutex_;

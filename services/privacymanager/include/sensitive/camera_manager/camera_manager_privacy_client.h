@@ -17,6 +17,7 @@
 #define CAMERA_MANAGER_PRIVACY_CLIENT_H
 
 #include <mutex>
+#include <stdint.h>
 #include <string>
 
 #include "camera_manager_privacy_death_recipient.h"
@@ -31,8 +32,7 @@ public:
     static CameraManagerPrivacyClient& GetInstance();
     virtual ~CameraManagerPrivacyClient();
 
-    int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback);
-    int32_t MuteCamera(bool muteMode);
+    int32_t MuteCameraPersist(PolicyType policyType, bool muteMode);
     bool IsCameraMuted();
     void OnRemoteDiedHandle();
 

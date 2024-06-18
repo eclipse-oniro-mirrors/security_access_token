@@ -28,7 +28,6 @@ public:
 
     virtual bool GetPersistentMicMuteState() = 0;
     virtual int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type) = 0;
-    virtual int32_t SetMicStateChangeCallback(const sptr<IRemoteObject> &object) = 0;
 };
 
 class AudioManagerPrivacyProxy : public IRemoteProxy<IAudioPolicy> {
@@ -39,7 +38,6 @@ public:
 
     bool GetPersistentMicMuteState() override;
     int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type) override;
-    int32_t SetMicStateChangeCallback(const sptr<IRemoteObject> &object) override;
 private:
     static inline BrokerDelegator<AudioManagerPrivacyProxy> delegator_;
 };

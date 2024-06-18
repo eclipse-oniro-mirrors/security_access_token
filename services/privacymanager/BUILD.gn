@@ -86,14 +86,12 @@ if (is_standard_system && ability_base_enable == true) {
       "src/record/permission_record_manager.cpp",
       "src/record/permission_record_repository.cpp",
       "src/record/permission_used_record_cache.cpp",
-      "src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
       "src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
       "src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
       "src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
-      "src/sensitive/camera_manager/camera_service_callback_stub.cpp",
       "src/service/privacy_manager_service.cpp",
       "src/service/privacy_manager_stub.cpp",
     ]
@@ -164,6 +162,9 @@ if (is_standard_system && ability_base_enable == true) {
         "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
         "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
       ]
+    }
+    if (access_token_different_feature) {
+      cflags_cc += [ "-DDIFFERENT_FEATURE" ]
     }
   }
 }

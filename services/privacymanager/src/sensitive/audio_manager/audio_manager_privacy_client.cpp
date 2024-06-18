@@ -50,25 +50,6 @@ AudioManagerPrivacyClient::~AudioManagerPrivacyClient()
     ReleaseProxy();
 }
 
-int32_t AudioManagerPrivacyClient::SetMicStateChangeCallback(const sptr<AudioRoutingManagerListenerStub>& callback)
-{
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: Callback is nullptr.");
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
-    }
-    sptr<IRemoteObject> object = callback->AsObject();
-    if (object == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AudioPolicyManager: AsObject is nullptr.");
-        return -1;
-    }
-    return proxy->SetMicStateChangeCallback(object);
-}
-
 int32_t AudioManagerPrivacyClient::SetMicrophoneMutePersistent(const bool isMute, const PolicyType type)
 {
     auto proxy = GetProxy();
@@ -108,7 +89,7 @@ void AudioManagerPrivacyClient::InitProxy()
         audioManagerSa->AddDeathRecipient(serviceDeathObserver_);
     }
 
-    proxy_ = iface_cast<IAudioPolicy>(audioManagerSa);
+    proxy_ = new AudioManagerPrivacyProxy(audioManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }

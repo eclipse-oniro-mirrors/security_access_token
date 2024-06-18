@@ -41,7 +41,9 @@ bool AudioManagerPrivacyProxy::GetPersistentMicMuteState()
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetPersistentMicMuteState failed, error: %{public}d", error);
         return false;
     }
-    return reply.ReadBool();
+    bool isMute = reply.ReadBool();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Mic mute state: %{public}d", isMute);
+    return isMute;
 }
 
 int32_t AudioManagerPrivacyProxy::SetMicrophoneMutePersistent(const bool isMute, const PolicyType type)
@@ -61,26 +63,9 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMutePersistent(const bool isMute,
         ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
         return error;
     }
-    return reply.ReadInt32();
-}
-
-int32_t AudioManagerPrivacyProxy::SetMicStateChangeCallback(const sptr<IRemoteObject> &object)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
-        return ERROR;
-    }
-    (void)data.WriteRemoteObject(object);
-    int error = Remote()->SendRequest(static_cast<uint32_t>(
-        AudioStandard::AudioPolicyInterfaceCode::REGISTER_POLICY_CALLBACK_CLIENT), data, reply, option);
-    if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SetMicStateChangeCallback failed, error: %{public}d", error);
-        return error;
-    }
-    return reply.ReadInt32();
+    int32_t ret = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Set mute result: %{public}d", ret);
+    return ret;
 }
 } // namespace AccessToken
 } // namespace Security

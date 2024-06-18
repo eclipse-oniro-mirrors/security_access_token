@@ -33,7 +33,6 @@
 #include "background_task_manager_access_proxy.h"
 #endif
 #include "camera_manager_privacy_proxy.h"
-#include "camera_service_callback_stub.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -141,61 +140,6 @@ HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest003, TestSize.Level1)
     // code not default + state = 5
     ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
         IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED), data, reply, option));
-}
-
-class SensitiveManagerCoverageTestCb2 : public CameraServiceCallbackStub {
-public:
-    SensitiveManagerCoverageTestCb2() = default;
-    virtual ~SensitiveManagerCoverageTestCb2() = default;
-
-    int32_t OnCameraMute(bool muteMode)
-    {
-        GTEST_LOG_(INFO) << "OnCameraMute, muteMode is " << muteMode;
-        return 0;
-    }
-};
-
-/**
- * @tc.name: OnRemoteRequest004
- * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest004, TestSize.Level1)
-{
-    bool muteMode = false;
-    SensitiveManagerCoverageTestCb2 callback;
-
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(ICameraMuteServiceCallback::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteBool(muteMode));
-    uint32_t code = 10;
-    ASSERT_NE(0, callback.OnRemoteRequest(code, data, reply, option)); // msgCode default
-}
-
-/**
- * @tc.name: OnRemoteRequest005
- * @tc.desc: CameraServiceCallbackStub::OnRemoteRequest function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerCoverageTest, OnRemoteRequest005, TestSize.Level1)
-{
-    bool muteMode = false;
-    SensitiveManagerCoverageTestCb2 callback;
-
-    OHOS::MessageParcel data;
-    OHOS::MessageParcel reply;
-    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
-
-    ASSERT_EQ(true, data.WriteInterfaceToken(ICameraMuteServiceCallback::GetDescriptor()));
-    ASSERT_EQ(true, data.WriteBool(muteMode));
-    // msgId = 0
-    ASSERT_EQ(0, callback.OnRemoteRequest(static_cast<uint32_t>(
-        PrivacyCameraMuteServiceInterfaceCode::CAMERA_CALLBACK_MUTE_MODE), data, reply, option));
 }
 
 /*

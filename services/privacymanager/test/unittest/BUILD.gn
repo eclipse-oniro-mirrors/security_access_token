@@ -49,6 +49,7 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager/include/sensitive/app_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/audio_manager",
       "${access_token_path}/services/privacymanager/include/sensitive/camera_manager",
+      "${audio_framework_path}/services/audio_policy/common/include",
     ]
 
     sources = [
@@ -66,14 +67,12 @@ if (is_standard_system && ability_base_enable == true) {
       "../../src/record/permission_record_manager.cpp",
       "../../src/record/permission_record_repository.cpp",
       "../../src/record/permission_used_record_cache.cpp",
-      "../../src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
       "../../src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
       "../../src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
       "../../src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
       "../../src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
-      "../../src/sensitive/camera_manager/camera_service_callback_stub.cpp",
       "../../src/service/privacy_manager_service.cpp",
       "../../src/service/privacy_manager_stub.cpp",
       "permission_record_db_test.cpp",
@@ -104,7 +103,6 @@ if (is_standard_system && ability_base_enable == true) {
     external_deps = [
       "ability_base:want",
       "access_token:libaccesstoken_sdk",
-      "audio_framework:audio_client",
       "c_utils:utils",
       "googletest:gtest_main",
       "hilog:libhilog",

@@ -61,7 +61,7 @@ ohos_unittest("libprivacy_sdk_test") {
   ]
 
   if (audio_framework_enable) {
-    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENALBE" ]
+    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
     external_deps += [ "audio_framework:audio_client" ]
   }
 }
