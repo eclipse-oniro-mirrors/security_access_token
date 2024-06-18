@@ -82,7 +82,7 @@ public:
         const PermStateChangeScope& scope, const sptr<IRemoteObject>& callback);
     int32_t RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback);
     bool GetApiVersionByTokenId(AccessTokenID tokenID, int32_t& apiVersion);
-    bool LocationPermissionSpecialHandle(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
+    bool LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion);
     void NotifyPermGrantStoreResult(bool result, uint64_t timestamp);
     void ClearAllSecCompGrantedPerm(const std::vector<AccessTokenID>& tokenIdList);
@@ -109,7 +109,13 @@ private:
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);
-    bool GetLocationPermissionState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList,
+    bool GetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion);
+    bool GetStateWithVaguePermission(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
+    bool GetLocationPermissionStateBackGroundVersion(std::vector<PermissionListStateParcel>& reqPermList,
+        std::vector<PermissionStateFull>& permsList, int32_t apiVersion);
+    bool GetStateWithVaguePermissionBackGroundVersion(std::vector<PermissionListStateParcel>& reqPermList,
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);

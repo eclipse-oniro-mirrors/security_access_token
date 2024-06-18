@@ -42,6 +42,7 @@ namespace {
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
+static constexpr int32_t DEFAULT_API_VERSION_VAGUE = 9;
 static constexpr int32_t RANDOM_INPUT_32 = 123;
 static constexpr int64_t RANDOM_INPUT_64 = 123;
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
@@ -1153,6 +1154,20 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetLocationPermissionStateBackGroundVersion001
+ * @tc.desc: GetLocationPermissionStateBackGroundVersion function test with no location permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetLocationPermissionStateBackGroundVersion001, TestSize.Level1)
+{
+    std::vector<PermissionListStateParcel> reqPermList;
+    std::vector<PermissionStateFull> permsList;
+    ASSERT_FALSE(PermissionManager::GetInstance().GetLocationPermissionStateBackGroundVersion(
+        reqPermList, permsList, DEFAULT_API_VERSION_VAGUE));
+}
+
+/**
  * @tc.name: DumpPermDefInfo001
  * @tc.desc: PermissionManager::DumpPermDefInfo function test.
  * @tc.type: FUNC
@@ -1438,6 +1453,37 @@ HWTEST_F(PermissionManagerTest, IsPermissionVaild001, TestSize.Level1)
 
     permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(true, PermissionManager::GetInstance().IsPermissionVaild(permissionName));
+}
+
+/**
+ * @tc.name: GetLocationPermissionState001
+ * @tc.desc: PermissionManager::GetLocationPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GetLocationPermissionState001, TestSize.Level1)
+{
+    std::vector<PermissionListStateParcel> reqPermList;
+    std::vector<PermissionStateFull> permsList;
+    int32_t apiVersion = DEFAULT_API_VERSION_VAGUE;
+
+    // no location permissions
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+
+    PermissionListStateParcel accurateParcel;
+    accurateParcel.permsState.permissionName = "ohos.permission.LOCATION";
+    reqPermList.emplace_back(accurateParcel);
+    // only accurate location permission
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+    ASSERT_EQ(INVALID_OPER, reqPermList[0].permsState.state);
+
+    reqPermList.clear();
+    PermissionListStateParcel backParcel;
+    backParcel.permsState.permissionName = "ohos.permission.LOCATION_IN_BACKGROUND";
+    reqPermList.emplace_back(backParcel);
+    // only back location permission
+    ASSERT_EQ(false, PermissionManager::GetInstance().GetLocationPermissionState(reqPermList, permsList, apiVersion));
+    ASSERT_EQ(INVALID_OPER, reqPermList[0].permsState.state);
 }
 
 /**

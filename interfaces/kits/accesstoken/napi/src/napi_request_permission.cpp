@@ -387,7 +387,11 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
         ACCESSTOKEN_LOG_ERROR(LABEL, "Returned permList size: %{public}zu.", permList.size());
         return false;
     }
-    return ret == TypePermissionOper::DYNAMIC_OPER;
+    if (ret != TypePermissionOper::DYNAMIC_OPER) {
+        return false;
+    }
+
+    return true;
 }
 
 static void GrantResultsCallbackUI(const std::vector<std::string>& permissionList,

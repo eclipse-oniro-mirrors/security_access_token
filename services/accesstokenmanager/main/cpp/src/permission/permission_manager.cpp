@@ -860,66 +860,118 @@ bool PermissionManager::GetLocationPermissionIndex(std::vector<PermissionListSta
     return hasFound;
 }
 
-bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
-    std::vector<PermissionListStateParcel>& reqPermList, std::vector<PermissionStateFull>& permsList,
-    int32_t apiVersion, const LocationIndex& locationIndex)
+bool PermissionManager::GetStateWithVaguePermission(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex)
 {
-    bool needVagueDynamic = false;
-    bool needAccurateDynamic = false; // needVagueDynamic-false, 1. not request;2. request but not equal to DYNAMIC_OPER
-    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
-        GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
-        needVagueDynamic = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
-    }
-
+    bool needRes = false;
+    GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
+    needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
     if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
-        bool isVagueGranted = VerifyHapAccessToken(tokenID, VAGUE_LOCATION_PERMISSION_NAME) == PERMISSION_GRANTED;
         // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
         GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
-        needAccurateDynamic = reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER;
-
-        // update permsState
-        if (needAccurateDynamic) {
-            // vague permissoion is not pop and permission status os not granted
-            if (!needVagueDynamic && !isVagueGranted) {
-                reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-                needAccurateDynamic = false;
-            }
-        }
-    }
-
-    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
-        if (apiVersion >= BACKGROUND_LOCATION_API_VERSION) {
-            // background permission
-            // with back and vague permission, request back can not pop dynamic dialog
-            reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
+        if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
+            ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
+            (reqPermList[locationIndex.vagueIndex].permsState.state == INVALID_OPER))) {
             reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
-            reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
-            return false;
         }
+        needRes = needRes || (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER);
+    }
+    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
         // with back and vague permission
         // back state is SETTING_OPER when dynamic pop-up dialog appears and INVALID_OPER when it doesn't
         GetSelfPermissionState(permsList, reqPermList[locationIndex.backIndex].permsState, apiVersion);
         if (reqPermList[locationIndex.backIndex].permsState.state == DYNAMIC_OPER) {
-            if (needAccurateDynamic || needVagueDynamic) {
+            if (((locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) &&
+                (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER)) ||
+                (reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER)) {
                 reqPermList[locationIndex.backIndex].permsState.state = SETTING_OPER;
             } else {
                 reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
             }
         }
     }
-    return needVagueDynamic || needAccurateDynamic;
+    return needRes;
 }
 
-bool PermissionManager::LocationPermissionSpecialHandle(
-    AccessTokenID tokenID,
-    std::vector<PermissionListStateParcel>& reqPermList,
+bool PermissionManager::GetLocationPermissionState(std::vector<PermissionListStateParcel>& reqPermList,
     std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
 {
     struct LocationIndex locationIndex;
     if (!GetLocationPermissionIndex(reqPermList, locationIndex)) {
         return false;
     }
-    return GetLocationPermissionState(tokenID, reqPermList, permsList, apiVersion, locationIndex);
+    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
+        return GetStateWithVaguePermission(reqPermList, permsList, apiVersion, locationIndex);
+    }
+    // permission handle without vague location, accurate and back can't be requested
+    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+        reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+    }
+    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
+        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+    }
+    return false;
+}
+
+bool PermissionManager::GetStateWithVaguePermissionBackGroundVersion(
+    std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex)
+{
+    bool needRes = false;
+    GetSelfPermissionState(permsList, reqPermList[locationIndex.vagueIndex].permsState, apiVersion);
+    needRes = reqPermList[locationIndex.vagueIndex].permsState.state == DYNAMIC_OPER;
+    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+        // request accurate and vague permission, if vague has been set or invalid, accurate can't be requested
+        GetSelfPermissionState(permsList, reqPermList[locationIndex.accurateIndex].permsState, apiVersion);
+        if (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER &&
+            ((reqPermList[locationIndex.vagueIndex].permsState.state == SETTING_OPER) ||
+            (reqPermList[locationIndex.vagueIndex].permsState.state == INVALID_OPER))) {
+            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+        }
+        needRes = needRes || (reqPermList[locationIndex.accurateIndex].permsState.state == DYNAMIC_OPER);
+    }
+    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
+        // with back and vague permission, request back can not pop dynamic dialog
+        reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
+        if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+        }
+        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+        needRes = false;
+    }
+    return needRes;
+}
+
+bool PermissionManager::GetLocationPermissionStateBackGroundVersion(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
+{
+    struct LocationIndex locationIndex;
+    if (!GetLocationPermissionIndex(reqPermList, locationIndex)) {
+        return false;
+    }
+    if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
+        return GetStateWithVaguePermissionBackGroundVersion(reqPermList, permsList, apiVersion, locationIndex);
+    }
+    // permission handle without vague location, accurate and back can't be requested
+    if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+        reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+    }
+    if (locationIndex.backIndex != PERMISSION_NOT_REQUSET) {
+        reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
+    }
+    return false;
+}
+
+bool PermissionManager::LocationPermissionSpecialHandle(std::vector<PermissionListStateParcel>& reqPermList,
+    std::vector<PermissionStateFull>& permsList, int32_t apiVersion)
+{
+    bool needRes = false;
+    if (apiVersion < BACKGROUND_LOCATION_API_VERSION) {
+        needRes = GetLocationPermissionState(reqPermList, permsList, apiVersion);
+    } else {
+        needRes = GetLocationPermissionStateBackGroundVersion(reqPermList, permsList, apiVersion);
+    }
+    return needRes;
 }
 
 void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
