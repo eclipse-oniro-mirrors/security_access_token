@@ -891,8 +891,12 @@ bool PermissionManager::GetLocationPermissionState(AccessTokenID tokenID,
         if (apiVersion >= BACKGROUND_LOCATION_API_VERSION) {
             // background permission
             // with back and vague permission, request back can not pop dynamic dialog
-            reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
-            reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+            if (locationIndex.vagueIndex != PERMISSION_NOT_REQUSET) {
+                reqPermList[locationIndex.vagueIndex].permsState.state = INVALID_OPER;
+            }
+            if (locationIndex.accurateIndex != PERMISSION_NOT_REQUSET) {
+                reqPermList[locationIndex.accurateIndex].permsState.state = INVALID_OPER;
+            }
             reqPermList[locationIndex.backIndex].permsState.state = INVALID_OPER;
             return false;
         }

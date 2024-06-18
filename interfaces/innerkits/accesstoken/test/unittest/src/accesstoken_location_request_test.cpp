@@ -1869,7 +1869,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Le
 
 /**
  * @tc.name: GetSelfPermissionsState040
- * @tc.desc: accurate + background with granted vague location api9, ret: DYNAMIC_OPER, state: DYNAMIC_OPER + SETTING_OPER
+ * @tc.desc: accurate/background with granted vague location api9, ret: DYNAMIC_OPER, state: DYNAMIC_OPER/SETTING_OPER
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
