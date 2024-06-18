@@ -218,7 +218,8 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
 
     // api9 location permission handle here
     if (apiVersion >= ACCURATE_LOCATION_API_VERSION) {
-        needRes = PermissionManager::GetInstance().LocationPermissionSpecialHandle(reqPermList, permsList, apiVersion);
+        needRes = PermissionManager::GetInstance().LocationPermissionSpecialHandle(
+            tokenID, reqPermList, permsList, apiVersion);
     }
 
     uint32_t size = reqPermList.size();

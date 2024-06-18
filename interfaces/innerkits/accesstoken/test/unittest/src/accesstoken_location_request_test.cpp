@@ -290,7 +290,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState004, TestSize.Le
 
 /**
  * @tc.name: GetSelfPermissionsState005
- * @tc.desc: only accurate location permission with granted vague location, ret: PASS_OPER, state: INVALID_OPER
+ * @tc.desc: only accurate location permission with granted vague location, ret: DYNAMIC_OPER, state: DYNAMIC_OPER
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
@@ -315,9 +315,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState005, TestSize.Le
 
     PermissionGrantInfo info;
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList5, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(1), permsList5.size());
-    ASSERT_EQ(INVALID_OPER, permsList5[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList5[0].state);
 }
 
 /**
@@ -585,7 +585,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState012, TestSize.Le
 
 /**
  * @tc.name: GetSelfPermissionsState013
- * @tc.desc: vague + background after accept vague location permission, ret: PASS_OPER, state: INVALID_OPER
+ * @tc.desc: vague + background after accept vague location permission, ret: DYNAMIC_OPER, state: INVALID_OPER
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
@@ -774,7 +774,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState016, TestSize.Le
 
 /**
  * @tc.name: GetSelfPermissionsState017
- * @tc.desc: accurate + background with granted vague location, ret: PASS_OPER, state: INVALID_OPER
+ * @tc.desc: accurate + background with granted vague location api11, ret: PASS_OPER, state: INVALID_OPER
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
@@ -805,7 +805,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
 
     PermissionGrantInfo info;
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList17, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(PASS_OPER, ret); // API>=11, request permission includebackground, needn't pop dialog
     ASSERT_EQ(static_cast<uint32_t>(2), permsList17.size());
     ASSERT_EQ(INVALID_OPER, permsList17[0].state);
     ASSERT_EQ(INVALID_OPER, permsList17[1].state);
@@ -816,9 +816,9 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState017, TestSize.Le
     std::vector<PermissionListState> permsList171;
     permsList171.emplace_back(permAccurate17);
     ret = AccessTokenKit::GetSelfPermissionsState(permsList171, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(DYNAMIC_OPER, ret); // API>=11, only request accrtate, need pop dialog
     ASSERT_EQ(static_cast<uint32_t>(1), permsList171.size());
-    ASSERT_EQ(INVALID_OPER, permsList171[0].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList171[0].state);
 }
 
 /**
@@ -1869,7 +1869,7 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState039, TestSize.Le
 
 /**
  * @tc.name: GetSelfPermissionsState040
- * @tc.desc: accurate + background with granted vague location api9, ret: PASS_OPER, state: INVALID_OPER + INVALID_OPER
+ * @tc.desc: accurate + background with granted vague location api9, ret: DYNAMIC_OPER, state: DYNAMIC_OPER + SETTING_OPER
  * @tc.type: FUNC
  * @tc.require: issueI5NOQI
  */
@@ -1900,10 +1900,10 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState040, TestSize.Le
 
     PermissionGrantInfo info;
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList40, info);
-    ASSERT_EQ(PASS_OPER, ret);
+    ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList40.size());
-    ASSERT_EQ(INVALID_OPER, permsList40[0].state);
-    ASSERT_EQ(INVALID_OPER, permsList40[1].state);
+    ASSERT_EQ(DYNAMIC_OPER, permsList40[0].state);
+    ASSERT_EQ(SETTING_OPER, permsList40[1].state);
 }
 
 /**
