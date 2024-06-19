@@ -32,7 +32,7 @@ extern "C" {
 #define MAX_JSON_FILE_LEN 1024000
 #define MAX_DCAPS_NUM 32
 #define MAX_DCAP_LEN 1024
-#define MAX_PERM_NUM 10240
+#define MAX_PERM_NUM 80
 #define MAX_PERM_LEN 256
 #define MAX_PARAMTER_LEN 128
 #define SYSTEM_PROP_NATIVE_RECEPTOR "rw.nativetoken.receptor.startup"
