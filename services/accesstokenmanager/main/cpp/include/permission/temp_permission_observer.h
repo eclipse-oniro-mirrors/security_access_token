@@ -112,9 +112,8 @@ public:
 private:
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> eventHandler_;
-    int32_t cancleTimes_;
 #endif
-
+    int32_t cancleTimes_;
     std::mutex tempPermissionMutex_;
     std::map<AccessTokenID, std::vector<bool>> tempPermTokenMap_;
 
