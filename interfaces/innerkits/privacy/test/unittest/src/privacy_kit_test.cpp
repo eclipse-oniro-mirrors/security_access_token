@@ -136,7 +136,7 @@ static HapPolicyParams g_policyPramsD = {
     .apl = APL_NORMAL,
     .domain = "test.domain.C",
     .permList = {},
-    .permStateList = {}
+    .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB}
 };
 
 static HapPolicyParams g_policyPramsE = {
@@ -150,6 +150,19 @@ static HapInfoParams g_infoParmsE = {
     .bundleName = "ohos.privacy_test.bundleE",
     .instIndex = 0,
     .appIDDesc = "privacy_test.bundleE"
+};
+
+static HapPolicyParams g_policyPramsF = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain",
+    .permList = {},
+    .permStateList = {g_infoManagerTestStateA, g_infoManagerTestStateB}
+};
+static HapInfoParams g_infoParmsF = {
+    .userID = 1,
+    .bundleName = "ohos.privacy_test.bundleF",
+    .instIndex = 0,
+    .appIDDesc = "privacy_test.bundleF"
 };
 
 static UsedRecordDetail g_usedRecordDetail = {
@@ -194,6 +207,7 @@ static AccessTokenID g_tokenIdA = 0;
 static AccessTokenID g_tokenIdB = 0;
 static AccessTokenIDEx g_tokenIdC = {0};
 static AccessTokenID g_tokenIdE = 0;
+static AccessTokenID g_tokenIdF = 0;
 
 static void DeleteTestToken()
 {
@@ -218,6 +232,12 @@ static void DeleteTestToken()
     tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID,
                                             g_infoParmsE.bundleName,
                                             g_infoParmsE.instIndex);
+    AccessTokenKit::DeleteToken(tokenId);
+    PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+
+    tokenId = AccessTokenKit::GetHapTokenID(g_infoParmsF.userID,
+                                            g_infoParmsF.bundleName,
+                                            g_infoParmsF.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
     PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
 
@@ -262,11 +282,13 @@ void PrivacyKitTest::SetUp()
     AccessTokenKit::AllocHapToken(g_infoParmsB, g_policyPramsB);
     AccessTokenKit::AllocHapToken(g_infoParmsC, g_policyPramsC);
     AccessTokenKit::AllocHapToken(g_infoParmsE, g_policyPramsE);
+    AccessTokenKit::AllocHapToken(g_infoParmsF, g_policyPramsF);
 
     g_tokenIdA = AccessTokenKit::GetHapTokenID(g_infoParmsA.userID, g_infoParmsA.bundleName, g_infoParmsA.instIndex);
     g_tokenIdB = AccessTokenKit::GetHapTokenID(g_infoParmsB.userID, g_infoParmsB.bundleName, g_infoParmsB.instIndex);
     g_tokenIdC = AccessTokenKit::GetHapTokenIDEx(g_infoParmsC.userID, g_infoParmsC.bundleName, g_infoParmsC.instIndex);
     g_tokenIdE = AccessTokenKit::GetHapTokenID(g_infoParmsE.userID, g_infoParmsE.bundleName, g_infoParmsE.instIndex);
+    g_tokenIdF = AccessTokenKit::GetHapTokenID(g_infoParmsF.userID, g_infoParmsF.bundleName, g_infoParmsF.instIndex);
 }
 
 void PrivacyKitTest::TearDown()
@@ -1514,7 +1536,9 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission009, TestSize.Level1)
     std::string permissionName = "ohos.permission.CAMERA";
     auto callbackPtr = std::make_shared<CbCustomizeTest4>();
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdF, permissionName, callbackPtr));
     ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdF, permissionName));
 }
 
 /**
