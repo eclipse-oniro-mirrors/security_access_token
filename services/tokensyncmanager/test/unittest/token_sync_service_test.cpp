@@ -36,6 +36,7 @@
 #include "device_info_manager.h"
 #include "device_info_repository.h"
 #include "device_info.h"
+#include "device_manager.h"
 #include "device_manager_callback.h"
 #include "dm_device_info.h"
 #include "i_token_sync_manager.h"
@@ -50,9 +51,6 @@
 
 using namespace std;
 using namespace testing::ext;
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
 
 namespace OHOS {
 namespace Security {
@@ -60,7 +58,6 @@ namespace AccessToken {
 static std::vector<std::thread> threads_;
 static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
     std::make_shared<SoftBusDeviceConnectionListener>();
-static std::string g_networkID = "deviceid-1";
 static std::string g_udid = "deviceid-1:udid-001";
 static int32_t g_selfUid;
 static AccessTokenID g_selfTokenId = 0;
@@ -72,13 +69,13 @@ public:
     ~TokenSyncServiceTest();
     static void SetUpTestCase();
     static void TearDownTestCase();
-    void OnDeviceOffline(const DmDeviceInfo &info);
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info);
     void SetUp();
     void TearDown();
     std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
 };
 
-static DmDeviceInfo g_devInfo = {
+static DistributedHardware::DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
     .deviceName = "remote_mock",
@@ -135,7 +132,7 @@ void TokenSyncServiceTest::TearDown()
     }
 }
 
-void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
+void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
@@ -253,6 +250,20 @@ public:
     TestBaseRemoteCommand() {}
     virtual ~TestBaseRemoteCommand() = default;
 };
+
+static void DeleteAndAllocToken(AccessTokenID& tokenId)
+{
+    // create local token
+    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
+        g_infoManagerTestInfoParms.bundleName, g_infoManagerTestInfoParms.instIndex);
+    AccessTokenKit::DeleteToken(tokenID);
+
+    AccessTokenIDEx tokenIdEx = {0};
+    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+
+    tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+}
 
 /**
  * @tc.name: ProcessOneCommand001
@@ -588,15 +599,8 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
 
     ResetUuidMock();
 
-    // create local token
-    AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
-                                                          g_infoManagerTestInfoParms.bundleName,
-                                                          g_infoManagerTestInfoParms.instIndex);
-    AccessTokenKit::DeleteToken(tokenID);
-
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = 0;
+    DeleteAndAllocToken(tokenId);
 
     std::string jsonBefore =
         "{\"commandName\":\"SyncRemoteHapTokenCommand\",\"id\":\"0065e65f-\",\"jsonPayload\":"
@@ -605,18 +609,17 @@ HWTEST_F(TokenSyncServiceTest, GetRemoteHapTokenInfo002, TestSize.Level1)
         "\\\"tokenID\\\":0,\\\"userID\\\":0,\\\"version\\\":1},\\\"commandName\\\":\\\"SyncRemoteHapTokenCommand\\\","
         "\\\"dstDeviceId\\\":\\\"local:udid-001\\\",\\\"dstDeviceLevel\\\":\\\"\\\",\\\"message\\\":\\\"success\\\","
         "\\\"requestTokenId\\\":";
-    std::string tokenJsonStr = std::to_string(tokenIdEx.tokenIdExStruct.tokenID);
     std::string jsonAfter = ",\\\"requestVersion\\\":2,\\\"responseDeviceId\\\":\\\"\\\",\\\"responseVersion\\\":2,"
         "\\\"srcDeviceId\\\":\\\"deviceid-1:udid-001\\\",\\\"srcDeviceLevel\\\":\\\"\\\",\\\"statusCode\\\":100001,"
         "\\\"uniqueId\\\":\\\"SyncRemoteHapTokenCommand\\\"}\",\"type\":\"request\"}";
-
-    std::string recvJson = jsonBefore + tokenJsonStr + jsonAfter;
+    std::string recvJson = jsonBefore + std::to_string(tokenId) + jsonAfter;
 
     unsigned char *recvBuffer = (unsigned char *)malloc(0x1000);
     int recvLen = 0x1000;
     CompressMock(recvJson, recvBuffer, recvLen);
 
     ResetSendMessFlagMock();
+
     g_ptrDeviceStateCallback->OnDeviceOnline(g_devInfo); // create channel
 
     char networkId[DEVICEID_MAX_LEN + 1];

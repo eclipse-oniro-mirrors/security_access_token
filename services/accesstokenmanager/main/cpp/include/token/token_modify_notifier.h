@@ -66,7 +66,9 @@ private:
     std::vector<AccessTokenID> deleteTokenList_;
     std::vector<AccessTokenID> modifiedTokenList_;
     sptr<ITokenSyncCallback> tokenSyncCallbackObject_ = nullptr;
+#ifdef TOKEN_SYNC_ENABLE
     sptr<TokenSyncCallbackDeathRecipient> tokenSyncCallbackDeathRecipient_ = nullptr;
+#endif
 };
 } // namespace AccessToken
 } // namespace Security

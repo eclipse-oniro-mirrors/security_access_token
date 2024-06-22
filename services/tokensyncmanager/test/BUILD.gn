@@ -14,7 +14,7 @@
 group("unittest") {
   testonly = true
   deps = [
-    "coverage:libtoken_sync_service_sdk_coverage_test",
-    "unittest:libtoken_sync_service_sdk_test",
+    "coverage:libtoken_sync_service_coverage_test",
+    "unittest:libtoken_sync_service_standard_test",
   ]
 }

@@ -25,7 +25,9 @@
 #include "accesstoken_remote_token_manager.h"
 #include "libraryloader.h"
 #include "token_field_const.h"
+#ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_loader.h"
+#endif
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
 #include "token_modify_notifier.h"
@@ -111,6 +113,7 @@ static PermissionStateFull g_permState = {
     .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG, PermissionFlag::PERMISSION_DEFAULT_FLAG}
 };
 
+#ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackMock : public TokenSyncCallbackStub {
 public:
@@ -121,6 +124,7 @@ public:
     MOCK_METHOD(int32_t, DeleteRemoteHapTokenInfo, (AccessTokenID), (override));
     MOCK_METHOD(int32_t, UpdateRemoteHapTokenInfo, (const HapTokenInfoForSync&), (override));
 };
+#endif
 }
 
 void AccessTokenInfoManagerTest::SetUpTestCase()
@@ -862,19 +866,6 @@ HWTEST_F(AccessTokenInfoManagerTest, DeleteRemoteToken001, TestSize.Level1)
     GTEST_LOG_(INFO) << "remove the token info";
 }
 
-/**
- * @tc.name: GetUdidByNodeId001
- * @tc.desc: Verify the GetUdidByNodeId abnormal branch.
- * @tc.type: FUNC
- * @tc.require: issue5RJBB
- */
-HWTEST_F(AccessTokenInfoManagerTest, GetUdidByNodeId001, TestSize.Level1)
-{
-    std::string nodeId = "test";
-    std::string result = AccessTokenInfoManager::GetInstance().GetUdidByNodeId(nodeId);
-    ASSERT_EQ(result.empty(), true);
-}
-
 static bool SetRemoteHapTokenInfoTest(const std::string& deviceID, const HapTokenInfo& baseInfo)
 {
     std::vector<PermissionStateFull> permStateList;
@@ -1074,7 +1065,6 @@ HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
 }
-#endif
 
 /**
  * @tc.name: UpdateRemoteHapTokenInfo001
@@ -1229,6 +1219,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AllocLocalTokenID001, TestSize.Level1)
     ASSERT_EQ(static_cast<AccessTokenID>(0),
         AccessTokenInfoManager::GetInstance().GetRemoteNativeTokenID(remoteDeviceID, remoteTokenID));
 }
+#endif
 
 /**
  * @tc.name: Dump001
@@ -2018,6 +2009,7 @@ HWTEST_F(AccessTokenInfoManagerTest, PermStateFullToString001, TestSize.Level1)
     policySet->PermStateFullToString(g_permState, info);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: MapRemoteDeviceTokenToLocal001
  * @tc.desc: AccessTokenRemoteTokenManager::MapRemoteDeviceTokenToLocal function test
@@ -2127,6 +2119,7 @@ HWTEST_F(AccessTokenInfoManagerTest, AddHapTokenObservation001, TestSize.Level1)
 
     TokenModifyNotifier::GetInstance().observationSet_ = observationSet; // recovery
 }
+#endif
 
 /**
  * @tc.name: RestoreNativeTokenInfo001
@@ -2523,6 +2516,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen001, TestSize.Level1)
     EXPECT_NE(nullptr, loader2.handle_);
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: Dlopen002
  * @tc.desc: Open a exist lib & exist func
@@ -2536,6 +2530,7 @@ HWTEST_F(AccessTokenInfoManagerTest, Dlopen002, TestSize.Level1)
     EXPECT_NE(nullptr, loader.handle_);
     EXPECT_NE(nullptr, tokenSyncKit);
 }
+#endif
 
 /**
  * @tc.name: OnRemoteRequest001

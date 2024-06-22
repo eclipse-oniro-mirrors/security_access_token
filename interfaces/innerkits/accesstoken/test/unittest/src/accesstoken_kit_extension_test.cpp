@@ -25,7 +25,6 @@
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
-#include "softbus_bus_center.h"
 #include "string_ex.h"
 #include "tokenid_kit.h"
 #include "token_setproc.h"

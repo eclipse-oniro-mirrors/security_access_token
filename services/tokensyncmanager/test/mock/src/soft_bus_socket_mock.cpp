@@ -24,17 +24,18 @@ using namespace OHOS::Security::AccessToken;
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusSocketMock"};
 static const int SERVER_COUNT_LIMIT = 10;
+static int g_serverCount = -1;
+static bool g_sendMessFlag = false;
+static std::string g_uuid = "";
 } // namespace
 
 #define MIN_(x, y) ((x) < (y)) ? (x) : (y)
 
-static int g_serverCount = -1;
 bool IsServerCountOK()
 {
     return g_serverCount >= 0 && g_serverCount < SERVER_COUNT_LIMIT;
 }
 
-static bool g_sendMessFlag = false;
 int SendBytes(int sessionId, const void *data, unsigned int len)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "len: %{public}d", len);
@@ -46,7 +47,6 @@ int SendBytes(int sessionId, const void *data, unsigned int len)
     return Constant::SUCCESS;
 }
 
-static std::string uuid = "";
 void DecompressMock(const unsigned char *bytes, const int length)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "input length: %{public}d", length);
@@ -73,11 +73,10 @@ void DecompressMock(const unsigned char *bytes, const int length)
     std::size_t id_post = str.find("\"id\":");
 
     std::string id_string = str.substr(id_post + 6, 9);
-    uuid = id_string;
+    g_uuid = id_string;
     ACCESSTOKEN_LOG_DEBUG(LABEL, "id_string: %{public}s", id_string.c_str());
     return;
 }
-
 
 void CompressMock(const std::string &json, const unsigned char *compressedBytes, int &compressedLength)
 {
@@ -104,8 +103,8 @@ void CompressMock(const std::string &json, const unsigned char *compressedBytes,
 
 std::string GetUuidMock()
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetUuidMock called uuid: %{public}s", uuid.c_str());
-    return uuid;
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "GetUuidMock called uuid: %{public}s", g_uuid.c_str());
+    return g_uuid;
 }
 
 bool GetSendMessFlagMock()
@@ -120,5 +119,5 @@ void ResetSendMessFlagMock()
 
 void ResetUuidMock()
 {
-    uuid = "";
+    g_uuid = "";
 }
