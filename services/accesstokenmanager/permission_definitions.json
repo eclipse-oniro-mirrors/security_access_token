@@ -4006,7 +4006,7 @@
             "availableLevel": "system_basic",
             "availableType": "NORMAL",
             "since": 11,
-            "deprecated": "since 12",
+            "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_read_write_desktop_directory",
