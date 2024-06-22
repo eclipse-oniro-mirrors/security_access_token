@@ -131,6 +131,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
     auto statement = Prepare(prepareSql);
     BeginTransaction();
     bool isExecuteSuccessfully = true;
+    uint32_t addFailCount = 0;
     for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
         for (const auto& columnName : columnNames) {
@@ -138,12 +139,15 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
         }
         int ret = statement.Step();
         if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, errorMsg: %{public}s.", SpitError().c_str());
+            addFailCount++;
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "Failed, errorMsg: %{public}s.", SpitError().c_str());
             isExecuteSuccessfully = false;
         }
         statement.Reset();
     }
     if (!isExecuteSuccessfully) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, addFailCount = %{public}d errorMsg = %{public}s.",
+            addFailCount, SpitError().c_str());
         ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;

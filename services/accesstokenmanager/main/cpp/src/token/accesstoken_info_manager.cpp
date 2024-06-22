@@ -260,7 +260,7 @@ int AccessTokenInfoManager::AddNativeTokenInfo(const std::shared_ptr<NativeToken
         nativeTokenIdMap_[processName] = id;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "Token info is added %{public}u.", id);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Token info is added %{public}u.", id);
     nativeTokenInfoMap_[id] = info;
 
     // add native to kernel
@@ -1089,6 +1089,8 @@ int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
             iter->second->StorePermissionPolicy(permStateValues);
         }
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "permStateValues %{public}zu, nativeTokenValues %{public}zu.",
+        permStateValues.size(), nativeTokenValues.size());
     AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
     AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
     return RET_SUCCESS;
