@@ -19,7 +19,6 @@
 #include <mutex>
 #include <string>
 
-#include "audio_global_switch_change_stub.h"
 #include "audio_manager_privacy_death_recipient.h"
 #include "audio_manager_privacy_proxy.h"
 #include "nocopyable.h"
@@ -32,7 +31,6 @@ public:
     static AudioManagerPrivacyClient& GetInstance();
     virtual ~AudioManagerPrivacyClient();
 
-    int32_t SetMicStateChangeCallback(const sptr<AudioRoutingManagerListenerStub>& callback);
     int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type);
     bool GetPersistentMicMuteState();
     void OnRemoteDiedHandle();

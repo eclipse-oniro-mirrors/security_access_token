@@ -24,34 +24,7 @@ constexpr HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_PRIVACY, "Cam
 static constexpr int32_t ERROR = -1;
 }
 
-int32_t CameraManagerPrivacyProxy::SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback)
-{
-    MessageParcel data;
-    MessageParcel reply;
-    MessageOption option;
-
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is null");
-        return ERROR;
-    }
-
-    if (!data.WriteInterfaceToken(GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
-        return ERROR;
-    }
-    if (!data.WriteRemoteObject(callback->AsObject())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteRemoteObject failed");
-        return ERROR;
-    }
-
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(CAMERA_SERVICE_SET_MUTE_CALLBACK), data, reply, option);
-    if (error != ERR_NONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, error: %{public}d", error);
-    }
-    return error;
-}
-
-int32_t CameraManagerPrivacyProxy::MuteCamera(bool muteMode)
+int32_t CameraManagerPrivacyProxy::MuteCameraPersist(PolicyType policyType, bool muteMode)
 {
     MessageParcel data;
     MessageParcel reply;
@@ -60,17 +33,19 @@ int32_t CameraManagerPrivacyProxy::MuteCamera(bool muteMode)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write descriptor");
         return ERROR;
     }
+    if (!data.WriteInt32(static_cast<int32_t>(policyType))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write bool");
+        return ERROR;
+    }
     if (!data.WriteBool(muteMode)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write bool");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(CAMERA_SERVICE_MUTE_CAMERA), data, reply, option);
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(CAMERA_SERVICE_MUTE_CAMERA_PERSIST), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, error: %{public}d", error);
-        return ERROR;
     }
-    error = reply.ReadInt32();
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "MuteCamera Read muteMode is %{public}d", error);
     return error;
 }
 

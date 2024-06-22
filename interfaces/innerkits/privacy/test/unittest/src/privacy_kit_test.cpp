@@ -19,7 +19,7 @@
 
 #include "access_token.h"
 #include "accesstoken_kit.h"
-#ifdef AUDIO_FRAMEWORK_ENALBE
+#ifdef AUDIO_FRAMEWORK_ENABLE
 #include "audio_system_manager.h"
 #endif
 #include "nativetoken_kit.h"
@@ -44,7 +44,7 @@ using namespace OHOS::Security::AccessToken;
 const static int32_t RET_NO_ERROR = 0;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static AccessTokenID g_nativeToken = 0;
-#ifdef AUDIO_FRAMEWORK_ENALBE
+#ifdef AUDIO_FRAMEWORK_ENABLE
 static bool g_isMicMute = false;
 #endif
 static constexpr int32_t RANDOM_TOKENID = 123;
@@ -260,7 +260,7 @@ void PrivacyKitTest::SetUpTestCase()
     g_selfTokenId = GetSelfTokenID();
     g_nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
     
-#ifdef AUDIO_FRAMEWORK_ENALBE
+#ifdef AUDIO_FRAMEWORK_ENABLE
     auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
         OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
     g_isMicMute = audioGroupManager->GetPersistentMicMuteState();
@@ -273,7 +273,7 @@ void PrivacyKitTest::TearDownTestCase()
 
 void PrivacyKitTest::SetUp()
 {
-#ifdef AUDIO_FRAMEWORK_ENALBE
+#ifdef AUDIO_FRAMEWORK_ENABLE
     auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
         OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
     audioGroupManager->SetMicrophoneMutePersistent(false, OHOS::AudioStandard::PolicyType::PRIVACY_POLCIY_TYPE);
@@ -293,7 +293,7 @@ void PrivacyKitTest::SetUp()
 
 void PrivacyKitTest::TearDown()
 {
-#ifdef AUDIO_FRAMEWORK_ENALBE
+#ifdef AUDIO_FRAMEWORK_ENABLE
     auto audioGroupManager = OHOS::AudioStandard::AudioSystemManager::GetInstance()->GetGroupManager(
         OHOS::AudioStandard::DEFAULT_VOLUME_GROUP_ID);
     audioGroupManager->SetMicrophoneMutePersistent(g_isMicMute, OHOS::AudioStandard::PolicyType::PRIVACY_POLCIY_TYPE);

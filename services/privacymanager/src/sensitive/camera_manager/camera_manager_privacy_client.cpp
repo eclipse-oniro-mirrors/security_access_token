@@ -49,24 +49,14 @@ CameraManagerPrivacyClient::~CameraManagerPrivacyClient()
     ReleaseProxy();
 }
 
-int32_t CameraManagerPrivacyClient::SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback)
+int32_t CameraManagerPrivacyClient::MuteCameraPersist(PolicyType policyType, bool muteMode)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
-    return proxy->SetMuteCallback(callback);
-}
-
-int32_t CameraManagerPrivacyClient::MuteCamera(bool muteMode)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
-    }
-    return proxy->MuteCamera(muteMode);
+    return proxy->MuteCameraPersist(policyType, muteMode);
 }
 
 bool CameraManagerPrivacyClient::IsCameraMuted()

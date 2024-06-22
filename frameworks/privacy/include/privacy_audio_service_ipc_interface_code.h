@@ -19,17 +19,13 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum PrivacyAudioRingerInterfaceCode {
-    ON_MIC_STATE_UPDATED = 1,
-};
-
 enum PrivacyAudioPolicyInterfaceCode {
-    SET_MICROPHONE_MUTE_PERSISTENT = 17,
-    GET_MICROPHONE_MUTE_PERSISTENT = 18,
 #ifdef FEATURE_DTMF_TONE
-    REGISTER_POLICY_CALLBACK_CLIENT = 94,
+    SET_MICROPHONE_MUTE_PERSISTENT = 119,
+    GET_MICROPHONE_MUTE_PERSISTENT = 120,
 #else
-    REGISTER_POLICY_CALLBACK_CLIENT = 92,
+    SET_MICROPHONE_MUTE_PERSISTENT = 117,
+    GET_MICROPHONE_MUTE_PERSISTENT = 118,
 #endif
 };
 } // namespace AccessToken
