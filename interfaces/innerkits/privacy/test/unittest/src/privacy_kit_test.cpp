@@ -22,6 +22,7 @@
 #ifdef AUDIO_FRAMEWORK_ENABLE
 #include "audio_system_manager.h"
 #endif
+#include "app_manager_access_client.h"
 #include "nativetoken_kit.h"
 #include "on_permission_used_record_callback_stub.h"
 #include "parameter.h"
@@ -30,8 +31,10 @@
 #include "privacy_manager_client.h"
 #include "state_change_callback.h"
 #undef private
+#include "permission_map.h"
 #include "perm_active_response_parcel.h"
 #include "perm_active_status_change_callback_stub.h"
+#include "perm_setproc.h"
 #include "privacy_error.h"
 #include "privacy_kit.h"
 #include "state_change_callback_stub.h"
@@ -42,6 +45,7 @@ using namespace testing::ext;
 using namespace OHOS::Security::AccessToken;
 
 const static int32_t RET_NO_ERROR = 0;
+static const uint32_t ACCESS_TOKEN_UID = 3020;
 static constexpr int32_t DEFAULT_API_VERSION = 8;
 static AccessTokenID g_nativeToken = 0;
 #ifdef AUDIO_FRAMEWORK_ENABLE
@@ -2387,4 +2391,123 @@ HWTEST_F(PrivacyKitTest, SetMutePolicyTest002, TestSize.Level1)
     EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx)); // as a system hap without PERMISSION_USED_STATE
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_DENIED,
         PrivacyKit::SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true));
+}
+
+/**
+ * @tc.name: IsAllowedUsingPermission011
+ * @tc.desc: IsAllowedUsingPermission with valid tokenId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, IsAllowedUsingPermission011, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    std::vector<AppStateData> list;
+    int32_t ret = AppManagerAccessClient::GetInstance().GetForegroundApplications(list);
+    ASSERT_EQ(0, ret);
+    if (list.empty()) {
+        GTEST_LOG_(INFO) << "GetForegroundApplications empty ";
+        return;
+    }
+    uint32_t tokenIdForeground = list[0].accessTokenId;
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(tokenIdForeground, permissionName));
+}
+
+/**
+ * @tc.name: SetHapWithFGReminder01
+ * @tc.desc: SetHapWithFGReminder with valid tokenId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder01, TestSize.Level1)
+{
+    uint32_t opCode1;
+    uint32_t opCode2;
+    uint32_t tokenTest = 111; /// 111 is a tokenId
+    uint32_t selfUid = getuid();
+    setuid(ACCESS_TOKEN_UID);
+
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
+    int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
+    ASSERT_EQ(res, 0);
+    GTEST_LOG_(INFO) << "permissionSet OK ";
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    std::string permissionName = "ohos.permission.MICROPHONE";
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    int32_t ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(true, PrivacyKit::IsAllowedUsingPermission(g_tokenIdE, permissionName));
+    ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false);
+    ASSERT_EQ(ret, 0);
+
+    res = RemovePermissionFromKernel(tokenTest);
+    ASSERT_EQ(res, 0);
+    setuid(selfUid);
+}
+
+/**
+ * @tc.name: SetHapWithFGReminder02
+ * @tc.desc: SetHapWithFGReminder with valid tokenId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder02, TestSize.Level1)
+{
+    uint32_t opCode1;
+    uint32_t opCode2;
+    uint32_t tokenTest = 111; /// 111 is a tokenId
+    uint32_t selfUid = getuid();
+    setuid(ACCESS_TOKEN_UID);
+
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
+    int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
+    ASSERT_EQ(res, 0);
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    int32_t ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true);
+    ASSERT_EQ(ret, 0);
+    ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, true);
+    ASSERT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false);
+    ASSERT_EQ(ret, 0);
+    ret = PrivacyKit::SetHapWithFGReminder(g_tokenIdE, false);
+    ASSERT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    res = RemovePermissionFromKernel(tokenTest);
+    ASSERT_EQ(res, 0);
+    setuid(selfUid);
+}
+
+/**
+ * @tc.name: SetHapWithFGReminder03
+ * @tc.desc: SetHapWithFGReminder with native tokenId.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, SetHapWithFGReminder03, TestSize.Level1)
+{
+    uint32_t opCode1;
+    uint32_t opCode2;
+    uint32_t tokenTest = 111; /// 111 is a tokenId
+    uint32_t selfUid = getuid();
+    setuid(ACCESS_TOKEN_UID);
+
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.SET_FOREGROUND_HAP_REMINDER", opCode1));
+    EXPECT_EQ(true, TransferPermissionToOpcode("ohos.permission.PERMISSION_USED_STATS", opCode2));
+    int32_t res = AddPermissionToKernel(tokenTest, {opCode1, opCode2}, {1, 1});
+    ASSERT_EQ(res, 0);
+
+    EXPECT_EQ(0, SetSelfTokenID(tokenTest));
+    uint32_t nativeTokenId = 672137215; // 672137215 is a native token
+    int32_t ret = PrivacyKit::SetHapWithFGReminder(nativeTokenId, true);
+    ASSERT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
+    res = RemovePermissionFromKernel(tokenTest);
+    ASSERT_EQ(res, 0);
+    setuid(selfUid);
+
+    uint32_t invalidTokenId = 0;
+    ret = PrivacyKit::SetHapWithFGReminder(invalidTokenId, true);
+    ASSERT_EQ(ret, PrivacyError::ERR_PARAM_INVALID);
 }

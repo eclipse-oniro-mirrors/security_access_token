@@ -251,7 +251,7 @@ void TempPermissionObserver::RegisterAppStatusListener()
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Register appManagerDeathCallback failed.");
                 return;
             }
-            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+            AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
         }
     }
 }

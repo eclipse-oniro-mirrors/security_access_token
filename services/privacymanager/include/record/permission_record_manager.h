@@ -89,6 +89,7 @@ public:
     int32_t SetEdmMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetPrivacyMutePolicy(const std::string permissionName, bool isMute);
     int32_t SetTempMutePolicy(const std::string permissionName, bool isMute);
+    int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
 
     void NotifyAppStateChange(AccessTokenID tokenId, ActiveChangeType status);
     void SetLockScreenStatus(int32_t lockScreenStatus);
@@ -202,13 +203,17 @@ private:
     std::mutex lockScreenStateMutex_;
     int32_t lockScreenStatus_ = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
 
+    // foreground reminder
+    std::mutex foreReminderMutex_;
+    std::vector<uint32_t> foreTokenIdList_;
+
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     bool isAutoClose = false;
     std::mutex windowLoaderMutex_;
     bool isWmRegistered = false;
     LibraryLoader* windowLoader_ = nullptr;
 
-    std::mutex windowStausMutex_;
+    std::mutex windowStatusMutex_;
     // camera float window
     bool camFloatWindowShowing_ = false;
     AccessTokenID floatWindowTokenId_ = 0;

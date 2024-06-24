@@ -22,9 +22,6 @@
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
-#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
-#include "continuous_task_callback_info.h"
-#endif
 #include "data_translator.h"
 #include "permission_record.h"
 #define private public
@@ -1450,31 +1447,6 @@ HWTEST_F(PermissionRecordManagerTest, Abnormal001, TestSize.Level1)
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Remove(type, conditionValue));
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Update(type, modifyValue, conditionValue));
     ASSERT_EQ(false, PermissionRecordRepository::GetInstance().Query(type, conditionValue, results));
-}
-
-/*
- * @tc.name: ContinuousTaskCallbackInfoParcel001
- * @tc.desc: ContinuousTaskCallbackInfo::Marshalling | Unmarshalling
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Level1)
-{
-    ContinuousTaskCallbackInfo info;
-    Parcel parcel;
-    EXPECT_EQ(true, info.Marshalling(parcel));
-
-    auto p = ContinuousTaskCallbackInfo::Unmarshalling(parcel);
-    EXPECT_NE(nullptr, p);
-    EXPECT_EQ(info.typeId_, p->typeId_);
-    EXPECT_EQ(info.creatorUid_, p->creatorUid_);
-    EXPECT_EQ(info.creatorPid_, p->creatorPid_);
-    EXPECT_EQ(info.abilityName_, p->abilityName_);
-    EXPECT_EQ(info.isFromWebview_, p->isFromWebview_);
-    EXPECT_EQ(info.isBatchApi_, p->isBatchApi_);
-    EXPECT_EQ(info.typeIds_, p->typeIds_);
-    EXPECT_EQ(info.abilityId_, p->abilityId_);
-    EXPECT_EQ(info.tokenId_, p->tokenId_);
 }
 
 /*

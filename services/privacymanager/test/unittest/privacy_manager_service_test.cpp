@@ -337,6 +337,10 @@ public:
     {
         return RET_SUCCESS;
     }
+    int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+    {
+        return RET_SUCCESS;
+    }
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
     int32_t RegisterSecCompEnhance(const SecCompEnhanceDataParcel& enhanceParcel)
     {

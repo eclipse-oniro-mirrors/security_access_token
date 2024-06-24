@@ -181,6 +181,7 @@ public:
      */
     static int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfo>& results);
+
     /**
      * @brief try set mute policy.
      * @param policyType policy type, see privacy_param.h
@@ -189,6 +190,14 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute);
+
+    /**
+     * @brief try set background visit policy.
+     * @param tokenId token id
+     * @param isAllowed allow or disallow
+     * @return error code, see privacy_error.h
+     */
+    static int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed);
 };
 } // namespace AccessToken
 } // namespace Security

@@ -4305,6 +4305,16 @@
             "distributedSceneEnable": true
         },
         {
+            "name": "ohos.permission.SET_FOREGROUND_HAP_REMINDER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
             "name": "ohos.permission.INJECT_INPUT_EVENT",
             "grantMode": "system_grant",
             "availableLevel": "system_core",

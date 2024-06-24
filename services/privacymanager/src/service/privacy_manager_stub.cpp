@@ -32,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+static const std::string SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 }
 
 PrivacyManagerStub::PrivacyManagerStub()
@@ -75,6 +76,8 @@ void PrivacyManagerStub::SetPrivacyFuncInMap()
         &PrivacyManagerStub::GetPermissionUsedTypeInfosInner;
     requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_MUTE_POLICY)] =
         &PrivacyManagerStub::SetMutePolicyInner;
+    requestMap_[static_cast<uint32_t>(PrivacyInterfaceCode::SET_HAP_WITH_FOREGROUND_REMINDER)] =
+        &PrivacyManagerStub::SetHapWithFGReminderInner;
 }
 int32_t PrivacyManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
@@ -427,6 +430,32 @@ void PrivacyManagerStub::SetMutePolicyInner(MessageParcel& data, MessageParcel& 
     }
 
     int32_t result = this->SetMutePolicy(policyType, callerType, isMute);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
+        return;
+    }
+}
+
+void PrivacyManagerStub::SetHapWithFGReminderInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!VerifyPermission(SET_FOREGROUND_HAP_REMINDER)) {
+        reply.WriteInt32(PrivacyError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    uint32_t tokenId;
+    if (!data.ReadUint32(tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read tokenId.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+    bool isAllowed;
+    if (!data.ReadBool(isAllowed)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isAllowed.");
+        reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
+        return;
+    }
+
+    int32_t result = this->SetHapWithFGReminder(tokenId, isAllowed);
     if (!reply.WriteInt32(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteInt32.");
         return;
