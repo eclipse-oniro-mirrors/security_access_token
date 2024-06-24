@@ -216,6 +216,15 @@ int32_t PrivacyKit::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool
     }
     return PrivacyManagerClient::GetInstance().SetMutePolicy(policyType, callerType, isMute);
 }
+
+int32_t PrivacyKit::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    if (!DataValidator::IsTokenIDValid(tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId is invalid");
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    return PrivacyManagerClient::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -74,7 +74,7 @@ void PrivacySecCompEnhanceAgent::InitAppObserver()
     }
     if (appManagerDeathCallback_ == nullptr) {
         appManagerDeathCallback_ = std::make_shared<PrivacySecCompAppManagerDeathCallback>();
-        AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+        AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
     }
 }
 

@@ -31,10 +31,6 @@
 #ifdef AUDIO_FRAMEWORK_ENABLE
 #include "audio_policy_ipc_interface_code.h"
 #endif
-#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
-#include "background_task_manager_access_client.h"
-#include "continuous_task_callback_info.h"
-#endif
 #include "camera_manager_privacy_client.h"
 #include "camera_manager_privacy_proxy.h"
 #ifdef CAMERA_FRAMEWORK_ENABLE

@@ -26,10 +26,6 @@
 #include "active_status_callback_manager.h"
 #include "app_manager_access_client.h"
 #include "audio_manager_privacy_client.h"
-#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
-#include "background_task_manager_access_client.h"
-#include "continuous_task_callback_info.h"
-#endif
 #include "camera_manager_privacy_client.h"
 #include "config_policy_loader.h"
 #include "constant.h"
@@ -993,25 +989,12 @@ bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
         return true;
     }
 
-    bool isContinuousTaskExist = false;
-#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
-    std::vector<std::shared_ptr<ContinuousTaskCallbackInfo>> continuousTaskList;
-    BackgourndTaskManagerAccessClient::GetInstance().GetContinuousTaskApps(continuousTaskList);
-    for (const auto& callbackInfo : continuousTaskList) {
-        if (callbackInfo == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "CallbackInfo is NULL.");
-            continue;
-        }
-        AccessTokenID conTaskTokenID = static_cast<AccessTokenID>(callbackInfo->tokenId_);
-        ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}d, typeId is %{public}d", conTaskTokenID, callbackInfo->typeId_);
-        if ((conTaskTokenID == tokenId) &&
-            (static_cast<BackgroundMode>(callbackInfo->typeId_) == BackgroundMode::VOIP)) {
-            isContinuousTaskExist = true;
-            break;
-        }
+    std::lock_guard<std::mutex> lock(foreReminderMutex_);
+    auto iter = std::find(foreTokenIdList_.begin(), foreTokenIdList_.end(), tokenId);
+    if (iter != foreTokenIdList_.end()) {
+        return true;
     }
-#endif
-    return isContinuousTaskExist;
+    return false;
 }
 
 bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
@@ -1062,6 +1045,28 @@ int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, con
     }
     ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid policy type: %{public}d.", policyType);
     return ERR_PARAM_INVALID;
+}
+
+int32_t PermissionRecordManager::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not hap(%{public}d)", tokenId);
+        return PrivacyError::ERR_PARAM_INVALID;
+    }
+    std::lock_guard<std::mutex> lock(foreReminderMutex_);
+    auto iter = std::find(foreTokenIdList_.begin(), foreTokenIdList_.end(), tokenId);
+    if (iter == foreTokenIdList_.end() && isAllowed) {
+        foreTokenIdList_.emplace_back(tokenId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Set hap(%{public}d) foreground", tokenId);
+        return RET_SUCCESS;
+    }
+    if (iter != foreTokenIdList_.end() && !isAllowed) {
+        foreTokenIdList_.erase(iter);
+        ACCESSTOKEN_LOG_INFO(LABEL, "cancel hap(%{public}d) foreground", tokenId);
+        return RET_SUCCESS;
+    }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "(%{public}d) is invalid to be operated", tokenId);
+    return PrivacyError::ERR_PARAM_INVALID;
 }
 
 int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionName, bool isMute)
@@ -1265,7 +1270,7 @@ bool PermissionRecordManager::Register()
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Register appManagerDeathCallback failed.");
                 return false;
             }
-            AppManagerAccessClient::GetInstance().RegisterDeathCallbak(appManagerDeathCallback_);
+            AppManagerAccessClient::GetInstance().RegisterDeathCallback(appManagerDeathCallback_);
         }
     }
     // app state change callback register
@@ -1494,7 +1499,7 @@ bool PermissionRecordManager::IsCameraWindowShow(AccessTokenID tokenId)
 {
     bool isShow = true;
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    std::lock_guard<std::mutex> lock(windowStausMutex_);
+    std::lock_guard<std::mutex> lock(windowStatusMutex_);
     isShow = (((floatWindowTokenId_ == tokenId) && camFloatWindowShowing_) ||
         ((pipWindowTokenId_ == tokenId) && pipWindowShowing_));
 #endif
@@ -1510,7 +1515,7 @@ void PermissionRecordManager::NotifyCameraWindowChange(bool isPip, AccessTokenID
     ACCESSTOKEN_LOG_INFO(LABEL, "Update window, isPip(%{public}d), token(%{public}d), status(%{public}d)",
         isPip, tokenId, isShowing);
     {
-        std::lock_guard<std::mutex> lock(windowStausMutex_);
+        std::lock_guard<std::mutex> lock(windowStatusMutex_);
         if (isPip) {
             pipWindowShowing_ = isShowing;
             pipWindowTokenId_ = tokenId;
@@ -1534,7 +1539,7 @@ void PermissionRecordManager::ClearWindowShowing()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Clear window show status.");
     {
-        std::lock_guard<std::mutex> lock(windowStausMutex_);
+        std::lock_guard<std::mutex> lock(windowStatusMutex_);
         camFloatWindowShowing_ = false;
         floatWindowTokenId_ = 0;
 

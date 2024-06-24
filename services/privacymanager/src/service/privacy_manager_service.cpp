@@ -282,6 +282,12 @@ int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t calle
         static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
 }
 
+int32_t PrivacyManagerService::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "tokenId: %{public}d, isAllowed: %{public}d", tokenId, isAllowed);
+    return PermissionRecordManager::GetInstance().SetHapWithFGReminder(tokenId, isAllowed);
+}
+
 int32_t PrivacyManagerService::GetPermissionUsedTypeInfos(const AccessTokenID tokenId,
     const std::string& permissionName, std::vector<PermissionUsedTypeInfoParcel>& resultsParcel)
 {

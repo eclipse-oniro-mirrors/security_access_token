@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -50,36 +50,6 @@ AppManagerAccessClient::~AppManagerAccessClient()
     ReleaseProxy();
 }
 
-int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
-    }
-    std::vector<std::string> bundleNameList;
-    return proxy->RegisterApplicationStateObserver(observer, bundleNameList);
-}
-
-int32_t AppManagerAccessClient::UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver> &observer)
-{
-    if (observer == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Callback is nullptr.");
-        return -1;
-    }
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return -1;
-    }
-    return proxy->UnregisterApplicationStateObserver(observer);
-}
-
 int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateData>& list)
 {
     auto proxy = GetProxy();
@@ -104,41 +74,9 @@ void AppManagerAccessClient::InitProxy()
         return;
     }
 
-    serviceDeathObserver_ = sptr<AppMgrDeathRecipient>::MakeSptr();
-    if (serviceDeathObserver_ != nullptr) {
-        appManagerSa->AddDeathRecipient(serviceDeathObserver_);
-    }
-
     proxy_ = iface_cast<IAppMgr>(appManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
-    }
-}
-
-void AppManagerAccessClient::RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback)
-{
-    std::lock_guard<std::mutex> lock(deathCallbackMutex_);
-    if (callback == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "AppManagerAccessClient: Callback is nullptr.");
-        return;
-    }
-    appManagerDeathCallbackList_.emplace_back(callback);
-}
-
-void AppManagerAccessClient::OnRemoteDiedHandle()
-{
-    std::vector<std::shared_ptr<AppManagerDeathCallback>> tmpCallbackList;
-    {
-        std::lock_guard<std::mutex> lock(deathCallbackMutex_);
-        tmpCallbackList.assign(appManagerDeathCallbackList_.begin(), appManagerDeathCallbackList_.end());
-    }
-
-    for (size_t i = 0; i < tmpCallbackList.size(); i++) {
-        tmpCallbackList[i]->NotifyAppManagerDeath();
-    }
-    {
-        std::lock_guard<std::mutex> lock(proxyMutex_);
-        ReleaseProxy();
     }
 }
 
@@ -153,11 +91,7 @@ sptr<IAppMgr> AppManagerAccessClient::GetProxy()
 
 void AppManagerAccessClient::ReleaseProxy()
 {
-    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
-        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
-    }
     proxy_ = nullptr;
-    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

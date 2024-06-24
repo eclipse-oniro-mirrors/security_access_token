@@ -371,6 +371,16 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
     return proxy->SetMutePolicy(policyType, callerType, isMute);
 }
 
+int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->SetHapWithFGReminder(tokenId, isAllowed);
+}
+
 void PrivacyManagerClient::InitProxy()
 {
     if (proxy_ == nullptr) {
