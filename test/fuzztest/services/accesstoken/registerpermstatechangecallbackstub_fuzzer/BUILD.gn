@@ -45,8 +45,6 @@ ohos_fuzztest("RegisterPermStateChangeCallbackStubFuzzTest") {
 
   sources += access_token_impl_sources
 
-  if (token_sync_enable == true) {
-    include_dirs +=
-        [ "${access_token_path}/interfaces/innerkits/accesstoken/src" ]
-  }
+  include_dirs +=
+      [ "${access_token_path}/interfaces/innerkits/accesstoken/src" ]
 }

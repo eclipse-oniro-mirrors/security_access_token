@@ -14,7 +14,7 @@
 import("//build/test.gni")
 import("../../../../access_token.gni")
 
-ohos_unittest("libtoken_sync_service_sdk_coverage_test") {
+ohos_unittest("libtoken_sync_service_coverage_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
@@ -43,7 +43,6 @@ ohos_unittest("libtoken_sync_service_sdk_coverage_test") {
     "../../src/service/token_sync_manager_service.cpp",
     "../../src/service/token_sync_manager_stub.cpp",
     "../mock/src/constant_mock.cpp",
-    "../mock/src/soft_bus_center_mock.cpp",
     "../mock/src/soft_bus_socket_mock.cpp",
     "token_sync_service_coverage_test.cpp",
   ]
@@ -76,21 +75,21 @@ ohos_unittest("libtoken_sync_service_sdk_coverage_test") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-  }
-
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   external_deps = [
     "c_utils:utils",
-    "device_manager:devicemanagersdk",
     "dsoftbus:softbus_client",
     "hilog:libhilog",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "zlib:libz",
   ]
+
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+  }
+
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]

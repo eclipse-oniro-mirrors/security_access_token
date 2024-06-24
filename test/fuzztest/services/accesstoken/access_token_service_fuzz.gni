@@ -59,6 +59,7 @@ access_token_deps = [
 
 access_token_external_deps = [
   "c_utils:utils",
+  "device_manager:devicemanagersdk",
   "dsoftbus:softbus_client",
   "hilog:libhilog",
   "hisysevent:libhisysevent",

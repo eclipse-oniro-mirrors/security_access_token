@@ -27,7 +27,9 @@
 
 using namespace std;
 using namespace OHOS::Security::AccessToken;
+#ifdef TOKEN_SYNC_ENABLE
 const int CONSTANTS_NUMBER_TWO = 2;
+#endif
 
 namespace OHOS {
     bool GetAllNativeTokenInfoFuzzTest(const uint8_t* data, size_t size)

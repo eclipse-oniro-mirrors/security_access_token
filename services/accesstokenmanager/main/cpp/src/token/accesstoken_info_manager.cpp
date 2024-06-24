@@ -42,7 +42,6 @@
 #include "ipc_skeleton.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
-#include "softbus_bus_center.h"
 #include "access_token_db.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
@@ -56,9 +55,12 @@ namespace AccessToken {
 namespace {
 std::recursive_mutex g_instanceMutex;
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenInfoManager"};
-static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
 static const unsigned int SYSTEM_APP_FLAG = 0x0001;
-const std::string DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
+#ifdef TOKEN_SYNC_ENABLE
+static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
+static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_token_sync";
+#endif
+static const std::string DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 }
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
@@ -72,6 +74,14 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     if (!hasInited_) {
         return;
     }
+
+#ifdef TOKEN_SYNC_ENABLE
+    int32_t ret = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME);
+    if (ret != ERR_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UnInitDeviceManager failed, code: %{public}d", ret);
+    }
+#endif
+
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
     this->tokenDataWorker_.Stop();
 #endif
@@ -92,6 +102,28 @@ void AccessTokenInfoManager::Init()
     this->tokenDataWorker_.Start(1);
 #endif
     hasInited_ = true;
+
+#ifdef TOKEN_SYNC_ENABLE
+    std::function<void()> runner = [&]() {
+        std::string name = "AtmInfoMgrInit";
+        pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
+        auto sleepTime = std::chrono::milliseconds(1000);
+        std::shared_ptr<AccessTokenDmInitCallback> ptrDmInitCallback = std::make_shared<AccessTokenDmInitCallback>();
+        while (1) {
+            int32_t ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(ACCESS_TOKEN_PACKAGE_NAME,
+                ptrDmInitCallback);
+            if (ret != ERR_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Initialize: InitDeviceManager error, result: %{public}d", ret);
+                std::this_thread::sleep_for(sleepTime);
+                continue;
+            }
+            return;
+        }
+    };
+    std::thread initThread(runner);
+    initThread.detach();
+#endif
+
     ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
 }
 
@@ -968,20 +1000,6 @@ int AccessTokenInfoManager::DeleteRemoteDeviceTokens(const std::string& deviceID
     return RET_SUCCESS;
 }
 
-std::string AccessTokenInfoManager::GetUdidByNodeId(const std::string &nodeId)
-{
-    uint8_t info[UDID_MAX_LENGTH + 1] = {0};
-
-    int32_t ret = ::GetNodeKeyInfo(
-        ACCESS_TOKEN_PACKAGE_NAME.c_str(), nodeId.c_str(), NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
-    if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d.", ret);
-        return "";
-    }
-    std::string udid(reinterpret_cast<char *>(info));
-    return udid;
-}
-
 AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remoteDeviceID,
     AccessTokenID remoteTokenID)
 {
@@ -996,7 +1014,10 @@ AccessTokenID AccessTokenInfoManager::AllocLocalTokenID(const std::string& remot
     uint64_t fullTokenId = IPCSkeleton::GetCallingFullTokenID();
     SetFirstCallerTokenID(fullTokenId);
     ACCESSTOKEN_LOG_INFO(LABEL, "Set first caller %{public}" PRIu64 ".", fullTokenId);
-    std::string remoteUdid = GetUdidByNodeId(remoteDeviceID);
+
+    std::string remoteUdid;
+    DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(ACCESS_TOKEN_PACKAGE_NAME, remoteDeviceID,
+        remoteUdid);
     ACCESSTOKEN_LOG_INFO(LABEL, "Device %{public}s remoteUdid.", ConstantCommon::EncryptDevId(remoteUdid).c_str());
     AccessTokenID mapID = AccessTokenRemoteTokenManager::GetInstance().GetDeviceMappingTokenID(remoteUdid,
         remoteTokenID);

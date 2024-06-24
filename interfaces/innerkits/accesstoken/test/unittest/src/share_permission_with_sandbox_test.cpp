@@ -20,7 +20,6 @@
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "softbus_bus_center.h"
 #include "token_setproc.h"
 #include "tokenid_kit.h"
 
