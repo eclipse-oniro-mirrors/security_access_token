@@ -25,6 +25,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+std::mutex g_lockFlag;
 std::map<int32_t, std::vector<std::shared_ptr<RequestAsyncContext>>> RequestAsyncInstanceControl::instanceIdMap_;
 std::mutex RequestAsyncInstanceControl::instanceIdMutex_;
 namespace {
@@ -389,9 +390,18 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
     return ret == TypePermissionOper::DYNAMIC_OPER;
 }
 
-void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
+void UIExtensionCallback::ReleaseHandler(int32_t code)
 {
-    this->reqContext_->releaseFlag = true;
+    ACCESSTOKEN_LOG_INFO(LABEL, "Release code: %{public}d", code);
+    {
+        std::lock_guard<std::mutex> lock(g_lockFlag);
+        if (this->reqContext_->releaseFlag) {
+            ACCESSTOKEN_LOG_WARN(LABEL, "Callback has executed.");
+            return;
+        }
+        this->reqContext_->releaseFlag = true;
+    }
+
     Ace::UIContent* uiContent = nullptr;
     if (this->reqContext_->uiAbilityFlag) {
         uiContent = this->reqContext_->abilityContext->GetUIContent();
@@ -402,11 +412,12 @@ void UIExtensionCallback::ReleaseOrErrorHandle(int32_t code)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
+
     uiContent->CloseModalUIExtension(this->sessionId_);
     int32_t instanceId = uiContent->GetInstanceId();
     RequestAsyncInstanceControl::ExecCallback(instanceId);
     if (code == 0) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Request has return by OnResult.");
         return; // code is 0 means request has return by OnResult
     }
     this->reqContext_->result = RET_FAILED;
@@ -434,7 +445,10 @@ void UIExtensionCallback::OnResult(int32_t resultCode, const AAFwk::Want& result
     ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d", resultCode);
     std::vector<std::string> permissionList = result.GetStringArrayParam(PERMISSION_KEY);
     std::vector<int32_t> permissionStates = result.GetIntArrayParam(RESULT_KEY);
-
+    {
+        std::lock_guard<std::mutex> lock(g_lockFlag);
+        this->reqContext_->resultCode = 0;
+    }
     RequestResultsHandler(permissionList, permissionStates, this->reqContext_);
 }
 
@@ -454,7 +468,7 @@ void UIExtensionCallback::OnRelease(int32_t releaseCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
 
-    ReleaseOrErrorHandle(releaseCode);
+    ReleaseHandler(releaseCode);
 }
 
 /*
@@ -465,7 +479,7 @@ void UIExtensionCallback::OnError(int32_t code, const std::string& name, const s
     ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
-    ReleaseOrErrorHandle(code);
+    ReleaseHandler(code);
 }
 
 /*
@@ -483,24 +497,16 @@ void UIExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtens
 void UIExtensionCallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
-    if (this->reqContext_->releaseFlag) {
+    int32_t resultCode = -1;
+    {
+        std::lock_guard<std::mutex> lock(g_lockFlag);
+        resultCode = this->reqContext_->resultCode;
+    }
+    if (resultCode != 0) {
+        ReleaseHandler(resultCode);
         return;
     }
-    Ace::UIContent* uiContent = nullptr;
-    if (this->reqContext_->uiAbilityFlag) {
-        uiContent = this->reqContext_->abilityContext->GetUIContent();
-    } else {
-        uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
-    }
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        return;
-    }
-
-    int32_t instanceId = uiContent->GetInstanceId();
-    RequestAsyncInstanceControl::ExecCallback(instanceId);
-    this->reqContext_->result = RET_FAILED;
-    RequestResultsHandler(this->reqContext_->permissionList, this->reqContext_->permissionsState, this->reqContext_);
+    ReleaseHandler(0);
 }
 
 static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)

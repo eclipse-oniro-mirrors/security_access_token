@@ -35,6 +35,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
     int32_t result = RET_SUCCESS;
+    int32_t resultCode = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
@@ -79,7 +80,7 @@ public:
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
-    void ReleaseOrErrorHandle(int32_t code);
+    void ReleaseHandler(int32_t code);
 
 private:
     int32_t sessionId_ = 0;
