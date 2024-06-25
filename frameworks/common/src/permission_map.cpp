@@ -429,6 +429,22 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_SUBSCRIPTION_CAPSULE_DATA",              false},
     {"ohos.permission.PRE_START_ATOMIC_SERVICE",            false},
     {"ohos.permission.UPDATE_CALENDAR_RRULE",            false},
+    {"ohos.permission.CONNECT_FORM_EXTENSION",              false},
+    {"ohos.permission.CONNECT_WORK_SCHEDULER_EXTENSION",    false},
+    {"ohos.permission.CONNECT_INPUT_METHOD_EXTENSION",      false},
+    {"ohos.permission.CONNECT_ACCESSIBILITY_EXTENSION",     false},
+    {"ohos.permission.CONNECT_STATIC_SUBSCRIBER_EXTENSION", false},
+    {"ohos.permission.CONNECT_WALLPAPER_EXTENSION",         false},
+    {"ohos.permission.CONNECT_BACKUP_EXTENSION",            false},
+    {"ohos.permission.CONNECT_ENTERPRISE_ADMIN_EXTENSION",  false},
+    {"ohos.permission.CONNECT_FILE_ACCESS_EXTENSION",       false},
+    {"ohos.permission.CONNECT_PRINT_EXTENSION",             false},
+    {"ohos.permission.CONNECT_DRIVER_EXTENSION",            false},
+    {"ohos.permission.CONNECT_APP_ACCOUNT_AUTHORIZATION_EXTENSION",    false},
+    {"ohos.permission.CONNECT_REMOTE_NOTIFICATION_EXTENSION",          false},
+    {"ohos.permission.CONNECT_REMOTE_LOCATION_EXTENSION",   false},
+    {"ohos.permission.CONNECT_VPN_EXTENSION",               false},
+    {"ohos.permission.KILL_PROCESS_DEPENDED_ON_ARKWEB",     false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
