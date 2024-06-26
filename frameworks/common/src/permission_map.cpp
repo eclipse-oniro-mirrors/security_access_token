@@ -260,6 +260,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ACCESS_CAST_ENGINE_STREAM",           false},
     {"ohos.permission.CLOUDDATA_CONFIG",                    false},
     {"ohos.permission.DEVICE_STANDBY_EXEMPTION",            false},
+    {"ohos.permission.PERCEIVE_SMART_POWER_SCENARIO",   false},
     {"ohos.permission.RESTRICT_APPLICATION_ACTIVE",         false},
     {"ohos.permission.MANAGE_SENSOR",                       false},
     {"ohos.permission.UPLOAD_SESSION_MANAGER",              false},
