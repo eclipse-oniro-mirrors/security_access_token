@@ -890,6 +890,7 @@ void RequestAsyncInstanceControl::AddCallbackByInstanceId(
 void RequestAsyncInstanceControl::ExecCallback(int32_t id)
 {
     std::shared_ptr<RequestAsyncContext> asyncContext = nullptr;
+    bool isDynamic = false;
     {
         std::lock_guard<std::mutex> lock(instanceIdMutex_);
         auto iter = instanceIdMap_.find(id);
@@ -906,14 +907,13 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
             ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
             iter->second.erase(iter->second.begin());
-            bool isDynamic = false;
             CheckDynamicRequest(asyncContext, isDynamic);
             if (isDynamic) {
                 break;
             }
         }
     }
-    if (asyncContext != nullptr) {
+    if (isDynamic) {
         if (asyncContext->uiExtensionFlag) {
             CreateUIExtension(asyncContext);
         } else {
