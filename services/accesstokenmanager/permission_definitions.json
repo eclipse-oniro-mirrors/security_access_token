@@ -4472,7 +4472,7 @@
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
-            "distributedSceneEnable": true
+            "distributedSceneEnable": false
         },
         {
             "name": "ohos.permission.INJECT_INPUT_EVENT",
