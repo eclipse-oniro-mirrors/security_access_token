@@ -212,7 +212,7 @@ void RemoteCommandExecutor::ProcessBufferedCommandsWithThread()
     }
 
     running_ = true;
-    const std::function<void()> runner = std::bind(&RemoteCommandExecutor::ProcessBufferedCommands, this, true);
+    const std::function<void()> runner = [this]() {this->ProcessBufferedCommands(true);};
 
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AccessEventHandler> handler =

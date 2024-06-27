@@ -116,10 +116,10 @@ AtmCommand::AtmCommand(int32_t argc, char *argv[]) : argc_(argc), argv_(argv), n
     opterr = 0;
 
     commandMap_ = {
-        {"help", std::bind(&AtmCommand::RunAsHelpCommand, this)},
-        {"dump", std::bind(&AtmCommand::RunAsCommonCommand, this)},
-        {"perm", std::bind(&AtmCommand::RunAsCommonCommand, this)},
-        {"toggle", std::bind(&AtmCommand::RunAsCommonCommand, this)},
+        {"help", [this](){return RunAsHelpCommand();}},
+        {"dump", [this]() {return RunAsCommonCommand();}},
+        {"perm", [this]() {return RunAsCommonCommand();}},
+        {"toggle", [this]() {return RunAsCommonCommand();}},
     };
 
     if ((argc < MIN_ARGUMENT_NUMBER) || (argc > MAX_ARGUMENT_NUMBER)) {

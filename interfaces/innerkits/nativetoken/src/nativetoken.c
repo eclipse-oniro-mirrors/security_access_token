@@ -550,6 +550,10 @@ static int32_t ComparePermsInfo(const NativeTokenList *tokenNode,
 static uint32_t UpdateStrArrayInList(char *strArr[], int32_t *strNum,
     const char **strArrNew, int32_t strNumNew)
 {
+    if (strNum == NULL) {
+        NativeTokenKmsg(NATIVETOKEN_KERROR, "[%s]:strNum length is invalid.", __func__);
+        return ATRET_FAILED;
+    }
     for (int32_t i = 0; i < *strNum; i++) {
         free(strArr[i]);
         strArr[i] = NULL;
