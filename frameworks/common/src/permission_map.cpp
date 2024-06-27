@@ -445,6 +445,8 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CONNECT_REMOTE_LOCATION_EXTENSION",   false},
     {"ohos.permission.CONNECT_VPN_EXTENSION",               false},
     {"ohos.permission.KILL_PROCESS_DEPENDED_ON_ARKWEB",     false},
+    {"ohos.permission.CONTROL_LOCATION_SWITCH",               false},
+    {"ohos.permission.MOCK_LOCATION",     false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
