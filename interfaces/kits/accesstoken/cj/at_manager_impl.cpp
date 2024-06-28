@@ -558,6 +558,31 @@ void UIExtensionCallback::OnDestroy()
     LOGI("UIExtensionAbility destructed.");
 }
 
+static Ace::ModalUIExtensionCallbacks BindCallbacks(std::shared_ptr<UIExtensionCallback> uiExtCallback)
+{
+    Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
+        [uiExtCallback](int32_t releaseCode) {
+            uiExtCallback->OnRelease(releaseCode);
+        },
+        [uiExtCallback](int32_t resultCode, const OHOS::AAFwk::Want& result) {
+            uiExtCallback->OnResult(resultCode, result);
+        },
+        [uiExtCallback](const OHOS::AAFwk::WantParams& request) {
+            uiExtCallback->OnReceive(request);
+        },
+        [uiExtCallback](int32_t code, const std::string& name, [[maybe_unused]]const std::string& message) {
+            uiExtCallback->OnError(code, name, name);
+        },
+        [uiExtCallback](const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy);
+        },
+        [uiExtCallback] {
+            uiExtCallback->OnDestroy();
+        },
+    };
+    return uiExtensionCallbacks;
+}
+
 static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     Ace::UIContent* uiContent = nullptr;
@@ -589,22 +614,11 @@ static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestAsyncC
         return CjErrorCode::CJ_ERROR_SYSTEM_CAPABILITY_NOT_SUPPORT;
     }
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
-    Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
-        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1, std::placeholders::_2,
-            std::placeholders::_2),
-        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback),
-    };
-
+    auto uiExtensionCallbacks = BindCallbacks(uiExtCallback);
     Ace::ModalUIExtensionConfig config;
     config.isProhibitBack = true;
     int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-    LOGI("end CreateModalUIExtension, sessionId is %{public}d", sessionId);
     if (sessionId == 0) {
-        LOGE("create component failed, sessionId is 0");
         asyncContext->result = CJ_ERROR_INNER;
         return CJ_ERROR_INNER;
     }
