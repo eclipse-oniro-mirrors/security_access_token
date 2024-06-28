@@ -4495,6 +4495,16 @@
             "distributedSceneEnable": true
         },
         {
+            "name": "ohos.permission.ALLOW_TIPS_ACCESS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SET_FOREGROUND_HAP_REMINDER",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
