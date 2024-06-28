@@ -115,7 +115,7 @@ void AppManagerAccessClient::InitProxy()
     }
 }
 
-void AppManagerAccessClient::RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback)
+void AppManagerAccessClient::RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback)
 {
     std::lock_guard<std::mutex> lock(deathCallbackMutex_);
     if (callback == nullptr) {

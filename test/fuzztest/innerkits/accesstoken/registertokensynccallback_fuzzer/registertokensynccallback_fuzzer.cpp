@@ -41,7 +41,8 @@ public:
     };
 };
 
-bool NativeTokenGet()
+#ifdef TOKEN_SYNC_ENABLE
+static bool NativeTokenGet()
 {
     AccessTokenID token = AccessTokenKit::GetNativeTokenId("token_sync_service");
     if (token == 0) {
@@ -50,6 +51,7 @@ bool NativeTokenGet()
     SetSelfTokenID(token);
     return true;
 }
+#endif
 };
 
 namespace OHOS {

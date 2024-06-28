@@ -27,7 +27,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class MyDmInitCallback final : public DistributedHardware::DmInitCallback {
+class TokenSyncDmInitCallback final : public DistributedHardware::DmInitCallback {
     void OnRemoteDied() override
     {}
 };

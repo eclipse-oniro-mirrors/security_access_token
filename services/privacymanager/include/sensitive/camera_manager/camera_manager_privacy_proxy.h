@@ -19,23 +19,16 @@
 #include <iremote_proxy.h>
 
 #include "privacy_camera_service_ipc_interface_code.h"
+#include "privacy_param.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class ICameraMuteServiceCallback : public IRemoteBroker {
-public:
-    virtual int32_t OnCameraMute(bool muteMode) = 0;
-
-    DECLARE_INTERFACE_DESCRIPTOR(u"ICameraMuteServiceCallback");
-};
-
 class ICameraService : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ICameraService");
 
-    virtual int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) = 0;
-    virtual int32_t MuteCamera(bool muteMode) = 0;
+    virtual int32_t MuteCameraPersist(PolicyType policyType, bool muteMode) = 0;
     virtual int32_t IsCameraMuted(bool &muteMode) = 0;
 };
 
@@ -45,8 +38,7 @@ public:
 
     virtual ~CameraManagerPrivacyProxy() = default;
 
-    int32_t SetMuteCallback(const sptr<ICameraMuteServiceCallback>& callback) override;
-    int32_t MuteCamera(bool muteMode) override;
+    int32_t MuteCameraPersist(PolicyType policyType, bool muteMode) override;
     int32_t IsCameraMuted(bool &muteMode) override;
 private:
     static inline BrokerDelegator<CameraManagerPrivacyProxy> delegator_;

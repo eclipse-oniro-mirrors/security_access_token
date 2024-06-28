@@ -49,35 +49,14 @@
 
 using namespace std;
 using namespace testing::ext;
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-static std::vector<std::thread> threads_;
-static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
-    std::make_shared<SoftBusDeviceConnectionListener>();
-static std::string g_networkID = "deviceid-1";
-static std::string g_udid = "deviceid-1:udid-001";
-static int32_t g_selfUid;
-static AccessTokenID g_selfTokenId = 0;
-static const int32_t OUT_OF_MAP_SOCKET = 2;
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
 
-class TokenSyncServiceTest : public testing::Test {
-public:
-    TokenSyncServiceTest();
-    ~TokenSyncServiceTest();
-    static void SetUpTestCase();
-    static void TearDownTestCase();
-    void OnDeviceOffline(const DmDeviceInfo &info);
-    void SetUp();
-    void TearDown();
-    std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
-};
-
-static DmDeviceInfo g_devInfo = {
+static DistributedHardware::DmDeviceInfo g_devInfo = {
     // udid = deviceid-1:udid-001  uuid = deviceid-1:uuid-001
     .deviceId = "deviceid-1",
     .deviceName = "remote_mock",
@@ -85,9 +64,25 @@ static DmDeviceInfo g_devInfo = {
     .networkId = "deviceid-1"
 };
 
-namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "TokenSyncServiceTest"};
+static std::vector<std::thread> threads_;
+static std::shared_ptr<SoftBusDeviceConnectionListener> g_ptrDeviceStateCallback =
+    std::make_shared<SoftBusDeviceConnectionListener>();
+static int32_t g_selfUid;
+static AccessTokenID g_selfTokenId = 0;
+static const int32_t OUT_OF_MAP_SOCKET = 2;
 }
+
+class TokenSyncServiceTest : public testing::Test {
+public:
+    TokenSyncServiceTest();
+    ~TokenSyncServiceTest();
+    static void SetUpTestCase();
+    static void TearDownTestCase();
+    void OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info);
+    void SetUp();
+    void TearDown();
+    std::shared_ptr<TokenSyncManagerService> tokenSyncManagerService_;
+};
 
 TokenSyncServiceTest::TokenSyncServiceTest()
 {
@@ -132,7 +127,7 @@ void TokenSyncServiceTest::TearDown()
     }
 }
 
-void TokenSyncServiceTest::OnDeviceOffline(const DmDeviceInfo &info)
+void TokenSyncServiceTest::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
     std::string networkId = info.networkId;
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);

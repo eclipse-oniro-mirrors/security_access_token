@@ -18,12 +18,22 @@
 
 #include <gtest/gtest.h>
 #include "access_token.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "device_manager.h"
+#endif
 #include "permission_def.h"
 #include "permission_state_full.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+#ifdef TOKEN_SYNC_ENABLE
+class TestDmInitCallback final : public OHOS::DistributedHardware::DmInitCallback {
+    void OnRemoteDied() override
+    {}
+};
+#endif
+
 class RemoteTokenKitTest : public testing::Test {
 public:
     static void SetUpTestCase();

@@ -42,6 +42,7 @@
       "OHOS::Security::AccessToken::PermActiveStatusChangeCallback::PermActiveStatusChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::PermActiveStatusCustomizedCbk> const&)";
       "OHOS::Security::AccessToken::StateChangeCallback::StateChangeCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::StateCustomizedCbk> const&)";
       "OHOS::Security::AccessToken::PrivacyManagerClient::InitProxy()";
+      "OHOS::Security::AccessToken::PrivacyKit::SetHapWithFGReminder(unsigned int, bool)";
       "OHOS::Security::AccessToken::PrivacyKit::GetPermissionUsedTypeInfos(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, std::__h::vector<OHOS::Security::AccessToken::PermissionUsedTypeInfo, std::__h::allocator<OHOS::Security::AccessToken::PermissionUsedTypeInfo>>&)";
       "OHOS::Security::AccessToken::PrivacyKit::SetMutePolicy(unsigned int, unsigned int, bool)";
       "";

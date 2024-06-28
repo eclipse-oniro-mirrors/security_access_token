@@ -36,7 +36,7 @@ public:
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t GetForegroundApplications(std::vector<AppStateData>& list);
-    void RegisterDeathCallbak(const std::shared_ptr<AppManagerDeathCallback>& callback);
+    void RegisterDeathCallback(const std::shared_ptr<AppManagerDeathCallback>& callback);
     void OnRemoteDiedHandle();
 
 private:

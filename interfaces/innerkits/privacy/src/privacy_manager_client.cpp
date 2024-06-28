@@ -32,6 +32,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 };
 const static int32_t MAX_CALLBACK_SIZE = 200;
 const static int32_t MAX_PERM_LIST_SIZE = 1024;
+constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
@@ -79,19 +80,20 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const 
     return proxy->StartUsingPermission(tokenID, permissionName);
 }
 
-int32_t PrivacyManagerClient::CreateStateChangeCbk(
+int32_t PrivacyManagerClient::CreateStateChangeCbk(AccessTokenID tokenId,
     const std::shared_ptr<StateCustomizedCbk>& callback, sptr<StateChangeCallback>& callbackWrap)
 {
     std::lock_guard<std::mutex> lock(stateCbkMutex_);
 
-    if (stateChangeCallback_ != nullptr) {
+    auto iter = stateChangeCallbackMap_.find(tokenId);
+    if (iter != stateChangeCallbackMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, " callback has been used");
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
     } else {
         callbackWrap = new (std::nothrow) StateChangeCallback(callback);
         if (callbackWrap == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Memory allocation for callbackWrap failed!");
-            return PrivacyError::ERR_SERVICE_ABNORMAL;
+            return PrivacyError::ERR_MALLOC_FAILED;
         }
     }
     return RET_SUCCESS;
@@ -106,7 +108,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const 
     }
 
     sptr<StateChangeCallback> callbackWrap = nullptr;
-    int32_t result = CreateStateChangeCbk(callback, callbackWrap);
+    int32_t result = CreateStateChangeCbk(tokenId, callback, callbackWrap);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -120,7 +122,7 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const 
     result = proxy->StartUsingPermission(tokenId, permissionName, callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        stateChangeCallback_ = callbackWrap;
+        stateChangeCallbackMap_[tokenId] = callbackWrap;
         ACCESSTOKEN_LOG_INFO(LABEL, "CallbackObject added");
     }
     return result;
@@ -133,9 +135,12 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    {
+    if (permissionName == CAMERA_PERMISSION_NAME) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        stateChangeCallback_ = nullptr;
+        auto iter = stateChangeCallbackMap_.find(tokenID);
+        if (iter != stateChangeCallbackMap_.end()) {
+            stateChangeCallbackMap_.erase(tokenID);
+        }
     }
 
     return proxy->StopUsingPermission(tokenID, permissionName);
@@ -364,6 +369,16 @@ int32_t PrivacyManagerClient::SetMutePolicy(uint32_t policyType, uint32_t caller
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetMutePolicy(policyType, callerType, isMute);
+}
+
+int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->SetHapWithFGReminder(tokenId, isAllowed);
 }
 
 void PrivacyManagerClient::InitProxy()

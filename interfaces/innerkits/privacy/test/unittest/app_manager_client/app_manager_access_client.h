@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,42 +13,38 @@
  * limitations under the License.
  */
 
-#ifndef AUDIO_MANAGER_PRIVACY_CLIENT_H
-#define AUDIO_MANAGER_PRIVACY_CLIENT_H
+#ifndef ACCESS_APP_MANAGER_ACCESS_CLIENT_H
+#define ACCESS_APP_MANAGER_ACCESS_CLIENT_H
 
 #include <mutex>
 #include <string>
 
-#include "audio_manager_privacy_death_recipient.h"
-#include "audio_manager_privacy_proxy.h"
+#include "app_manager_access_proxy.h"
 #include "nocopyable.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AudioManagerPrivacyClient final {
+class AppManagerAccessClient final {
 public:
-    static AudioManagerPrivacyClient& GetInstance();
-    virtual ~AudioManagerPrivacyClient();
-
-    int32_t SetMicrophoneMutePersistent(const bool isMute, const PolicyType type);
-    bool GetPersistentMicMuteState();
+    static AppManagerAccessClient& GetInstance();
+    virtual ~AppManagerAccessClient();
+    int32_t GetForegroundApplications(std::vector<AppStateData>& list);
     void OnRemoteDiedHandle();
 
 private:
-    AudioManagerPrivacyClient();
-    DISALLOW_COPY_AND_MOVE(AudioManagerPrivacyClient);
+    AppManagerAccessClient();
+    DISALLOW_COPY_AND_MOVE(AppManagerAccessClient);
 
     void InitProxy();
-    sptr<IAudioPolicy> GetProxy();
+    sptr<IAppMgr> GetProxy();
     void ReleaseProxy();
 
-    sptr<AudioMgrDeathRecipient> serviceDeathObserver_ = nullptr;
     std::mutex proxyMutex_;
-    sptr<IAudioPolicy> proxy_ = nullptr;
+    sptr<IAppMgr> proxy_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // AUDIO_MANAGER_PRIVACY_CLIENT_H
+#endif // ACCESS_APP_MANAGER_ACCESS_CLIENT_H
 

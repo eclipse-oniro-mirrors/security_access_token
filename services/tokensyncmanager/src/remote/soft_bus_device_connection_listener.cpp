@@ -18,8 +18,8 @@
 #include "remote_command_manager.h"
 #include "soft_bus_manager.h"
 #include "device_info_manager.h"
+#include "device_manager.h"
 #include "iservice_registry.h"
-#include "softbus_bus_center.h"
 #include "soft_bus_socket_listener.h"
 #include "system_ability_definition.h"
 #include "constant_common.h"
@@ -29,10 +29,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-using OHOS::DistributedHardware::DeviceStateCallback;
-using OHOS::DistributedHardware::DmDeviceInfo;
-using OHOS::DistributedHardware::DmInitCallback;
-
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "SoftBusDeviceConnectionListener"};
@@ -49,9 +45,9 @@ SoftBusDeviceConnectionListener::~SoftBusDeviceConnectionListener()
     ACCESSTOKEN_LOG_DEBUG(LABEL, "~SoftBusDeviceConnectionListener()");
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceOnline(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceOnline(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     std::string uuid = SoftBusManager::GetInstance().GetUniversallyUniqueIdByNodeId(networkId);
     std::string udid = SoftBusManager::GetInstance().GetUniqueDeviceIdByNodeId(networkId);
 
@@ -84,9 +80,9 @@ void SoftBusDeviceConnectionListener::UnloadTokensyncService()
     }
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceOffline(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     std::string uuid = DeviceInfoManager::GetInstance().ConvertToUniversallyUniqueIdOrFetch(networkId);
     std::string udid = DeviceInfoManager::GetInstance().ConvertToUniqueDeviceIdOrFetch(networkId);
     if ((uuid == "") || (udid == "")) {
@@ -105,7 +101,7 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
 
     std::string packageName = ACCESSTOKEN_PACKAGE_NAME;
     std::string extra = "";
-    std::vector<DmDeviceInfo> deviceList;
+    std::vector<DistributedHardware::DmDeviceInfo> deviceList;
 
     int32_t ret = DistributedHardware::DeviceManager::GetInstance().GetTrustedDeviceList(packageName,
         extra, deviceList);
@@ -121,15 +117,15 @@ void SoftBusDeviceConnectionListener::OnDeviceOffline(const DmDeviceInfo &info)
     }
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceReady(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceReady(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 
-void SoftBusDeviceConnectionListener::OnDeviceChanged(const DmDeviceInfo &info)
+void SoftBusDeviceConnectionListener::OnDeviceChanged(const DistributedHardware::DmDeviceInfo &info)
 {
-    std::string networkId = info.networkId;
+    std::string networkId = std::string(info.networkId);
     ACCESSTOKEN_LOG_INFO(LABEL, "NetworkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
 }
 }  // namespace AccessToken

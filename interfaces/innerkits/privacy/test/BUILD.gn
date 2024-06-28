@@ -27,6 +27,8 @@ ohos_unittest("libprivacy_sdk_test") {
 
   include_dirs = [
     "../src",
+    "unittest/app_manager_client",
+    "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/privacy/include",
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
@@ -35,6 +37,9 @@ ohos_unittest("libprivacy_sdk_test") {
   ]
 
   sources = [
+    "unittest/app_manager_client/app_manager_access_client.cpp",
+    "unittest/app_manager_client/app_manager_access_proxy.cpp",
+    "unittest/app_manager_client/app_state_data.cpp",
     "unittest/src/permission_deny_test.cpp",
     "unittest/src/privacy_kit_test.cpp",
   ]
@@ -48,20 +53,25 @@ ohos_unittest("libprivacy_sdk_test") {
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   deps = [
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
     "${access_token_path}/interfaces/innerkits/privacy:libprivacy_sdk",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
   ]
   external_deps = [
     "c_utils:utils",
+    "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   if (audio_framework_enable) {
-    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENALBE" ]
+    cflags_cc += [ "-DAUDIO_FRAMEWORK_ENABLE" ]
     external_deps += [ "audio_framework:audio_client" ]
   }
 }

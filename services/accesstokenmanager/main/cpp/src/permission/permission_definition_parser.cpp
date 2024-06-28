@@ -171,7 +171,7 @@ static bool CheckPermissionDefRules(const PermissionDef& permDef)
 {
     // Extension permission support permission for service only.
     if (permDef.availableType != AccessToken::ATokenAvailableTypeEnum::SERVICE) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "%{public}s is for hap.", permDef.permissionName.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s is for hap.", permDef.permissionName.c_str());
         return false;
     }
     return true;
@@ -195,7 +195,7 @@ int32_t PermissionDefinitionParser::GetPermissionDefList(const nlohmann::json& j
         if (!CheckPermissionDefRules(result.permDef)) {
             continue;
         }
-        ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s insert.", result.permDef.permissionName.c_str());
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s insert.", result.permDef.permissionName.c_str());
         permDefList.emplace_back(result.permDef);
     }
     return RET_SUCCESS;
@@ -215,11 +215,13 @@ int32_t PermissionDefinitionParser::ParserPermsRawData(const std::string& permsR
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get system_grant permission def list failed.");
         return ret;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get system_grant permission size=%{public}zu.", permDefList.size());
     ret = GetPermissionDefList(jsonRes, permsRawData, USER_GRANT_DEFINE_PERMISSION, permDefList);
     if (ret != RET_SUCCESS) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get user_grant permission def list failed.");
         return ret;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Get permission size=%{public}zu.", permDefList.size());
     return RET_SUCCESS;
 }
 

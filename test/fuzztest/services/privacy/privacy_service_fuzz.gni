@@ -84,14 +84,12 @@ privacy_sources = [
   "${access_token_path}/services/privacymanager/src/record/permission_record_manager.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_record_repository.cpp",
   "${access_token_path}/services/privacymanager/src/record/permission_used_record_cache.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_global_switch_change_stub.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_client.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_death_recipient.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/audio_manager/audio_manager_privacy_proxy.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_client.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_death_recipient.cpp",
   "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_manager_privacy_proxy.cpp",
-  "${access_token_path}/services/privacymanager/src/sensitive/camera_manager/camera_service_callback_stub.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_service.cpp",
   "${access_token_path}/services/privacymanager/src/service/privacy_manager_stub.cpp",
 ]
@@ -124,17 +122,4 @@ if (window_manager_enable && access_token_camera_float_window_enable) {
 if (theme_screenlock_mgr_enable) {
   privacy_cflags_cc += [ "-DTHEME_SCREENLOCK_MGR_ENABLE" ]
   privacy_external_deps += [ "screenlock_mgr:screenlock_client" ]
-}
-
-if (access_token_background_task_mgr_continuous_task_enable == true) {
-  privacy_cflags_cc += [ "-DBGTASKMGR_CONTINUOUS_TASK_ENABLE" ]
-  privacy_include_dirs +=
-      [ "${access_token_path}/services/common/background_task_manager/include" ]
-  privacy_sources += [
-    "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_client.cpp",
-    "${access_token_path}/services/common/background_task_manager/src/background_task_manager_access_proxy.cpp",
-    "${access_token_path}/services/common/background_task_manager/src/background_task_manager_death_recipient.cpp",
-    "${access_token_path}/services/common/background_task_manager/src/continuous_task_callback_info.cpp",
-    "${access_token_path}/services/common/background_task_manager/src/continuous_task_change_callback.cpp",
-  ]
 }

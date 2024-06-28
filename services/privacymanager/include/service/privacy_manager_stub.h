@@ -52,6 +52,7 @@ private:
 #endif
     void GetPermissionUsedTypeInfosInner(MessageParcel& data, MessageParcel& reply);
     void SetMutePolicyInner(MessageParcel& data, MessageParcel& reply);
+    void SetHapWithFGReminderInner(MessageParcel& data, MessageParcel& reply);
     bool IsAccessTokenCalling() const;
     bool IsSystemAppCalling() const;
     bool VerifyPermission(const std::string& permission) const;

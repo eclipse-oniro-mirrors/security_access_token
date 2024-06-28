@@ -14,7 +14,7 @@
 group("unittest") {
   testonly = true
   deps = [
-    "coverage:libaccesstoken_manager_service_standard_coverage_test",
+    "coverage:libaccesstoken_manager_service_coverage_test",
     "unittest:libaccesstoken_manager_service_standard_test",
   ]
 }

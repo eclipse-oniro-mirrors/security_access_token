@@ -20,7 +20,6 @@
 #include "accesstoken_log.h"
 #include "access_token_error.h"
 #include "nativetoken_kit.h"
-#include "softbus_bus_center.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;
@@ -117,6 +116,7 @@ void NativeTokenGet()
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 }
 
+#ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackImpl : public TokenSyncKitInterface {
 public:
@@ -141,6 +141,7 @@ public:
         return FAKE_SYNC_RET;
     };
 };
+#endif
 }
 
 void RemoteTokenKitTest::SetUpTestCase()
@@ -155,10 +156,20 @@ void RemoteTokenKitTest::SetUpTestCase()
     AccessTokenKit::DeleteToken(tokenID);
 
     NativeTokenGet();
+
+#ifdef TOKEN_SYNC_ENABLE
+    std::shared_ptr<TestDmInitCallback> ptrDmInitCallback = std::make_shared<TestDmInitCallback>();
+    int32_t res = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(TEST_PKG_NAME, ptrDmInitCallback);
+    ASSERT_EQ(res, RET_SUCCESS);
+#endif
 }
 
 void RemoteTokenKitTest::TearDownTestCase()
 {
+#ifdef TOKEN_SYNC_ENABLE
+    int32_t res = DistributedHardware::DeviceManager::GetInstance().UnInitDeviceManager(TEST_PKG_NAME);
+    ASSERT_EQ(res, RET_SUCCESS);
+#endif
 }
 
 void RemoteTokenKitTest::SetUp()
@@ -171,15 +182,18 @@ void RemoteTokenKitTest::SetUp()
                                                           g_infoManagerTestInfoParms.instIndex);
     AccessTokenKit::DeleteToken(tokenID);
 
-    NodeBasicInfo deviceInfo;
-    int32_t res = ::GetLocalNodeDeviceInfo(TEST_PKG_NAME.c_str(), &deviceInfo);
+#ifdef TOKEN_SYNC_ENABLE
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TEST_PKG_NAME, deviceInfo);
     ASSERT_EQ(res, RET_SUCCESS);
-    char udid[128] = {0}; // 128 is udid length
-    ::GetNodeKeyInfo(TEST_PKG_NAME.c_str(), deviceInfo.networkId,
-        NodeDeviceInfoKey::NODE_KEY_UDID, reinterpret_cast<uint8_t *>(udid), 128); // 128 is udid length
 
-    udid_.append(udid);
-    networkId_.append(deviceInfo.networkId);
+    networkId_ = std::string(deviceInfo.networkId);
+    ASSERT_NE(networkId_, "");
+
+    res = DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(TEST_PKG_NAME, networkId_, udid_);
+    ASSERT_EQ(res, RET_SUCCESS);
+    ASSERT_NE(udid_, "");
+#endif
 
     ACCESSTOKEN_LOG_INFO(LABEL, "SetUp ok.");
 }

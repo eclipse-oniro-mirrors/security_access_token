@@ -23,11 +23,10 @@
 #include "constant.h"
 #include "constant_common.h"
 #include "device_info_manager.h"
-#include "dm_device_info.h"
+#include "device_manager.h"
 #include "ipc_skeleton.h"
 #include "libraryloader.h"
 #include "remote_command_manager.h"
-#include "softbus_bus_center.h"
 #include "soft_bus_device_connection_listener.h"
 #include "soft_bus_socket_listener.h"
 #include "token_setproc.h"
@@ -40,7 +39,6 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 static constexpr int32_t DEFAULT_SEND_REQUEST_REPEAT_TIMES = 5;
 }
 namespace {
-static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 
 static const std::string TOKEN_SYNC_PACKAGE_NAME = "ohos.security.distributed_access_token";
@@ -98,8 +96,12 @@ int SoftBusManager::AddTrustedDeviceInfo()
     }
 
     for (const DistributedHardware::DmDeviceInfo& device : deviceList) {
-        std::string uuid = GetUuidByNodeId(device.networkId);
-        std::string udid = GetUdidByNodeId(device.networkId);
+        std::string uuid;
+        std::string udid;
+        DistributedHardware::DeviceManager::GetInstance().GetUuidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, device.networkId,
+            uuid);
+        DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, device.networkId,
+            udid);
         if (uuid.empty() || udid.empty()) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Uuid = %{public}s, udid = %{public}s, uuid or udid is empty, abort.",
                 ConstantCommon::EncryptDevId(uuid).c_str(), ConstantCommon::EncryptDevId(udid).c_str());
@@ -117,7 +119,7 @@ int SoftBusManager::AddTrustedDeviceInfo()
 int SoftBusManager::DeviceInit()
 {
     std::string packageName = TOKEN_SYNC_PACKAGE_NAME;
-    std::shared_ptr<MyDmInitCallback> ptrDmInitCallback = std::make_shared<MyDmInitCallback>();
+    std::shared_ptr<TokenSyncDmInitCallback> ptrDmInitCallback = std::make_shared<TokenSyncDmInitCallback>();
 
     int ret = DistributedHardware::DeviceManager::GetInstance().InitDeviceManager(packageName, ptrDmInitCallback);
     if (ret != ERR_OK) {
@@ -454,14 +456,15 @@ bool SoftBusManager::GetNetworkIdBySocket(const int32_t socket, std::string& net
     return false;
 }
 
-std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &nodeId)
+std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &networkId)
 {
-    if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+    if (!DataValidator::IsDeviceIdValid(networkId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid networkId, empty or size extends 256");
         return "";
     }
 
-    std::string uuid = GetUuidByNodeId(nodeId);
+    std::string uuid;
+    DistributedHardware::DeviceManager::GetInstance().GetUuidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, networkId, uuid);
     if (uuid.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Softbus return null or empty string");
         return "";
@@ -485,13 +488,14 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &no
     return uuid;
 }
 
-std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
+std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &networkId)
 {
-    if (!DataValidator::IsDeviceIdValid(nodeId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid nodeId: %{public}s", ConstantCommon::EncryptDevId(nodeId).c_str());
+    if (!DataValidator::IsDeviceIdValid(networkId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid networkId: %{public}s", ConstantCommon::EncryptDevId(networkId).c_str());
         return "";
     }
-    std::string udid = GetUdidByNodeId(nodeId);
+    std::string udid;
+    DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, networkId, udid);
     if (udid.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Softbus return null or empty string: %{public}s",
             ConstantCommon::EncryptDevId(udid).c_str());
@@ -507,50 +511,6 @@ std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &nodeId)
     return udid;
 }
 
-std::string SoftBusManager::GetUuidByNodeId(const std::string &nodeId) const
-{
-    uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
-    if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", UDID_MAX_LENGTH);
-        return "";
-    }
-    (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
-        NodeDeviceInfoKey::NODE_KEY_UUID, info, UDID_MAX_LENGTH);
-    if (ret != Constant::SUCCESS) {
-        delete[] info;
-        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, return code: %{public}d", ret);
-        return "";
-    }
-    std::string uuid(reinterpret_cast<char *>(info));
-    delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished. nodeId(in): %{public}s, uuid: %{public}s",
-        ConstantCommon::EncryptDevId(nodeId).c_str(), ConstantCommon::EncryptDevId(uuid).c_str());
-    return uuid;
-}
-
-std::string SoftBusManager::GetUdidByNodeId(const std::string &nodeId) const
-{
-    uint8_t *info = new (std::nothrow) uint8_t[UDID_MAX_LENGTH + 1];
-    if (info == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "No enough memory: %{public}d", UDID_MAX_LENGTH);
-        return "";
-    }
-    (void)memset_s(info, UDID_MAX_LENGTH + 1, 0, UDID_MAX_LENGTH + 1);
-    int32_t ret = ::GetNodeKeyInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), nodeId.c_str(),
-        NodeDeviceInfoKey::NODE_KEY_UDID, info, UDID_MAX_LENGTH);
-    if (ret != Constant::SUCCESS) {
-        delete[] info;
-        ACCESSTOKEN_LOG_WARN(LABEL, "GetNodeKeyInfo error, code: %{public}d", ret);
-        return "";
-    }
-    std::string udid(reinterpret_cast<char *>(info));
-    delete[] info;
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished: nodeId(in): %{public}s",
-        ConstantCommon::EncryptDevId(nodeId).c_str());
-    return udid;
-}
-
 int SoftBusManager::FulfillLocalDeviceInfo()
 {
     // repeated task will just skip
@@ -559,26 +519,31 @@ int SoftBusManager::FulfillLocalDeviceInfo()
         return Constant::SUCCESS;
     }
 
-    NodeBasicInfo info;
-    int32_t ret = ::GetLocalNodeDeviceInfo(TOKEN_SYNC_PACKAGE_NAME.c_str(), &info);
-    if (ret != Constant::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "GetLocalNodeDeviceInfo error");
+    DistributedHardware::DmDeviceInfo deviceInfo;
+    int32_t res = DistributedHardware::DeviceManager::GetInstance().GetLocalDeviceInfo(TOKEN_SYNC_PACKAGE_NAME,
+        deviceInfo);
+    if (res != Constant::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetLocalDeviceInfo error");
         fulfillMutex_.unlock();
         return Constant::FAILURE;
     }
+    std::string networkId = std::string(deviceInfo.networkId);
 
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished, type:%{public}d", info.deviceTypeId);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Call softbus finished, type:%{public}d", deviceInfo.deviceTypeId);
 
-    std::string uuid = GetUuidByNodeId(info.networkId);
-    std::string udid = GetUdidByNodeId(info.networkId);
+    std::string uuid;
+    std::string udid;
+
+    DistributedHardware::DeviceManager::GetInstance().GetUuidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, networkId, uuid);
+    DistributedHardware::DeviceManager::GetInstance().GetUdidByNetworkId(TOKEN_SYNC_PACKAGE_NAME, networkId, udid);
     if (uuid.empty() || udid.empty()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "FulfillLocalDeviceInfo: uuid or udid is empty, abort.");
         fulfillMutex_.unlock();
         return Constant::FAILURE;
     }
 
-    DeviceInfoManager::GetInstance().AddDeviceInfo(info.networkId, uuid, udid, info.deviceName,
-        std::to_string(info.deviceTypeId));
+    DeviceInfoManager::GetInstance().AddDeviceInfo(networkId, uuid, udid, std::string(deviceInfo.deviceName),
+        std::to_string(deviceInfo.deviceTypeId));
     ACCESSTOKEN_LOG_DEBUG(LABEL, "AddDeviceInfo finished");
 
     fulfillMutex_.unlock();

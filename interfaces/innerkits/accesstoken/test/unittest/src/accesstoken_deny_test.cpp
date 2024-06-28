@@ -17,7 +17,9 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #include "token_setproc.h"
+#ifdef TOKEN_SYNC_ENABLE
 #include "token_sync_kit_interface.h"
+#endif
 
 namespace OHOS {
 namespace Security {
@@ -40,6 +42,7 @@ static HapInfoParams g_InfoParms = {
     .isSystemApp = true
 };
 
+#ifdef TOKEN_SYNC_ENABLE
 static const int32_t FAKE_SYNC_RET = 0xabcdef;
 class TokenSyncCallbackImpl : public TokenSyncKitInterface {
     int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
@@ -57,6 +60,7 @@ class TokenSyncCallbackImpl : public TokenSyncKitInterface {
         return FAKE_SYNC_RET;
     };
 };
+#endif
 }
 using namespace testing::ext;
 

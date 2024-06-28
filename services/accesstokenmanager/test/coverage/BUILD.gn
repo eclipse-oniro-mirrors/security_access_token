@@ -43,7 +43,7 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/native_token_receptor.cpp",
 ]
 
-ohos_unittest("libaccesstoken_manager_service_standard_coverage_test") {
+ohos_unittest("libaccesstoken_manager_service_coverage_test") {
   subsystem_name = "security"
   part_name = "access_token"
   module_out_path = part_name + "/" + part_name
@@ -98,21 +98,8 @@ ohos_unittest("libaccesstoken_manager_service_standard_coverage_test") {
     "${access_token_path}/services/common:accesstoken_service_common",
   ]
 
-  if (token_sync_enable == true) {
-    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
-    sources += [
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
-      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
-    ]
-    include_dirs += [
-      "${access_token_path}/interfaces/innerkits/tokensync/include",
-      "${access_token_path}/interfaces/innerkits/tokensync/src",
-    ]
-  }
-
   external_deps = [
     "c_utils:utils",
-    "dsoftbus:softbus_client",
     "googletest:gmock",
     "googletest:gtest_main",
     "hilog:libhilog",
@@ -125,6 +112,18 @@ ohos_unittest("libaccesstoken_manager_service_standard_coverage_test") {
     "sqlite:sqlite",
   ]
 
+  if (token_sync_enable == true) {
+    cflags_cc += [ "-DTOKEN_SYNC_ENABLE" ]
+    sources += [
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/accesstoken_remote_token_manager.cpp",
+      "${access_token_path}/services/accesstokenmanager/main/cpp/src/token/token_modify_notifier.cpp",
+    ]
+    include_dirs += [
+      "${access_token_path}/interfaces/innerkits/tokensync/include",
+      "${access_token_path}/interfaces/innerkits/tokensync/src",
+    ]
+    external_deps += [ "device_manager:devicemanagersdk" ]
+  }
   if (eventhandler_enable == true) {
     cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
     external_deps += [ "eventhandler:libeventhandler" ]

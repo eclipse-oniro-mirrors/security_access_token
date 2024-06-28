@@ -480,6 +480,32 @@ int32_t PrivacyManagerProxy::SetMutePolicy(uint32_t policyType, uint32_t callerT
     return result;
 }
 
+int32_t PrivacyManagerProxy::SetHapWithFGReminder(uint32_t tokenId, bool isAllowed)
+{
+    MessageParcel data;
+    MessageParcel reply;
+    if (!data.WriteInterfaceToken(IPrivacyManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write WriteInterfaceToken.");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteUint32(tokenId)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteUint32(%{public}d)", tokenId);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+
+    if (!data.WriteBool(isAllowed)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}d)", isAllowed);
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!SendRequest(PrivacyInterfaceCode::SET_HAP_WITH_FOREGROUND_REMINDER, data, reply)) {
+        return PrivacyError::ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result = reply.ReadInt32();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server is %{public}d.", result);
+    return result;
+}
+
 bool PrivacyManagerProxy::SendRequest(
     PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode)
 {

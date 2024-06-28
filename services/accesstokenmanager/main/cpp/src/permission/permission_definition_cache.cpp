@@ -55,7 +55,7 @@ bool PermissionDefinitionCache::Insert(const PermissionDef& info, AccessTokenID 
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.find(info.permissionName);
     if (it != permissionDefinitionMap_.end()) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Info for permission: %{public}s has been insert, please check!",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Info for permission: %{public}s has been insert, please check!",
             info.permissionName.c_str());
         return false;
     }

@@ -35,6 +35,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
     int32_t result = RET_SUCCESS;
+    int32_t resultCode = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
@@ -79,7 +80,7 @@ public:
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
-    void ReleaseOrErrorHandle(int32_t code);
+    void ReleaseHandler(int32_t code);
 
 private:
     int32_t sessionId_ = 0;
@@ -90,23 +91,19 @@ struct ResultCallback {
     std::vector<std::string> permissions;
     std::vector<int32_t> grantResults;
     std::vector<bool> dialogShownResults;
-    int32_t requestCode;
     std::shared_ptr<RequestAsyncContext> data = nullptr;
 };
 
 class AuthorizationResult : public Security::AccessToken::TokenCallbackStub {
 public:
-    AuthorizationResult(int32_t requestCode, std::shared_ptr<RequestAsyncContext>& data)
-        : requestCode_(requestCode), data_(data)
-    {}
+    AuthorizationResult(std::shared_ptr<RequestAsyncContext>& data) : data_(data) {}
     virtual ~AuthorizationResult() override = default;
 
-    virtual void GrantResultsCallback(const std::vector<std::string>& permissions,
+    virtual void GrantResultsCallback(const std::vector<std::string>& permissionList,
         const std::vector<int>& grantResults) override;
     virtual void WindowShownCallback() override;
 
 private:
-    int32_t requestCode_ = 0;
     std::shared_ptr<RequestAsyncContext> data_ = nullptr;
 };
 

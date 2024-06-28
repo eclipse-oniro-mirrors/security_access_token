@@ -23,6 +23,9 @@
 
 #include "access_token.h"
 #include "atm_tools_param_info.h"
+#ifdef TOKEN_SYNC_ENABLE
+#include "device_manager.h"
+#endif
 #include "hap_token_info.h"
 #include "hap_token_info_inner.h"
 #include "native_token_info_inner.h"
@@ -34,6 +37,13 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 static const int UDID_MAX_LENGTH = 128; // udid/uuid max length
+
+#ifdef TOKEN_SYNC_ENABLE
+class AccessTokenDmInitCallback final : public DistributedHardware::DmInitCallback {
+    void OnRemoteDied() override
+    {}
+};
+#endif
 
 class AccessTokenInfoManager final {
 public:
@@ -86,7 +96,6 @@ public:
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
-    std::string GetUdidByNodeId(const std::string &nodeId);
 #endif
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE

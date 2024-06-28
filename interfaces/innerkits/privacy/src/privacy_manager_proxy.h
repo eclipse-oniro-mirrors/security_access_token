@@ -53,6 +53,7 @@ public:
     int32_t GetPermissionUsedTypeInfos(const AccessTokenID tokenId, const std::string& permissionName,
         std::vector<PermissionUsedTypeInfoParcel>& resultsParcel) override;
     int32_t SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute) override;
+    int32_t SetHapWithFGReminder(uint32_t tokenId, bool isAllowed) override;
 private:
     bool SendRequest(PrivacyInterfaceCode code, MessageParcel& data, MessageParcel& reply, bool asyncMode = false);
     static inline BrokerDelegator<PrivacyManagerProxy> delegator_;

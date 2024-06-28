@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "camera_manager_privacy_client.h"
+#include "app_manager_access_client.h"
+#include <unistd.h>
 
 #include "accesstoken_log.h"
 #include "iservice_registry.h"
@@ -23,86 +24,63 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "CameraManagerPrivacyClient"
+    LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AppManagerAccessClient"
 };
 std::recursive_mutex g_instanceMutex;
 } // namespace
 
-CameraManagerPrivacyClient& CameraManagerPrivacyClient::GetInstance()
+AppManagerAccessClient& AppManagerAccessClient::GetInstance()
 {
-    static CameraManagerPrivacyClient* instance = nullptr;
+    static AppManagerAccessClient* instance = nullptr;
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new CameraManagerPrivacyClient();
+            instance = new AppManagerAccessClient();
         }
     }
     return *instance;
 }
 
-CameraManagerPrivacyClient::CameraManagerPrivacyClient()
+AppManagerAccessClient::AppManagerAccessClient()
 {}
 
-CameraManagerPrivacyClient::~CameraManagerPrivacyClient()
+AppManagerAccessClient::~AppManagerAccessClient()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     ReleaseProxy();
 }
 
-int32_t CameraManagerPrivacyClient::MuteCameraPersist(PolicyType policyType, bool muteMode)
+int32_t AppManagerAccessClient::GetForegroundApplications(std::vector<AppStateData>& list)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
         return -1;
     }
-    return proxy->MuteCameraPersist(policyType, muteMode);
+    return proxy->GetForegroundApplications(list);
 }
 
-bool CameraManagerPrivacyClient::IsCameraMuted()
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
-        return false;
-    }
-    bool muteMode = false;
-    proxy->IsCameraMuted(muteMode);
-    return muteMode;
-}
-
-void CameraManagerPrivacyClient::InitProxy()
+void AppManagerAccessClient::InitProxy()
 {
     auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (sam == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbilityManager is null");
         return;
     }
-    auto cameraManagerSa = sam->GetSystemAbility(CAMERA_SERVICE_ID);
-    if (cameraManagerSa == nullptr) {
+    auto appManagerSa = sam->GetSystemAbility(APP_MGR_SERVICE_ID);
+    if (appManagerSa == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetSystemAbility %{public}d is null",
-            CAMERA_SERVICE_ID);
+            APP_MGR_SERVICE_ID);
         return;
     }
 
-    serviceDeathObserver_ = sptr<CameraManagerPrivacyDeathRecipient>::MakeSptr();
-    if (serviceDeathObserver_ != nullptr) {
-        cameraManagerSa->AddDeathRecipient(serviceDeathObserver_);
-    }
-
-    proxy_ = iface_cast<ICameraService>(cameraManagerSa);
+    proxy_ = iface_cast<IAppMgr>(appManagerSa);
     if (proxy_ == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
     }
 }
 
-void CameraManagerPrivacyClient::OnRemoteDiedHandle()
-{
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    ReleaseProxy();
-}
-
-sptr<ICameraService> CameraManagerPrivacyClient::GetProxy()
+sptr<IAppMgr> AppManagerAccessClient::GetProxy()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
     if (proxy_ == nullptr) {
@@ -111,13 +89,9 @@ sptr<ICameraService> CameraManagerPrivacyClient::GetProxy()
     return proxy_;
 }
 
-void CameraManagerPrivacyClient::ReleaseProxy()
+void AppManagerAccessClient::ReleaseProxy()
 {
-    if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {
-        proxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
-    }
     proxy_ = nullptr;
-    serviceDeathObserver_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security

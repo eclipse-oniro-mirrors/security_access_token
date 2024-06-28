@@ -20,7 +20,6 @@
 #include "access_token_error.h"
 #include "permission_grant_info.h"
 #include "nativetoken_kit.h"
-#include "softbus_bus_center.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;

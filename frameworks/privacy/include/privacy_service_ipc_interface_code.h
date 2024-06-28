@@ -39,6 +39,7 @@ enum class PrivacyInterfaceCode {
 #endif
     GET_PERMISSION_USED_TYPE_INFOS,
     SET_MUTE_POLICY,
+    SET_HAP_WITH_FOREGROUND_REMINDER,
 };
 } // namespace AccessToken
 } // namespace Security
