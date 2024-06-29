@@ -479,7 +479,7 @@ std::string SoftBusManager::GetUniversallyUniqueIdByNodeId(const std::string &ne
         std::string dimUuid = info.deviceId.universallyUniqueId;
         if (uuid == dimUuid) {
             // refresh cache
-            std::function<void()> fulfillDeviceInfo = std::bind(&SoftBusManager::FulfillLocalDeviceInfo, this);
+            std::function<void()> fulfillDeviceInfo = [this]() {this->FulfillLocalDeviceInfo();};
             std::thread fulfill(fulfillDeviceInfo);
             fulfill.detach();
         }
@@ -504,7 +504,7 @@ std::string SoftBusManager::GetUniqueDeviceIdByNodeId(const std::string &network
     std::string localUdid = ConstantCommon::GetLocalDeviceId();
     if (udid == localUdid) {
         // refresh cache
-        std::function<void()> fulfillDeviceInfo = std::bind(&SoftBusManager::FulfillLocalDeviceInfo, this);
+        std::function<void()> fulfillDeviceInfo = [this]() {this->FulfillLocalDeviceInfo();};
         std::thread fulfill(fulfillDeviceInfo);
         fulfill.detach();
     }

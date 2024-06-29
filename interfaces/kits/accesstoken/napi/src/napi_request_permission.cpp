@@ -564,13 +564,24 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     }
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
     Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
-        std::bind(&UIExtensionCallback::OnRelease, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnResult, uiExtCallback, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&UIExtensionCallback::OnReceive, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnError, uiExtCallback, std::placeholders::_1, std::placeholders::_2,
-            std::placeholders::_2),
-        std::bind(&UIExtensionCallback::OnRemoteReady, uiExtCallback, std::placeholders::_1),
-        std::bind(&UIExtensionCallback::OnDestroy, uiExtCallback),
+        [uiExtCallback](int32_t releaseCode) {
+            uiExtCallback->OnRelease(releaseCode);
+        },
+        [uiExtCallback](int32_t resultCode, const AAFwk::Want &result) {
+            uiExtCallback->OnResult(resultCode, result);
+        },
+        [uiExtCallback](const AAFwk::WantParams &receive) {
+            uiExtCallback->OnReceive(receive);
+        },
+        [uiExtCallback](int32_t code, const std::string &name, [[maybe_unused]] const std::string &message) {
+            uiExtCallback->OnError(code, name, name);
+        },
+        [uiExtCallback](const std::shared_ptr<Ace::ModalUIExtensionProxy> &uiProxy) {
+            uiExtCallback->OnRemoteReady(uiProxy);
+        },
+        [uiExtCallback]() {
+            uiExtCallback->OnDestroy();
+        },
     };
 
     Ace::ModalUIExtensionConfig config;
