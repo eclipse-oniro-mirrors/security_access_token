@@ -480,6 +480,7 @@ void NapiAtManager::CheckAccessTokenExecute(napi_env env, void *data)
 }
 
 void NapiAtManager::CheckAccessTokenComplete(napi_env env, napi_status status, void *data)
+    __attribute__((no_sanitize("cfi")))
 {
     AtManagerAsyncContext* asyncContext = reinterpret_cast<AtManagerAsyncContext *>(data);
     std::unique_ptr<AtManagerAsyncContext> context {asyncContext};
