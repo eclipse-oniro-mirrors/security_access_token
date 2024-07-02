@@ -45,10 +45,6 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "src/used_record_detail_parcel.cpp",
   ]
 
-  if (access_token_feature_dtmf_tone) {
-    defines = [ "FEATURE_DTMF_TONE" ]
-  }
-
   external_deps = [ "c_utils:utils" ]
 
   if (security_component_enhance_enable) {
