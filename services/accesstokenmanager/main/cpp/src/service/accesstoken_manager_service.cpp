@@ -671,8 +671,8 @@ void AccessTokenManagerService::GetConfigValue()
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s,\
-        permStateAbilityName_ is %{public}s , permStateAbilityName_ is %{public}s",
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s, \
+        permStateAbilityName_ is %{public}s, permStateAbilityName_ is %{public}s",
         grantBundleName_.c_str(), grantAbilityName_.c_str(),
         permStateAbilityName_.c_str(), permStateAbilityName_.c_str());
 }

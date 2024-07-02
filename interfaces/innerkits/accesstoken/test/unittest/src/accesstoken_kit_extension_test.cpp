@@ -2254,6 +2254,20 @@ HWTEST_F(AccessTokenKitExtensionTest, TokenSyncCallbackTest001, TestSize.Level1)
     EXPECT_EQ(FAKE_SYNC_RET, callbackImpl->UpdateRemoteHapTokenInfo(info)); // test input
 }
 #endif // TOKEN_SYNC_ENABLE
+
+/**
+ * @tc.name: GetPermissionManagerInfo001
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, GetPermissionManagerInfo001, TestSize.Level1)
+{
+    PermissionGrantInfo info;
+    AccessTokenKit::GetPermissionManagerInfo(info);
+    ASSERT_EQ(false, info.grantBundleName.empty());
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

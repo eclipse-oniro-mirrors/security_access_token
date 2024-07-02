@@ -508,6 +508,19 @@ HWTEST_F(AccessTokenKitTest, SetPermDialogCap001, TestSize.Level1)
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
 }
+
+/**
+ * @tc.name: GetPermissionManagerInfo001
+ * @tc.desc: GetPermissionManagerInfo with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionManagerInfo001, TestSize.Level1)
+{
+    PermissionGrantInfo info;
+    AccessTokenKit::GetPermissionManagerInfo(info);
+    ASSERT_EQ(true, info.grantBundleName.empty());
+}
 }  // namespace AccessToken
 }  // namespace Security
 }
