@@ -41,6 +41,10 @@ typedef enum {
     JS_ERROR_SERVICE_NOT_RUNNING,
     JS_ERROR_OUT_OF_MEMORY,
     JS_ERROR_INNER,
+    JS_ERROR_REQUEST_IS_ALREADY_EXIST = 12100010,
+    JS_ERROR_ALL_PERM_GRANTED = 12100011,
+    JS_ERROR_PERM_REVOKE_BY_USER = 12100012,
+    JS_ERROR_GLOBAL_SWITCH_IS_ALREADY_OPEN = 12100013,
 } JsErrorCode;
 
 std::string GetParamErrorMsg(const std::string& param, const std::string& type);

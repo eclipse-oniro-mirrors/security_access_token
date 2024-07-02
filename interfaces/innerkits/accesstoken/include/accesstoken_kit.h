@@ -411,6 +411,12 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t DumpPermDefInfo(std::string& dumpInfo);
+    /**
+     * @brief Get application info of permission manager.
+     * @param info application info of permission manager
+     * @return error code, see access_token_error.h
+     */
+    static void GetPermissionManagerInfo(PermissionGrantInfo& info);
 };
 } // namespace AccessToken
 } // namespace Security

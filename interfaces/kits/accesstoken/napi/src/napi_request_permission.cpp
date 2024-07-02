@@ -502,11 +502,7 @@ void UIExtensionCallback::OnDestroy()
         std::lock_guard<std::mutex> lock(g_lockFlag);
         resultCode = this->reqContext_->resultCode;
     }
-    if (resultCode != 0) {
-        ReleaseHandler(resultCode);
-        return;
-    }
-    ReleaseHandler(0);
+    ReleaseHandler(resultCode);
 }
 
 static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
@@ -660,7 +656,7 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
     // argv[1] : permissionList
     if (!ParseStringArray(env, argv[1], asyncContext->permissionList) ||
         (asyncContext->permissionList.empty())) {
-        errMsg = GetParamErrorMsg("permissions", "Array<string>");
+        errMsg = GetParamErrorMsg("permissionList", "Array<string>");
         NAPI_CALL_BASE(
             env, napi_throw(env, GenerateBusinessError(env, JsErrorCode::JS_ERROR_PARAM_ILLEGAL, errMsg)), false);
         return false;

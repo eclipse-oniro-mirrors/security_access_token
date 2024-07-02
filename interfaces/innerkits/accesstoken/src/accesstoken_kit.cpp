@@ -575,6 +575,11 @@ int32_t AccessTokenKit::SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool en
 {
     return AccessTokenManagerClient::GetInstance().SetPermDialogCap(hapBaseInfo, enable);
 }
+
+void AccessTokenKit::GetPermissionManagerInfo(PermissionGrantInfo& info)
+{
+    AccessTokenManagerClient::GetInstance().GetPermissionManagerInfo(info);
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
