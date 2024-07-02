@@ -457,6 +457,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.CONTROL_LOCATION_SWITCH",               false},
     {"ohos.permission.MOCK_LOCATION",     false},
     {"ohos.permission.ALLOW_TIPS_ACCESS",   false},
+    {"ohos.permission.ACCESS_SCAN_SERVICE",                 false},
     {"ohos.permission.ACCESS_FACTORY_OTA_DIR",   false},
 };
 
