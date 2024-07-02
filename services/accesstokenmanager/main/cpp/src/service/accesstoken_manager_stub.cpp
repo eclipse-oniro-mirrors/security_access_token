@@ -889,6 +889,13 @@ void AccessTokenManagerStub::SetPermDialogCapInner(MessageParcel& data, MessageP
     reply.WriteInt32(res);
 }
 
+void AccessTokenManagerStub::GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    PermissionGrantInfoParcel infoParcel;
+    this->GetPermissionManagerInfo(infoParcel);
+    reply.WriteParcelable(&infoParcel);
+}
+
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
@@ -983,6 +990,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::GetNativeTokenIdInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERM_DIALOG_CAPABILITY)] =
         &AccessTokenManagerStub::SetPermDialogCapInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_MANAGER_INFO)] =
+        &AccessTokenManagerStub::GetPermissionManagerInfoInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()

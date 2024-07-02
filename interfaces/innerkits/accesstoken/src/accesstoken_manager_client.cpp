@@ -744,6 +744,18 @@ int32_t AccessTokenManagerClient::SetPermDialogCap(const HapBaseInfo& hapBaseInf
     return proxy->SetPermDialogCap(hapBaseInfoParcel, enable);
 }
 
+void AccessTokenManagerClient::GetPermissionManagerInfo(PermissionGrantInfo& info)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return;
+    }
+    PermissionGrantInfoParcel infoParcel;
+    proxy->GetPermissionManagerInfo(infoParcel);
+    info = infoParcel.info;
+}
+
 void AccessTokenManagerClient::ReleaseProxy()
 {
     if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {

@@ -101,6 +101,7 @@ public:
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
+    void GetPermissionManagerInfo(PermissionGrantInfo& info);
 
 private:
     AccessTokenManagerClient();

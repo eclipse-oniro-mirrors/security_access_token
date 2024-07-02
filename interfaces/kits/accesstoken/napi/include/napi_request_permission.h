@@ -25,7 +25,6 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 static int32_t curRequestCode_ = 0;
-const std::string REQUEST_PERMISSION_CLASS_NAME = "requestPermission";
 struct RequestAsyncContext : public AtManagerAsyncWorkData {
     explicit RequestAsyncContext(napi_env env) : AtManagerAsyncWorkData(env)
     {
@@ -109,7 +108,6 @@ private:
 
 class NapiRequestPermission {
 public:
-    static napi_value Init(napi_env env, napi_value exports);
     static bool IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext);
     static napi_value RequestPermissionsFromUser(napi_env env, napi_callback_info info);
     static napi_value GetPermissionsStatus(napi_env env, napi_callback_info info);

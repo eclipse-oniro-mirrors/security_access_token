@@ -30,6 +30,8 @@ static const std::string ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/accesstoke
 
 static const std::string PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
 static const std::string GRANT_ABILITY_NAME_KEY = "grant_ability_name";
+static const std::string PERMISSION_STATE_SHEET_ABILITY_NAME_KEY = "permission_state_sheet_ability_name";
+static const std::string GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_switch_sheet_ability_name";
 static const std::string TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
 
 static const std::string RECORD_SIZE_MAXIMUM_KEY = "permission_used_record_size_maximum";
@@ -69,6 +71,14 @@ void from_json(const nlohmann::json& j, AccessTokenServiceConfig& a)
     }
 
     if (!JsonParser::GetStringFromJson(j, GRANT_ABILITY_NAME_KEY, a.grantAbilityName)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, PERMISSION_STATE_SHEET_ABILITY_NAME_KEY, a.permStateAbilityName)) {
+        return;
+    }
+
+    if (!JsonParser::GetStringFromJson(j, GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY, a.globalSwitchAbilityName)) {
         return;
     }
 
@@ -139,7 +149,10 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const st
 bool ConfigPolicLoader::IsConfigValueValid(const ServiceType& type, const AccessTokenConfigValue& config)
 {
     if (type == ServiceType::ACCESSTOKEN_SERVICE) {
-        return ((!config.atConfig.grantAbilityName.empty()) && (!config.atConfig.grantBundleName.empty()));
+        return ((!config.atConfig.grantAbilityName.empty()) &&
+                (!config.atConfig.grantBundleName.empty()) &&
+                (!config.atConfig.permStateAbilityName.empty()) &&
+                (!config.atConfig.globalSwitchAbilityName.empty()));
     } else if (type == ServiceType::PRIVACY_SERVICE) {
         return ((config.pConfig.sizeMaxImum != 0) &&
                 (config.pConfig.agingTime != 0) &&
@@ -163,7 +176,8 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
         std::string fileContent;
         int32_t res = JsonParser::ReadCfgFile(filePath, fileContent);
         if (res != 0) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Read Cfg file [%{puiblic}s] failed.", filePath.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Read Cfg file [%{public}s] failed, error(%{public}d).",
+                filePath.c_str(), res);
             continue;
         }
 

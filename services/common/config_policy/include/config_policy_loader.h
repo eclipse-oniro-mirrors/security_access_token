@@ -26,6 +26,8 @@ const static std::string CONFIG_POLICY_LIBPATH = "libaccesstoken_config_policy.z
 struct AccessTokenServiceConfig final {
     std::string grantBundleName;
     std::string grantAbilityName;
+    std::string permStateAbilityName;
+    std::string globalSwitchAbilityName;
     int32_t cancleTime;
 };
 

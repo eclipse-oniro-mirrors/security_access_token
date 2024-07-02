@@ -64,6 +64,7 @@ enum class AccessTokenInterfaceCode {
     GET_USER_GRANTED_PERMISSION_USED_TYPE,
     DUMP_PERM_DEFINITION_INFO,
     GET_VERSION,
+    GET_PERMISSION_MANAGER_INFO,
 };
 } // namespace AccessToken
 } // namespace Security

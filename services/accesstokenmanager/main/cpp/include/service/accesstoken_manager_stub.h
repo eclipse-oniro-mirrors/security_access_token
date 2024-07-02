@@ -82,6 +82,7 @@ private:
     void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetVersionInner(MessageParcel& data, MessageParcel& reply);
     void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

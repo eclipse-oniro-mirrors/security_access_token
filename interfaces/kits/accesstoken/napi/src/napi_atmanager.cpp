@@ -15,7 +15,9 @@
 #include "napi_atmanager.h"
 
 #include "access_token.h"
+#include "napi_request_global_switch_on_setting.h"
 #include "napi_request_permission.h"
+#include "napi_request_permission_on_setting.h"
 #include "parameter.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -287,6 +289,8 @@ napi_value NapiAtManager::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getPermissionRequestToggleStatus", GetPermissionRequestToggleStatus),
         DECLARE_NAPI_FUNCTION("requestPermissionsFromUser", NapiRequestPermission::RequestPermissionsFromUser),
         DECLARE_NAPI_FUNCTION("getPermissionsStatus", NapiRequestPermission::GetPermissionsStatus),
+        DECLARE_NAPI_FUNCTION("requestPermissionOnSetting", NapiRequestPermissionOnSetting::RequestPermissionOnSetting),
+        DECLARE_NAPI_FUNCTION("requestGlobalSwitch", NapiRequestGlobalSwitch::RequestGlobalSwitch),
     };
 
     napi_value cons = nullptr;
@@ -305,19 +309,16 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
 {
     napi_value grantStatus = nullptr;
     napi_create_object(env, &grantStatus);
-
     SetNamedProperty(env, grantStatus, PERMISSION_DENIED, "PERMISSION_DENIED");
     SetNamedProperty(env, grantStatus, PERMISSION_GRANTED, "PERMISSION_GRANTED");
 
     napi_value permStateChangeType = nullptr;
     napi_create_object(env, &permStateChangeType);
-
     SetNamedProperty(env, permStateChangeType, PERMISSION_REVOKED_OPER, "PERMISSION_REVOKED_OPER");
     SetNamedProperty(env, permStateChangeType, PERMISSION_GRANTED_OPER, "PERMISSION_GRANTED_OPER");
 
     napi_value permissionStatus = nullptr;
     napi_create_object(env, &permissionStatus);
-
     SetNamedProperty(env, permissionStatus, SETTING_OPER, "DENIED");
     SetNamedProperty(env, permissionStatus, PASS_OPER, "GRANTED");
     SetNamedProperty(env, permissionStatus, DYNAMIC_OPER, "NOT_DETERMINED");
@@ -326,15 +327,21 @@ void NapiAtManager::CreateObjects(napi_env env, napi_value exports)
 
     napi_value permissionRequestToggleStatus = nullptr;
     napi_create_object(env, &permissionRequestToggleStatus);
-
     SetNamedProperty(env, permissionRequestToggleStatus, CLOSED, "CLOSED");
     SetNamedProperty(env, permissionRequestToggleStatus, OPEN, "OPEN");
+
+    napi_value globalSwitchType = nullptr;
+    napi_create_object(env, &globalSwitchType);
+    SetNamedProperty(env, globalSwitchType, CAMERA, "CAMERA");
+    SetNamedProperty(env, globalSwitchType, MICROPHONE, "MICROPHONE");
+    SetNamedProperty(env, globalSwitchType, LOCATION, "LOCATION");
 
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_PROPERTY("GrantStatus", grantStatus),
         DECLARE_NAPI_PROPERTY("PermissionStateChangeType", permStateChangeType),
         DECLARE_NAPI_PROPERTY("PermissionStatus", permissionStatus),
         DECLARE_NAPI_PROPERTY("PermissionRequestToggleStatus", permissionRequestToggleStatus),
+        DECLARE_NAPI_PROPERTY("SwitchType", globalSwitchType),
     };
     napi_define_properties(env, exports, sizeof(exportFuncs) / sizeof(*exportFuncs), exportFuncs);
 }

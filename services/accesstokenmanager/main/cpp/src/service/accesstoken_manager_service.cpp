@@ -63,6 +63,8 @@ static const char* ACCESS_TOKEN_SERVICE_INIT_KEY = "accesstoken.permission.init"
 constexpr int TWO_ARGS = 2;
 const std::string GRANT_ABILITY_BUNDLE_NAME = "com.ohos.permissionmanager";
 const std::string GRANT_ABILITY_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
+const std::string PERMISSION_STATE_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.PermissionStateSheetAbility";
+const std::string GLOBAL_SWITCH_SHEET_ABILITY_NAME = "com.ohos.permissionmanager.GlobalSwitchSheetAbility";
 static const std::string ACCESSTOKEN_PROCESS_NAME = "accesstoken_service";
 static constexpr char ADD_DOMAIN[] = "PERFORMANCE";
 }
@@ -568,6 +570,14 @@ int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hap
     return AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenIdEx.tokenIdExStruct.tokenID, enable);
 }
 
+void AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel)
+{
+    infoParcel.info.grantBundleName = grantBundleName_;
+    infoParcel.info.grantAbilityName = grantAbilityName_;
+    infoParcel.info.permStateAbilityName = permStateAbilityName_;
+    infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
+}
+
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
@@ -638,14 +648,6 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
     ACCESSTOKEN_LOG_INFO(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY success");
 }
 
-void AccessTokenManagerService::SetDefaultConfigValue()
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
-
-    grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
-    grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
-}
-
 void AccessTokenManagerService::GetConfigValue()
 {
     LibraryLoader loader(CONFIG_POLICY_LIBPATH);
@@ -659,12 +661,20 @@ void AccessTokenManagerService::GetConfigValue()
         // set value from config
         grantBundleName_ = value.atConfig.grantBundleName;
         grantAbilityName_ = value.atConfig.grantAbilityName;
+        permStateAbilityName_ = value.atConfig.permStateAbilityName;
+        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName;
     } else {
-        SetDefaultConfigValue();
+        ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
+        grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
+        grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
+        globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
     }
 
-    ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s",
-        grantBundleName_.c_str(), grantAbilityName_.c_str());
+    ACCESSTOKEN_LOG_INFO(LABEL, "GrantBundleName_ is %{public}s, grantAbilityName_ is %{public}s,\
+        permStateAbilityName_ is %{public}s , permStateAbilityName_ is %{public}s",
+        grantBundleName_.c_str(), grantAbilityName_.c_str(),
+        permStateAbilityName_.c_str(), permStateAbilityName_.c_str());
 }
 
 bool AccessTokenManagerService::Initialize()

@@ -1157,6 +1157,27 @@ int32_t AccessTokenManagerProxy::SetPermDialogCap(const HapBaseInfoParcel& hapBa
     }
     return reply.ReadInt32();
 }
+
+void AccessTokenManagerProxy::GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GET_PERMISSION_MANAGER_INFO, data, reply)) {
+        return;
+    }
+
+    sptr<PermissionGrantInfoParcel> parcel = reply.ReadParcelable<PermissionGrantInfoParcel>();
+    if (parcel == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read infoParcel.");
+        return;
+    }
+    infoParcel = *parcel;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

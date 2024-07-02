@@ -96,6 +96,7 @@ public:
 #endif
 
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
+    void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
@@ -104,7 +105,6 @@ public:
 private:
     void GetValidConfigFilePathList(std::vector<std::string>& pathList);
     bool GetConfigGrantValueFromFile(std::string& fileContent);
-    void SetDefaultConfigValue();
     void GetConfigValue();
     bool Initialize();
     void DumpTokenIfNeeded();
@@ -119,6 +119,8 @@ private:
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
+    std::string permStateAbilityName_;
+    std::string globalSwitchAbilityName_;
 };
 } // namespace AccessToken
 } // namespace Security
