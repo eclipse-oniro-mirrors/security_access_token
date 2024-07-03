@@ -21,8 +21,7 @@
     ],
     "features": [
       "access_token_feature_coverage = false",
-      "access_token_camera_float_window_enable",
-      "access_token_different_feature"
+      "access_token_camera_float_window_enable"
     ],
     "adapted_system_type": [ "standard" ],
     "rom": "10000KB",

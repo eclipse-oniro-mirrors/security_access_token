@@ -714,7 +714,7 @@ bool PermissionRecordManager::GetGlobalSwitchStatus(const std::string& permissio
     }
     return isOpen;
 }
-#ifdef DIFFERENT_FEATURE
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * StartUsing when close and choose open, update status to foreground or background from inactive
  * StartUsing when open and choose close, update status to inactive and store in database
@@ -837,7 +837,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
     if (AddRecordToStartList(record)) {
         return PrivacyError::ERR_PERMISSION_ALREADY_START_USING;
     }
-
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     if (!GetGlobalSwitchStatus(permissionName)) {
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Show permission dialog failed.");
@@ -845,12 +845,10 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             UnRegisterWindowCallback();
             return ERR_SERVICE_ABNORMAL;
         }
-#ifdef DIFFERENT_FEATURE
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
 #else
-    }
     CallbackExecute(tokenId, permissionName, record.status);
 #endif
     return Constant::SUCCESS;
@@ -892,6 +890,7 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
         cameraCallbackMap_.Erase(tokenId);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     if (!GetGlobalSwitchStatus(permissionName)) {
         if (!ShowGlobalDialog(permissionName)) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Show permission dialog failed.");
@@ -900,12 +899,10 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
             cameraCallbackMap_.Erase(tokenId);
             return ERR_SERVICE_ABNORMAL;
         }
-#ifdef DIFFERENT_FEATURE
     } else {
         CallbackExecute(tokenId, permissionName, record.status);
     }
 #else
-    }
     CallbackExecute(tokenId, permissionName, record.status);
 #endif
     return Constant::SUCCESS;
@@ -1075,7 +1072,7 @@ int32_t PermissionRecordManager::SetEdmMutePolicy(const std::string permissionNa
     if (isMute) {
         ModifyMuteStatus(permissionName, EDM, isMute);
         ModifyMuteStatus(permissionName, MIXED, isMute);
-#ifdef DIFFERENT_FEATURE
+#ifndef APP_SECURITY_PRIVACY_SERVICE
         ExecuteAndUpdateRecordByPerm(permissionName, false);
 #endif
     } else {
@@ -1098,7 +1095,7 @@ int32_t PermissionRecordManager::SetPrivacyMutePolicy(const std::string permissi
         }
         ModifyMuteStatus(permissionName, MIXED, isMute);
     }
-#ifdef DIFFERENT_FEATURE
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     ExecuteAndUpdateRecordByPerm(permissionName, !isMute);
 #endif
     return RET_SUCCESS;

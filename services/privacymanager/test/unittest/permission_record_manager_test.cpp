@@ -365,7 +365,11 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName));
 
     usleep(500000); // 500000us = 0.5s
+#ifndef APP_SECURITY_PRIVACY_SERVICE
     ASSERT_EQ(PERM_INACTIVE, callback->type_);
+#else
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+#endif
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName));
     PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
 }

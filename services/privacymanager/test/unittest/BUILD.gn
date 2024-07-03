@@ -130,11 +130,6 @@ if (is_standard_system && ability_base_enable == true) {
       ]
     }
 
-    if (camera_framework_enable) {
-      cflags_cc += [ "-DCAMERA_FRAMEWORK_ENABLE" ]
-      external_deps += [ "camera_framework:camera_framework" ]
-    }
-
     if (ability_runtime_enable) {
       cflags_cc += [ "-DABILITY_RUNTIME_ENABLE" ]
       external_deps += [
@@ -147,6 +142,10 @@ if (is_standard_system && ability_base_enable == true) {
       cflags_cc += [ "-DCAMERA_FLOAT_WINDOW_ENABLE" ]
       include_dirs +=
           [ "${access_token_path}/services/common/window_manager/include" ]
+    }
+
+    if (access_token_app_security_privacy_service_enable) {
+      cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
     }
   }
 }
