@@ -284,11 +284,16 @@ int AccessTokenKit::VerifyAccessToken(AccessTokenID tokenID, const std::string& 
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
         tokenID, permissionName.c_str());
-    if (!DataValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName is invalid");
-        return PERMISSION_DENIED;
+    uint32_t code;
+    if (!TransferPermissionToOpcode(permissionName, code)) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
     }
-    return AccessTokenKit::VerifyAccessToken(tokenID, permissionName, false);
+    bool isGranted = false;
+    int32_t ret = GetPermissionFromKernel(tokenID, code, isGranted);
+    if (ret != 0) {
+        return AccessTokenManagerClient::GetInstance().VerifyAccessToken(tokenID, permissionName);
+    }
+    return isGranted ? PERMISSION_GRANTED : PERMISSION_DENIED;
 }
 
 int AccessTokenKit::VerifyAccessToken(
