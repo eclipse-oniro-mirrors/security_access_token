@@ -103,6 +103,8 @@ public:
     void AddCurTaskNum();
     void ReduceCurTaskNum();
 #endif
+    bool UpdateStatesToDatabase(AccessTokenID tokenID, std::vector<PermissionStateFull>& stateChangeList);
+    bool UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable);
 
 private:
     AccessTokenInfoManager();

@@ -959,6 +959,27 @@ void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& gr
     }
 }
 
+bool PermissionManager::IsPermissionStateOrFlagMatched(const PermissionStateFull& state1,
+    const PermissionStateFull& state2)
+{
+    return ((state1.grantStatus[0] == state2.grantStatus[0]) && (state1.grantFlags[0] == state2.grantFlags[0]));
+}
+
+void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStateFull>& stateListBefore,
+    std::vector<PermissionStateFull>& stateListAfter, std::vector<PermissionStateFull>& stateChangeList)
+{
+    uint32_t size = stateListBefore.size();
+
+    for (uint32_t i = 0; i < size; ++i) {
+        PermissionStateFull state1 = stateListBefore[i];
+        PermissionStateFull state2 = stateListAfter[i];
+
+        if (!IsPermissionStateOrFlagMatched(state1, state2)) {
+            stateChangeList.emplace_back(state2);
+        }
+    }
+}
+
 int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
@@ -977,6 +998,8 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     }
     std::vector<std::string> grantedPermListBefore;
     permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
+    std::vector<PermissionStateFull> stateListBefore;
+    permPolicySet->GetPermissionStateList(stateListBefore);
 
     // reset permission.
     permPolicySet->ResetUserGrantPermissionStatus();
@@ -994,6 +1017,13 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
 
     std::vector<std::string> grantedPermListAfter;
     permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
+    std::vector<PermissionStateFull> stateListAfter;
+    permPolicySet->GetPermissionStateList(stateListAfter);
+    std::vector<PermissionStateFull> stateChangeList;
+    GetStateOrFlagChangedList(stateListBefore, stateListAfter, stateChangeList);
+    if (!AccessTokenInfoManager::GetInstance().UpdateStatesToDatabase(tokenID, stateChangeList)) {
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
 
     // clear
     AddPermToKernel(tokenID, permPolicySet);

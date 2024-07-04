@@ -303,7 +303,6 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
     PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
-    AccessTokenInfoManager::GetInstance().RefreshTokenInfoIfNeeded();
     DumpTokenIfNeeded();
     return RET_SUCCESS;
 }

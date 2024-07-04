@@ -117,6 +117,9 @@ private:
     void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName);
     void DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
     void PermDefToString(const PermissionDef& def, std::string& info) const;
+    bool IsPermissionStateOrFlagMatched(const PermissionStateFull& stata1, const PermissionStateFull& stata2);
+    void GetStateOrFlagChangedList(std::vector<PermissionStateFull>& stateListBefore,
+        std::vector<PermissionStateFull>& stateListAfter, std::vector<PermissionStateFull>& stateChangeList);
 
     PermissionGrantEvent grantEvent_;
     static std::recursive_mutex mutex_;
