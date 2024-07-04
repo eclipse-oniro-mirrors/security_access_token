@@ -75,6 +75,9 @@ public:
         secData.challenge = fuzzData.GetData<uint64_t>();
         secData.sessionId = fuzzData.GetData<uint32_t>();
         secData.seqNum = fuzzData.GetData<uint32_t>();
+        if (size < AES_KEY_STORAGE_LEN) {
+            return false;
+        }
         if (memcpy_s(secData.key, AES_KEY_STORAGE_LEN, data, AES_KEY_STORAGE_LEN) != EOK) {
             return false;
         }
