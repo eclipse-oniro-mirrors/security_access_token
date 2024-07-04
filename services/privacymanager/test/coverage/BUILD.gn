@@ -92,10 +92,6 @@ if (is_standard_system && ability_base_enable == true) {
       "${access_token_path}/services/privacymanager:privacy_manager_service",
     ]
 
-    if (access_token_feature_dtmf_tone) {
-      defines = [ "FEATURE_DTMF_TONE" ]
-    }
-
     external_deps = [
       "ability_base:want",
       "access_token:libaccesstoken_sdk",
