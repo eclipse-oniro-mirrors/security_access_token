@@ -15,6 +15,7 @@
 
 #include "getaccesstokenid_fuzzer.h"
 
+#include <securec.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -41,7 +42,12 @@ namespace OHOS {
             .aplStr = "system_core",
         };
         infoInstance.dcapsNum = 0;
-        infoInstance.processName = fuzzData.GenerateRandomString().c_str();
+        std::string processName(fuzzData.GenerateRandomString());
+        char name[MAX_PROCESS_NAME_LEN];
+        if (strcpy_s(name, MAX_PROCESS_NAME_LEN, processName.c_str()) != EOK) {
+            return false;
+        }
+        infoInstance.processName = name;
         GetAccessTokenId(&infoInstance);
 
         return true;
