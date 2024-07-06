@@ -15,6 +15,10 @@
 #ifndef INTERFACES_ACCESSTOKEN_KITS_NAPI_REQUEST_PERMISSION_H
 #define INTERFACES_ACCESSTOKEN_KITS_NAPI_REQUEST_PERMISSION_H
 
+#ifdef EVENTHANDLER_ENABLE
+#include "event_handler.h"
+#include "event_queue.h"
+#endif
 #include "napi_context_common.h"
 #include "permission_grant_info.h"
 #include "token_callback_stub.h"
@@ -35,6 +39,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool needDynamicRequest = true;
     int32_t result = RET_SUCCESS;
     int32_t resultCode = -1;
+    int32_t instanceId = 0;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
@@ -47,6 +52,9 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
+#endif
 };
 
 struct RequestAsyncContextHandle {
@@ -60,7 +68,7 @@ struct RequestAsyncContextHandle {
 
 class RequestAsyncInstanceControl {
     public:
-        static void AddCallbackByInstanceId(int32_t id, std::shared_ptr<RequestAsyncContext>& asyncContext);
+        static void AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
         static void ExecCallback(int32_t id);
         static void CheckDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext, bool& isDynamic);
     private:
@@ -121,6 +129,8 @@ private:
         RequestAsyncContext& asyncContext);
     static void GetPermissionsStatusExecute(napi_env env, void *data);
     static void GetPermissionsStatusComplete(napi_env env, napi_status status, void *data);
+    static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext);
+    static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
 } // namespace AccessToken
 } // namespace Security
