@@ -86,6 +86,105 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
+static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncContext)
+{
+    Ace::UIContent* uiContent = nullptr;
+    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    if (asyncContext->uiAbilityFlag) {
+        while (true) {
+            uiContent = asyncContext->abilityContext->GetUIContent();
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
+                break;
+            }
+        }
+    } else {
+        while (true) {
+            uiContent = asyncContext->uiExtensionContext->GetUIContent();
+            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
+                break;
+            }
+        }
+    }
+    return uiContent;
+}
+
+void NapiRequestPermission::GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
+{
+    auto task = [asyncContext]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+        asyncContext->instanceId = uiContent->GetInstanceId();
+    };
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:GetInstanceId");
+    } else {
+        task();
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", asyncContext->instanceId);
+}
+
+static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, const AAFwk::Want& want,
+    const Ace::ModalUIExtensionCallbacks& uiExtensionCallbacks,
+    const std::shared_ptr<UIExtensionCallback>& uiExtCallback)
+{
+    auto task = [asyncContext, want, uiExtensionCallbacks, uiExtCallback]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+
+        Ace::ModalUIExtensionConfig config;
+        config.isProhibitBack = true;
+        int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
+
+        ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
+            sessionId, asyncContext->tokenId, asyncContext->permissionList.size());
+        if (sessionId == 0) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Create component failed, sessionId is 0");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+        uiExtCallback->SetSessionId(sessionId);
+    };
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CreateUIExtensionMainThread");
+    } else {
+        task();
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", asyncContext->instanceId);
+}
+
+static void CloseModalUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, int32_t sessionId)
+{
+    auto task = [asyncContext, sessionId]() {
+        Ace::UIContent* uiContent = GetUIContent(asyncContext);
+        if (uiContent == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
+            asyncContext->result = RET_FAILED;
+            return;
+        }
+        uiContent->CloseModalUIExtension(sessionId);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Close end, sessionId: %{public}d", sessionId);
+    };
+    if (asyncContext->handler_ != nullptr) {
+        asyncContext->handler_->PostSyncTask(task, "AT:CloseModalUIExtensionMainThread");
+    } else {
+        task();
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", asyncContext->instanceId);
+}
+
 static napi_value GetContext(
     const napi_env &env, const napi_value &value, std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
@@ -282,8 +381,7 @@ void AuthorizationResult::WindowShownCallback()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
         return;
     }
-    int32_t instanceId = uiContent->GetInstanceId();
-    RequestAsyncInstanceControl::ExecCallback(instanceId);
+    RequestAsyncInstanceControl::ExecCallback(asyncContext->instanceId);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnRequestPermissionsFromUser async callback is called end");
 }
 
@@ -326,38 +424,16 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
-static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
+void NapiRequestPermission::StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    Ace::UIContent* uiContent = nullptr;
-    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    if (asyncContext->uiAbilityFlag) {
-        while (true) {
-            uiContent = asyncContext->abilityContext->GetUIContent();
-            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
-                break;
-            }
-        }
-    } else {
-        while (true) {
-            uiContent = asyncContext->uiExtensionContext->GetUIContent();
-            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
-                break;
-            }
-        }
-    }
+    Ace::UIContent* uiContent = GetUIContent(asyncContext);
     if (uiContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
         CreateServiceExtension(asyncContext);
         return;
     }
     asyncContext->uiContentFlag = true;
-    int32_t instanceId = uiContent->GetInstanceId();
-    RequestAsyncInstanceControl::AddCallbackByInstanceId(instanceId, asyncContext);
+    RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
 }
 
 bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext)
@@ -401,21 +477,8 @@ void UIExtensionCallback::ReleaseHandler(int32_t code)
         }
         this->reqContext_->releaseFlag = true;
     }
-
-    Ace::UIContent* uiContent = nullptr;
-    if (this->reqContext_->uiAbilityFlag) {
-        uiContent = this->reqContext_->abilityContext->GetUIContent();
-    } else {
-        uiContent = this->reqContext_->uiExtensionContext->GetUIContent();
-    }
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        return;
-    }
-
-    uiContent->CloseModalUIExtension(this->sessionId_);
-    int32_t instanceId = uiContent->GetInstanceId();
-    RequestAsyncInstanceControl::ExecCallback(instanceId);
+    CloseModalUIExtensionMainThread(this->reqContext_, this->sessionId_);
+    RequestAsyncInstanceControl::ExecCallback(this->reqContext_->instanceId);
     if (code == 0) {
         ACCESSTOKEN_LOG_WARN(LABEL, "Request has return by OnResult.");
         return; // code is 0 means request has return by OnResult
@@ -505,40 +568,6 @@ void UIExtensionCallback::OnDestroy()
     ReleaseHandler(resultCode);
 }
 
-static void StartUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
-{
-    Ace::UIContent* uiContent = nullptr;
-    int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    if (asyncContext->uiAbilityFlag) {
-        while (true) {
-            uiContent = asyncContext->abilityContext->GetUIContent();
-            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
-                break;
-            }
-        }
-    } else {
-        while (true) {
-            uiContent = asyncContext->uiExtensionContext->GetUIContent();
-            int64_t curTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if ((uiContent != nullptr) || (curTime - beginTime > NapiContextCommon::MAX_WAIT_TIME)) {
-                break;
-            }
-        }
-    }
-
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        asyncContext->result = RET_FAILED;
-        return;
-    }
-    int32_t instanceId = uiContent->GetInstanceId();
-    RequestAsyncInstanceControl::AddCallbackByInstanceId(instanceId, asyncContext);
-}
-
 static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
     AAFwk::Want want;
@@ -547,17 +576,6 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(EXTENSION_TYPE_KEY, UI_EXTENSION_TYPE);
 
-    Ace::UIContent* uiContent = nullptr;
-    if (asyncContext->uiAbilityFlag) {
-        uiContent = asyncContext->abilityContext->GetUIContent();
-    } else {
-        uiContent = asyncContext->uiExtensionContext->GetUIContent();
-    }
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        asyncContext->result = RET_FAILED;
-        return;
-    }
     auto uiExtCallback = std::make_shared<UIExtensionCallback>(asyncContext);
     Ace::ModalUIExtensionCallbacks uiExtensionCallbacks = {
         [uiExtCallback](int32_t releaseCode) {
@@ -579,18 +597,7 @@ static void CreateUIExtension(std::shared_ptr<RequestAsyncContext> asyncContext)
             uiExtCallback->OnDestroy();
         },
     };
-
-    Ace::ModalUIExtensionConfig config;
-    config.isProhibitBack = true;
-    int32_t sessionId = uiContent->CreateModalUIExtension(want, uiExtensionCallbacks, config);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Create end, sessionId: %{public}d, tokenId: %{public}d, permNum: %{public}zu",
-        sessionId, asyncContext->tokenId, asyncContext->permissionList.size());
-    if (sessionId == 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Create component failed, sessionId is 0");
-        asyncContext->result = RET_FAILED;
-        return;
-    }
-    uiExtCallback->SetSessionId(sessionId);
+    CreateUIExtensionMainThread(asyncContext, want, uiExtensionCallbacks, uiExtCallback);
 }
 
 
@@ -670,7 +677,10 @@ bool NapiRequestPermission::ParseRequestPermissionFromUser(const napi_env& env,
             return false;
         }
     }
-
+#ifdef EVENTHANDLER_ENABLE
+    asyncContext->handler_ = std::make_shared<AppExecFwk::EventHandler>(AppExecFwk::EventRunner::GetMainEventRunner());
+#endif
+    GetInstanceId(asyncContext);
     return true;
 }
 
@@ -687,7 +697,7 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
     }
     if (asyncContextHandle->asyncContextPtr->tokenId != static_cast<AccessTokenID>(GetSelfTokenID())) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context is not belong to the current application.");
-        asyncContextHandle->asyncContextPtr->result = ERR_PARAM_INVALID;
+        asyncContextHandle->asyncContextPtr->result = RET_FAILED;
         return;
     }
 
@@ -703,7 +713,7 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "Pop ui extension dialog");
         asyncContextHandle->asyncContextPtr->uiExtensionFlag = true;
-        StartUIExtension(asyncContextHandle->asyncContextPtr);
+        RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
         if (asyncContextHandle->asyncContextPtr->result != JsErrorCode::JS_OK) {
             ACCESSTOKEN_LOG_WARN(LABEL, "Pop uiextension dialog fail, start to pop service extension dialog");
             asyncContextHandle->asyncContextPtr->uiExtensionFlag = false;
@@ -870,21 +880,20 @@ void RequestAsyncInstanceControl::CheckDynamicRequest(
     isDynamic = true;
 }
 
-void RequestAsyncInstanceControl::AddCallbackByInstanceId(
-    int32_t id, std::shared_ptr<RequestAsyncContext>& asyncContext)
+void RequestAsyncInstanceControl::AddCallbackByInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", id);
+    ACCESSTOKEN_LOG_INFO(LABEL, "InstanceId: %{public}d", asyncContext->instanceId);
     {
         std::lock_guard<std::mutex> lock(instanceIdMutex_);
-        auto iter = instanceIdMap_.find(id);
+        auto iter = instanceIdMap_.find(asyncContext->instanceId);
         // id is existed mean a pop window is showing, add context to waiting queue
         if (iter != instanceIdMap_.end()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d has existed.", id);
-            instanceIdMap_[id].emplace_back(asyncContext);
+            ACCESSTOKEN_LOG_INFO(LABEL, "InstanceId: %{public}d has existed.", asyncContext->instanceId);
+            instanceIdMap_[asyncContext->instanceId].emplace_back(asyncContext);
             return;
         }
         // make sure id is in map to indicate a pop-up window is showing
-        instanceIdMap_[id] = {};
+        instanceIdMap_[asyncContext->instanceId] = {};
     }
 
     if (asyncContext->uiExtensionFlag) {

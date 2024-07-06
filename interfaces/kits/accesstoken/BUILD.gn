@@ -61,6 +61,11 @@ ohos_shared_library("libabilityaccessctrl") {
     "napi:ace_napi",
   ]
 
+  if (eventhandler_enable == true) {
+    cflags_cc += [ "-DEVENTHANDLER_ENABLE" ]
+    external_deps += [ "eventhandler:libeventhandler" ]
+  }
+
   configs = [ "${access_token_path}/config:coverage_flags" ]
 
   relative_install_dir = "module"
