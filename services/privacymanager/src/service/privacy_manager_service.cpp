@@ -67,6 +67,7 @@ void PrivacyManagerService::OnStart()
         ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService has already started!");
         return;
     }
+    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacyManagerService is starting");
     if (!Initialize()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
         return;

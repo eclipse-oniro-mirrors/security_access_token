@@ -150,5 +150,9 @@ if (is_standard_system && ability_base_enable == true) {
       include_dirs +=
           [ "${access_token_path}/services/common/window_manager/include" ]
     }
+
+    if (access_token_app_security_privacy_service_enable) {
+      cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
+    }
   }
 }
