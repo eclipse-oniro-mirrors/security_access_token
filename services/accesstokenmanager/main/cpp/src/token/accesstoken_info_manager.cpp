@@ -482,6 +482,7 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "Remove native token %{public}u ok!", id);
     RefreshTokenInfoIfNeeded();
+
     // remove native to kernel
     PermissionManager::GetInstance().RemovePermFromKernel(id);
     return RET_SUCCESS;
@@ -1431,7 +1432,11 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
         return ERR_TOKENID_NOT_EXIST;
     }
     infoIter->second->SetPermDialogForbidden(enable);
-    RefreshTokenInfoIfNeeded();
+
+    if (!UpdateCapStateToDatabase(tokenID, enable)) {
+        return RET_FAILED;
+    }
+
     return RET_SUCCESS;
 }
 
@@ -1448,6 +1453,48 @@ bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)
         return true;
     }
     return infoIter->second->IsPermDialogForbidden();
+}
+
+bool AccessTokenInfoManager::UpdateStatesToDatabase(AccessTokenID tokenID,
+    std::vector<PermissionStateFull>& stateChangeList)
+{
+    for (const auto& state : stateChangeList) {
+        GenericValues modifyValue;
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_STATE, state.grantStatus[0]);
+        modifyValue.Put(TokenFiledConst::FIELD_GRANT_FLAG, static_cast<int32_t>(state.grantFlags[0]));
+
+        GenericValues conditionValue;
+        conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+        conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, state.permissionName);
+
+        int32_t res = AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
+            conditionValue);
+        if (res != AccessTokenDb::ExecuteResult::SUCCESS) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Update tokenID %{public}u permission %{public}s to database failed",
+                tokenID, state.permissionName.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, bool enable)
+{
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_FORBID_PERM_DIALOG, enable);
+
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+
+    int32_t res = AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
+    if (res != AccessTokenDb::ExecuteResult::SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Update tokenID %{public}u permissionDialogForbidden %{public}d to database failed", tokenID, enable);
+        return false;
+    }
+
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security
