@@ -116,8 +116,7 @@ static bool IsCurrentThread(std::thread::id threadId)
     return true;
 }
 
-static bool CompareCallbackRef(std::function<void(CPermStateChangeInfo)>* subscriberRef,
-    std::function<void(CPermStateChangeInfo)>* unsubscriberRef, std::thread::id threadId)
+static bool CompareCallbackRef(int64_t subscriberRef, int64_t unsubscriberRef, std::thread::id threadId)
 {
     if (!IsCurrentThread(threadId)) {
         return false;
@@ -280,8 +279,7 @@ int32_t AtManagerImpl::RegisterPermStateChangeCallback(
     const char* cType,
     CArrUI32 cTokenIDList,
     CArrString cPermissionList,
-    std::function<void(CPermStateChangeInfo)>* callback,
-    const std::function<void(CPermStateChangeInfo)>& callbackRef)
+    int64_t callbackRef)
 {
     RegisterPermStateChangeInfo* registerPermStateChangeInfo =
         new (std::nothrow) RegisterPermStateChangeInfo();
@@ -291,8 +289,7 @@ int32_t AtManagerImpl::RegisterPermStateChangeCallback(
     }
     std::unique_ptr<RegisterPermStateChangeInfo> callbackPtr {registerPermStateChangeInfo};
     // ParseInputToRegister
-    RegisterCallback registerCallback = {.callback = callback, .callbackRef = callbackRef};
-    auto ret = FillPermStateChangeInfo(cType, cTokenIDList, cPermissionList, registerCallback,
+    auto ret = FillPermStateChangeInfo(cType, cTokenIDList, cPermissionList, callbackRef,
         *registerPermStateChangeInfo);
     if (ret != CJ_OK) {
         LOGE("FillPermStateChangeInfo failed");
@@ -322,8 +319,7 @@ int32_t AtManagerImpl::UnregisterPermStateChangeCallback(
     const char* cType,
     CArrUI32 cTokenIDList,
     CArrString cPermissionList,
-    std::function<void(CPermStateChangeInfo)> *callback,
-    const std::function<void(CPermStateChangeInfo)>& callbackRef)
+    int64_t callbackRef)
 {
     UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo =
         new (std::nothrow) UnregisterPermStateChangeInfo();
@@ -333,8 +329,7 @@ int32_t AtManagerImpl::UnregisterPermStateChangeCallback(
     }
     std::unique_ptr<UnregisterPermStateChangeInfo> callbackPtr {unregisterPermStateChangeInfo};
     // ParseInputToUnregister
-    RegisterCallback unRegisterCallback = {.callback = callback, .callbackRef = callbackRef};
-    auto ret = FillUnregisterPermStateChangeInfo(cType, cTokenIDList, cPermissionList, unRegisterCallback,
+    auto ret = FillUnregisterPermStateChangeInfo(cType, cTokenIDList, cPermissionList, callbackRef,
         *unregisterPermStateChangeInfo);
     if (ret != CJ_OK) {
         LOGE("FillPermStateChangeInfo failed");
@@ -690,7 +685,7 @@ int32_t AtManagerImpl::FillPermStateChangeInfo(
     const std::string& type,
     CArrUI32 cTokenIDList,
     CArrString cPermissionList,
-    RegisterCallback callback,
+    int64_t callback,
     RegisterPermStateChangeInfo& registerPermStateChangeInfo)
 {
     PermStateChangeScope scopeInfo;
@@ -710,10 +705,11 @@ int32_t AtManagerImpl::FillPermStateChangeInfo(
     }
     std::sort(scopeInfo.tokenIDs.begin(), scopeInfo.tokenIDs.end());
     std::sort(scopeInfo.permList.begin(), scopeInfo.permList.end());
-    registerPermStateChangeInfo.callbackRef = callback.callback;
+    registerPermStateChangeInfo.callbackRef = callback;
     registerPermStateChangeInfo.permStateChangeType = type;
     registerPermStateChangeInfo.subscriber = std::make_shared<RegisterPermStateChangeScopePtr>(scopeInfo);
-    registerPermStateChangeInfo.subscriber->SetCallbackRef(callback.callbackRef);
+    auto cFunc = reinterpret_cast<void(*)(CPermStateChangeInfo)>(callback);
+    registerPermStateChangeInfo.subscriber->SetCallbackRef(CJLambda::Create(cFunc));
     registerPermStateChangeInfo.threadId = std::this_thread::get_id();
     return CJ_OK;
 }
@@ -722,7 +718,7 @@ int32_t AtManagerImpl::FillUnregisterPermStateChangeInfo(
     const std::string& type,
     CArrUI32 cTokenIDList,
     CArrString cPermissionList,
-    RegisterCallback callback,
+    int64_t callback,
     UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo)
 {
     PermStateChangeScope changeScopeInfo;
@@ -743,7 +739,7 @@ int32_t AtManagerImpl::FillUnregisterPermStateChangeInfo(
 
     std::sort(changeScopeInfo.tokenIDs.begin(), changeScopeInfo.tokenIDs.end());
     std::sort(changeScopeInfo.permList.begin(), changeScopeInfo.permList.end());
-    unregisterPermStateChangeInfo.callbackRef = callback.callback;
+    unregisterPermStateChangeInfo.callbackRef = callback;
     unregisterPermStateChangeInfo.permStateChangeType = type;
     unregisterPermStateChangeInfo.scopeInfo = changeScopeInfo;
     unregisterPermStateChangeInfo.threadId = std::this_thread::get_id();
@@ -757,7 +753,7 @@ bool AtManagerImpl::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* 
     std::vector<AccessTokenID> targetTokenIDs = unregisterPermStateChangeInfo->scopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = unregisterPermStateChangeInfo->scopeInfo.permList;
     for (const auto& item : g_permStateChangeRegisters) {
-        if (unregisterPermStateChangeInfo->callbackRef != nullptr) {
+        if (unregisterPermStateChangeInfo->callbackRef != 0) {
             if (!CompareCallbackRef(item->callbackRef, unregisterPermStateChangeInfo->callbackRef, item->threadId)) {
                 continue;
             }
@@ -781,8 +777,7 @@ bool AtManagerImpl::FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* 
     return false;
 }
 
-void AtManagerImpl::DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo,
-    std::function<void(CPermStateChangeInfo)>* subscriberRef)
+void AtManagerImpl::DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, int64_t subscriberRef)
 {
     std::vector<AccessTokenID> targetTokenIDs = scopeInfo.tokenIDs;
     std::vector<std::string> targetPermList = scopeInfo.permList;
@@ -942,7 +937,7 @@ void RegisterPermStateChangeScopePtr::PermStateChangeCallback(PermStateChangeInf
     CPermStateChangeInfo info;
     info.permStateChangeType = result.permStateChangeType;
     info.tokenID = result.tokenID;
-    info.permissionName = const_cast<char*>(result.permissionName.c_str());
+    info.permissionName = MallocCString(result.permissionName);
     ref_(info);
 }
 

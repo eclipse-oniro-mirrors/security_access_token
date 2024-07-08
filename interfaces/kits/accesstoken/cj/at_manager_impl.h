@@ -69,11 +69,6 @@ struct CPermStateChangeInfo {
     char* permissionName;
 };
 
-struct RegisterCallback {
-    std::function<void(CPermStateChangeInfo)>* callback;
-    std::function<void(CPermStateChangeInfo)> callbackRef;
-};
-
 struct RequestAsyncContext {
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
@@ -134,7 +129,7 @@ private:
 
 struct PermStateChangeContext {
     virtual ~PermStateChangeContext();
-    std::function<void(CPermStateChangeInfo)>* callbackRef =  nullptr;
+    int64_t callbackRef =  0;
     int32_t errCode = 0;
     std::string permStateChangeType;
     AccessTokenKit* accessTokenKit = nullptr;
@@ -176,13 +171,11 @@ public:
         const char* cType,
         CArrUI32 cTokenIDList,
         CArrString cPermissionList,
-        std::function<void(CPermStateChangeInfo)> *callback,
-        const std::function<void(CPermStateChangeInfo)>& callbackRef);
+        int64_t callbackRef);
     static int32_t UnregisterPermStateChangeCallback(
         const char* cType, CArrUI32 cTokenIDList,
         CArrString cPermissionList,
-        std::function<void(CPermStateChangeInfo)> *callback,
-        const std::function<void(CPermStateChangeInfo)>& callbackRef);
+        int64_t callbackRef);
     static void RequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
         const std::function<void(RetDataCPermissionRequestResult)>& callbackRef);
 private:
@@ -191,21 +184,20 @@ private:
         const std::string& type,
         CArrUI32 cTokenIDList,
         CArrString cPermissionList,
-        RegisterCallback callback,
+        int64_t callback,
         RegisterPermStateChangeInfo& registerPermStateChangeInfo);
     static int32_t FillUnregisterPermStateChangeInfo(
         const std::string& type,
         CArrUI32 cTokenIDList,
         CArrString cPermissionList,
-        RegisterCallback callback,
+        int64_t callback,
         UnregisterPermStateChangeInfo& unregisterPermStateChangeInfo);
     static bool IsExistRegister(const RegisterPermStateChangeInfo* registerPermStateChangeInfo);
     static bool IsDynamicRequest(const std::vector<std::string>& permissions,
         std::vector<int32_t>& permissionsState, PermissionGrantInfo& info);
     static bool FindAndGetSubscriberInVector(UnregisterPermStateChangeInfo* unregisterPermStateChangeInfo,
         std::vector<RegisterPermStateChangeInfo*>& batchPermStateChangeRegisters);
-    static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo,
-        std::function<void(CPermStateChangeInfo)>* subscriberRef);
+    static void DeleteRegisterFromVector(const PermStateChangeScope& scopeInfo, int64_t subscriberRef);
     static bool ParseRequestPermissionFromUser(OHOS::AbilityRuntime::Context* context, CArrString cPermissionList,
         const std::function<void(RetDataCPermissionRequestResult)>& callbackRef,
         const std::shared_ptr<RequestAsyncContext>& asyncContext);

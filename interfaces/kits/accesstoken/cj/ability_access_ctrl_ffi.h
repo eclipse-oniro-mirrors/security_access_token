@@ -29,11 +29,9 @@ extern "C" {
     FFI_EXPORT int32_t FfiOHOSAbilityAccessCtrlRevokeUserGrantedPermission(unsigned int tokenID,
         const char* cPermissionName, unsigned int permissionFlags);
     FFI_EXPORT int32_t FfiOHOSAbilityAccessCtrlOn(const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
-        void (*callback)(OHOS::CJSystemapi::CPermStateChangeInfo info),
-        void (*callbackRef)(OHOS::CJSystemapi::CPermStateChangeInfo infoRef));
+        int64_t callbackRef);
     FFI_EXPORT int32_t FfiOHOSAbilityAccessCtrlOff(const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
-        void (*callback)(OHOS::CJSystemapi::CPermStateChangeInfo info),
-        void (*callbackRef)(OHOS::CJSystemapi::CPermStateChangeInfo infoRef));
+        int64_t callbackRef);
     FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context,
         CArrString cPermissionList, void (*callbackRef)(RetDataCPermissionRequestResult infoRef));
     FFI_EXPORT void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRuntime::Context* context,

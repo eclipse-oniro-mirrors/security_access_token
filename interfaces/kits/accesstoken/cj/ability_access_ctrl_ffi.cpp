@@ -49,30 +49,17 @@ int32_t FfiOHOSAbilityAccessCtrlRevokeUserGrantedPermission(unsigned int tokenID
 }
 
 int32_t FfiOHOSAbilityAccessCtrlOn(const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
-    void (*callback)(CPermStateChangeInfo info), void (*callbackRef)(CPermStateChangeInfo infoRef))
+    int64_t callbackRef)
 {
     LOGI("ACCESS_CTRL_TEST::FfiOHOSAbilityAccessCtrlOn START");
-    auto onChange = [lambda = CJLambda::Create(callbackRef)](
-        CPermStateChangeInfo infoRef) -> void { lambda(infoRef); };
-    auto error = AtManagerImpl::RegisterPermStateChangeCallback(cType, cTokenIDList, cPermissionList,
-        (std::function<void(CPermStateChangeInfo)>*)(callback), onChange);
-    return error;
+    return AtManagerImpl::RegisterPermStateChangeCallback(cType, cTokenIDList, cPermissionList, callbackRef);
 }
 
 int32_t FfiOHOSAbilityAccessCtrlOff(const char* cType, CArrUI32 cTokenIDList, CArrString cPermissionList,
-    void (*callback)(CPermStateChangeInfo info), void (*callbackRef)(CPermStateChangeInfo infoRef))
+    int64_t callbackRef)
 {
     LOGI("ACCESS_CTRL_TEST::FfiOHOSAbilityAccessCtrlOff START");
-    if (callback == nullptr) {
-        LOGI("ACCESS_CTRL_TEST::FfiOHOSAbilityAccessCtrlOff the callback is None");
-        return AtManagerImpl::UnregisterPermStateChangeCallback(cType, cTokenIDList, cPermissionList, nullptr,
-            nullptr);
-    }
-    auto onChange = [lambda = CJLambda::Create(callbackRef)](
-        CPermStateChangeInfo infoRef) -> void { lambda(infoRef); };
-    auto error = AtManagerImpl::UnregisterPermStateChangeCallback(cType, cTokenIDList, cPermissionList,
-        (std::function<void(CPermStateChangeInfo)>*)(callback), onChange);
-    return error;
+    return AtManagerImpl::UnregisterPermStateChangeCallback(cType, cTokenIDList, cPermissionList, callbackRef);
 }
 
 void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUser(OHOS::AbilityRuntime::Context* context,
