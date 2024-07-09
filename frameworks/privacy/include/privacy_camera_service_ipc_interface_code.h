@@ -20,8 +20,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 enum PrivacyCameraServiceInterfaceCode {
-    CAMERA_SERVICE_IS_CAMERA_MUTED = 14,
-    CAMERA_SERVICE_MUTE_CAMERA_PERSIST = 23,
+    CAMERA_SERVICE_IS_CAMERA_MUTED = 13,
+    CAMERA_SERVICE_MUTE_CAMERA_PERSIST = 22,
 };
 } // namespace AccessToken
 } // namespace Security
