@@ -43,7 +43,7 @@ namespace OHOS {
         };
         infoInstance.dcapsNum = 0;
         std::string processName(fuzzData.GenerateRandomString());
-        char name[MAX_PROCESS_NAME_LEN];
+        char name[MAX_PROCESS_NAME_LEN] = { 0 };
         if (strcpy_s(name, MAX_PROCESS_NAME_LEN, processName.c_str()) != EOK) {
             return false;
         }

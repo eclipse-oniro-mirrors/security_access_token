@@ -39,7 +39,7 @@ struct RequestGlobalSwitchAsyncContext : public AtManagerAsyncWorkData {
     int32_t result = RET_SUCCESS;
     PermissionGrantInfo info;
     int32_t resultCode = -1;
-    int32_t switchType;
+    int32_t switchType = -1;
     napi_value requestResult = nullptr;
 
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
