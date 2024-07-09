@@ -67,7 +67,7 @@ int32_t El5FilekeyManagerService::Init()
     serviceRunningState_ = ServiceRunningState::STATE_RUNNING;
 
 #ifdef EVENTHANDLER_ENABLE
-    auto runner = AppExecFwk::EventRunner::Create();
+    auto runner = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     unloadHandler_ = std::make_shared<AppExecFwk::EventHandler>(runner);
 #endif
 

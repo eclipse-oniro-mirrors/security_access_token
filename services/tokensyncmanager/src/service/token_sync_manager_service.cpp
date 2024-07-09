@@ -172,14 +172,14 @@ int TokenSyncManagerService::UpdateRemoteHapTokenInfo(const HapTokenInfoForSync&
 bool TokenSyncManagerService::Initialize()
 {
 #ifdef EVENTHANDLER_ENABLE
-    sendRunner_ = AppExecFwk::EventRunner::Create(true);
+    sendRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!sendRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a sendRunner.");
         return false;
     }
 
     sendHandler_ = std::make_shared<AccessEventHandler>(sendRunner_);
-    recvRunner_ = AppExecFwk::EventRunner::Create(true);
+    recvRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!recvRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
         return false;
