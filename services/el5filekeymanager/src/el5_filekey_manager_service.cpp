@@ -370,6 +370,17 @@ int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
     return service_->SetPolicyScreenLocked();
 }
 
+int32_t El5FilekeyManagerService::HandleUserCommonEvent(const std::string &eventName, int32_t userId)
+{
+    LOG_INFO("service HandleUserCommonEvent");
+    if (service_ == nullptr) {
+        LOG_ERROR("Failed to get policy.");
+        PostDelayedUnloadTask(API_DELAY_TIME);
+        return EFM_SUCCESS;
+    }
+    return service_->HandleUserCommonEvent(eventName, userId);
+}
+
 int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     LOG_INFO("El5FilekeyManager Dump");

@@ -55,6 +55,15 @@ void El5FilekeyManagerServiceAbility::OnStart(const SystemAbilityOnDemandReason 
 
     if (reasonName == "usual.event.SCREEN_LOCKED") {
         service_->SetPolicyScreenLocked();
+    } else if (reasonName == "usual.event.USER_REMOVED" || reasonName == "usual.event.USER_STOPPED") {
+        std::string strUserId = startReason.GetValue();
+        int32_t userId = 0;
+        if (StrToInt(strUserId, userId)) {
+            LOG_INFO("el5 manager start, common event:%{public}s userId:%{public}d", reasonName.c_str(), userId);
+            service_->HandleUserCommonEvent(reasonName, userId);
+        } else {
+            LOG_ERROR("el5 manager start, invalid userId:%{public}s", strUserId.c_str());
+        }
     }
 
     if (!Publish(service_.get())) {
