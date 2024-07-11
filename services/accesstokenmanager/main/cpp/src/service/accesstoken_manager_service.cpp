@@ -688,12 +688,12 @@ bool AccessTokenManagerService::Initialize()
     NativeTokenReceptor::GetInstance().Init();
 
 #ifdef EVENTHANDLER_ENABLE
-    eventRunner_ = AppExecFwk::EventRunner::Create(true);
+    eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!eventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
         return false;
     }
-    dumpEventRunner_ = AppExecFwk::EventRunner::Create(true);
+    dumpEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
     if (!dumpEventRunner_) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
         return false;
