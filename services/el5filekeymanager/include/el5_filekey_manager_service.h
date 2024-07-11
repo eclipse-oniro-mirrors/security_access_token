@@ -52,6 +52,7 @@ public:
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback) override;
 
     int32_t SetPolicyScreenLocked();
+    int32_t HandleUserCommonEvent(const std::string &eventName, int32_t userId);
     void PostDelayedUnloadTask(uint32_t delayedTime);
     void CancelDelayedUnloadTask();
     int Dump(int fd, const std::vector<std::u16string>& args) override;
