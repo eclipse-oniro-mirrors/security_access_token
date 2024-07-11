@@ -170,3 +170,53 @@ HWTEST_F(El5FilekeyManagerServiceTest, RegisterCallback001, TestSize.Level1)
 {
     ASSERT_EQ(el5FilekeyManagerService_->RegisterCallback((new TestEl5FilekeyCallback())), EFM_ERR_NO_PERMISSION);
 }
+
+/**
+ * @tc.name: SetPolicyScreenLocked001
+ * @tc.desc: SetPolicyScreenLocked
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, SetPolicyScreenLocked001, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->SetPolicyScreenLocked(), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: Dump001
+ * @tc.desc: Dump fd > 0
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, Dump001, TestSize.Level1)
+{
+    int fd = 1;
+    std::vector<std::u16string> args = {};
+    ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: Dump002
+ * @tc.desc: Dump fd < 0
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, Dump002, TestSize.Level1)
+{
+    int fd = -1;
+    std::vector<std::u16string> args = {};
+    ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_ERR_INVALID_PARAMETER);
+}
+
+/**
+ * @tc.name: Dump003
+ * @tc.desc: Dump args != null
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, Dump003, TestSize.Level1)
+{
+    int fd = 1;
+    std::vector<std::u16string> args = {u"-h: command help\n", u"-a: dump all el5 data information \n"};
+    ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_SUCCESS);
+}
