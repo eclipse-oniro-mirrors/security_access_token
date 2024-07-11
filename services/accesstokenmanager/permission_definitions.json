@@ -143,7 +143,7 @@
         {
             "name": "ohos.permission.INPUT_MONITORING",
             "grantMode": "system_grant",
-            "availableLevel": "system_core",
+            "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 7,
             "deprecated": "",
@@ -2433,7 +2433,7 @@
         {
             "name": "ohos.permission.INTERCEPT_INPUT_EVENT",
             "grantMode": "system_grant",
-            "availableLevel": "system_core",
+            "availableLevel": "system_basic",
             "availableType": "SYSTEM",
             "since": 11,
             "deprecated": "",
