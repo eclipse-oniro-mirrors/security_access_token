@@ -243,6 +243,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.WRITE_APP_PUSH_DATA",                 false},
     {"ohos.permission.MANAGE_AUDIO_CONFIG",                 false},
     {"ohos.permission.MANAGE_CAMERA_CONFIG",                false},
+    {"ohos.permission.CAMERA_CONTROL",                      false},
     {"ohos.permission.RECEIVER_STARTUP_COMPLETED",          false},
     {"ohos.permission.ACCESS_SERVICE_DM",                   false},
     {"ohos.permission.RUN_ANY_CODE",                        false},
