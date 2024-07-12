@@ -88,6 +88,9 @@ static napi_value WrapVoidToJS(napi_env env)
 
 static Ace::UIContent* GetUIContent(std::shared_ptr<RequestAsyncContext> asyncContext)
 {
+    if (asyncContext == nullptr) {
+        return nullptr;
+    }
     Ace::UIContent* uiContent = nullptr;
     int64_t beginTime = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
