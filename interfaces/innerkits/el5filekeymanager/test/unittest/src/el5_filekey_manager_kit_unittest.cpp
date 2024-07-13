@@ -170,3 +170,17 @@ HWTEST_F(El5FilekeyManagerKitTest, RegisterCallback001, TestSize.Level1)
 {
     ASSERT_EQ(El5FilekeyManagerKit::RegisterCallback((new TestEl5FilekeyCallback())), EFM_ERR_IPC_READ_DATA);
 }
+
+/**
+ * @tc.name: GetUserAllAppKey001
+ * @tc.desc: GetUserAllAppKey function test without permission.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerKitTest, GetUserAllAppKey001, TestSize.Level1)
+{
+    int32_t userId = 100;
+    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    keyInfos.emplace_back(std::make_pair(100, ""));
+    ASSERT_EQ(El5FilekeyManagerKit::GetUserAllAppKey(userId, keyInfos), EFM_ERR_NO_PERMISSION);
+}
