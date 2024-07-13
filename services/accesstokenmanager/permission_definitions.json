@@ -951,6 +951,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.GET_DISPOSED_APP_STATUS",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.ACCESS_DLP_FILE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
