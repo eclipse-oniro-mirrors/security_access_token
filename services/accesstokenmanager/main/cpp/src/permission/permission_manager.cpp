@@ -1110,11 +1110,17 @@ bool IsAclSatisfied(const PermissionDef& permDef, const HapPolicyParams& policy)
 
 bool IsPermAvailableRangeSatisfied(const PermissionDef& permDef, const std::string& appDistributionType)
 {
-    if ((appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) &&
-        permDef.availableType == ATokenAvailableTypeEnum::MDM) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is a mdm permission, the hap is not a mdm application.",
-            permDef.permissionName.c_str());
-        return false;
+    if (permDef.availableType == ATokenAvailableTypeEnum::MDM) {
+        if (appDistributionType == "none") {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Debug app use permission: %{public}s.",
+                permDef.permissionName.c_str());
+            return true;
+        }
+        if (appDistributionType != APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "%{public}s is a mdm permission, the hap is not a mdm application.",
+                permDef.permissionName.c_str());
+            return false;
+        }
     }
     return true;
 }

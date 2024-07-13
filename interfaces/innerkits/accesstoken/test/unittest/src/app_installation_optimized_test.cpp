@@ -369,6 +369,25 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken007, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level1)
 {
     HapPolicyParams testPolicyParam = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerTestStateMdm},
+    };
+    g_testHapInfoParams.appDistributionType = "none";
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
+}
+
+/**
+ * @tc.name: InitHapToken009
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
         .permStateList = {g_infoManagerTestState4},
@@ -380,12 +399,12 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken008, TestSize.Level1)
 }
 
 /**
- * @tc.name: InitHapToken009
+ * @tc.name: InitHapToken010
  * @tc.desc:
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level1)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_SYSTEM_BASIC,
@@ -400,12 +419,12 @@ HWTEST_F(AppInstallationOptimizedTest, InitHapToken009, TestSize.Level1)
 }
 
 /**
- * @tc.name: InitHapToken010
+ * @tc.name: InitHapToken011
  * @tc.desc: InitHapToken with dlp type.
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, InitHapToken010, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, InitHapToken011, TestSize.Level1)
 {
     HapPolicyParams testPolicyParams = {
         .apl = APL_SYSTEM_BASIC,
@@ -736,6 +755,39 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken006, TestSize.Level1)
 HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken007, TestSize.Level1)
 {
     HapPolicyParams testPolicyParam = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t res = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParam, fullTokenId);
+    EXPECT_EQ(RET_SUCCESS, res);
+
+    HapPolicyParams testPolicyParam2 = {
+        .apl = APL_SYSTEM_BASIC,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState, g_infoManagerTestStateMdm},
+    };
+    UpdateHapInfoParams info = {
+        .appIDDesc = "TEST",
+        .apiVersion = DEFAULT_API_VERSION,
+        .isSystemApp = false
+    };
+    info.appDistributionType = "none";
+    res = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParam2);
+    EXPECT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken008
+ * @tc.desc:
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
         .domain = "test.domain2",
         .permStateList = {g_infoManagerCameraState}
@@ -760,12 +812,12 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken007, TestSize.Level1)
 }
 
 /**
- * @tc.name: UpdateHapToken008
+ * @tc.name: UpdateHapToken009
  * @tc.desc:
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level1)
 {
     HapPolicyParams testPolicyParam = {
         .apl = APL_NORMAL,
@@ -792,53 +844,8 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken008, TestSize.Level1)
 }
 
 /**
- * @tc.name: UpdateHapToken009
- * @tc.desc:
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken009, TestSize.Level1)
-{
-    HapPolicyParams testPolicyParams1 = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain2",
-        .permStateList = {g_infoManagerCameraState}
-    };
-    AccessTokenIDEx fullTokenId;
-    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
-    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
-    EXPECT_EQ(RET_SUCCESS, ret);
-
-    UpdateHapInfoParams info;
-    info.appIDDesc = "TEST";
-    info.apiVersion = DEFAULT_API_VERSION;
-    info.isSystemApp = true;
-    PreAuthorizationInfo info1 = {
-        .permissionName = CAMERA_PERMISSION,
-        .userCancelable = false
-    };
-    HapPolicyParams testPolicyParams2 = {
-        .apl = APL_NORMAL,
-        .domain = "test.domain2",
-        .permStateList = {g_infoManagerCameraState},
-        .preAuthorizationInfo = {info1}
-    };
-    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
-    ASSERT_EQ(RET_SUCCESS, ret);
-    std::vector<PermissionStateFull> state;
-    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
-    ASSERT_EQ(RET_SUCCESS, res);
-    ASSERT_EQ(static_cast<uint32_t>(1), state.size());
-    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
-    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
-    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
-}
-
-/**
  * @tc.name: UpdateHapToken010
- * @tc.desc: app user_grant permission has not been operated, update with pre-authorization
+ * @tc.desc:
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
@@ -883,11 +890,56 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken010, TestSize.Level1)
 
 /**
  * @tc.name: UpdateHapToken011
- * @tc.desc: app user_grant permission has been granted or revoked by user, update with pre-authorization
+ * @tc.desc: app user_grant permission has not been operated, update with pre-authorization
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
 HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
+{
+    HapPolicyParams testPolicyParams1 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState}
+    };
+    AccessTokenIDEx fullTokenId;
+    int32_t ret = AccessTokenKit::InitHapToken(g_testHapInfoParams, testPolicyParams1, fullTokenId);
+    GTEST_LOG_(INFO) << "tokenID :" << fullTokenId.tokenIdExStruct.tokenID;
+    EXPECT_EQ(RET_SUCCESS, ret);
+
+    UpdateHapInfoParams info;
+    info.appIDDesc = "TEST";
+    info.apiVersion = DEFAULT_API_VERSION;
+    info.isSystemApp = true;
+    PreAuthorizationInfo info1 = {
+        .permissionName = CAMERA_PERMISSION,
+        .userCancelable = false
+    };
+    HapPolicyParams testPolicyParams2 = {
+        .apl = APL_NORMAL,
+        .domain = "test.domain2",
+        .permStateList = {g_infoManagerCameraState},
+        .preAuthorizationInfo = {info1}
+    };
+    ret = AccessTokenKit::UpdateHapToken(fullTokenId, info, testPolicyParams2);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    std::vector<PermissionStateFull> state;
+    int32_t res = AccessTokenKit::GetReqPermissions(fullTokenId.tokenIdExStruct.tokenID, state, false);
+    ASSERT_EQ(RET_SUCCESS, res);
+    ASSERT_EQ(static_cast<uint32_t>(1), state.size());
+    ASSERT_EQ(CAMERA_PERMISSION, state[0].permissionName);
+    EXPECT_EQ(state[0].grantStatus[0], PERMISSION_GRANTED);
+    EXPECT_EQ(state[0].grantFlags[0], PERMISSION_SYSTEM_FIXED);
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(fullTokenId.tokenIdExStruct.tokenID));
+}
+
+/**
+ * @tc.name: UpdateHapToken012
+ * @tc.desc: app user_grant permission has been granted or revoked by user, update with pre-authorization
+ * @tc.type: FUNC
+ * @tc.require: Issue Number
+ */
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
 {
     HapPolicyParams testPolicyParams1 = {
         .apl = APL_NORMAL,
@@ -940,13 +992,13 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken011, TestSize.Level1)
 
 
 /**
- * @tc.name: UpdateHapToken012
+ * @tc.name: UpdateHapToken013
  * @tc.desc: app user_grant permission has been pre-authorized with
  *           userUnCancelable flag, update with userCancelable pre-authorization
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = CAMERA_PERMISSION,
@@ -994,13 +1046,13 @@ HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken012, TestSize.Level1)
 }
 
 /**
- * @tc.name: UpdateHapToken013
+ * @tc.name: UpdateHapToken014
  * @tc.desc: app user_grant permission has been pre-authorized with userCancelable flag,
  *           update with userCancelable pre-authorization
  * @tc.type: FUNC
  * @tc.require: Issue Number
  */
-HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken013, TestSize.Level1)
+HWTEST_F(AppInstallationOptimizedTest, UpdateHapToken014, TestSize.Level1)
 {
     PreAuthorizationInfo info1 = {
         .permissionName = CAMERA_PERMISSION,
