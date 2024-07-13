@@ -224,6 +224,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.SET_DEFAULT_APPLICATION",             false},
     {"ohos.permission.ACCESS_IDS",                          false},
     {"ohos.permission.MANAGE_DISPOSED_APP_STATUS",          false},
+    {"ohos.permission.GET_DISPOSED_APP_STATUS",          false},
     {"ohos.permission.ACCESS_DLP_FILE",                     false},
     {"ohos.permission.PROVISIONING_MESSAGE",                false},
     {"ohos.permission.ACCESS_SYSTEM_SETTINGS",              false},
