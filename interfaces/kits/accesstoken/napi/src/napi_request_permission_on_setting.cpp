@@ -59,6 +59,20 @@ static napi_value WrapVoidToJS(napi_env env)
     return result;
 }
 
+static Ace::UIContent* GetUIContent(std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
+{
+    if (asyncContext == nullptr) {
+        return nullptr;
+    }
+    Ace::UIContent* uiContent = nullptr;
+    if (asyncContext->uiAbilityFlag) {
+        uiContent = asyncContext->abilityContext->GetUIContent();
+    } else {
+        uiContent = asyncContext->uiExtensionContext->GetUIContent();
+    }
+    return uiContent;
+}
+
 static napi_value GetContext(
     const napi_env &env, const napi_value &value, std::shared_ptr<RequestPermOnSettingAsyncContext>& asyncContext)
 {
@@ -213,8 +227,7 @@ void PermissonOnSettingUICallback::ReleaseOrErrorHandle(int32_t code)
         }
         this->reqContext_->releaseFlag = true;
     }
-    Ace::UIContent* uiContent = this->reqContext_->uiAbilityFlag ? this->reqContext_->abilityContext->GetUIContent() :
-        this->reqContext_->uiExtensionContext->GetUIContent();
+    Ace::UIContent* uiContent = GetUIContent(this->reqContext_);
     if (uiContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
         return;
@@ -338,12 +351,7 @@ void PermissonOnSettingUICallback::OnDestroy()
 
 static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)
 {
-    Ace::UIContent* uiContent = nullptr;
-    if (asyncContext->uiAbilityFlag) {
-        uiContent = asyncContext->abilityContext->GetUIContent();
-    } else {
-        uiContent = asyncContext->uiExtensionContext->GetUIContent();
-    }
+    Ace::UIContent* uiContent = GetUIContent(asyncContext);
     if (uiContent == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get ui content!");
         asyncContext->result = RET_FAILED;
