@@ -213,7 +213,7 @@ int32_t El5FilekeyManagerProxy::ChangeUserAppkeysLoadInfo(int32_t userId,
         LOG_ERROR("Failed to WriteUint32(%{public}d).", static_cast<uint32_t>(loadInfos.size()));
         return EFM_ERR_IPC_WRITE_DATA;
     }
-    for (std::pair<std::string, bool> loadInfo : loadInfos) {
+    for (std::pair<std::string, bool> &loadInfo : loadInfos) {
         if (!data.WriteString(loadInfo.first)) {
             LOG_ERROR("Failed to write keyId.");
             return EFM_ERR_IPC_WRITE_DATA;

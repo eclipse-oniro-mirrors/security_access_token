@@ -26,10 +26,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr uint32_t MAX_PARAM_SIZE = 1;
-}
-
-static const std::unordered_map<uint32_t, std::string> ErrMsgMap {
+constexpr uint32_t MAX_PARAM_SIZE = 1;
+const std::unordered_map<uint32_t, std::string> ErrMsgMap {
     {EFM_ERR_NO_PERMISSION, "Permission denied."},
     {EFM_ERR_NOT_SYSTEM_APP, "Not system app."},
     {EFM_ERR_INVALID_PARAMETER, "Parameter error."},
@@ -40,6 +38,7 @@ static const std::unordered_map<uint32_t, std::string> ErrMsgMap {
     {EFM_ERR_ACCESS_RELEASED, "File access is denied."},
     {EFM_ERR_RELEASE_ACCESS_FAILED, "File access was not acquired."},
 };
+}
 
 void ThrowError(napi_env env, int32_t errCode)
 {
@@ -98,11 +97,6 @@ napi_value AcquireAccess(napi_env env, napi_callback_info info)
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
         return nullptr;
     }
-    if (argc > MAX_PARAM_SIZE) {
-        LOG_ERROR("Wrong number of arguments.");
-        ThrowError(env, EFM_ERR_INVALID_PARAMETER);
-        return nullptr;
-    }
 
     int32_t dataLockType = DEFAULT_DATA;
     if ((argc == MAX_PARAM_SIZE) && !ParseDataType(env, argv[0], dataLockType)) {
@@ -131,11 +125,6 @@ napi_value ReleaseAccess(napi_env env, napi_callback_info info)
     napi_value argv[MAX_PARAM_SIZE] = {nullptr};
     if (napi_get_cb_info(env, info, &argc, argv, NULL, NULL) != napi_ok) {
         LOG_ERROR("napi_get_cb_info failed.");
-        ThrowError(env, EFM_ERR_INVALID_PARAMETER);
-        return nullptr;
-    }
-    if (argc > MAX_PARAM_SIZE) {
-        LOG_ERROR("Wrong number of arguments.");
         ThrowError(env, EFM_ERR_INVALID_PARAMETER);
         return nullptr;
     }

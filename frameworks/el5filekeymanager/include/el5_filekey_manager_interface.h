@@ -20,8 +20,8 @@
 
 #include "data_lock_type.h"
 #include "el5_filekey_callback_interface.h"
-#include "el5_filekey_manager_interface_code.h"
 #include "el5_filekey_manager_error.h"
+#include "el5_filekey_manager_interface_code.h"
 #include "iremote_broker.h"
 
 namespace OHOS {

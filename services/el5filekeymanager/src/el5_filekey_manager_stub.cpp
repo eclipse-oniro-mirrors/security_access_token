@@ -21,7 +21,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static uint32_t MAX_KEY_SIZE = 1000;
+constexpr uint32_t MAX_KEY_SIZE = 1000;
 }
 
 El5FilekeyManagerStub::El5FilekeyManagerStub()
@@ -141,7 +141,7 @@ void El5FilekeyManagerStub::MarshallingKeyInfos(MessageParcel &reply,
     std::vector<std::pair<int32_t, std::string>>& keyInfos)
 {
     reply.WriteUint32(keyInfos.size());
-    for (std::pair<int32_t, std::string> keyInfo : keyInfos) {
+    for (std::pair<int32_t, std::string> &keyInfo : keyInfos) {
         reply.WriteInt32(keyInfo.first);
         reply.WriteString(keyInfo.second);
     }

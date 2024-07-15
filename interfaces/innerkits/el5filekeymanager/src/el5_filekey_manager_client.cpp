@@ -25,7 +25,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const int32_t LOAD_SA_TIMEOUT_MS = 5000;
+constexpr int32_t LOAD_SA_TIMEOUT_MS = 5000;
 }
 El5FilekeyManagerClient::El5FilekeyManagerClient()
 {

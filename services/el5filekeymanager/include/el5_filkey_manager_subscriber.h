@@ -23,7 +23,7 @@ namespace Security {
 namespace AccessToken {
 class El5FilekeyManagerSubscriber : public EventFwk::CommonEventSubscriber {
 public:
-    El5FilekeyManagerSubscriber(const EventFwk::CommonEventSubscribeInfo &subscribeInfo);
+    explicit El5FilekeyManagerSubscriber(const EventFwk::CommonEventSubscribeInfo &subscribeInfo);
     ~El5FilekeyManagerSubscriber() = default;
     void OnReceiveEvent(const EventFwk::CommonEventData &data) override;
 private:
