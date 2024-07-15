@@ -202,3 +202,22 @@ HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest009, TestSize.Level1)
     ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(
         static_cast<uint32_t>(EFMInterfaceCode::GENERATE_APP_KEY), data, reply, option), EFM_ERR_IPC_TOKEN_INVALID);
 }
+
+/**
+ * @tc.name: OnRemoteRequest010
+ * @tc.desc: OnRemoteRequest, code < 0.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest010, TestSize.Level1)
+{
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+
+    std::string des = "I don't know";
+    data.WriteInterfaceToken(OHOS::Str8ToStr16(des));
+    int32_t code = -1;
+
+    ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(code, data, reply, option), EFM_ERR_IPC_TOKEN_INVALID);
+}
