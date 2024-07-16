@@ -34,19 +34,19 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string PROTECT_DATA_PERMISSION = "ohos.permission.PROTECT_SCREEN_LOCK_DATA";
-static const std::string MEDIA_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA";
-static const std::string ALL_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_ALL_DATA";
-static const std::string TASK_ID = "el5FilekeyManagerUnload";
-static const std::string STORAGE_DAEMON = "storage_daemon";
-static const std::string FOUNDATION = "foundation";
-static const std::string SET_POLICY_CALLER = "com.ohos.medialibrary.medialibrarydata";
-static const uint32_t INSTALLS_UID = 3060;
-static const uint32_t API_DELAY_TIME = 5 * 1000; // 5s
+const std::string PROTECT_DATA_PERMISSION = "ohos.permission.PROTECT_SCREEN_LOCK_DATA";
+const std::string MEDIA_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_MEDIA_DATA";
+const std::string ALL_DATA_PERMISSION = "ohos.permission.ACCESS_SCREEN_LOCK_ALL_DATA";
+const std::string TASK_ID = "el5FilekeyManagerUnload";
+const std::string STORAGE_DAEMON = "storage_daemon";
+const std::string FOUNDATION = "foundation";
+const std::string SET_POLICY_CALLER = "com.ohos.medialibrary.medialibrarydata";
+constexpr uint32_t INSTALLS_UID = 3060;
+constexpr uint32_t API_DELAY_TIME = 5 * 1000; // 5s
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
-static const uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
+constexpr uint32_t SCREEN_ON_DELAY_TIME = 30 * 1000; // 30s
 #endif
-static const uint32_t USERID_MASK = 200000;
+constexpr uint32_t USERID_MASK = 200000;
 typedef El5FilekeyServiceExtInterface* (*GetExtInstance)(void);
 }
 
@@ -58,6 +58,10 @@ El5FilekeyManagerService::El5FilekeyManagerService()
 
 El5FilekeyManagerService::~El5FilekeyManagerService()
 {
+    if (handler_) {
+        dlclose(handler_);
+        handler_ = nullptr;
+    }
     LOG_INFO("Instance destroyed.");
 }
 
@@ -94,13 +98,13 @@ int32_t El5FilekeyManagerService::Init()
     }
 #endif
 
-    void* handler = dlopen("/system/lib64/libel5_filekey_manager_api.z.so", RTLD_LAZY);
-    if (handler == nullptr) {
+    handler_ = dlopen("/system/lib64/libel5_filekey_manager_api.z.so", RTLD_LAZY);
+    if (handler_ == nullptr) {
         LOG_ERROR("Policy not exist, just start service.");
         return EFM_SUCCESS;
     }
 
-    GetExtInstance getExtInstance = reinterpret_cast<GetExtInstance>(dlsym(handler, "GetExtInstance"));
+    GetExtInstance getExtInstance = reinterpret_cast<GetExtInstance>(dlsym(handler_, "GetExtInstance"));
     if (getExtInstance == nullptr) {
         LOG_ERROR("GetExtInstance failed.");
         return EFM_ERR_CALL_POLICY_FAILED;
@@ -118,7 +122,7 @@ int32_t El5FilekeyManagerService::Init()
 void El5FilekeyManagerService::PostDelayedUnloadTask(uint32_t delayedTime)
 {
 #ifdef EVENTHANDLER_ENABLE
-    auto task = [this]() {
+    auto task = []() {
         LOG_INFO("Start to unload el5_filekey_manager.");
         auto systemAbilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
         if (systemAbilityManager == nullptr) {
@@ -372,7 +376,7 @@ int32_t El5FilekeyManagerService::SetPolicyScreenLocked()
 
 int32_t El5FilekeyManagerService::HandleUserCommonEvent(const std::string &eventName, int32_t userId)
 {
-    LOG_INFO("service HandleUserCommonEvent");
+    LOG_INFO("service handle event:%{public}s userId:%{public}d", eventName.c_str(), userId);
     if (service_ == nullptr) {
         LOG_ERROR("Failed to get policy.");
         PostDelayedUnloadTask(API_DELAY_TIME);
