@@ -11,6 +11,26 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.SUBSCRIBE_SWING_ABILITY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.MANAGER_SWING_MOTION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GET_ALL_APP_ACCOUNTS",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
