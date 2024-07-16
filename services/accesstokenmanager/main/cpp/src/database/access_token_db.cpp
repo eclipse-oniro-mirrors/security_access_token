@@ -23,6 +23,7 @@ namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDb"};
+static const std::string FIELD_COUNT_NUMBER = "count";
 static const std::string INTEGER_STR = " integer not null,";
 static const std::string TEXT_STR = " text not null,";
 std::recursive_mutex g_instanceMutex;
@@ -126,12 +127,18 @@ AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
 
 int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& values)
 {
+    size_t addSize = values.size();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add type=%{public}d=, size=%{public}zu=.", type, addSize);
+    if (addSize == 0) {
+        return SUCCESS;
+    }
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     auto statement = Prepare(prepareSql);
     BeginTransaction();
     bool isExecuteSuccessfully = true;
     uint32_t addFailCount = 0;
+    uint32_t beforeCnt = Count(type);
     for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
         for (const auto& columnName : columnNames) {
@@ -146,18 +153,24 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
         statement.Reset();
     }
     if (!isExecuteSuccessfully) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, addFailCount = %{public}d errorMsg = %{public}s.",
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, addFailCount = %{public}d errorMsg = %{public}s. Rollback transaction.",
             addFailCount, SpitError().c_str());
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
         RollbackTransaction();
         return FAILURE;
     }
+    uint32_t afterCnt = Count(type);
+    if ((beforeCnt + static_cast<uint32_t>(addSize)) != afterCnt) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add to db, beforeCnt=%{public}d, afterCnt=%{public}d.",
+            beforeCnt, afterCnt);
+    }
     CommitTransaction();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Commit Add transaction.");
     return SUCCESS;
 }
 
 int AccessTokenDb::Remove(const DataType type, const GenericValues& conditions)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove type(%{public}d).", type);
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> columnNames = conditions.GetAllKeys();
     std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
@@ -171,6 +184,7 @@ int AccessTokenDb::Remove(const DataType type, const GenericValues& conditions)
 
 int AccessTokenDb::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Modify type(%{public}d).", type);
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
     std::vector<std::string> conditionColumns = conditions.GetAllKeys();
@@ -203,9 +217,23 @@ int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results
     return SUCCESS;
 }
 
+int64_t AccessTokenDb::Count(DataType type)
+{
+    GenericValues result;
+    std::string countSql = CreateCountPrepareSqlCmd(type);
+    auto countStatement = Prepare(countSql);
+    if (countStatement.Step() == Statement::State::ROW) {
+        int32_t column = 0;
+        result.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, true));
+    }
+
+    return result.GetInt64(FIELD_COUNT_NUMBER);
+}
+
 int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Refresh type=%{public}d=, results size=%{public}zu=.", type, values.size());
+    size_t refreshCont = values.size();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Refresh type=%{public}d=, results size=%{public}zu=.", type, refreshCont);
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string deleteSql = CreateDeletePrepareSqlCmd(type);
     std::string insertSql = CreateInsertPrepareSqlCmd(type);
@@ -231,8 +259,14 @@ int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValu
         RollbackTransaction();
         return FAILURE;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Commit refresh transaction.");
+    uint32_t count = Count(type);
+    if (count != static_cast<uint32_t>(refreshCont)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL,
+            "Failed to refresh to db, refreshCont=%{public}zu, dbCount=%{public}d. Rollback transaction.",
+            refreshCont, count);
+    }
     CommitTransaction();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Commit refresh transaction.");
     return SUCCESS;
 }
 
@@ -309,6 +343,16 @@ std::string AccessTokenDb::CreateSelectPrepareSqlCmd(const DataType type) const
         return std::string();
     }
     std::string sql = "select * from " + it->second.tableName_;
+    return sql;
+}
+
+std::string AccessTokenDb::CreateCountPrepareSqlCmd(DataType type) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+    std::string sql = "select count(*) from " + it->second.tableName_;
     return sql;
 }
 

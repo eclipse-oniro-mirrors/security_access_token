@@ -69,12 +69,15 @@ private:
     int CreatePermissionStateTable() const;
     int32_t CreatePermissionRequestToggleStatusTable() const;
 
+    int64_t Count(DataType type);
+
     std::string CreateInsertPrepareSqlCmd(const DataType type) const;
     std::string CreateDeletePrepareSqlCmd(
         const DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
     std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
+    std::string CreateCountPrepareSqlCmd(DataType type) const;
     int32_t AddAvailableTypeColumn() const;
     int32_t AddPermDialogCapColumn() const;
 
