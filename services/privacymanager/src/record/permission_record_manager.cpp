@@ -1362,9 +1362,6 @@ bool PermissionRecordManager::UnRegisterWindowCallback()
 {
     bool isSuccess = true;
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
-    if (!isAutoClose) {
-        return true;
-    }
     ACCESSTOKEN_LOG_INFO(LABEL, "Begin to UnRegisterWindowCallback.");
     std::lock_guard<std::mutex> lock(windowLoaderMutex_);
     if (windowLoader_ == nullptr) {
