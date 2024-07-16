@@ -13,32 +13,22 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
-#define EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
+#ifndef EL5_FILEKEY_MANAGER_SERVICE_MOCK_IPC_H
+#define EL5_FILEKEY_MANAGER_SERVICE_MOCK_IPC_H
 
-#include <gtest/gtest.h>
 #include <cstdint>
-
-#define private public
-#include "el5_filekey_manager_service.h"
-#undef private
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class El5FilekeyManagerServiceTest : public testing::Test {
+class MockIpc {
 public:
-    static void SetUpTestCase();
-
-    static void TearDownTestCase();
-
-    void SetUp();
-
-    void TearDown();
-
-    std::shared_ptr<El5FilekeyManagerService> el5FilekeyManagerService_;
+    MockIpc();
+    ~MockIpc();
+    static void SetCallingUid(uint32_t uid);
+    static void SetCallingTokenID(uint32_t tokenId);
 };
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
+#endif // EL5_FILEKEY_MANAGER_SERVICE_MOCK_IPC_H

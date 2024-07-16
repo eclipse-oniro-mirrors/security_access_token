@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
-#define EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
+#ifndef EL5_FILEKEY_MANAGER_SERVICE_MOCK_UNITTEST_H
+#define EL5_FILEKEY_MANAGER_SERVICE_MOCK_UNITTEST_H
 
 #include <gtest/gtest.h>
 #include <cstdint>
@@ -26,7 +26,7 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class El5FilekeyManagerServiceTest : public testing::Test {
+class El5FilekeyManagerServiceMockTest : public testing::Test {
 public:
     static void SetUpTestCase();
 
@@ -41,4 +41,4 @@ public:
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
-#endif // EL5_FILEKEY_MANAGER_SERVICE_UNITTEST_H
+#endif // EL5_FILEKEY_MANAGER_SERVICE_MOCK_UNITTEST_H

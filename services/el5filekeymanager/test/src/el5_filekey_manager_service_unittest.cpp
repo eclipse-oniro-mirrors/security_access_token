@@ -136,6 +136,19 @@ HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetUserAppKey002
+ * @tc.desc: Find key infos of the specified user id without permission, userId < 0.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, GetUserAppKey002, TestSize.Level1)
+{
+    int32_t userId = -100;
+    std::vector<std::pair<int32_t, std::string>> keyInfos;
+    ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_ERR_INVALID_PARAMETER);
+}
+
+/**
  * @tc.name: ChangeUserAppkeysLoadInfo001
  * @tc.desc: Change key infos of the specified user id without permission.
  * @tc.type: FUNC
@@ -147,6 +160,20 @@ HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo001, TestSize.Le
     std::vector<std::pair<std::string, bool>> loadInfos;
     loadInfos.emplace_back(std::make_pair("", true));
     ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: ChangeUserAppkeysLoadInfo002
+ * @tc.desc: Change key infos of the specified user id without permission, userId < 0.
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, ChangeUserAppkeysLoadInfo002, TestSize.Level1)
+{
+    int32_t userId = -100;
+    std::vector<std::pair<std::string, bool>> loadInfos;
+    loadInfos.emplace_back(std::make_pair("", true));
+    ASSERT_EQ(el5FilekeyManagerService_->ChangeUserAppkeysLoadInfo(userId, loadInfos), EFM_ERR_INVALID_PARAMETER);
 }
 
 /**
@@ -217,6 +244,46 @@ HWTEST_F(El5FilekeyManagerServiceTest, Dump002, TestSize.Level1)
 HWTEST_F(El5FilekeyManagerServiceTest, Dump003, TestSize.Level1)
 {
     int fd = 1;
-    std::vector<std::u16string> args = {u"-h: command help\n", u"-a: dump all el5 data information \n"};
+    std::vector<std::u16string> args = {u"-h"};
     ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: PostDelayedUnloadTask001
+ * @tc.desc: PostDelayedUnloadTask fun test.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, PostDelayedUnloadTask001, TestSize.Level1)
+{
+#ifndef EVENTHANDLER_ENABLE
+#define EVENTHANDLER_ENABLE
+    int32_t delayedTime = 1;
+    el5FilekeyManagerService_->PostDelayedUnloadTask(delayedTime);
+#endif
+}
+
+/**
+ * @tc.name: CancelDelayedUnloadTask001
+ * @tc.desc: CancelDelayedUnloadTask fun test.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, CancelDelayedUnloadTask001, TestSize.Level1)
+{
+#ifndef EVENTHANDLER_ENABLE
+#define EVENTHANDLER_ENABLE
+    el5FilekeyManagerService_->CancelDelayedUnloadTask();
+#endif
+}
+
+/**
+ * @tc.name: IsSystemApp001
+ * @tc.desc: IsSystemApp fun test.
+ * @tc.type: FUNC
+ * @tc.require: issueI9Q6K2
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, IsSystemApp001, TestSize.Level1)
+{
+    ASSERT_EQ(el5FilekeyManagerService_->IsSystemApp(), false);
 }
