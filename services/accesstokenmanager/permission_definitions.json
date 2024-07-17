@@ -4713,6 +4713,16 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
         }
     ]
 }
