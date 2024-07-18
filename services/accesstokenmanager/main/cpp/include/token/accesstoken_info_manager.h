@@ -82,6 +82,7 @@ public:
     int32_t GetCurDumpTaskNum();
     void AddDumpTaskNum();
     void ReduceDumpTaskNum();
+    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */

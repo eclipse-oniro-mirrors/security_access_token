@@ -65,6 +65,7 @@ enum class AccessTokenInterfaceCode {
     DUMP_PERM_DEFINITION_INFO,
     GET_VERSION,
     GET_PERMISSION_MANAGER_INFO,
+    GET_NATIVE_TOKEN_NAME,
 };
 } // namespace AccessToken
 } // namespace Security

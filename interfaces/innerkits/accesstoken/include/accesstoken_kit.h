@@ -414,9 +414,15 @@ public:
     /**
      * @brief Get application info of permission manager.
      * @param info application info of permission manager
-     * @return error code, see access_token_error.h
      */
     static void GetPermissionManagerInfo(PermissionGrantInfo& info);
+    /**
+     * @brief Get the name of native token by the specific tokenId.
+     * @param tokenId native token id
+     * @param name name of the native token
+     * @return error code, see access_token_error.h
+     */
+    static int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
 };
 } // namespace AccessToken
 } // namespace Security
