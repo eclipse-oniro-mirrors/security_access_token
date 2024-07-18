@@ -63,30 +63,26 @@ int32_t AccessTokenManagerStub::OnRemoteRequest(
     int timerId = HiviewDFX::XCollie::GetInstance().SetTimer(name, TIMEOUT, nullptr, nullptr,
         HiviewDFX::XCOLLIE_FLAG_LOG);
 #endif // HICOLLIE_ENABLE
+
     auto itFunc = requestFuncMap_.find(code);
     if (itFunc != requestFuncMap_.end()) {
         auto requestFunc = itFunc->second;
         if (requestFunc != nullptr) {
             (this->*requestFunc)(data, reply);
-        } else {
-            // when valid code without any function to handle
+
 #ifdef HICOLLIE_ENABLE
             HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
 #endif // HICOLLIE_ENABLE
-            return IPCObjectStub::OnRemoteRequest(code, data, reply, option);
+
+            return NO_ERROR;
         }
-    } else {
-#ifdef HICOLLIE_ENABLE
-        HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
-#endif // HICOLLIE_ENABLE
-        return IPCObjectStub::OnRemoteRequest(code, data, reply, option); // when code invalid
     }
 
 #ifdef HICOLLIE_ENABLE
     HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
 #endif // HICOLLIE_ENABLE
 
-    return NO_ERROR;
+    return IPCObjectStub::OnRemoteRequest(code, data, reply, option); // when code invalid
 }
 
 void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessageParcel& reply)

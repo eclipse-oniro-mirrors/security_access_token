@@ -154,5 +154,10 @@ if (is_standard_system && ability_base_enable == true) {
     if (access_token_app_security_privacy_service_enable) {
       cflags_cc += [ "-DAPP_SECURITY_PRIVACY_SERVICE" ]
     }
+
+    if (hicollie_enable == true) {
+      external_deps += [ "hicollie:libhicollie" ]
+      cflags_cc += [ "-DHICOLLIE_ENABLE" ]
+    }
   }
 }
