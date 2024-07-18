@@ -661,6 +661,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.RECEIVE_UPDATE_MESSAGE",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.GRANT_SENSITIVE_PERMISSIONS",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
