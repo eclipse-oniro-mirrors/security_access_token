@@ -41,6 +41,7 @@ public:
     PermissionAppStateObserver() = default;
     ~PermissionAppStateObserver() = default;
 
+    void OnApplicationStateChanged(const AppStateData &appStateData) override;
     void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
     void OnProcessDied(const ProcessData &processData) override;
     DISALLOW_COPY_AND_MOVE(PermissionAppStateObserver);
