@@ -20,6 +20,7 @@
 #include "accesstoken_kit.h"
 #include "access_token_error.h"
 #define private public
+#include "accesstoken_id_manager.h"
 #include "accesstoken_info_manager.h"
 #include "permission_definition_cache.h"
 #include "form_manager_access_client.h"
@@ -29,15 +30,36 @@
 #include "running_form_info.h"
 #include "token_setproc.h"
 
-using namespace testing;
 using namespace testing::ext;
-using namespace OHOS;
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static const std::string FORM_VISIBLE_NAME = "#1";
+static constexpr int USER_ID = 100;
+static constexpr int INST_INDEX = 0;
+
+static PermissionStateFull g_permState = {
+    .permissionName = "ohos.permission.CAMERA",
+    .isGeneral = true,
+    .resDeviceID = {"dev-001"},
+    .grantStatus = {PermissionState::PERMISSION_DENIED},
+    .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+};
+
+static HapInfoParams g_info = {
+    .userID = USER_ID,
+    .bundleName = "accesstoken_test",
+    .instIndex = INST_INDEX,
+    .appIDDesc = "testtesttesttest"
+};
+
+static HapPolicyParams g_policy = {
+    .apl = APL_NORMAL,
+    .domain = "test.domain",
+    .permStateList = {g_permState}
+};
 }
 class PermissionRecordManagerCoverageTest : public testing::Test {
 public:
@@ -50,7 +72,10 @@ public:
     void TearDown();
 };
 
-void PermissionRecordManagerCoverageTest::SetUpTestCase() {}
+void PermissionRecordManagerCoverageTest::SetUpTestCase()
+{
+    AccessTokenInfoManager::GetInstance().Init();
+}
 
 void PermissionRecordManagerCoverageTest::TearDownTestCase() {}
 
@@ -67,7 +92,7 @@ void PermissionRecordManagerCoverageTest::TearDown() {}
 HWTEST_F(PermissionRecordManagerCoverageTest, RegisterAddObserverTest001, TestSize.Level1)
 {
     AccessTokenID selfTokenId = GetSelfTokenID();
-    AccessTokenID nativeToken = AccessTokenKit::GetNativeTokenId("privacy_service");
+    AccessTokenID nativeToken = AccessTokenInfoManager::GetInstance().GetNativeTokenId("privacy_service");
     EXPECT_EQ(RET_SUCCESS, SetSelfTokenID(nativeToken));
     sptr<FormStateObserverStub> formStateObserver = new (std::nothrow) FormStateObserverStub();
     ASSERT_NE(formStateObserver, nullptr);
@@ -144,6 +169,73 @@ HWTEST_F(PermissionRecordManagerCoverageTest, OnRemoteRequest001, TestSize.Level
 
     uint32_t code = -1;
     EXPECT_NE(RET_SUCCESS, callback.OnRemoteRequest(code, data2, reply, option));
+}
+
+/**
+ * @tc.name: UpdateStatesToDatabase001
+ * @tc.desc: Test AccessTokenInfoManager::UpdateStatesToDatabase
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerCoverageTest, UpdateStatesToDatabase001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    std::vector<PermissionStateFull> stateChangeList = {g_permState};
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().UpdateStatesToDatabase(tokenId, stateChangeList));
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: UpdateCapStateToDatabase001
+ * @tc.desc: Test AccessTokenInfoManager::UpdateCapStateToDatabase
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerCoverageTest, UpdateCapStateToDatabase001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
+
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(true, AccessTokenInfoManager::GetInstance().UpdateCapStateToDatabase(tokenId, false));
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
+}
+
+/**
+ * @tc.name: GetNativeTokenName001
+ * @tc.desc: Test AccessTokenInfoManager::GetNativeTokenName
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerCoverageTest, GetNativeTokenName001, TestSize.Level1)
+{
+    std::string name;
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetNativeTokenName(
+        INVALID_TOKENID, name));
+
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(g_info, g_policy, tokenIdEx));
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(
+        static_cast<FullTokenID>(tokenId)));
+    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().GetNativeTokenName(
+        tokenId, name));
+    
+    std::string processName = "hdcd";
+    tokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId(processName);
+    ASSERT_NE(INVALID_TOKENID, tokenId);
+    ASSERT_EQ(0, AccessTokenInfoManager::GetInstance().GetNativeTokenName(tokenId, name));
+    ASSERT_EQ(processName, name);
+
+    AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId);
 }
 } // namespace AccessToken
 } // namespace Security

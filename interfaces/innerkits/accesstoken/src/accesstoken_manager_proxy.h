@@ -100,6 +100,7 @@ public:
     int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
+    int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name) override;
 
 private:
     bool SendRequest(AccessTokenInterfaceCode code, MessageParcel& data, MessageParcel& reply);

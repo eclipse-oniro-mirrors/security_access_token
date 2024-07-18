@@ -577,6 +577,13 @@ void AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParc
     infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
 }
 
+int32_t AccessTokenManagerService::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID is %{public}u.", tokenId);
+
+    return AccessTokenInfoManager::GetInstance().GetNativeTokenName(tokenId, name);
+}
+
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {

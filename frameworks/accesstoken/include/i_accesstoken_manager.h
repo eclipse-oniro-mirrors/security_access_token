@@ -106,6 +106,7 @@ public:
     virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
     virtual int32_t GetVersion(uint32_t& version) = 0;
     virtual void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) = 0;
+    virtual int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) = 0;
 };
 } // namespace AccessToken
 } // namespace Security
