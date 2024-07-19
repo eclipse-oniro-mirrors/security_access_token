@@ -208,6 +208,7 @@ private:
     std::vector<uint32_t> foreTokenIdList_;
 
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
+    bool isAutoClose = false;
     std::mutex windowLoaderMutex_;
     bool isWmRegistered = false;
     LibraryLoader* windowLoader_ = nullptr;
