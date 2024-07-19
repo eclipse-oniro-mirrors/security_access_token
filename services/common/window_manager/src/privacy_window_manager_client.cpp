@@ -52,6 +52,7 @@ PrivacyWindowManagerClient::PrivacyWindowManagerClient() : deathCallback_(nullpt
 
 PrivacyWindowManagerClient::~PrivacyWindowManagerClient()
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "~PrivacyWindowManagerClient().");
     std::lock_guard<std::mutex> lock(proxyMutex_);
     RemoveDeathRecipient();
 }
@@ -261,12 +262,8 @@ sptr<IWindowManager> PrivacyWindowManagerClient::GetWMSProxy()
 void PrivacyWindowManagerClient::OnRemoteDiedHandle()
 {
     std::lock_guard<std::mutex> lock(proxyMutex_);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Window manager remote died.");
     RemoveDeathRecipient();
-    mockSessionManagerServiceProxy_ = nullptr;
-    sessionManagerServiceProxy_ = nullptr;
-    sceneSessionManagerProxy_ = nullptr;
-    sceneSessionManagerLiteProxy_ = nullptr;
-    wmsProxy_ = nullptr;
 
     std::function<void()> runner = [this]() {
         std::string name = "WindowMgrDiedHandler";
@@ -316,6 +313,11 @@ void PrivacyWindowManagerClient::RemoveDeathRecipient()
     if (wmsProxy_ != nullptr) {
         wmsProxy_->AsObject()->RemoveDeathRecipient(serviceDeathObserver_);
     }
+    mockSessionManagerServiceProxy_ = nullptr;
+    sessionManagerServiceProxy_ = nullptr;
+    sceneSessionManagerProxy_ = nullptr;
+    sceneSessionManagerLiteProxy_ = nullptr;
+    wmsProxy_ = nullptr;
 }
 } // namespace AccessToken
 } // namespace Security
