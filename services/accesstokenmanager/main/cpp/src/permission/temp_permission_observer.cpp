@@ -104,6 +104,18 @@ void PermissionAppStateObserver::OnForegroundApplicationChanged(const AppStateDa
     }
 }
 
+void PermissionAppStateObserver::OnApplicationStateChanged(const AppStateData &appStateData)
+{
+    if (appStateData.state == static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED)) {
+        uint32_t tokenID = appStateData.accessTokenId;
+        ACCESSTOKEN_LOG_INFO(LABEL, "TokenID:%{public}d died.", tokenID);
+        // cancle task when process die
+        std::string taskName = TASK_NAME_TEMP_PERMISSION + std::to_string(tokenID);
+        TempPermissionObserver::GetInstance().CancleTaskOfPermissionRevoking(taskName);
+        TempPermissionObserver::GetInstance().RevokeAllTempPermission(tokenID);
+    }
+}
+
 int32_t PermissionFormStateObserver::NotifyWhetherFormsVisible(const FormVisibilityType visibleType,
     const std::string &bundleName, std::vector<FormInstance> &formInstances)
 {
