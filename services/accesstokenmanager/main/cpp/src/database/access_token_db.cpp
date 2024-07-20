@@ -15,6 +15,7 @@
 
 #include "access_token_db.h"
 
+#include <cinttypes>
 #include <mutex>
 #include "accesstoken_log.h"
 
@@ -138,7 +139,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
     BeginTransaction();
     bool isExecuteSuccessfully = true;
     uint32_t addFailCount = 0;
-    uint32_t beforeCnt = Count(type);
+    int64_t beforeCnt = Count(type);
     for (const auto& value : values) {
         std::vector<std::string> columnNames = value.GetAllKeys();
         for (const auto& columnName : columnNames) {
@@ -158,10 +159,10 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
         RollbackTransaction();
         return FAILURE;
     }
-    uint32_t afterCnt = Count(type);
-    if ((beforeCnt + static_cast<uint32_t>(addSize)) != afterCnt) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add to db, beforeCnt=%{public}d, afterCnt=%{public}d.",
-            beforeCnt, afterCnt);
+    int64_t afterCnt = Count(type);
+    if ((beforeCnt + static_cast<int64_t>(addSize)) != afterCnt) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add to db, beforeCnt=%{public}" PRId64 ", afterCnt=%{public}" PRId64
+            ".", beforeCnt, afterCnt);
     }
     CommitTransaction();
     ACCESSTOKEN_LOG_INFO(LABEL, "Commit Add transaction.");
@@ -259,10 +260,10 @@ int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValu
         RollbackTransaction();
         return FAILURE;
     }
-    uint32_t count = Count(type);
-    if (count != static_cast<uint32_t>(refreshCont)) {
+    int64_t count = Count(type);
+    if (count != static_cast<int64_t>(refreshCont)) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Failed to refresh to db, refreshCont=%{public}zu, dbCount=%{public}d. Rollback transaction.",
+            "Failed to refresh to db, refreshCont=%{public}zu, dbCount=%{public}" PRId64 ". Rollback transaction.",
             refreshCont, count);
     }
     CommitTransaction();
