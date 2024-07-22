@@ -798,30 +798,6 @@ void AccessTokenManagerStub::UnRegisterTokenSyncCallbackInner(MessageParcel& dat
 }
 #endif
 
-void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsShellProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::string dumpInfo = "";
-    int32_t result = this->DumpPermDefInfo(dumpInfo);
-    if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
-    }
-    if (result != RET_SUCCESS) {
-        return;
-    }
-
-    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
-    }
-    if (!reply.WriteString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
-    }
-}
-
 void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel& reply)
 {
     uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
@@ -839,6 +815,30 @@ void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel&
     }
     if (!reply.WriteUint32(version)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write Uint32 failed.");
+    }
+}
+
+void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsShellProcessCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::string dumpInfo = "";
+    int32_t result = this->DumpPermDefInfo(dumpInfo);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
+    }
+    if (result != RET_SUCCESS) {
+        return;
+    }
+
+    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
+    }
+    if (!reply.WriteString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
     }
 }
 

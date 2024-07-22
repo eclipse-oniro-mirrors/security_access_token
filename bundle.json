@@ -31,7 +31,6 @@
         "ability_base",
         "ability_runtime",
         "ace_engine",
-        "audio_framework",
         "bounds_checking_function",
         "c_utils",
         "cJSON",
