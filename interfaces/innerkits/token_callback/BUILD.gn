@@ -38,7 +38,10 @@ if (is_standard_system) {
 
     public_configs = [ ":token_callback" ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     include_dirs = [
       "src",

@@ -35,7 +35,10 @@ ohos_shared_library("accesstoken_power_manager") {
     sources = [ "src/power_manager_loader.cpp" ]
 
     cflags_cc = []
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     public_configs = [ ":accesstoken_power_manager_config" ]
 
     external_deps = [

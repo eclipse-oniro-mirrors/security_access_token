@@ -47,7 +47,10 @@ ohos_shared_library("libprivacymanager") {
     "ipc:ipc_single",
     "napi:ace_napi",
   ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   relative_install_dir = "module"
   subsystem_name = "security"

@@ -55,7 +55,10 @@ ohos_shared_library("accesstoken_common_cxx") {
     "json:nlohmann_json_static",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
 }

@@ -96,8 +96,14 @@ if (is_standard_system) {
     ]
     sources += access_token_impl_sources
 
-    cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "../../config:coverage_flags" ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-fvisibility=hidden",
+    ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     if (dlp_permission_enable == true) {
       cflags_cc += [ "-DSUPPORT_SANDBOX_APP" ]

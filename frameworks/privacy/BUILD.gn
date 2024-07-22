@@ -32,7 +32,10 @@ ohos_shared_library("privacy_communication_adapter_cxx") {
     "include",
   ]
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   sources = [
     "src/add_perm_param_info_parcel.cpp",

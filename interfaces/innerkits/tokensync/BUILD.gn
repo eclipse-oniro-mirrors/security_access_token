@@ -60,7 +60,10 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
   }

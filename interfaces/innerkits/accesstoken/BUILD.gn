@@ -75,7 +75,10 @@ if (is_standard_system) {
       "samgr:samgr_proxy",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     cflags_cc = [
       "-DHILOG_ENABLE",
@@ -119,7 +122,10 @@ if (is_standard_system) {
       "hilog:libhilog",
     ]
 
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     cflags_cc = [ "-DHILOG_ENABLE" ]
     if (security_component_enhance_enable == true) {
       cflags_cc += [ "-DSECURITY_COMPONENT_ENHANCE_ENABLE" ]

@@ -61,8 +61,14 @@ ohos_static_library("accesstoken_service_common") {
     "utils/src/time_util.cpp",
   ]
 
-  cflags_cc = [ "-DHILOG_ENABLE" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  cflags_cc = [
+    "-DHILOG_ENABLE",
+    "-fvisibility=hidden",
+  ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   external_deps = [
     "c_utils:utils",

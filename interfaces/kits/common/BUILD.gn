@@ -32,7 +32,10 @@ ohos_static_library("libnapi_common") {
     "src/napi_common.cpp",
     "src/napi_error.cpp",
   ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   deps = []
   cflags_cc = [ "-DHILOG_ENABLE" ]
