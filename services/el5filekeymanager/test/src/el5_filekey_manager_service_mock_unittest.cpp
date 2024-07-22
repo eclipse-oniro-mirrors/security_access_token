@@ -74,6 +74,9 @@ public:
 
     int32_t GetUserAppKey(int32_t userId, bool getAllFlag, std::vector<std::pair<int32_t, std::string>> &keyInfos)
     {
+        int32_t key = 111;
+        std::string info = "test";
+        keyInfos.emplace_back(std::make_pair(key, info));
         return EFM_SUCCESS;
     }
 
@@ -107,6 +110,74 @@ public:
         return EFM_SUCCESS;
     }
 };
+
+/**
+ * @tc.name: AcquireAccess001
+ * @tc.desc: Acquire default type data access.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: AcquireAccess002
+ * @tc.desc: Acquire default type data access.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, AcquireAccess002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(DEFAULT_DATA), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: ReleaseAccess001
+ * @tc.desc: Release default type data access.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: ReleaseAccess002
+ * @tc.desc: Release default type data access.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, ReleaseAccess002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+
+    MockIpc::SetCallingUid(20020025);
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(100, "com.ohos.medialibrary.medialibrarydata", 0);
+    MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
+
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(DEFAULT_DATA), EFM_SUCCESS);
+}
 
 /**
  * @tc.name: GenerateAppKey001
@@ -216,6 +287,27 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey002, TestSize.Level1)
     MockIpc::SetCallingTokenID(static_cast<uint32_t>(tokenId));
 
     ASSERT_EQ(el5FilekeyManagerService_->GetUserAppKey(userId, false, keyInfos), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: GetUserAppKey003
+ * @tc.desc: Find key infos of the specified user id.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, GetUserAppKey003, TestSize.Level1)
+{
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
+
+    data.WriteInt32(100);
+    data.WriteBool(false);
+
+    ASSERT_EQ(el5FilekeyManagerService_->OnRemoteRequest(
+        static_cast<uint32_t>(EFMInterfaceCode::GET_USER_APP_KEY), data, reply, option), OHOS::NO_ERROR);
 }
 
 /**
@@ -338,7 +430,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, SetPolicyScreenLocked001, TestSize.Le
 }
 
 /**
- * @tc.name: SetPolicyScreenLocked001
+ * @tc.name: SetPolicyScreenLocked002
  * @tc.desc: SetPolicyScreenLocked
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
@@ -366,7 +458,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Dump001, TestSize.Level1)
 }
 
 /**
- * @tc.name: Dump001
+ * @tc.name: Dump002
  * @tc.desc: Dump fd > 0
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
@@ -378,4 +470,32 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, Dump002, TestSize.Level1)
     int fd = 1;
     std::vector<std::u16string> args = {};
     ASSERT_EQ(el5FilekeyManagerService_->Dump(fd, args), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: HandleUserCommonEvent001
+ * @tc.desc: HandleUserCommonEvent func test, service_ == null.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent001, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = nullptr;
+    std::string eventName = "abc";
+    int userId = 1;
+    ASSERT_EQ(el5FilekeyManagerService_->HandleUserCommonEvent(eventName, userId), EFM_SUCCESS);
+}
+
+/**
+ * @tc.name: HandleUserCommonEvent002
+ * @tc.desc: HandleUserCommonEvent func test, service_ != null.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceMockTest, HandleUserCommonEvent002, TestSize.Level1)
+{
+    el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
+    std::string eventName = "abc";
+    int userId = 1;
+    ASSERT_EQ(el5FilekeyManagerService_->HandleUserCommonEvent(eventName, userId), EFM_SUCCESS);
 }

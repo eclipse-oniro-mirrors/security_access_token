@@ -56,8 +56,7 @@ public:
  */
 HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
 {
-    DataLockType type = MEDIA_DATA;
-    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -68,7 +67,18 @@ HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess002, TestSize.Level1)
 {
-    DataLockType type = ALL_DATA;
+    ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(ALL_DATA), EFM_ERR_NO_PERMISSION);
+}
+
+/**
+ * @tc.name: AcquireAccess003
+ * @tc.desc: Acquire invalid type data access.
+ * @tc.type: FUNC
+ * @tc.require: issueIAD2MD
+ */
+HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess003, TestSize.Level1)
+{
+    uint32_t type = 3;
     ASSERT_EQ(el5FilekeyManagerService_->AcquireAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
 }
 
@@ -80,8 +90,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, AcquireAccess002, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
 {
-    DataLockType type = MEDIA_DATA;
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(MEDIA_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**
@@ -92,8 +101,7 @@ HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerServiceTest, ReleaseAccess002, TestSize.Level1)
 {
-    DataLockType type = ALL_DATA;
-    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(static_cast<DataLockType>(type)), EFM_ERR_NO_PERMISSION);
+    ASSERT_EQ(el5FilekeyManagerService_->ReleaseAccess(ALL_DATA), EFM_ERR_NO_PERMISSION);
 }
 
 /**

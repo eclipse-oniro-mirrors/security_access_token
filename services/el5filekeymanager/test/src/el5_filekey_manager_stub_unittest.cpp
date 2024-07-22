@@ -144,13 +144,17 @@ HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest006, TestSize.Level1)
 
     ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
 
+    data.WriteUint32(1);
+    data.WriteString("test");
+    data.WriteBool(false);
+
     ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(
         static_cast<uint32_t>(EFMInterfaceCode::CHANGE_USER_APP_KEYS_LOAD_INFO), data, reply, option), OHOS::NO_ERROR);
 }
 
 /**
  * @tc.name: OnRemoteRequest007
- * @tc.desc: EFMInterfaceCode::SET_FILE_PATH_POLICY.
+ * @tc.desc: EFMInterfaceCode::CHANGE_USER_APP_KEYS_LOAD_INFO.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
@@ -162,13 +166,17 @@ HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest007, TestSize.Level1)
 
     ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
 
+    data.WriteUint32(10000);
+    data.WriteString("test");
+    data.WriteBool(false);
+
     ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(
-        static_cast<uint32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY), data, reply, option), OHOS::NO_ERROR);
+        static_cast<uint32_t>(EFMInterfaceCode::CHANGE_USER_APP_KEYS_LOAD_INFO), data, reply, option), OHOS::NO_ERROR);
 }
 
 /**
  * @tc.name: OnRemoteRequest008
- * @tc.desc: EFMInterfaceCode::REGISTER_CALLBACK.
+ * @tc.desc: EFMInterfaceCode::SET_FILE_PATH_POLICY.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
@@ -181,16 +189,34 @@ HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest008, TestSize.Level1)
     ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
 
     ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(
-        static_cast<uint32_t>(EFMInterfaceCode::REGISTER_CALLBACK), data, reply, option), OHOS::NO_ERROR);
+        static_cast<uint32_t>(EFMInterfaceCode::SET_FILE_PATH_POLICY), data, reply, option), OHOS::NO_ERROR);
 }
 
 /**
  * @tc.name: OnRemoteRequest009
- * @tc.desc: data.ReadInterfaceToken() != El5FilekeyManagerInterface::GetDescriptor().
+ * @tc.desc: EFMInterfaceCode::REGISTER_CALLBACK.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
 HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest009, TestSize.Level1)
+{
+    OHOS::MessageParcel data;
+    OHOS::MessageParcel reply;
+    OHOS::MessageOption option(OHOS::MessageOption::TF_SYNC);
+
+    ASSERT_EQ(true, data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor()));
+
+    ASSERT_EQ(el5FilekeyManagerStub_->OnRemoteRequest(
+        static_cast<uint32_t>(EFMInterfaceCode::REGISTER_CALLBACK), data, reply, option), OHOS::NO_ERROR);
+}
+
+/**
+ * @tc.name: OnRemoteRequest010
+ * @tc.desc: data.ReadInterfaceToken() != El5FilekeyManagerInterface::GetDescriptor().
+ * @tc.type: FUNC
+ * @tc.require: issueI9JGMV
+ */
+HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest010, TestSize.Level1)
 {
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
@@ -204,12 +230,12 @@ HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest009, TestSize.Level1)
 }
 
 /**
- * @tc.name: OnRemoteRequest010
+ * @tc.name: OnRemoteRequest011
  * @tc.desc: OnRemoteRequest, code < 0.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
-HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest010, TestSize.Level1)
+HWTEST_F(El5FilekeyManagerStubTest, OnRemoteRequest011, TestSize.Level1)
 {
     OHOS::MessageParcel data;
     OHOS::MessageParcel reply;
