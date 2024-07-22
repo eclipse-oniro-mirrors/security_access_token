@@ -77,5 +77,5 @@ void FfiOHOSAbilityAccessCtrlRequestPermissionsFromUserByStdFunc(OHOS::AbilityRu
     AtManagerImpl::RequestPermissionsFromUser(context, cPermissionList, onChange);
 }
 }
-} //namespace CJSystemapi
-} //namespace OHOS
+} // namespace CJSystemapi
+} // namespace OHOS

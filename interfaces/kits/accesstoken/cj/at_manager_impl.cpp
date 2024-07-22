@@ -952,5 +952,5 @@ void RegisterPermStateChangeScopePtr::SetValid(bool valid)
     valid_ = valid;
 }
 }
-} //namespace CJSystemapi
-} //namespace OHOS
+} // namespace CJSystemapi
+} // namespace OHOS
