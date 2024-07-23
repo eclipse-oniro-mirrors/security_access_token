@@ -66,7 +66,10 @@ ohos_shared_library("libabilityaccessctrl") {
     external_deps += [ "eventhandler:libeventhandler" ]
   }
 
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   relative_install_dir = "module"
   subsystem_name = "security"
@@ -133,7 +136,10 @@ ohos_shared_library("cj_ability_access_ctrl_ffi") {
 
   cflags_cc = [ "-DHILOG_ENABLE" ]
   public_configs = [ ":cj_ability_access_ctrl_ffi_config" ]
-  configs = [ "${access_token_path}/config:coverage_flags" ]
+  configs = [
+    "${access_token_path}/config:access_token_compile_flags",
+    "${access_token_path}/config:coverage_flags",
+  ]
 
   if (current_os == "ohos") {
     defines += [ "OHOS_PLATFORM" ]

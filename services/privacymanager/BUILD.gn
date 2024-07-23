@@ -96,8 +96,14 @@ if (is_standard_system && ability_base_enable == true) {
       "src/service/privacy_manager_stub.cpp",
     ]
 
-    cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    cflags_cc = [
+      "-DHILOG_ENABLE",
+      "-fvisibility=hidden",
+    ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     defines = [ "FEATURE_DTMF_TONE" ]
 
     deps = [

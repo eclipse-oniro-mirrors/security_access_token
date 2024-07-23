@@ -35,8 +35,11 @@ ohos_shared_library("accesstoken_ability_manager_adapter") {
 
     sources = [ "src/ability_manager_access_loader.cpp" ]
 
-    cflags_cc = []
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    cflags_cc = [ "-fvisibility=hidden" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     public_configs = [ ":accesstoken_abillity_manager_config" ]
 
     external_deps = [

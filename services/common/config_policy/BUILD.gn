@@ -38,7 +38,10 @@ ohos_shared_library("accesstoken_config_policy") {
     sources = [ "src/config_policy_loader.cpp" ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
     public_configs = [ ":accesstoken_config_policy_config" ]
 
     deps = [ "${access_token_path}/frameworks/common:accesstoken_common_cxx" ]
