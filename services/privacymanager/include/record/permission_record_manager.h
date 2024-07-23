@@ -20,6 +20,9 @@
 #include <set>
 #include <string>
 
+#ifdef EVENTHANDLER_ENABLE
+#include "access_event_handler.h"
+#endif
 #include "access_token.h"
 #include "active_change_response_info.h"
 #include "add_perm_param_info.h"
@@ -118,6 +121,9 @@ private:
     int32_t GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record);
     bool CreateBundleUsedRecord(const AccessTokenID tokenId, BundleUsedRecord& bundleRecord);
     void ExecuteDeletePermissionRecordTask();
+    int32_t GetCurDeleteTaskNum();
+    void AddDeleteTaskNum();
+    void ReduceDeleteTaskNum();
     int32_t DeletePermissionRecord(int32_t days);
 
     void MergeSamePermission(const PermissionUsageFlag& flag, const PermissionUsedRecord& inRecord,
@@ -170,8 +176,7 @@ private:
     void GetConfigValue();
 
 private:
-    OHOS::ThreadPool deleteTaskWorker_;
-    bool hasInited_;
+    bool hasInited_ = false;
     OHOS::Utils::RWLock rwLock_;
     std::mutex startRecordListMutex_;
     std::vector<PermissionRecord> startRecordList_;
@@ -228,6 +233,12 @@ private:
     int32_t recordAgingTime_ = 0;
     std::string globalDialogBundleName_;
     std::string globalDialogAbilityName_;
+
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventRunner> deleteEventRunner_;
+    std::shared_ptr<AccessEventHandler> deleteEventHandler_;
+#endif
+    std::atomic_int32_t deleteTaskNum_ = 0;
 };
 } // namespace AccessToken
 } // namespace Security

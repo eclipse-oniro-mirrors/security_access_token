@@ -16,6 +16,7 @@
 #include "data_validator.h"
 
 #include "access_token.h"
+#include "accesstoken_log.h"
 #include "permission_used_request.h"
 #include "permission_used_type.h"
 #include "privacy_param.h"
@@ -23,6 +24,10 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DataValidator"};
+} // namespace
+
 bool DataValidator::IsBundleNameValid(const std::string& bundleName)
 {
     return !bundleName.empty() && (bundleName.length() <= MAX_LENGTH);
@@ -40,7 +45,11 @@ bool DataValidator::IsDescValid(const std::string& desc)
 
 bool DataValidator::IsPermissionNameValid(const std::string& permissionName)
 {
-    return !permissionName.empty() && (permissionName.length() <= MAX_LENGTH);
+    if (permissionName.empty() || (permissionName.length() > MAX_LENGTH)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid perm length(%{public}d).", permissionName.length());
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsUserIdValid(const int userId)
@@ -81,7 +90,11 @@ bool DataValidator::IsProcessNameValid(const std::string& processName)
 
 bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
 {
-    return !deviceId.empty() && (deviceId.length() <= MAX_LENGTH);
+    if (deviceId.empty() || (deviceId.length() > MAX_LENGTH)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid deviceId length(%{public}d).", deviceId.length());
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsDcapValid(const std::string& dcap)
@@ -104,7 +117,11 @@ bool DataValidator::IsPermissionFlagValid(uint32_t flag)
 
 bool DataValidator::IsTokenIDValid(AccessTokenID id)
 {
-    return id != 0;
+    if (id == 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid token.");
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsDlpTypeValid(int dlpType)
@@ -124,19 +141,42 @@ bool DataValidator::IsPermissionUsedFlagValid(uint32_t flag)
 
 bool DataValidator::IsPermissionUsedTypeValid(uint32_t type)
 {
-    return ((type == NORMAL_TYPE) || (type == PICKER_TYPE) || (type == SECURITY_COMPONENT_TYPE));
+    if ((type != NORMAL_TYPE) && (type != PICKER_TYPE) && (type != SECURITY_COMPONENT_TYPE)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsPolicyTypeValid(uint32_t type)
 {
     PolicyType policyType = static_cast<PolicyType>(type);
-    return ((policyType == EDM) || (policyType == PRIVACY) || (policyType == TEMPORARY));
+    if ((policyType != EDM) && (policyType != PRIVACY) && (policyType != TEMPORARY)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
 }
 
 bool DataValidator::IsCallerTypeValid(uint32_t type)
 {
     CallerType callerType = static_cast<CallerType>(type);
-    return ((callerType == MICROPHONE) || (callerType == CAMERA));
+    if ((callerType != MICROPHONE) && (callerType != CAMERA)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid type(%{public}d).", type);
+        return false;
+    }
+    return true;
+}
+
+bool DataValidator::IsHapCaller(AccessTokenID id)
+{
+    AccessTokenIDInner *idInner = reinterpret_cast<AccessTokenIDInner *>(&id);
+    ATokenTypeEnum type = static_cast<ATokenTypeEnum>(idInner->type);
+    if (type != TOKEN_HAP) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not hap(%{public}d).", id);
+        return false;
+    }
+    return true;
 }
 } // namespace AccessToken
 } // namespace Security

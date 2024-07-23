@@ -62,7 +62,6 @@ if (is_standard_system) {
     deps = [
       "${access_token_path}/frameworks/common:accesstoken_common_cxx",
       "${access_token_path}/frameworks/privacy:privacy_communication_adapter_cxx",
-      "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     ]
 
     configs = [

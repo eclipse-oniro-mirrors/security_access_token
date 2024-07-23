@@ -46,7 +46,10 @@ ohos_shared_library("accesstoken_window_manager") {
     ]
 
     cflags_cc = [ "-DHILOG_ENABLE" ]
-    configs = [ "${access_token_path}/config:coverage_flags" ]
+    configs = [
+      "${access_token_path}/config:access_token_compile_flags",
+      "${access_token_path}/config:coverage_flags",
+    ]
 
     external_deps = [
       "c_utils:utils",

@@ -47,7 +47,7 @@ public:
     int32_t Remove(DataType type, const GenericValues& conditions);
     int32_t FindByConditions(DataType type, const std::set<int32_t>& opCodeList, const GenericValues& andConditions,
         std::vector<GenericValues>& results, int32_t databaseQueryCount);
-    void Count(DataType type, GenericValues& result);
+    int32_t Count(DataType type);
     int32_t DeleteExpireRecords(DataType type, const GenericValues& andConditions);
     int32_t DeleteExcessiveRecords(DataType type, uint32_t excessiveSize);
     int32_t Update(DataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
@@ -83,10 +83,10 @@ private:
     std::string CreateQueryPrepareSqlCmd(DataType type, const std::vector<std::string>& conditionColumns) const;
 
 private:
-    inline static const std::string PERMISSION_RECORD_TABLE = "permission_record_table";
-    inline static const std::string PERMISSION_USED_TYPE_TABLE = "permission_used_type_table";
-    inline static const std::string DATABASE_NAME = "permission_used_record.db";
-    inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
+    inline static constexpr const char* PERMISSION_RECORD_TABLE = "permission_record_table";
+    inline static constexpr const char* PERMISSION_USED_TYPE_TABLE = "permission_used_type_table";
+    inline static constexpr const char* DATABASE_NAME = "permission_used_record.db";
+    inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
     static const int32_t DATABASE_VERSION = 3;
 };
 } // namespace AccessToken

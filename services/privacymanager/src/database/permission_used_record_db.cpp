@@ -29,8 +29,11 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
     LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionUsedRecordDb"
 };
-static const std::string FIELD_COUNT_NUMBER = "count";
-static const std::string INTEGER_STR = " integer not null,";
+constexpr const char* FIELD_COUNT_NUMBER = "count";
+constexpr const char* INTEGER_STR = " integer not null,";
+constexpr const char* CREATE_TABLE_STR = "create table if not exists ";
+constexpr const char* WHERE_1_STR = " where 1 = 1";
+
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -199,15 +202,17 @@ int32_t PermissionUsedRecordDb::FindByConditions(DataType type, const std::set<i
     return SUCCESS;
 }
 
-void PermissionUsedRecordDb::Count(DataType type, GenericValues& result)
+int32_t PermissionUsedRecordDb::Count(DataType type)
 {
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    GenericValues countValue;
     std::string countSql = CreateCountPrepareSqlCmd(type);
     auto countStatement = Prepare(countSql);
     if (countStatement.Step() == Statement::State::ROW) {
         int32_t column = 0;
-        result.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, true));
+        countValue.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, false));
     }
+    return countValue.GetInt(FIELD_COUNT_NUMBER);
 }
 
 int32_t PermissionUsedRecordDb::DeleteExpireRecords(DataType type,
@@ -323,7 +328,7 @@ std::string PermissionUsedRecordDb::CreateQueryPrepareSqlCmd(DataType type,
     if (it == dataTypeToSqlTable_.end()) {
         return std::string();
     }
-    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+    std::string sql = "select * from " + it->second.tableName_ + WHERE_1_STR;
 
     for (const auto& andColumn : conditionColumns) {
         sql.append(" and ");
@@ -340,7 +345,7 @@ std::string PermissionUsedRecordDb::CreateDeletePrepareSqlCmd(
     if (it == dataTypeToSqlTable_.end()) {
         return std::string();
     }
-    std::string sql = "delete from " + it->second.tableName_ + " where 1 = 1";
+    std::string sql = "delete from " + it->second.tableName_ + WHERE_1_STR;
     for (const auto& name : columnNames) {
         sql.append(" and ");
         sql.append(name + "=:" + name);
@@ -371,7 +376,7 @@ std::string PermissionUsedRecordDb::CreateUpdatePrepareSqlCmd(DataType type,
     }
 
     if (!conditionColumns.empty()) {
-        sql.append(" where 1 = 1");
+        sql.append(WHERE_1_STR);
         for (const auto& columnName : conditionColumns) {
             sql.append(" and ");
             sql.append(columnName + "=:" + columnName);
@@ -388,7 +393,7 @@ std::string PermissionUsedRecordDb::CreateSelectByConditionPrepareSqlCmd(const i
         return std::string();
     }
 
-    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+    std::string sql = "select * from " + it->second.tableName_ + WHERE_1_STR;
 
     for (const auto& andColName : andColumns) {
         if (andColName == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
@@ -447,7 +452,7 @@ std::string PermissionUsedRecordDb::CreateDeleteExpireRecordsPrepareSqlCmd(DataT
     sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
     sql.append(" in (select ");
     sql.append(PrivacyFiledConst::FIELD_TIMESTAMP);
-    sql.append(" from " + it->second.tableName_ + " where 1 = 1");
+    sql.append(" from " + it->second.tableName_ + WHERE_1_STR);
     for (const auto& name : andColumns) {
         if (name == PrivacyFiledConst::FIELD_TIMESTAMP_BEGIN) {
             sql.append(" and ");
@@ -490,26 +495,26 @@ int32_t PermissionUsedRecordDb::CreatePermissionRecordTable() const
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
     }
-    std::string sql = "create table if not exists ";
+    std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_OP_CODE)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_STATUS)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_TIMESTAMP)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_ACCESS_DURATION)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_ACCESS_COUNT)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_REJECT_COUNT)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_LOCKSCREEN_STATUS)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -528,14 +533,14 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedTypeTable() const
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
     }
-    std::string sql = "create table if not exists ";
+    std::string sql = CREATE_TABLE_STR;
     sql.append(it->second.tableName_ + " (")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_PERMISSION_CODE)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append(PrivacyFiledConst::FIELD_USED_TYPE)
-        .append(" integer not null,")
+        .append(INTEGER_STR)
         .append("primary key(")
         .append(PrivacyFiledConst::FIELD_TOKEN_ID)
         .append(",")
@@ -546,7 +551,6 @@ int32_t PermissionUsedRecordDb::CreatePermissionUsedTypeTable() const
 
 int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
@@ -572,7 +576,6 @@ int32_t PermissionUsedRecordDb::InsertLockScreenStatusColumn() const
 
 int32_t PermissionUsedRecordDb::InsertPermissionUsedTypeColumn() const
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     auto it = dataTypeToSqlTable_.find(DataType::PERMISSION_RECORD);
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;

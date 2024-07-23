@@ -16,16 +16,12 @@
 #include "permission_record_repository.h"
 
 #include <mutex>
-#include "accesstoken_log.h"
 #include "permission_used_record_db.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
-    LOG_CORE, SECURITY_DOMAIN_PRIVACY, "PermissionRecordRepository"
-};
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -53,12 +49,7 @@ bool PermissionRecordRepository::Add(const PermissionUsedRecordDb::DataType type
     const std::vector<GenericValues>& recordValues)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().Add(type, recordValues);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table add fail.",
-            type);
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 
 bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCodeList,
@@ -66,39 +57,26 @@ bool PermissionRecordRepository::FindRecordValues(const std::set<int32_t>& opCod
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().FindByConditions(PermissionUsedRecordDb::PERMISSION_RECORD,
         opCodeList, andConditionValues, recordValues, databaseQueryCount);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD table find fail");
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 
 bool PermissionRecordRepository::Remove(const PermissionUsedRecordDb::DataType type,
     const GenericValues& conditionValues)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().Remove(type, conditionValues);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table remove fail.",
-            type);
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 
-void PermissionRecordRepository::CountRecordValues(GenericValues& resultValues)
+int32_t PermissionRecordRepository::CountRecordValues()
 {
-    PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD, resultValues);
+    return PermissionUsedRecordDb::GetInstance().Count(PermissionUsedRecordDb::PERMISSION_RECORD);
 }
 
 bool PermissionRecordRepository::DeleteExpireRecordsValues(const GenericValues& andConditions)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExpireRecords(PermissionUsedRecordDb::PERMISSION_RECORD,
         andConditions);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 
 bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excessiveSize)
@@ -106,7 +84,6 @@ bool PermissionRecordRepository::DeleteExcessiveSizeRecordValues(uint32_t excess
     int32_t res = PermissionUsedRecordDb::GetInstance().DeleteExcessiveRecords(
         PermissionUsedRecordDb::PERMISSION_RECORD, excessiveSize);
     if (res != PermissionUsedRecordDb::SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "PERMISSION_RECORD delete fail");
             return false;
     }
     return true;
@@ -116,24 +93,14 @@ bool PermissionRecordRepository::Update(const PermissionUsedRecordDb::DataType t
     const GenericValues& modifyValue, const GenericValues& conditionValue)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().Update(type, modifyValue, conditionValue);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table update fail.",
-            type);
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 
 bool PermissionRecordRepository::Query(const PermissionUsedRecordDb::DataType type,
     const GenericValues& conditionValue, std::vector<GenericValues>& results)
 {
     int32_t res = PermissionUsedRecordDb::GetInstance().Query(type, conditionValue, results);
-    if (res != PermissionUsedRecordDb::SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}d(0-PERMISSION_RECORD 1-PERMISSION_USED_TYPE) table query fail.",
-            type);
-        return false;
-    }
-    return true;
+    return res == PermissionUsedRecordDb::SUCCESS;
 }
 } // namespace AccessToken
 } // namespace Security

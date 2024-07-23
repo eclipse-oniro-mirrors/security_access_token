@@ -55,6 +55,7 @@ public:
     static bool IsPermissionUsedTypeValid(uint32_t type);
     static bool IsPolicyTypeValid(uint32_t type);
     static bool IsCallerTypeValid(uint32_t type);
+    static bool IsHapCaller(AccessTokenID id);
 
 private:
     const static int MAX_LENGTH = 256;

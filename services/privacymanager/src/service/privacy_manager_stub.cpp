@@ -39,8 +39,8 @@ static const uint32_t PERM_LIST_SIZE_MAX = 1024;
 static constexpr uint32_t TIMEOUT = 6; // 6s
 #endif // HICOLLIE_ENABLE
 #endif // SECURITY_COMPONENT_ENHANCE_ENABLE
-static const std::string PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
-static const std::string SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
+constexpr const char* PERMISSION_USED_STATS = "ohos.permission.PERMISSION_USED_STATS";
+constexpr const char* SET_FOREGROUND_HAP_REMINDER = "ohos.permission.SET_FOREGROUND_HAP_REMINDER";
 }
 
 PrivacyManagerStub::PrivacyManagerStub()
@@ -126,8 +126,7 @@ void PrivacyManagerStub::AddPermissionUsedRecordInner(MessageParcel& data, Messa
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->AddPermissionUsedRecord(*infoParcel);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->AddPermissionUsedRecord(*infoParcel));
 }
 
 void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -143,8 +142,7 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
     }
     AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int32_t result = this->StartUsingPermission(tokenId, permissionName);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->StartUsingPermission(tokenId, permissionName));
 }
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -161,8 +159,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->StartUsingPermission(tokenId, permissionName, callback);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->StartUsingPermission(tokenId, permissionName, callback));
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -178,8 +175,7 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
     }
     AccessTokenID tokenId = data.ReadUint32();
     std::string permissionName = data.ReadString();
-    int32_t result = this->StopUsingPermission(tokenId, permissionName);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->StopUsingPermission(tokenId, permissionName));
 }
 
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
@@ -191,8 +187,7 @@ void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, M
 
     AccessTokenID tokenId = data.ReadUint32();
     std::string deviceID = data.ReadString();
-    int32_t result = this->RemovePermissionUsedRecords(tokenId, deviceID);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->RemovePermissionUsedRecords(tokenId, deviceID));
 }
 
 void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)
@@ -215,6 +210,10 @@ void PrivacyManagerStub::GetPermissionUsedRecordsInner(MessageParcel& data, Mess
     }
     int32_t result = this->GetPermissionUsedRecords(*requestParcel, responseParcel);
     reply.WriteInt32(result);
+    if (result != RET_SUCCESS) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 faild");
+        return;
+    }
     reply.WriteParcelable(&responseParcel);
 }
 
@@ -236,8 +235,7 @@ void PrivacyManagerStub::GetPermissionUsedRecordsAsyncInner(MessageParcel& data,
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->GetPermissionUsedRecords(*requestParcel, callback);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->GetPermissionUsedRecords(*requestParcel, callback));
 }
 
 void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -268,8 +266,7 @@ void PrivacyManagerStub::RegisterPermActiveStatusCallbackInner(MessageParcel& da
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    int32_t result = this->RegisterPermActiveStatusCallback(permList, callback);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->RegisterPermActiveStatusCallback(permList, callback));
 }
 
 void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -289,9 +286,7 @@ void PrivacyManagerStub::UnRegisterPermActiveStatusCallbackInner(MessageParcel& 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-
-    int32_t result = this->UnRegisterPermActiveStatusCallback(callback);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->UnRegisterPermActiveStatusCallback(callback));
 }
 
 void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -306,6 +301,7 @@ void PrivacyManagerStub::IsAllowedUsingPermissionInner(MessageParcel& data, Mess
     bool result = this->IsAllowedUsingPermission(tokenId, permissionName);
     if (!reply.WriteBool(result)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteBool(%{public}s)", permissionName.c_str());
+        reply.WriteBool(false);
         return;
     }
 }
@@ -330,8 +326,7 @@ void PrivacyManagerStub::RegisterSecCompEnhanceInner(MessageParcel& data, Messag
 
         return;
     }
-    int32_t result = this->RegisterSecCompEnhance(*requestParcel);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->RegisterSecCompEnhance(*requestParcel));
 
 #ifdef HICOLLIE_ENABLE
     HiviewDFX::XCollie::GetInstance().CancelTimer(timerId);
@@ -346,11 +341,8 @@ void PrivacyManagerStub::UpdateSecCompEnhanceInner(MessageParcel& data, MessageP
     }
 
     int32_t pid = data.ReadInt32();
-    
     uint32_t seqNum = data.ReadUint32();
-
-    int32_t result = this->UpdateSecCompEnhance(pid, seqNum);
-    reply.WriteInt32(result);
+    reply.WriteInt32(this->UpdateSecCompEnhance(pid, seqNum));
 }
 
 void PrivacyManagerStub::GetSecCompEnhanceInner(MessageParcel& data, MessageParcel& reply)
@@ -379,7 +371,6 @@ void PrivacyManagerStub::GetSpecialSecCompEnhanceInner(MessageParcel& data, Mess
     }
 
     std::string bundleName = data.ReadString();
-
     std::vector<SecCompEnhanceDataParcel> parcelList;
     int32_t result = this->GetSpecialSecCompEnhance(bundleName, parcelList);
     reply.WriteInt32(result);
