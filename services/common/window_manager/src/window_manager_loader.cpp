@@ -41,10 +41,8 @@ int32_t WindowManagerLoader::RegisterFloatWindowListener(const WindowChangeCallb
 
 int32_t WindowManagerLoader::UnregisterFloatWindowListener(const WindowChangeCallback& callback)
 {
-    int32_t ret = PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
+    return PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
         WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_FLOAT, g_floatWindowCallback);
-    g_floatWindowCallback = nullptr;
-    return ret;
 }
 
 int32_t WindowManagerLoader::RegisterPipWindowListener(const WindowChangeCallback& callback)
@@ -67,10 +65,8 @@ int32_t WindowManagerLoader::UnregisterPipWindowListener(const WindowChangeCallb
     if (!Rosen::SceneBoardJudgement::IsSceneBoardEnabled()) {
         return 0;
     }
-    int32_t ret = PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
+    return PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
         WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW, g_pipWindowCallback);
-    g_pipWindowCallback = nullptr;
-    return ret;
 }
 
 void WindowManagerLoader::AddDeathCallback(void (*callback)())
