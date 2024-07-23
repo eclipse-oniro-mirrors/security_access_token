@@ -422,6 +422,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.PROTECT_SCREEN_LOCK_DATA",            false},
     {"ohos.permission.MANAGE_SETTINGS",                     false},
     {"ohos.permission.ACCESS_DEVICE_COLLABORATION_PRIVATE_ABILITY",                     false},
+    {"ohos.permission.ACCESS_DEVICE_COLLABORATION_SERVICE", false},
     {"ohos.permission.ACCESS_RINGTONE_RESOURCE",            false},
     {"ohos.permission.ACCESS_FILE_CONTENT_SHARE",           false},
     {"ohos.permission.ACCESS_SEARCH_SERVICE",               false},
