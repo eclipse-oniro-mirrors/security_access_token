@@ -2159,7 +2159,7 @@ HWTEST_F(PrivacyKitTest, GetPermissionUsedTypeInfos001, TestSize.Level1)
     std::vector<PermissionUsedTypeInfo> results;
     ASSERT_EQ(RET_SUCCESS, PrivacyKit::GetPermissionUsedTypeInfos(0, permissionName, results));
     // results size may more than 3
-    for (PermissionUsedTypeInfo& result : results) {
+    for (const PermissionUsedTypeInfo& result : results) {
         if (result.tokenId == g_tokenIdA) {
             ASSERT_EQ(PermissionUsedType::NORMAL_TYPE, result.type); // g_tokenIdA only normal type
         } else if (result.tokenId == g_tokenIdB) {

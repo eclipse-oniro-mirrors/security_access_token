@@ -44,6 +44,8 @@ namespace AccessToken {
 /**
  * @brief Declares security component enhance data struct only for security component service
  */
+
+static constexpr int32_t AES_KEY_STORAGE_LEN = 64;
 struct SecCompEnhanceData {
     /**
      * callback remote object for checking security component valid.
@@ -72,7 +74,7 @@ struct SecCompEnhanceData {
     /**
      * key to encrypt ipc message.
      */
-    std::string key;
+    uint8_t key[AES_KEY_STORAGE_LEN];
 };
 
 } // namespace AccessToken

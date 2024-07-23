@@ -14,7 +14,11 @@
  */
 
 #include "sec_comp_enhance_data_parcel.h"
+
+#include <unistd.h>
+
 #include "parcel_utils.h"
+#include "securec.h"
 
 namespace OHOS {
 namespace Security {
@@ -26,7 +30,7 @@ bool SecCompEnhanceDataParcel::Marshalling(Parcel& out) const
     RETURN_IF_FALSE(out.WriteUint64(this->enhanceData.challenge));
     RETURN_IF_FALSE(out.WriteUint32(this->enhanceData.sessionId));
     RETURN_IF_FALSE(out.WriteUint32(this->enhanceData.seqNum));
-    RETURN_IF_FALSE(out.WriteString(this->enhanceData.key));
+    RETURN_IF_FALSE(out.WriteBuffer(this->enhanceData.key, AES_KEY_STORAGE_LEN));
     RETURN_IF_FALSE((static_cast<MessageParcel*>(&out))->WriteRemoteObject(this->enhanceData.callback));
     return true;
 }
@@ -43,7 +47,15 @@ SecCompEnhanceDataParcel* SecCompEnhanceDataParcel::Unmarshalling(Parcel& in)
     RELEASE_IF_FALSE(in.ReadUint64(enhanceDataParcel->enhanceData.challenge), enhanceDataParcel);
     RELEASE_IF_FALSE(in.ReadUint32(enhanceDataParcel->enhanceData.sessionId), enhanceDataParcel);
     RELEASE_IF_FALSE(in.ReadUint32(enhanceDataParcel->enhanceData.seqNum), enhanceDataParcel);
-    RELEASE_IF_FALSE(in.ReadString(enhanceDataParcel->enhanceData.key), enhanceDataParcel);
+    const uint8_t* ptr = in.ReadBuffer(AES_KEY_STORAGE_LEN);
+    if (ptr == nullptr) {
+        delete enhanceDataParcel;
+        return nullptr;
+    }
+    if (memcpy_s(enhanceDataParcel->enhanceData.key, AES_KEY_STORAGE_LEN, ptr, AES_KEY_STORAGE_LEN) != EOK) {
+        delete enhanceDataParcel;
+        return nullptr;
+    }
 
     enhanceDataParcel->enhanceData.callback = (static_cast<MessageParcel*>(&in))->ReadRemoteObject();
     if (enhanceDataParcel->enhanceData.callback == nullptr) {
