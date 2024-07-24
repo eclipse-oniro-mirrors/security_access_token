@@ -145,23 +145,6 @@ bool ConfigPolicLoader::GetConfigValueFromFile(const ServiceType& type, const st
         return false;
     }
 }
-
-bool ConfigPolicLoader::IsConfigValueValid(const ServiceType& type, const AccessTokenConfigValue& config)
-{
-    if (type == ServiceType::ACCESSTOKEN_SERVICE) {
-        return ((!config.atConfig.grantAbilityName.empty()) &&
-                (!config.atConfig.grantBundleName.empty()) &&
-                (!config.atConfig.permStateAbilityName.empty()) &&
-                (!config.atConfig.globalSwitchAbilityName.empty()));
-    } else if (type == ServiceType::PRIVACY_SERVICE) {
-        return ((config.pConfig.sizeMaxImum != 0) &&
-                (config.pConfig.agingTime != 0) &&
-                (!config.pConfig.globalDialogBundleName.empty()) &&
-                (!config.pConfig.globalDialogAbilityName.empty()));
-    }
-
-    return (config.tsConfig.sendRequestRepeatTimes != 0);
-}
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
 
 bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfigValue& config)
@@ -182,11 +165,9 @@ bool ConfigPolicLoader::GetConfigValue(const ServiceType& type, AccessTokenConfi
         }
 
         if (GetConfigValueFromFile(type, fileContent, config)) {
-            if (IsConfigValueValid(type, config)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "Get valid config value!");
-                successFlag = true;
-                break; // once get the config value, break the loop
-            }
+            ACCESSTOKEN_LOG_INFO(LABEL, "Get valid config value!");
+            successFlag = true;
+            break; // once get the config value, break the loop
         }
     }
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE

@@ -66,7 +66,6 @@ class ConfigPolicLoader final: public ConfigPolicyLoaderInterface {
 private:
 #ifdef CUSTOMIZATION_CONFIG_POLICY_ENABLE
     void GetConfigFilePathList(std::vector<std::string>& pathList);
-    bool IsConfigValueValid(const ServiceType& type, const AccessTokenConfigValue& config);
     bool GetConfigValueFromFile(const ServiceType& type, const std::string& fileContent,
         AccessTokenConfigValue& config);
 #endif // CUSTOMIZATION_CONFIG_POLICY_ENABLE
