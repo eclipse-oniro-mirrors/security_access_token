@@ -19,6 +19,9 @@
 #include <string>
 #include <set>
 #include <vector>
+#ifdef EVENTHANDLER_ENABLE
+#include "access_event_handler.h"
+#endif
 #include "access_token.h"
 #include "nocopyable.h"
 #include "permission_record.h"
@@ -61,6 +64,9 @@ private:
     bool RecordMergeCheck(const PermissionRecord& record1, const PermissionRecord& record2);
     void DeepCopyFromHead(const std::shared_ptr<PermissionUsedRecordNode>& oriHeadNode,
         std::shared_ptr<PermissionUsedRecordNode>& copyHeadNode, int32_t copyCount);
+    int32_t GetCurBufferTaskNum();
+    void AddBufferTaskNum();
+    void ReduceBufferTaskNum();
     bool hasInited_;
     OHOS::Utils::RWLock initLock_;
     int32_t readableSize_ = 0;
@@ -74,7 +80,11 @@ private:
     OHOS::Utils::RWLock cacheLock1_;
     // cacheLock2_ is used for locking persistPendingBufferQueue_ and persistIsRunning_
     OHOS::Utils::RWLock cacheLock2_;
-    OHOS::ThreadPool readRecordBufferTaskWorker_;
+#ifdef EVENTHANDLER_ENABLE
+    std::shared_ptr<AppExecFwk::EventRunner> bufferEventRunner_;
+    std::shared_ptr<AccessEventHandler> bufferEventHandler_;
+#endif
+    std::atomic_int32_t bufferTaskNum_ = 0;
 };
 } // namespace AccessToken
 } // namespace Security

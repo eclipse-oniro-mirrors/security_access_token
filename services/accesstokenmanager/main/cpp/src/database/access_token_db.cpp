@@ -129,7 +129,7 @@ AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
 int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& values)
 {
     size_t addSize = values.size();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add type=%{public}d=, size=%{public}zu=.", type, addSize);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add type=%{public}d, size=%{public}zu.", type, addSize);
     if (addSize == 0) {
         return SUCCESS;
     }

@@ -86,13 +86,14 @@ private:
 
     std::map<DataType, SqliteTable> dataTypeToSqlTable_;
     OHOS::Utils::RWLock rwLock_;
-    inline static const std::string HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
-    inline static const std::string NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
-    inline static const std::string PERMISSION_DEF_TABLE = "permission_definition_table";
-    inline static const std::string PERMISSION_STATE_TABLE = "permission_state_table";
-    inline static const std::string PERMISSION_REQUEST_TOGGLE_STATUS_TABLE = "permission_request_toggle_status_table";
-    inline static const std::string DATABASE_NAME = "access_token.db";
-    inline static const std::string DATABASE_PATH = "/data/service/el1/public/access_token/";
+    inline static constexpr const char* HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
+    inline static constexpr const char* NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
+    inline static constexpr const char* PERMISSION_DEF_TABLE = "permission_definition_table";
+    inline static constexpr const char* PERMISSION_STATE_TABLE = "permission_state_table";
+    inline static constexpr const char*
+        PERMISSION_REQUEST_TOGGLE_STATUS_TABLE = "permission_request_toggle_status_table";
+    inline static constexpr const char* DATABASE_NAME = "access_token.db";
+    inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
     static const int DATABASE_VERSION = 3;
 };
 } // namespace AccessToken

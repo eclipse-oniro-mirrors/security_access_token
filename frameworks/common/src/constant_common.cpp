@@ -21,8 +21,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-static const std::string REPLACE_TARGET = "****";
-static const std::string REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
+constexpr const char* REPLACE_TARGET = "****";
+constexpr const char* REPLACE_TARGET_LESS_THAN_MINLEN = "*******";
 } // namespace
 std::string ConstantCommon::EncryptDevId(std::string deviceId)
 {

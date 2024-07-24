@@ -1360,9 +1360,7 @@ HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level1
     AddRecord(num, values);
 
     EXPECT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().DeletePermissionRecord(1));
-    GenericValues countValue;
-    PermissionRecordRepository::GetInstance().CountRecordValues(countValue);
-    EXPECT_NE(num, countValue.GetInt64("count"));
+    EXPECT_NE(num, PermissionRecordRepository::GetInstance().CountRecordValues());
     PermissionUsedRecordDb::DataType type = PermissionUsedRecordDb::PERMISSION_RECORD;
     for (const auto& value : values) {
         EXPECT_EQ(0, PermissionUsedRecordDb::GetInstance().Remove(type, value));

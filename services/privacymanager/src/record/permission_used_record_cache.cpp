@@ -34,14 +34,21 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {
 std::recursive_mutex g_instanceMutex;
 }
 PermissionUsedRecordCache::PermissionUsedRecordCache()
-    : hasInited_(false), readRecordBufferTaskWorker_("PermissionUsedRecordCache") {}
+    : hasInited_(false)
+{
+#ifdef EVENTHANDLER_ENABLE
+    bufferEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (bufferEventRunner_ != nullptr) {
+        bufferEventHandler_ = std::make_shared<AccessEventHandler>(bufferEventRunner_);
+    }
+#endif
+}
 
 PermissionUsedRecordCache::~PermissionUsedRecordCache()
 {
     if (!hasInited_) {
         return;
     }
-    this->readRecordBufferTaskWorker_.Stop();
     this->hasInited_ = false;
 }
 
@@ -58,7 +65,6 @@ PermissionUsedRecordCache& PermissionUsedRecordCache::GetInstance()
     if (!instance->hasInited_) {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(instance->initLock_);
         if (!instance->hasInited_) {
-            instance->readRecordBufferTaskWorker_.Start(1);
             instance->hasInited_ = true;
         }
     }
@@ -208,15 +214,43 @@ void PermissionUsedRecordCache::AddToPersistQueue(
 
 void PermissionUsedRecordCache::ExecuteReadRecordBufferTask()
 {
-    if (readRecordBufferTaskWorker_.GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Already has read record buffer task!");
+#ifdef EVENTHANDLER_ENABLE
+    if (GetCurBufferTaskNum() > 1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Has delete task!");
         return;
     }
-    auto readRecordBufferTask = [this]() {
-        ACCESSTOKEN_LOG_INFO(LABEL, "ReadRecordBuffer task called");
+    AddBufferTaskNum();
+    if (bufferEventHandler_ == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Fail to get EventHandler.");
+        ReduceBufferTaskNum();
+        return;
+    }
+
+    std::function<void()> delayed = ([this]() {
         PersistPendingRecords();
-    };
-    readRecordBufferTaskWorker_.AddTask(readRecordBufferTask);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Record buffer end.");
+        // Sleep for one minute to avoid frequent refresh of the file.
+        std::this_thread::sleep_for(std::chrono::minutes(1));
+        ReduceBufferTaskNum();
+    });
+
+    bufferEventHandler_->ProxyPostTask(delayed);
+#endif
+}
+
+int32_t PermissionUsedRecordCache::GetCurBufferTaskNum()
+{
+    return bufferTaskNum_.load();
+}
+
+void PermissionUsedRecordCache::AddBufferTaskNum()
+{
+    bufferTaskNum_++;
+}
+
+void PermissionUsedRecordCache::ReduceBufferTaskNum()
+{
+    bufferTaskNum_--;
 }
 
 int32_t PermissionUsedRecordCache::PersistPendingRecords()

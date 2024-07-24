@@ -32,15 +32,13 @@ std::recursive_mutex g_instanceMutex;
 }
 void PrivacyAppUsingSecCompStateObserver::OnProcessDied(const ProcessData &processData)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "OnProcessDied die pid %{public}d", processData.pid);
-
-    int pid = processData.pid;
-    PrivacySecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(pid);
+    ACCESSTOKEN_LOG_INFO(LABEL, "OnProcessDied pid %{public}d", processData.pid);
+    PrivacySecCompEnhanceAgent::GetInstance().RemoveSecCompEnhance(processData.pid);
 }
 
 void PrivacySecCompAppManagerDeathCallback::NotifyAppManagerDeath()
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "PrivacySecComp AppManagerDeath called");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AppManagerDeath called");
 
     PrivacySecCompEnhanceAgent::GetInstance().OnAppMgrRemoteDiedHandle();
 }
