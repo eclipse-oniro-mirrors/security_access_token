@@ -86,6 +86,7 @@ ohos_unittest("libtoken_sync_service_standard_test") {
     "dsoftbus:softbus_client",
     "hilog:libhilog",
     "ipc:ipc_core",
+    "json:nlohmann_json_static",
     "safwk:system_ability_fwk",
     "zlib:libz",
   ]
