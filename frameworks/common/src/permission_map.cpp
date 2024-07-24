@@ -74,6 +74,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.GET_BLUETOOTH_LOCAL_MAC", false},
     {"ohos.permission.GET_BLUETOOTH_PEERS_MAC", false},
     {"ohos.permission.INTERNET",                false},
+    {"ohos.permission.GET_DOMAIN_VERIFY_INFO",  false},
     {"ohos.permission.MODIFY_AUDIO_SETTINGS",   false},
     {"ohos.permission.ACCESS_NOTIFICATION_POLICY", false},
     {"ohos.permission.GET_TELEPHONY_STATE",     false},

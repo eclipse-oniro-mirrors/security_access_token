@@ -1211,6 +1211,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.GET_DOMAIN_VERIFY_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "normal",
+            "availableType": "NORMAL",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.DISTRIBUTED_SOFTBUS_CENTER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
