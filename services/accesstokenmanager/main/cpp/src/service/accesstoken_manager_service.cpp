@@ -260,30 +260,23 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
 int AccessTokenManagerService::GetPermissionFlag(
     AccessTokenID tokenID, const std::string& permissionName, uint32_t& flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission: %{public}s",
-        tokenID, permissionName.c_str());
     return PermissionManager::GetInstance().GetPermissionFlag(tokenID, permissionName, flag);
 }
 
 int32_t AccessTokenManagerService::SetPermissionRequestToggleStatus(
     const std::string& permissionName, uint32_t status, int32_t userID = 0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Permission=%{public}s, status=%{public}d, userID=%{public}d",
-        permissionName.c_str(), status, userID);
     return PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int32_t AccessTokenManagerService::GetPermissionRequestToggleStatus(
     const std::string& permissionName, uint32_t& status, int32_t userID = 0)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Permission=%{public}s, userID=%{public}d", permissionName.c_str(), userID);
     return PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, userID);
 }
 
 int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission: %{public}s, flag: %{public}d",
-        tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permissionName, flag);
     DumpTokenIfNeeded();
     return ret;
@@ -291,8 +284,6 @@ int AccessTokenManagerService::GrantPermission(AccessTokenID tokenID, const std:
 
 int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission: %{public}s, flag: %{public}d",
-        tokenID, permissionName.c_str(), flag);
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     DumpTokenIfNeeded();
     return ret;
@@ -310,13 +301,11 @@ int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tok
 int32_t AccessTokenManagerService::RegisterPermStateChangeCallback(
     const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     return PermissionManager::GetInstance().AddPermStateChangeCallback(scope.scope, callback);
 }
 
 int32_t AccessTokenManagerService::UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
     return PermissionManager::GetInstance().RemovePermStateChangeCallback(callback);
 }
 

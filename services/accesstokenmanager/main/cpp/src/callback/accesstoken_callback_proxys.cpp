@@ -49,12 +49,12 @@ void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChange
     PermissionStateChangeInfoParcel resultParcel;
     resultParcel.changeInfo = result;
     if (!data.WriteParcelable(&resultParcel)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to WriteParcelable(result)");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteParcelable failed.");
         return;
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
+    MessageOption option(MessageOption::TF_ASYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");

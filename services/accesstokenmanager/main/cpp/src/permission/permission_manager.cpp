@@ -789,6 +789,7 @@ int32_t PermissionManager::AddPermStateChangeCallback(
 
 int32_t PermissionManager::RemovePermStateChangeCallback(const sptr<IRemoteObject>& callback)
 {
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     return CallbackManager::GetInstance().RemoveCallback(callback);
 }
 

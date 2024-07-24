@@ -210,20 +210,11 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::string taskName = "AtmCallback";
-    ffrt::task_handle h = ffrt::submit_h(callbackStart, {}, {},
+    ffrt::submit_h(callbackStart, {}, {},
         ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
-    ffrt::wait({h});
 #else
     std::packaged_task<void()> callbackTask(callbackStart);
-    std::future<void> fut = callbackTask.get_future();
     std::make_unique<std::thread>(std::move(callbackTask))->detach();
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Waiting for the callback execution complete...");
-    std::future_status status = fut.wait_for(std::chrono::seconds(MAX_TIMEOUT_SEC));
-    if (status == std::future_status::timeout) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "CallbackTask callback execution timeout");
-        return;
-    }
 #endif
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }
