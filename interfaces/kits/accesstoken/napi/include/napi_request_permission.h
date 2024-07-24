@@ -38,8 +38,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     AccessTokenID tokenId = 0;
     bool needDynamicRequest = true;
     int32_t result = RET_SUCCESS;
-    int32_t resultCode = -1;
-    int32_t instanceId = 0;
+    int32_t instanceId = -1;
     std::vector<std::string> permissionList;
     std::vector<int32_t> permissionsState;
     napi_value requestResult = nullptr;
@@ -52,6 +51,7 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
+    bool resultReturnFlag = false;
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
@@ -130,7 +130,6 @@ private:
     static void GetPermissionsStatusExecute(napi_env env, void *data);
     static void GetPermissionsStatusComplete(napi_env env, napi_status status, void *data);
     static void StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext);
-    static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext);
 };
 } // namespace AccessToken
 } // namespace Security
