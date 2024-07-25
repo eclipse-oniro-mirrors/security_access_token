@@ -173,7 +173,7 @@ int AccessTokenManagerProxy::GetDefPermissions(AccessTokenID tokenID,
     }
     uint32_t defPermSize = reply.ReadUint32();
     if (defPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}zu) is oversize.", defPermSize);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}u) is oversize.", defPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < defPermSize; i++) {
@@ -214,7 +214,7 @@ int AccessTokenManagerProxy::GetReqPermissions(
     }
     uint32_t reqPermSize = reply.ReadUint32();
     if (reqPermSize > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}zu) is oversize.", reqPermSize);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size(%{public}u) is oversize.", reqPermSize);
         return ERR_OVERSIZE;
     }
     for (uint32_t i = 0; i < reqPermSize; i++) {
