@@ -1578,10 +1578,14 @@ void PermissionRecordManager::GetConfigValue()
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
         // set value from config
-        recordSizeMaximum_ = value.pConfig.sizeMaxImum;
-        recordAgingTime_ = value.pConfig.agingTime;
-        globalDialogBundleName_ = value.pConfig.globalDialogBundleName;
-        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName;
+        recordSizeMaximum_ = value.pConfig.sizeMaxImum == 0
+            ? DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM : value.pConfig.sizeMaxImum;
+        recordAgingTime_ = value.pConfig.agingTime == 0
+            ? DEFAULT_PERMISSION_USED_RECORD_AGING_TIME : value.pConfig.agingTime;
+        globalDialogBundleName_ = value.pConfig.globalDialogBundleName.empty()
+            ? DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME : value.pConfig.globalDialogBundleName;
+        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName.empty()
+            ? DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY : value.pConfig.globalDialogAbilityName;
     } else {
         SetDefaultConfigValue();
     }
