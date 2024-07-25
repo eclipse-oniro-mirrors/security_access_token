@@ -471,6 +471,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.INPUT_PANEL_STATUS_PUBLISHER",        false},
     {"ohos.permission.RECEIVE_FUSION_MESSAGES",             false},
     {"ohos.permission.PUBLISH_LOCATION_EVENT",              false},
+    {"ohos.permission.DUMP_AUDIO",        false},
     {"ohos.permission.ACTIVATE_DEVICE_PSI",                 false},
     {"ohos.permission.ACCESS_MULTICORE_HYBRID_ABILITY",     false},
 };
