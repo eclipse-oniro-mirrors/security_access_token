@@ -512,7 +512,7 @@ void NapiRequestPermissionOnSetting::RequestPermissionOnSettingComplete(napi_env
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestPermissionOnSettingComplete begin.");
     RequestOnSettingAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestOnSettingAsyncContextHandle*>(data);
-    if (asyncContextHandle == nullptr && asyncContextHandle->asyncContextPtr == nullptr) {
+    if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
         return;
     }
     std::unique_ptr<RequestOnSettingAsyncContextHandle> callbackPtr {asyncContextHandle};

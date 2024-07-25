@@ -489,7 +489,7 @@ void NapiRequestGlobalSwitch::RequestGlobalSwitchComplete(napi_env env, napi_sta
     ACCESSTOKEN_LOG_DEBUG(LABEL, "RequestGlobalSwitchComplete begin.");
     RequestGlobalSwitchAsyncContextHandle* asyncContextHandle =
         reinterpret_cast<RequestGlobalSwitchAsyncContextHandle*>(data);
-    if (asyncContextHandle == nullptr && asyncContextHandle->asyncContextPtr == nullptr) {
+    if (asyncContextHandle == nullptr || asyncContextHandle->asyncContextPtr == nullptr) {
         return;
     }
     std::unique_ptr<RequestGlobalSwitchAsyncContextHandle> callbackPtr {asyncContextHandle};
