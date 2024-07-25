@@ -91,7 +91,7 @@ bool DataValidator::IsProcessNameValid(const std::string& processName)
 bool DataValidator::IsDeviceIdValid(const std::string& deviceId)
 {
     if (deviceId.empty() || (deviceId.length() > MAX_LENGTH)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid deviceId length(%{public}d).", deviceId.length());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid deviceId length(%{public}d).", static_cast<int32_t>(deviceId.length()));
         return false;
     }
     return true;

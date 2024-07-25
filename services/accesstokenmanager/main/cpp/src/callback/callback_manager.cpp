@@ -32,7 +32,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackManager"};
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
-static const time_t MAX_TIMEOUT_SEC = 30;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 #endif
 std::recursive_mutex g_instanceMutex;

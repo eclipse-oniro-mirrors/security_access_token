@@ -805,7 +805,7 @@ int AccessTokenManagerProxy::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo
     }
 
     int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d).", result);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (error=%{public}d).", result);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -896,7 +896,7 @@ AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& proce
         ACCESSTOKEN_LOG_INFO(LABEL, "ReadInt32 failed.");
         return INVALID_TOKENID;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (id=%{public}d).", id);
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Result from server (process=%{public}s, id=%{public}d).", processName.c_str(), id);
     return id;
 }
 
