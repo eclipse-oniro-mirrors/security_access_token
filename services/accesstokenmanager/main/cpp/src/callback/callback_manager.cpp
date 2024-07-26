@@ -196,15 +196,15 @@ void CallbackManager::GetCallbackObjectList(AccessTokenID tokenID, const std::st
 void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    auto callbackStart = [&]() {
+    auto callbackStart = [this, tokenID, permName, changeType]() {
         ACCESSTOKEN_LOG_INFO(LABEL, "CallbackStart");
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
         std::string name = "AtmCallback";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
 #endif
         std::vector<sptr<IRemoteObject>> list;
-        GetCallbackObjectList(tokenID, permName, list);
-        ExcuteAllCallback(list, tokenID, permName, changeType);
+        this->GetCallbackObjectList(tokenID, permName, list);
+        this->ExcuteAllCallback(list, tokenID, permName, changeType);
     };
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE

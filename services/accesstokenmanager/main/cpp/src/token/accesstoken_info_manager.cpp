@@ -104,7 +104,7 @@ void AccessTokenInfoManager::Init()
     hasInited_ = true;
 
 #ifdef TOKEN_SYNC_ENABLE
-    std::function<void()> runner = [&]() {
+    std::function<void()> runner = []() {
         std::string name = "AtmInfoMgrInit";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
         auto sleepTime = std::chrono::milliseconds(1000);
