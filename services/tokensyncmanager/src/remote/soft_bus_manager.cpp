@@ -251,7 +251,7 @@ void SoftBusManager::Initialize()
 
     GetConfigValue();
 
-    std::function<void()> runner = [&]() {
+    std::function<void()> runner = [this]() {
         std::string name = "SoftBusMagInit";
         pthread_setname_np(pthread_self(), name.substr(0, MAX_PTHREAD_NAME_LEN).c_str());
         auto sleepTime = std::chrono::milliseconds(1000);

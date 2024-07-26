@@ -145,7 +145,7 @@ std::string SoftBusChannel::GetUuid()
 void SoftBusChannel::InsertCallback(int result, std::string &uuid)
 {
     std::unique_lock<std::mutex> lock(socketMutex_);
-    std::function<void(const std::string &)> callback = [&](const std::string &result) {
+    std::function<void(const std::string &)> callback = [this](const std::string &result) {
         responseResult_ = std::string(result);
         loadedCond_.notify_all();
         ACCESSTOKEN_LOG_DEBUG(LABEL, "OnResponse called end");
