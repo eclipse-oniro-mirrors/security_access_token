@@ -50,6 +50,8 @@ constexpr uint32_t TIMEOUT = 40; // 40s
 int32_t AccessTokenManagerStub::OnRemoteRequest(
     uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option)
 {
+    MemoryGuard guard;
+
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     ACCESSTOKEN_LOG_DEBUG(LABEL, "Code %{public}u token %{public}u", code, callingTokenID);
     std::u16string descriptor = data.ReadInterfaceToken();
@@ -544,8 +546,6 @@ void AccessTokenManagerStub::GetHapTokenInfoInner(MessageParcel& data, MessagePa
 
 void AccessTokenManagerStub::GetNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
-    MemoryGuard guard;
-
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
@@ -894,8 +894,6 @@ void AccessTokenManagerStub::GetPermissionManagerInfoInner(MessageParcel& data, 
 
 void AccessTokenManagerStub::GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply)
 {
-    MemoryGuard guard;
-
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
         reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
