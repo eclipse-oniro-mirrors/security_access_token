@@ -623,7 +623,7 @@ int32_t AccessTokenManagerProxy::InitHapToken(const HapInfoParcel& hapInfoParcel
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, id=%{public}llu).",
         result, fullTokenId.tokenIDEx);
-    return RET_SUCCESS;
+    return result;
 }
 
 int AccessTokenManagerProxy::DeleteToken(AccessTokenID tokenID)
