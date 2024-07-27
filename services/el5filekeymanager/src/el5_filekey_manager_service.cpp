@@ -393,7 +393,7 @@ int El5FilekeyManagerService::Dump(int fd, const std::vector<std::u16string>& ar
     }
 
     dprintf(fd, "El5FilekeyManager Dump:\n");
-    std::string arg0 = ((args.size() == 0)? "" : Str16ToStr8(args.at(0)));
+    std::string arg0 = ((args.size() == 0) ? "" : Str16ToStr8(args.at(0)));
     if (arg0.compare("-h") == 0) {
         dprintf(fd, "Usage:\n");
         dprintf(fd, "       -h: command help\n");
