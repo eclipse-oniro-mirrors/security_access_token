@@ -4793,16 +4793,6 @@
             "deprecated": "",
             "provisionEnable": true,
             "distributedSceneEnable": false
-        },
-        {
-            "name": "ohos.permission.GET_ALL_PROCESSES",
-            "grantMode": "system_grant",
-            "availableLevel": "system_cord",
-            "availableType": "SYSTEM",
-            "since": 12,
-            "deprecated": "",
-            "provisionEnable": true,
-            "distributedSceneEnable": true
         }
     ]
 }
