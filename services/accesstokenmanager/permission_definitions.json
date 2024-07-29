@@ -1211,7 +1211,7 @@
             "distributedSceneEnable": false
         },
         {
-            "name": "ohos.permission.GET_DOMAIN_VERIFY_INFO",
+            "name": "ohos.permission.GET_APP_DOMAIN_BUNDLE_INFO",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
             "availableType": "SYSTEM",
