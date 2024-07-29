@@ -1213,8 +1213,8 @@
         {
             "name": "ohos.permission.GET_DOMAIN_VERIFY_INFO",
             "grantMode": "system_grant",
-            "availableLevel": "normal",
-            "availableType": "NORMAL",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
             "since": 12,
             "deprecated": "",
             "provisionEnable": true,
