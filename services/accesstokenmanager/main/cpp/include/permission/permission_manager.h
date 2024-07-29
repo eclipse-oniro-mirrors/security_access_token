@@ -113,9 +113,8 @@ private:
         std::vector<PermissionStateFull>& permsList, int32_t apiVersion, const LocationIndex& locationIndex);
     void NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
         const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID);
-    bool FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
-    void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName);
-    void DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
+    int32_t FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName);
+    void AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName, int32_t status);
     void PermDefToString(const PermissionDef& def, std::string& info) const;
     bool IsPermissionStateOrFlagMatched(const PermissionStateFull& stata1, const PermissionStateFull& stata2);
     void GetStateOrFlagChangedList(std::vector<PermissionStateFull>& stateListBefore,

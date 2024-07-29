@@ -31,10 +31,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum PermStateChangeType {
-    REVOKED = 0,
-    GRANTED = 1,
-};
 struct CallbackRecord {
     CallbackRecord() : scopePtr_(nullptr), callbackObject_(nullptr)
     {}

@@ -350,7 +350,6 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
 {
     int32_t goalGrantStatus;
     uint32_t goalGrantFlag;
-    int32_t userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
 
     // api8 require vague location permission refuse directly because there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
@@ -366,10 +365,6 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         return;
     }
 
-    if (FindPermRequestToggleStatusFromDb(userID, permState.permissionName)) {
-        permState.state = SETTING_OPER;
-        return;
-    }
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
@@ -462,49 +457,34 @@ int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
     return RET_SUCCESS;
 }
 
-bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
+int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
 {
     std::vector<GenericValues> permRequestToggleStatusRes;
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        permRequestToggleStatusRes);
-    for (const GenericValues& permRequestToggleStatus: permRequestToggleStatusRes) {
-        int32_t id = permRequestToggleStatus.GetInt(TokenFiledConst::FIELD_USER_ID);
-        if (id != userID) {
-            continue;
-        }
-
-        std::string permission = permRequestToggleStatus.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        if (permission == permissionName) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, has been forbidden", userID,
-                permissionName.c_str());
-            return true;
-        }
+    AccessTokenDb::GetInstance().FindByConditions(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+        conditionValue, permRequestToggleStatusRes);
+    if (permRequestToggleStatusRes.empty()) {
+        // never set, return default status: CLOSED if APP_TRACKING_CONSENT
+        return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?
+            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;;
     }
-
-    return false;
+    return permRequestToggleStatusRes[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
 }
 
-void PermissionManager::AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName)
+void PermissionManager::AddPermRequestToggleStatusToDb(
+    int32_t userID, const std::string& permissionName, int32_t status)
 {
     std::vector<GenericValues> permRequestToggleStatusValues;
-    GenericValues genericValues;
-
-    genericValues.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    permRequestToggleStatusValues.emplace_back(genericValues);
-
+    GenericValues modifyValue;
+    modifyValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    modifyValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    modifyValue.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
+    permRequestToggleStatusValues.emplace_back(modifyValue);
     AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         permRequestToggleStatusValues);
-}
-
-void PermissionManager::DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    GenericValues values;
-    values.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    values.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values);
 }
 
 int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
@@ -538,11 +518,7 @@ int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& p
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    if (status == PermissionRequestToggleStatus::CLOSED) {
-        AddPermRequestToggleStatusToDb(userID, permissionName);
-    } else {
-        DeletePermRequestToggleStatusFromDb(userID, permissionName);
-    }
+    AddPermRequestToggleStatusToDb(userID, permissionName, status);
 
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
@@ -577,12 +553,7 @@ int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& p
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    bool ret = FindPermRequestToggleStatusFromDb(userID, permissionName);
-    if (ret) {
-        status = PermissionRequestToggleStatus::CLOSED;
-    } else {
-        status = PermissionRequestToggleStatus::OPEN;
-    }
+    status = FindPermRequestToggleStatusFromDb(userID, permissionName);
 
     return 0;
 }
