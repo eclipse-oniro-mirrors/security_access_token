@@ -577,7 +577,7 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "IsUpdated");
-    int32_t changeType = isGranted ? GRANTED : REVOKED;
+    int32_t changeType = isGranted ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
 
     // set to kernel(grant/revoke)
     SetPermToKernel(tokenID, permissionName, isGranted);
@@ -918,14 +918,16 @@ void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& gr
     for (uint32_t i = 0; i < grantedPermListBefore.size(); i++) {
         auto it = find(grantedPermListAfter.begin(), grantedPermListAfter.end(), grantedPermListBefore[i]);
         if (it == grantedPermListAfter.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListBefore[i], REVOKED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListBefore[i], STATE_CHANGE_REVOKED);
             ParamUpdate(grantedPermListBefore[i], 0, true);
         }
     }
     for (uint32_t i = 0; i < grantedPermListAfter.size(); i++) {
         auto it = find(grantedPermListBefore.begin(), grantedPermListBefore.end(), grantedPermListAfter[i]);
         if (it == grantedPermListBefore.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListAfter[i], GRANTED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListAfter[i], STATE_CHANGE_GRANTED);
             ParamUpdate(grantedPermListAfter[i], 0, false);
         }
     }
