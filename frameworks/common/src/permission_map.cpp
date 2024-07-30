@@ -475,6 +475,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.DUMP_AUDIO",        false},
     {"ohos.permission.ACTIVATE_DEVICE_PSI",                 false},
     {"ohos.permission.ACCESS_MULTICORE_HYBRID_ABILITY",     false},
+    {"ohos.permission.INSTALL_INTERNALTESTING_BUNDLE",     false},
     {"ohos.permission.GET_ALL_PROCESSES",     false},
 };
 
