@@ -1211,6 +1211,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.GET_APP_DOMAIN_BUNDLE_INFO",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.DISTRIBUTED_SOFTBUS_CENTER",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
