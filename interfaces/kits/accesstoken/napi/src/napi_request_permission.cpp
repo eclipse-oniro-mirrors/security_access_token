@@ -19,6 +19,7 @@
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "hisysevent.h"
 #include "napi_base_context.h"
 #include "token_setproc.h"
 #include "want.h"
@@ -670,12 +671,15 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
 {
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
+    std::string bundleName = "";
     if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
+        bundleName = asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->bundleName;
     } else {
         asyncContextHandle->asyncContextPtr->tokenId =
             asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+        bundleName = asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->bundleName;
     }
     AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
@@ -697,10 +701,15 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
         StartServiceExtension(asyncContextHandle->asyncContextPtr);
     } else if (asyncContextHandle->asyncContextPtr->instanceId == -1) {
         CreateServiceExtension(asyncContextHandle->asyncContextPtr);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", bundleName, "UIEXTENSION_FLAG", false);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "Pop ui extension dialog");
         asyncContextHandle->asyncContextPtr->uiExtensionFlag = true;
         RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", bundleName,
+            "UIEXTENSION_FLAG", asyncContextHandle->asyncContextPtr->uiExtensionFlag);
         if (!asyncContextHandle->asyncContextPtr->uiExtensionFlag) {
             ACCESSTOKEN_LOG_WARN(LABEL, "Pop uiextension dialog fail, start to pop service extension dialog");
             StartServiceExtension(asyncContextHandle->asyncContextPtr);

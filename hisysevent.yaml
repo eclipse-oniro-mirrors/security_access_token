@@ -68,3 +68,8 @@ GRANT_TEMP_PERMISSION:
   TOKENID: {type: UINT32, desc: tokenID}
   BUNDLENAME: {type: STRING, desc: bundle name}
   PERMISSION_NAME: {type: STRING, desc: permission name}
+
+REQUEST_PERMISSIONS_FROM_USER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
