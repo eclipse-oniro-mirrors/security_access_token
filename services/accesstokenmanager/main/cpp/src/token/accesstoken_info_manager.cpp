@@ -1243,7 +1243,8 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
         PermissionManager::GetInstance().ParamUpdate(permissionList[0], 0, true);
     }
     for (const auto& permissionName : permissionList) {
-        CallbackManager::GetInstance().ExecuteCallbackAsync(id, permissionName, PermStateChangeType::REVOKED);
+        CallbackManager::GetInstance().ExecuteCallbackAsync(
+            id, permissionName, PermStateChangeType::STATE_CHANGE_REVOKED);
     }
 }
 

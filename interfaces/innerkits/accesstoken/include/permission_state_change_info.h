@@ -57,8 +57,8 @@ namespace AccessToken {
  * @brief Declares permission state change type
  */
 enum PermStateChangeType {
-    REVOKED = 0,
-    GRANTED = 1,
+    STATE_CHANGE_REVOKED = 0,
+    STATE_CHANGE_GRANTED = 1,
 };
 
 /**
