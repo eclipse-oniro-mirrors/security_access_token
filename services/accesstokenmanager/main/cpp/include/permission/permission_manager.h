@@ -127,6 +127,7 @@ private:
     OHOS::Utils::RWLock permParamSetLock_;
     uint64_t paramValue_ = 0;
 
+    OHOS::Utils::RWLock permToggleStateLock_;
     DISALLOW_COPY_AND_MOVE(PermissionManager);
 };
 } // namespace AccessToken
