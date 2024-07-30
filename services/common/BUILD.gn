@@ -21,7 +21,6 @@ config("accesstoken_service_common_public_config") {
     "database/include",
     "libraryloader/include",
     "random/include",
-    "utils/include",
   ]
   if (eventhandler_enable) {
     include_dirs += [ "handler/include" ]
@@ -58,7 +57,6 @@ ohos_static_library("accesstoken_service_common") {
     "database/src/variant_value.cpp",
     "libraryloader/src/libraryloader.cpp",
     "random/src/random_openssl.cpp",
-    "utils/src/time_util.cpp",
   ]
 
   cflags_cc = [
