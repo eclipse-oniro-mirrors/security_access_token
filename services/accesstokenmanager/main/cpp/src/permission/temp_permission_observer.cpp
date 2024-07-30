@@ -531,19 +531,12 @@ void TempPermissionObserver::GetConfigValue()
     }
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
-        cancleTimes_ = value.atConfig.cancleTime;
+        cancleTimes_ = value.atConfig.cancleTime == 0 ? DEFAULT_CANCLE_MILLISECONDS : value.atConfig.cancleTime;
     } else {
-        SetDefaultConfigValue();
+        cancleTimes_ = DEFAULT_CANCLE_MILLISECONDS;
     }
 
     ACCESSTOKEN_LOG_INFO(LABEL, "CancleTimes_ is %{public}d.", cancleTimes_);
-}
-
-void TempPermissionObserver::SetDefaultConfigValue()
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
-
-    cancleTimes_ = DEFAULT_CANCLE_MILLISECONDS;
 }
 } // namespace AccessToken
 } // namespace Security

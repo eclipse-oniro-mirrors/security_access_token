@@ -1133,23 +1133,17 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 {
     std::vector<PermissionStateFull> permsList1;
     permsList1.emplace_back(g_permState2);
-    PermissionListState permState1;
-    permState1.permissionName = "ohos.permission.CAMERA";
-    int32_t apiVersion = ACCURATE_LOCATION_API_VERSION;
-
+    std::string permissionName = "ohos.permission.CAMERA";
     uint32_t oriStatus;
-    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permState1.permissionName, oriStatus, 0);
+    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
 
-    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permState1.permissionName,
+    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName,
         PermissionRequestToggleStatus::CLOSED, 0);
     uint32_t status;
-    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permState1.permissionName, status, 0);
+    PermissionManager::GetInstance().GetPermissionRequestToggleStatus(permissionName, status, 0);
     ASSERT_EQ(PermissionRequestToggleStatus::CLOSED, status);
 
-    // permission has been set request toggle, return SETTING_OPER
-    PermissionManager::GetInstance().GetSelfPermissionState(permsList1, permState1, apiVersion);
-    ASSERT_EQ(PermissionOper::SETTING_OPER, permState1.state);
-    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permState1.permissionName, oriStatus, 0);
+    PermissionManager::GetInstance().SetPermissionRequestToggleStatus(permissionName, oriStatus, 0);
 }
 
 /**

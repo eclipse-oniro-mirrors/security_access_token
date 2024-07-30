@@ -232,7 +232,8 @@ void SoftBusManager::GetConfigValue()
     }
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::TOKENSYNC_SERVICE, value)) {
-        sendRequestRepeatTimes_ = value.tsConfig.sendRequestRepeatTimes;
+        sendRequestRepeatTimes_ = value.tsConfig.sendRequestRepeatTimes == 0
+            ? DEFAULT_SEND_REQUEST_REPEAT_TIMES : value.tsConfig.sendRequestRepeatTimes;
     } else {
         SetDefaultConfigValue();
     }

@@ -654,10 +654,14 @@ void AccessTokenManagerService::GetConfigValue()
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
         // set value from config
-        grantBundleName_ = value.atConfig.grantBundleName;
-        grantAbilityName_ = value.atConfig.grantAbilityName;
-        permStateAbilityName_ = value.atConfig.permStateAbilityName;
-        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName;
+        grantBundleName_ = value.atConfig.grantBundleName.empty()
+            ? GRANT_ABILITY_BUNDLE_NAME : value.atConfig.grantBundleName;
+        grantAbilityName_ = value.atConfig.grantAbilityName.empty()
+            ? GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantAbilityName;
+        permStateAbilityName_ = value.atConfig.permStateAbilityName.empty()
+            ? PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
+        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty()
+            ? GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;

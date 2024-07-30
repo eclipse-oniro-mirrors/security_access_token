@@ -67,6 +67,9 @@ void AccessTokenDb::OnUpdate(int32_t version)
     if (version < DataBaseVersion::VERISION_3) {
         CreatePermissionRequestToggleStatusTable();
     }
+    if (version < DataBaseVersion::VERISION_4) {
+        AddRequestToggleStatusColumn();
+    }
 }
 
 AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
@@ -112,7 +115,8 @@ AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     SqliteTable permissionRequestToggleStatusTable;
     permissionRequestToggleStatusTable.tableName_ = PERMISSION_REQUEST_TOGGLE_STATUS_TABLE;
     permissionRequestToggleStatusTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME
+        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS
     };
 
     dataTypeToSqlTable_ = {
@@ -203,7 +207,7 @@ int AccessTokenDb::Modify(const DataType type, const GenericValues& modifyValues
 
 int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results)
 {
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateSelectPrepareSqlCmd(type);
     auto statement = Prepare(prepareSql);
     while (statement.Step() == Statement::State::ROW) {
@@ -215,6 +219,33 @@ int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results
         results.emplace_back(value);
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Find type(%{public}d), results size=%{public}zu.", type, results.size());
+    return SUCCESS;
+}
+
+int32_t AccessTokenDb::FindByConditions(DataType type,
+    const GenericValues& andConditions, std::vector<GenericValues>& results)
+{
+    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::vector<std::string> andColumns = andConditions.GetAllKeys();
+    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, andColumns);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
+
+    auto statement = Prepare(prepareSql);
+    for (const auto& columnName : andColumns) {
+        statement.Bind(columnName, andConditions.Get(columnName));
+    }
+
+    while (statement.Step() == Statement::State::ROW) {
+        int32_t columnCount = statement.GetColumnCount();
+        GenericValues value;
+        for (int32_t i = 0; i < columnCount; i++) {
+            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
+        }
+        results.emplace_back(value);
+    }
     return SUCCESS;
 }
 
@@ -277,7 +308,7 @@ std::string AccessTokenDb::CreateInsertPrepareSqlCmd(const DataType type) const
     if (it == dataTypeToSqlTable_.end()) {
         return std::string();
     }
-    std::string sql = "insert into " + it->second.tableName_ + " values(";
+    std::string sql = "insert or replace into " + it->second.tableName_ + " values(";
     int i = 1;
     for (const auto& columnName : it->second.tableColumnNames_) {
         sql.append(":" + columnName);
@@ -344,6 +375,22 @@ std::string AccessTokenDb::CreateSelectPrepareSqlCmd(const DataType type) const
         return std::string();
     }
     std::string sql = "select * from " + it->second.tableName_;
+    return sql;
+}
+
+std::string AccessTokenDb::CreateSelectByConditionPrepareSqlCmd(
+    DataType type, const std::vector<std::string>& andColumns) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+
+    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+    for (const auto& andColName : andColumns) {
+        sql.append(" and ");
+        sql.append(andColName + "=:" + andColName);
+    }
     return sql;
 }
 
@@ -489,6 +536,23 @@ int32_t AccessTokenDb::AddAvailableTypeColumn() const
     return insertResult;
 }
 
+int32_t AccessTokenDb::AddRequestToggleStatusColumn() const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
+        .append(" integer default ")
+        .append(std::to_string(0)); // 0: close
+    int32_t insertResult = ExecuteSql(sql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
+    return insertResult;
+}
+
 int32_t AccessTokenDb::AddPermDialogCapColumn() const
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
@@ -556,6 +620,8 @@ int32_t AccessTokenDb::CreatePermissionRequestToggleStatusTable() const
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
+        .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_USER_ID)
         .append(",")
