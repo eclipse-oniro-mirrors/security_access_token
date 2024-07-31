@@ -169,7 +169,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
             ".", beforeCnt, afterCnt);
     }
     CommitTransaction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Commit Add transaction.");
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Commit Add transaction.");
     return SUCCESS;
 }
 
