@@ -40,7 +40,6 @@ ohos_unittest("el5_filekey_manager_kit_unittest") {
     "${access_token_path}/interfaces/innerkits/accesstoken:libaccesstoken_sdk",
     "${access_token_path}/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtoken_setproc",
-    "//third_party/googletest:gtest_main",
   ]
 
   external_deps = [
