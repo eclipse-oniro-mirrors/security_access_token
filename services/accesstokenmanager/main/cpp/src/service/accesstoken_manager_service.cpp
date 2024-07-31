@@ -612,7 +612,7 @@ void AccessTokenManagerService::DumpTokenIfNeeded()
 {
 #ifdef EVENTHANDLER_ENABLE
     if (AccessTokenInfoManager::GetInstance().GetCurDumpTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Has refresh task!");
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Has refresh task!");
         return;
     }
     AccessTokenInfoManager::GetInstance().AddDumpTaskNum();
