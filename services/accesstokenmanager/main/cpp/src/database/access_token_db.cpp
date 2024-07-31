@@ -308,7 +308,7 @@ std::string AccessTokenDb::CreateInsertPrepareSqlCmd(const DataType type) const
     if (it == dataTypeToSqlTable_.end()) {
         return std::string();
     }
-    std::string sql = "insert or replace into " + it->second.tableName_ + " values(";
+    std::string sql = "insert into " + it->second.tableName_ + " values(";
     int i = 1;
     for (const auto& columnName : it->second.tableColumnNames_) {
         sql.append(":" + columnName);

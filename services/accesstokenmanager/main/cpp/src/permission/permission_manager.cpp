@@ -474,12 +474,15 @@ int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, con
 void PermissionManager::AddPermRequestToggleStatusToDb(
     int32_t userID, const std::string& permissionName, int32_t status)
 {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permToggleStateLock_);
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, value);
+
     std::vector<GenericValues> permRequestToggleStatusValues;
-    GenericValues modifyValue;
-    modifyValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    modifyValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    modifyValue.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
-    permRequestToggleStatusValues.emplace_back(modifyValue);
+    value.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
+    permRequestToggleStatusValues.emplace_back(value);
     AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         permRequestToggleStatusValues);
 }
