@@ -212,10 +212,7 @@ PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Query permission info of %{public}s failed.", permissionName.c_str());
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    if (USER_GRANT != permissionDefResult.grantMode) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not user grant for permission=%{public}s.", permissionName.c_str());
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
+
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
