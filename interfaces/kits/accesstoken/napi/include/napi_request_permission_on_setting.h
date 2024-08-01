@@ -36,6 +36,8 @@ struct RequestPermOnSettingAsyncContext : public AtManagerAsyncWorkData {
 
     std::vector<std::string> permissionList;
     napi_value requestResult = nullptr;
+    int32_t errorCode = -1;
+    std::vector<int32_t> stateList;
 
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
@@ -63,7 +65,7 @@ public:
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
-    void ReleaseOrErrorHandle(int32_t code);
+    void ReleaseHandler(int32_t code);
 
 private:
     int32_t sessionId_ = 0;

@@ -51,7 +51,6 @@ struct RequestAsyncContext : public AtManagerAsyncWorkData {
     bool uiExtensionFlag = false;
     bool uiContentFlag = false;
     bool releaseFlag = false;
-    bool resultReturnFlag = false;
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventHandler> handler_ = nullptr;
 #endif
