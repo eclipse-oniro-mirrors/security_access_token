@@ -553,7 +553,7 @@ int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& p
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    status = FindPermRequestToggleStatusFromDb(userID, permissionName);
+    status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
 
     return 0;
 }
