@@ -217,7 +217,7 @@ static void PermissionResultsCallbackUI(int32_t jsCode,
     callbackPtr.release();
 }
 
-void PermissonOnSettingUICallback::ReleaseOrErrorHandle(int32_t code)
+void PermissonOnSettingUICallback::ReleaseHandler(int32_t code)
 {
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
@@ -234,36 +234,11 @@ void PermissonOnSettingUICallback::ReleaseOrErrorHandle(int32_t code)
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
     uiContent->CloseModalUIExtension(this->sessionId_);
-    if (code == 0) {
-        return; // code is 0 means request has return by OnResult
+    if (code == -1) {
+        this->reqContext_->errorCode = code;
     }
-    auto* retCB = new (std::nothrow) PermissonOnSettingResultCallback();
-    if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<PermissonOnSettingResultCallback> callbackPtr {retCB};
-    retCB->data = this->reqContext_;
-    retCB->jsCode = JS_ERROR_INNER;
-
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_get_uv_event_loop(this->reqContext_->env, &loop));
-    if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
-        return;
-    }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env, uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
-    uvWorkPtr.release();
-    callbackPtr.release();
-    return;
+    PermissionResultsCallbackUI(
+        TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->stateList, this->reqContext_);
 }
 
 PermissonOnSettingUICallback::PermissonOnSettingUICallback(
@@ -285,15 +260,11 @@ void PermissonOnSettingUICallback::SetSessionId(int32_t sessionId)
  */
 void PermissonOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
-    int32_t errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
-    std::vector<int32_t> stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
-    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d", resultCode, errorCode);
-
-    {
-        std::lock_guard<std::mutex> lock(g_lockFlag);
-        this->reqContext_->resultCode = 0;
-    }
-    PermissionResultsCallbackUI(TransferToJsErrorCode(errorCode), stateList, this->reqContext_);
+    this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
+    this->reqContext_->stateList = result.GetIntArrayParam(PERMISSION_RESULT_KEY);
+    ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d, listSize=%{public}zu",
+        resultCode, this->reqContext_->errorCode, this->reqContext_->stateList.size());
+    ReleaseHandler(0);
 }
 
 /*
@@ -312,7 +283,7 @@ void PermissonOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
 
-    ReleaseOrErrorHandle(releaseCode);
+    ReleaseHandler(-1);
 }
 
 /*
@@ -323,7 +294,7 @@ void PermissonOnSettingUICallback::OnError(int32_t code, const std::string& name
     ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
-    ReleaseOrErrorHandle(code);
+    ReleaseHandler(-1);
 }
 
 /*
@@ -341,12 +312,7 @@ void PermissonOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::Moda
 void PermissonOnSettingUICallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
-    int32_t resultCode = -1;
-    {
-        std::lock_guard<std::mutex> lock(g_lockFlag);
-        resultCode = this->reqContext_->resultCode;
-    }
-    ReleaseOrErrorHandle(resultCode);
+    ReleaseHandler(-1);
 }
 
 static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestPermOnSettingAsyncContext> asyncContext)

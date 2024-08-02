@@ -41,7 +41,8 @@ struct RequestGlobalSwitchAsyncContext : public AtManagerAsyncWorkData {
     int32_t resultCode = -1;
     int32_t switchType = -1;
     napi_value requestResult = nullptr;
-
+    int32_t errorCode = -1;
+    bool switchStatus = false;
     std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext;
     std::shared_ptr<AbilityRuntime::UIExtensionContext> uiExtensionContext;
     bool uiAbilityFlag = false;
@@ -69,7 +70,7 @@ public:
     void OnError(int32_t code, const std::string& name, const std::string& message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy>& uiProxy);
     void OnDestroy();
-    void ReleaseOrErrorHandle(int32_t code);
+    void ReleaseHandler(int32_t code);
 
 private:
     int32_t sessionId_ = 0;

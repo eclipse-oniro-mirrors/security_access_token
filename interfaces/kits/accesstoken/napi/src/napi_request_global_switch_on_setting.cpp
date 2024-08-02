@@ -153,7 +153,7 @@ static void ResultCallbackJSThreadWorker(uv_work_t* work, int32_t status)
         return;
     }
     napi_value requestResult = nullptr;
-    NAPI_CALL_RETURN_VOID(asyncContext->env, napi_create_int32(asyncContext->env, retCB->switchStatus, &requestResult));
+    NAPI_CALL_RETURN_VOID(asyncContext->env, napi_get_boolean(asyncContext->env, retCB->switchStatus, &requestResult));
 
     ReturnPromiseResult(asyncContext->env, retCB->jsCode, asyncContext->deferred, requestResult);
     napi_close_handle_scope(asyncContext->env, scope);
@@ -193,7 +193,7 @@ static void GlobalSwitchResultsCallbackUI(int32_t jsCode,
     callbackPtr.release();
 }
 
-void SwitchOnSettingUICallback::ReleaseOrErrorHandle(int32_t code)
+void SwitchOnSettingUICallback::ReleaseHandler(int32_t code)
 {
     {
         std::lock_guard<std::mutex> lock(g_lockFlag);
@@ -210,36 +210,11 @@ void SwitchOnSettingUICallback::ReleaseOrErrorHandle(int32_t code)
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Close uiextension component");
     uiContent->CloseModalUIExtension(this->sessionId_);
-    if (code == 0) {
-        return; // code is 0 means request has return by OnResult
+    if (code == -1) {
+        this->reqContext_->errorCode = code;
     }
-    auto* retCB = new (std::nothrow) SwitchOnSettingResultCallback();
-    if (retCB == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<SwitchOnSettingResultCallback> callbackPtr {retCB};
-    retCB->data = this->reqContext_;
-    retCB->jsCode = JS_ERROR_INNER;
-
-    uv_loop_s* loop = nullptr;
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env, napi_get_uv_event_loop(this->reqContext_->env, &loop));
-    if (loop == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Loop instance is nullptr");
-        return;
-    }
-    uv_work_t* work = new (std::nothrow) uv_work_t;
-    if (work == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Insufficient memory for work!");
-        return;
-    }
-    std::unique_ptr<uv_work_t> uvWorkPtr {work};
-    work->data = reinterpret_cast<void *>(retCB);
-    NAPI_CALL_RETURN_VOID(this->reqContext_->env, uv_queue_work_with_qos(
-        loop, work, [](uv_work_t* work) {}, ResultCallbackJSThreadWorker, uv_qos_user_initiated));
-    uvWorkPtr.release();
-    callbackPtr.release();
-    return;
+    GlobalSwitchResultsCallbackUI(
+        TransferToJsErrorCode(this->reqContext_->errorCode), this->reqContext_->switchStatus, this->reqContext_);
 }
 
 SwitchOnSettingUICallback::SwitchOnSettingUICallback(
@@ -261,16 +236,11 @@ void SwitchOnSettingUICallback::SetSessionId(int32_t sessionId)
  */
 void SwitchOnSettingUICallback::OnResult(int32_t resultCode, const AAFwk::Want& result)
 {
-    int32_t errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
-    bool switchStatus = result.GetBoolParam(GLOBAL_SWITCH_RESULT_KEY, 0);
+    this->reqContext_->errorCode = result.GetIntParam(RESULT_ERROR_KEY, 0);
+    this->reqContext_->switchStatus = result.GetBoolParam(GLOBAL_SWITCH_RESULT_KEY, 0);
     ACCESSTOKEN_LOG_INFO(LABEL, "ResultCode is %{public}d, errorCode=%{public}d, switchStatus=%{public}d",
-        resultCode, errorCode, switchStatus);
-    {
-        std::lock_guard<std::mutex> lock(g_lockFlag);
-        this->reqContext_->resultCode = 0;
-    }
-
-    GlobalSwitchResultsCallbackUI(TransferToJsErrorCode(errorCode), switchStatus, this->reqContext_);
+        resultCode, this->reqContext_->errorCode, this->reqContext_->switchStatus);
+    ReleaseHandler(0);
 }
 
 /*
@@ -289,7 +259,7 @@ void SwitchOnSettingUICallback::OnRelease(int32_t releaseCode)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "ReleaseCode is %{public}d", releaseCode);
 
-    ReleaseOrErrorHandle(releaseCode);
+    ReleaseHandler(-1);
 }
 
 /*
@@ -300,7 +270,7 @@ void SwitchOnSettingUICallback::OnError(int32_t code, const std::string& name, c
     ACCESSTOKEN_LOG_INFO(LABEL, "Code is %{public}d, name is %{public}s, message is %{public}s",
         code, name.c_str(), message.c_str());
 
-    ReleaseOrErrorHandle(code);
+    ReleaseHandler(-1);
 }
 
 /*
@@ -318,12 +288,7 @@ void SwitchOnSettingUICallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUI
 void SwitchOnSettingUICallback::OnDestroy()
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "UIExtensionAbility destructed.");
-    int32_t resultCode = -1;
-    {
-        std::lock_guard<std::mutex> lock(g_lockFlag);
-        resultCode = this->reqContext_->resultCode;
-    }
-    ReleaseOrErrorHandle(resultCode);
+    ReleaseHandler(-1);
 }
 
 static int32_t CreateUIExtension(const Want &want, std::shared_ptr<RequestGlobalSwitchAsyncContext> asyncContext)
