@@ -438,6 +438,7 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Leve
     PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
 }
 
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * @tc.name: ShowGlobalDialog001
  * @tc.desc: ShowGlobalDialog function test
@@ -454,6 +455,7 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
     sleep(3); // wait for dialog disappear
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(LOCATION_PERMISSION_NAME)); // no dialog
 }
+#endif
 
 /*
  * @tc.name: AppStateChangeListener001
@@ -859,6 +861,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest007, TestSize.Level1)
         PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
 }
 
+#ifndef APP_SECURITY_PRIVACY_SERVICE
 /*
  * @tc.name: SetMutePolicyTest008
  * @tc.desc:
@@ -878,6 +881,7 @@ HWTEST_F(PermissionRecordManagerTest, SetMutePolicyTest008, TestSize.Level1)
     EXPECT_EQ(ERR_PRIVACY_POLICY_CHECK_FAILED,
         PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::TEMPORARY, CallerType::MICROPHONE, false));
 }
+#endif
 
 /*
  * @tc.name: SetMutePolicyTest009
