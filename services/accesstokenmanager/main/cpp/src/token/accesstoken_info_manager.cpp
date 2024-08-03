@@ -244,13 +244,13 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
         }
 
         if (!info->IsRemote()) {
-            std::string HapUniqueKey = GetHapUniqueStr(info);
-            auto iter = hapTokenIdMap_.find(HapUniqueKey);
+            std::string hapUniqueKey = GetHapUniqueStr(info);
+            auto iter = hapTokenIdMap_.find(hapUniqueKey);
             if (iter != hapTokenIdMap_.end()) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u Unique info has exist, update.", id);
                 idRemoved = iter->second;
             }
-            hapTokenIdMap_[HapUniqueKey] = id;
+            hapTokenIdMap_[hapUniqueKey] = id;
         }
         hapTokenInfoMap_[id] = info;
     }

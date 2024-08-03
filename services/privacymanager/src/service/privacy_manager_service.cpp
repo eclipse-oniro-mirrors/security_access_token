@@ -277,7 +277,8 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    ACCESSTOKEN_LOG_INFO(LABEL, "PolicyType: %{public}d, callerType: %{public}d, isMute: %{public}d",
+        policyType, callerType, isMute);
     return PermissionRecordManager::GetInstance().SetMutePolicy(
         static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
 }

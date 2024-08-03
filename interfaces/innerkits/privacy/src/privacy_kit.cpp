@@ -18,15 +18,42 @@
 #include <string>
 #include <vector>
 
-#include "accesstoken_log.h"
 #include "constant_common.h"
 #include "data_validator.h"
 #include "privacy_error.h"
 #include "privacy_manager_client.h"
+#include "time_util.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+namespace {
+constexpr const uint64_t MERGE_TIMESTAMP = 200; // 200ms
+std::mutex g_lockCache;
+std::map<std::string, uint64_t> g_recordMap;
+}
+static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
+{
+    return std::to_string(record.tokenId) + "_" + record.permissionName + "_" + std::to_string(record.type);
+}
+
+bool FindAndInsertRecord(const AddPermParamInfo& record)
+{
+    std::string newRecordStr = GetRecordUniqueStr(record);
+    uint64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
+    std::lock_guard<std::mutex> lock(g_lockCache);
+    auto iter = g_recordMap.find(newRecordStr);
+    if (iter == g_recordMap.end()) {
+        g_recordMap[newRecordStr] = curTimestamp;
+        return false;
+    }
+    if (curTimestamp - iter->second < MERGE_TIMESTAMP) {
+        return true;
+    }
+    g_recordMap[newRecordStr] = curTimestamp;
+    return false;
+}
+
 int32_t PrivacyKit::AddPermissionUsedRecord(AccessTokenID tokenID, const std::string& permissionName,
     int32_t successCount, int32_t failCount, bool asyncMode)
 {
@@ -49,7 +76,11 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     if (!DataValidator::IsHapCaller(info.tokenId)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
+
+    if (!FindAndInsertRecord(info)) {
+        return PrivacyManagerClient::GetInstance().AddPermissionUsedRecord(info, asyncMode);
+    }
+    return RET_SUCCESS;
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
