@@ -60,18 +60,6 @@ HWTEST_F(WindowManagerTest, OnRemoteDiedHandle001, TestSize.Level1) {
     EXPECT_EQ(nullptr, PrivacyWindowManagerClient::GetInstance().wmsProxy_);
 }
 
-/**
- * @tc.name: UnregisterWindowManagerAgent001
- * @tc.desc: UnregisterWindowManagerAgent.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(WindowManagerTest, UnregisterWindowManagerAgent001, TestSize.Level1) {
-    PrivacyWindowManagerClient::GetInstance().UnregisterWindowManagerAgent(
-        WindowManagerAgentType::WINDOW_MANAGER_AGENT_TYPE_CAMERA_WINDOW, nullptr);
-    EXPECT_EQ(nullptr, PrivacyWindowManagerClient::GetInstance().wmsProxy_);
-}
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

@@ -29,7 +29,9 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_callback_info.h"
+#endif
 #include "running_form_info.h"
 
 using namespace testing::ext;
@@ -2253,6 +2255,7 @@ HWTEST_F(PermissionManagerTest, RunningFormInfoParcel001, TestSize.Level1)
     EXPECT_EQ(info.formLocation_, p->formLocation_);
 }
 
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /*
  * @tc.name: ContinuousTaskCallbackInfoParcel001
  * @tc.desc: ContinuousTaskCallbackInfo::Marshalling | Unmarshalling
@@ -2277,6 +2280,7 @@ HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Le
     EXPECT_EQ(info.abilityId_, p->abilityId_);
     EXPECT_EQ(info.tokenId_, p->tokenId_);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
