@@ -539,7 +539,7 @@ int32_t AccessTokenDb::AddAvailableTypeColumn() const
 int32_t AccessTokenDb::AddRequestToggleStatusColumn() const
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
+    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
     if (it == dataTypeToSqlTable_.end()) {
         return FAILURE;
     }
