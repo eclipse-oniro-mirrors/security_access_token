@@ -118,7 +118,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 {
     std::vector<PermissionDef> permFilterList;
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
-    ACCESSTOKEN_LOG_INFO(LABEL, "PermFilterList size: %{public}zu", permFilterList.size());
+    //ACCESSTOKEN_LOG_INFO(LABEL, "PermFilterList size: %{public}zu", permFilterList.size());
     for (const auto& perm : permFilterList) {
         if (updateFlag) {
             PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
@@ -1159,8 +1159,8 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
 bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
     const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu.",
-        policy.permStateList.size(), policy.preAuthorizationInfo.size());
+    //ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu.",
+    //    policy.permStateList.size(), policy.preAuthorizationInfo.size());
 
     for (auto state : policy.permStateList) {
         PermissionDef permDef;
@@ -1201,7 +1201,8 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         }
         initializedList.emplace_back(state);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "After, request perm list size: %{public}zu.", initializedList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu; After, request perm list size: %{public}zu.", 
+        policy.permStateList.size(), initializedList.size());
     return true;
 }
 

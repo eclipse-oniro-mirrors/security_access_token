@@ -133,6 +133,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
     if (addSize == 0) {
         return SUCCESS;
     }
+    //ACCESSTOKEN_LOG_INFO(LABEL, "Add type=%{public}d, size=%{public}zu.", type, addSize);
     OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateInsertPrepareSqlCmd(type);
     auto statement = Prepare(prepareSql);
@@ -165,7 +166,7 @@ int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& va
             ".", beforeCnt, afterCnt);
     }
     CommitTransaction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Commit Add transaction.");
+    //ACCESSTOKEN_LOG_INFO(LABEL, "Commit Add transaction.");
     return SUCCESS;
 }
 

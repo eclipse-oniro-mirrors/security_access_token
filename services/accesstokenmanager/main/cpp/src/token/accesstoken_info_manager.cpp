@@ -345,8 +345,8 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(
-            LABEL, "Token %{public}u is invalid.", tokenID);
+        //ACCESSTOKEN_LOG_ERROR(
+        //    LABEL, "Token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     infoPtr->TranslateToHapTokenInfo(info);
