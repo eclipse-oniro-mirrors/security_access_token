@@ -71,7 +71,7 @@ public:
      * @param permissionName permission to be checked
      * @return enum PermUsedTypeEnum, see access_token.h
      */
-    static PermUsedTypeEnum GetUserGrantedPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+    static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     /**
      * @brief Create a unique hap token by input values.
      * @param info struct HapInfoParams quote, see hap_token_info.h

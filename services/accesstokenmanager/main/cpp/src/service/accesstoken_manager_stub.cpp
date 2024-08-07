@@ -101,7 +101,7 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
+void AccessTokenManagerStub::GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
@@ -120,7 +120,7 @@ void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel
         reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE));
         return;
     }
-    PermUsedTypeEnum result = this->GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    PermUsedTypeEnum result = this->GetPermissionUsedType(tokenID, permissionName);
     int32_t type = static_cast<int32_t>(result);
     if (!reply.WriteInt32(type)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail.");
@@ -1016,7 +1016,7 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_USER_GRANTED_PERMISSION_USED_TYPE)] =
-        &AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner;
+        &AccessTokenManagerStub::GetPermissionUsedTypeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =

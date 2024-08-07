@@ -47,7 +47,7 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
-    virtual PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+    virtual PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;

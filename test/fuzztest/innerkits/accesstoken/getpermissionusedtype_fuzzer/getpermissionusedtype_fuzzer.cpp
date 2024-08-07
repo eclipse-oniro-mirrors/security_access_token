@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getusergrantedpermissionusedtype_fuzzer.h"
+#include "getpermissionusedtype_fuzzer.h"
 
 #include <iostream>
 #include <thread>
@@ -27,13 +27,13 @@ using namespace std;
 using namespace OHOS::Security::AccessToken;
 
 namespace OHOS {
-bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
+bool GetPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
     }
     AccessTokenFuzzData fuzzData(data, size);
-    PermUsedTypeEnum type = AccessTokenKit::GetUserGrantedPermissionUsedType(
+    PermUsedTypeEnum type = AccessTokenKit::GetPermissionUsedType(
         fuzzData.GetData<AccessTokenID>(), fuzzData.GenerateRandomString());
 
     return type != PermUsedTypeEnum::PERM_USED_TYPE_BUTT;
@@ -44,6 +44,6 @@ bool GetUserGrantedPermissionUsedTypeFuzzTest(const uint8_t* data, size_t size)
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetUserGrantedPermissionUsedTypeFuzzTest(data, size);
+    OHOS::GetPermissionUsedTypeFuzzTest(data, size);
     return 0;
 }

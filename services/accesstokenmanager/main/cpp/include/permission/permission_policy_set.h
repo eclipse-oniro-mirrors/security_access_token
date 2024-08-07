@@ -44,7 +44,7 @@ public:
     void StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList);
     void Update(const std::vector<PermissionStateFull>& permStateList);
 
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(const std::string& permissionName);
+    PermUsedTypeEnum GetPermissionUsedType(const std::string& permissionName);
     int VerifyPermissionStatus(const std::string& permissionName);
     void GetDefPermissions(std::vector<PermissionDef>& permList);
     void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);

@@ -65,7 +65,7 @@
         "OHOS::Security::AccessToken::AccessTokenKit::VerifyAccessToken(unsigned int, unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, bool)";
         "OHOS::Security::AccessToken::PermStateChangeCallbackCustomize::GetScope(OHOS::Security::AccessToken::PermStateChangeScope&) const";
         "OHOS::Security::AccessToken::AccessTokenKit::SetPermDialogCap(OHOS::Security::AccessToken::HapBaseInfo const&, bool)";
-        "OHOS::Security::AccessToken::AccessTokenKit::GetUserGrantedPermissionUsedType(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
+        "OHOS::Security::AccessToken::AccessTokenKit::GetPermissionUsedType(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::RegisterTokenSyncCallback(std::__h::shared_ptr<OHOS::Security::AccessToken::TokenSyncKitInterface> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::UnRegisterTokenSyncCallback()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenName(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";

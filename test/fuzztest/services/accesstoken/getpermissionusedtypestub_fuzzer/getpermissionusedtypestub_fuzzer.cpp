@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "getusergrantedpermissionusedtypestub_fuzzer.h"
+#include "getpermissionusedtypestub_fuzzer.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <iostream>
@@ -32,7 +32,7 @@ const int CONSTANTS_NUMBER_TWO = 2;
 static const int32_t ROOT_UID = 0;
 
 namespace OHOS {
-bool GetUserGrantedPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t size)
+bool GetPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t size)
 {
     if ((data == nullptr) || (size == 0)) {
         return false;
@@ -71,6 +71,6 @@ bool GetUserGrantedPermissionUsedTypeStubFuzzTest(const uint8_t* data, size_t si
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
-    OHOS::GetUserGrantedPermissionUsedTypeStubFuzzTest(data, size);
+    OHOS::GetPermissionUsedTypeStubFuzzTest(data, size);
     return 0;
 }

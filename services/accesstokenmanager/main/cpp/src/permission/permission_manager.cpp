@@ -197,7 +197,7 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
     return permPolicySet->VerifyPermissionStatus(permissionName);
 }
 
-PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     if ((tokenID == INVALID_TOKENID) ||
@@ -220,7 +220,7 @@ PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
 
-    return permPolicySet->GetUserGrantedPermissionUsedType(permissionName);
+    return permPolicySet->GetPermissionUsedType(permissionName);
 }
 
 int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)

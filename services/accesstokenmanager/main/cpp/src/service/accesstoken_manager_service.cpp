@@ -120,11 +120,11 @@ void AccessTokenManagerService::OnRemoveSystemAbility(int32_t systemAbilityId, c
     }
 }
 
-PermUsedTypeEnum AccessTokenManagerService::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum AccessTokenManagerService::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d, permission=%{public}s", tokenID, permissionName.c_str());
-    return PermissionManager::GetInstance().GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    return PermissionManager::GetInstance().GetPermissionUsedType(tokenID, permissionName);
 }
 
 int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
