@@ -28,9 +28,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const uint64_t MERGE_TIMESTAMP = 200; // 200ms
+constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
 std::mutex g_lockCache;
-std::map<std::string, uint64_t> g_recordMap;
+std::map<std::string, int64_t> g_recordMap;
 }
 static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 {
@@ -40,7 +40,7 @@ static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 bool FindAndInsertRecord(const AddPermParamInfo& record)
 {
     std::string newRecordStr = GetRecordUniqueStr(record);
-    uint64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
+    int64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_recordMap.find(newRecordStr);
     if (iter == g_recordMap.end()) {

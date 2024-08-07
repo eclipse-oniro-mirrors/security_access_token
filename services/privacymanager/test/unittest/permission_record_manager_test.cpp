@@ -55,9 +55,7 @@ static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
 static bool g_isMicMute = false;
-constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
 constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
-constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
@@ -449,11 +447,11 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.CAMERA"));
     sleep(3); // wait for dialog disappear
     ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(MICROPHONE_PERMISSION_NAME));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(LOCATION_PERMISSION_NAME)); // no dialog
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.LOCATION")); // no dialog
 }
 #endif
 
