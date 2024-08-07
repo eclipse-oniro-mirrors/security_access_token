@@ -103,7 +103,7 @@ void PermissionManager::ClearAllSecCompGrantedPerm(const std::vector<AccessToken
         std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
             AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenId);
         if (tokenInfoPtr == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId is invalid, tokenId=%{public}u", tokenId);
+            ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenId);
             continue;
         }
         std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
@@ -118,7 +118,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
 {
     std::vector<PermissionDef> permFilterList;
     PermissionValidator::FilterInvalidPermissionDef(permList, permFilterList);
-    //ACCESSTOKEN_LOG_INFO(LABEL, "PermFilterList size: %{public}zu", permFilterList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "PermFilterList size: %{public}zu", permFilterList.size());
     for (const auto& perm : permFilterList) {
         if (updateFlag) {
             PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
@@ -140,7 +140,7 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
     std::shared_ptr<HapTokenInfoInner> tokenInfo =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfo == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params(tokenID: %{public}u)!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return;
     }
     std::string bundleName = tokenInfo->GetBundleName();
@@ -152,12 +152,12 @@ int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::st
     std::shared_ptr<HapTokenInfoInner> tokenInfoPtr =
         AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, can not find tokenInfo!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return PERMISSION_DENIED;
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = tokenInfoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, invalid params!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -169,7 +169,7 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
     std::shared_ptr<NativeTokenInfoInner> tokenInfoPtr =
         AccessTokenInfoManager::GetInstance().GetNativeTokenInfoInner(tokenID);
     if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Can not find tokenInfo!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -190,7 +190,7 @@ int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std:
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetNativePermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return PERMISSION_DENIED;
     }
 
@@ -219,7 +219,7 @@ PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID=%{public}d, invalid params.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
 
@@ -237,7 +237,7 @@ int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::strin
     }
 
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, invalid params!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
         return PERMISSION_DENIED;
     }
 
@@ -266,7 +266,7 @@ int PermissionManager::GetDefPermissions(AccessTokenID tokenID, std::vector<Perm
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
@@ -282,7 +282,7 @@ int PermissionManager::GetReqPermissions(
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
@@ -395,7 +395,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s called, tokenID: %{public}u, permissionName: %{public}s",
         __func__, tokenID, permissionName.c_str());
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName:%{public}s invalid!", permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
@@ -406,7 +406,7 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     int32_t fullFlag;
@@ -448,7 +448,7 @@ int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
         PermissionDef def;
         int32_t ret = DataTranslator::TranslationIntoPermissionDef(*iter, def);
         if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "PermDef is wrong.");
+            ACCESSTOKEN_LOG_ERROR(LABEL, "PermDef of %{public}s is wrong.", def.permissionName.c_str());
             return ret;
         }
         PermDefToString(def, dumpInfo);
@@ -630,7 +630,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (infoPtr->IsRemote()) {
@@ -648,7 +648,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 #ifdef SUPPORT_SANDBOX_APP
@@ -683,7 +683,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     bool isGranted, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName: %{pubic}s, Invalid params!", permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
@@ -692,7 +692,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         return AccessTokenError::ERR_PERMISSION_NOT_EXIST;
     }
     if (!PermissionValidator::IsPermissionFlagValid(flag)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "flag: %{public}d, Invalid params!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag);
@@ -985,7 +985,7 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return ERR_PARAM_INVALID;
     }
     if (infoPtr->IsRemote()) {
@@ -994,7 +994,7 @@ int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
         return ERR_PARAM_INVALID;
     }
     std::vector<std::string> grantedPermListBefore;
@@ -1149,7 +1149,7 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenId.tokenIdExStruct.tokenID);
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenId.tokenIdExStruct.tokenID);
         return false;
     }
     permPolicySet->GetPermissionStateFulls(initializedList);
@@ -1159,8 +1159,9 @@ bool PermissionManager::InitDlpPermissionList(const std::string& bundleName, int
 bool PermissionManager::InitPermissionList(const std::string& appDistributionType,
     const HapPolicyParams& policy, std::vector<PermissionStateFull>& initializedList)
 {
-    //ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu.",
-    //    policy.permStateList.size(), policy.preAuthorizationInfo.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu, preAuthorizationInfo size %{public}zu, "
+        "ACLRequestedList size %{public}zu.",
+        policy.permStateList.size(), policy.preAuthorizationInfo.size(), policy.aclRequestedList.size());
 
     for (auto state : policy.permStateList) {
         PermissionDef permDef;
@@ -1201,8 +1202,7 @@ bool PermissionManager::InitPermissionList(const std::string& appDistributionTyp
         }
         initializedList.emplace_back(state);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Before, request perm list size: %{public}zu; After, request perm list size: %{public}zu.", 
-        policy.permStateList.size(), initializedList.size());
+    ACCESSTOKEN_LOG_INFO(LABEL, "After, request perm list size: %{public}zu.", initializedList.size());
     return true;
 }
 

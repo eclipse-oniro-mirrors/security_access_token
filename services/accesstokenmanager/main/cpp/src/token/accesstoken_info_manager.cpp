@@ -345,8 +345,8 @@ int AccessTokenInfoManager::GetHapTokenInfo(AccessTokenID tokenID, HapTokenInfo&
 {
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        //ACCESSTOKEN_LOG_ERROR(
-        //    LABEL, "Token %{public}u is invalid.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(
+            LABEL, "Token %{public}u is invalid.", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     infoPtr->TranslateToHapTokenInfo(info);
@@ -516,7 +516,7 @@ int AccessTokenInfoManager::CreateHapTokenInfo(
     int32_t cloneFlag = ((dlpFlag == 0) && (info.instIndex) > 0) ? 1 : 0;
     AccessTokenID tokenId = AccessTokenIDManager::GetInstance().CreateAndRegisterTokenId(TOKEN_HAP, dlpFlag, cloneFlag);
     if (tokenId == 0) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token Id create failed");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token Id create failed");
         return ERR_TOKENID_CREATE_FAILED;
     }
     PermissionManager::GetInstance().AddDefPermissions(policy.permList, tokenId, false);
@@ -677,12 +677,12 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 {
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     if (!DataValidator::IsAppIDDescValid(info.appIDDesc)) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u parm format error!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u parm format error!", tokenID);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenID);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u is null, can not update!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid, can not update!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
 
@@ -1157,7 +1157,7 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(AccessTokenID tokenID)
 
     std::shared_ptr<HapTokenInfoInner> hapInfo = GetHapTokenInfoInner(tokenID);
     if (hapInfo == nullptr) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u info is null!", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u info is null!", tokenID);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     hapInfo->StoreHapInfo(hapInfoValues);
@@ -1262,8 +1262,6 @@ AccessTokenID AccessTokenInfoManager::GetNativeTokenId(const std::string& proces
 
 void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Dump by tokenId[%{public}u].", tokenId);
-
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenId);
     if (type == TOKEN_HAP) {
         std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
@@ -1282,8 +1280,6 @@ void AccessTokenInfoManager::DumpHapTokenInfoByTokenId(const AccessTokenID token
 
 void AccessTokenInfoManager::DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get hap token info by bundleName[%{public}s].", bundleName.c_str());
-
     Utils::UniqueReadGuard<Utils::RWLock> hapInfoGuard(this->hapTokenInfoLock_);
     for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
         if (iter->second != nullptr) {
@@ -1312,8 +1308,6 @@ void AccessTokenInfoManager::DumpAllHapTokenInfo(std::string& dumpInfo)
 
 void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get native token info by processName[%{public}s].", processName.c_str());
-
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
     for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
         if ((iter->second != nullptr) && (processName == iter->second->GetProcessName())) {
@@ -1499,11 +1493,6 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
 
 int32_t AccessTokenInfoManager::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
 {
-    if (tokenId == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is invalid.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
     ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenId);
     if ((type != ATokenTypeEnum::TOKEN_NATIVE) && (type != ATokenTypeEnum::TOKEN_SHELL)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Token type %{public}u is invalid.", type);

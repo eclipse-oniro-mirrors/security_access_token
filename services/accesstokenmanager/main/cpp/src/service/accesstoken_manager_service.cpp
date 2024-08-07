@@ -164,8 +164,6 @@ int AccessTokenManagerService::GetDefPermissions(AccessTokenID tokenID, std::vec
 int AccessTokenManagerService::GetReqPermissions(
     AccessTokenID tokenID, std::vector<PermissionStateFullParcel>& reqPermList, bool isSystemGrant)
 {
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, isSystemGrant: %{public}d", tokenID, isSystemGrant);
-
     std::vector<PermissionStateFull> permList;
     int ret = PermissionManager::GetInstance().GetReqPermissions(tokenID, permList, isSystemGrant);
 
@@ -238,7 +236,7 @@ PermissionOper AccessTokenManagerService::GetPermissionsState(AccessTokenID toke
         if (static_cast<PermissionOper>(reqPermList[i].permsState.state) == DYNAMIC_OPER) {
             needRes = true;
         }
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Perm: 0x%{public}s, state: 0x%{public}d",
+        ACCESSTOKEN_LOG_DEBUG(LABEL, "Perm: %{public}s, state: %{public}d",
             reqPermList[i].permsState.permissionName.c_str(), reqPermList[i].permsState.state);
     }
     if (GetTokenType(tokenID) == TOKEN_HAP && AccessTokenInfoManager::GetInstance().GetPermDialogCap(tokenID)) {
@@ -345,7 +343,6 @@ int32_t AccessTokenManagerService::InitHapToken(
     int32_t ret = AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(
         info.hapInfoParameter, policy.hapPolicyParameter, fullTokenId);
     if (ret != RET_SUCCESS) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Hap token info create failed.");
         return ret;
     }
 

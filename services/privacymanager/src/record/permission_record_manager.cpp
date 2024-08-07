@@ -544,7 +544,7 @@ bool PermissionRecordManager::AddRecordToStartList(const PermissionRecord& recor
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
         [record](const auto& rec) { return (rec.opCode == record.opCode) && (rec.tokenId == record.tokenId); });
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Id(%{public}d), opCode(%{public}d), hasStarted(%{public}d).",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id(%{public}d), opCode(%{public}d), hasStarted(%{public}d).",
         record.tokenId, record.opCode, hasStarted);
     if (!hasStarted) {
         startRecordList_.emplace_back(record);
@@ -1432,7 +1432,7 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
             std::lock_guard<std::mutex> lock(camLoadMutex_);
             if (!isCamLoad_) {
                 bool isEdmMute = false;
-            ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
+                ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
             }
         }
     }

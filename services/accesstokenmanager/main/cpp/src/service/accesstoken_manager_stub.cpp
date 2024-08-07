@@ -95,7 +95,6 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
         return;
     }
     AccessTokenID tokenID = data.ReadUint32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Recieve request successfully, tokenID=%{public}d", tokenID);
     int result = this->DeleteToken(tokenID);
     reply.WriteInt32(result);
 }
@@ -236,7 +235,7 @@ void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, Mess
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is oversize", size);
         reply.WriteInt32(INVALID_OPER);
         return;
     }
@@ -416,14 +415,12 @@ void AccessTokenManagerStub::AllocHapTokenInner(MessageParcel& data, MessageParc
         reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Recieve request successfully");
     res = this->AllocHapToken(*hapInfoParcel, *hapPolicyParcel);
     reply.WriteUint64(res.tokenIDEx);
 }
 
 void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParcel& reply)
 {
-    
     AccessTokenID tokenID = IPCSkeleton::GetCallingTokenID();
     if (!IsPrivilegedCalling() &&
         (VerifyAccessToken(tokenID, MANAGE_HAP_TOKENID_PERMISSION) == PERMISSION_DENIED)) {
@@ -439,7 +436,6 @@ void AccessTokenManagerStub::InitHapTokenInner(MessageParcel& data, MessageParce
         reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Recieve request successfully");
     int32_t res;
     AccessTokenIDEx fullTokenId = { 0 };
     res = this->InitHapToken(*hapInfoParcel, *hapPolicyParcel, fullTokenId);
