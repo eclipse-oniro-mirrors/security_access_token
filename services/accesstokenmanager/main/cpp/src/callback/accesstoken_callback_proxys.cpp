@@ -54,7 +54,7 @@ void PermissionStateChangeCallbackProxy::PermStateChangeCallback(PermStateChange
     }
 
     MessageParcel reply;
-    MessageOption option(MessageOption::TF_SYNC);
+    MessageOption option(MessageOption::TF_ASYNC);
     sptr<IRemoteObject> remote = Remote();
     if (remote == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service null.");
