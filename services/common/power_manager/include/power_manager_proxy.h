@@ -12,35 +12,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "power_manager_loader.h"
-#include "power_manager_client.h"
+
+#ifndef ACCESS_POWER_MANAGER_ACCESS_PROXY_H
+#define ACCESS_POWER_MANAGER_ACCESS_PROXY_H
+
+#include <iremote_proxy.h>
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-bool PowerManagerLoader::IsScreenOn()
-{
-    return PowerMgrClient::GetInstance().IsScreenOn();
-}
+class IPowerMgr : public IRemoteBroker {
+public:
+    DECLARE_INTERFACE_DESCRIPTOR(u"ohos.powermgr.IPowerMgr");
+    enum class Message {
+        IS_SCREEN_ON = 16,
+    };
 
-void PowerManagerLoader::WakeupDevice()
-{
-}
+    virtual bool IsScreenOn() = 0;
+};
 
-extern "C" {
-void* Create()
-{
-    return reinterpret_cast<void*>(new PowerManagerLoader);
-}
+class PowerMgrProxy : public IRemoteProxy<IPowerMgr> {
+public:
+    explicit PowerMgrProxy(const sptr<IRemoteObject>& impl)
+        : IRemoteProxy<IPowerMgr>(impl) {}
+    ~PowerMgrProxy() = default;
+    DISALLOW_COPY_AND_MOVE(PowerMgrProxy);
 
-void Destroy(void* loaderPtr)
-{
-    PowerManagerLoaderInterface* loader = reinterpret_cast<PowerManagerLoaderInterface*>(loaderPtr);
-    if (loader != nullptr) {
-        delete loader;
-    }
-}
-}
+    virtual bool IsScreenOn() override;
+private:
+    static inline BrokerDelegator<PowerMgrProxy> delegator_;
+};
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
+#endif // ACCESS_POWER_MANAGER_ACCESS_PROXY_H
