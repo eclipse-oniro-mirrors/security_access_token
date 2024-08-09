@@ -638,9 +638,15 @@ void AccessTokenManagerService::AccessTokenServiceParamSet() const
 {
     int32_t res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(1).c_str());
     if (res != 0) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY failed %{public}d", res);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY 1 failed %{public}d", res);
+        return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY success");
+    // 2 is to tell others sa that at service is loaded.
+    res = SetParameter(ACCESS_TOKEN_SERVICE_INIT_KEY, std::to_string(2).c_str());
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "SetParameter ACCESS_TOKEN_SERVICE_INIT_KEY 2 failed %{public}d", res);
+        return;
+    }
 }
 
 void AccessTokenManagerService::GetConfigValue()
