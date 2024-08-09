@@ -11,6 +11,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ACCESS_BBOX_DIR",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 12,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.SUBSCRIBE_SWING_ABILITY",
             "grantMode": "system_grant",
             "availableLevel": "system_basic",
