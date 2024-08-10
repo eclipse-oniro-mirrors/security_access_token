@@ -256,8 +256,8 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
             return PERMISSION_GRANTED;
         }
         if (iter->grantStatus[0] != PERMISSION_GRANTED) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted",
-                tokenId_, permissionName.c_str());
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not granted, flag: %{public}d",
+                tokenId_, permissionName.c_str(), iter->grantFlags[0]);
             return PERMISSION_DENIED;
         }
         return PERMISSION_GRANTED;

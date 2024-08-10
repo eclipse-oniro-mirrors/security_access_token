@@ -361,7 +361,8 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         permState.state = INVALID_OPER;
         return;
     }
-
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: status: %{public}d, flag: %{public}d",
+        permState.permissionName.c_str(), goalGrantStatus, goalGrantFlag);
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
