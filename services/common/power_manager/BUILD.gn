@@ -30,11 +30,18 @@ ohos_shared_library("accesstoken_power_manager") {
     }
     branch_protector_ret = "pac_ret"
 
-    include_dirs = [ "include" ]
+    include_dirs = [
+      "include",
+      "${access_token_path}/frameworks/common/include",
+    ]
 
-    sources = [ "src/power_manager_loader.cpp" ]
+    sources = [
+      "src/power_manager_client.cpp",
+      "src/power_manager_loader.cpp",
+      "src/power_manager_proxy.cpp",
+    ]
 
-    cflags_cc = []
+    cflags_cc = [ "-DHILOG_ENABLE" ]
     configs = [
       "${access_token_path}/config:access_token_compile_flags",
       "${access_token_path}/config:coverage_flags",
@@ -43,8 +50,10 @@ ohos_shared_library("accesstoken_power_manager") {
 
     external_deps = [
       "c_utils:utils",
+      "hilog:libhilog",
       "ipc:ipc_core",
-      "power_manager:powermgr_client",
+      "safwk:system_ability_fwk",
+      "samgr:samgr_proxy",
     ]
   }
 }
