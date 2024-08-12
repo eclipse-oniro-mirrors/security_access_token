@@ -16,6 +16,7 @@
 #ifndef ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 #define ACCESSTOKEN_TOKEN_INFO_MANAGER_H
 
+#include <algorithm>
 #include <atomic>
 #include <map>
 #include <memory>
@@ -76,6 +77,9 @@ public:
     void GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList);
     int32_t GetHapTokenDlpType(AccessTokenID id);
     int32_t SetPermDialogCap(AccessTokenID tokenID, bool enable);
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+    int32_t ClearUserPolicy();
     bool GetPermDialogCap(AccessTokenID tokenID);
     int32_t ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission);
     void DumpToken();
@@ -83,6 +87,9 @@ public:
     void AddDumpTaskNum();
     void ReduceDumpTaskNum();
     int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
+    void ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t ClearUserGrantedPermission(AccessTokenID tokenID);
+    bool IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName);
 
 #ifdef TOKEN_SYNC_ENABLE
     /* tokensync needed */
@@ -128,9 +135,18 @@ private:
     void DumpHapTokenInfoByTokenId(const AccessTokenID tokenId, std::string& dumpInfo);
     void DumpHapTokenInfoByBundleName(const std::string& bundleName, std::string& dumpInfo);
     void DumpAllHapTokenInfo(std::string& dumpInfo);
+    void DumpUserPolicyInfo(std::string& dumpInfo);
     void DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo);
     void DumpAllNativeTokenInfo(std::string& dumpInfo);
-
+    int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
+        const std::vector<std::string>& permList, std::map<int32_t, bool>& changedUserList);
+    int32_t ParseUserPolicyInfo(const std::vector<UserState>& userList,
+        std::map<int32_t, bool>& changedUserList);
+    int32_t UpdatePermissionStateToKernel(const std::vector<std::string>& permCodeList,
+        const std::map<AccessTokenID, bool>& tokenIdList);
+    int32_t UpdatePermissionStateToKernel(const std::map<AccessTokenID, bool>& tokenIdList);
+    void GetGoalHapList(std::map<AccessTokenID, bool>& tokenIdList,
+        std::map<int32_t, bool>& changedUserList);
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::atomic_int32_t curTaskNum_;
     std::shared_ptr<ffrt::queue> ffrtTaskQueue_ = std::make_shared<ffrt::queue>("TokenStore");
@@ -149,6 +165,10 @@ private:
     std::map<std::string, AccessTokenID> hapTokenIdMap_;
     std::map<int, std::shared_ptr<NativeTokenInfoInner>> nativeTokenInfoMap_;
     std::map<std::string, AccessTokenID> nativeTokenIdMap_;
+
+    OHOS::Utils::RWLock userPolicyLock_;
+    std::vector<int32_t> inactiveUserList_;
+    std::vector<std::string> permPolicyList_;
 };
 } // namespace AccessToken
 } // namespace Security

@@ -35,6 +35,7 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
+static const int32_t MAX_USER_POLICY_SIZE = 1024;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 #endif
@@ -913,6 +914,96 @@ void AccessTokenManagerStub::GetNativeTokenNameInner(MessageParcel& data, Messag
     }
 }
 
+void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::vector<UserState> userList;
+    std::vector<std::string> permList;
+    uint32_t userSize = data.ReadUint32();
+    uint32_t permSize = data.ReadUint32();
+    if ((userSize > MAX_USER_POLICY_SIZE) || (permSize > MAX_USER_POLICY_SIZE)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
+        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
+        return;
+    }
+    for (uint32_t i = 0; i < userSize; i++) {
+        UserState userInfo;
+        if (!data.ReadInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        if (!data.ReadBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        userList.emplace_back(userInfo);
+    }
+    for (uint32_t i = 0; i < permSize; i++) {
+        std::string permission;
+        if (!data.ReadString(permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permission.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        permList.emplace_back(permission);
+    }
+    int32_t res = this->InitUserPolicy(userList, permList);
+    reply.WriteInt32(res);
+}
+
+void AccessTokenManagerStub::UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::vector<UserState> userList;
+    uint32_t userSize = data.ReadUint32();
+    if (userSize > MAX_USER_POLICY_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
+        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
+        return;
+    }
+    for (uint32_t i = 0; i < userSize; i++) {
+        UserState userInfo;
+        if (!data.ReadInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        if (!data.ReadBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        userList.emplace_back(userInfo);
+    }
+    int32_t res = this->UpdateUserPolicy(userList);
+    reply.WriteInt32(res);
+}
+
+void AccessTokenManagerStub::ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    int32_t res = this->ClearUserPolicy();
+    reply.WriteInt32(res);
+}
+
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
@@ -1011,6 +1102,12 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::GetPermissionManagerInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME)] =
         &AccessTokenManagerStub::GetNativeTokenNameInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::INIT_USER_POLICY)] =
+        &AccessTokenManagerStub::InitUserPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_USER_POLICY)] =
+        &AccessTokenManagerStub::UpdateUserPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_POLICY)] =
+        &AccessTokenManagerStub::ClearUserPolicyInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()

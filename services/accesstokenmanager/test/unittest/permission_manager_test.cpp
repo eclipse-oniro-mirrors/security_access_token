@@ -1514,25 +1514,6 @@ HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level1)
 }
 
 /**
- * @tc.name: ClearUserGrantedPermissionState001
- * @tc.desc: PermissionManager::ClearUserGrantedPermissionState function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123; // 123 is random input
-
-    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-    ASSERT_NE(nullptr, hap);
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
-
-    PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
-
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
-}
-
-/**
  * @tc.name: GrantTempPermission001
  * @tc.desc: Test grant temp permission revoke permission after switching to background
  * @tc.type: FUNC

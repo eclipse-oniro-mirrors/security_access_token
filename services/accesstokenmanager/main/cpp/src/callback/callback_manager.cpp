@@ -134,7 +134,7 @@ bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>&
         [permName](const std::string& perm) { return perm == permName; });
 }
 
-void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID,
+void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID,
     const std::string& permName, int32_t changeType)
 {
     for (auto it = list.begin(); it != list.end(); ++it) {
@@ -204,7 +204,7 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
 #endif
         std::vector<sptr<IRemoteObject>> list;
         this->GetCallbackObjectList(tokenID, permName, list);
-        this->ExcuteAllCallback(list, tokenID, permName, changeType);
+        this->ExecuteAllCallback(list, tokenID, permName, changeType);
     };
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE

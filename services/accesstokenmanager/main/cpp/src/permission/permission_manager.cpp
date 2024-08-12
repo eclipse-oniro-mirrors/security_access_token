@@ -466,7 +466,7 @@ int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, con
     if (permRequestToggleStatusRes.empty()) {
         // never set, return default status: CLOSED if APP_TRACKING_CONSENT
         return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?
-            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;;
+            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
     }
     return permRequestToggleStatusRes[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
 }
@@ -900,18 +900,6 @@ bool PermissionManager::LocationPermissionSpecialHandle(
     return GetLocationPermissionState(tokenID, reqPermList, permsList, apiVersion, locationIndex);
 }
 
-void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
-{
-    if (ClearUserGrantedPermission(tokenID) != RET_SUCCESS) {
-        return;
-    }
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
-    for (const auto& id : tokenIdList) {
-        (void)ClearUserGrantedPermission(id);
-    }
-}
-
 void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
     const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID)
 {
@@ -954,58 +942,6 @@ void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStateFul
     }
 }
 
-int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
-{
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", tokenID);
-        return ERR_PARAM_INVALID;
-    }
-    if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", tokenID);
-        return ERR_IDENTITY_CHECK_FAILED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
-        return ERR_PARAM_INVALID;
-    }
-    std::vector<std::string> grantedPermListBefore;
-    permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
-    std::vector<PermissionStateFull> stateListBefore;
-    permPolicySet->GetPermissionStateList(stateListBefore);
-
-    // reset permission.
-    permPolicySet->ResetUserGrantPermissionStatus();
-    // clear security component granted permission which is not requested in module.json.
-    permPolicySet->ClearSecCompGrantedPerm();
-
-#ifdef SUPPORT_SANDBOX_APP
-    // update permission status with dlp permission rule.
-    std::vector<PermissionStateFull> permListOfHap;
-    permPolicySet->GetPermissionStateFulls(permListOfHap);
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
-        infoPtr->GetDlpType(), permListOfHap);
-    permPolicySet->Update(permListOfHap);
-#endif
-
-    std::vector<std::string> grantedPermListAfter;
-    permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
-    std::vector<PermissionStateFull> stateListAfter;
-    permPolicySet->GetPermissionStateList(stateListAfter);
-    std::vector<PermissionStateFull> stateChangeList;
-    GetStateOrFlagChangedList(stateListBefore, stateListAfter, stateChangeList);
-    if (!AccessTokenInfoManager::GetInstance().UpdateStatesToDatabase(tokenID, stateChangeList)) {
-        return ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    // clear
-    AddPermToKernel(tokenID, permPolicySet);
-
-    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
-    return RET_SUCCESS;
-}
-
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
 {
     grantEvent_.NotifyPermGrantStoreResult(result, timestamp);
@@ -1037,6 +973,39 @@ void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared
     std::vector<uint32_t> opCodeList;
     std::vector<bool> statusList;
     policy->GetPermissionStateList(opCodeList, statusList);
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    if (ret != ACCESS_TOKEN_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
+}
+
+void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy,
+    const std::vector<std::string>& permList)
+{
+    if (policy == nullptr) {
+        return;
+    }
+
+    std::vector<uint32_t> permCodeList;
+    for (const auto &permission : permList) {
+        uint32_t code;
+        if (!TransferPermissionToOpcode(permission, code)) {
+            continue;
+        }
+        permCodeList.emplace_back(code);
+    }
+
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    bool isUserActive = false;
+    policy->GetPermissionStateList(opCodeList, statusList);
+    for (uint32_t i = 0; i < opCodeList.size(); i++) {
+        if (std::find(permCodeList.begin(), permCodeList.end(), opCodeList[i]) == permCodeList.end()) {
+            continue;
+        }
+        statusList[i] = statusList[i] && isUserActive;
+    }
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
     if (ret != ACCESS_TOKEN_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
