@@ -488,6 +488,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.NETWORK_DHCP",                  false},
     {"ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE",       false},
     {"ohos.permission.ALLOW_CONNECT_CAR",                   false},
+    {"ohos.permission.ACCESS_IDM_WIDGET",                   false},
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
