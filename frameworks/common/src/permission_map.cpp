@@ -486,8 +486,10 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.PUBLISH_DISPLAY_ROTATION_EVENT",                      false},
     {"ohos.permission.PUBLISH_CAST_PLUGGED_EVENT",                  false},
     {"ohos.permission.NETWORK_DHCP",                  false},
+    {"ohos.permission.ACCESS_BBOX_DIR",               false},
     {"ohos.permission.ACCESS_CAR_DISTRIBUTED_ENGINE",       false},
     {"ohos.permission.ALLOW_CONNECT_CAR",                   false},
+    {"ohos.permission.ACCESS_IDM_WIDGET",                   false},
     {"ohos.permission.MANAGE_ACCESSORY",                    false},
     {"ohos.permission.COLLECT_ACCESSORY_LOG",               false},
 };
