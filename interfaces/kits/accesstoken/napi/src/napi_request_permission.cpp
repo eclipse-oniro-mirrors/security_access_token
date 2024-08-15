@@ -909,11 +909,6 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
             ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d not existed.", id);
             return;
         }
-        if (iter->second.empty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map is empty", id);
-            instanceIdMap_.erase(id);
-            return;
-        }
         while (!iter->second.empty()) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
             asyncContext = iter->second[0];
@@ -922,6 +917,11 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
             if (isDynamic) {
                 break;
             }
+        }
+        if (iter->second.empty()) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map is empty", id);
+            instanceIdMap_.erase(id);
+            return;
         }
     }
     if (isDynamic) {
