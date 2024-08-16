@@ -251,6 +251,10 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "add same hap token";
+    PermissionDef permDef;
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionManager::GetInstance().GetDefPermission(g_infoManagerTestPermDef1.permissionName, permDef));
+    ASSERT_EQ(permDef.permissionName, g_infoManagerTestPermDef1.permissionName);
 
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);

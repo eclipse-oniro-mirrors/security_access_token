@@ -128,6 +128,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
             PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
         } else {
+            PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());
         }
@@ -143,8 +144,7 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params(tokenID: %{public}u)!", tokenID);
         return;
     }
-    std::string bundleName = tokenInfo->GetBundleName();
-    PermissionDefinitionCache::GetInstance().DeleteByBundleName(bundleName);
+    PermissionDefinitionCache::GetInstance().DeleteByToken(tokenID);
 }
 
 int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
