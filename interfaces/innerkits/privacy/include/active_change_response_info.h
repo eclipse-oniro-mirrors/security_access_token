@@ -50,6 +50,7 @@ enum ActiveChangeType {
     PERM_INACTIVE = 0,
     PERM_ACTIVE_IN_FOREGROUND = 1,
     PERM_ACTIVE_IN_BACKGROUND = 2,
+    PERM_TEMPORARY_CALL,
 };
 
 /**
