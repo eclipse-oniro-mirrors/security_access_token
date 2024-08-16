@@ -32,6 +32,7 @@
 #include "constant_common.h"
 #include "data_translator.h"
 #include "i_state_change_callback.h"
+#include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "libraryloader.h"
 #include "parameter.h"
@@ -1116,9 +1117,8 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
             return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
         }
         if (GetMuteStatus(permissionName, MIXED)) {
-            if (!ShowGlobalDialog(permissionName)) {
-                return ERR_SERVICE_ABNORMAL;
-            }
+            AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+            CallbackExecute(callingTokenID, permissionName, PERM_TEMPORARY_CALL);
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
