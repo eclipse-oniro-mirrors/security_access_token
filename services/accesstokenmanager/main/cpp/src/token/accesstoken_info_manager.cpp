@@ -710,8 +710,7 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     // update hap to kernel
     std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetHapInfoPermissionPolicySet();
     PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
-    ModifyHapTokenInfoFromDb(tokenID);
-    return RET_SUCCESS;
+    return ModifyHapTokenInfoFromDb(tokenID);
 }
 
 #ifdef TOKEN_SYNC_ENABLE
@@ -1120,9 +1119,31 @@ int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
 
 int AccessTokenInfoManager::ModifyHapTokenInfoFromDb(AccessTokenID tokenID)
 {
+    std::shared_ptr<HapTokenInfoInner> hapInner = GetHapTokenInfoInner(tokenID);
+    if (hapInner == nullptr) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "token %{public}u info is null!", tokenID);
+        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
+    }
+
     Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->modifyLock_);
-    RemoveHapTokenInfoFromDb(tokenID);
-    return AddHapTokenInfoToDb(tokenID);
+    // get new hap token info from cache
+    std::vector<GenericValues> hapInfoValues;
+    hapInner->StoreHapInfo(hapInfoValues); // only exsit one if empty something is wrong
+    if (hapInfoValues.empty()) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Hap token info is empty!");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    // get new permission def from cache if exsits
+    std::vector<GenericValues> permDefValues;
+    PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
+
+    // get new permission def from cache if exsits
+    std::vector<GenericValues> permStateValues;
+    hapInner->StorePermissionPolicy(permStateValues);
+
+    return AccessTokenDb::GetInstance().DeleteAndInsertHap(tokenID, hapInfoValues, permDefValues,
+        permStateValues);
 }
 
 int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, const std::string& permission)
