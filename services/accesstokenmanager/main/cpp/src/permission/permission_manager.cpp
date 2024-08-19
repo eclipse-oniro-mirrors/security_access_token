@@ -589,6 +589,14 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
 
+    // To notify kill process when perm is revoke
+    if ((flag != PERMISSION_ALLOW_THIS_TIME) && (flag != PERMISSION_COMPONENT_SET)) {
+        if (!isGranted) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Perm(%{public}s) is revoked, kill process(%{public}u).",
+                permissionName.c_str(), tokenID);
+            AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(tokenID);
+        }
+    }
     // DFX.
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
@@ -612,7 +620,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     if (flag == PERMISSION_ALLOW_THIS_TIME) {
         if (isGranted) {
             if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(tokenID, permissionName)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Grant permission failed, id:%{public}d, permissionName:%{public}s",
                     tokenID, permissionName.c_str());
                 return ERR_IDENTITY_CHECK_FAILED;
             }
