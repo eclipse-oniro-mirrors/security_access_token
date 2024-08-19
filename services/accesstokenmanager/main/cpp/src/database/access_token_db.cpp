@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <mutex>
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -247,6 +248,90 @@ int32_t AccessTokenDb::FindByConditions(DataType type,
         results.emplace_back(value);
     }
     return SUCCESS;
+}
+
+int32_t AccessTokenDb::HandleDeleteAndAddSql(const GenericValues& conditionValue,
+    const std::vector<GenericValues>& addValues, const std::string& delSql, const std::string& addSql)
+{
+    // delete table record, condition only token_id
+    auto statDel = Prepare(delSql);
+    statDel.Bind(TokenFiledConst::FIELD_TOKEN_ID, conditionValue.Get(TokenFiledConst::FIELD_TOKEN_ID));
+    if (statDel.Step() != Statement::State::DONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Delete table record failed, errorMsg is %{public}s.", SpitError().c_str());
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    // if no value to add return success
+    if (addValues.empty()) {
+        return RET_SUCCESS;
+    }
+
+    // add to table
+    auto statAdd = Prepare(addSql);
+    for (const auto& value : addValues) {
+        std::vector<std::string> addColumns = value.GetAllKeys();
+        // bind column value
+        for (const auto& column : addColumns) {
+            statAdd.Bind(column, value.Get(column));
+        }
+
+        // exec sql
+        if (statAdd.Step() != Statement::State::DONE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Add table failed, errorMsg is %{public}s.", SpitError().c_str());
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+        statAdd.Reset(); // reset statement
+    }
+
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+    const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+
+    // create delete sqls
+    std::vector<std::string> delColumnNames;
+    delColumnNames.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
+    std::string hapDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO, delColumnNames);
+    std::string defDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF, delColumnNames);
+    std::string stateDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE, delColumnNames);
+
+    // create add sqls
+    std::string hapAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO);
+    std::string defAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF);
+    std::string stateAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE);
+
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    BeginTransaction();
+
+    // delete and add hap token info
+    int32_t res = HandleDeleteAndAddSql(conditionValue, hapInfoValues, hapDelSql, hapAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    // delete and add permission def
+    res = HandleDeleteAndAddSql(conditionValue, permDefValues, defDelSql, defAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    // delete and add permission state
+    res = HandleDeleteAndAddSql(conditionValue, permStateValues, stateDelSql, stateAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    CommitTransaction();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Delete and insert hap success!");
+
+    return RET_SUCCESS;
 }
 
 int64_t AccessTokenDb::Count(DataType type)
