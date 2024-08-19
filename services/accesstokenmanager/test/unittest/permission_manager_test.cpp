@@ -1403,6 +1403,51 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
 }
 
 /**
+ * @tc.name: UpdateTokenPermissionState003
+ * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.DUMP";
+    uint32_t flag = 0;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain"
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    // permissio is  granted
+    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, true, flag));
+
+    flag = PERMISSION_ALLOW_THIS_TIME;
+    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag));
+
+    flag = PERMISSION_COMPONENT_SET;
+    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag));
+
+    flag = PERMISSION_USER_FIXED;
+    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
  * @tc.name: IsAllowGrantTempPermission001
  * @tc.desc: PermissionManager::IsAllowGrantTempPermission function test
  * @tc.type: FUNC

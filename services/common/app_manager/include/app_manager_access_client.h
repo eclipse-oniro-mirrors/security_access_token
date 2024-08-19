@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,6 +33,7 @@ public:
     static AppManagerAccessClient& GetInstance();
     virtual ~AppManagerAccessClient();
 
+    int32_t KillProcessesByAccessTokenId(const uint32_t accessTokenId);
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer);
     int32_t GetForegroundApplications(std::vector<AppStateData>& list);
