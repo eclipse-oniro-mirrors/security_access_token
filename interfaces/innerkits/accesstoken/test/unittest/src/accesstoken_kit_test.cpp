@@ -867,7 +867,7 @@ HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus004, TestSize.Level
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -984,7 +984,7 @@ static void AllocAndSetHapToken(void)
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef1 = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -1004,7 +1004,7 @@ static void AllocAndSetHapToken(void)
     };
 
     PermissionDef infoManagerTestPermDef2 = {
-        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,

@@ -95,7 +95,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
 };
 
 PermissionDef g_infoManagerTestPermDef3 = {
-    .permissionName = "ohos.permission.GET_BUNDLE_INFO",
+    .permissionName = "ohos.permission.GET_BUNDLE_INFO_TEST",
     .bundleName = "accesstoken_test3",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,

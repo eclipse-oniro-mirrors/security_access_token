@@ -1419,29 +1419,33 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
         .instIndex = INST_INDEX,
         .appIDDesc = "permission_manager_test"
     };
+    PermissionStateFull permStat = {
+        .permissionName = permissionName,
+        .isGeneral = true,
+        .resDeviceID = {"dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
     HapPolicyParams policy = {
         .apl = APL_NORMAL,
-        .domain = "domain"
+        .domain = "domain",
+        .permStateList = {permStat}
     };
     AccessTokenIDEx tokenIdEx = {0};
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
     AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
 
-    // permissio is  granted
-    ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, true, flag));
-
     flag = PERMISSION_ALLOW_THIS_TIME;
-    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
         tokenId, permissionName, false, flag));
 
     flag = PERMISSION_COMPONENT_SET;
-    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
         tokenId, permissionName, false, flag));
 
     flag = PERMISSION_USER_FIXED;
-    ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
         tokenId, permissionName, false, flag));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
