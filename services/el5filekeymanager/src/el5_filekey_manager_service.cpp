@@ -200,9 +200,13 @@ int32_t El5FilekeyManagerService::GenerateAppKey(uint32_t uid, const std::string
     return service_->GenerateAppKey(uid, bundleName, keyId);
 }
 
-int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& keyId)
+int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& bundleName, int32_t userId)
 {
-    LOG_DEBUG("Delete app key.");
+    LOG_DEBUG("Delete %{public}d's %{public}s app key.", userId, bundleName.c_str());
+    if (userId < 0) {
+        LOG_ERROR("UserId is invalid!");
+        return EFM_ERR_INVALID_PARAMETER;
+    }
     if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
         LOG_ERROR("Delete app key permission denied.");
         return EFM_ERR_NO_PERMISSION;
@@ -214,7 +218,7 @@ int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& keyId)
         return EFM_SUCCESS;
     }
 
-    return service_->DeleteAppKey(keyId);
+    return service_->DeleteAppKey(bundleName, userId);
 }
 
 int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,

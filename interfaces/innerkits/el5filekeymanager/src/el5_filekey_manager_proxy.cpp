@@ -121,15 +121,19 @@ int32_t El5FilekeyManagerProxy::GenerateAppKey(uint32_t uid, const std::string& 
     return result;
 }
 
-int32_t El5FilekeyManagerProxy::DeleteAppKey(const std::string& keyId)
+int32_t El5FilekeyManagerProxy::DeleteAppKey(const std::string& bundleName, int32_t userId)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(El5FilekeyManagerInterface::GetDescriptor())) {
         LOG_ERROR("Failed to write WriteInterfaceToken.");
         return EFM_ERR_IPC_WRITE_DATA;
     }
-    if (!data.WriteString(keyId)) {
-        LOG_ERROR("Failed to WriteString(%{public}s).", keyId.c_str());
+    if (!data.WriteString(bundleName)) {
+        LOG_ERROR("Failed to WriteString(%{public}s).", bundleName.c_str());
+        return EFM_ERR_IPC_WRITE_DATA;
+    }
+    if (!data.WriteUint32(userId)) {
+        LOG_ERROR("Failed to WriteUint32(%{public}d).", userId);
         return EFM_ERR_IPC_WRITE_DATA;
     }
 

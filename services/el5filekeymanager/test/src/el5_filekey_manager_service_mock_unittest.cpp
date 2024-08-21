@@ -67,7 +67,7 @@ public:
         return EFM_SUCCESS;
     }
 
-    int32_t DeleteAppKey(const std::string& keyId)
+    int32_t DeleteAppKey(const std::string& bundleName, int32_t userId)
     {
         return EFM_SUCCESS;
     }
@@ -219,7 +219,7 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, GenerateAppKey002, TestSize.Level1)
 
 /**
  * @tc.name: DeleteAppKey001
- * @tc.desc: Delete app key by keyId.
+ * @tc.desc: Delete app key by bundle name and user id.
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
@@ -227,16 +227,17 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey001, TestSize.Level1)
 {
     el5FilekeyManagerService_->service_ = nullptr;
 
-    std::string keyId = "";
+    std::string bundleName = "";
+    int32_t userId = 100;
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(keyId), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, userId), EFM_SUCCESS);
 }
 
 /**
  * @tc.name: DeleteAppKey002
- * @tc.desc: Delete app key by keyId.
+ * @tc.desc: Delete app key by bundle name and user id.
  * @tc.type: FUNC
  * @tc.require: issueIAD2MD
  */
@@ -244,11 +245,12 @@ HWTEST_F(El5FilekeyManagerServiceMockTest, DeleteAppKey002, TestSize.Level1)
 {
     el5FilekeyManagerService_->service_ = new TestEl5FilekeyServiceExt();
 
-    std::string keyId = "";
+    std::string bundleName = "";
+    int32_t userId = 100;
 
     MockIpc::SetCallingUid(3060);
 
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(keyId), EFM_SUCCESS);
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, userId), EFM_SUCCESS);
 }
 
 /**

@@ -120,14 +120,15 @@ HWTEST_F(El5FilekeyManagerServiceTest, GenerateAppKey001, TestSize.Level1)
 
 /**
  * @tc.name: DeleteAppKey001
- * @tc.desc: Delete app key by keyId without permission.
+ * @tc.desc: Delete app key by bundle name and user id without permission.
  * @tc.type: FUNC
  * @tc.require: issueI9JGMV
  */
 HWTEST_F(El5FilekeyManagerServiceTest, DeleteAppKey001, TestSize.Level1)
 {
-    std::string keyId = "";
-    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(keyId), EFM_ERR_NO_PERMISSION);
+    std::string bundleName = "";
+    int32_t userId = 100;
+    ASSERT_EQ(el5FilekeyManagerService_->DeleteAppKey(bundleName, userId), EFM_ERR_NO_PERMISSION);
 }
 
 /**

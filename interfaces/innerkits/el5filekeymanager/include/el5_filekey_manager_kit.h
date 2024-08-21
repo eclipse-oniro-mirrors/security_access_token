@@ -54,10 +54,11 @@ public:
     static int32_t GenerateAppKey(uint32_t uid, const std::string& bundleName, std::string& keyId);
     /**
      * @brief Delete app key of the uninstalled application.
-     * @param keyId KeyId of the uninstalled application
+     * @param bundleName bundle name
+     * @param userId The user id
      * @return error code, see el5_filekey_manager_error.h
      */
-    static int32_t DeleteAppKey(const std::string& keyId);
+    static int32_t DeleteAppKey(const std::string& bundleName, int32_t userId);
     /**
      * @brief Get key infos of the specified user, the state is unloaded.
      * @param userId The user id

@@ -35,9 +35,9 @@ int32_t El5FilekeyManagerKit::GenerateAppKey(uint32_t uid, const std::string& bu
     return El5FilekeyManagerClient::GetInstance().GenerateAppKey(uid, bundleName, keyId);
 }
 
-int32_t El5FilekeyManagerKit::DeleteAppKey(const std::string& keyId)
+int32_t El5FilekeyManagerKit::DeleteAppKey(const std::string& bundleName, int32_t userId)
 {
-    return El5FilekeyManagerClient::GetInstance().DeleteAppKey(keyId);
+    return El5FilekeyManagerClient::GetInstance().DeleteAppKey(bundleName, userId);
 }
 
 int32_t El5FilekeyManagerKit::GetUserAppKey(int32_t userId, std::vector<std::pair<int32_t, std::string>> &keyInfos)
