@@ -647,6 +647,16 @@ bool AccessTokenManagerService::Initialize()
     AccessTokenInfoManager::GetInstance().Init();
     NativeTokenReceptor::GetInstance().Init();
 
+#ifdef EVENTHANDLER_ENABLE
+    eventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!eventRunner_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a recvRunner.");
+        return false;
+    }
+    eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
+    TempPermissionObserver::GetInstance().InitEventHandler(eventHandler_);
+#endif
+
 #ifdef SUPPORT_SANDBOX_APP
     DlpPermissionSetParser::GetInstance().Init();
 #endif
