@@ -1527,6 +1527,7 @@ bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
     if ((std::find(permPolicyList_.begin(), permPolicyList_.end(), permissionName) != permPolicyList_.end()) &&
         (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "id %{public}u perm %{public}s.", id, permissionName.c_str());
         return true;
     }
     return false;
