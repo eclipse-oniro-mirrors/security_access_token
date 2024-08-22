@@ -153,7 +153,7 @@ void PermissionRecordManager::AddRecord(const PermissionRecord& record)
 int32_t PermissionRecordManager::GetPermissionRecord(const AddPermParamInfo& info, PermissionRecord& record)
 {
     if (AccessTokenKit::GetTokenTypeFlag(info.tokenId) != TOKEN_HAP) {
-        ACCESSTOKEN_LOG_DEBUG(LABEL, "Not hap(%{public}d).", info.tokenId);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Not hap(%{public}d).", info.tokenId);
         return PrivacyError::ERR_PARAM_INVALID;
     }
     int32_t opCode;
@@ -544,7 +544,7 @@ bool PermissionRecordManager::AddRecordToStartList(const PermissionRecord& recor
     std::lock_guard<std::mutex> lock(startRecordListMutex_);
     bool hasStarted = std::any_of(startRecordList_.begin(), startRecordList_.end(),
         [record](const auto& rec) { return (rec.opCode == record.opCode) && (rec.tokenId == record.tokenId); });
-    ACCESSTOKEN_LOG_ERROR(LABEL, "Id(%{public}d), opCode(%{public}d), hasStarted(%{public}d).",
+    ACCESSTOKEN_LOG_INFO(LABEL, "Id(%{public}d), opCode(%{public}d), hasStarted(%{public}d).",
         record.tokenId, record.opCode, hasStarted);
     if (!hasStarted) {
         startRecordList_.emplace_back(record);
@@ -704,6 +704,7 @@ bool PermissionRecordManager::GetRecordFromStartList(uint32_t tokenId,  int32_t 
             return true;
         }
     }
+    ACCESSTOKEN_LOG_ERROR(LABEL, "No records started, tokenId=%{public}d, opCode=%{public}d", tokenId, opCode);
     return false;
 }
 
@@ -824,8 +825,6 @@ void PermissionRecordManager::ExecuteCameraCallbackAsync(AccessTokenID tokenId)
 
 int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry, tokenId=0x%{public}x, permissionName=%{public}s",
-        tokenId, permissionName.c_str());
     InitializeMuteState(permissionName);
     if (GetMuteStatus(permissionName, EDM)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "EDM not allow.");
@@ -924,8 +923,6 @@ int32_t PermissionRecordManager::StartUsingPermission(AccessTokenID tokenId, con
 
 int32_t PermissionRecordManager::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id=0x%{public}x, permissionName=%{public}s",
-        tokenId, permissionName.c_str());
     ExecuteDeletePermissionRecordTask();
 
     if (AccessTokenKit::GetTokenTypeFlag(tokenId) != TOKEN_HAP) {
