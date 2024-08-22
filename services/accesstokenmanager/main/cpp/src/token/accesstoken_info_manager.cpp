@@ -710,10 +710,13 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
     {
         Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
         infoPtr->Update(info, permStateList, apl);
-        ACCESSTOKEN_LOG_INFO(LABEL,
-            "Token %{public}u bundle name %{public}s user %{public}d inst %{public}d tokenAttr %{public}d update ok!",
-            tokenID, infoPtr->GetBundleName().c_str(), infoPtr->GetUserID(), infoPtr->GetInstIndex(),
-            infoPtr->GetHapInfoBasic().tokenAttr);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Token %{public}u bundle name %{public}s user %{public}d \
+inst %{public}d tokenAttr %{public}d update ok!", tokenID, infoPtr->GetBundleName().c_str(),
+            infoPtr->GetUserID(), infoPtr->GetInstIndex(), infoPtr->GetHapInfoBasic().tokenAttr);
+        // DFX
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_HAP",
+            HiviewDFX::HiSysEvent::EventType::STATISTIC, "TOKENID", infoPtr->GetTokenID(), "USERID",
+            infoPtr->GetUserID(), "BUNDLENAME", infoPtr->GetBundleName(), "INSTINDEX", infoPtr->GetInstIndex());
     }
     PermissionManager::GetInstance().AddDefPermissions(permList, tokenID, true);
 #ifdef TOKEN_SYNC_ENABLE
@@ -1476,6 +1479,10 @@ void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID token
     for (const auto& id : tokenIdList) {
         (void)ClearUserGrantedPermission(id);
     }
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "CLEAR_USER_PERMISSION_STATE",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID,
+        "TOKENID_LEN", static_cast<uint32_t>(tokenIdList.size()));
 }
 
 int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
