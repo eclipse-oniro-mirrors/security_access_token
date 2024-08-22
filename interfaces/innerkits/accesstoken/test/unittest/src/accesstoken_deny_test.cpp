@@ -99,6 +99,37 @@ void AccessTokenDenyTest::TearDown()
 }
 
 /**
+ * @tc.name: InitUserPolicy001
+ * @tc.desc: InitUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level1)
+{
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
+    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+
+/**
+ * @tc.name: UpdateUserPolicy002
+ * @tc.desc: UpdateUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy002, TestSize.Level1)
+{
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    int32_t ret = AccessTokenKit::UpdateUserPolicy(userList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+
+/**
  * @tc.name: AllocHapToken001
  * @tc.desc: AllocHapToken with no permission
  * @tc.type: FUNC

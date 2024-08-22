@@ -135,6 +135,11 @@ int AccessTokenManagerService::VerifyAccessToken(AccessTokenID tokenID, const st
     int32_t res = PermissionManager::GetInstance().VerifyAccessToken(tokenID, permissionName);
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID: %{public}d, permission: %{public}s, res %{public}d",
         tokenID, permissionName.c_str(), res);
+    if ((res == PERMISSION_GRANTED) &&
+        (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_HAP)) {
+        res = AccessTokenInfoManager::GetInstance().IsPermissionRestrictedByUserPolicy(tokenID, permissionName) ?
+            PERMISSION_DENIED : PERMISSION_GRANTED;
+    }
 #ifdef HITRACE_NATIVE_ENABLE
     FinishTrace(HITRACE_TAG_ACCESS_CONTROL);
 #endif
@@ -288,7 +293,7 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
 int AccessTokenManagerService::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d", tokenID);
-    PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
+    AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenID);
     AccessTokenInfoManager::GetInstance().SetPermDialogCap(tokenID, false);
     return RET_SUCCESS;
 }
@@ -553,6 +558,22 @@ int32_t AccessTokenManagerService::GetNativeTokenName(AccessTokenID tokenId, std
     return AccessTokenInfoManager::GetInstance().GetNativeTokenName(tokenId, name);
 }
 
+int32_t AccessTokenManagerService::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    return AccessTokenInfoManager::GetInstance().InitUserPolicy(userList, permList);
+}
+
+int32_t AccessTokenManagerService::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    return AccessTokenInfoManager::GetInstance().UpdateUserPolicy(userList);
+}
+
+int32_t AccessTokenManagerService::ClearUserPolicy()
+{
+    return AccessTokenInfoManager::GetInstance().ClearUserPolicy();
+}
+
 int AccessTokenManagerService::Dump(int fd, const std::vector<std::u16string>& args)
 {
     if (fd < 0) {
@@ -614,14 +635,14 @@ void AccessTokenManagerService::GetConfigValue()
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::ACCESSTOKEN_SERVICE, value)) {
         // set value from config
-        grantBundleName_ = value.atConfig.grantBundleName.empty()
-            ? GRANT_ABILITY_BUNDLE_NAME : value.atConfig.grantBundleName;
-        grantAbilityName_ = value.atConfig.grantAbilityName.empty()
-            ? GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantAbilityName;
-        permStateAbilityName_ = value.atConfig.permStateAbilityName.empty()
-            ? PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
-        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty()
-            ? GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
+        grantBundleName_ = value.atConfig.grantBundleName.empty() ?
+            GRANT_ABILITY_BUNDLE_NAME : value.atConfig.grantBundleName;
+        grantAbilityName_ = value.atConfig.grantAbilityName.empty() ?
+            GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantAbilityName;
+        permStateAbilityName_ = value.atConfig.permStateAbilityName.empty() ?
+            PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
+        globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
+            GLOBAL_SWITCH_SHEET_ABILITY_NAME : value.atConfig.globalSwitchAbilityName;
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;

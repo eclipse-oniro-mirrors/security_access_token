@@ -24,6 +24,7 @@
 #include "permission_definition_cache.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "perm_setproc.h"
 #include "data_translator.h"
 #include "token_field_const.h"
 
@@ -489,6 +490,24 @@ void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::stri
     }
 }
 
+void PermissionPolicySet::GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList,
+    const std::vector<std::string>& constrainedList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& perm : permStateList_) {
+        if (perm.isGeneral) {
+            if ((perm.grantStatus[0] == PERMISSION_GRANTED) &&
+                (std::find(constrainedList.begin(), constrainedList.end(), perm.permissionName) ==
+                constrainedList.end())) {
+                permissionList.emplace_back(perm.permissionName);
+            }
+        }
+    }
+    for (const auto& permission : secCompGrantedPermList_) {
+        permissionList.emplace_back(permission);
+    }
+}
+
 void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
@@ -497,6 +516,39 @@ void PermissionPolicySet::GetPermissionStateList(std::vector<uint32_t>& opCodeLi
         if (TransferPermissionToOpcode(state.permissionName, code)) {
             opCodeList.emplace_back(code);
             statusList.emplace_back(state.grantStatus[0] == PERMISSION_GRANTED);
+        }
+    }
+}
+
+void PermissionPolicySet::RefreshPermStateToKernel(const std::vector<std::string>& permList,
+    bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    for (const auto& state : permStateList_) {
+        if (std::find(permList.begin(), permList.end(), state.permissionName) == permList.end()) {
+            continue;
+        }
+        uint32_t code;
+        if (TransferPermissionToOpcode(state.permissionName, code)) {
+            bool isGrantedCurr;
+            int32_t ret = GetPermissionFromKernel(tokenId, code, isGrantedCurr);
+            bool isGrantedToBe = (state.grantStatus[0] == PERMISSION_GRANTED) && hapUserIsActive;
+            if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "SetPermissionToKernel err=%{public}d", ret);
+                continue;
+            }
+            ACCESSTOKEN_LOG_INFO(LABEL,
+                "id=%{public}u, opCode=%{public}u, isGranted=%{public}d, hapUserIsActive=%{public}d",
+                tokenId, code, isGrantedToBe, hapUserIsActive);
+            if (isGrantedCurr == isGrantedToBe) {
+                continue;
+            }
+            ret = SetPermissionToKernel(tokenId, code, isGrantedToBe);
+            if (ret != RET_SUCCESS) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "SetPermissionToKernel err=%{public}d", ret);
+                continue;
+            }
+            refreshedPermList[state.permissionName] = isGrantedToBe;
         }
     }
 }

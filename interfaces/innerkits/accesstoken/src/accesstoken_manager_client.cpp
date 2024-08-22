@@ -767,6 +767,37 @@ int32_t AccessTokenManagerClient::GetNativeTokenName(AccessTokenID tokenId, std:
     return proxy->GetNativeTokenName(tokenId, name);
 }
 
+int32_t AccessTokenManagerClient::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->InitUserPolicy(userList, permList);
+}
+
+int32_t AccessTokenManagerClient::ClearUserPolicy()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->ClearUserPolicy();
+}
+
+int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->UpdateUserPolicy(userList);
+}
+
 void AccessTokenManagerClient::ReleaseProxy()
 {
     if (proxy_ != nullptr && serviceDeathObserver_ != nullptr) {

@@ -27,6 +27,7 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "ATMProxy"};
 static const int MAX_PERMISSION_SIZE = 1000;
+static const int32_t MAX_USER_POLICY_SIZE = 1024;
 #ifdef TOKEN_SYNC_ENABLE
 static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
 #endif
@@ -1277,6 +1278,127 @@ int32_t AccessTokenManagerProxy::GetNativeTokenName(AccessTokenID tokenId, std::
         }
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, name=%{public}s).", result, name.c_str());
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    size_t userLen = userList.size();
+    size_t permLen = permList.size();
+    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE) || (permLen == 0) || (permLen > MAX_USER_POLICY_SIZE)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserLen %{public}zu or permLen %{public}zu is invalid", userLen, permLen);
+        return ERR_PARAM_INVALID;
+    }
+
+    if (!data.WriteUint32(userLen)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userLen size.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(permLen)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permLen size.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    for (const auto& userInfo : userList) {
+        if (!data.WriteInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userId.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+        if (!data.WriteBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isActive.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+    }
+    for (const auto& permission : permList) {
+        if (!data.WriteString(permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write permission.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::INIT_USER_POLICY, data, reply)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        return ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::ClearUserPolicy()
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::CLEAR_USER_POLICY, data, reply)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        return ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
+    return result;
+}
+
+int32_t AccessTokenManagerProxy::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write interface token failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    size_t userLen = userList.size();
+    if ((userLen == 0) || (userLen > MAX_USER_POLICY_SIZE)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserLen %{public}zu is invalid.", userLen);
+        return ERR_PARAM_INVALID;
+    }
+
+    if (!data.WriteUint32(userLen)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userLen size.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    for (const auto& userInfo : userList) {
+        if (!data.WriteInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write userId.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+        if (!data.WriteBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write isActive.");
+            return ERR_WRITE_PARCEL_FAILED;
+        }
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::UPDATE_USER_POLICY, data, reply)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read replay failed");
+        return ERR_SERVICE_ABNORMAL;
+    }
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Read Int32 failed");
+        return AccessTokenError::ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server data = %{public}d", result);
     return result;
 }
 } // namespace AccessToken

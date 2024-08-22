@@ -931,7 +931,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.dlpType = (HapDlpType)11;; // wrong dlpType
+    wrongBaseInfo.dlpType = (HapDlpType)11; // wrong dlpType
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
@@ -941,6 +941,25 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.tokenID = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+}
+
+/**
+ * @tc.name: ClearUserGrantedPermissionState001
+ * @tc.desc: AccessTokenInfoManagerTest::ClearUserGrantedPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
+
+    AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
 /**

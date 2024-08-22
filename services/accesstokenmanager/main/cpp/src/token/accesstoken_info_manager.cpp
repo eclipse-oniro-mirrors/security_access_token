@@ -42,6 +42,8 @@
 #include "ipc_skeleton.h"
 #include "permission_definition_cache.h"
 #include "permission_manager.h"
+#include "permission_map.h"
+#include "perm_setproc.h"
 #include "access_token_db.h"
 #include "token_field_const.h"
 #include "token_setproc.h"
@@ -257,14 +259,24 @@ int AccessTokenInfoManager::AddHapTokenInfo(const std::shared_ptr<HapTokenInfoIn
     if (idRemoved != INVALID_TOKENID) {
         RemoveHapTokenInfo(idRemoved);
     }
-    // add hap to kernel
-    std::shared_ptr<PermissionPolicySet> policySet = info->GetHapInfoPermissionPolicySet();
-    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
-
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP", HiviewDFX::HiSysEvent::EventType::STATISTIC,
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "ADD_HAP",
+        HiviewDFX::HiSysEvent::EventType::STATISTIC,
         "TOKENID", info->GetTokenID(), "USERID", info->GetUserID(), "BUNDLENAME", info->GetBundleName(),
         "INSTINDEX", info->GetInstIndex());
 
+    // add hap to kernel
+    std::shared_ptr<PermissionPolicySet> policySet = info->GetHapInfoPermissionPolicySet();
+    int32_t userId = info->GetUserID();
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        if (!permPolicyList_.empty() &&
+            (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            PermissionManager::GetInstance().AddPermToKernel(id, policySet, permPolicyList_);
+            return RET_SUCCESS;
+        }
+    }
+    PermissionManager::GetInstance().AddPermToKernel(id, policySet);
     return RET_SUCCESS;
 }
 
@@ -709,6 +721,17 @@ int32_t AccessTokenInfoManager::UpdateHapToken(AccessTokenIDEx& tokenIdEx, const
 #endif
     // update hap to kernel
     std::shared_ptr<PermissionPolicySet> policySet = infoPtr->GetHapInfoPermissionPolicySet();
+    int32_t userId = infoPtr->GetUserID();
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        if (!permPolicyList_.empty() &&
+            (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet, permPolicyList_);
+            ModifyHapTokenInfoFromDb(tokenID);
+            return RET_SUCCESS;
+        }
+    }
     PermissionManager::GetInstance().AddPermToKernel(tokenID, policySet);
     return ModifyHapTokenInfoFromDb(tokenID);
 }
@@ -1259,7 +1282,17 @@ void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapToke
     }
 
     std::vector<std::string> permissionList;
-    policy->GetDeletedPermissionListToNotify(permissionList);
+    int32_t userId = info->GetUserID();
+    {
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        if (!permPolicyList_.empty() &&
+            (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Execute user policy.");
+            policy->GetDeletedPermissionListToNotify(permissionList, permPolicyList_);
+        } else {
+            policy->GetDeletedPermissionListToNotify(permissionList);
+        }
+    }
     if (permissionList.size() != 0) {
         PermissionManager::GetInstance().ParamUpdate(permissionList[0], 0, true);
     }
@@ -1330,6 +1363,27 @@ void AccessTokenInfoManager::DumpAllHapTokenInfo(std::string& dumpInfo)
             dumpInfo.append("\n");
         }
     }
+}
+
+void AccessTokenInfoManager::DumpUserPolicyInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get user policy info.");
+
+    Utils::UniqueReadGuard<Utils::RWLock> infoUser(this->userPolicyLock_);
+    dumpInfo.append(R"({)");
+    dumpInfo.append("\n");
+    dumpInfo.append(R"(  "userIdList": )");
+    for (uint32_t i = 0; i < inactiveUserList_.size(); i++) {
+        dumpInfo.append(R"( )" + std::to_string(inactiveUserList_[i]));
+    }
+    dumpInfo.append("\n");
+    dumpInfo.append(R"(  "permissionList": )");
+    for (uint32_t i = 0; i < permPolicyList_.size(); i++) {
+        dumpInfo.append(R"( )" + permPolicyList_[i]);
+    }
+    dumpInfo.append("\n");
+    dumpInfo.append("}");
+    dumpInfo.append("\n");
 }
 
 void AccessTokenInfoManager::DumpNativeTokenInfoByProcessName(const std::string& processName, std::string& dumpInfo)
@@ -1408,6 +1462,96 @@ void AccessTokenInfoManager::DumpTokenInfo(const AtmToolsParamInfo& info, std::s
 
     DumpAllHapTokenInfo(dumpInfo);
     DumpAllNativeTokenInfo(dumpInfo);
+    DumpUserPolicyInfo(dumpInfo);
+}
+
+
+void AccessTokenInfoManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
+{
+    if (ClearUserGrantedPermission(tokenID) != RET_SUCCESS) {
+        return;
+    }
+    std::vector<AccessTokenID> tokenIdList;
+    GetRelatedSandBoxHapList(tokenID, tokenIdList);
+    for (const auto& id : tokenIdList) {
+        (void)ClearUserGrantedPermission(id);
+    }
+}
+
+int32_t AccessTokenInfoManager::ClearUserGrantedPermission(AccessTokenID id)
+{
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
+        return ERR_PARAM_INVALID;
+    }
+    if (infoPtr->IsRemote()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", id);
+        return ERR_IDENTITY_CHECK_FAILED;
+    }
+    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+    if (permPolicySet == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid params!");
+        return ERR_PARAM_INVALID;
+    }
+    std::vector<std::string> grantedPermListBefore;
+    permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
+    std::vector<PermissionStateFull> stateListBefore;
+    permPolicySet->GetPermissionStateList(stateListBefore);
+
+    // reset permission.
+    permPolicySet->ResetUserGrantPermissionStatus();
+    // clear security component granted permission which is not requested in module.json.
+    permPolicySet->ClearSecCompGrantedPerm();
+
+#ifdef SUPPORT_SANDBOX_APP
+    // update permission status with dlp permission rule.
+    std::vector<PermissionStateFull> permListOfHap;
+    permPolicySet->GetPermissionStateFulls(permListOfHap);
+    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(infoPtr->GetDlpType(), permListOfHap);
+    permPolicySet->Update(permListOfHap);
+#endif
+
+    std::vector<std::string> grantedPermListAfter;
+    permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
+    std::vector<PermissionStateFull> stateListAfter;
+    permPolicySet->GetPermissionStateList(stateListAfter);
+    std::vector<PermissionStateFull> stateChangeList;
+    PermissionManager::GetInstance().GetStateOrFlagChangedList(stateListBefore, stateListAfter, stateChangeList);
+    if (!UpdateStatesToDatabase(id, stateChangeList)) {
+        return ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    {
+        int32_t userId = infoPtr->GetUserID();
+        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        if (!permPolicyList_.empty() &&
+            (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+            PermissionManager::GetInstance().AddPermToKernel(id, permPolicySet, permPolicyList_);
+            PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
+            return RET_SUCCESS;
+        }
+    }
+    PermissionManager::GetInstance().AddPermToKernel(id, permPolicySet);
+    PermissionManager::GetInstance().NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, id);
+    return RET_SUCCESS;
+}
+
+bool AccessTokenInfoManager::IsPermissionRestrictedByUserPolicy(AccessTokenID id, const std::string& permissionName)
+{
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
+    if (infoPtr == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Token %{public}u is invalid.", id);
+        return ERR_PARAM_INVALID;
+    }
+    int32_t userId = infoPtr->GetUserID();
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+    if ((std::find(permPolicyList_.begin(), permPolicyList_.end(), permissionName) != permPolicyList_.end()) &&
+        (std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userId) != inactiveUserList_.end())) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "id %{public}u perm %{public}s.", id, permissionName.c_str());
+        return true;
+    }
+    return false;
 }
 
 void AccessTokenInfoManager::GetRelatedSandBoxHapList(AccessTokenID tokenId, std::vector<AccessTokenID>& tokenIdList)
@@ -1460,6 +1604,201 @@ int32_t AccessTokenInfoManager::SetPermDialogCap(AccessTokenID tokenID, bool ena
     }
 
     return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>& userList,
+    const std::vector<std::string>& permList, std::map<int32_t, bool>& changedUserList)
+{
+    if (!permPolicyList_.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserPolicy has been initialized.");
+        return ERR_USER_POLICY_INITIALIZED;
+    }
+    for (const auto &permission : permList) {
+        if (std::find(permPolicyList_.begin(), permPolicyList_.end(), permission) == permPolicyList_.end()) {
+            permPolicyList_.emplace_back(permission);
+        }
+    }
+
+    if (permPolicyList_.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permList is invalid.");
+        return ERR_PARAM_INVALID;
+    }
+    for (const auto &userInfo : userList) {
+        if (userInfo.userId < 0) {
+            ACCESSTOKEN_LOG_WARN(LABEL, "userId %{public}d is invalid.", userInfo.userId);
+            continue;
+        }
+        if (userInfo.isActive) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "userid %{public}d is active.", userInfo.userId);
+            continue;
+        }
+        inactiveUserList_.emplace_back(userInfo.userId);
+        changedUserList[userInfo.userId] = false;
+    }
+
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::ParseUserPolicyInfo(const std::vector<UserState>& userList,
+    std::map<int32_t, bool>& changedUserList)
+{
+    if (permPolicyList_.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "UserPolicy has been initialized.");
+        return ERR_USER_POLICY_NOT_INITIALIZED;
+    }
+    for (const auto &userInfo : userList) {
+        if (userInfo.userId < 0) {
+            ACCESSTOKEN_LOG_WARN(LABEL, "UserId %{public}d is invalid.", userInfo.userId);
+            continue;
+        }
+        auto iter = std::find(inactiveUserList_.begin(), inactiveUserList_.end(), userInfo.userId);
+        // the userid is changed to foreground
+        if ((iter != inactiveUserList_.end() && userInfo.isActive)) {
+            inactiveUserList_.erase(iter);
+            changedUserList[userInfo.userId] = userInfo.isActive;
+        }
+        // the userid is changed to background
+        if ((iter == inactiveUserList_.end() && !userInfo.isActive)) {
+            changedUserList[userInfo.userId] = userInfo.isActive;
+            inactiveUserList_.emplace_back(userInfo.userId);
+        }
+    }
+    return RET_SUCCESS;
+}
+
+void AccessTokenInfoManager::GetGoalHapList(std::map<AccessTokenID, bool>& tokenIdList,
+    std::map<int32_t, bool>& changedUserList)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
+    for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); ++iter) {
+        AccessTokenID tokenId = iter->first;
+        std::shared_ptr<HapTokenInfoInner> infoPtr = iter->second;
+        if (infoPtr == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId infoPtr is null.");
+            continue;
+        }
+        auto userInfo = changedUserList.find(infoPtr->GetUserID());
+        if (userInfo != changedUserList.end()) {
+            // Record the policy status of hap (active or not).
+            tokenIdList[tokenId] = userInfo->second;
+        }
+    }
+    return;
+}
+
+int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::map<AccessTokenID, bool>& tokenIdList)
+{
+    for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
+        AccessTokenID tokenId = iter->first;
+        std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
+        bool isActive = iter->second;
+        std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+        // refresh under userPolicyLock_
+        {
+            Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+            std::map<std::string, bool> refreshedPermList;
+            permPolicySet->RefreshPermStateToKernel(permPolicyList_, isActive, tokenId, refreshedPermList);
+
+            if (refreshedPermList.size() != 0) {
+                PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
+            }
+            for (auto perm = refreshedPermList.begin(); perm != refreshedPermList.end(); ++perm) {
+                PermStateChangeType change = perm->second ?
+                    PermStateChangeType::STATE_CHANGE_GRANTED : PermStateChangeType::STATE_CHANGE_REVOKED;
+                CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm->first, change);
+            }
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::vector<std::string>& permCodeList,
+    const std::map<AccessTokenID, bool>& tokenIdList)
+{
+    for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
+        AccessTokenID tokenId = iter->first;
+        std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
+        bool isActive = iter->second;
+        std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+        std::map<std::string, bool> refreshedPermList;
+        permPolicySet->RefreshPermStateToKernel(permCodeList, isActive, tokenId, refreshedPermList);
+
+        if (refreshedPermList.size() != 0) {
+            PermissionManager::GetInstance().ParamUpdate(std::string(), 0, true);
+        }
+        for (auto perm = refreshedPermList.begin(); perm != refreshedPermList.end(); ++perm) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Perm %{public}s refreshed by user policy, isactive %{public}d.",
+                perm->first.c_str(), perm->second);
+            PermStateChangeType change = perm->second ?
+                PermStateChangeType::STATE_CHANGE_GRANTED : PermStateChangeType::STATE_CHANGE_REVOKED;
+            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenId, perm->first, change);
+        }
+    }
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenInfoManager::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    std::map<AccessTokenID, bool> tokenIdList;
+    {
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        std::map<int32_t, bool> changedUserList;
+        int32_t ret = ParseUserPolicyInfo(userList, permList, changedUserList);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        if (changedUserList.empty()) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "changedUserList is empty.");
+            return ret;
+        }
+        GetGoalHapList(tokenIdList, changedUserList);
+    }
+    return UpdatePermissionStateToKernel(tokenIdList);
+}
+
+int32_t AccessTokenInfoManager::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    std::map<AccessTokenID, bool> tokenIdList;
+    {
+        std::map<int32_t, bool> changedUserList;
+        Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+        int32_t ret = ParseUserPolicyInfo(userList, changedUserList);
+        if (ret != RET_SUCCESS) {
+            return ret;
+        }
+        if (changedUserList.empty()) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "changedUserList is empty.");
+            return ret;
+        }
+        GetGoalHapList(tokenIdList, changedUserList);
+    }
+    return UpdatePermissionStateToKernel(tokenIdList);
+}
+
+int32_t AccessTokenInfoManager::ClearUserPolicy()
+{
+    std::map<AccessTokenID, bool> tokenIdList;
+    std::vector<std::string> permList;
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
+    if (permPolicyList_.empty()) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "UserPolicy has been cleared.");
+        return RET_SUCCESS;
+    }
+    permList.assign(permPolicyList_.begin(), permPolicyList_.end());
+    std::map<int32_t, bool> changedUserList;
+    for (const auto &userId : inactiveUserList_) {
+        // All user comes to be active for permission manager.
+        changedUserList[userId] = true;
+    }
+    GetGoalHapList(tokenIdList, changedUserList);
+    int32_t ret = UpdatePermissionStateToKernel(permList, tokenIdList);
+    // Lock range is large. While The number of ClearUserPolicy function calls is very small.
+    if (ret == RET_SUCCESS) {
+        permPolicyList_.clear();
+        inactiveUserList_.clear();
+    }
+    return ret;
 }
 
 bool AccessTokenInfoManager::GetPermDialogCap(AccessTokenID tokenID)

@@ -66,6 +66,9 @@ enum class AccessTokenInterfaceCode {
     GET_VERSION,
     GET_PERMISSION_MANAGER_INFO,
     GET_NATIVE_TOKEN_NAME,
+    INIT_USER_POLICY,
+    UPDATE_USER_POLICY,
+    CLEAR_USER_POLICY,
 };
 } // namespace AccessToken
 } // namespace Security

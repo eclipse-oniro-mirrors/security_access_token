@@ -81,6 +81,9 @@ public:
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
     AccessTokenID GetNativeTokenId(const std::string& processName) override;
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
+    int32_t ClearUserPolicy() override;
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
