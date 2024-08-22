@@ -688,6 +688,11 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag);
     }
 #endif
+
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID, "PERMISSION_NAME",
+        permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
     return RET_SUCCESS;
 }
 
