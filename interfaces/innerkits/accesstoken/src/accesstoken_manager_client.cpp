@@ -47,7 +47,8 @@ AccessTokenManagerClient& AccessTokenManagerClient::GetInstance()
     if (instance == nullptr) {
         std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
         if (instance == nullptr) {
-            instance = new AccessTokenManagerClient();
+            AccessTokenManagerClient* tmp = new AccessTokenManagerClient();
+            instance = std::move(tmp);
         }
     }
     return *instance;
@@ -765,6 +766,37 @@ int32_t AccessTokenManagerClient::GetNativeTokenName(AccessTokenID tokenId, std:
         return AccessTokenError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->GetNativeTokenName(tokenId, name);
+}
+
+int32_t AccessTokenManagerClient::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->InitUserPolicy(userList, permList);
+}
+
+int32_t AccessTokenManagerClient::ClearUserPolicy()
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->ClearUserPolicy();
+}
+
+int32_t AccessTokenManagerClient::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->UpdateUserPolicy(userList);
 }
 
 void AccessTokenManagerClient::ReleaseProxy()

@@ -102,6 +102,10 @@ public:
 #endif
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
+    virtual int32_t InitUserPolicy(
+        const std::vector<UserState>& userList, const std::vector<std::string>& permList) = 0;
+    virtual int32_t UpdateUserPolicy(const std::vector<UserState>& userList) = 0;
+    virtual int32_t ClearUserPolicy() = 0;
     virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
     virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
     virtual int32_t GetVersion(uint32_t& version) = 0;

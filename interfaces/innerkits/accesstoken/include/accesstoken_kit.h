@@ -423,6 +423,27 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
+
+    /**
+     * @brief Set user permission policy
+     * @param userList list of user id.
+     * @param permList list of permission
+     * @return error code, see access_token_error.h
+     */
+    static int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
+
+    /**
+     * @brief Update user permission policy
+     * @param userList list of user id.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+
+    /**
+     * @brief Clear user permission policy
+     * @return error code, see access_token_error.h
+     */
+    static int32_t ClearUserPolicy();
 };
 } // namespace AccessToken
 } // namespace Security

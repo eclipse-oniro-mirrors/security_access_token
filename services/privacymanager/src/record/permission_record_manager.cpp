@@ -32,6 +32,7 @@
 #include "constant_common.h"
 #include "data_translator.h"
 #include "i_state_change_callback.h"
+#include "ipc_skeleton.h"
 #include "iservice_registry.h"
 #include "libraryloader.h"
 #include "parameter.h"
@@ -1031,8 +1032,6 @@ bool PermissionRecordManager::IsAllowedUsingPermission(AccessTokenID tokenId, co
 
 int32_t PermissionRecordManager::SetMutePolicy(const PolicyType& policyType, const CallerType& callerType, bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, policyType: %{public}d, isMute: %{public}d",
-        callerType, policyType, isMute);
     std::string permissionName;
     if (callerType == MICROPHONE) {
         permissionName = MICROPHONE_PERMISSION_NAME;
@@ -1118,9 +1117,8 @@ int32_t PermissionRecordManager::SetTempMutePolicy(const std::string permissionN
             return PrivacyError::ERR_EDM_POLICY_CHECK_FAILED;
         }
         if (GetMuteStatus(permissionName, MIXED)) {
-            if (!ShowGlobalDialog(permissionName)) {
-                return ERR_SERVICE_ABNORMAL;
-            }
+            AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
+            CallbackExecute(callingTokenID, permissionName, PERM_TEMPORARY_CALL);
             return PrivacyError::ERR_PRIVACY_POLICY_CHECK_FAILED;
         }
     }
@@ -1578,10 +1576,14 @@ void PermissionRecordManager::GetConfigValue()
     AccessTokenConfigValue value;
     if (policy->GetConfigValue(ServiceType::PRIVACY_SERVICE, value)) {
         // set value from config
-        recordSizeMaximum_ = value.pConfig.sizeMaxImum;
-        recordAgingTime_ = value.pConfig.agingTime;
-        globalDialogBundleName_ = value.pConfig.globalDialogBundleName;
-        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName;
+        recordSizeMaximum_ = value.pConfig.sizeMaxImum == 0
+            ? DEFAULT_PERMISSION_USED_RECORD_SIZE_MAXIMUM : value.pConfig.sizeMaxImum;
+        recordAgingTime_ = value.pConfig.agingTime == 0
+            ? DEFAULT_PERMISSION_USED_RECORD_AGING_TIME : value.pConfig.agingTime;
+        globalDialogBundleName_ = value.pConfig.globalDialogBundleName.empty()
+            ? DEFAULT_PERMISSION_MANAGER_BUNDLE_NAME : value.pConfig.globalDialogBundleName;
+        globalDialogAbilityName_ = value.pConfig.globalDialogAbilityName.empty()
+            ? DEFAULT_PERMISSION_MANAGER_DIALOG_ABILITY : value.pConfig.globalDialogAbilityName;
     } else {
         SetDefaultConfigValue();
     }

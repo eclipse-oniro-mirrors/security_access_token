@@ -25,6 +25,29 @@ static constexpr int32_t ERROR = -1;
 constexpr int32_t CYCLE_LIMIT = 1000;
 }
 
+sptr<IAmsMgr> AppManagerAccessProxy::GetAmsMgr()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        return nullptr;
+    }
+    int32_t error = Remote()->SendRequest(
+        static_cast<uint32_t>(IAppMgr::Message::APP_GET_MGR_INSTANCE), data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAmsMgr failed, error: %{public}d", error);
+        return nullptr;
+    }
+    sptr<IRemoteObject> object = reply.ReadRemoteObject();
+    sptr<IAmsMgr> amsMgr = iface_cast<IAmsMgr>(object);
+    if (!amsMgr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Ability manager service instance is nullptr. ");
+        return nullptr;
+    }
+    return amsMgr;
+}
+
 int32_t AppManagerAccessProxy::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
     const std::vector<std::string>& bundleNameList)
 {

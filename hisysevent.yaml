@@ -68,3 +68,36 @@ GRANT_TEMP_PERMISSION:
   TOKENID: {type: UINT32, desc: tokenID}
   BUNDLENAME: {type: STRING, desc: bundle name}
   PERMISSION_NAME: {type: STRING, desc: permission name}
+
+REQUEST_PERMISSIONS_FROM_USER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: request permissions from user}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  UIEXTENSION_FLAG: {type: BOOL, desc: uiextension flag}
+
+UPDATE_PERMISSION:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: grant or revoke permission}
+  TOKENID: {type: UINT32, desc: tokenID}
+  PERMISSION_NAME: {type: STRING, desc: permission name}
+  PERMISSION_FLAG: {type: UINT32, desc: permission flag}
+  GRANTED_FLAG: {type: BOOL, desc: grant or revoke}
+
+UPDATE_HAP:
+  __BASE: {type: STATISTIC, level: MINOR, tag: usability, desc: update hap to device}
+  TOKENID: {type: UINT32, desc: token id}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+
+CLEAR_USER_PERMISSION_STATE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: clear user permission state}
+  TOKENID: {type: UINT32, desc: tokenid to be cleared}
+  TOKENID_LEN: {type: UINT32, desc: amount of realated sandbox app accesstoken}
+
+SET_PERMISSION_DIALOG_CAP:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: set permission dialog capability}
+  TOKENID: {type: UINT32, desc: token id}
+  USERID: {type: INT32, desc: user id}
+  BUNDLENAME: {type: STRING, desc: bundle name}
+  INSTINDEX: {type: INT32, desc: inst index}
+  ENABLE: {type: BOOL, desc: enable or disable}
+

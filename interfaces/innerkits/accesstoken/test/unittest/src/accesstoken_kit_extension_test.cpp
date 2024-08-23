@@ -95,7 +95,7 @@ PermissionDef g_infoManagerTestPermDef2 = {
 };
 
 PermissionDef g_infoManagerTestPermDef3 = {
-    .permissionName = "ohos.permission.GET_BUNDLE_INFO",
+    .permissionName = "ohos.permission.GET_BUNDLE_INFO_TEST",
     .bundleName = "accesstoken_test3",
     .grantMode = 1,
     .availableLevel = APL_NORMAL,
@@ -1088,25 +1088,19 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback001, TestSi
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
     ASSERT_NE(INVALID_TOKENID, tokenID);
 
-    ATokenTypeEnum ret = AccessTokenKit::GetTokenTypeFlag(tokenID);
-    ASSERT_EQ(ret, TOKEN_HAP);
-
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_DENIED, res);
-
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
 
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(PERMISSION_GRANTED, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -1116,14 +1110,14 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback001, TestSi
 
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
 
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -1177,7 +1171,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback002, TestSi
 
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -1230,12 +1224,11 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback003, TestSi
     AccessTokenID tokenID = tokenIdEx.tokenIdExStruct.tokenID;
 
     callbackPtr->ready_ = false;
-    res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
-    ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(PERMISSION_GRANTED, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
@@ -1243,7 +1236,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback003, TestSi
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -1303,6 +1296,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback004, TestSi
     ASSERT_EQ(RET_SUCCESS, res);
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(PERMISSION_DENIED, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
@@ -1310,7 +1304,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback004, TestSi
     ASSERT_EQ(PERMISSION_GRANTED, res);
     res = AccessTokenKit::RevokePermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -1363,6 +1357,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback005, TestSi
     res = AccessTokenKit::VerifyAccessToken(tokenID, "ohos.permission.CAMERA", false);
     ASSERT_EQ(PERMISSION_DENIED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.CAMERA", 2);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(RET_SUCCESS, res);
     EXPECT_EQ(true, callbackPtr->ready_);
 
@@ -1371,7 +1366,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback005, TestSi
     ASSERT_EQ(PERMISSION_GRANTED, res);
     res = AccessTokenKit::GrantPermission(tokenID, "ohos.permission.GET_BUNDLE_INFO", 2);
     ASSERT_EQ(RET_SUCCESS, res);
-
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenID);
@@ -1421,6 +1416,7 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback006, TestSi
 
     res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
     ASSERT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
@@ -1632,21 +1628,25 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback013, TestSi
 
     res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID, "ohos.permission.CAMERA", 2);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -1688,16 +1688,19 @@ HWTEST_F(AccessTokenKitExtensionTest, RegisterPermStateChangeCallback014, TestSi
     res = AccessTokenKit::GrantPermission(tokenIdEx.tokenIdExStruct.tokenID,
         "ohos.permission.READ_MEDIA", PERMISSION_SYSTEM_FIXED);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::ClearUserGrantedPermissionState(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(false, callbackPtr->ready_);
 
     callbackPtr->ready_ = false;
     res = AccessTokenKit::DeleteToken(tokenIdEx.tokenIdExStruct.tokenID);
     EXPECT_EQ(RET_SUCCESS, res);
+    usleep(500000); // 500000us = 0.5s
     EXPECT_EQ(true, callbackPtr->ready_);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);

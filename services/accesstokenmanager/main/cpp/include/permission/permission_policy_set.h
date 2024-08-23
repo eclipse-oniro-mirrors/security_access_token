@@ -60,8 +60,11 @@ public:
     static uint32_t GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag);
     static uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
+    void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList,
+        const std::vector<std::string>& constrainedList);
     void GetGrantedPermissionList(std::vector<std::string>& permissionList);
-
+    void RefreshPermStateToKernel(const std::vector<std::string>& permList,
+        bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
     void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     uint32_t GetReqPermissionSize();
 private:

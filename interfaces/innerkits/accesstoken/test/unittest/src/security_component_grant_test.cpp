@@ -461,23 +461,27 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest009, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
     // user grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, false);
 
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
     // security component revoke repeat
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_NE(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -510,18 +514,21 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest010, TestSize.Lev
     // security component grant
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
     // user revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION, PERMISSION_USER_FIXED);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
     // security component revoke
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION, PERMISSION_COMPONENT_SET);
     ASSERT_NE(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, false);
 
     res = AccessTokenKit::UnRegisterPermStateChangeCallback(callbackPtr);
@@ -554,6 +561,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     // security component grant a not requested permission
     res = AccessTokenKit::GrantPermission(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
     callbackPtr->ready2_ = false;
 
@@ -563,6 +571,7 @@ HWTEST_F(SecurityComponentGrantTest, SecurityComponentGrantTest011, TestSize.Lev
     // security component revoke
     res = AccessTokenKit::RevokePermission(tokenID, TEST_PERMISSION_NOT_REQUESTED, PERMISSION_COMPONENT_SET);
     ASSERT_EQ(res, RET_SUCCESS);
+    usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(callbackPtr->ready2_, true);
 
     status = AccessTokenKit::VerifyAccessToken(tokenID, TEST_PERMISSION_NOT_REQUESTED, false);

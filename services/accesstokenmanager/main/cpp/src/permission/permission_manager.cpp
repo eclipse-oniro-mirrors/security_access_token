@@ -128,6 +128,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
         if (!PermissionDefinitionCache::GetInstance().HasDefinition(perm.permissionName)) {
             PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
         } else {
+            PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
             ACCESSTOKEN_LOG_INFO(LABEL, "Permission %{public}s has define",
                 TransferPermissionDefToString(perm).c_str());
         }
@@ -143,8 +144,7 @@ void PermissionManager::RemoveDefPermissions(AccessTokenID tokenID)
         ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
         return;
     }
-    std::string bundleName = tokenInfo->GetBundleName();
-    PermissionDefinitionCache::GetInstance().DeleteByBundleName(bundleName);
+    PermissionDefinitionCache::GetInstance().DeleteByToken(tokenID);
 }
 
 int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::string& permissionName)
@@ -212,10 +212,7 @@ PermUsedTypeEnum PermissionManager::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Query permission info of %{public}s failed.", permissionName.c_str());
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    if (USER_GRANT != permissionDefResult.grantMode) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Not user grant for permission=%{public}s.", permissionName.c_str());
-        return PermUsedTypeEnum::INVALID_USED_TYPE;
-    }
+
     std::shared_ptr<PermissionPolicySet> permPolicySet =
         AccessTokenInfoManager::GetInstance().GetHapPermissionPolicySet(tokenID);
     if (permPolicySet == nullptr) {
@@ -350,7 +347,6 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
 {
     int32_t goalGrantStatus;
     uint32_t goalGrantFlag;
-    int32_t userID = IPCSkeleton::GetCallingUid() / BASE_USER_RANGE;
 
     // api8 require vague location permission refuse directly because there is no vague location permission in api8
     if ((permState.permissionName == VAGUE_LOCATION_PERMISSION_NAME) && (apiVersion < ACCURATE_LOCATION_API_VERSION)) {
@@ -365,11 +361,8 @@ void PermissionManager::GetSelfPermissionState(const std::vector<PermissionState
         permState.state = INVALID_OPER;
         return;
     }
-
-    if (FindPermRequestToggleStatusFromDb(userID, permState.permissionName)) {
-        permState.state = SETTING_OPER;
-        return;
-    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "%{public}s: status: %{public}d, flag: %{public}d",
+        permState.permissionName.c_str(), goalGrantStatus, goalGrantFlag);
     if (goalGrantStatus == PERMISSION_DENIED) {
         if ((goalGrantFlag & PERMISSION_POLICY_FIXED) != 0) {
             permState.state = SETTING_OPER;
@@ -462,49 +455,37 @@ int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
     return RET_SUCCESS;
 }
 
-bool PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
+int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
 {
     std::vector<GenericValues> permRequestToggleStatusRes;
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-        permRequestToggleStatusRes);
-    for (const GenericValues& permRequestToggleStatus: permRequestToggleStatusRes) {
-        int32_t id = permRequestToggleStatus.GetInt(TokenFiledConst::FIELD_USER_ID);
-        if (id != userID) {
-            continue;
-        }
-
-        std::string permission = permRequestToggleStatus.GetString(TokenFiledConst::FIELD_PERMISSION_NAME);
-        if (permission == permissionName) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "UserID=%{public}u, permissionName=%{public}s, has been forbidden", userID,
-                permissionName.c_str());
-            return true;
-        }
+    AccessTokenDb::GetInstance().FindByConditions(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+        conditionValue, permRequestToggleStatusRes);
+    if (permRequestToggleStatusRes.empty()) {
+        // never set, return default status: CLOSED if APP_TRACKING_CONSENT
+        return (permissionName == "ohos.permission.APP_TRACKING_CONSENT") ?
+            PermissionRequestToggleStatus::CLOSED : PermissionRequestToggleStatus::OPEN;
     }
-
-    return false;
+    return permRequestToggleStatusRes[0].GetInt(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS);
 }
 
-void PermissionManager::AddPermRequestToggleStatusToDb(int32_t userID, const std::string& permissionName)
+void PermissionManager::AddPermRequestToggleStatusToDb(
+    int32_t userID, const std::string& permissionName, int32_t status)
 {
+    Utils::UniqueWriteGuard<Utils::RWLock> infoGuard(this->permToggleStateLock_);
+    GenericValues value;
+    value.Put(TokenFiledConst::FIELD_USER_ID, userID);
+    value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
+    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, value);
+
     std::vector<GenericValues> permRequestToggleStatusValues;
-    GenericValues genericValues;
-
-    genericValues.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    genericValues.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    permRequestToggleStatusValues.emplace_back(genericValues);
-
+    value.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
+    permRequestToggleStatusValues.emplace_back(value);
     AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         permRequestToggleStatusValues);
-}
-
-void PermissionManager::DeletePermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
-{
-    GenericValues values;
-    values.Put(TokenFiledConst::FIELD_USER_ID, userID);
-    values.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, values);
 }
 
 int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t status,
@@ -538,11 +519,7 @@ int32_t PermissionManager::SetPermissionRequestToggleStatus(const std::string& p
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    if (status == PermissionRequestToggleStatus::CLOSED) {
-        AddPermRequestToggleStatusToDb(userID, permissionName);
-    } else {
-        DeletePermRequestToggleStatusFromDb(userID, permissionName);
-    }
+    AddPermRequestToggleStatusToDb(userID, permissionName, status);
 
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERM_DIALOG_STATUS_INFO",
         HiviewDFX::HiSysEvent::EventType::STATISTIC, "USERID", userID, "PERMISSION_NAME", permissionName,
@@ -577,12 +554,7 @@ int32_t PermissionManager::GetPermissionRequestToggleStatus(const std::string& p
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 
-    bool ret = FindPermRequestToggleStatusFromDb(userID, permissionName);
-    if (ret) {
-        status = PermissionRequestToggleStatus::CLOSED;
-    } else {
-        status = PermissionRequestToggleStatus::OPEN;
-    }
+    status = static_cast<uint32_t>(FindPermRequestToggleStatusFromDb(userID, permissionName));
 
     return 0;
 }
@@ -606,7 +578,7 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "IsUpdated");
-    int32_t changeType = isGranted ? GRANTED : REVOKED;
+    int32_t changeType = isGranted ? STATE_CHANGE_GRANTED : STATE_CHANGE_REVOKED;
 
     // set to kernel(grant/revoke)
     SetPermToKernel(tokenID, permissionName, isGranted);
@@ -617,6 +589,14 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
 
+    // To notify kill process when perm is revoke
+    if ((flag != PERMISSION_ALLOW_THIS_TIME) && (flag != PERMISSION_COMPONENT_SET)) {
+        if (!isGranted) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "Perm(%{public}s) is revoked, kill process(%{public}u).",
+                permissionName.c_str(), tokenID);
+            AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(tokenID);
+        }
+    }
     // DFX.
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
@@ -640,7 +620,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     if (flag == PERMISSION_ALLOW_THIS_TIME) {
         if (isGranted) {
             if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(tokenID, permissionName)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Grant permission failed, tokenID:%{public}d, permissionName:%{public}s",
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Grant permission failed, id:%{public}d, permissionName:%{public}s",
                     tokenID, permissionName.c_str());
                 return ERR_IDENTITY_CHECK_FAILED;
             }
@@ -708,6 +688,11 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag);
     }
 #endif
+
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID, "PERMISSION_NAME",
+        permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
     return RET_SUCCESS;
 }
 
@@ -929,32 +914,22 @@ bool PermissionManager::LocationPermissionSpecialHandle(
     return GetLocationPermissionState(tokenID, reqPermList, permsList, apiVersion, locationIndex);
 }
 
-void PermissionManager::ClearUserGrantedPermissionState(AccessTokenID tokenID)
-{
-    if (ClearUserGrantedPermission(tokenID) != RET_SUCCESS) {
-        return;
-    }
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
-    for (const auto& id : tokenIdList) {
-        (void)ClearUserGrantedPermission(id);
-    }
-}
-
 void PermissionManager::NotifyUpdatedPermList(const std::vector<std::string>& grantedPermListBefore,
     const std::vector<std::string>& grantedPermListAfter, AccessTokenID tokenID)
 {
     for (uint32_t i = 0; i < grantedPermListBefore.size(); i++) {
         auto it = find(grantedPermListAfter.begin(), grantedPermListAfter.end(), grantedPermListBefore[i]);
         if (it == grantedPermListAfter.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListBefore[i], REVOKED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListBefore[i], STATE_CHANGE_REVOKED);
             ParamUpdate(grantedPermListBefore[i], 0, true);
         }
     }
     for (uint32_t i = 0; i < grantedPermListAfter.size(); i++) {
         auto it = find(grantedPermListBefore.begin(), grantedPermListBefore.end(), grantedPermListAfter[i]);
         if (it == grantedPermListBefore.end()) {
-            CallbackManager::GetInstance().ExecuteCallbackAsync(tokenID, grantedPermListAfter[i], GRANTED);
+            CallbackManager::GetInstance().ExecuteCallbackAsync(
+                tokenID, grantedPermListAfter[i], STATE_CHANGE_GRANTED);
             ParamUpdate(grantedPermListAfter[i], 0, false);
         }
     }
@@ -979,58 +954,6 @@ void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStateFul
             stateChangeList.emplace_back(state2);
         }
     }
-}
-
-int32_t PermissionManager::ClearUserGrantedPermission(AccessTokenID tokenID)
-{
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
-    if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
-        return ERR_PARAM_INVALID;
-    }
-    if (infoPtr->IsRemote()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "It is a remote hap token %{public}u!", tokenID);
-        return ERR_IDENTITY_CHECK_FAILED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
-        return ERR_PARAM_INVALID;
-    }
-    std::vector<std::string> grantedPermListBefore;
-    permPolicySet->GetGrantedPermissionList(grantedPermListBefore);
-    std::vector<PermissionStateFull> stateListBefore;
-    permPolicySet->GetPermissionStateList(stateListBefore);
-
-    // reset permission.
-    permPolicySet->ResetUserGrantPermissionStatus();
-    // clear security component granted permission which is not requested in module.json.
-    permPolicySet->ClearSecCompGrantedPerm();
-
-#ifdef SUPPORT_SANDBOX_APP
-    // update permission status with dlp permission rule.
-    std::vector<PermissionStateFull> permListOfHap;
-    permPolicySet->GetPermissionStateFulls(permListOfHap);
-    DlpPermissionSetManager::GetInstance().UpdatePermStateWithDlpInfo(
-        infoPtr->GetDlpType(), permListOfHap);
-    permPolicySet->Update(permListOfHap);
-#endif
-
-    std::vector<std::string> grantedPermListAfter;
-    permPolicySet->GetGrantedPermissionList(grantedPermListAfter);
-    std::vector<PermissionStateFull> stateListAfter;
-    permPolicySet->GetPermissionStateList(stateListAfter);
-    std::vector<PermissionStateFull> stateChangeList;
-    GetStateOrFlagChangedList(stateListBefore, stateListAfter, stateChangeList);
-    if (!AccessTokenInfoManager::GetInstance().UpdateStatesToDatabase(tokenID, stateChangeList)) {
-        return ERR_DATABASE_OPERATE_FAILED;
-    }
-
-    // clear
-    AddPermToKernel(tokenID, permPolicySet);
-
-    NotifyUpdatedPermList(grantedPermListBefore, grantedPermListAfter, tokenID);
-    return RET_SUCCESS;
 }
 
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
@@ -1064,6 +987,39 @@ void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared
     std::vector<uint32_t> opCodeList;
     std::vector<bool> statusList;
     policy->GetPermissionStateList(opCodeList, statusList);
+    int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
+    if (ret != ACCESS_TOKEN_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",
+            tokenID, opCodeList.size(), ret);
+    }
+}
+
+void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy,
+    const std::vector<std::string>& permList)
+{
+    if (policy == nullptr) {
+        return;
+    }
+
+    std::vector<uint32_t> permCodeList;
+    for (const auto &permission : permList) {
+        uint32_t code;
+        if (!TransferPermissionToOpcode(permission, code)) {
+            continue;
+        }
+        permCodeList.emplace_back(code);
+    }
+
+    std::vector<uint32_t> opCodeList;
+    std::vector<bool> statusList;
+    bool isUserActive = false;
+    policy->GetPermissionStateList(opCodeList, statusList);
+    for (uint32_t i = 0; i < opCodeList.size(); i++) {
+        if (std::find(permCodeList.begin(), permCodeList.end(), opCodeList[i]) == permCodeList.end()) {
+            continue;
+        }
+        statusList[i] = statusList[i] && isUserActive;
+    }
     int32_t ret = AddPermissionToKernel(tokenID, opCodeList, statusList);
     if (ret != ACCESS_TOKEN_OK) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "AddPermissionToKernel(token=%{public}d), size=%{public}zu, err=%{public}d",

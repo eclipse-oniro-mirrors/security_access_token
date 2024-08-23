@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <mutex>
 #include "accesstoken_log.h"
+#include "access_token_error.h"
 
 namespace OHOS {
 namespace Security {
@@ -67,6 +68,9 @@ void AccessTokenDb::OnUpdate(int32_t version)
     if (version < DataBaseVersion::VERISION_3) {
         CreatePermissionRequestToggleStatusTable();
     }
+    if (version < DataBaseVersion::VERISION_4) {
+        AddRequestToggleStatusColumn();
+    }
 }
 
 AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
@@ -112,7 +116,8 @@ AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATA
     SqliteTable permissionRequestToggleStatusTable;
     permissionRequestToggleStatusTable.tableName_ = PERMISSION_REQUEST_TOGGLE_STATUS_TABLE;
     permissionRequestToggleStatusTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME
+        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
+        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS
     };
 
     dataTypeToSqlTable_ = {
@@ -202,7 +207,7 @@ int AccessTokenDb::Modify(const DataType type, const GenericValues& modifyValues
 
 int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results)
 {
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
     std::string prepareSql = CreateSelectPrepareSqlCmd(type);
     auto statement = Prepare(prepareSql);
     while (statement.Step() == Statement::State::ROW) {
@@ -215,6 +220,117 @@ int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "Find type(%{public}d), results size=%{public}zu.", type, results.size());
     return SUCCESS;
+}
+
+int32_t AccessTokenDb::FindByConditions(DataType type,
+    const GenericValues& andConditions, std::vector<GenericValues>& results)
+{
+    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    std::vector<std::string> andColumns = andConditions.GetAllKeys();
+    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, andColumns);
+    if (prepareSql.empty()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
+        return FAILURE;
+    }
+
+    auto statement = Prepare(prepareSql);
+    for (const auto& columnName : andColumns) {
+        statement.Bind(columnName, andConditions.Get(columnName));
+    }
+
+    while (statement.Step() == Statement::State::ROW) {
+        int32_t columnCount = statement.GetColumnCount();
+        GenericValues value;
+        for (int32_t i = 0; i < columnCount; i++) {
+            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
+        }
+        results.emplace_back(value);
+    }
+    return SUCCESS;
+}
+
+int32_t AccessTokenDb::HandleDeleteAndAddSql(const GenericValues& conditionValue,
+    const std::vector<GenericValues>& addValues, const std::string& delSql, const std::string& addSql)
+{
+    // delete table record, condition only token_id
+    auto statDel = Prepare(delSql);
+    statDel.Bind(TokenFiledConst::FIELD_TOKEN_ID, conditionValue.Get(TokenFiledConst::FIELD_TOKEN_ID));
+    if (statDel.Step() != Statement::State::DONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Delete table record failed, errorMsg is %{public}s.", SpitError().c_str());
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+
+    // if no value to add return success
+    if (addValues.empty()) {
+        return RET_SUCCESS;
+    }
+
+    // add to table
+    auto statAdd = Prepare(addSql);
+    for (const auto& value : addValues) {
+        std::vector<std::string> addColumns = value.GetAllKeys();
+        // bind column value
+        for (const auto& column : addColumns) {
+            statAdd.Bind(column, value.Get(column));
+        }
+
+        // exec sql
+        if (statAdd.Step() != Statement::State::DONE) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Add table failed, errorMsg is %{public}s.", SpitError().c_str());
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+        statAdd.Reset(); // reset statement
+    }
+
+    return RET_SUCCESS;
+}
+
+int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+    const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
+
+    // create delete sqls
+    std::vector<std::string> delColumnNames;
+    delColumnNames.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
+    std::string hapDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO, delColumnNames);
+    std::string defDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF, delColumnNames);
+    std::string stateDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE, delColumnNames);
+
+    // create add sqls
+    std::string hapAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO);
+    std::string defAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF);
+    std::string stateAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE);
+
+    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+    BeginTransaction();
+
+    // delete and add hap token info
+    int32_t res = HandleDeleteAndAddSql(conditionValue, hapInfoValues, hapDelSql, hapAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    // delete and add permission def
+    res = HandleDeleteAndAddSql(conditionValue, permDefValues, defDelSql, defAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    // delete and add permission state
+    res = HandleDeleteAndAddSql(conditionValue, permStateValues, stateDelSql, stateAddSql);
+    if (res != RET_SUCCESS) {
+        RollbackTransaction();
+        return res;
+    }
+
+    CommitTransaction();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Delete and insert hap success!");
+
+    return RET_SUCCESS;
 }
 
 int64_t AccessTokenDb::Count(DataType type)
@@ -343,6 +459,22 @@ std::string AccessTokenDb::CreateSelectPrepareSqlCmd(const DataType type) const
         return std::string();
     }
     std::string sql = "select * from " + it->second.tableName_;
+    return sql;
+}
+
+std::string AccessTokenDb::CreateSelectByConditionPrepareSqlCmd(
+    DataType type, const std::vector<std::string>& andColumns) const
+{
+    auto it = dataTypeToSqlTable_.find(type);
+    if (it == dataTypeToSqlTable_.end()) {
+        return std::string();
+    }
+
+    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
+    for (const auto& andColName : andColumns) {
+        sql.append(" and ");
+        sql.append(andColName + "=:" + andColName);
+    }
     return sql;
 }
 
@@ -488,6 +620,23 @@ int32_t AccessTokenDb::AddAvailableTypeColumn() const
     return insertResult;
 }
 
+int32_t AccessTokenDb::AddRequestToggleStatusColumn() const
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
+    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
+    if (it == dataTypeToSqlTable_.end()) {
+        return FAILURE;
+    }
+    std::string sql = "alter table ";
+    sql.append(it->second.tableName_ + " add column ")
+        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
+        .append(" integer default ")
+        .append(std::to_string(0)); // 0: close
+    int32_t insertResult = ExecuteSql(sql);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
+    return insertResult;
+}
+
 int32_t AccessTokenDb::AddPermDialogCapColumn() const
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
@@ -555,6 +704,8 @@ int32_t AccessTokenDb::CreatePermissionRequestToggleStatusTable() const
         .append(INTEGER_STR)
         .append(TokenFiledConst::FIELD_PERMISSION_NAME)
         .append(TEXT_STR)
+        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
+        .append(INTEGER_STR)
         .append("primary key(")
         .append(TokenFiledConst::FIELD_USER_ID)
         .append(",")

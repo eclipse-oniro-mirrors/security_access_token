@@ -96,7 +96,6 @@ public:
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
     void GetConfigValue();
-    void SetDefaultConfigValue();
 #endif
     bool DelayRevokePermission(AccessToken::AccessTokenID tokenId, const std::string& taskName);
     bool CancleTaskOfPermissionRevoking(const std::string& taskName);

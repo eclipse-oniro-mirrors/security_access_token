@@ -277,7 +277,8 @@ bool PrivacyManagerService::IsAllowedUsingPermission(AccessTokenID tokenId, cons
 
 int32_t PrivacyManagerService::SetMutePolicy(uint32_t policyType, uint32_t callerType, bool isMute)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "CallerType: %{public}d, isMute: %{public}d", callerType, isMute);
+    ACCESSTOKEN_LOG_INFO(LABEL, "PolicyType: %{public}d, callerType: %{public}d, isMute: %{public}d",
+        policyType, callerType, isMute);
     return PermissionRecordManager::GetInstance().SetMutePolicy(
         static_cast<PolicyType>(policyType), static_cast<CallerType>(callerType), isMute);
 }
@@ -323,7 +324,12 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
         ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
-            PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
+            int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+            if (screenlockManagerLoader->IsScreenLocked()) {
+                lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED;
+            }
+
+            PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
         }
         return;
     }

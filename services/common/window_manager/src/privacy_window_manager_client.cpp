@@ -40,8 +40,14 @@ static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 
 PrivacyWindowManagerClient& PrivacyWindowManagerClient::GetInstance()
 {
-    static PrivacyWindowManagerClient instance;
-    return instance;
+    static PrivacyWindowManagerClient* instance = nullptr;
+    if (instance == nullptr) {
+        std::lock_guard<std::recursive_mutex> lock(g_instanceMutex);
+        if (instance == nullptr) {
+            instance = new PrivacyWindowManagerClient();
+        }
+    }
+    return *instance;
 }
 
 PrivacyWindowManagerClient::PrivacyWindowManagerClient() : deathCallback_(nullptr)

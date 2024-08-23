@@ -50,6 +50,20 @@ AppManagerAccessClient::~AppManagerAccessClient()
     ReleaseProxy();
 }
 
+int32_t AppManagerAccessClient::KillProcessesByAccessTokenId(const uint32_t accessTokenId)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
+        return -1;
+    }
+    sptr<IAmsMgr> amsService = proxy->GetAmsMgr();
+    if (amsService == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "AmsService is null.");
+    }
+    return amsService->KillProcessesByAccessTokenId(accessTokenId);
+}
+
 int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
@@ -59,7 +73,7 @@ int32_t AppManagerAccessClient::RegisterApplicationStateObserver(const sptr<IApp
     }
     auto proxy = GetProxy();
     if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return -1;
     }
     std::vector<std::string> bundleNameList;

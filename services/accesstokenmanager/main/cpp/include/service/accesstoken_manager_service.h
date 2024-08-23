@@ -98,6 +98,9 @@ public:
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) override;
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
+    int32_t ClearUserPolicy() override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
     int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
@@ -108,14 +111,11 @@ private:
     bool GetConfigGrantValueFromFile(std::string& fileContent);
     void GetConfigValue();
     bool Initialize();
-    void DumpTokenIfNeeded();
     void AccessTokenServiceParamSet() const;
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
-    std::shared_ptr<AppExecFwk::EventRunner> dumpEventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
-    std::shared_ptr<AccessEventHandler> dumpEventHandler_;
 #endif
     ServiceRunningState state_;
     std::string grantBundleName_;

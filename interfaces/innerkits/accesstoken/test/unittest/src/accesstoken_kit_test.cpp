@@ -867,7 +867,7 @@ HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus004, TestSize.Level
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -984,7 +984,7 @@ static void AllocAndSetHapToken(void)
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef1 = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -1004,7 +1004,7 @@ static void AllocAndSetHapToken(void)
     };
 
     PermissionDef infoManagerTestPermDef2 = {
-        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -3322,6 +3322,26 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenName(tokenId, name));
     setuid(selfUid);
 }
+
+/**
+ * @tc.name: UserPolicyTest
+ * @tc.desc: UserPolicyTest.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
+{
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
+    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
+    EXPECT_EQ(ret, 0);
+    ret = AccessTokenKit::UpdateUserPolicy(userList);
+    EXPECT_EQ(ret, 0);
+    ret = AccessTokenKit::ClearUserPolicy();
+    EXPECT_EQ(ret, 0);
+}
+
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

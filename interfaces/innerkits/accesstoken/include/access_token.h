@@ -241,6 +241,16 @@ typedef enum DlpType {
 } HapDlpType;
 
 /**
+ * @brief User permission policy status.
+ */
+typedef struct {
+    /** user id */
+    int32_t userId;
+    /** active status */
+    bool isActive;
+} UserState;
+
+/**
  * @brief Dlp permission type
  */
 typedef enum TypeDlpPerm {

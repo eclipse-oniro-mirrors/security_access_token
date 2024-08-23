@@ -59,6 +59,10 @@ public:
 
     int RefreshAll(const DataType type, const std::vector<GenericValues>& values);
 
+    int32_t FindByConditions(DataType type, const GenericValues& andConditions, std::vector<GenericValues>& results);
+    int32_t DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+        const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
+
     void OnCreate() override;
     void OnUpdate(int32_t version) override;
 
@@ -78,8 +82,12 @@ private:
         const std::vector<std::string>& conditionColumns) const;
     std::string CreateSelectPrepareSqlCmd(const DataType type) const;
     std::string CreateCountPrepareSqlCmd(DataType type) const;
+    std::string CreateSelectByConditionPrepareSqlCmd(DataType type, const std::vector<std::string>& andColumns) const;
     int32_t AddAvailableTypeColumn() const;
     int32_t AddPermDialogCapColumn() const;
+    int32_t AddRequestToggleStatusColumn() const;
+    int32_t HandleDeleteAndAddSql(const GenericValues& conditionValue, const std::vector<GenericValues>& addValues,
+        const std::string& delSql, const std::string& addSql);
 
     AccessTokenDb();
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);
@@ -94,7 +102,7 @@ private:
         PERMISSION_REQUEST_TOGGLE_STATUS_TABLE = "permission_request_toggle_status_table";
     inline static constexpr const char* DATABASE_NAME = "access_token.db";
     inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int DATABASE_VERSION = 3;
+    static const int DATABASE_VERSION = VERISION_4;
 };
 } // namespace AccessToken
 } // namespace Security

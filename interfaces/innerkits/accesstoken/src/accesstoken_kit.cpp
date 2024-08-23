@@ -602,6 +602,25 @@ int32_t AccessTokenKit::GetNativeTokenName(AccessTokenID tokenId, std::string& n
 
     return AccessTokenManagerClient::GetInstance().GetNativeTokenName(tokenId, name);
 }
+
+int32_t AccessTokenKit::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().InitUserPolicy(userList, permList);
+}
+
+int32_t AccessTokenKit::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().UpdateUserPolicy(userList);
+}
+
+int32_t AccessTokenKit::ClearUserPolicy()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().ClearUserPolicy();
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
