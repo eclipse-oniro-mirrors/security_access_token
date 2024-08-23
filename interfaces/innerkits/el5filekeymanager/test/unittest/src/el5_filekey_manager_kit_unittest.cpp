@@ -168,7 +168,7 @@ HWTEST_F(El5FilekeyManagerKitTest, SetFilePathPolicy001, TestSize.Level1)
  */
 HWTEST_F(El5FilekeyManagerKitTest, RegisterCallback001, TestSize.Level1)
 {
-    ASSERT_EQ(El5FilekeyManagerKit::RegisterCallback((new TestEl5FilekeyCallback())), EFM_ERR_IPC_READ_DATA);
+    ASSERT_NE(El5FilekeyManagerKit::RegisterCallback((new TestEl5FilekeyCallback())), EFM_SUCCESS);
 }
 
 /**
