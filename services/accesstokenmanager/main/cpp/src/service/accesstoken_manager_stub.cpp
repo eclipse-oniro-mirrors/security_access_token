@@ -238,7 +238,7 @@ void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, Mess
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is oversize", size);
         reply.WriteInt32(INVALID_OPER);
         return;
     }

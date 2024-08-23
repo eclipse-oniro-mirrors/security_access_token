@@ -1427,7 +1427,7 @@ void PermissionRecordManager::InitializeMuteState(const std::string& permissionN
             std::lock_guard<std::mutex> lock(camLoadMutex_);
             if (!isCamLoad_) {
                 bool isEdmMute = false;
-            ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
+                ModifyMuteStatus(CAMERA_PERMISSION_NAME, EDM, isEdmMute);
             }
         }
     }

@@ -322,6 +322,7 @@ int32_t AccessTokenManagerClient::RegisterPermStateChangeCallback(
 
     if (scopeParcel.scope.permList.size() > PERMS_LIST_SIZE_MAX ||
         scopeParcel.scope.tokenIDs.size() > TOKENIDS_LIST_SIZE_MAX) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Scope oversize");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     result = proxy->RegisterPermStateChangeCallback(scopeParcel, callback->AsObject());
