@@ -421,6 +421,13 @@ int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
 {
     return NativeTokenReceptor::GetInstance().Init();
 }
+
+int32_t AccessTokenManagerService::DumpPermDefInfo(std::string& dumpInfo)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
+
+    return PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo);
+}
 #endif
 
 AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& processName)
@@ -521,13 +528,6 @@ int32_t AccessTokenManagerService::GetVersion(uint32_t& version)
     ACCESSTOKEN_LOG_INFO(LABEL, "Called");
     version = DEFAULT_TOKEN_VERSION;
     return RET_SUCCESS;
-}
-
-int32_t AccessTokenManagerService::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-
-    return PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo);
 }
 
 int32_t AccessTokenManagerService::SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable)

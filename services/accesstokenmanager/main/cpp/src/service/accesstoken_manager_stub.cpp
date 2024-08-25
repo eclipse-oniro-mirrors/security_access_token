@@ -623,6 +623,30 @@ void AccessTokenManagerStub::ReloadNativeTokenInfoInner(MessageParcel& data, Mes
     int32_t result = this->ReloadNativeTokenInfo();
     reply.WriteInt32(result);
 }
+
+void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
+{
+    if (!IsShellProcessCalling()) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::string dumpInfo = "";
+    int32_t result = this->DumpPermDefInfo(dumpInfo);
+    if (!reply.WriteInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
+    }
+    if (result != RET_SUCCESS) {
+        return;
+    }
+
+    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
+        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
+    }
+    if (!reply.WriteString(dumpInfo)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
+    }
+}
 #endif
 
 void AccessTokenManagerStub::GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply)
@@ -816,30 +840,6 @@ void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel&
     }
     if (!reply.WriteUint32(version)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write Uint32 failed.");
-    }
-}
-
-void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsShellProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::string dumpInfo = "";
-    int32_t result = this->DumpPermDefInfo(dumpInfo);
-    if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
-    }
-    if (result != RET_SUCCESS) {
-        return;
-    }
-
-    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
-    }
-    if (!reply.WriteString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
     }
 }
 
@@ -1093,6 +1093,8 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::RELOAD_NATIVE_TOKEN_INFO)] =
         &AccessTokenManagerStub::ReloadNativeTokenInfoInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO)] =
+        &AccessTokenManagerStub::DumpPermDefInfoInner;
 #endif
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_ID)] =
         &AccessTokenManagerStub::GetNativeTokenIdInner;
@@ -1142,8 +1144,6 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO)] =
-        &AccessTokenManagerStub::DumpPermDefInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_VERSION)] =
         &AccessTokenManagerStub::GetVersionInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS)] =

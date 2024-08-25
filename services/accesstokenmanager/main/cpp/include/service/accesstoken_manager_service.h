@@ -79,6 +79,7 @@ public:
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
+    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
 #endif
     AccessTokenID GetNativeTokenId(const std::string& processName) override;
 
@@ -102,7 +103,6 @@ public:
     int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
     int32_t ClearUserPolicy() override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
-    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
