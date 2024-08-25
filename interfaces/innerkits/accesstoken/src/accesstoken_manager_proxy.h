@@ -76,6 +76,7 @@ public:
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfoParcel& nativeTokenInfoRes) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
+    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
 #endif
     int32_t RegisterPermStateChangeCallback(
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
@@ -97,7 +98,6 @@ public:
 
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
-    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name) override;
