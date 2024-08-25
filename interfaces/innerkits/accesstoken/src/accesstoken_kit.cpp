@@ -482,6 +482,16 @@ int32_t AccessTokenKit::ReloadNativeTokenInfo()
 #endif
 }
 
+int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
+{
+#ifndef ATM_BUILD_VARIANT_USER_ENABLE
+    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called.");
+    return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
+#else
+    return 0;
+#endif
+}
+
 AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 {
     if (!DataValidator::IsProcessNameValid(processName)) {
@@ -563,12 +573,6 @@ void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& d
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, bundleName=%{public}s, processName=%{public}s.",
         info.tokenId, info.bundleName.c_str(), info.processName.c_str());
     AccessTokenManagerClient::GetInstance().DumpTokenInfo(info, dumpInfo);
-}
-
-int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called.");
-    return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
 }
 
 int32_t AccessTokenKit::GetVersion(uint32_t& version)

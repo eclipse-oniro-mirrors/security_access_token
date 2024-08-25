@@ -83,6 +83,7 @@ public:
     virtual int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) = 0;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     virtual int32_t ReloadNativeTokenInfo() = 0;
+    virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
 #endif
     virtual AccessTokenID GetNativeTokenId(const std::string& processName) = 0;
 
@@ -103,7 +104,6 @@ public:
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
     virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
-    virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
     virtual int32_t GetVersion(uint32_t& version) = 0;
     virtual void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) = 0;
