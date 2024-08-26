@@ -71,14 +71,14 @@ int32_t El5FilekeyManagerClient::GenerateAppKey(uint32_t uid, const std::string&
     return proxy->GenerateAppKey(uid, bundleName, keyId);
 }
 
-int32_t El5FilekeyManagerClient::DeleteAppKey(const std::string& keyId)
+int32_t El5FilekeyManagerClient::DeleteAppKey(const std::string& bundleName, int32_t userId)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         LOG_ERROR("Get proxy failed, proxy is null.");
         return EFM_ERR_SA_GET_PROXY;
     }
-    return proxy->DeleteAppKey(keyId);
+    return proxy->DeleteAppKey(bundleName, userId);
 }
 
 int32_t El5FilekeyManagerClient::GetUserAppKey(int32_t userId, bool getAllFlag,
