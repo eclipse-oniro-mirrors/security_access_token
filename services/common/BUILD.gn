@@ -45,6 +45,7 @@ ohos_static_library("accesstoken_service_common") {
   public_configs = [ ":accesstoken_service_common_public_config" ]
 
   sources = [
+    "app_manager/src/ams_manager_access_proxy.cpp",
     "app_manager/src/app_manager_access_client.cpp",
     "app_manager/src/app_manager_access_proxy.cpp",
     "app_manager/src/app_manager_death_recipient.cpp",
