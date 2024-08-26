@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
-import("../../../access_token.gni")
+import("../../../../access_token.gni")
 
 ohos_shared_library("screenlockfilemanager") {
   sanitize = {
@@ -25,10 +25,10 @@ ohos_shared_library("screenlockfilemanager") {
   include_dirs = [
     "${access_token_path}/frameworks/el5filekeymanager/include",
     "${access_token_path}/interfaces/innerkits/el5filekeymanager/include",
-    "napi/include",
+    "include",
   ]
 
-  sources = [ "napi/src/el5_filekey_manager_napi.cpp" ]
+  sources = [ "src/el5_filekey_manager_napi.cpp" ]
 
   deps = [ "${access_token_path}/interfaces/innerkits/el5filekeymanager:el5_filekey_manager_sdk" ]
 
