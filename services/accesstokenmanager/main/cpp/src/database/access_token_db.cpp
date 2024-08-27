@@ -315,14 +315,14 @@ int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vect
     }
 
     // delete and add permission def
-    res = HandleDeleteAndAddSql(conditionValue, permDefValues, defDelSql, stateAddSql);
+    res = HandleDeleteAndAddSql(conditionValue, permDefValues, defDelSql, defAddSql);
     if (res != RET_SUCCESS) {
         RollbackTransaction();
         return res;
     }
 
     // delete and add permission state
-    res = HandleDeleteAndAddSql(conditionValue, permStateValues, stateDelSql, hapAddSql);
+    res = HandleDeleteAndAddSql(conditionValue, permStateValues, stateDelSql, stateAddSql);
     if (res != RET_SUCCESS) {
         RollbackTransaction();
         return res;
