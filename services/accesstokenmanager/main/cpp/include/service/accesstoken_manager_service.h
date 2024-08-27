@@ -120,6 +120,7 @@ private:
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
+    std::string grantServiceAbilityName_;
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
 };

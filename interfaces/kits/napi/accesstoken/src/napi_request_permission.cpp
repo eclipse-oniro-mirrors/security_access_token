@@ -40,7 +40,6 @@ const std::string RESULT_KEY = "ohos.user.grant.permission.result";
 const std::string EXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
 const std::string UI_EXTENSION_TYPE = "sys/commonUI";
 const std::string ORI_PERMISSION_MANAGER_BUNDLE_NAME = "com.ohos.permissionmanager";
-const std::string ORI_PERMISSION_MANAGER_ABILITY_NAME = "com.ohos.permissionmanager.GrantAbility";
 const std::string TOKEN_KEY = "ohos.ability.params.token";
 const std::string CALLBACK_KEY = "ohos.ability.params.callback";
 
@@ -110,6 +109,7 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
             ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
             return;
         }
+        asyncContext->uiContentFlag = true;
         asyncContext->instanceId = uiContent->GetInstanceId();
     };
 #ifdef EVENTHANDLER_ENABLE
@@ -121,7 +121,8 @@ static void GetInstanceId(std::shared_ptr<RequestAsyncContext>& asyncContext)
 #else
     task();
 #endif
-    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d", asyncContext->instanceId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "Instance id: %{public}d, uiContentFlag: %{public}d",
+        asyncContext->instanceId, asyncContext->uiContentFlag);
 }
 
 static void CreateUIExtensionMainThread(std::shared_ptr<RequestAsyncContext>& asyncContext, const AAFwk::Want& want,
@@ -205,6 +206,8 @@ static napi_value GetContext(
             AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
         if (asyncContext->abilityContext != nullptr) {
             asyncContext->uiAbilityFlag = true;
+            asyncContext->tokenId = asyncContext->abilityContext->GetApplicationInfo()->accessTokenId;
+            asyncContext->bundleName = asyncContext->abilityContext->GetApplicationInfo()->bundleName;
         } else {
             ACCESSTOKEN_LOG_WARN(LABEL, "Convert to ability context failed");
             asyncContext->uiExtensionContext =
@@ -213,6 +216,8 @@ static napi_value GetContext(
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Convert to ui extension context failed");
                 return nullptr;
             }
+            asyncContext->tokenId = asyncContext->uiExtensionContext->GetApplicationInfo()->accessTokenId;
+            asyncContext->bundleName = asyncContext->uiExtensionContext->GetApplicationInfo()->bundleName;
         }
         return WrapVoidToJS(env);
     }
@@ -398,7 +403,7 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         return;
     }
     AAFwk::Want want;
-    want.SetElementName(ORI_PERMISSION_MANAGER_BUNDLE_NAME, ORI_PERMISSION_MANAGER_ABILITY_NAME);
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
@@ -421,19 +426,6 @@ static void CreateServiceExtension(std::shared_ptr<RequestAsyncContext> asyncCon
         ret, asyncContext->tokenId, asyncContext->permissionList.size());
 }
 
-void NapiRequestPermission::StartServiceExtension(std::shared_ptr<RequestAsyncContext>& asyncContext)
-{
-    asyncContext->result = RET_SUCCESS;
-    Ace::UIContent* uiContent = GetUIContent(asyncContext);
-    if (uiContent == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Get ui content failed!");
-        CreateServiceExtension(asyncContext);
-        return;
-    }
-    asyncContext->uiContentFlag = true;
-    RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContext);
-}
-
 bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext>& asyncContext)
 {
     std::vector<PermissionListState> permList;
@@ -443,13 +435,16 @@ bool NapiRequestPermission::IsDynamicRequest(std::shared_ptr<RequestAsyncContext
         permState.state = INVALID_OPER;
         permList.emplace_back(permState);
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d.", asyncContext->tokenId);
     auto ret = AccessTokenKit::GetSelfPermissionsState(permList, asyncContext->info);
     if (ret == FORBIDDEN_OPER) { // if app is under control, change state from default -1 to 2
         for (auto& perm : permList) {
             perm.state = INVALID_OPER;
         }
     }
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "TokenID: %{public}d, bundle: %{public}s, uiExAbility: %{public}s, serExAbility: %{public}s.",
+        asyncContext->tokenId, asyncContext->info.grantBundleName.c_str(),
+        asyncContext->info.grantAbilityName.c_str(), asyncContext->info.grantServiceAbilityName.c_str());
 
     for (const auto& permState : permList) {
         ACCESSTOKEN_LOG_INFO(LABEL, "Permission: %{public}s: state: %{public}d",
@@ -671,16 +666,6 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
 {
     // asyncContext release in complete
     RequestAsyncContextHandle* asyncContextHandle = reinterpret_cast<RequestAsyncContextHandle*>(data);
-    std::string bundleName = "";
-    if (asyncContextHandle->asyncContextPtr->uiAbilityFlag) {
-        asyncContextHandle->asyncContextPtr->tokenId =
-            asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->accessTokenId;
-        bundleName = asyncContextHandle->asyncContextPtr->abilityContext->GetApplicationInfo()->bundleName;
-    } else {
-        asyncContextHandle->asyncContextPtr->tokenId =
-            asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->accessTokenId;
-        bundleName = asyncContextHandle->asyncContextPtr->uiExtensionContext->GetApplicationInfo()->bundleName;
-    }
     AccessTokenID selfTokenID = static_cast<AccessTokenID>(GetSelfTokenID());
     if (asyncContextHandle->asyncContextPtr->tokenId != selfTokenID) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "The context tokenID: %{public}d, selfTokenID: %{public}d.",
@@ -697,22 +682,31 @@ void NapiRequestPermission::RequestPermissionsFromUserExecute(napi_env env, void
     GetInstanceId(asyncContextHandle->asyncContextPtr);
     // service extension dialog
     if (asyncContextHandle->asyncContextPtr->info.grantBundleName == ORI_PERMISSION_MANAGER_BUNDLE_NAME) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Pop service extension dialog");
-        StartServiceExtension(asyncContextHandle->asyncContextPtr);
+        ACCESSTOKEN_LOG_INFO(LABEL, "Pop service extension dialog, uiContentFlag=%{public}d",
+            asyncContextHandle->asyncContextPtr->uiContentFlag);
+        if (asyncContextHandle->asyncContextPtr->uiContentFlag) {
+            RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
+        } else {
+            CreateServiceExtension(asyncContextHandle->asyncContextPtr);
+        }
     } else if (asyncContextHandle->asyncContextPtr->instanceId == -1) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Pop service extension dialog, instanceId is -1.");
         CreateServiceExtension(asyncContextHandle->asyncContextPtr);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", bundleName, "UIEXTENSION_FLAG", false);
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+            "BUNDLENAME", asyncContextHandle->asyncContextPtr->bundleName,
+            "UIEXTENSION_FLAG", false);
     } else {
         ACCESSTOKEN_LOG_INFO(LABEL, "Pop ui extension dialog");
         asyncContextHandle->asyncContextPtr->uiExtensionFlag = true;
         RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "REQUEST_PERMISSIONS_FROM_USER",
-            HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "BUNDLENAME", bundleName,
+            HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
+            "BUNDLENAME", asyncContextHandle->asyncContextPtr->bundleName,
             "UIEXTENSION_FLAG", asyncContextHandle->asyncContextPtr->uiExtensionFlag);
         if (!asyncContextHandle->asyncContextPtr->uiExtensionFlag) {
-            ACCESSTOKEN_LOG_WARN(LABEL, "Pop uiextension dialog fail, start to pop service extension dialog");
-            StartServiceExtension(asyncContextHandle->asyncContextPtr);
+            ACCESSTOKEN_LOG_WARN(LABEL, "Pop uiextension dialog fail, start to pop service extension dialog.");
+            RequestAsyncInstanceControl::AddCallbackByInstanceId(asyncContextHandle->asyncContextPtr);
         }
     }
 }
