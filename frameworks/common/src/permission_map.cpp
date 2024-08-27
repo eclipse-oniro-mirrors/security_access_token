@@ -176,6 +176,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.MANAGE_SECURE_SETTINGS",  false},
     {"ohos.permission.READ_DFX_SYSEVENT",       false},
     {"ohos.permission.READ_HIVIEW_SYSTEM",      false},
+    {"ohos.permission.READ_DFX_XPOWER",         false},
     {"ohos.permission.WRITE_HIVIEW_SYSTEM",     false},
     {"ohos.permission.SUBSCRIBE_SWING_ABILITY",     false},
     {"ohos.permission.MANAGER_SWING_MOTION",     false},

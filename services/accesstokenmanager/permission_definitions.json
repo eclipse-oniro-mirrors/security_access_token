@@ -871,6 +871,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.READ_DFX_XPOWER",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 11,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.NFC_CARD_EMULATION",
             "grantMode": "system_grant",
             "availableLevel": "normal",
