@@ -34,7 +34,7 @@ public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& options) override;
 
 private:
-    void GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply);
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);

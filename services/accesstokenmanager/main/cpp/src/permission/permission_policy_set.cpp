@@ -201,7 +201,7 @@ uint32_t PermissionPolicySet::GetFlagWithoutSpecifiedElement(uint32_t fullFlag, 
     return unmaskedFlag;
 }
 
-PermUsedTypeEnum PermissionPolicySet::GetUserGrantedPermissionUsedType(const std::string& permissionName)
+PermUsedTypeEnum PermissionPolicySet::GetPermissionUsedType(const std::string& permissionName)
 {
     Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
     auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),

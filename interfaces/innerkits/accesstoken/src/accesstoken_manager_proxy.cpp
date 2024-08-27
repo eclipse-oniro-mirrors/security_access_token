@@ -59,7 +59,7 @@ bool AccessTokenManagerProxy::SendRequest(
     return true;
 }
 
-PermUsedTypeEnum AccessTokenManagerProxy::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum AccessTokenManagerProxy::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string &permissionName)
 {
     MessageParcel data;

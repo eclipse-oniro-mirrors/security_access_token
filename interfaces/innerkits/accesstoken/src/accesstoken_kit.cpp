@@ -40,7 +40,7 @@ static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 } // namespace
 
-PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
@@ -49,7 +49,7 @@ PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    return AccessTokenManagerClient::GetInstance().GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    return AccessTokenManagerClient::GetInstance().GetPermissionUsedType(tokenID, permissionName);
 }
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)

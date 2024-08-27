@@ -64,7 +64,7 @@ AccessTokenManagerClient::~AccessTokenManagerClient()
     ReleaseProxy();
 }
 
-PermUsedTypeEnum AccessTokenManagerClient::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum AccessTokenManagerClient::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string &permissionName)
 {
     auto proxy = GetProxy();
@@ -72,7 +72,7 @@ PermUsedTypeEnum AccessTokenManagerClient::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    return proxy->GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    return proxy->GetPermissionUsedType(tokenID, permissionName);
 }
 
 int AccessTokenManagerClient::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)

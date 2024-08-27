@@ -43,7 +43,7 @@ public:
     explicit AccessTokenManagerProxy(const sptr<IRemoteObject>& impl);
     ~AccessTokenManagerProxy() override;
 
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+    PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
