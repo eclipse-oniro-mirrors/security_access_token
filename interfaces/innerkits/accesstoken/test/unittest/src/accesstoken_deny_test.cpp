@@ -115,12 +115,12 @@ HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level1)
 
 
 /**
- * @tc.name: UpdateUserPolicy002
+ * @tc.name: UpdateUserPolicy001
  * @tc.desc: UpdateUserPolicy without authorized.
  * @tc.type: FUNC
  * @tc.require:Issue Number
  */
-HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy002, TestSize.Level1)
+HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level1)
 {
     UserState user = {.userId = 100, .isActive = true}; // 100 is userId
     const std::vector<UserState> userList = { user };
@@ -571,6 +571,21 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
 {
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+}
+
+/**
+ * @tc.name: GrantPermissionForSpecifiedTime001
+ * @tc.desc: GrantPermissionForSpecifiedTime with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::string permission = "permission";
+    uint32_t onceTime = 1;
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
 }
 } // namespace AccessToken
 } // namespace Security

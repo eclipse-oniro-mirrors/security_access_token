@@ -704,6 +704,27 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState004, TestSize.Level
 }
 
 /**
+ * @tc.name: GetSelfPermissionsState005
+ * @tc.desc: test noexist token id
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState005, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, 0);
+    EXPECT_EQ(0, SetSelfTokenID(tokenId));
+    std::vector<PermissionListState> permsList4;
+    PermissionListState tmp = {
+        .permissionName = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", // todo
+        .state = PASS_OPER
+    };
+    permsList4.emplace_back(tmp);
+    PermissionGrantInfo info;
+    ASSERT_EQ(PASS_OPER, AccessTokenKit::GetSelfPermissionsState(permsList4, info));
+    ASSERT_EQ(RET_SUCCESS, AccessTokenKit::DeleteToken(tokenId));
+}
+
+/**
  * @tc.name: GetPermissionsStatus001
  * @tc.desc: get different permissions status
  * @tc.type: FUNC

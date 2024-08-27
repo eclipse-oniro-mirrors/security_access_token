@@ -64,6 +64,8 @@ public:
         int32_t userID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
+    int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int DeleteToken(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
@@ -116,6 +118,8 @@ private:
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
+    std::shared_ptr<AppExecFwk::EventRunner> shortGrantEventRunner_;
+    std::shared_ptr<AccessEventHandler> shortGrantEventHandler_;
 #endif
     ServiceRunningState state_;
     std::string grantBundleName_;

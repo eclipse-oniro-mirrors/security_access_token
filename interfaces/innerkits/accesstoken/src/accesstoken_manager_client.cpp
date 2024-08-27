@@ -242,6 +242,17 @@ int AccessTokenManagerClient::RevokePermission(AccessTokenID tokenID, const std:
     return proxy->RevokePermission(tokenID, permissionName, flag);
 }
 
+int AccessTokenManagerClient::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    auto proxy = GetProxy();
+    if (proxy == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null");
+        return AccessTokenError::ERR_SERVICE_ABNORMAL;
+    }
+    return proxy->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
+}
+
 int AccessTokenManagerClient::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     auto proxy = GetProxy();

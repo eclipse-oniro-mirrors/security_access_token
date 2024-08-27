@@ -34,6 +34,7 @@
 #include "ipc_skeleton.h"
 #include "parameter.h"
 #include "permission_definition_cache.h"
+#include "short_grant_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
 #ifdef TOKEN_SYNC_ENABLE
@@ -59,7 +60,8 @@ static const std::vector<std::string> g_notDisplayedPerms = {
     "ohos.permission.RECEIVE_WAP_MESSAGES",
     "ohos.permission.SEND_MESSAGES",
     "ohos.permission.READ_CALL_LOG",
-    "ohos.permission.WRITE_CALL_LOG"
+    "ohos.permission.WRITE_CALL_LOG",
+    "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO"
 };
 constexpr const char* APP_DISTRIBUTION_TYPE_ENTERPRISE_MDM = "enterprise_mdm";
 }
@@ -589,14 +591,6 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
     // To notify the client cache to update by resetting paramValue_.
     ParamUpdate(permissionName, flag, false);
 
-    // To notify kill process when perm is revoke
-    if ((flag != PERMISSION_ALLOW_THIS_TIME) && (flag != PERMISSION_COMPONENT_SET)) {
-        if (!isGranted) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Perm(%{public}s) is revoked, kill process(%{public}u).",
-                permissionName.c_str(), tokenID);
-            AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(tokenID);
-        }
-    }
     // DFX.
     HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK_EVENT",
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", USER_GRANT_PERMISSION_EVENT,
@@ -606,56 +600,81 @@ void PermissionManager::NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, 
 }
 
 int32_t PermissionManager::UpdateTokenPermissionState(
-    AccessTokenID tokenID, const std::string& permissionName, bool isGranted, uint32_t flag)
+    AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill)
 {
-    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenID);
+    std::shared_ptr<HapTokenInfoInner> infoPtr = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(id);
     if (infoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", id);
         return AccessTokenError::ERR_TOKENID_NOT_EXIST;
     }
     if (infoPtr->IsRemote()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Remote token can not update");
         return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
     }
-    if (flag == PERMISSION_ALLOW_THIS_TIME) {
-        if (isGranted) {
-            if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(tokenID, permissionName)) {
-                ACCESSTOKEN_LOG_ERROR(LABEL, "Grant permission failed, id:%{public}d, permissionName:%{public}s",
-                    tokenID, permissionName.c_str());
-                return ERR_IDENTITY_CHECK_FAILED;
-            }
+    if ((flag == PERMISSION_ALLOW_THIS_TIME) && isGranted) {
+        if (!TempPermissionObserver::GetInstance().IsAllowGrantTempPermission(id, permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Id:%{public}d fail to grant permission:%{public}s", id, permission.c_str());
+            return ERR_IDENTITY_CHECK_FAILED;
         }
     }
     std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
     if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", id);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
 #ifdef SUPPORT_SANDBOX_APP
     int32_t hapDlpType = infoPtr->GetDlpType();
     if (hapDlpType != DLP_COMMON) {
-        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permissionName);
+        int32_t permDlpMode = DlpPermissionSetManager::GetInstance().GetPermDlpMode(permission);
         if (!DlpPermissionSetManager::GetInstance().IsPermDlpModeAvailableToDlpHap(hapDlpType, permDlpMode)) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}u is not allowed to be granted permissionName %{public}s",
-                tokenID, permissionName.c_str());
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "%{public}s cannot to be granted to %{public}u", permission.c_str(), id);
             return AccessTokenError::ERR_IDENTITY_CHECK_FAILED;
         }
     }
 #endif
-    int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permissionName);
-    int32_t ret = permPolicySet->UpdatePermissionStatus(permissionName, isGranted, flag);
+    int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permission);
+    int32_t ret = permPolicySet->UpdatePermissionStatus(permission, isGranted, flag);
     if (ret != RET_SUCCESS) {
         return ret;
     }
-    int32_t statusAfter = permPolicySet->VerifyPermissionStatus(permissionName);
+    int32_t statusAfter = permPolicySet->VerifyPermissionStatus(permission);
     if (statusAfter != statusBefore) {
-        NotifyWhenPermissionStateUpdated(tokenID, permissionName, isGranted, flag, infoPtr);
+        NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
+        // To notify kill process when perm is revoke
+        if (needKill) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
+            AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id);
+        }
     }
 
 #ifdef TOKEN_SYNC_ENABLE
-    TokenModifyNotifier::GetInstance().NotifyTokenModify(tokenID);
+    TokenModifyNotifier::GetInstance().NotifyTokenModify(id);
 #endif
-    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(tokenID, permissionName);
+    AccessTokenInfoManager::GetInstance().ModifyHapPermStateFromDb(id, permission);
+    return RET_SUCCESS;
+}
+
+int32_t PermissionManager::UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+    bool isGranted, uint32_t flag, bool needKill)
+{
+    int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag, needKill);
+    if (ret != RET_SUCCESS) {
+        return ret;
+    }
+
+#ifdef SUPPORT_SANDBOX_APP
+    // The action of sharing would be taken place only if the grant operation or revoke operation equals to success.
+    std::vector<AccessTokenID> tokenIdList;
+    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
+    for (const auto& id : tokenIdList) {
+        (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag, needKill);
+    }
+#endif
+
+    // DFX
+    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID, "PERMISSION_NAME",
+        permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
     return RET_SUCCESS;
 }
 
@@ -663,7 +682,7 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
     bool isGranted, uint32_t flag)
 {
     if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName: %{pubic}s, Invalid params!", permissionName.c_str());
+        ACCESSTOKEN_LOG_ERROR(LABEL, "permissionName: %{public}s, Invalid params!", permissionName.c_str());
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     if (!PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
@@ -675,25 +694,15 @@ int32_t PermissionManager::CheckAndUpdatePermission(AccessTokenID tokenID, const
         ACCESSTOKEN_LOG_ERROR(LABEL, "flag: %{public}d, Invalid params!", flag);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
-    int32_t ret = UpdateTokenPermissionState(tokenID, permissionName, isGranted, flag);
-    if (ret != RET_SUCCESS) {
-        return ret;
+    bool needKill = false;
+    // To kill process when perm is revoke
+    if (!isGranted && (flag != PERMISSION_ALLOW_THIS_TIME) && (flag != PERMISSION_COMPONENT_SET)) {
+        ACCESSTOKEN_LOG_INFO(LABEL, "Perm(%{public}s) is revoked, kill process(%{public}u).",
+            permissionName.c_str(), tokenID);
+        needKill = true;
     }
 
-#ifdef SUPPORT_SANDBOX_APP
-    // The action of sharing would be taken place only if the grant operation or revoke operation equals to success.
-    std::vector<AccessTokenID> tokenIdList;
-    AccessTokenInfoManager::GetInstance().GetRelatedSandBoxHapList(tokenID, tokenIdList);
-    for (const auto& id : tokenIdList) {
-        (void)UpdateTokenPermissionState(id, permissionName, isGranted, flag);
-    }
-#endif
-
-    // DFX
-    HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "UPDATE_PERMISSION",
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "TOKENID", tokenID, "PERMISSION_NAME",
-        permissionName, "PERMISSION_FLAG", flag, "GRANTED_FLAG", isGranted);
-    return RET_SUCCESS;
+    return UpdatePermission(tokenID, permissionName, isGranted, flag, needKill);
 }
 
 int32_t PermissionManager::GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag)
@@ -710,6 +719,15 @@ int32_t PermissionManager::RevokePermission(AccessTokenID tokenID, const std::st
         "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, flag: %{public}d",
         __func__, tokenID, permissionName.c_str(), flag);
     return CheckAndUpdatePermission(tokenID, permissionName, false, flag);
+}
+
+int32_t PermissionManager::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "%{public}s called, tokenID: %{public}u, permissionName: %{public}s, onceTime: %{public}d",
+        __func__, tokenID, permissionName.c_str(), onceTime);
+    return ShortGrantManager::GetInstance().RefreshPermission(tokenID, permissionName, onceTime);
 }
 
 void PermissionManager::ScopeToString(
