@@ -73,6 +73,8 @@ const std::map<std::string, int32_t> Constant::PERMISSION_OPCODE_MAP = {
         "ohos.permission.ACCESS_NEARLINK", Constant::OP_ACCESS_NEARLINK),
     std::map<std::string, int32_t>::value_type(
         "ohos.permission.CAPTURE_SCREEN", Constant::OP_CAPTURE_SCREEN),
+    std::map<std::string, int32_t>::value_type(
+        "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", Constant::SHORT_TERM_WRITE_IMAGEVIDEO),
 };
 
 bool Constant::TransferPermissionToOpcode(const std::string& permissionName, int32_t& opCode)

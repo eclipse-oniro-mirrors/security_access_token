@@ -31,6 +31,7 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_policy_set.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",

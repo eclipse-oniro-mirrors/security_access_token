@@ -478,6 +478,41 @@ int AccessTokenManagerProxy::RevokePermission(AccessTokenID tokenID, const std::
     return result;
 }
 
+int AccessTokenManagerProxy::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(tokenID)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteString(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteUint32(onceTime)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
+        return ERR_WRITE_PARCEL_FAILED;
+    }
+
+    MessageParcel reply;
+    if (!SendRequest(AccessTokenInterfaceCode::GRANT_PERMISSION_FOR_SPECIFIEDTIME, data, reply)) {
+        return ERR_SERVICE_ABNORMAL;
+    }
+
+    int32_t result;
+    if (!reply.ReadInt32(result)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return ERR_READ_PARCEL_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (result=%{public}d).", result);
+    return result;
+}
+
 int AccessTokenManagerProxy::ClearUserGrantedPermissionState(AccessTokenID tokenID)
 {
     MessageParcel data;

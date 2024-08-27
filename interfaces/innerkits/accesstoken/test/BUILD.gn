@@ -40,6 +40,7 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "unittest/src/accesstoken_kit_extension_test.cpp",
     "unittest/src/accesstoken_kit_test.cpp",
     "unittest/src/accesstoken_location_request_test.cpp",
+    "unittest/src/accesstoken_short_time_permission_test.cpp",
     "unittest/src/app_installation_optimized_test.cpp",
     "unittest/src/clone_app_permission_test.cpp",
     "unittest/src/edm_policy_set_test.cpp",

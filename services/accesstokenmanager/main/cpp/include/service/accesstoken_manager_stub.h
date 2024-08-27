@@ -46,6 +46,7 @@ private:
     void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
+    void GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply);
     void AllocHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);

@@ -3341,7 +3341,6 @@ HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
     ret = AccessTokenKit::ClearUserPolicy();
     EXPECT_EQ(ret, 0);
 }
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
