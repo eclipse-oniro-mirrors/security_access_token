@@ -101,6 +101,7 @@ void AccessTokenManagerService::OnStart()
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to publish service!");
         return;
     }
+    AccessTokenServiceParamSet();
     (void)AddSystemAbilityListener(SECURITY_COMPONENT_SERVICE_ID);
     ACCESSTOKEN_LOG_INFO(LABEL, "Congratulations, AccessTokenManagerService start successfully!");
 }
@@ -703,7 +704,6 @@ bool AccessTokenManagerService::Initialize()
         HiviewDFX::HiSysEvent::EventType::BEHAVIOR, "CODE", ACCESS_TOKEN_SERVICE_INIT_EVENT,
         "PID_INFO", getpid());
     PermissionDefinitionParser::GetInstance().Init();
-    AccessTokenServiceParamSet();
     GetConfigValue();
     TempPermissionObserver::GetInstance().GetConfigValue();
     ACCESSTOKEN_LOG_INFO(LABEL, "Initialize success");
