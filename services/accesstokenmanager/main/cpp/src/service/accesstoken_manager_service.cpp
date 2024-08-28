@@ -186,6 +186,7 @@ PermissionOper AccessTokenManagerService::GetSelfPermissionsState(std::vector<Pe
 {
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
+    infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     AccessTokenID callingTokenID = IPCSkeleton::GetCallingTokenID();
     return GetPermissionsState(callingTokenID, reqPermList);
 }
@@ -557,6 +558,7 @@ void AccessTokenManagerService::GetPermissionManagerInfo(PermissionGrantInfoParc
 {
     infoParcel.info.grantBundleName = grantBundleName_;
     infoParcel.info.grantAbilityName = grantAbilityName_;
+    infoParcel.info.grantServiceAbilityName = grantServiceAbilityName_;
     infoParcel.info.permStateAbilityName = permStateAbilityName_;
     infoParcel.info.globalSwitchAbilityName = globalSwitchAbilityName_;
 }
@@ -649,6 +651,8 @@ void AccessTokenManagerService::GetConfigValue()
             GRANT_ABILITY_BUNDLE_NAME : value.atConfig.grantBundleName;
         grantAbilityName_ = value.atConfig.grantAbilityName.empty() ?
             GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantAbilityName;
+        grantServiceAbilityName_ = value.atConfig.grantServiceAbilityName.empty() ?
+            GRANT_ABILITY_ABILITY_NAME : value.atConfig.grantServiceAbilityName;
         permStateAbilityName_ = value.atConfig.permStateAbilityName.empty() ?
             PERMISSION_STATE_SHEET_ABILITY_NAME : value.atConfig.permStateAbilityName;
         globalSwitchAbilityName_ = value.atConfig.globalSwitchAbilityName.empty() ?
@@ -657,6 +661,7 @@ void AccessTokenManagerService::GetConfigValue()
         ACCESSTOKEN_LOG_INFO(LABEL, "No config file or config file is not valid, use default values");
         grantBundleName_ = GRANT_ABILITY_BUNDLE_NAME;
         grantAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
+        grantServiceAbilityName_ = GRANT_ABILITY_ABILITY_NAME;
         permStateAbilityName_ = PERMISSION_STATE_SHEET_ABILITY_NAME;
         globalSwitchAbilityName_ = GLOBAL_SWITCH_SHEET_ABILITY_NAME;
     }

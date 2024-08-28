@@ -398,7 +398,7 @@ static int32_t StartServiceExtension(std::shared_ptr<RequestAsyncContext>& async
     }
     
     AAFwk::Want want;
-    want.SetElementName(GRANT_ABILITY_BUNDLE_NAME, GRANT_ABILITY_ABILITY_NAME);
+    want.SetElementName(asyncContext->info.grantBundleName, asyncContext->info.grantServiceAbilityName);
     want.SetParam(PERMISSION_KEY, asyncContext->permissionList);
     want.SetParam(STATE_KEY, asyncContext->permissionsState);
     want.SetParam(TOKEN_KEY, asyncContext->abilityContext->GetToken());
