@@ -94,7 +94,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
         data.tokenID = tokenID;
         data.permissionName = permission;
         data.firstGrantTimes = GetCurrentTime();
-        data.currGrantTimes = data.firstGrantTimes;
+        data.revokeTimes = data.firstGrantTimes + onceTime;
         shortGrantData_.emplace_back(data);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
@@ -106,10 +106,13 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
     }
 
     uint32_t maxRemainedTime = maxTime_ - (GetCurrentTime() - iter->firstGrantTimes);
-    uint32_t currRemainedTime = GetCurrentTime() - iter->currGrantTimes;
+    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ?
+         (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
+    ACCESSTOKEN_LOG_INFO(LABEL, "currRemainedTime %{public}d", currRemainedTime);
     if (cancelTimes > currRemainedTime) {
-        iter->currGrantTimes = GetCurrentTime();
+        iter->revokeTimes = GetCurrentTime() + cancelTimes;
+        ACCESSTOKEN_LOG_INFO(LABEL, "iter->revokeTimes %{public}d", iter->revokeTimes);
         ShortGrantManager::GetInstance().CancelTaskOfPermissionRevoking(taskName);
         int32_t ret = PermissionManager::GetInstance().GrantPermission(tokenID, permission, PERMISSION_USER_FIXED);
         if (ret != RET_SUCCESS) {
@@ -159,6 +162,7 @@ void ShortGrantManager::ScheduleRevokeTask(AccessTokenID tokenID, const std::str
         ACCESSTOKEN_LOG_INFO(LABEL,
             "Token: %{public}d, permission: %{public}s, delay revoke permission end.", tokenID, permission.c_str());
     });
+    ACCESSTOKEN_LOG_INFO(LABEL, "cancelTimes %{public}d", cancelTimes);
     eventHandler_->ProxyPostTask(delayed, taskName, cancelTimes * 1000); // 1000 means to ms
     return;
 #else

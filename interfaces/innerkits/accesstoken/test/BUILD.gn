@@ -149,6 +149,8 @@ group("unittest") {
   deps = [
     ":accesstoken_mock_test",
     ":libaccesstoken_sdk_test",
+    "tool:GrantShortTermWriteImageVideo",
     "tool:SetPermDialogCapTest",
+    "tool:VerifyAccessToken",
   ]
 }
