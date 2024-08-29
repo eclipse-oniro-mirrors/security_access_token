@@ -1931,6 +1931,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.ENTERPRISE_RECOVERY_KEY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_core",
+            "availableType": "MDM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.securityguard.SET_MODEL_STATE",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
