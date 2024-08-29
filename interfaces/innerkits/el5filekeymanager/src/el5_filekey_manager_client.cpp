@@ -15,7 +15,6 @@
 
 #include "el5_filekey_manager_client.h"
 
-#include "el5_filekey_manager_load_callback.h"
 #include "el5_filekey_manager_log.h"
 #include "el5_filekey_manager_proxy.h"
 #include "iservice_registry.h"
@@ -25,7 +24,8 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr int32_t LOAD_SA_TIMEOUT_MS = 60000;
+constexpr int32_t LOAD_SA_TIMEOUT_SECOND = 4;
+constexpr int32_t LOAD_SA_RETRY_TIMES = 5;
 }
 El5FilekeyManagerClient::El5FilekeyManagerClient()
 {
@@ -131,81 +131,24 @@ sptr<El5FilekeyManagerInterface> El5FilekeyManagerClient::GetProxy()
         LOG_ERROR("Get system ability manager failed.");
         return nullptr;
     }
-    if (proxy_ == nullptr) {
-        auto el5FilekeyService = systemAbilityManager->CheckSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID);
+
+    auto el5FilekeyService = systemAbilityManager->GetSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID);
+    if (el5FilekeyService != nullptr) {
+        LOG_INFO("get el5 filekey manager proxy success");
+        return iface_cast<El5FilekeyManagerInterface>(el5FilekeyService);
+    }
+
+    for (int i = 0; i <= LOAD_SA_RETRY_TIMES; i++) {
+        auto el5FilekeyService =
+            systemAbilityManager->LoadSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID, LOAD_SA_TIMEOUT_SECOND);
         if (el5FilekeyService != nullptr) {
-            deathRecipient_ = new (std::nothrow) El5FilekeyManagerDeathRecipient();
-            if (deathRecipient_ != nullptr) {
-                el5FilekeyService->AddDeathRecipient(deathRecipient_);
-            }
-
-            proxy_ = iface_cast<El5FilekeyManagerInterface>(el5FilekeyService);
-            if (proxy_ == nullptr) {
-                LOG_ERROR("Cast proxy failed, iface_cast get null.");
-            }
-            return proxy_;
+            LOG_INFO("load el5 filekey manager success");
+            return iface_cast<El5FilekeyManagerInterface>(el5FilekeyService);
         }
+        LOG_INFO("load el5 filekey manager failed, retry count:%{public}d", i);
     }
-
-    // LoadEl5FilekeyManagerService
-    sptr<El5FilekeyManagerLoadCallback> loadCallback = new El5FilekeyManagerLoadCallback();
-    if (loadCallback == nullptr) {
-        LOG_ERROR("Load service failed, loadCallback is nullptr.");
-        return nullptr;
-    }
-    int32_t ret = systemAbilityManager->LoadSystemAbility(EL5_FILEKEY_MANAGER_SERVICE_ID, loadCallback);
-    if (ret != ERR_OK) {
-        LOG_ERROR("Load el5_filekey_service failed.");
-        return nullptr;
-    }
-    // wait for LoadSystemAbility
-    LOG_INFO("wait for LoadSystemAbility");
-    auto waitStatus = proxyConVar_.wait_for(lock, std::chrono::milliseconds(LOAD_SA_TIMEOUT_MS),
-        [this]() { return proxy_ != nullptr; });
-    if (!waitStatus) {
-        LOG_WARN("wait for LoadSystemAbility timeout");
-        return nullptr;
-    }
-    LOG_INFO("El5FilekeyManagerClient GetProxy success");
-
-    return proxy_;
-}
-
-void El5FilekeyManagerClient::LoadSystemAbilitySuccess(const sptr<IRemoteObject> &remoteObject)
-{
-    LOG_INFO("El5FilekeyManagerClient LoadSystemAbilitySuccess");
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    if (remoteObject == nullptr) {
-        LOG_ERROR("After loading el5_filekey_service, remoteObject is null.");
-        proxy_ = nullptr;
-        return;
-    }
-
-    deathRecipient_ = new (std::nothrow) El5FilekeyManagerDeathRecipient();
-    if (deathRecipient_ != nullptr) {
-        remoteObject->AddDeathRecipient(deathRecipient_);
-    }
-
-    proxy_ = iface_cast<El5FilekeyManagerInterface>(remoteObject);
-    if (proxy_ == nullptr) {
-        LOG_ERROR("After loading el5_filekey_service, iface_cast get null.");
-    }
-    proxyConVar_.notify_one();
-}
-
-void El5FilekeyManagerClient::LoadSystemAbilityFail()
-{
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    LOG_ERROR("Load el5_filekey_service failed.");
-    proxy_ = nullptr;
-    proxyConVar_.notify_one();
-}
-
-void El5FilekeyManagerClient::OnRemoteDiedHandle()
-{
-    LOG_INFO("Remote died.");
-    std::lock_guard<std::mutex> lock(proxyMutex_);
-    proxy_ = nullptr;
+    LOG_ERROR("get el5 filekey manager proxy failed");
+    return nullptr;
 }
 }  // namespace AccessToken
 }  // namespace Security
