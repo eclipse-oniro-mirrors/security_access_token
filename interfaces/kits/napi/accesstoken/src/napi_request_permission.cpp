@@ -912,7 +912,6 @@ void RequestAsyncInstanceControl::ExecCallback(int32_t id)
         if (iter->second.empty()) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map is empty", id);
             instanceIdMap_.erase(id);
-            return;
         }
         while (!iter->second.empty()) {
             ACCESSTOKEN_LOG_INFO(LABEL, "Id: %{public}d, map size: %{public}zu.", id, iter->second.size());
