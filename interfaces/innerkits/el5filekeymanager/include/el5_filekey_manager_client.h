@@ -19,7 +19,6 @@
 #include "el5_filekey_manager_interface.h"
 
 #include <condition_variable>
-#include "el5_filekey_manager_death_recipient.h"
 
 namespace OHOS {
 namespace Security {
@@ -38,17 +37,10 @@ public:
     int32_t SetFilePathPolicy();
     int32_t RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback);
 
-    void LoadSystemAbilitySuccess(const sptr<IRemoteObject> &remoteObject);
-    void LoadSystemAbilityFail();
-    void OnRemoteDiedHandle();
-
 private:
     El5FilekeyManagerClient();
     DISALLOW_COPY_AND_MOVE(El5FilekeyManagerClient);
     std::mutex proxyMutex_;
-    sptr<El5FilekeyManagerInterface> proxy_ = nullptr;
-    std::condition_variable proxyConVar_;
-    sptr<El5FilekeyManagerDeathRecipient> deathRecipient_ = nullptr;
     sptr<El5FilekeyManagerInterface> GetProxy();
 };
 }  // namespace AccessToken
