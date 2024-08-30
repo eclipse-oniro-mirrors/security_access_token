@@ -154,5 +154,6 @@ group("unittest") {
   deps = [
     ":libprivacy_mock_test",
     ":libprivacy_sdk_test",
+    "tool:AddPermissionUsedRecord",
   ]
 }

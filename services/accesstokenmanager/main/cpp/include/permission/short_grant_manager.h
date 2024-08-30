@@ -34,7 +34,7 @@ typedef struct {
     AccessTokenID tokenID;
     std::string permissionName;
     uint32_t firstGrantTimes;
-    uint32_t currGrantTimes;
+    uint32_t revokeTimes;
 } PermTimerData;
 
 class ShortGrantManager {

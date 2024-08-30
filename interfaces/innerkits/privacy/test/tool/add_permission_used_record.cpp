@@ -19,6 +19,7 @@
 #include <string>
 #include "accesstoken_kit.h"
 #include "nativetoken_kit.h"
+#include "privacy_kit.h"
 #include "token_setproc.h"
 
 using namespace std;
@@ -27,16 +28,12 @@ using namespace OHOS::Security::AccessToken;
 static void NativeTokenGet()
 {
     uint64_t tokenID;
-    const char **perms = new const char *[5]; // size of array
-    perms[0] = "ohos.permission.DISTRIBUTED_DATASYNC"; // 0: index
-    perms[1] = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS"; // 1: index
-    perms[2] = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS"; // 2: index
-    perms[3] = "ohos.permission.GET_SENSITIVE_PERMISSIONS"; // 3: index
-    perms[4] = "ohos.permission.DISABLE_PERMISSION_DIALOG"; // 4: index
+    const char **perms = new const char *[1]; // size of array
+    perms[0] = "ohos.permission.PERMISSION_USED_STATS"; // 0: index
 
     NativeTokenInfoParams infoInstance = {
         .dcapsNum = 0,
-        .permsNum = 5, // size of permission list
+        .permsNum = 1, // size of permission list
         .aclsNum = 0,
         .dcaps = nullptr,
         .perms = perms,
@@ -44,7 +41,7 @@ static void NativeTokenGet()
         .aplStr = "system_core",
     };
 
-    infoInstance.processName = "SetPermDialogCapTest";
+    infoInstance.processName = "AddPermissionUsedRecord";
     tokenID = GetAccessTokenId(&infoInstance);
     SetSelfTokenID(tokenID);
     AccessTokenKit::ReloadNativeTokenInfo();
@@ -54,18 +51,19 @@ static void NativeTokenGet()
 int32_t main(int argc, char *argv[])
 {
     if (argc < 3) { // 3: size
-        std::cout << "Help: ./SetPermDialogCapTest bundleName 0/1 (0: allow, 1: forbid)\n" << std::endl;
+        std::cout << "Help: ./AddPermissionUsedRecord tokenid permisisionName\n" << std::endl;
         return 0;
     }
 
     NativeTokenGet();
 
-    std::string bundle = argv[1];
-    bool isForbidden = static_cast<bool>(atoi(argv[2]));
-    HapBaseInfo baseInfo;
-    baseInfo.bundleName = bundle;
-    baseInfo.instIndex = 0;
-    baseInfo.userID = 100; // 100: user id
-    AccessTokenKit::SetPermDialogCap(baseInfo, isForbidden);
+    uint32_t tokenId = static_cast<uint32_t>(atoi(argv[1])); // 1: index
+    std::string permisisionName = argv[2]; // 2: index
+    int32_t ret = PrivacyKit::AddPermissionUsedRecord(tokenId, permisisionName, 1, 0);
+    if (ret == 0) {
+        std::cout << "Success" << ret << std::endl;
+    } else {
+        std::cout << "Failed, error: " << ret << std::endl;
+    }
     return 0;
 }
