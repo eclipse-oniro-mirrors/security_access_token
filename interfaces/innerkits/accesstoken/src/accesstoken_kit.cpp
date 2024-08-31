@@ -528,26 +528,12 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfoFromRemote(tokenID, hapSync);
 }
 
-int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
-
-    return AccessTokenManagerClient::GetInstance().GetAllNativeTokenInfo(nativeTokenInfosRes);
-}
-
 int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
     const HapTokenInfoForSync& hapSync)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DeviceID=%{public}s, tokenID=%{public}d.",
         ConstantCommon::EncryptDevId(deviceID).c_str(), hapSync.baseInfo.tokenID);
     return AccessTokenManagerClient::GetInstance().SetRemoteHapTokenInfo(deviceID, hapSync);
-}
-
-int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "DeviceID=%{public}s.", ConstantCommon::EncryptDevId(deviceID).c_str());
-    return AccessTokenManagerClient::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
 }
 
 int AccessTokenKit::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
