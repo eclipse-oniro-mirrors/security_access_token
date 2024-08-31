@@ -35,7 +35,12 @@ sptr<IRemoteObject> PrivacySessionManagerProxy::GetSceneSessionManager()
         return nullptr;
     }
 
-    auto ret = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return nullptr;
+    }
+    auto ret = remote->SendRequest(
         static_cast<uint32_t>(SessionManagerServiceMessage::TRANS_ID_GET_SCENE_SESSION_MANAGER),
         data, reply, option);
     if (ret != ERR_NONE) {
@@ -57,7 +62,12 @@ sptr<IRemoteObject> PrivacySessionManagerProxy::GetSceneSessionManagerLite()
         return nullptr;
     }
 
-    auto ret = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return nullptr;
+    }
+    auto ret = remote->SendRequest(
         static_cast<uint32_t>(SessionManagerServiceMessage::TRANS_ID_GET_SCENE_SESSION_MANAGER_LITE),
         data, reply, option);
     if (ret != ERR_NONE) {

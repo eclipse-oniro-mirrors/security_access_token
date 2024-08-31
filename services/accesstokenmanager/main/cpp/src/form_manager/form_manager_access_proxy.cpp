@@ -42,7 +42,12 @@ int32_t FormManagerAccessProxy::RegisterAddObserver(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_REGISTER_ADD_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterAddObserver failed, error: %{public}d", error);
@@ -69,7 +74,12 @@ int32_t FormManagerAccessProxy::RegisterRemoveObserver(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_REGISTER_REMOVE_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "UnregisterAddObserver failed, error: %d", error);
@@ -92,7 +102,12 @@ bool FormManagerAccessProxy::HasFormVisible(const uint32_t tokenId)
         return false;
     }
 
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return false;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IFormMgr::Message::FORM_MGR_HAS_FORM_VISIBLE_WITH_TOKENID), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get form visibility failed, error: %{public}d", error);

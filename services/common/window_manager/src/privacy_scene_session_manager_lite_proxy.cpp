@@ -46,7 +46,12 @@ int32_t PrivacySceneSessionManagerLiteProxy::RegisterWindowManagerAgent(WindowMa
         return ERR_WRITE_PARCEL_FAILED;
     }
 
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(
         SceneSessionManagerLiteMessage::TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
@@ -78,7 +83,12 @@ int32_t PrivacySceneSessionManagerLiteProxy::UnregisterWindowManagerAgent(Window
         return ERR_WRITE_PARCEL_FAILED;
     }
 
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(
         SceneSessionManagerLiteMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {

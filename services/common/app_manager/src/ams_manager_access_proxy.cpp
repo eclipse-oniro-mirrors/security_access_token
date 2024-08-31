@@ -37,7 +37,12 @@ int32_t AmsManagerAccessProxy::KillProcessesByAccessTokenId(const uint32_t acces
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IAmsMgr::Message::FORCE_KILL_APPLICATION_BY_ACCESS_TOKEN_ID), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "KillProcessesByAccessTokenId failed, error: %{public}d", error);
