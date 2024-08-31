@@ -478,18 +478,6 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: GetAllNativeTokenInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
-}
-
-/**
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: SetRemoteHapTokenInfo with no permission
  * @tc.type: FUNC
@@ -500,19 +488,6 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string device = "device";
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
-}
-
-/**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: SetRemoteNativeTokenInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string device = "device";
-    std::vector<NativeTokenInfoForSync> nativeToken;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
 }
 
 /**

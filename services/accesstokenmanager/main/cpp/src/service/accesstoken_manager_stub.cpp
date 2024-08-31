@@ -36,9 +36,6 @@ const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TO
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
 static const int32_t MAX_USER_POLICY_SIZE = 1024;
-#ifdef TOKEN_SYNC_ENABLE
-static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
-#endif
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
@@ -709,25 +706,6 @@ void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data,
     reply.WriteParcelable(&hapTokenParcel);
 }
 
-void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
-    int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
-    reply.WriteInt32(result);
-    if (result != RET_SUCCESS) {
-        return;
-    }
-    reply.WriteUint32(nativeTokenInfosRes.size());
-    for (const auto& native : nativeTokenInfosRes) {
-        reply.WriteParcelable(&native);
-    }
-}
-
 void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
@@ -743,36 +721,6 @@ void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, Mes
         return;
     }
     int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
-    reply.WriteInt32(result);
-}
-
-void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::string deviceID = data.ReadString();
-
-    std::vector<NativeTokenInfoForSyncParcel> nativeParcelList;
-    uint32_t size = data.ReadUint32();
-    if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", size);
-        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
-        return;
-    }
-    for (uint32_t i = 0; i < size; i++) {
-        sptr<NativeTokenInfoForSyncParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoForSyncParcel>();
-        if (nativeParcel == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "NativeParcel read faild");
-            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
-            return;
-        }
-        nativeParcelList.emplace_back(*nativeParcel);
-    }
-
-    int result = this->SetRemoteNativeTokenInfo(deviceID, nativeParcelList);
     reply.WriteInt32(result);
 }
 
@@ -1072,14 +1020,8 @@ void AccessTokenManagerStub::SetTokenSyncFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;
-    requestFuncMap_[
-        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
-        &AccessTokenManagerStub::GetAllNativeTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO)] =
         &AccessTokenManagerStub::SetRemoteHapTokenInfoInner;
-    requestFuncMap_[
-        static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO)] =
-        &AccessTokenManagerStub::SetRemoteNativeTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO)] =
         &AccessTokenManagerStub::DeleteRemoteTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =

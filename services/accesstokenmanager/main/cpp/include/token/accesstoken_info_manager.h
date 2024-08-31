@@ -96,10 +96,7 @@ public:
     int GetHapTokenSync(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSync& hapSync);
-    void GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSync& hapSync);
-    int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     bool IsRemoteHapTokenValid(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);

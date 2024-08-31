@@ -455,21 +455,6 @@ int AccessTokenManagerService::GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         hapSyncParcel.hapTokenInfoForSyncParams);
 }
 
-int AccessTokenManagerService::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfosRes)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-
-    std::vector<NativeTokenInfoForSync> nativeVec;
-    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
-    for (const auto& native : nativeVec) {
-        NativeTokenInfoForSyncParcel nativeParcel;
-        nativeParcel.nativeTokenInfoForSyncParams = native;
-        nativeTokenInfosRes.emplace_back(nativeParcel);
-    }
-
-    return RET_SUCCESS;
-}
-
 int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID,
     HapTokenInfoForSyncParcel& hapSyncParcel)
 {
@@ -477,18 +462,6 @@ int AccessTokenManagerService::SetRemoteHapTokenInfo(const std::string& deviceID
     int ret = AccessTokenInfoManager::GetInstance().SetRemoteHapTokenInfo(deviceID,
         hapSyncParcel.hapTokenInfoForSyncParams);
     return ret;
-}
-
-int AccessTokenManagerService::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DeviceID: %{public}s", ConstantCommon::EncryptDevId(deviceID).c_str());
-
-    std::vector<NativeTokenInfoForSync> nativeList;
-    std::transform(nativeTokenInfoForSyncParcel.begin(),
-        nativeTokenInfoForSyncParcel.end(), std::back_inserter(nativeList),
-        [](const auto& nativeParcel) { return nativeParcel.nativeTokenInfoForSyncParams; });
-    return AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeList);
 }
 
 int AccessTokenManagerService::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
