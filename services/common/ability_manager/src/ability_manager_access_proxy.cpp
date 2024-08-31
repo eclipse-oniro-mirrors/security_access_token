@@ -60,7 +60,12 @@ int AbilityManagerAccessProxy::StartAbility(const AAFwk::Want &want, const sptr<
         return AccessTokenError::ERR_WRITE_PARCEL_FAILED;
     }
 
-    int error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return AccessTokenError::ERR_REMOTE_CONNECTION;
+    }
+    int error = remote->SendRequest(
         static_cast<uint32_t>(AccessAbilityServiceInterfaceCode::START_ABILITY_ADD_CALLER), data, reply, option);
     if (error != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Send request error: %{public}d", error);

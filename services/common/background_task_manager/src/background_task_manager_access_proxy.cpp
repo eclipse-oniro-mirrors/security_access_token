@@ -39,7 +39,12 @@ int32_t BackgroundTaskManagerAccessProxy::SubscribeBackgroundTask(const sptr<IBa
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::SUBSCRIBE_BACKGROUND_TASK), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Regist background task observer failed, error: %{public}d", error);
@@ -66,7 +71,12 @@ int32_t BackgroundTaskManagerAccessProxy::UnsubscribeBackgroundTask(const sptr<I
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write callerToken failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::UNSUBSCRIBE_BACKGROUND_TASK), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Unregist background task observer failed, error: %d", error);
@@ -90,7 +100,12 @@ int32_t BackgroundTaskManagerAccessProxy::GetContinuousTaskApps(
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IBackgroundTaskMgr::Message::GET_CONTINUOUS_TASK_APPS), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Get continuous task apps failed, error: %{public}d", error);

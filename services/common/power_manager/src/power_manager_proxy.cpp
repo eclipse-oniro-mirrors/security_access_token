@@ -37,7 +37,12 @@ bool PowerMgrProxy::IsScreenOn()
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteBool failed");
         return false;
     }
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(IPowerMgr::Message::IS_SCREEN_ON), data, reply, option);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return false;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(IPowerMgr::Message::IS_SCREEN_ON), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "IsScreenOn failed, error: %{public}d", error);
         return false;

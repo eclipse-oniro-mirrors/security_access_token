@@ -76,6 +76,7 @@ enum AccessTokenError {
     ERR_LOAD_SO_FAILED,
     ERR_USER_POLICY_INITIALIZED,
     ERR_USER_POLICY_NOT_INITIALIZED,
+    ERR_REMOTE_CONNECTION,
 };
 } // namespace AccessToken
 } // namespace Security
