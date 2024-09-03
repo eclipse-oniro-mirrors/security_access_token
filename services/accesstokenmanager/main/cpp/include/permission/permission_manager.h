@@ -73,9 +73,13 @@ public:
     int32_t GetPermissionRequestToggleStatus(const std::string& permissionName, uint32_t& status, int32_t userID);
     int32_t CheckAndUpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag);
+    int32_t UpdatePermission(AccessTokenID tokenID, const std::string& permissionName,
+        bool isGranted, uint32_t flag, bool needKill);
     int32_t GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int32_t RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     void ClearUserGrantedPermissionState(AccessTokenID tokenID);
+    int32_t GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     void GetSelfPermissionState(const std::vector<PermissionStateFull>& permsList,
         PermissionListState& permState, int32_t apiVersion);
     int32_t AddPermStateChangeCallback(
@@ -105,7 +109,7 @@ private:
         const std::vector<AccessTokenID>& tokenIDs, const std::vector<std::string>& permList);
     int32_t ScopeFilter(const PermStateChangeScope& scopeSrc, PermStateChangeScope& scopeRes);
     int32_t UpdateTokenPermissionState(
-        AccessTokenID tokenID, const std::string& permissionName, bool isGranted, uint32_t flag);
+        AccessTokenID id, const std::string& permission, bool isGranted, uint32_t flag, bool needKill);
     std::string TransferPermissionDefToString(const PermissionDef& inPermissionDef);
     bool IsPermissionVaild(const std::string& permissionName);
     bool GetLocationPermissionIndex(std::vector<PermissionListStateParcel>& reqPermList, LocationIndex& locationIndex);

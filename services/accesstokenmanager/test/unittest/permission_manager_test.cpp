@@ -1369,7 +1369,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     uint32_t flag = 0;
     // tokenId invalid
     ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
 
     HapInfoParams info = {
         .userID = USER_ID,
@@ -1390,12 +1390,12 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     infoPtr->SetRemote(true);
     // remote token is true
     ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
     infoPtr->SetRemote(false);
 
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
-        permissionName, isGranted, flag));
+        permissionName, isGranted, flag, true));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }

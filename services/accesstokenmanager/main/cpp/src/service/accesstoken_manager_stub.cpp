@@ -42,6 +42,8 @@ const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
+const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
+
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
 #endif // HICOLLIE_ENABLE
@@ -379,6 +381,29 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
         return;
     }
     int result = this->RevokePermission(tokenID, permissionName, flag);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply)
+{
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    AccessTokenID tokenID = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    uint32_t onceTime = data.ReadUint32();
+    if (!IsPrivilegedCalling() &&
+        VerifyAccessToken(callingTokenID, GRANT_SHORT_TERM_WRITE_MEDIAVIDEO) == PERMISSION_DENIED) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
+            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int result = this->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
     reply.WriteInt32(result);
 }
 
@@ -1033,6 +1058,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::GrantPermissionInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REVOKE_PERMISSION)] =
         &AccessTokenManagerStub::RevokePermissionInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GRANT_PERMISSION_FOR_SPECIFIEDTIME)] =
+        &AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION)] =
         &AccessTokenManagerStub::ClearUserGrantedPermissionStateInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =

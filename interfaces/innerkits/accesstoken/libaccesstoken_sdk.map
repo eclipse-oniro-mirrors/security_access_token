@@ -74,6 +74,7 @@
         "OHOS::Security::AccessToken::TokenSyncCallback::~TokenSyncCallback()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::TokenSyncKitInterface()";
         "OHOS::Security::AccessToken::TokenSyncKitInterface::~TokenSyncKitInterface()";
+        "OHOS::Security::AccessToken::AccessTokenKit::GrantPermissionForSpecifiedTime(unsigned int, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";
         "";
         "";
     };

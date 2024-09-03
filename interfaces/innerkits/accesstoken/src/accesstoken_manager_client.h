@@ -63,6 +63,8 @@ public:
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);

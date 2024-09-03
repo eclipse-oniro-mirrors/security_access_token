@@ -541,6 +541,21 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
 }
+
+/**
+ * @tc.name: GrantPermissionForSpecifiedTime001
+ * @tc.desc: GrantPermissionForSpecifiedTime with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::string permission = "permission";
+    uint32_t onceTime = 1;
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
