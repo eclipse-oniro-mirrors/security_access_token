@@ -30,7 +30,7 @@ namespace {
 static constexpr int32_t MIN_ARGUMENT_NUMBER = 2;
 static constexpr int32_t MAX_ARGUMENT_NUMBER = 4096;
 static const std::string HELP_MSG_NO_OPTION = "error: you must specify an option at least.\n";
-static const std::string SHORT_OPTIONS_DUMP = "hd::t::r::v::i:p:b:n:";
+static const std::string SHORT_OPTIONS_DUMP = "h::t::r::v::i:p:b:n:";
 static const std::string TOOLS_NAME = "atm";
 static const std::string HELP_MSG =
     "usage: atm <command> <option>\n"
@@ -67,7 +67,6 @@ static const std::string HELP_MSG_TOGGLE =
 
 static const struct option LONG_OPTIONS_DUMP[] = {
     {"help", no_argument, nullptr, 'h'},
-    {"perm", no_argument, nullptr, 'd'},
     {"token-info", no_argument, nullptr, 't'},
     {"record-info", no_argument, nullptr, 'r'},
     {"token-id", required_argument, nullptr, 'i'},
