@@ -967,6 +967,7 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
@@ -988,6 +989,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
         atManagerService_->UnRegisterTokenSyncCallback());
     EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
     EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackDeathRecipient_);
+    setuid(0);
 }
 
 /**
@@ -998,6 +1000,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
@@ -1040,6 +1043,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
     TokenModifyNotifier::GetInstance().deleteTokenList_ = deleteTokenList;
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
+    setuid(0);
 }
 
 /**
@@ -1050,6 +1054,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS, atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
@@ -1064,6 +1069,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
         .GetRemoteHapTokenInfo("invalid_id", 0)); // this is a test input
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
+    setuid(0);
 }
 
 /**

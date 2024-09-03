@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Copyright (c) 2022-2024 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -27,6 +27,7 @@ ohos_unittest("libprivacy_sdk_test") {
 
   include_dirs = [
     "../src",
+    "mock/src",
     "unittest/app_manager_client",
     "${access_token_path}/frameworks/common/include",
     "${access_token_path}/frameworks/privacy/include",
@@ -37,9 +38,7 @@ ohos_unittest("libprivacy_sdk_test") {
   ]
 
   sources = [
-    "unittest/app_manager_client/app_manager_access_client.cpp",
-    "unittest/app_manager_client/app_manager_access_proxy.cpp",
-    "unittest/app_manager_client/app_state_data.cpp",
+    "mock/src/app_manager_access_client.cpp",
     "unittest/src/permission_deny_test.cpp",
     "unittest/src/privacy_kit_test.cpp",
   ]
