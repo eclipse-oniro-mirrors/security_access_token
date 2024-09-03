@@ -267,7 +267,7 @@ HWTEST_F(EdmPolicySetTest, InitUserPolicy008, TestSize.Level1)
     std::vector<PermissionStateFull> permStatList;
     res = AccessTokenKit::GetReqPermissions(fullIdUser2.tokenIdExStruct.tokenID, permStatList, true);
     EXPECT_EQ(RET_SUCCESS, res);
-    EXPECT_EQ(static_cast<uint32_t>(2), permStatList.size());
+    ASSERT_EQ(static_cast<uint32_t>(2), permStatList.size());
     EXPECT_EQ(INTERNET, permStatList[0].permissionName);
     EXPECT_EQ(PERMISSION_GRANTED, permStatList[0].grantStatus[0]);
 

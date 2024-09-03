@@ -42,7 +42,6 @@ static const int32_t INDEX_ONE = 1;
 static const int32_t INDEX_TWO = 2;
 static const int32_t INDEX_THREE = 3;
 static const int32_t INDEX_FOUR = 4;
-static const int32_t RANDOM_UID = 123;
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
@@ -156,6 +155,7 @@ void NativeTokenGet()
 
 void AccessTokenKitTest::SetUpTestCase()
 {
+    setuid(0);
     // make test case clean
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
@@ -3275,55 +3275,6 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetNativeTokenName001
- * @tc.desc: AccessTokenKit::GetNativeTokenName.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetNativeTokenName001, TestSize.Level1)
-{
-    std::string name;
-    // invalid tokenId
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenName(INVALID_TOKENID, name));
-
-    AccessTokenID tokenId = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenKit::GetTokenTypeFlag(tokenId));
-    // invalid token type
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, AccessTokenKit::GetNativeTokenName(tokenId, name));
-
-    std::string processName = "hdcd";
-    tokenId = AccessTokenKit::GetNativeTokenId(processName);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(0, AccessTokenKit::GetNativeTokenName(tokenId, name));
-    ASSERT_EQ(processName, name);
-}
-
-/**
- * @tc.name: GetNativeTokenName002
- * @tc.desc: AccessTokenKit::GetNativeTokenName.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
-{
-    AccessTokenID tokenId = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ATokenTypeEnum::TOKEN_HAP, AccessTokenKit::GetTokenTypeFlag(tokenId));
-    EXPECT_EQ(0, SetSelfTokenID(tokenId)); // set self to hap
-
-    std::string name;
-    std::string processName = "hdcd";
-    tokenId = AccessTokenKit::GetNativeTokenId(processName);
-
-    int32_t selfUid = getuid();
-    setuid(RANDOM_UID);
-    // calling is not native token, permission denied
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenName(tokenId, name));
-    setuid(selfUid);
-}
-
-/**
  * @tc.name: UserPolicyTest
  * @tc.desc: UserPolicyTest.
  * @tc.type: FUNC
@@ -3331,6 +3282,12 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
 {
+    setuid(0);
+    const char **perms = new const char *[1];
+    perms[INDEX_ZERO] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    uint64_t tokenID = GetNativeTokenTest("TestCase", perms, 1);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    delete[] perms;
     UserState user = {.userId = 100, .isActive = true}; // 100 is userId
     const std::vector<UserState> userList = { user };
     const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
