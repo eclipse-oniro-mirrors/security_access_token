@@ -272,6 +272,33 @@ int PermissionPolicySet::VerifyPermissionStatus(const std::string& permissionNam
     return PERMISSION_DENIED;
 }
 
+
+bool PermissionPolicySet::IsPermissionGrantedWithSecComp(const std::string& permissionName)
+{
+    Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->permPolicySetLock_);
+    auto iter = std::find_if(permStateList_.begin(), permStateList_.end(),
+        [permissionName](const PermissionStateFull& permState) {
+            return permissionName == permState.permissionName;
+        });
+    if (iter != permStateList_.end()) {
+        if (!iter->isGeneral) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, permission: %{public}s is not general",
+                tokenId_, permissionName.c_str());
+            return false;
+        }
+        if (IsPermGrantedBySecComp(iter->grantFlags[0])) {
+            ACCESSTOKEN_LOG_INFO(LABEL, "TokenID: %{public}d, permission is granted by secComp", tokenId_);
+            return true;
+        }
+    }
+
+    if (std::any_of(secCompGrantedPermList_.begin(), secCompGrantedPermList_.end(),
+        [permissionName](const auto& permission) { return permission == permissionName; })) {
+            return true;
+    }
+    return false;
+}
+
 void PermissionPolicySet::GetDefPermissions(std::vector<PermissionDef>& permList)
 {
     PermissionDefinitionCache::GetInstance().GetDefPermissionsByTokenId(permList, tokenId_);
