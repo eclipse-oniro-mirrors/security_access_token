@@ -44,7 +44,6 @@ static const std::string HELP_MSG_DUMP =
     "usage: atm dump <option>.\n"
     "options list:\n"
     "  -h, --help                                               list available options\n"
-    "  -d, --perm                                               list all permission definition info\n"
     "  -t, --token-info                                         list all token info in system\n"
     "  -t, --token-info -i <token-id>                           list single token info by specific tokenId\n"
     "  -t, --token-info -b <bundle-name>                        list all token info by specific bundleName\n"
@@ -102,7 +101,6 @@ std::map<char, OptType> COMMAND_TYPE = {
     {'t', DUMP_TOKEN},
     {'r', DUMP_RECORD},
     {'v', DUMP_TYPE},
-    {'d', DUMP_PERM},
     {'g', PERM_GRANT},
     {'c', PERM_REVOKE},
     {'s', TOGGLE_SET},
@@ -230,7 +228,6 @@ void AtmCommand::RunAsCommandExistentOptionArgument(const int32_t& option, AtmTo
         case 'c':
         case 's':
         case 'o':
-        case 'd':
             info.type = COMMAND_TYPE[option];
             break;
         case 'i':
@@ -364,12 +361,6 @@ int32_t AtmCommand::RunCommandByOperationType(const AtmToolsParamInfo& info)
             break;
         case DUMP_TYPE:
             dumpInfo = DumpUsedTypeInfo(info.tokenId, info.permissionName);
-            break;
-        case DUMP_PERM:
-            ret = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-            if (ret != RET_SUCCESS) {
-                dumpInfo = "Failure.";
-            }
             break;
         case PERM_GRANT:
         case PERM_REVOKE:

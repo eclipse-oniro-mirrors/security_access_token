@@ -79,7 +79,6 @@ public:
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo() override;
-    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
 #endif
     AccessTokenID GetNativeTokenId(const std::string& processName) override;
 

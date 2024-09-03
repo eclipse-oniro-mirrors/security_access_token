@@ -489,17 +489,6 @@ int32_t AccessTokenManagerClient::ReloadNativeTokenInfo()
     }
     return proxy->ReloadNativeTokenInfo();
 }
-
-int32_t AccessTokenManagerClient::DumpPermDefInfo(std::string& dumpInfo)
-{
-    auto proxy = GetProxy();
-    if (proxy == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
-        return AccessTokenError::ERR_SERVICE_ABNORMAL;
-    }
-
-    return proxy->DumpPermDefInfo(dumpInfo);
-}
 #endif
 
 AccessTokenID AccessTokenManagerClient::GetNativeTokenId(const std::string& processName)

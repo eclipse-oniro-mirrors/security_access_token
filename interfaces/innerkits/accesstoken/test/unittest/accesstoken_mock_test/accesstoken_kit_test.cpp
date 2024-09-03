@@ -245,18 +245,6 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: DumpPermDefInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo = "";
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DumpPermDefInfo(dumpInfo));
-}
-
-/**
  * @tc.name: GetPermissionFlag001
  * @tc.desc: GetPermissionFlag with proxy is null
  * @tc.type: FUNC

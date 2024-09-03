@@ -968,56 +968,6 @@ HWTEST_F(AccessTokenKitExtensionTest, GetPermissionFlag006, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: Dump all the permission definition infos, that caller is shell app.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitExtensionTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    SetSelfTokenID(g_selfShellTokenId);
-    std::string dumpInfo = "";
-    int32_t ret = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-    ASSERT_EQ(RET_SUCCESS, ret);
-}
-
-/**
- * @tc.name: DumpPermDefInfo002
- * @tc.desc: DumpPermDefInfo caller is a normal app.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitExtensionTest, DumpPermDefInfo002, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestNormalInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-
-    std::string dumpInfo = "";
-    int32_t ret = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-    ASSERT_EQ(ERR_PERMISSION_DENIED, ret);
-}
-
-/**
- * @tc.name: DumpPermDefInfo003
- * @tc.desc: DumpPermDefInfo caller is a system app.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitExtensionTest, DumpPermDefInfo003, TestSize.Level1)
-{
-    AccessTokenIDEx tokenIdEx = {0};
-    tokenIdEx = AccessTokenKit::AllocHapToken(g_infoManagerTestSystemInfoParms, g_infoManagerTestPolicyPrams);
-    ASSERT_NE(INVALID_TOKENID, tokenIdEx.tokenIDEx);
-    EXPECT_EQ(0, SetSelfTokenID(tokenIdEx.tokenIDEx));
-
-    std::string dumpInfo = "";
-    int32_t ret = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-    ASSERT_EQ(ERR_PERMISSION_DENIED, ret);
-}
-
-/**
  * @tc.name: DumpTokenInfo001
  * @tc.desc: Get dump token information with invalid tokenID
  * @tc.type: FUNC
