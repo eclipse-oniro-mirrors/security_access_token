@@ -72,8 +72,7 @@ bool ShortGrantManager::CancelTaskOfPermissionRevoking(const std::string& taskNa
 int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::string& permission, uint32_t onceTime)
 {
     if (tokenID == 0 || onceTime == 0 || onceTime > DEFAULT_MAX_ONCE_TIME_MILLISECONDS || onceTime > maxTime_) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Input invalid, tokenID is: %{public}d, onceTime is %{public}u!", tokenID, onceTime);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Input invalid, tokenID: %{public}d, onceTime %{public}u!", tokenID, onceTime);
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     std::string taskName = TASK_NAME_SHORT_GRANT_PERMISSION + std::to_string(tokenID) + permission;
@@ -106,8 +105,7 @@ int ShortGrantManager::RefreshPermission(AccessTokenID tokenID, const std::strin
     }
 
     uint32_t maxRemainedTime = maxTime_ - (GetCurrentTime() - iter->firstGrantTimes);
-    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ?
-         (iter->revokeTimes - GetCurrentTime()) : 0;
+    uint32_t currRemainedTime = iter->revokeTimes > GetCurrentTime() ? (iter->revokeTimes - GetCurrentTime()) : 0;
     uint32_t cancelTimes = (maxRemainedTime > onceTime) ? onceTime : maxRemainedTime;
     ACCESSTOKEN_LOG_INFO(LABEL, "currRemainedTime %{public}d", currRemainedTime);
     if (cancelTimes > currRemainedTime) {
