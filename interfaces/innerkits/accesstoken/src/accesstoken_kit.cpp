@@ -497,16 +497,6 @@ int32_t AccessTokenKit::ReloadNativeTokenInfo()
 #endif
 }
 
-int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
-{
-#ifndef ATM_BUILD_VARIANT_USER_ENABLE
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called.");
-    return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
-#else
-    return 0;
-#endif
-}
-
 AccessTokenID AccessTokenKit::GetNativeTokenId(const std::string& processName)
 {
     if (!DataValidator::IsProcessNameValid(processName)) {

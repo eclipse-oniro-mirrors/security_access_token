@@ -92,7 +92,6 @@ public:
     void ParamUpdate(const std::string& permissionName, uint32_t flag, bool filtered);
     void NotifyWhenPermissionStateUpdated(AccessTokenID tokenID, const std::string& permissionName,
         bool isGranted, uint32_t flag, const std::shared_ptr<HapTokenInfoInner>& infoPtr);
-    int32_t DumpPermDefInfo(std::string& dumpInfo);
     void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy);
     void AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy,
         const std::vector<std::string>& permList);

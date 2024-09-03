@@ -450,19 +450,6 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
     ASSERT_EQ("", dumpInfo);
 }
 
-/**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: Verify the DumpPermDefInfo abnormal branch return nullptr proxy.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(AccessTokenDenyTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo;
-    int32_t res = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, res);
-}
-
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenInfoFromRemote001

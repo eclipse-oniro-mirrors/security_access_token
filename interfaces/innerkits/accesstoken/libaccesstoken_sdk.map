@@ -34,7 +34,6 @@
         "OHOS::Security::AccessToken::AccessTokenKit::ReloadNativeTokenInfo()";
         "OHOS::Security::AccessToken::AccessTokenKit::GetNativeTokenId(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DumpTokenInfo(OHOS::Security::AccessToken::AtmToolsParamInfo const&, std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
-        "OHOS::Security::AccessToken::AccessTokenKit::DumpPermDefInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>>&)";
         "OHOS::Security::AccessToken::AccessTokenKit::GetHapTokenInfoFromRemote(unsigned int, OHOS::Security::AccessToken::HapTokenInfoForSync&)";
         "OHOS::Security::AccessToken::AccessTokenKit::SetRemoteHapTokenInfo(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, OHOS::Security::AccessToken::HapTokenInfoForSync const&)";
         "OHOS::Security::AccessToken::AccessTokenKit::DeleteRemoteToken(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int)";

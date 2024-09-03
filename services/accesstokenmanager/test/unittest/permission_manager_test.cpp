@@ -1149,19 +1149,6 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: PermissionManager::DumpPermDefInfo function test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo = "";
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo));
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
  * @tc.name: SetPermissionRequestToggleStatus001
  * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
  * status and invalid userID.
