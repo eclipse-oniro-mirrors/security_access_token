@@ -78,7 +78,6 @@ public:
     int GetNativeTokenInfo(AccessTokenID tokenID, NativeTokenInfo& nativeTokenInfoRes);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     int32_t ReloadNativeTokenInfo();
-    int32_t DumpPermDefInfo(std::string& dumpInfo);
 #endif
     AccessTokenID GetNativeTokenId(const std::string& processName);
     int32_t RegisterPermStateChangeCallback(

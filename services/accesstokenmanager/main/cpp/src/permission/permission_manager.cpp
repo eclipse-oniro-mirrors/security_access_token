@@ -428,35 +428,6 @@ void PermissionManager::PermDefToString(const PermissionDef& def, std::string& i
     info.append(R"(    })");
 }
 
-int32_t PermissionManager::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Get all permission definition info.");
-
-    std::vector<GenericValues> permDefRes;
-
-    dumpInfo.append(R"({)");
-    dumpInfo.append("\n");
-    dumpInfo.append(R"(  "permDefList": [)");
-    dumpInfo.append("\n");
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
-    for (auto iter = permDefRes.begin(); iter != permDefRes.end(); iter++) {
-        PermissionDef def;
-        int32_t ret = DataTranslator::TranslationIntoPermissionDef(*iter, def);
-        if (ret != RET_SUCCESS) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "PermDef of %{public}s is wrong.", def.permissionName.c_str());
-            return ret;
-        }
-        PermDefToString(def, dumpInfo);
-        if (iter != (permDefRes.end() - 1)) {
-            dumpInfo.append(",\n");
-        }
-        dumpInfo.append("\n");
-    }
-    dumpInfo.append("\n  ]\n");
-    dumpInfo.append("}");
-    return RET_SUCCESS;
-}
-
 int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
 {
     std::vector<GenericValues> permRequestToggleStatusRes;

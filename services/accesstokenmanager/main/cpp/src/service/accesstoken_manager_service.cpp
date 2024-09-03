@@ -432,12 +432,6 @@ int32_t AccessTokenManagerService::ReloadNativeTokenInfo()
     return NativeTokenReceptor::GetInstance().Init();
 }
 
-int32_t AccessTokenManagerService::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Called");
-
-    return PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo);
-}
 #endif
 
 AccessTokenID AccessTokenManagerService::GetNativeTokenId(const std::string& processName)

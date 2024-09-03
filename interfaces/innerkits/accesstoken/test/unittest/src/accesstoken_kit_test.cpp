@@ -156,6 +156,7 @@ void NativeTokenGet()
 
 void AccessTokenKitTest::SetUpTestCase()
 {
+    setuid(0);
     // make test case clean
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
@@ -3331,6 +3332,12 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
  */
 HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
 {
+    setuid(0);
+    const char **perms = new const char *[1];
+    perms[INDEX_ZERO] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    uint64_t tokenID = GetNativeTokenTest("TestCase", perms, 1);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    delete[] perms;
     UserState user = {.userId = 100, .isActive = true}; // 100 is userId
     const std::vector<UserState> userList = { user };
     const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
