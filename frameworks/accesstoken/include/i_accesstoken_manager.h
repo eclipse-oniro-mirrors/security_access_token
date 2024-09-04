@@ -65,6 +65,8 @@ public:
         AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) = 0;
     virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
+    virtual int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;
     virtual AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) = 0;
     virtual int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,

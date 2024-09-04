@@ -44,6 +44,7 @@
 #ifndef COMMON_EVENT_SERVICE_ENABLE
 #include "privacy_kit.h"
 #endif // COMMON_EVENT_SERVICE_ENABLE
+#include "short_grant_manager.h"
 #include "string_ex.h"
 #include "system_ability_definition.h"
 #include "permission_definition_parser.h"
@@ -286,6 +287,13 @@ int AccessTokenManagerService::RevokePermission(AccessTokenID tokenID, const std
 {
     int32_t ret = PermissionManager::GetInstance().RevokePermission(tokenID, permissionName, flag);
     DumpTokenIfNeeded();
+    return ret;
+}
+
+int AccessTokenManagerService::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    int32_t ret = PermissionManager::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
     return ret;
 }
 
@@ -701,6 +709,14 @@ bool AccessTokenManagerService::Initialize()
     eventHandler_ = std::make_shared<AccessEventHandler>(eventRunner_);
     dumpEventHandler_ = std::make_shared<AccessEventHandler>(dumpEventRunner_);
     TempPermissionObserver::GetInstance().InitEventHandler(eventHandler_);
+
+    shortGrantEventRunner_ = AppExecFwk::EventRunner::Create(true, AppExecFwk::ThreadMode::FFRT);
+    if (!shortGrantEventRunner_) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to create a shortGrantEventRunner_.");
+        return false;
+    }
+    shortGrantEventHandler_ = std::make_shared<AccessEventHandler>(shortGrantEventRunner_);
+    ShortGrantManager::GetInstance().InitEventHandler(shortGrantEventHandler_);
 #endif
 
 #ifdef SUPPORT_SANDBOX_APP

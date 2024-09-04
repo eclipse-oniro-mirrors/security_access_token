@@ -72,6 +72,17 @@ public:
      * @return enum PermUsedTypeEnum, see access_token.h
      */
     static PermUsedTypeEnum GetUserGrantedPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+
+    /**
+     * @brief Grant input permission to input tokenID flag for specified time.
+     * @param tokenID token id
+     * @param permissionName permission name quote
+     * @param onceTime the time it takes to work, the unit is second.
+     * @return error code, see access_token_error.h
+     */
+    static int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
+
     /**
      * @brief Create a unique hap token by input values.
      * @param info struct HapInfoParams quote, see hap_token_info.h

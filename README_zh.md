@@ -75,6 +75,7 @@ ATM部件的架构图如下所示：
 | int GetPermissionFlag(AccessTokenID tokenID, const std::string& permissionName); | 查询指定tokenID的应用的指定权限 |
 | int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | 授予指定tokenID的应用的指定权限 |
 | int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, int flag); | 撤销指定tokenID的应用的指定权限 |
+| int GrantPermissionForSpecifiedTime(AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime, uint32_t maxTime); | 授权指定tokenID的应用固定授权时间的指定权限 |
 | int ClearUserGrantedPermissionState(AccessTokenID tokenID); | 清空指定tokenID的应用的user_grant权限状态 |
 | uint64_t GetAccessTokenId(const char *processname, const char **dcap, int32_t dacpNum, const char *aplStr); | 创建获取native进程的tokenId |
 
