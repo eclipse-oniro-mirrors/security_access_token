@@ -604,6 +604,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     }
 #endif
     int32_t statusBefore = permPolicySet->VerifyPermissionStatus(permission);
+    bool isSecCompGrantedBefore = permPolicySet->IsPermissionGrantedWithSecComp(permission);
     int32_t ret = permPolicySet->UpdatePermissionStatus(permission, isGranted, flag);
     if (ret != RET_SUCCESS) {
         return ret;
@@ -612,7 +613,7 @@ int32_t PermissionManager::UpdateTokenPermissionState(
     if (statusAfter != statusBefore) {
         NotifyWhenPermissionStateUpdated(id, permission, isGranted, flag, infoPtr);
         // To notify kill process when perm is revoke
-        if (needKill) {
+        if (needKill && (!isGranted && !isSecCompGrantedBefore)) {
             ACCESSTOKEN_LOG_INFO(LABEL, "(%{public}s) is revoked, kill process(%{public}u).", permission.c_str(), id);
             AppManagerAccessClient::GetInstance().KillProcessesByAccessTokenId(id);
         }
