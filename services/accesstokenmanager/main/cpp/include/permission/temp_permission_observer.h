@@ -41,9 +41,9 @@ public:
     PermissionAppStateObserver() = default;
     ~PermissionAppStateObserver() = default;
 
-    void OnApplicationStateChanged(const AppStateData &appStateData) override;
-    void OnForegroundApplicationChanged(const AppStateData &appStateData) override;
-    void OnProcessDied(const ProcessData &processData) override;
+    void OnAppStopped(const AppStateData &appStateData) override;
+    void OnAppStateChanged(const AppStateData &appStateData) override;
+
     DISALLOW_COPY_AND_MOVE(PermissionAppStateObserver);
 };
 
@@ -86,13 +86,18 @@ public:
     void OnAppMgrRemoteDiedHandle();
 
     bool IsAllowGrantTempPermission(AccessTokenID tokenID, const std::string& permissionName);
+    bool CheckPermissionState(AccessTokenID tokenID, const std::string& permissionName, const std::string& bundleName);
     void AddTempPermTokenToList(AccessTokenID tokenID,
         const std::string& bundleName, const std::string& permissionName, const std::vector<bool>& list);
     void RevokeAllTempPermission(AccessTokenID tokenID);
+    void RevokeTempPermission(AccessTokenID tokenID, const std::string& permissionName);
     bool GetPermissionStateFull(AccessTokenID tokenID, std::vector<PermissionStateFull>& permissionStateFullList);
     bool GetAppStateListByTokenID(AccessTokenID tokenID, std::vector<bool>& list);
     void ModifyAppState(AccessTokenID tokenID, int32_t index, bool flag);
     bool GetTokenIDByBundle(const std::string &bundleName, AccessTokenID& tokenID);
+    void AddContinuousTask(AccessTokenID tokenID);
+    void DelContinuousTask(AccessTokenID tokenID);
+    bool FindContinuousTask(AccessTokenID tokenID);
 #ifdef EVENTHANDLER_ENABLE
     void InitEventHandler(const std::shared_ptr<AccessEventHandler>& eventHandler);
     void GetConfigValue();
@@ -117,6 +122,9 @@ private:
     std::mutex tempPermissionMutex_;
     std::map<AccessTokenID, std::vector<bool>> tempPermTokenMap_;
 
+    std::mutex continuousTaskMutex_;
+    std::map<AccessTokenID, int32_t> continuousTaskMap_;
+
     // appState
     std::mutex appStateCallbackMutex_;
     sptr<PermissionAppStateObserver> appStateCallback_ = nullptr;
@@ -129,6 +137,7 @@ private:
     std::mutex formStateCallbackMutex_;
     sptr<PermissionFormStateObserver> formVisibleCallback_ = nullptr;
     sptr<PermissionFormStateObserver> formInvisibleCallback_ = nullptr;
+
     std::mutex formTokenMutex_;
     std::map<std::string, AccessTokenID> formTokenMap_;
 

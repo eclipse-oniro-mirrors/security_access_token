@@ -102,7 +102,7 @@ PermissionRecordManager::~PermissionRecordManager()
     Unregister();
 }
 
-void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData &appStateData)
+void PrivacyAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, pid=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.pid, appStateData.state);
@@ -116,7 +116,7 @@ void PrivacyAppStateObserver::OnForegroundApplicationChanged(const AppStateData 
     PermissionRecordManager::GetInstance().NotifyAppStateChange(appStateData.accessTokenId, appStateData.pid, status);
 }
 
-void PrivacyAppStateObserver::OnApplicationStateChanged(const AppStateData &appStateData)
+void PrivacyAppStateObserver::OnAppStopped(const AppStateData &appStateData)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "OnChange(id=%{public}d, state=%{public}d).",
         appStateData.accessTokenId, appStateData.state);

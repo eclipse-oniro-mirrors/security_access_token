@@ -44,16 +44,20 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
         return ERROR_IPC_REQUEST_FAIL;
     }
     switch (static_cast<IApplicationStateObserver::Message>(code)) {
-        case IApplicationStateObserver::Message::TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED: {
-            HandleOnForegroundApplicationChanged(data, reply);
+        case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_STATE_CHANGED: {
+            HandleOnProcessStateChanged(data, reply);
             return NO_ERROR;
         }
         case IApplicationStateObserver::Message::TRANSACT_ON_PROCESS_DIED: {
             HandleOnProcessDied(data, reply);
             return NO_ERROR;
         }
-        case IApplicationStateObserver::Message::TRANSACT_ON_APPLICATION_STATE_CHANGED: {
-            HandleOnApplicationStateChanged(data, reply);
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STATE_CHANGED: {
+            HandleOnAppStateChanged(data, reply);
+            return NO_ERROR;
+        }
+        case IApplicationStateObserver::Message::TRANSACT_ON_APP_STOPPED: {
+            HandleOnAppStopped(data, reply);
             return NO_ERROR;
         }
         default: {
@@ -64,15 +68,15 @@ int32_t ApplicationStateObserverStub::OnRemoteRequest(
     return NO_ERROR;
 }
 
-int32_t ApplicationStateObserverStub::HandleOnForegroundApplicationChanged(MessageParcel &data, MessageParcel &reply)
+int32_t ApplicationStateObserverStub::HandleOnProcessStateChanged(MessageParcel &data, MessageParcel &reply)
 {
-    std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
+    std::unique_ptr<ProcessData> processData(data.ReadParcelable<ProcessData>());
     if (processData == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
         return -1;
     }
 
-    OnForegroundApplicationChanged(*processData);
+    OnProcessStateChanged(*processData);
     return NO_ERROR;
 }
 
@@ -88,7 +92,19 @@ int32_t ApplicationStateObserverStub::HandleOnProcessDied(MessageParcel &data, M
     return NO_ERROR;
 }
 
-int32_t ApplicationStateObserverStub::HandleOnApplicationStateChanged(MessageParcel &data, MessageParcel &reply)
+int32_t ApplicationStateObserverStub::HandleOnAppStateChanged(MessageParcel &data, MessageParcel &reply)
+{
+    std::unique_ptr<AppStateData> processData(data.ReadParcelable<AppStateData>());
+    if (processData == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadParcelable failed");
+        return -1;
+    }
+
+    OnAppStateChanged(*processData);
+    return NO_ERROR;
+}
+
+int32_t ApplicationStateObserverStub::HandleOnAppStopped(MessageParcel &data, MessageParcel &reply)
 {
     std::unique_ptr<AppStateData> appStateData(data.ReadParcelable<AppStateData>());
     if (appStateData == nullptr) {
@@ -96,7 +112,7 @@ int32_t ApplicationStateObserverStub::HandleOnApplicationStateChanged(MessagePar
         return -1;
     }
 
-    OnApplicationStateChanged(*appStateData);
+    OnAppStopped(*appStateData);
     return NO_ERROR;
 }
 } // namespace AccessToken
