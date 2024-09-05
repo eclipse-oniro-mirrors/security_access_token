@@ -5135,6 +5135,24 @@
             "deprecated": "",
             "provisionEnable": false,
             "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CALLED_TRANSITION_ON_LOCK_SCREEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
         }
     ]
 }

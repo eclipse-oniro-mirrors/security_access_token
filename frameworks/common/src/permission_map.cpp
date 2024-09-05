@@ -505,9 +505,14 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.GET_ETHERNET_LOCAL_MAC",               false},
     {"ohos.permission.ALLOW_SHOW_NON_SECURE_WINDOWS",       false},
     {"ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO",               false},
+<<<<<<< HEAD
     {"ohos.permission.CAMERA_BACKGROUND",                   false},
     {"ohos.permission.CONNECT_PUSH_EXTENSION",              false},
     {"ohos.permission.CONNECT_VOIP_EXTENSION",              false},
+=======
+    {"ohos.permission.CALLED_TRANSITION_ON_LOCK_SCREEN",     false},
+    {"ohos.permission.CALLED_BELOW_LOCK_SCREEN",     false}
+>>>>>>> 70b30a47 (增加应用被拉起至锁屏上权限以及应用被其他应用拉起权限)
 };
 
 bool TransferPermissionToOpcode(const std::string& permission, uint32_t& opCode)
