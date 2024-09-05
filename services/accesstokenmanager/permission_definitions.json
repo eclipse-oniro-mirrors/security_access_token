@@ -5105,6 +5105,24 @@
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_short_term_write_imagevideo",
             "description": "$string:ohos_desc_short_term_write_imagevideo"
+        },
+        {
+            "name": "ohos.permission.CALLED_TRANSITION_ON_LOCK_SCREEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
+        },
+        {
+            "name": "ohos.permission.CALLED_BELOW_LOCK_SCREEN",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "since": 14,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": true
         }
     ]
 }
