@@ -38,7 +38,7 @@ public:
     ~CbCustomizeTest()
     {}
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShowing)
+    virtual void StateChangeNotify(AccessTokenID tokenId,  bool isShowing)
     {
         isShowing_ = true;
     }
@@ -62,6 +62,9 @@ namespace OHOS {
         MessageParcel datas;
         datas.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
         if (!datas.WriteUint32(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()))) {
+            return false;
+        }
+        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
             return false;
         }
         if (!datas.WriteString(fuzzData.GenerateRandomString())) {

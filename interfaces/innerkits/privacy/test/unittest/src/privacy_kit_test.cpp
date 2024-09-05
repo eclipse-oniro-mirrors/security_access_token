@@ -1511,31 +1511,19 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission007, TestSize.Level1)
 }
 
 /**
- * @tc.name: StopUsingPermission008
- * @tc.desc: Add record when StopUsingPermission is called.
+ * @tc.name: StartUsingPermission008
+ * @tc.desc: PrivacyKit:: function test input invalid
  * @tc.type: FUNC
- * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ * @tc.require: issueI61A6M
  */
-HWTEST_F(PrivacyKitTest, StopUsingPermission008, TestSize.Level1)
+HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
 {
-    std::string permissionName = "ohos.permission.CAMERA";
-    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
-
-    usleep(500000); // 500000us = 0.5s
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
-
-    PermissionUsedRequest request;
-    PermissionUsedResult result;
-    std::vector<std::string> permissionList;
-    BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
-    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
-    ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
-    ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
-    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
-    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
+    AccessTokenID tokenId = 0;
+    std::string permissionName;
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId, permissionName));
+    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
 }
 
 /**
@@ -1570,6 +1558,63 @@ HWTEST_F(PrivacyKitTest, StartUsingPermission010, TestSize.Level1)
 
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName));
+}
+
+/**
+ * @tc.name: StartUsingPermission011
+ * @tc.desc: StartUsingPermission with differet tokenId and pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission011, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t pid1 = 1001;
+    int32_t pid2 = 1002;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(g_tokenIdF, permissionName, pid2));
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(g_tokenIdF, permissionName, pid2));
+}
+
+/**
+ * @tc.name: StartUsingPermission012
+ * @tc.desc: StartUsingPermission with same tokenId and differet pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission012, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t pid1 = 1001;
+    int32_t pid2 = 1002;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, pid2));
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid2));
+}
+
+/**
+ * @tc.name: StartUsingPermission013
+ * @tc.desc: StartUsingPermission with same tokenId and pid.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PrivacyKitTest, StartUsingPermission013, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    int32_t pid1 = 1001;
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, pid1));
+
+    ASSERT_EQ(RET_SUCCESS, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName, pid1));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
+        PrivacyKit::StopUsingPermission(g_tokenIdF, permissionName, pid1));
 }
 
 /**
@@ -1655,6 +1700,34 @@ HWTEST_F(PrivacyKitTest, StopUsingPermission006, TestSize.Level1)
 
     std::string permissionName = "ohos.permission.CAMERA";
     ASSERT_EQ(PrivacyError::ERR_NOT_SYSTEM_APP, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+}
+
+/**
+ * @tc.name: StopUsingPermission007
+ * @tc.desc: Add record when StopUsingPermission is called.
+ * @tc.type: FUNC
+ * @tc.require: issueI5RWX5 issueI5RWX3 issueI5RWXA
+ */
+HWTEST_F(PrivacyKitTest, StopUsingPermission007, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.CAMERA";
+    auto callbackPtr = std::make_shared<CbCustomizeTest4>();
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StartUsingPermission(g_tokenIdE, permissionName, callbackPtr));
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::AddPermissionUsedRecord(g_tokenIdE, permissionName, 1, 0));
+
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::StopUsingPermission(g_tokenIdE, permissionName));
+
+    PermissionUsedRequest request;
+    PermissionUsedResult result;
+    std::vector<std::string> permissionList;
+    BuildQueryRequest(g_tokenIdE, GetLocalDeviceUdid(), g_infoParmsE.bundleName, permissionList, request);
+    ASSERT_EQ(RET_NO_ERROR, PrivacyKit::GetPermissionUsedRecords(request, result));
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords.size());
+    ASSERT_EQ(g_tokenIdE, result.bundleRecords[0].tokenId);
+    ASSERT_EQ(g_infoParmsE.bundleName, result.bundleRecords[0].bundleName);
+    ASSERT_EQ(static_cast<uint32_t>(1), result.bundleRecords[0].permissionRecords.size());
+    ASSERT_EQ(1, result.bundleRecords[0].permissionRecords[0].accessCount);
 }
 
 class TestCallBack1 : public StateChangeCallbackStub {
@@ -1859,25 +1932,9 @@ HWTEST_F(PrivacyKitTest, InitProxy001, TestSize.Level1)
     PrivacyManagerClient::GetInstance().proxy_ = proxy; // recovery
 }
 
-/**
- * @tc.name: StartUsingPermission008
- * @tc.desc: PrivacyKit:: function test input invalid
- * @tc.type: FUNC
- * @tc.require: issueI61A6M
- */
-HWTEST_F(PrivacyKitTest, StartUsingPermission008, TestSize.Level1)
-{
-    AccessTokenID tokenId = 0;
-    std::string permissionName;
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StartUsingPermission(tokenId, permissionName));
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::StopUsingPermission(tokenId, permissionName));
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PrivacyKit::RemovePermissionUsedRecords(tokenId, permissionName));
-    ASSERT_EQ(false, PrivacyKit::IsAllowedUsingPermission(tokenId, permissionName));
-}
-
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
 /**
- * @tc.name: StartUsingPermission008
+ * @tc.name: RegisterSecCompEnhance001
  * @tc.desc: PrivacyKit:: function test register enhance data
  * @tc.type: FUNC
  * @tc.require: issueI7MXZ

@@ -81,7 +81,7 @@ public:
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
     /**
      * @brief Input tokenID start using input permission and return by callback,
      *        only those services which has float window such as camera or
@@ -92,14 +92,14 @@ public:
      * @return error code, see privacy_error.h
      */
     static int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-        const std::shared_ptr<StateCustomizedCbk>& callback);
+        const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid = -1);
     /**
      * @brief Input tokenID stop using input permission.
      * @param tokenID token id
      * @param permissionName permission nanme
      * @return error code, see privacy_error.h
      */
-    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    static int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid = -1);
     /**
      * @brief Remove input tokenID sensitive permission used records.
      * @param tokenID token id
