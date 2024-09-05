@@ -156,6 +156,7 @@ void NativeTokenGet()
 
 void AccessTokenKitTest::SetUpTestCase()
 {
+    setuid(0);
     // make test case clean
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,

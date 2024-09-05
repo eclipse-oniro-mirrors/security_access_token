@@ -417,12 +417,6 @@ public:
      */
     static void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     /**
-     * @brief Dump all permission definition infos.
-     * @param dumpInfo all permission definition info
-     * @return error code, see access_token_error.h
-     */
-    static int32_t DumpPermDefInfo(std::string& dumpInfo);
-    /**
      * @brief Get application info of permission manager.
      * @param info application info of permission manager
      */

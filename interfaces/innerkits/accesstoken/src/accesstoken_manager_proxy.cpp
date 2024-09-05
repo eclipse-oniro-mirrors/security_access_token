@@ -909,29 +909,6 @@ int32_t AccessTokenManagerProxy::ReloadNativeTokenInfo()
     return result;
 }
 
-int32_t AccessTokenManagerProxy::DumpPermDefInfo(std::string& dumpInfo)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-    int32_t result = reply.ReadInt32();
-    ACCESSTOKEN_LOG_INFO(LABEL, "result from server data = %{public}d", result);
-    if (result != RET_SUCCESS) {
-        return result;
-    }
-    if (!reply.ReadString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
-        return ERR_READ_PARCEL_FAILED;
-    }
-    return result;
-}
 #endif
 
 AccessTokenID AccessTokenManagerProxy::GetNativeTokenId(const std::string& processName)
