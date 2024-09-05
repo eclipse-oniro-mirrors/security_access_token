@@ -74,6 +74,7 @@ enum AccessTokenError {
     ERR_SIZE_NOT_EQUAL,
     ERR_PERM_REQUEST_CFG_FAILED,
     ERR_LOAD_SO_FAILED,
+    ERR_REMOTE_CONNECTION,
 };
 } // namespace AccessToken
 } // namespace Security

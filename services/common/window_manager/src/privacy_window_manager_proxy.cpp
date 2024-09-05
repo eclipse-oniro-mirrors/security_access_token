@@ -44,7 +44,12 @@ int32_t PrivacyWindowManagerProxy::RegisterWindowManagerAgent(WindowManagerAgent
         ACCESSTOKEN_LOG_ERROR(LABEL, "Write IWindowManagerAgent failed");
         return ERR_WRITE_PARCEL_FAILED;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IWindowManager::WindowManagerMessage::TRANS_ID_REGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
@@ -75,7 +80,12 @@ int32_t PrivacyWindowManagerProxy::UnregisterWindowManagerAgent(WindowManagerAge
         return ERR_WRITE_PARCEL_FAILED;
     }
 
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERR_REMOTE_CONNECTION;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IWindowManager::WindowManagerMessage::TRANS_ID_UNREGISTER_WINDOW_MANAGER_AGENT),
         data, reply, option);
     if (error != ERR_NONE) {
