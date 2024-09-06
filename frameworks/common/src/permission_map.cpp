@@ -506,7 +506,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.ALLOW_SHOW_NON_SECURE_WINDOWS",       false},
     {"ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO",               false},
     {"ohos.permission.CALLED_TRANSITION_ON_LOCK_SCREEN",     false},
-    {"ohos.permission.CALLED_BELOW_LOCK_SCREEN",     false}
+    {"ohos.permission.CALLED_BELOW_LOCK_SCREEN",     false},
     {"ohos.permission.CAMERA_BACKGROUND",                   false},
 };
 
