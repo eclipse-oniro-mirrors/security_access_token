@@ -384,9 +384,9 @@ void PrivacyManagerClient::InitProxy()
             ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbilityManager is null");
             return;
         }
-        auto privacySa = sam->GetSystemAbility(IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
+        auto privacySa = sam->CheckSystemAbility(IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
         if (privacySa == nullptr) {
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "GetSystemAbility %{public}d is null",
+            ACCESSTOKEN_LOG_DEBUG(LABEL, "CheckSystemAbility %{public}d is null",
                 IPrivacyManager::SA_ID_PRIVACY_MANAGER_SERVICE);
             return;
         }
