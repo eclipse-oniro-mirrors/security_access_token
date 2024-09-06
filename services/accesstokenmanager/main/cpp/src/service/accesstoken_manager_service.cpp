@@ -90,9 +90,9 @@ void AccessTokenManagerService::OnStart()
         ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService has already started!");
         return;
     }
-    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService is starting");
+    ACCESSTOKEN_LOG_INFO(LABEL, "AccessTokenManagerService is starting.");
     if (!Initialize()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to initialize.");
         return;
     }
     state_ = ServiceRunningState::STATE_RUNNING;
