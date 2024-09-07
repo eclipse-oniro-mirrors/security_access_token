@@ -1608,8 +1608,16 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::map<Acc
     for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
         AccessTokenID tokenId = iter->first;
         std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
+        if (infoPtr == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d infoPtr is nullptr.", tokenId);
+            continue;
+        }
         bool isActive = iter->second;
         std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+        if (permPolicySet == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d permPolicySet is nullptr.", tokenId);
+            continue;
+        }
         // refresh under userPolicyLock_
         {
             Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->userPolicyLock_);
@@ -1635,8 +1643,16 @@ int32_t AccessTokenInfoManager::UpdatePermissionStateToKernel(const std::vector<
     for (auto iter = tokenIdList.begin(); iter != tokenIdList.end(); ++iter) {
         AccessTokenID tokenId = iter->first;
         std::shared_ptr<HapTokenInfoInner> infoPtr = GetHapTokenInfoInner(tokenId);
+        if (infoPtr == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d infoPtr is nullptr.", tokenId);
+            continue;
+        }
         bool isActive = iter->second;
         std::shared_ptr<PermissionPolicySet> permPolicySet = infoPtr->GetHapInfoPermissionPolicySet();
+        if (permPolicySet == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}d permPolicySet is nullptr.", tokenId);
+            continue;
+        }
         std::map<std::string, bool> refreshedPermList;
         permPolicySet->RefreshPermStateToKernel(permCodeList, isActive, tokenId, refreshedPermList);
 
