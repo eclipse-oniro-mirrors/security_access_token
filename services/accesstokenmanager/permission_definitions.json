@@ -5115,6 +5115,26 @@
             "distributedSceneEnable": false,
             "label": "$string:ohos_lab_short_term_write_imagevideo",
             "description": "$string:ohos_desc_short_term_write_imagevideo"
+        },
+        {
+            "name": "ohos.permission.CONNECT_PUSH_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
+        },
+        {
+            "name": "ohos.permission.CONNECT_VOIP_EXTENSION",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SERVICE",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": false,
+            "distributedSceneEnable": false
         }
     ]
 }
