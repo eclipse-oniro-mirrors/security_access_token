@@ -958,7 +958,11 @@ int32_t PermissionRecordManager::StartUsingPermission(
         cameraCallbackMap_.Erase(id);
         return PrivacyError::ERR_WINDOW_CALLBACK_FAILED;
     }
-    return AddRecordToStartList(tokenId, pid, permissionName, status);
+    int32_t ret = AddRecordToStartList(tokenId, pid, permissionName, status);
+    if (ret != RET_SUCCESS) {
+        cameraCallbackMap_.Erase(id);
+    }
+    return ret;
 }
 
 int32_t PermissionRecordManager::StopUsingPermission(
@@ -1348,10 +1352,6 @@ bool PermissionRecordManager::RegisterWindowCallback()
     ACCESSTOKEN_LOG_INFO(LABEL, "Begin to RegisterWindowCallback.");
     if (windowLoader_ != nullptr) {
         ACCESSTOKEN_LOG_INFO(LABEL, "WindowCallback has already been registered.");
-        return true;
-    }
-    if (!HasUsingCamera()) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Camera is not using.");
         return true;
     }
     windowLoader_ = new (std::nothrow) LibraryLoader(WINDOW_MANAGER_PATH);
