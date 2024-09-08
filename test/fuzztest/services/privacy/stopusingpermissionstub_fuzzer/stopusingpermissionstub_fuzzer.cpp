@@ -41,6 +41,9 @@ namespace OHOS {
         if (!datas.WriteUint32(static_cast<AccessTokenID>(fuzzData.GetData<uint32_t>()))) {
             return false;
         }
+        if (!datas.WriteInt32(fuzzData.GetData<int32_t>())) {
+            return false;
+        }
         if (!datas.WriteString(fuzzData.GenerateRandomString())) {
             return false;
         }
