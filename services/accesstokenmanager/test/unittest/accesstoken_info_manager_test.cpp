@@ -820,7 +820,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
     std::string deviceId2 = "device_2";
     AccessTokenID mapID =
         AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(mapID == 0, true);
+    ASSERT_EQ(mapID, 0);
     HapTokenInfoForSync hapSync;
     ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
     ASSERT_EQ(RET_SUCCESS, ret);

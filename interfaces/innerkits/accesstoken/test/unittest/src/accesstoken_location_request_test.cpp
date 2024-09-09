@@ -1620,7 +1620,6 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList33.size());
     ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
-    ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
 }
 
 /**
