@@ -30,7 +30,7 @@ static constexpr const char* ACCESSTOKEN_CONFIG_FILE = "/etc/access_token/access
 
 static constexpr const char* PERMISSION_MANAGER_BUNDLE_NAME_KEY = "permission_manager_bundle_name";
 static constexpr const char* GRANT_ABILITY_NAME_KEY = "grant_ability_name";
-static constexpr const char* GRANT_SERVICE_ABILITY_NAME_KEY = "grant_servicre_ability_name";
+static constexpr const char* GRANT_SERVICE_ABILITY_NAME_KEY = "grant_service_ability_name";
 static constexpr const char* PERMISSION_STATE_SHEET_ABILITY_NAME_KEY = "permission_state_sheet_ability_name";
 static constexpr const char* GLOBAL_SWITCH_SHEET_ABILITY_NAME_KEY = "global_switch_sheet_ability_name";
 static constexpr const char* TEMP_PERM_CANCLE_TIME_KEY = "temp_perm_cencle_time";
