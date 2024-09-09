@@ -15,19 +15,25 @@
 
 #include "access_token_db.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <mutex>
+
 #include "accesstoken_log.h"
 #include "access_token_error.h"
+#include "access_token_open_callback.h"
+#include "rdb_helper.h"
+#include "time_util.h"
+#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "AccessTokenDb"};
-static const std::string FIELD_COUNT_NUMBER = "count";
-static const std::string INTEGER_STR = " integer not null,";
-static const std::string TEXT_STR = " text not null,";
+
+constexpr const char* DATABASE_NAME = "access_token.db";
+constexpr const char* ACCESSTOKEN_SERVICE_NAME = "accesstoken_service";
 std::recursive_mutex g_instanceMutex;
 }
 
@@ -43,675 +49,417 @@ AccessTokenDb& AccessTokenDb::GetInstance()
     return *instance;
 }
 
-AccessTokenDb::~AccessTokenDb()
+AccessTokenDb::AccessTokenDb()
 {
-    Close();
-}
-
-void AccessTokenDb::OnCreate()
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnCreate.");
-    CreateHapTokenInfoTable();
-    CreateNativeTokenInfoTable();
-    CreatePermissionDefinitionTable();
-    CreatePermissionStateTable();
-    CreatePermissionRequestToggleStatusTable();
-}
-
-void AccessTokenDb::OnUpdate(int32_t version)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "DB OnUpdate(version: %{public}d).", version);
-    if (version < DataBaseVersion::VERISION_2) {
-        AddAvailableTypeColumn();
-        AddPermDialogCapColumn();
-    }
-    if (version < DataBaseVersion::VERISION_3) {
-        CreatePermissionRequestToggleStatusTable();
-    }
-    if (version < DataBaseVersion::VERISION_4) {
-        AddRequestToggleStatusColumn();
+    std::string dbPath = std::string(DATABASE_PATH) + std::string(DATABASE_NAME);
+    NativeRdb::RdbStoreConfig config(dbPath);
+    config.SetSecurityLevel(NativeRdb::SecurityLevel::S3);
+    config.SetAllowRebuild(true);
+    config.SetHaMode(NativeRdb::HAMode::MAIN_REPLICA); // Real-time dual-write backup database
+    config.SetServiceName(std::string(ACCESSTOKEN_SERVICE_NAME));
+    AccessTokenOpenCallback callback;
+    int32_t res = NativeRdb::E_OK;
+    // pragma user_version will done by rdb, they store path and db_ as pair in RdbStoreManager
+    db_ = NativeRdb::RdbHelper::GetRdbStore(config, DATABASE_VERSION_4, callback, res);
+    if ((res != NativeRdb::E_OK) || (db_ == nullptr)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to init rdb, res is %{public}d.", res);
+        return;
     }
 }
 
-AccessTokenDb::AccessTokenDb() : SqliteHelper(DATABASE_NAME, DATABASE_PATH, DATABASE_VERSION)
+int32_t AccessTokenDb::RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
+    const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets)
 {
-    SqliteTable hapTokenInfoTable;
-    hapTokenInfoTable.tableName_ = HAP_TOKEN_INFO_TABLE;
-    hapTokenInfoTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_USER_ID,
-        TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_INST_INDEX, TokenFiledConst::FIELD_DLP_TYPE,
-        TokenFiledConst::FIELD_APP_ID, TokenFiledConst::FIELD_DEVICE_ID,
-        TokenFiledConst::FIELD_APL, TokenFiledConst::FIELD_TOKEN_VERSION,
-        TokenFiledConst::FIELD_TOKEN_ATTR, TokenFiledConst::FIELD_API_VERSION,
-        TokenFiledConst::FIELD_FORBID_PERM_DIALOG
-    };
+    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
+        return resultCode;
+    }
 
-    SqliteTable nativeTokenInfoTable;
-    nativeTokenInfoTable.tableName_ = NATIVE_TOKEN_INFO_TABLE;
-    nativeTokenInfoTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PROCESS_NAME,
-        TokenFiledConst::FIELD_TOKEN_VERSION, TokenFiledConst::FIELD_TOKEN_ATTR,
-        TokenFiledConst::FIELD_DCAP, TokenFiledConst::FIELD_NATIVE_ACLS, TokenFiledConst::FIELD_APL
-    };
+    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    int32_t res = db_->Restore("");
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        return res;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try insert again!");
 
-    SqliteTable permissionDefTable;
-    permissionDefTable.tableName_ = PERMISSION_DEF_TABLE;
-    permissionDefTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
-        TokenFiledConst::FIELD_BUNDLE_NAME, TokenFiledConst::FIELD_GRANT_MODE,
-        TokenFiledConst::FIELD_AVAILABLE_LEVEL, TokenFiledConst::FIELD_PROVISION_ENABLE,
-        TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE, TokenFiledConst::FIELD_LABEL,
-        TokenFiledConst::FIELD_LABEL_ID, TokenFiledConst::FIELD_DESCRIPTION,
-        TokenFiledConst::FIELD_DESCRIPTION_ID, TokenFiledConst::FIELD_AVAILABLE_TYPE
-    };
+    res = db_->BatchInsert(outInsertNum, tableName, buckets);
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s again, res is %{public}d.",
+            tableName.c_str(), res);
+        return res;
+    }
 
-    SqliteTable permissionStateTable;
-    permissionStateTable.tableName_ = PERMISSION_STATE_TABLE;
-    permissionStateTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_TOKEN_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
-        TokenFiledConst::FIELD_DEVICE_ID, TokenFiledConst::FIELD_GRANT_IS_GENERAL,
-        TokenFiledConst::FIELD_GRANT_STATE, TokenFiledConst::FIELD_GRANT_FLAG
-    };
-
-    SqliteTable permissionRequestToggleStatusTable;
-    permissionRequestToggleStatusTable.tableName_ = PERMISSION_REQUEST_TOGGLE_STATUS_TABLE;
-    permissionRequestToggleStatusTable.tableColumnNames_ = {
-        TokenFiledConst::FIELD_USER_ID, TokenFiledConst::FIELD_PERMISSION_NAME,
-        TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS
-    };
-
-    dataTypeToSqlTable_ = {
-        {ACCESSTOKEN_HAP_INFO, hapTokenInfoTable},
-        {ACCESSTOKEN_NATIVE_INFO, nativeTokenInfoTable},
-        {ACCESSTOKEN_PERMISSION_DEF, permissionDefTable},
-        {ACCESSTOKEN_PERMISSION_STATE, permissionStateTable},
-        {ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, permissionRequestToggleStatusTable},
-    };
-
-    Open();
+    return 0;
 }
 
-int AccessTokenDb::Add(const DataType type, const std::vector<GenericValues>& values)
+int32_t AccessTokenDb::Add(const AtmDataType type, const std::vector<GenericValues>& values)
 {
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add type is %{public}u.", type);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    if (tableName.empty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
     size_t addSize = values.size();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Add type=%{public}d, size=%{public}zu.", type, addSize);
     if (addSize == 0) {
-        return SUCCESS;
+        ACCESSTOKEN_LOG_INFO(LABEL, "Insert values is empty.");
+        return 0;
     }
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string prepareSql = CreateInsertPrepareSqlCmd(type);
-    auto statement = Prepare(prepareSql);
-    BeginTransaction();
-    bool isExecuteSuccessfully = true;
-    uint32_t addFailCount = 0;
-    int64_t beforeCnt = Count(type);
-    for (const auto& value : values) {
-        std::vector<std::string> columnNames = value.GetAllKeys();
-        for (const auto& columnName : columnNames) {
-            statement.Bind(columnName, value.Get(columnName));
+
+    std::vector<NativeRdb::ValuesBucket> buckets;
+    AccessTokenDbUtil::ToRdbValueBuckets(values, buckets);
+
+    int64_t outInsertNum = 0;
+    {
+        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        if (db_ == nullptr) {
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
-        int ret = statement.Step();
-        if (ret != Statement::State::DONE) {
-            addFailCount++;
-            ACCESSTOKEN_LOG_DEBUG(LABEL, "Failed, errorMsg: %{public}s.", SpitError().c_str());
-            isExecuteSuccessfully = false;
+
+        int32_t res = db_->BatchInsert(outInsertNum, tableName, buckets);
+        if (res != NativeRdb::E_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s, res is %{public}d.",
+                tableName.c_str(), res);
+            int32_t result = RestoreAndInsertIfCorrupt(res, outInsertNum, tableName, buckets);
+            if (result != NativeRdb::E_OK) {
+                return result;
+            }
         }
-        statement.Reset();
-    }
-    if (!isExecuteSuccessfully) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed, addFailCount = %{public}d errorMsg = %{public}s. Rollback transaction.",
-            addFailCount, SpitError().c_str());
-        RollbackTransaction();
-        return FAILURE;
-    }
-    int64_t afterCnt = Count(type);
-    if ((beforeCnt + static_cast<int64_t>(addSize)) != afterCnt) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to add to db, beforeCnt=%{public}" PRId64 ", afterCnt=%{public}" PRId64
-            ".", beforeCnt, afterCnt);
-    }
-    CommitTransaction();
-    return SUCCESS;
-}
-
-int AccessTokenDb::Remove(const DataType type, const GenericValues& conditions)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Remove type(%{public}d).", type);
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::vector<std::string> columnNames = conditions.GetAllKeys();
-    std::string prepareSql = CreateDeletePrepareSqlCmd(type, columnNames);
-    auto statement = Prepare(prepareSql);
-    for (const auto& columnName : columnNames) {
-        statement.Bind(columnName, conditions.Get(columnName));
-    }
-    int ret = statement.Step();
-    return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
-}
-
-int AccessTokenDb::Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Modify type(%{public}d).", type);
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
-    std::vector<std::string> conditionColumns = conditions.GetAllKeys();
-    std::string prepareSql = CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns);
-    auto statement = Prepare(prepareSql);
-    for (const auto& columnName : modifyColumns) {
-        statement.Bind(columnName, modifyValues.Get(columnName));
-    }
-    for (const auto& columnName : conditionColumns) {
-        statement.Bind(columnName, conditions.Get(columnName));
-    }
-    int ret = statement.Step();
-    return (ret == Statement::State::DONE) ? SUCCESS : FAILURE;
-}
-
-int AccessTokenDb::Find(const DataType type, std::vector<GenericValues>& results)
-{
-    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string prepareSql = CreateSelectPrepareSqlCmd(type);
-    auto statement = Prepare(prepareSql);
-    while (statement.Step() == Statement::State::ROW) {
-        int columnCount = statement.GetColumnCount();
-        GenericValues value;
-        for (int i = 0; i < columnCount; i++) {
-            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-        }
-        results.emplace_back(value);
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Find type(%{public}d), results size=%{public}zu.", type, results.size());
-    return SUCCESS;
-}
-
-int32_t AccessTokenDb::FindByConditions(DataType type,
-    const GenericValues& andConditions, std::vector<GenericValues>& results)
-{
-    OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::vector<std::string> andColumns = andConditions.GetAllKeys();
-    std::string prepareSql = CreateSelectByConditionPrepareSqlCmd(type, andColumns);
-    if (prepareSql.empty()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Type %{public}u invalid", type);
-        return FAILURE;
     }
 
-    auto statement = Prepare(prepareSql);
-    for (const auto& columnName : andColumns) {
-        statement.Bind(columnName, andConditions.Get(columnName));
-    }
-
-    while (statement.Step() == Statement::State::ROW) {
-        int32_t columnCount = statement.GetColumnCount();
-        GenericValues value;
-        for (int32_t i = 0; i < columnCount; i++) {
-            value.Put(statement.GetColumnName(i), statement.GetValue(i, false));
-        }
-        results.emplace_back(value);
-    }
-    return SUCCESS;
-}
-
-int32_t AccessTokenDb::HandleDeleteAndAddSql(const GenericValues& conditionValue,
-    const std::vector<GenericValues>& addValues, const std::string& delSql, const std::string& addSql)
-{
-    // delete table record, condition only token_id
-    auto statDel = Prepare(delSql);
-    statDel.Bind(TokenFiledConst::FIELD_TOKEN_ID, conditionValue.Get(TokenFiledConst::FIELD_TOKEN_ID));
-    if (statDel.Step() != Statement::State::DONE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Delete table record failed, errorMsg is %{public}s.", SpitError().c_str());
+    if (outInsertNum <= 0) { // this is rdb bug, adapt it
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
         return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
     }
 
-    // if no value to add return success
-    if (addValues.empty()) {
-        return RET_SUCCESS;
-    }
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Add call cast %{public}" PRId64 ", batch insert %{public}" PRId64
+        " records to table %{public}s.", endTime - beginTime, outInsertNum, tableName.c_str());
 
-    // add to table
-    auto statAdd = Prepare(addSql);
-    for (const auto& value : addValues) {
-        std::vector<std::string> addColumns = value.GetAllKeys();
-        // bind column value
-        for (const auto& column : addColumns) {
-            statAdd.Bind(column, value.Get(column));
-        }
-
-        // exec sql
-        if (statAdd.Step() != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Add table failed, errorMsg is %{public}s.", SpitError().c_str());
-            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
-        }
-        statAdd.Reset(); // reset statement
-    }
-
-    return RET_SUCCESS;
+    return 0;
 }
 
-int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+int32_t AccessTokenDb::RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
+    const NativeRdb::RdbPredicates& predicates)
+{
+    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
+        return resultCode;
+    }
+
+    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    int32_t res = db_->Restore("");
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        return res;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try delete again!");
+
+    res = db_->Delete(deletedRows, predicates);
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to delete record from table %{public}s again, res is %{public}d.",
+            predicates.GetTableName().c_str(), res);
+        return res;
+    }
+
+    return 0;
+}
+
+int32_t AccessTokenDb::Remove(const AtmDataType type, const GenericValues& conditionValue)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove type is %{public}u.", type);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    if (tableName.empty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    NativeRdb::RdbPredicates predicates(tableName);
+    AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
+
+    int32_t deletedRows = 0;
+    {
+        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        if (db_ == nullptr) {
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+
+        int32_t res = db_->Delete(deletedRows, predicates);
+        if (res != NativeRdb::E_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to delete record from table %{public}s, res is %{public}d.",
+                tableName.c_str(), res);
+            int32_t result = RestoreAndDeleteIfCorrupt(res, deletedRows, predicates);
+            if (result != NativeRdb::E_OK) {
+                return result;
+            }
+        }
+    }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Remove call cast %{public}" PRId64
+        ", delete %{public}d records from table %{public}s.", endTime - beginTime, deletedRows, tableName.c_str());
+
+    return 0;
+}
+
+int32_t AccessTokenDb::RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
+    const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates)
+{
+    if (resultCode != NativeRdb::E_SQLITE_CORRUPT) {
+        return resultCode;
+    }
+
+    ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+    int32_t res = db_->Restore("");
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+        return res;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try update again!");
+
+    res = db_->Update(changedRows, bucket, predicates);
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to update record from table %{public}s again, res is %{public}d.",
+            predicates.GetTableName().c_str(), res);
+        return res;
+    }
+
+    return 0;
+}
+
+int32_t AccessTokenDb::Modify(const AtmDataType type, const GenericValues& modifyValue,
+    const GenericValues& conditionValue)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Modify type is %{public}u.", type);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    if (tableName.empty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    NativeRdb::ValuesBucket bucket;
+
+    AccessTokenDbUtil::ToRdbValueBucket(modifyValue, bucket);
+    if (bucket.IsEmpty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    NativeRdb::RdbPredicates predicates(tableName);
+    AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
+
+    int32_t changedRows = 0;
+    {
+        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        if (db_ == nullptr) {
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+
+        int32_t res = db_->Update(changedRows, bucket, predicates);
+        if (res != NativeRdb::E_OK) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to update record from table %{public}s, res is %{public}d.",
+                tableName.c_str(), res);
+            int32_t result = RestoreAndUpdateIfCorrupt(res, changedRows, bucket, predicates);
+            if (result != NativeRdb::E_OK) {
+                return result;
+            }
+        }
+    }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Modify call cast %{public}" PRId64
+        ", update %{public}d records from table %{public}s.", endTime - beginTime, changedRows, tableName.c_str());
+
+    return 0;
+}
+
+int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
+    const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet)
+{
+    int32_t count = 0;
+    int32_t res = queryResultSet->GetRowCount(count);
+    if (res != NativeRdb::E_OK) {
+        if (res == NativeRdb::E_SQLITE_CORRUPT) {
+            queryResultSet->Close();
+            queryResultSet = nullptr;
+
+            ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
+            int32_t res = db_->Restore("");
+            if (res != NativeRdb::E_OK) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
+                return res;
+            }
+            ACCESSTOKEN_LOG_INFO(LABEL, "Database restore success, try query again!");
+
+            queryResultSet = db_->Query(predicates, columns);
+            if (queryResultSet == nullptr) {
+                ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find records from table %{public}s again.",
+                    predicates.GetTableName().c_str());
+                return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+            }
+        } else {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to get result count.");
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+    }
+
+    return 0;
+}
+
+int32_t AccessTokenDb::Find(AtmDataType type, const GenericValues& conditionValue,
+    std::vector<GenericValues>& results)
+{
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Find type is %{public}u.", type);
+
+    std::string tableName;
+    AccessTokenDbUtil::GetTableNameByType(type, tableName);
+    if (tableName.empty()) {
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+
+    NativeRdb::RdbPredicates predicates(tableName);
+    AccessTokenDbUtil::ToRdbPredicates(conditionValue, predicates);
+
+    std::vector<std::string> columns; // empty columns means query all columns
+    int count = 0;
+    {
+        OHOS::Utils::UniqueReadGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        if (db_ == nullptr) {
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+
+        auto queryResultSet = db_->Query(predicates, columns);
+        if (queryResultSet == nullptr) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to find records from table %{public}s.",
+                tableName.c_str());
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+        }
+
+        int32_t res = RestoreAndQueryIfCorrupt(predicates, columns, queryResultSet);
+        if (res != 0) {
+            return res;
+        }
+
+        while (queryResultSet->GoToNextRow() == NativeRdb::E_OK) {
+            GenericValues value;
+            AccessTokenDbUtil::ResultToGenericValues(queryResultSet, value);
+            if (value.GetAllKeys().empty()) {
+                continue;
+            }
+
+            results.emplace_back(value);
+            count++;
+        }
+    }
+
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_INFO(LABEL, "Find call cast %{public}" PRId64
+        ", query %{public}d records from table %{public}s.", endTime - beginTime, count, tableName.c_str());
+
+    return 0;
+}
+
+int32_t AccessTokenDb::DeleteAndAddSingleTable(const GenericValues delCondition, const std::string& tableName,
+    const std::vector<GenericValues>& addValues)
+{
+    NativeRdb::RdbPredicates predicates(tableName);
+    AccessTokenDbUtil::ToRdbPredicates(delCondition, predicates); // fill predicates with delCondition
+    int32_t deletedRows = 0;
+    int32_t res = db_->Delete(deletedRows, predicates);
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to delete record from table %{public}s, res is %{public}d.",
+            tableName.c_str(), res);
+        int32_t result = RestoreAndDeleteIfCorrupt(res, deletedRows, predicates);
+        if (result != NativeRdb::E_OK) {
+            return result;
+        }
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Delete %{public}d record from table %{public}s", deletedRows, tableName.c_str());
+
+    // if nothing to insert, no need to call BatchInsert
+    if (addValues.empty()) {
+        return 0;
+    }
+
+    std::vector<NativeRdb::ValuesBucket> buckets;
+    AccessTokenDbUtil::ToRdbValueBuckets(addValues, buckets); // fill buckets with addValues
+    int64_t outInsertNum = 0;
+    res = db_->BatchInsert(outInsertNum, tableName, buckets);
+    if (res != NativeRdb::E_OK) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to batch insert into table %{public}s, res is %{public}d.",
+            tableName.c_str(), res);
+        int32_t result = RestoreAndInsertIfCorrupt(res, outInsertNum, tableName, buckets);
+        if (result != NativeRdb::E_OK) {
+            return result;
+        }
+    }
+    if (outInsertNum <= 0) { // rdb bug, adapt it
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Insert count %{public}" PRId64 " abnormal.", outInsertNum);
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL, "Batch insert %{public}" PRId64 " records to table %{public}s.", outInsertNum,
+        tableName.c_str());
+
+    return 0;
+}
+
+int32_t AccessTokenDb::DeleteAndAddRecord(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
     const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues)
 {
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenId));
 
-    // create delete sqls
-    std::vector<std::string> delColumnNames;
-    delColumnNames.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
-    std::string hapDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO, delColumnNames);
-    std::string defDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF, delColumnNames);
-    std::string stateDelSql = CreateDeletePrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE, delColumnNames);
-
-    // create add sqls
-    std::string hapAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_HAP_INFO);
-    std::string defAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_DEF);
-    std::string stateAddSql = CreateInsertPrepareSqlCmd(DataType::ACCESSTOKEN_PERMISSION_STATE);
-
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    BeginTransaction();
-
-    // delete and add hap token info
-    int32_t res = HandleDeleteAndAddSql(conditionValue, hapInfoValues, hapDelSql, hapAddSql);
-    if (res != RET_SUCCESS) {
-        RollbackTransaction();
+    std::string hapTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_HAP_INFO, hapTableName);
+    int32_t res = DeleteAndAddSingleTable(conditionValue, hapTableName, hapInfoValues);
+    if (res != NativeRdb::E_OK) {
         return res;
     }
 
-    // delete and add permission def
-    res = HandleDeleteAndAddSql(conditionValue, permDefValues, defDelSql, defAddSql);
-    if (res != RET_SUCCESS) {
-        RollbackTransaction();
+    std::string defTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, defTableName);
+    res = DeleteAndAddSingleTable(conditionValue, defTableName, permDefValues);
+    if (res != NativeRdb::E_OK) {
         return res;
     }
 
-    // delete and add permission state
-    res = HandleDeleteAndAddSql(conditionValue, permStateValues, stateDelSql, stateAddSql);
-    if (res != RET_SUCCESS) {
-        RollbackTransaction();
-        return res;
-    }
-
-    CommitTransaction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Delete and insert hap success!");
-
-    return RET_SUCCESS;
+    std::string stateTableName;
+    AccessTokenDbUtil::GetTableNameByType(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, stateTableName);
+    return DeleteAndAddSingleTable(conditionValue, stateTableName, permStateValues);
 }
 
-int64_t AccessTokenDb::Count(DataType type)
+int32_t AccessTokenDb::DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+    const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues)
 {
-    GenericValues result;
-    std::string countSql = CreateCountPrepareSqlCmd(type);
-    auto countStatement = Prepare(countSql);
-    if (countStatement.Step() == Statement::State::ROW) {
-        int32_t column = 0;
-        result.Put(FIELD_COUNT_NUMBER, countStatement.GetValue(column, true));
-    }
+    int64_t beginTime = TimeUtil::GetCurrentTimestamp();
 
-    return result.GetInt64(FIELD_COUNT_NUMBER);
-}
-
-int AccessTokenDb::RefreshAll(const DataType type, const std::vector<GenericValues>& values)
-{
-    size_t refreshCont = values.size();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Refresh type=%{public}d=, results size=%{public}zu=.", type, refreshCont);
-    OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
-    std::string deleteSql = CreateDeletePrepareSqlCmd(type);
-    std::string insertSql = CreateInsertPrepareSqlCmd(type);
-    auto deleteStatement = Prepare(deleteSql);
-    auto insertStatement = Prepare(insertSql);
-    BeginTransaction();
-    bool canCommit = deleteStatement.Step() == Statement::State::DONE;
-    for (const auto& value : values) {
-        std::vector<std::string> columnNames = value.GetAllKeys();
-        for (const auto& columnName : columnNames) {
-            insertStatement.Bind(columnName, value.Get(columnName));
+    {
+        OHOS::Utils::UniqueWriteGuard<OHOS::Utils::RWLock> lock(this->rwLock_);
+        if (db_ == nullptr) {
+            return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
         }
-        int ret = insertStatement.Step();
-        if (ret != Statement::State::DONE) {
-            ACCESSTOKEN_LOG_ERROR(
-                LABEL, "Insert failed, errorMsg: %{public}s.", SpitError().c_str());
-            canCommit = false;
+
+        db_->BeginTransaction();
+
+        int32_t res = DeleteAndAddRecord(tokenId, hapInfoValues, permDefValues, permStateValues);
+        if (res != NativeRdb::E_OK) {
+            db_->RollBack();
+            return res;
         }
-        insertStatement.Reset();
-    }
-    if (!canCommit) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Rollback transaction.");
-        RollbackTransaction();
-        return FAILURE;
-    }
-    int64_t count = Count(type);
-    if (count != static_cast<int64_t>(refreshCont)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL,
-            "Failed to refresh to db, refreshCont=%{public}zu, dbCount=%{public}" PRId64 ". Rollback transaction.",
-            refreshCont, count);
-    }
-    CommitTransaction();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Commit refresh transaction.");
-    return SUCCESS;
-}
 
-std::string AccessTokenDb::CreateInsertPrepareSqlCmd(const DataType type) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "insert into " + it->second.tableName_ + " values(";
-    int i = 1;
-    for (const auto& columnName : it->second.tableColumnNames_) {
-        sql.append(":" + columnName);
-        if (i < static_cast<int32_t>(it->second.tableColumnNames_.size())) {
-            sql.append(",");
-        }
-        i += 1;
-    }
-    sql.append(")");
-    return sql;
-}
-
-std::string AccessTokenDb::CreateDeletePrepareSqlCmd(
-    const DataType type, const std::vector<std::string>& columnNames) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "delete from " + it->second.tableName_ + " where 1 = 1";
-    for (const auto& columnName : columnNames) {
-        sql.append(" and ");
-        sql.append(columnName + "=:" + columnName);
-    }
-    return sql;
-}
-
-std::string AccessTokenDb::CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
-    const std::vector<std::string>& conditionColumns) const
-{
-    if (modifyColumns.empty()) {
-        return std::string();
+        db_->Commit();
     }
 
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
+    int64_t endTime = TimeUtil::GetCurrentTimestamp();
+    ACCESSTOKEN_LOG_ERROR(LABEL, "DeleteAndInsertHap cast %{public}" PRId64 ".", endTime - beginTime);
 
-    std::string sql = "update " + it->second.tableName_ + " set ";
-    int i = 1;
-    for (const auto& columnName : modifyColumns) {
-        sql.append(columnName + "=:" + columnName);
-        if (i < static_cast<int32_t>(modifyColumns.size())) {
-            sql.append(",");
-        }
-        i += 1;
-    }
-
-    if (!conditionColumns.empty()) {
-        sql.append(" where 1 = 1");
-        for (const auto& columnName : conditionColumns) {
-            sql.append(" and ");
-            sql.append(columnName + "=:" + columnName);
-        }
-    }
-    return sql;
-}
-
-std::string AccessTokenDb::CreateSelectPrepareSqlCmd(const DataType type) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "select * from " + it->second.tableName_;
-    return sql;
-}
-
-std::string AccessTokenDb::CreateSelectByConditionPrepareSqlCmd(
-    DataType type, const std::vector<std::string>& andColumns) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-
-    std::string sql = "select * from " + it->second.tableName_ + " where 1 = 1";
-    for (const auto& andColName : andColumns) {
-        sql.append(" and ");
-        sql.append(andColName + "=:" + andColName);
-    }
-    return sql;
-}
-
-std::string AccessTokenDb::CreateCountPrepareSqlCmd(DataType type) const
-{
-    auto it = dataTypeToSqlTable_.find(type);
-    if (it == dataTypeToSqlTable_.end()) {
-        return std::string();
-    }
-    std::string sql = "select count(*) from " + it->second.tableName_;
-    return sql;
-}
-
-int AccessTokenDb::CreateHapTokenInfoTable() const
-{
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_USER_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_BUNDLE_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_INST_INDEX)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_DLP_TYPE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_APP_ID)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_DEVICE_ID)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_APL)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_TOKEN_VERSION)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_TOKEN_ATTR)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_API_VERSION)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append("))");
-    return ExecuteSql(sql);
-}
-
-int AccessTokenDb::CreateNativeTokenInfoTable() const
-{
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_NATIVE_INFO);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PROCESS_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_TOKEN_VERSION)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_TOKEN_ATTR)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_DCAP)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_NATIVE_ACLS)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_APL)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append("))");
-    return ExecuteSql(sql);
-}
-
-int AccessTokenDb::CreatePermissionDefinitionTable() const
-{
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_DEF);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_BUNDLE_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_GRANT_MODE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_AVAILABLE_LEVEL)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PROVISION_ENABLE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_DISTRIBUTED_SCENE_ENABLE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_LABEL)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_LABEL_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_DESCRIPTION)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_DESCRIPTION_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_AVAILABLE_TYPE)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(",")
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append("))");
-    return ExecuteSql(sql);
-}
-
-int32_t AccessTokenDb::AddAvailableTypeColumn() const
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_DEF);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        TokenFiledConst::FIELD_AVAILABLE_TYPE + "=" +
-        std::to_string(ATokenAvailableTypeEnum::NORMAL);
-    int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d", checkResult);
-    if (checkResult != -1) {
-        return SUCCESS;
-    }
-
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(TokenFiledConst::FIELD_AVAILABLE_TYPE)
-        .append(" integer default ")
-        .append(std::to_string(ATokenAvailableTypeEnum::NORMAL));
-    int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
-    return insertResult;
-}
-
-int32_t AccessTokenDb::AddRequestToggleStatusColumn() const
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
-        .append(" integer default ")
-        .append(std::to_string(0)); // 0: close
-    int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
-    return insertResult;
-}
-
-int32_t AccessTokenDb::AddPermDialogCapColumn() const
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "Entry");
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_HAP_INFO);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string checkSql = "SELECT 1 FROM " + it->second.tableName_ + " WHERE " +
-        TokenFiledConst::FIELD_FORBID_PERM_DIALOG + "=" + std::to_string(false);
-    int32_t checkResult = ExecuteSql(checkSql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Check result:%{public}d.", checkResult);
-    if (checkResult != -1) {
-        return SUCCESS;
-    }
-
-    std::string sql = "alter table ";
-    sql.append(it->second.tableName_ + " add column ")
-        .append(TokenFiledConst::FIELD_FORBID_PERM_DIALOG)
-        .append(" integer default ")
-        .append(std::to_string(false));
-    int32_t insertResult = ExecuteSql(sql);
-    ACCESSTOKEN_LOG_INFO(LABEL, "Insert column result:%{public}d.", insertResult);
-    return insertResult;
-}
-
-int AccessTokenDb::CreatePermissionStateTable() const
-{
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_STATE);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_DEVICE_ID)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_GRANT_IS_GENERAL)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_GRANT_STATE)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_GRANT_FLAG)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_TOKEN_ID)
-        .append(",")
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(",")
-        .append(TokenFiledConst::FIELD_DEVICE_ID)
-        .append("))");
-    return ExecuteSql(sql);
-}
-
-int32_t AccessTokenDb::CreatePermissionRequestToggleStatusTable() const
-{
-    auto it = dataTypeToSqlTable_.find(DataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS);
-    if (it == dataTypeToSqlTable_.end()) {
-        return FAILURE;
-    }
-    std::string sql = "create table if not exists ";
-    sql.append(it->second.tableName_ + " (")
-        .append(TokenFiledConst::FIELD_USER_ID)
-        .append(INTEGER_STR)
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append(TEXT_STR)
-        .append(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS)
-        .append(INTEGER_STR)
-        .append("primary key(")
-        .append(TokenFiledConst::FIELD_USER_ID)
-        .append(",")
-        .append(TokenFiledConst::FIELD_PERMISSION_NAME)
-        .append("))");
-    return ExecuteSql(sql);
+    return 0;
 }
 } // namespace AccessToken
 } // namespace Security

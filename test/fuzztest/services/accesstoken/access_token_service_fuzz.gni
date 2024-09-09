@@ -68,9 +68,9 @@ access_token_external_deps = [
   "ipc:ipc_core",
   "json:nlohmann_json_static",
   "openssl:libcrypto_shared",
+  "relational_store:native_rdb",
   "safwk:system_ability_fwk",
   "samgr:samgr_proxy",
-  "sqlite:sqlite",
   "zlib:shared_libz",
 ]
 
@@ -79,6 +79,8 @@ access_token_sources = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
