@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -309,10 +309,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     sleep(3);
 
     // get sql data
+    GenericValues conditionValue;
     std::vector<GenericValues> nativeTokenResults;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue, nativeTokenResults);
     std::vector<GenericValues> permStateRes;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     for (GenericValues nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId != info.tokenID) {

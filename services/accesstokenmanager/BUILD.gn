@@ -71,6 +71,8 @@ if (is_standard_system) {
       "main/cpp/src/callback/callback_death_recipients.cpp",
       "main/cpp/src/callback/callback_manager.cpp",
       "main/cpp/src/database/access_token_db.cpp",
+      "main/cpp/src/database/access_token_db_util.cpp",
+      "main/cpp/src/database/access_token_open_callback.cpp",
       "main/cpp/src/database/data_translator.cpp",
       "main/cpp/src/database/token_field_const.cpp",
       "main/cpp/src/form_manager/form_instance.cpp",
@@ -139,9 +141,9 @@ if (is_standard_system) {
       "init:libbegetutil",
       "ipc:ipc_core",
       "json:nlohmann_json_static",
+      "relational_store:native_rdb",
       "safwk:system_ability_fwk",
       "samgr:samgr_proxy",
-      "sqlite:sqlite",
     ]
 
     if (ohos_indep_compiler_enable) {
