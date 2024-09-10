@@ -20,7 +20,6 @@
 #include "accesstoken_log.h"
 #include "data_translator.h"
 #include "data_validator.h"
-#include "nlohmann/json.hpp"
 #include "token_field_const.h"
 
 namespace OHOS {
