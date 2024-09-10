@@ -58,12 +58,17 @@ int32_t PrivacyManagerProxy::AddPermissionUsedRecord(const AddPermParamInfoParce
     return result;
 }
 
-int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerProxy::StartUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
 {
     MessageParcel startData;
     startData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!startData.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!startData.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!startData.WriteString(permissionName)) {
@@ -81,13 +86,18 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     return result;
 }
 
-int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+int32_t PrivacyManagerProxy::StartUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName,
     const sptr<IRemoteObject>& callback)
 {
     MessageParcel data;
     data.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!data.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!data.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!data.WriteString(permissionName)) {
@@ -110,12 +120,17 @@ int32_t PrivacyManagerProxy::StartUsingPermission(AccessTokenID tokenID, const s
     return result;
 }
 
-int32_t PrivacyManagerProxy::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerProxy::StopUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
 {
     MessageParcel stopData;
     stopData.WriteInterfaceToken(IPrivacyManager::GetDescriptor());
     if (!stopData.WriteUint32(tokenID)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write tokenID");
+        return PrivacyError::ERR_WRITE_PARCEL_FAILED;
+    }
+    if (!stopData.WriteInt32(pid)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write pid");
         return PrivacyError::ERR_WRITE_PARCEL_FAILED;
     }
     if (!stopData.WriteString(permissionName)) {

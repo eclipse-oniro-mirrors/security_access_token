@@ -40,10 +40,10 @@ public:
     void OnStop() override;
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfoParcel& infoParcel, bool asyncMode = false) override;
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName) override;
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const sptr<IRemoteObject>& callback) override;
-    int32_t StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName) override;
+    int32_t StopUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName) override;
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID) override;
     int32_t GetPermissionUsedRecords(
         const PermissionUsedRequestParcel& request, PermissionUsedResultParcel& result) override;

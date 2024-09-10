@@ -38,12 +38,12 @@ public:
     virtual ~PrivacyManagerClient();
 
     int32_t AddPermissionUsedRecord(const AddPermParamInfo& info, bool asyncMode = false);
-    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
-    int32_t CreateStateChangeCbk(AccessTokenID tokenId, const std::shared_ptr<StateCustomizedCbk>& callback,
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
+    int32_t CreateStateChangeCbk(uint64_t id, const std::shared_ptr<StateCustomizedCbk>& callback,
         sptr<StateChangeCallback>& callbackWrap);
-    int32_t StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+    int32_t StartUsingPermission(AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
         const std::shared_ptr<StateCustomizedCbk>& callback);
-    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName);
+    int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName);
     int32_t RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID);
     int32_t GetPermissionUsedRecords(const PermissionUsedRequest& request, PermissionUsedResult& result);
     int32_t GetPermissionUsedRecords(
@@ -77,12 +77,13 @@ private:
     void InitProxy();
     sptr<IPrivacyManager> GetProxy();
     void ReleaseProxy();
+    uint64_t GetUniqueId(uint32_t tokenId, int32_t pid) const;
 
 private:
     std::mutex activeCbkMutex_;
     std::map<std::shared_ptr<PermActiveStatusCustomizedCbk>, sptr<PermActiveStatusChangeCallback>> activeCbkMap_;
     std::mutex stateCbkMutex_;
-    std::map<AccessTokenID, sptr<StateChangeCallback>> stateChangeCallbackMap_;
+    std::map<uint64_t, sptr<StateChangeCallback>> stateChangeCallbackMap_;
 };
 } // namespace AccessToken
 } // namespace Security

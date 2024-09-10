@@ -43,7 +43,6 @@ void StateChangeCallbackProxy::StateChangeNotify(AccessTokenID tokenId, bool isS
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Write tokenId");
         return;
     }
-
     if (!data.WriteBool(isShowing)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to Write isShowing");
         return;
