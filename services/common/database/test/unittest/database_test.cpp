@@ -20,10 +20,13 @@
 #include "access_token.h"
 #define private public
 #include "access_token_db.h"
+#include "access_token_open_callback.h"
 #undef private
+#include "access_token_error.h"
 #include "data_translator.h"
 #include "permission_def.h"
 #include "generic_values.h"
+#include "token_field_const.h"
 #include "variant_value.h"
 
 using namespace testing::ext;
@@ -34,8 +37,6 @@ namespace AccessToken {
 namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "DatabaseTest"};
 static constexpr int32_t GET_INT64_TRUE_VALUE = -1;
-static constexpr int32_t ROLLBACK_TRANSACTION_RESULT_ABNORMAL = -1;
-static constexpr int32_t EXECUTESQL_RESULT_ABNORMAL = -1;
 static const int32_t DEFAULT_VALUE = -1;
 static const int32_t TEST_TOKEN_ID = 100;
 } // namespace
@@ -93,82 +94,6 @@ HWTEST_F(DatabaseTest, PutVariant001, TestSize.Level1)
 }
 
 /**
- * @tc.name: RollbackTransaction001
- * @tc.desc: RollbackTransaction001 Abnormal branch res != SQLITE_OK
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, RollbackTransaction001, TestSize.Level1)
-{
-    AccessTokenDb::GetInstance().SetVersion();
-    int32_t result = AccessTokenDb::GetInstance().RollbackTransaction();
-    EXPECT_EQ(result, ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
-}
-
-/**
- * @tc.name: RollbackTransaction002
- * @tc.desc: RollbackTransaction002 Abnormal branch db_ = nullptr
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, RollbackTransaction002, TestSize.Level1)
-{
-    AccessTokenDb::GetInstance().Close();
-    EXPECT_EQ(AccessTokenDb::GetInstance().RollbackTransaction(), ROLLBACK_TRANSACTION_RESULT_ABNORMAL);
-}
-
-/**
- * @tc.name: ExecuteSql001
- * @tc.desc: ExecuteSql001 Abnormal branch res != SQLITE_OK
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, ExecuteSql001, TestSize.Level1)
-{
-    std::string testSql = "test";
-    EXPECT_EQ(AccessTokenDb::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
-}
-
-/**
- * @tc.name: ExecuteSql002
- * @tc.desc: ExecuteSql002 Abnormal branch db_ = nullptr
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, ExecuteSql002, TestSize.Level1)
-{
-    std::string testSql = "test";
-    AccessTokenDb::GetInstance().Close();
-    EXPECT_EQ(AccessTokenDb::GetInstance().ExecuteSql(testSql), EXECUTESQL_RESULT_ABNORMAL);
-}
-
-/**
- * @tc.name: SpitError001
- * @tc.desc: SpitError001 Abnormal branch db_ = nullptr
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, SpitError001, TestSize.Level1)
-{
-    AccessTokenDb::GetInstance().Close();
-    std::string result = AccessTokenDb::GetInstance().SpitError().c_str();
-    EXPECT_EQ(result.empty(), true);
-}
-
-/**
- * @tc.name: SpitError002
- * @tc.desc: SpitError002 use SpitError
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(DatabaseTest, SpitError002, TestSize.Level1)
-{
-    AccessTokenDb::GetInstance().Open();
-    std::string result = AccessTokenDb::GetInstance().SpitError().c_str();
-    EXPECT_EQ(result.length() > 0, true);
-}
-
-/**
  * @tc.name: VariantValue64001
  * @tc.desc: VariantValue64001 use VariantValue
  * @tc.type: FUNC
@@ -212,13 +137,13 @@ HWTEST_F(DatabaseTest, VariantValue001, TestSize.Level1)
 
 static void RemoveTestTokenHapInfo()
 {
+    GenericValues conditionValue;
     std::vector<GenericValues> hapInfoResults;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
-            ASSERT_EQ(AccessTokenDb::SUCCESS,
-                AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValue));
+            ASSERT_EQ(0, AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValue));
             break;
         }
     }
@@ -252,7 +177,7 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest001, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(0, AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest001 end");
 }
 
@@ -273,7 +198,8 @@ HWTEST_F(DatabaseTest, SqliteStorageAddTest002, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(AccessTokenError::ERR_DATABASE_OPERATE_FAILED,
+        AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageAddTest002 end");
 }
 
@@ -305,7 +231,7 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
 
     std::vector<GenericValues> values;
     values.emplace_back(genericValues);
-    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
+    EXPECT_EQ(0, AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, values));
 
     GenericValues modifyValues;
     modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
@@ -314,12 +240,12 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
     conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
 
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_HAP_INFO,
-        modifyValues, conditions));
+    ASSERT_EQ(0, AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValues, conditions));
 
     bool modifySuccess = false;
+    GenericValues conditionValue;
     std::vector<GenericValues> hapInfoResults;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoResults);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapInfoResults);
     for (GenericValues hapInfoValue : hapInfoResults) {
         AccessTokenID tokenId = (AccessTokenID)hapInfoValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId == TEST_TOKEN_ID) {
@@ -330,204 +256,6 @@ HWTEST_F(DatabaseTest, SqliteStorageModifyTest001, TestSize.Level1)
     }
     EXPECT_TRUE(modifySuccess);
     ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageModifyTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageRefreshAllTest001
- * @tc.desc: RefreshAll function test failed
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageRefreshAllTest001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageRefreshAllTest001 begin");
-
-    RemoveTestTokenHapInfo();
-
-    GenericValues genericValues;
-    genericValues.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
-
-    std::vector<GenericValues> values;
-    values.emplace_back(genericValues);
-    EXPECT_EQ(AccessTokenDb::FAILURE,
-        AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageRefreshAllTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreateInsertPrepareSqlCmd001
- * @tc.desc: CreateInsertPrepareSqlCmd function test type not found
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateInsertPrepareSqlCmd001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 begin");
-    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
-    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateInsertPrepareSqlCmd(type));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateInsertPrepareSqlCmdTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreateDeletePrepareSqlCmd001
- * @tc.desc: CreateDeletePrepareSqlCmd function test type not found
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateDeletePrepareSqlCmd001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 begin");
-    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
-    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateDeletePrepareSqlCmd(type));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateDeletePrepareSqlCmdTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreateUpdatePrepareSqlCmd001
- * @tc.desc: CreateUpdatePrepareSqlCmd function test type not found
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 begin");
-
-    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
-
-    GenericValues conditions;
-    conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, TEST_TOKEN_ID);
-    conditions.Put(TokenFiledConst::FIELD_USER_ID, 100);
-
-    GenericValues modifyValues;
-    modifyValues.Put(TokenFiledConst::FIELD_BUNDLE_NAME, "test_bundle_name_modified");
-
-    std::vector<std::string> modifyColumns = modifyValues.GetAllKeys();
-    std::vector<std::string> conditionColumns = conditions.GetAllKeys();
-
-    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateUpdatePrepareSqlCmdTest001 end");
-}
-
-/**
- * @tc.name: SqliteStorageCreateUpdatePrepareSqlCmd002
- * @tc.desc: AccessTokenDb::CreateUpdatePrepareSqlCmd function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateUpdatePrepareSqlCmd002, TestSize.Level1)
-{
-    AccessTokenDb::DataType type = AccessTokenDb::DataType::ACCESSTOKEN_HAP_INFO;
-    std::vector<std::string> modifyColumns;
-    std::vector<std::string> conditionColumns;
-
-    // modifyColumns is empty
-    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
-
-    type = AccessTokenDb::DataType::ACCESSTOKEN_HAP_INFO;
-    modifyColumns.emplace_back(TokenFiledConst::FIELD_TOKEN_ID);
-    modifyColumns.emplace_back(TokenFiledConst::FIELD_USER_ID);
-    // modifyColumns is not empty + modifyColumns.size > 1 + conditionColumns is empty
-    ASSERT_NE("", AccessTokenDb::GetInstance().CreateUpdatePrepareSqlCmd(type, modifyColumns, conditionColumns));
-}
-
-/*
- * @tc.name: SqliteStorageCreateSelectPrepareSqlCmd001
- * @tc.desc: CreateSelectPrepareSqlCmd function test type not found
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateSelectPrepareSqlCmd001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 begin");
-    AccessTokenDb::DataType type = static_cast<AccessTokenDb::DataType>(100);
-    ASSERT_EQ("", AccessTokenDb::GetInstance().CreateSelectPrepareSqlCmd(type));
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateSelectPrepareSqlCmdTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreateHapTokenInfoTable001
- * @tc.desc: CreateHapTokenInfoTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 begin");
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreateHapTokenInfoTable());
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateHapTokenInfoTableTest001 end");
-}
-
-/**
- * @tc.name: SqliteStorageCreateHapTokenInfoTable002
- * @tc.desc: AccessTokenDb::CreateHapTokenInfoTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateHapTokenInfoTable002, TestSize.Level1)
-{
-    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
-    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_; // backup
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
-
-    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreateHapTokenInfoTable());
-    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreateNativeTokenInfoTable());
-    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionDefinitionTable());
-    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionStateTable());
-    ASSERT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().CreatePermissionRequestToggleStatusTable());
-
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable; // recovery
-}
-
-/*
- * @tc.name: SqliteStorageCreateNativeTokenInfoTable001
- * @tc.desc: CreateNativeTokenInfoTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreateNativeTokenInfoTable001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 begin");
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreateNativeTokenInfoTable());
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreateNativeTokenInfoTableTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreatePermissionDefinitionTable001
- * @tc.desc: CreatePermissionDefinitionTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionDefinitionTable001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 begin");
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionDefinitionTable());
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionDefinitionTableTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreatePermissionStateTable001
- * @tc.desc: CreatePermissionStateTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionStateTable001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 begin");
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionStateTable());
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionStateTableTest001 end");
-}
-
-/*
- * @tc.name: SqliteStorageCreatePermissionRequestToggleStatusTable001
- * @tc.desc: CreatePermissionRequestToggleStatusTable function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, SqliteStorageCreatePermissionRequestToggleStatusTable001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionRequestToggleStatusTableTest001 begin");
-    ASSERT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().CreatePermissionRequestToggleStatusTable());
-    ACCESSTOKEN_LOG_INFO(LABEL, "SqliteStorageCreatePermissionRequestToggleStatusTableTest001 end");
 }
 
 /*
@@ -709,43 +437,6 @@ HWTEST_F(DatabaseTest, DataTranslatorTranslationIntoPermissionStateFull004, Test
     ASSERT_NE(RET_SUCCESS, DataTranslator::TranslationIntoPermissionStateFull(inGenericValues, outPermissionState));
     ACCESSTOKEN_LOG_INFO(LABEL, "DataTranslatorTranslationIntoPermissionStateFullTest004 end");
 }
-
-/**
- * @tc.name: AddAvailableTypeColumn001
- * @tc.desc: test AddAvailableTypeColumn
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, AddAvailableTypeColumn001, TestSize.Level1)
-{
-    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
-    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_;
-    EXPECT_TRUE(dataTypeToSqlTable.size() > 0);
-    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().AddAvailableTypeColumn());
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
-    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().AddAvailableTypeColumn());
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable;
-    EXPECT_EQ(dataTypeToSqlTable.size(), AccessTokenDb::GetInstance().dataTypeToSqlTable_.size());
-}
-
-/**
- * @tc.name: AddPermDialogCapColumn001
- * @tc.desc: test AddPermDialogCapColumn
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(DatabaseTest, AddPermDialogCapColumn001, TestSize.Level1)
-{
-    std::map<AccessTokenDb::DataType, AccessTokenDb::SqliteTable> dataTypeToSqlTable;
-    dataTypeToSqlTable = AccessTokenDb::GetInstance().dataTypeToSqlTable_;
-    EXPECT_TRUE(dataTypeToSqlTable.size() > 0);
-    EXPECT_EQ(AccessTokenDb::SUCCESS, AccessTokenDb::GetInstance().AddPermDialogCapColumn());
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_.clear();
-    EXPECT_EQ(AccessTokenDb::FAILURE, AccessTokenDb::GetInstance().AddPermDialogCapColumn());
-    AccessTokenDb::GetInstance().dataTypeToSqlTable_ = dataTypeToSqlTable;
-    EXPECT_EQ(dataTypeToSqlTable.size(), AccessTokenDb::GetInstance().dataTypeToSqlTable_.size());
-}
-
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

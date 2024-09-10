@@ -37,10 +37,11 @@
 #include "short_grant_manager.h"
 #include "permission_map.h"
 #include "permission_validator.h"
+#include "perm_setproc.h"
+#include "token_field_const.h"
 #ifdef TOKEN_SYNC_ENABLE
 #include "token_modify_notifier.h"
 #endif
-#include "perm_setproc.h"
 
 namespace OHOS {
 namespace Security {
@@ -434,7 +435,7 @@ int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, con
     conditionValue.Put(TokenFiledConst::FIELD_USER_ID, userID);
     conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
 
-    AccessTokenDb::GetInstance().FindByConditions(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         conditionValue, permRequestToggleStatusRes);
     if (permRequestToggleStatusRes.empty()) {
         // never set, return default status: CLOSED if APP_TRACKING_CONSENT
@@ -451,12 +452,12 @@ void PermissionManager::AddPermRequestToggleStatusToDb(
     GenericValues value;
     value.Put(TokenFiledConst::FIELD_USER_ID, userID);
     value.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permissionName);
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, value);
+    AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS, value);
 
     std::vector<GenericValues> permRequestToggleStatusValues;
     value.Put(TokenFiledConst::FIELD_REQUEST_TOGGLE_STATUS, status);
     permRequestToggleStatusValues.emplace_back(value);
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
         permRequestToggleStatusValues);
 }
 

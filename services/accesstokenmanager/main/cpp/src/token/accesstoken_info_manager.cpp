@@ -34,9 +34,6 @@
 #ifdef SUPPORT_SANDBOX_APP
 #include "dlp_permission_set_manager.h"
 #endif
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-#include "ffrt.h"
-#endif
 #include "generic_values.h"
 #include "hap_token_info_inner.h"
 #include "ipc_skeleton.h"
@@ -63,11 +60,7 @@ static const std::string ACCESS_TOKEN_PACKAGE_NAME = "ohos.security.distributed_
 static const std::string DUMP_JSON_PATH = "/data/service/el1/public/access_token/nativetoken.log";
 }
 
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-AccessTokenInfoManager::AccessTokenInfoManager() : curTaskNum_(0), hasInited_(false) {}
-#else
-AccessTokenInfoManager::AccessTokenInfoManager() : tokenDataWorker_("TokenStore"), hasInited_(false) {}
-#endif
+AccessTokenInfoManager::AccessTokenInfoManager() : hasInited_(false) {}
 
 AccessTokenInfoManager::~AccessTokenInfoManager()
 {
@@ -82,9 +75,6 @@ AccessTokenInfoManager::~AccessTokenInfoManager()
     }
 #endif
 
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
-    this->tokenDataWorker_.Stop();
-#endif
     this->hasInited_ = false;
 }
 
@@ -98,10 +88,6 @@ void AccessTokenInfoManager::Init()
     ACCESSTOKEN_LOG_INFO(LABEL, "Init begin!");
     InitHapTokenInfos();
     InitNativeTokenInfos();
-#ifndef RESOURCESCHEDULE_FFRT_ENABLE
-    this->tokenDataWorker_.Start(1);
-#endif
-    hasInited_ = true;
 
 #ifdef TOKEN_SYNC_ENABLE
     std::function<void()> runner = []() {
@@ -124,18 +110,20 @@ void AccessTokenInfoManager::Init()
     initThread.detach();
 #endif
 
+    hasInited_ = true;
     ACCESSTOKEN_LOG_INFO(LABEL, "Init success");
 }
 
 void AccessTokenInfoManager::InitHapTokenInfos()
 {
+    GenericValues conditionValue;
     std::vector<GenericValues> hapTokenRes;
     std::vector<GenericValues> permDefRes;
     std::vector<GenericValues> permStateRes;
 
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapTokenRes);
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefRes);
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_HAP_INFO, conditionValue, hapTokenRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, conditionValue, permDefRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
 
     for (const GenericValues& tokenValue : hapTokenRes) {
         AccessTokenID tokenId = (AccessTokenID)tokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
@@ -174,11 +162,13 @@ void AccessTokenInfoManager::InitHapTokenInfos()
 
 void AccessTokenInfoManager::InitNativeTokenInfos()
 {
+    GenericValues conditionValue;
     std::vector<GenericValues> nativeTokenResults;
     std::vector<GenericValues> permStateRes;
 
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
+
     for (const GenericValues& nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenId);
@@ -481,7 +471,10 @@ int AccessTokenInfoManager::RemoveNativeTokenInfo(AccessTokenID id)
     }
     AccessTokenIDManager::GetInstance().ReleaseTokenId(id);
     ACCESSTOKEN_LOG_INFO(LABEL, "Remove native token %{public}u ok!", id);
-    RefreshTokenInfoIfNeeded();
+
+    if (!RemoveNativeInfoFromDatabase(id)) {
+        return AccessTokenError::ERR_DATABASE_OPERATE_FAILED;
+    }
 
     // remove native to kernel
     PermissionManager::GetInstance().RemovePermFromKernel(id);
@@ -1058,46 +1051,6 @@ AccessTokenInfoManager& AccessTokenInfoManager::GetInstance()
     return *instance;
 }
 
-void AccessTokenInfoManager::StoreAllTokenInfo()
-{
-    std::vector<GenericValues> hapInfoValues;
-    std::vector<GenericValues> permDefValues;
-    std::vector<GenericValues> permStateValues;
-    std::vector<GenericValues> nativeTokenValues;
-    uint64_t lastestUpdateStamp = 0;
-    {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->hapTokenInfoLock_);
-        for (auto iter = hapTokenInfoMap_.begin(); iter != hapTokenInfoMap_.end(); iter++) {
-            if (iter->second != nullptr) {
-                std::shared_ptr<HapTokenInfoInner>& hapInfo = iter->second;
-                hapInfo->StoreHapInfo(hapInfoValues);
-                hapInfo->StorePermissionPolicy(permStateValues);
-                if (hapInfo->permUpdateTimestamp_ > lastestUpdateStamp) {
-                    lastestUpdateStamp = hapInfo->permUpdateTimestamp_;
-                }
-            }
-        }
-    }
-
-    {
-        Utils::UniqueReadGuard<Utils::RWLock> infoGuard(this->nativeTokenInfoLock_);
-        for (auto iter = nativeTokenInfoMap_.begin(); iter != nativeTokenInfoMap_.end(); iter++) {
-            if (iter->second != nullptr) {
-                iter->second->StoreNativeInfo(nativeTokenValues);
-                iter->second->StorePermissionPolicy(permStateValues);
-            }
-        }
-    }
-
-    PermissionDefinitionCache::GetInstance().StorePermissionDef(permDefValues);
-
-    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues);
-    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
-    AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
-    int res = AccessTokenDb::GetInstance().RefreshAll(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
-    PermissionManager::GetInstance().NotifyPermGrantStoreResult((res == 0), lastestUpdateStamp);
-}
-
 int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
 {
     std::vector<GenericValues> permStateValues;
@@ -1112,8 +1065,8 @@ int AccessTokenInfoManager::AddAllNativeTokenInfoToDb(void)
     }
     ACCESSTOKEN_LOG_INFO(LABEL, "permStateValues %{public}zu, nativeTokenValues %{public}zu.",
         permStateValues.size(), nativeTokenValues.size());
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_NATIVE_INFO, nativeTokenValues);
     return RET_SUCCESS;
 }
 
@@ -1165,7 +1118,7 @@ int32_t AccessTokenInfoManager::ModifyHapPermStateFromDb(AccessTokenID tokenID, 
         conditions.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
         conditions.Put(TokenFiledConst::FIELD_PERMISSION_NAME, permission);
         AccessTokenDb::GetInstance().Modify(
-            AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
+            AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues[i], conditions);
     }
     return RET_SUCCESS;
 }
@@ -1185,9 +1138,9 @@ int AccessTokenInfoManager::AddHapTokenInfoToDb(AccessTokenID tokenID)
     hapInfo->StorePermissionPolicy(permStateValues);
 
     PermissionDefinitionCache::GetInstance().StorePermissionDef(tokenID, permDefValues);
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_HAP_INFO, hapInfoValues);
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
-    AccessTokenDb::GetInstance().Add(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_HAP_INFO, hapInfoValues);
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, permStateValues);
+    AccessTokenDb::GetInstance().Add(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, permDefValues);
     return RET_SUCCESS;
 }
 
@@ -1196,59 +1149,10 @@ int AccessTokenInfoManager::RemoveHapTokenInfoFromDb(AccessTokenID tokenID)
     GenericValues values;
     values.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_HAP_INFO, values);
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_DEF, values);
-    AccessTokenDb::GetInstance().Remove(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, values);
+    AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_HAP_INFO, values);
+    AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_PERMISSION_DEF, values);
+    AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, values);
     return RET_SUCCESS;
-}
-
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-int32_t AccessTokenInfoManager::GetCurTaskNum()
-{
-    return curTaskNum_.load();
-}
-
-void AccessTokenInfoManager::AddCurTaskNum()
-{
-    curTaskNum_++;
-}
-
-void AccessTokenInfoManager::ReduceCurTaskNum()
-{
-    curTaskNum_--;
-}
-#endif
-
-void AccessTokenInfoManager::RefreshTokenInfoIfNeeded()
-{
-#ifdef RESOURCESCHEDULE_FFRT_ENABLE
-    if (GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Has refresh task!");
-        return;
-    }
-
-    auto tokenStore = []() {
-        AccessTokenInfoManager::GetInstance().StoreAllTokenInfo();
-
-        // Sleep for one second to avoid frequent refresh of the database.
-        ffrt::this_task::sleep_for(std::chrono::seconds(1));
-        AccessTokenInfoManager::GetInstance().ReduceCurTaskNum();
-    };
-    AddCurTaskNum();
-    ffrtTaskQueue_->submit(tokenStore, ffrt::task_attr().qos(ffrt::qos_default));
-#else
-    if (tokenDataWorker_.GetCurTaskNum() > 1) {
-        ACCESSTOKEN_LOG_INFO(LABEL, "Has refresh task!");
-        return;
-    }
-
-    tokenDataWorker_.AddTask([]() {
-        AccessTokenInfoManager::GetInstance().StoreAllTokenInfo();
-
-        // Sleep for one second to avoid frequent refresh of the database.
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    });
-#endif
 }
 
 void AccessTokenInfoManager::PermissionStateNotify(const std::shared_ptr<HapTokenInfoInner>& info, AccessTokenID id)
@@ -1489,9 +1393,9 @@ bool AccessTokenInfoManager::UpdateStatesToDatabase(AccessTokenID tokenID,
         conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
         conditionValue.Put(TokenFiledConst::FIELD_PERMISSION_NAME, state.permissionName);
 
-        int32_t res = AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
+        int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, modifyValue,
             conditionValue);
-        if (res != AccessTokenDb::ExecuteResult::SUCCESS) {
+        if (res != 0) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Update tokenID %{public}u permission %{public}s to database failed",
                 tokenID, state.permissionName.c_str());
             return false;
@@ -1509,10 +1413,30 @@ bool AccessTokenInfoManager::UpdateCapStateToDatabase(AccessTokenID tokenID, boo
     GenericValues conditionValue;
     conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
 
-    int32_t res = AccessTokenDb::GetInstance().Modify(AccessTokenDb::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
-    if (res != AccessTokenDb::ExecuteResult::SUCCESS) {
+    int32_t res = AccessTokenDb::GetInstance().Modify(AtmDataType::ACCESSTOKEN_HAP_INFO, modifyValue, conditionValue);
+    if (res != 0) {
         ACCESSTOKEN_LOG_ERROR(LABEL,
             "Update tokenID %{public}u permissionDialogForbidden %{public}d to database failed", tokenID, enable);
+        return false;
+    }
+
+    return true;
+}
+
+bool AccessTokenInfoManager::RemoveNativeInfoFromDatabase(AccessTokenID tokenID)
+{
+    GenericValues conditionValue;
+    conditionValue.Put(TokenFiledConst::FIELD_TOKEN_ID, static_cast<int32_t>(tokenID));
+
+    int32_t res = AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue);
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remove tokenID %{public}u from table native_token_info failed.", tokenID);
+        return false;
+    }
+
+    res = AccessTokenDb::GetInstance().Remove(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue);
+    if (res != 0) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remove tokenID %{public}u from table permission_state failed.", tokenID);
         return false;
     }
 
