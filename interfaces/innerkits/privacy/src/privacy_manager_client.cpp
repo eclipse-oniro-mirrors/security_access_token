@@ -70,22 +70,22 @@ int32_t PrivacyManagerClient::AddPermissionUsedRecord(const AddPermParamInfo& in
     return proxy->AddPermissionUsedRecord(infoParcel, asyncMode);
 }
 
-int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerClient::StartUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Proxy is null.");
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
-    return proxy->StartUsingPermission(tokenID, permissionName);
+    return proxy->StartUsingPermission(tokenID, pid, permissionName);
 }
 
-int32_t PrivacyManagerClient::CreateStateChangeCbk(AccessTokenID tokenId,
+int32_t PrivacyManagerClient::CreateStateChangeCbk(uint64_t id,
     const std::shared_ptr<StateCustomizedCbk>& callback, sptr<StateChangeCallback>& callbackWrap)
 {
     std::lock_guard<std::mutex> lock(stateCbkMutex_);
-
-    auto iter = stateChangeCallbackMap_.find(tokenId);
+    auto iter = stateChangeCallbackMap_.find(id);
     if (iter != stateChangeCallbackMap_.end()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, " Callback has been used.");
         return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
@@ -99,7 +99,8 @@ int32_t PrivacyManagerClient::CreateStateChangeCbk(AccessTokenID tokenId,
     return RET_SUCCESS;
 }
 
-int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
+int32_t PrivacyManagerClient::StartUsingPermission(
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName,
     const std::shared_ptr<StateCustomizedCbk>& callback)
 {
     if (callback == nullptr) {
@@ -108,7 +109,8 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const 
     }
 
     sptr<StateChangeCallback> callbackWrap = nullptr;
-    int32_t result = CreateStateChangeCbk(tokenId, callback, callbackWrap);
+    uint64_t id = GetUniqueId(tokenId, pid);
+    int32_t result = CreateStateChangeCbk(id, callback, callbackWrap);
     if (result != RET_SUCCESS) {
         return result;
     }
@@ -119,16 +121,17 @@ int32_t PrivacyManagerClient::StartUsingPermission(AccessTokenID tokenId, const 
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
 
-    result = proxy->StartUsingPermission(tokenId, permissionName, callbackWrap->AsObject());
+    result = proxy->StartUsingPermission(tokenId, pid, permissionName, callbackWrap->AsObject());
     if (result == RET_SUCCESS) {
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        stateChangeCallbackMap_[tokenId] = callbackWrap;
+        stateChangeCallbackMap_[id] = callbackWrap;
         ACCESSTOKEN_LOG_INFO(LABEL, "CallbackObject added.");
     }
     return result;
 }
 
-int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyManagerClient::StopUsingPermission(
+    AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
 {
     auto proxy = GetProxy();
     if (proxy == nullptr) {
@@ -136,14 +139,15 @@ int32_t PrivacyManagerClient::StopUsingPermission(AccessTokenID tokenID, const s
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     if (permissionName == CAMERA_PERMISSION_NAME) {
+        uint64_t id = GetUniqueId(tokenID, pid);
         std::lock_guard<std::mutex> lock(stateCbkMutex_);
-        auto iter = stateChangeCallbackMap_.find(tokenID);
+        auto iter = stateChangeCallbackMap_.find(id);
         if (iter != stateChangeCallbackMap_.end()) {
-            stateChangeCallbackMap_.erase(tokenID);
+            stateChangeCallbackMap_.erase(id);
         }
     }
 
-    return proxy->StopUsingPermission(tokenID, permissionName);
+    return proxy->StopUsingPermission(tokenID, pid, permissionName);
 }
 
 int32_t PrivacyManagerClient::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)
@@ -374,6 +378,12 @@ int32_t PrivacyManagerClient::SetHapWithFGReminder(uint32_t tokenId, bool isAllo
         return PrivacyError::ERR_SERVICE_ABNORMAL;
     }
     return proxy->SetHapWithFGReminder(tokenId, isAllowed);
+}
+
+uint64_t PrivacyManagerClient::GetUniqueId(uint32_t tokenId, int32_t pid) const
+{
+    uint32_t tmpPid = (pid <= 0) ? 0 : static_cast<uint32_t>(pid);
+    return (static_cast<uint64_t>(tmpPid) << 32) | (static_cast<uint64_t>(tokenId) & 0xFFFFFFFF); // 32: bit
 }
 
 void PrivacyManagerClient::InitProxy()

@@ -59,8 +59,6 @@ void PermActiveStatusChangeCallbackProxy::ActiveStatusChangeCallback(ActiveChang
         ACCESSTOKEN_LOG_ERROR(LABEL, "Send request fail, result: %{public}d", requestResult);
         return;
     }
-
-    ACCESSTOKEN_LOG_INFO(LABEL, "SendRequest success");
 }
 } // namespace AccessToken
 } // namespace Security
