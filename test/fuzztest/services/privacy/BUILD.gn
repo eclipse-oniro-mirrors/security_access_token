@@ -25,6 +25,7 @@ group("fuzztest") {
       "isallowedusingpermissionstub_fuzzer:IsAllowedUsingPermissionStubFuzzTest",
       "registerpermactivestatuscallbackstub_fuzzer:RegisterPermActiveStatusCallbackStubFuzzTest",
       "removepermissionusedrecordsstub_fuzzer:RemovePermissionUsedRecordsStubFuzzTest",
+      "sethapwithfgreminderstub_fuzzer:SetHapWithFGReminderStubFuzzTest",
       "setmutepolicystub_fuzzer:SetMutePolicyStubFuzzTest",
       "startusingpermissioncallbackstub_fuzzer:StartUsingPermissionCallbackStubFuzzTest",
       "startusingpermissionstub_fuzzer:StartUsingPermissionStubFuzzTest",
