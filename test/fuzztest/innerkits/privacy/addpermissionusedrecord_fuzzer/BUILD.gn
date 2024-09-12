@@ -37,6 +37,6 @@ ohos_fuzztest("AddPermissionUsedRecordFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
-    "ipc:ipc_core",
+    "ipc:ipc_single",  //???
   ]
 }

@@ -60,7 +60,7 @@ ohos_unittest("libdatabase_test") {
     "c_utils:utils",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
-    "ipc:ipc_core",
+    "ipc:ipc_single",
     "sqlite:sqlite",
   ]
 }
