@@ -59,6 +59,10 @@ public:
      */
     std::string grantAbilityName;
     /**
+     * permission grant service ability name
+     */
+    std::string grantServiceAbilityName;
+    /**
      * permission state sheet ability name
      */
     std::string permStateAbilityName;

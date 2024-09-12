@@ -49,7 +49,7 @@ public:
 
     virtual ~AccessTokenManagerClient();
 
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+    PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName);
     int GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult);
     int GetDefPermissions(AccessTokenID tokenID, std::vector<PermissionDef>& permList);
@@ -63,6 +63,8 @@ public:
     int32_t GetPermissionsStatus(AccessTokenID tokenID, std::vector<PermissionListState>& permList);
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag);
+    int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
     int ClearUserGrantedPermissionState(AccessTokenID tokenID);
     AccessTokenIDEx AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy);
     int32_t InitHapToken(const HapInfoParams& info, HapPolicyParams& policy, AccessTokenIDEx& fullTokenId);
@@ -85,10 +87,7 @@ public:
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
-    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
     int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
-    int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID);
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID);
     int DeleteRemoteDeviceTokens(const std::string& deviceID);
@@ -97,12 +96,14 @@ public:
 #endif
 
     void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
-    int32_t DumpPermDefInfo(std::string& dumpInfo);
     int32_t GetVersion(uint32_t& version);
     void OnRemoteDiedHandle();
     int32_t SetPermDialogCap(const HapBaseInfo& hapBaseInfo, bool enable);
     void GetPermissionManagerInfo(PermissionGrantInfo& info);
     int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+    int32_t ClearUserPolicy();
 
 private:
     AccessTokenManagerClient();

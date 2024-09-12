@@ -25,6 +25,34 @@ static constexpr int32_t ERROR = -1;
 constexpr int32_t CYCLE_LIMIT = 1000;
 }
 
+sptr<IAmsMgr> AppManagerAccessProxy::GetAmsMgr()
+{
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption option;
+    if (!data.WriteInterfaceToken(GetDescriptor())) {
+        return nullptr;
+    }
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return nullptr;
+    }
+    int32_t error = remote->SendRequest(
+        static_cast<uint32_t>(IAppMgr::Message::APP_GET_MGR_INSTANCE), data, reply, option);
+    if (error != ERR_NONE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "GetAmsMgr failed, error: %{public}d", error);
+        return nullptr;
+    }
+    sptr<IRemoteObject> object = reply.ReadRemoteObject();
+    sptr<IAmsMgr> amsMgr = iface_cast<IAmsMgr>(object);
+    if (!amsMgr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Ability manager service instance is nullptr. ");
+        return nullptr;
+    }
+    return amsMgr;
+}
+
 int32_t AppManagerAccessProxy::RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
     const std::vector<std::string>& bundleNameList)
 {
@@ -43,7 +71,12 @@ int32_t AppManagerAccessProxy::RegisterApplicationStateObserver(const sptr<IAppl
         ACCESSTOKEN_LOG_ERROR(LABEL, "BundleNameList write failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "RegisterAppStatus failed, error: %{public}d", error);
@@ -66,7 +99,12 @@ int32_t AppManagerAccessProxy::UnregisterApplicationStateObserver(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Observer write failed.");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);
@@ -84,7 +122,12 @@ int32_t AppManagerAccessProxy::GetForegroundApplications(std::vector<AppStateDat
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(IAppMgr::Message::GET_FOREGROUND_APPLICATIONS), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetForegroundApplications failed, error: %{public}d", error);

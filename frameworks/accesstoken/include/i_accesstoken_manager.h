@@ -47,7 +47,7 @@ public:
 
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.security.accesstoken.IAccessTokenManager");
 
-    virtual PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+    virtual PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) = 0;
     virtual int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) = 0;
@@ -65,6 +65,8 @@ public:
         AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) = 0;
     virtual int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
     virtual int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) = 0;
+    virtual int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) = 0;
     virtual int ClearUserGrantedPermissionState(AccessTokenID tokenID) = 0;
     virtual AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) = 0;
     virtual int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
@@ -89,11 +91,8 @@ public:
 #ifdef TOKEN_SYNC_ENABLE
     virtual int GetHapTokenInfoFromRemote(AccessTokenID tokenID,
         HapTokenInfoForSyncParcel& hapSyncParcel) = 0;
-    virtual int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoRes)  = 0;
     virtual int SetRemoteHapTokenInfo(const std::string& deviceID,
         HapTokenInfoForSyncParcel& hapSyncParcel) = 0;
-    virtual int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel)  = 0;
     virtual int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) = 0;
     virtual int DeleteRemoteDeviceTokens(const std::string& deviceID)  = 0;
@@ -102,8 +101,11 @@ public:
 #endif
 
     virtual int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) = 0;
+    virtual int32_t InitUserPolicy(
+        const std::vector<UserState>& userList, const std::vector<std::string>& permList) = 0;
+    virtual int32_t UpdateUserPolicy(const std::vector<UserState>& userList) = 0;
+    virtual int32_t ClearUserPolicy() = 0;
     virtual void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& tokenInfo) = 0;
-    virtual int32_t DumpPermDefInfo(std::string& tokenInfo) = 0;
     virtual int32_t GetVersion(uint32_t& version) = 0;
     virtual void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) = 0;
     virtual int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) = 0;

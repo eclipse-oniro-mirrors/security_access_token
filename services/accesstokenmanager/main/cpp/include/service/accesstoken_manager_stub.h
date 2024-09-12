@@ -34,7 +34,7 @@ public:
     int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& options) override;
 
 private:
-    void GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply);
+    void GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply);
     void VerifyAccessTokenInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionInner(MessageParcel& data, MessageParcel& reply);
     void GetDefPermissionsInner(MessageParcel& data, MessageParcel& reply);
@@ -46,6 +46,7 @@ private:
     void GetPermissionRequestToggleStatusInner(MessageParcel& data, MessageParcel& reply);
     void GrantPermissionInner(MessageParcel& data, MessageParcel& reply);
     void RevokePermissionInner(MessageParcel& data, MessageParcel& reply);
+    void GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply);
     void ClearUserGrantedPermissionStateInner(MessageParcel& data, MessageParcel& reply);
     void AllocHapTokenInner(MessageParcel& data, MessageParcel& reply);
     void InitHapTokenInner(MessageParcel& data, MessageParcel& reply);
@@ -61,14 +62,13 @@ private:
     void UnRegisterPermStateChangeCallbackInner(MessageParcel& data, MessageParcel& reply);
 #ifndef ATM_BUILD_VARIANT_USER_ENABLE
     void ReloadNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
+    void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);
 #endif
     void GetNativeTokenIdInner(MessageParcel& data, MessageParcel& reply);
 
 #ifdef TOKEN_SYNC_ENABLE
     void GetHapTokenInfoFromRemoteInner(MessageParcel& data, MessageParcel& reply);
-    void GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply);
-    void SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteTokenInner(MessageParcel& data, MessageParcel& reply);
     void DeleteRemoteDeviceTokensInner(MessageParcel& data, MessageParcel& reply);
     void GetRemoteNativeTokenIDInner(MessageParcel& data, MessageParcel& reply);
@@ -79,11 +79,13 @@ private:
     void SetPermissionOpFuncInMap();
     void SetLocalTokenOpFuncInMap();
     void DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply);
-    void DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetVersionInner(MessageParcel& data, MessageParcel& reply);
     void SetPermDialogCapInner(MessageParcel& data, MessageParcel& reply);
     void GetPermissionManagerInfoInner(MessageParcel& data, MessageParcel& reply);
     void GetNativeTokenNameInner(MessageParcel& data, MessageParcel& reply);
+    void InitUserPolicyInner(MessageParcel& data, MessageParcel& reply);
+    void UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply);
+    void ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply);
 
     bool IsPrivilegedCalling() const;
     bool IsAccessTokenCalling();

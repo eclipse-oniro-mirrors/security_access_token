@@ -288,16 +288,16 @@ public:
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid, const std::string& permissionName)
     {
         return RET_SUCCESS;
     }
-    int32_t StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
+    int32_t StartUsingPermission(AccessTokenID tokenID, int32_t pid,  const std::string& permissionName,
         const sptr<IRemoteObject>& callback)
     {
         return RET_SUCCESS;
     }
-    int32_t StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+    int32_t StopUsingPermission(AccessTokenID tokenID, int32_t pid,  const std::string& permissionName)
     {
         return RET_SUCCESS;
     }
@@ -586,6 +586,7 @@ public:
 HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
+    int32_t pid = 111;
     std::string permissionName = "ohos.permission.test";
     auto callbackPtr = std::make_shared<PrivacyManagerServiceTestCb1>();
     ASSERT_NE(nullptr, callbackPtr);
@@ -602,6 +603,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteInt32(pid));
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
@@ -619,6 +621,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner001, TestSi
 HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
+    int32_t pid = 11;
     std::string permissionName = "ohos.permission.test";
     auto callbackPtr = std::make_shared<PrivacyManagerServiceTestCb1>();
     ASSERT_NE(nullptr, callbackPtr);
@@ -632,6 +635,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteInt32(pid));
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(true, data.WriteRemoteObject(callbackWrap->AsObject()));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(static_cast<uint32_t>(
@@ -649,6 +653,7 @@ HWTEST_F(PrivacyManagerServiceTest, StartUsingPermissionCallbackInner002, TestSi
 HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1)
 {
     AccessTokenID tokenID = 123; // 123 is random input
+    int32_t pid = 11;
     std::string permissionName = "ohos.permission.test";
 
     TestPrivacyManagerStub testSub;
@@ -658,6 +663,7 @@ HWTEST_F(PrivacyManagerServiceTest, StopUsingPermissionInner001, TestSize.Level1
 
     ASSERT_EQ(true, data.WriteInterfaceToken(IPrivacyManager::GetDescriptor()));
     ASSERT_EQ(true, data.WriteUint32(tokenID));
+    ASSERT_EQ(true, data.WriteInt32(pid));
     ASSERT_EQ(true, data.WriteString(permissionName));
     ASSERT_EQ(RET_SUCCESS, testSub.OnRemoteRequest(
         static_cast<uint32_t>(PrivacyInterfaceCode::STOP_USING_PERMISSION), data, reply, option));

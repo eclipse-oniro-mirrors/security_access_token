@@ -1149,19 +1149,6 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: PermissionManager::DumpPermDefInfo function test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo = "";
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo));
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
  * @tc.name: SetPermissionRequestToggleStatus001
  * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
  * status and invalid userID.
@@ -1371,7 +1358,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     uint32_t flag = 0;
     // tokenId invalid
     ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
 
     HapInfoParams info = {
         .userID = USER_ID,
@@ -1392,12 +1379,61 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     infoPtr->SetRemote(true);
     // remote token is true
     ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
     infoPtr->SetRemote(false);
 
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
-        permissionName, isGranted, flag));
+        permissionName, isGranted, flag, true));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdateTokenPermissionState003
+ * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.DUMP";
+    uint32_t flag = 0;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    PermissionStateFull permStat = {
+        .permissionName = permissionName,
+        .isGeneral = true,
+        .resDeviceID = {"dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain",
+        .permStateList = {permStat}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    flag = PERMISSION_ALLOW_THIS_TIME;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_COMPONENT_SET;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_USER_FIXED;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
@@ -1509,25 +1545,6 @@ HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level1)
 
     ASSERT_EQ(PermissionState::PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyHapAccessToken(tokenId, permissionName)); // permPolicySet is null
-
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
-}
-
-/**
- * @tc.name: ClearUserGrantedPermissionState001
- * @tc.desc: PermissionManager::ClearUserGrantedPermissionState function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123; // 123 is random input
-
-    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-    ASSERT_NE(nullptr, hap);
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
-
-    PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }

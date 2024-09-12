@@ -121,6 +121,7 @@ PermissionStateFull g_locationTestStateBack12 = {
 
 void AccessTokenLocationRequestTest::SetUpTestCase()
 {
+    setuid(0);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, TEST_INST_INDEX);
     AccessTokenKit::DeleteToken(tokenId);
 }

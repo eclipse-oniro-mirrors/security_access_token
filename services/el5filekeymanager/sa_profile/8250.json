@@ -5,6 +5,7 @@
             "name": 8250,
             "libpath": "libel5_filekey_manager_service.z.so",
             "run-on-create": false,
+            "auto-restart":true,
             "distributed": false,
             "dump_level": 1,
             "start-on-demand": {

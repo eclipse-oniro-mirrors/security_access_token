@@ -36,6 +36,25 @@ HapPolicyParams g_infoManagerTestPolicyPrams = {
     .apl = APL_NORMAL,
     .domain = "test.domain",
 };
+#ifdef TOKEN_SYNC_ENABLE
+static const int32_t FAKE_SYNC_RET = 0xabcdef;
+class TokenSyncCallbackImpl : public TokenSyncKitInterface {
+    int32_t GetRemoteHapTokenInfo(const std::string& deviceID, AccessTokenID tokenID) const override
+    {
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t DeleteRemoteHapTokenInfo(AccessTokenID tokenID) const override
+    {
+        return FAKE_SYNC_RET;
+    };
+
+    int32_t UpdateRemoteHapTokenInfo(const HapTokenInfoForSync& tokenInfo) const override
+    {
+        return FAKE_SYNC_RET;
+    };
+};
+#endif
 }
 void AccessTokenKitTest::SetUpTestCase()
 {
@@ -51,6 +70,19 @@ void AccessTokenKitTest::SetUp()
 
 void AccessTokenKitTest::TearDown()
 {
+}
+
+/**
+ * @tc.name: InitHapToken001
+ * @tc.desc: InitHapToken with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, InitHapToken001, TestSize.Level1)
+{
+    AccessTokenIDEx tokenIdEx = {0};
+    int32_t ret = AccessTokenKit::InitHapToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams, tokenIdEx);
+    ASSERT_EQ(ret, AccessTokenError::ERR_SERVICE_ABNORMAL);
 }
 
 /**
@@ -151,6 +183,21 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenID001, TestSize.Level1)
 }
 
 /**
+ * @tc.name: GetHapTokenID001
+ * @tc.desc: GetHapTokenIDEx with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetHapTokenIDEx001, TestSize.Level1)
+{
+    int32_t userID = 0;
+    std::string bundleName = "test";
+    int32_t instIndex = 0;
+    AccessTokenIDEx tokenIdEx = AccessTokenKit::GetHapTokenIDEx(userID, bundleName, instIndex);
+    ASSERT_EQ(INVALID_TOKENID, tokenIdEx.tokenIdExStruct.tokenID);
+}
+
+/**
  * @tc.name: GetHapTokenInfo001
  * @tc.desc: GetHapTokenInfo with proxy is null
  * @tc.type: FUNC
@@ -245,18 +292,6 @@ HWTEST_F(AccessTokenKitTest, GetReqPermissions001, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: DumpPermDefInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo = "";
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DumpPermDefInfo(dumpInfo));
-}
-
-/**
  * @tc.name: GetPermissionFlag001
  * @tc.desc: GetPermissionFlag with proxy is null
  * @tc.type: FUNC
@@ -311,6 +346,25 @@ HWTEST_F(AccessTokenKitTest, GetSelfPermissionsState001, TestSize.Level1)
     std::vector<PermissionListState> permList;
     PermissionGrantInfo info;
     ASSERT_EQ(INVALID_OPER, AccessTokenKit::GetSelfPermissionsState(permList, info));
+}
+
+/**
+ * @tc.name: GetPermissionsStatus001
+ * @tc.desc: GetPermissionsStatus with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GetPermissionsStatus001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::vector<PermissionListState> permsList;
+    PermissionListState perm = {
+        .permissionName = "ohos.permission.testPermDef1",
+        .state = SETTING_OPER
+    };
+    permsList.emplace_back(perm);
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GetPermissionsStatus(tokenId, permsList));
 }
 
 /**
@@ -421,18 +475,6 @@ HWTEST_F(AccessTokenKitTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: GetAllNativeTokenInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
-}
-
-/**
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: SetRemoteHapTokenInfo with proxy is null
  * @tc.type: FUNC
@@ -443,19 +485,6 @@ HWTEST_F(AccessTokenKitTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string device = "device";
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
-}
-
-/**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: SetRemoteNativeTokenInfo with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string device = "device";
-    std::vector<NativeTokenInfoForSync> nativeToken;
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
 }
 
 /**
@@ -495,7 +524,35 @@ HWTEST_F(AccessTokenKitTest, DeleteRemoteDeviceTokens001, TestSize.Level1)
     std::string device = "device";
     ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::DeleteRemoteDeviceTokens(device));
 }
+
+/**
+ * @tc.name: RegisterTokenSyncCallback001
+ * @tc.desc: RegisterTokenSyncCallback with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, RegisterTokenSyncCallback001, TestSize.Level1)
+{
+    std::shared_ptr<TokenSyncKitInterface> callback = std::make_shared<TokenSyncCallbackImpl>();
+    EXPECT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::RegisterTokenSyncCallback(callback));
+    EXPECT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::UnRegisterTokenSyncCallback());
+}
 #endif
+
+/**
+ * @tc.name: DumpTokenInfo001
+ * @tc.desc: DumpTokenInfo with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, DumpTokenInfo001, TestSize.Level1)
+{
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.tokenId = 123;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    ASSERT_EQ("", dumpInfo);
+}
 
 /**
  * @tc.name: SetPermDialogCap001
@@ -520,6 +577,21 @@ HWTEST_F(AccessTokenKitTest, GetPermissionManagerInfo001, TestSize.Level1)
     PermissionGrantInfo info;
     AccessTokenKit::GetPermissionManagerInfo(info);
     ASSERT_EQ(true, info.grantBundleName.empty());
+}
+
+/**
+ * @tc.name: GrantPermissionForSpecifiedTime001
+ * @tc.desc: GrantPermissionForSpecifiedTime with proxy is null
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::string permission = "permission";
+    uint32_t onceTime = 1;
+    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL,
+        AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
 }
 }  // namespace AccessToken
 }  // namespace Security

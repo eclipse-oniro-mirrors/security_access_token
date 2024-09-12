@@ -21,6 +21,7 @@
 #include "access_token.h"
 #include "accesstoken_log.h"
 #include "active_status_callback_manager.h"
+#include "ipc_skeleton.h"
 #ifdef COMMON_EVENT_SERVICE_ENABLE
 #include "privacy_common_event_subscriber.h"
 #endif //COMMON_EVENT_SERVICE_ENABLE
@@ -101,28 +102,33 @@ int32_t PrivacyManagerService::AddPermissionUsedRecord(const AddPermParamInfoPar
     return PermissionRecordManager::GetInstance().AddPermissionUsedRecord(info);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+int32_t PrivacyManagerService::StartUsingPermission(
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName);
+    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
+        tokenId, pid, permissionName.c_str());
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName);
 }
 
-int32_t PrivacyManagerService::StartUsingPermission(AccessTokenID tokenId, const std::string& permissionName,
-    const sptr<IRemoteObject>& callback)
+int32_t PrivacyManagerService::StartUsingPermission(
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName, const sptr<IRemoteObject>& callback)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName, callback);
+    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
+        tokenId, pid, permissionName.c_str());
+    return PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, pid, permissionName, callback);
 }
 
-int32_t PrivacyManagerService::StopUsingPermission(AccessTokenID tokenId, const std::string& permissionName)
+int32_t PrivacyManagerService::StopUsingPermission(
+    AccessTokenID tokenId, int32_t pid, const std::string& permissionName)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d, perm: %{public}s", tokenId, permissionName.c_str());
-    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName);
+    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u, pid: %{public}d, perm: %{public}s",
+        tokenId, pid, permissionName.c_str());
+    return PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, pid, permissionName);
 }
 
 int32_t PrivacyManagerService::RemovePermissionUsedRecords(AccessTokenID tokenId, const std::string& deviceID)
 {
-    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}d", tokenId);
+    ACCESSTOKEN_LOG_INFO(LABEL, "id: %{public}u", tokenId);
     PermissionRecordManager::GetInstance().RemovePermissionUsedRecords(tokenId, deviceID);
     return Constant::SUCCESS;
 }
@@ -155,7 +161,8 @@ int32_t PrivacyManagerService::GetPermissionUsedRecords(
 int32_t PrivacyManagerService::RegisterPermActiveStatusCallback(
     std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
-    return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback);
+    return PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        IPCSkeleton::GetCallingTokenID(), permList, callback);
 }
 
 #ifdef SECURITY_COMPONENT_ENHANCE_ENABLE
@@ -324,7 +331,12 @@ void PrivacyManagerService::OnAddSystemAbility(int32_t systemAbilityId, const st
         ScreenLockManagerAccessLoaderInterface* screenlockManagerLoader =
             loader.GetObject<ScreenLockManagerAccessLoaderInterface>();
         if (screenlockManagerLoader != nullptr) {
-            PermissionRecordManager::GetInstance().SetLockScreenStatus(screenlockManagerLoader->IsScreenLocked());
+            int32_t lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_UNLOCKED;
+            if (screenlockManagerLoader->IsScreenLocked()) {
+                lockScreenStatus = LockScreenStatusChangeType::PERM_ACTIVE_IN_LOCKED;
+            }
+
+            PermissionRecordManager::GetInstance().SetLockScreenStatus(lockScreenStatus);
         }
         return;
     }

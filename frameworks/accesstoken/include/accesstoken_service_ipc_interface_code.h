@@ -34,6 +34,7 @@ enum class AccessTokenInterfaceCode {
     INIT_TOKEN_HAP,
     SET_PERMISSION_REQUEST_TOGGLE_STATUS,
     GET_PERMISSION_REQUEST_TOGGLE_STATUS,
+    GRANT_PERMISSION_FOR_SPECIFIEDTIME,
 
     GET_TOKEN_TYPE = 0x0010,
     CHECK_NATIVE_DCAP,
@@ -66,6 +67,9 @@ enum class AccessTokenInterfaceCode {
     GET_VERSION,
     GET_PERMISSION_MANAGER_INFO,
     GET_NATIVE_TOKEN_NAME,
+    INIT_USER_POLICY,
+    UPDATE_USER_POLICY,
+    CLEAR_USER_POLICY,
 };
 } // namespace AccessToken
 } // namespace Security

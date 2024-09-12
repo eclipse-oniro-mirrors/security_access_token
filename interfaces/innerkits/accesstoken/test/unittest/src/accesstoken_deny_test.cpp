@@ -99,6 +99,37 @@ void AccessTokenDenyTest::TearDown()
 }
 
 /**
+ * @tc.name: InitUserPolicy001
+ * @tc.desc: InitUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, InitUserPolicy001, TestSize.Level1)
+{
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
+    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+
+/**
+ * @tc.name: UpdateUserPolicy001
+ * @tc.desc: UpdateUserPolicy without authorized.
+ * @tc.type: FUNC
+ * @tc.require:Issue Number
+ */
+HWTEST_F(AccessTokenDenyTest, UpdateUserPolicy001, TestSize.Level1)
+{
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    int32_t ret = AccessTokenKit::UpdateUserPolicy(userList);
+    EXPECT_EQ(ret, AccessTokenError::ERR_PERMISSION_DENIED);
+}
+
+
+/**
  * @tc.name: AllocHapToken001
  * @tc.desc: AllocHapToken with no permission
  * @tc.type: FUNC
@@ -419,19 +450,6 @@ HWTEST_F(AccessTokenDenyTest, DumpTokenInfo001, TestSize.Level1)
     ASSERT_EQ("", dumpInfo);
 }
 
-/**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: Verify the DumpPermDefInfo abnormal branch return nullptr proxy.
- * @tc.type: FUNC
- * @tc.require:Issue Number
- */
-HWTEST_F(AccessTokenDenyTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo;
-    int32_t res = AccessTokenKit::DumpPermDefInfo(dumpInfo);
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, res);
-}
-
 #ifdef TOKEN_SYNC_ENABLE
 /**
  * @tc.name: GetHapTokenInfoFromRemote001
@@ -447,18 +465,6 @@ HWTEST_F(AccessTokenDenyTest, GetHapTokenInfoFromRemote001, TestSize.Level1)
 }
 
 /**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: GetAllNativeTokenInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    std::vector<NativeTokenInfoForSync> nativeTokenInfosRes;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetAllNativeTokenInfo(nativeTokenInfosRes));
-}
-
-/**
  * @tc.name: SetRemoteHapTokenInfo001
  * @tc.desc: SetRemoteHapTokenInfo with no permission
  * @tc.type: FUNC
@@ -469,19 +475,6 @@ HWTEST_F(AccessTokenDenyTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     std::string device = "device";
     HapTokenInfoForSync hapSync;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteHapTokenInfo(device, hapSync));
-}
-
-/**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: SetRemoteNativeTokenInfo with no permission
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenDenyTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string device = "device";
-    std::vector<NativeTokenInfoForSync> nativeToken;
-    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetRemoteNativeTokenInfo(device, nativeToken));
 }
 
 /**
@@ -540,6 +533,21 @@ HWTEST_F(AccessTokenDenyTest, SetPermDialogCap001, TestSize.Level1)
 {
     HapBaseInfo hapBaseInfo;
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::SetPermDialogCap(hapBaseInfo, true));
+}
+
+/**
+ * @tc.name: GrantPermissionForSpecifiedTime001
+ * @tc.desc: GrantPermissionForSpecifiedTime with no permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenDenyTest, GrantPermissionForSpecifiedTime001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123;
+    std::string permission = "permission";
+    uint32_t onceTime = 1;
+    ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED,
+        AccessTokenKit::GrantPermissionForSpecifiedTime(tokenId, permission, onceTime));
 }
 } // namespace AccessToken
 } // namespace Security

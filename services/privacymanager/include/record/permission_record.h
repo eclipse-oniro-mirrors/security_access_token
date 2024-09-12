@@ -16,6 +16,7 @@
 #ifndef PERMISSION_RECORD_H
 #define PERMISSION_RECORD_H
 
+#include <set>
 #include "active_change_response_info.h"
 #include "generic_values.h"
 #include "permission_used_type.h"
@@ -38,6 +39,13 @@ struct PermissionRecord {
 
     static void TranslationIntoGenericValues(const PermissionRecord& record, GenericValues& values);
     static void TranslationIntoPermissionRecord(const GenericValues& values, PermissionRecord& record);
+};
+
+struct ContinusPermissionRecord {
+    uint32_t tokenId = 0;
+    int32_t opCode = 0;
+    int32_t status = 0;
+    std::set<int32_t> pidList;
 };
 } // namespace AccessToken
 } // namespace Security
