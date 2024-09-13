@@ -597,7 +597,12 @@ void PermissionRecordManager::ExecuteAndUpdateRecord(uint32_t tokenId, int32_t p
 
             // app use camera background without float window
             bool isShow = IsCameraWindowShow(tokenId);
-            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) && (!isShow)) {
+            bool isAllowedBackGround = false;
+            if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
+                isAllowedBackGround = true;
+            }
+            if ((perm == CAMERA_PERMISSION_NAME) && (status == PERM_ACTIVE_IN_BACKGROUND) &&
+                (!isShow) && (!isAllowedBackGround)) {
                 ACCESSTOKEN_LOG_INFO(LABEL, "Camera float window is close!");
                 camPermList.emplace_back(perm);
                 continue;
@@ -1015,10 +1020,14 @@ bool PermissionRecordManager::IsAllowedUsingCamera(AccessTokenID tokenId)
 {
     int32_t status = GetAppStatus(tokenId);
     bool isScreenOn = IsScreenOn();
-    ACCESSTOKEN_LOG_INFO(LABEL, "Id(%{public}d), appStatus(%{public}d), isScreenOn(%{public}d)",
-        tokenId, status, isScreenOn);
-
-    return (status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenOn;
+    bool isAllowedBackGround = false;
+    if (AccessTokenKit::VerifyAccessToken(tokenId, "ohos.permission.CAMERA_BACKGROUND") == PERMISSION_GRANTED) {
+        isAllowedBackGround = true;
+    }
+    ACCESSTOKEN_LOG_INFO(LABEL,
+        "Id(%{public}d), appStatus(%{public}d), isScreenOn(%{public}d, isAllowedBackGround(%{public}d))",
+        tokenId, status, isScreenOn, isAllowedBackGround);
+    return ((status == ActiveChangeType::PERM_ACTIVE_IN_FOREGROUND) && isScreenOn) || isAllowedBackGround;
 }
 
 bool PermissionRecordManager::IsAllowedUsingMicrophone(AccessTokenID tokenId)
