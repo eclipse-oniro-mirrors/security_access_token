@@ -251,6 +251,10 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateHapTokenInfo002, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     ASSERT_NE(tokenIdEx.tokenIdExStruct.tokenID, tokenIdEx1.tokenIdExStruct.tokenID);
     GTEST_LOG_(INFO) << "add same hap token";
+    PermissionDef permDef;
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionManager::GetInstance().GetDefPermission(g_infoManagerTestPermDef1.permissionName, permDef));
+    ASSERT_EQ(permDef.permissionName, g_infoManagerTestPermDef1.permissionName);
 
     std::shared_ptr<HapTokenInfoInner> tokenInfo;
     tokenInfo = AccessTokenInfoManager::GetInstance().GetHapTokenInfoInner(tokenIdEx1.tokenIdExStruct.tokenID);
@@ -816,7 +820,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RemoteHapTest001, TestSize.Level1)
     std::string deviceId2 = "device_2";
     AccessTokenID mapID =
         AccessTokenInfoManager::GetInstance().AllocLocalTokenID(deviceId, tokenIdEx.tokenIdExStruct.tokenID);
-    ASSERT_EQ(mapID == 0, true);
+    ASSERT_EQ(mapID, 0);
     HapTokenInfoForSync hapSync;
     ret = AccessTokenInfoManager::GetInstance().GetHapTokenInfoFromRemote(tokenIdEx.tokenIdExStruct.tokenID, hapSync);
     ASSERT_EQ(RET_SUCCESS, ret);
@@ -927,7 +931,7 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
-    wrongBaseInfo.dlpType = (HapDlpType)11;; // wrong dlpType
+    wrongBaseInfo.dlpType = (HapDlpType)11; // wrong dlpType
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
 
     wrongBaseInfo = rightBaseInfo;
@@ -937,6 +941,25 @@ HWTEST_F(AccessTokenInfoManagerTest, SetRemoteHapTokenInfo001, TestSize.Level1)
     wrongBaseInfo = rightBaseInfo;
     wrongBaseInfo.tokenID = AccessTokenInfoManager::GetInstance().GetNativeTokenId("hdcd");
     EXPECT_EQ(false, SetRemoteHapTokenInfoTest(deviceID, wrongBaseInfo));
+}
+
+/**
+ * @tc.name: ClearUserGrantedPermissionState001
+ * @tc.desc: AccessTokenInfoManagerTest::ClearUserGrantedPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenInfoManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
+{
+    AccessTokenID tokenId = 123; // 123 is random input
+
+    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
+    ASSERT_NE(nullptr, hap);
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
+
+    AccessTokenInfoManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
+
+    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
 }
 
 /**
@@ -967,6 +990,7 @@ HWTEST_F(AccessTokenInfoManagerTest, NotifyTokenSyncTask001, TestSize.Level1)
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
@@ -988,6 +1012,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
         atManagerService_->UnRegisterTokenSyncCallback());
     EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackObject_);
     EXPECT_EQ(nullptr, TokenModifyNotifier::GetInstance().tokenSyncCallbackDeathRecipient_);
+    setuid(0);
 }
 
 /**
@@ -998,6 +1023,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback001, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS,
@@ -1040,6 +1066,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
     TokenModifyNotifier::GetInstance().deleteTokenList_ = deleteTokenList;
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
+    setuid(0);
 }
 
 /**
@@ -1050,6 +1077,7 @@ HWTEST_F(AccessTokenInfoManagerTest, RegisterTokenSyncCallback002, TestSize.Leve
  */
 HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
 {
+    setuid(3020);
     sptr<TokenSyncCallbackMock> callback = new (std::nothrow) TokenSyncCallbackMock();
     ASSERT_NE(nullptr, callback);
     EXPECT_EQ(RET_SUCCESS, atManagerService_->RegisterTokenSyncCallback(callback->AsObject()));
@@ -1064,6 +1092,7 @@ HWTEST_F(AccessTokenInfoManagerTest, GetRemoteHapTokenInfo001, TestSize.Level1)
         .GetRemoteHapTokenInfo("invalid_id", 0)); // this is a test input
     EXPECT_EQ(RET_SUCCESS,
         atManagerService_->UnRegisterTokenSyncCallback());
+    setuid(0);
 }
 
 /**
@@ -1110,42 +1139,6 @@ HWTEST_F(AccessTokenInfoManagerTest, CreateRemoteHapTokenInfo001, TestSize.Level
     ASSERT_NE(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateRemoteHapTokenInfo(mapID, hapSync));
 
     AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(123);
-}
-
-/**
- * @tc.name: SetRemoteNativeTokenInfo001
- * @tc.desc: AccessTokenInfoManager::SetRemoteNativeTokenInfo function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenInfoManagerTest, SetRemoteNativeTokenInfo001, TestSize.Level1)
-{
-    std::string deviceID;
-    std::vector<NativeTokenInfoForSync> nativeTokenInfoList;
-
-    ASSERT_EQ(ERR_PARAM_INVALID, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
-        nativeTokenInfoList)); // deviceID invalid
-
-    deviceID = "dev-001";
-    NativeTokenInfo info;
-    info.apl = ATokenAplEnum::APL_NORMAL;
-    info.ver = DEFAULT_TOKEN_VERSION;
-    info.processName = "what's this";
-    info.dcap = {"what's this"};
-    info.tokenID = 672137215; // 672137215 is max native tokenId: 001 01 0 000000 11111111111111111111
-    NativeTokenInfoForSync sync;
-    sync.baseInfo = info;
-    nativeTokenInfoList.emplace_back(sync);
-
-    AccessTokenRemoteDevice device;
-    device.DeviceID_ = deviceID;
-    // 672137215 is remoteID 123 is mapID
-    device.MappingTokenIDPairMap_.insert(std::pair<AccessTokenID, AccessTokenID>(672137215, 123));
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_[deviceID] = device;
-
-    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().SetRemoteNativeTokenInfo(deviceID,
-        nativeTokenInfoList)); // has maped
-    AccessTokenRemoteTokenManager::GetInstance().remoteDeviceMap_.erase(deviceID);
 }
 
 /**

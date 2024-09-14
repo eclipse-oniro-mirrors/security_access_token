@@ -18,7 +18,9 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/callback_death_recipients.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/callback/accesstoken_callback_proxys.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db_util.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_db.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/access_token_open_callback.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/data_translator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/database/token_field_const.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/form_manager/form_instance.cpp",
@@ -31,6 +33,7 @@ accesstoken_manager_service_source = [
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_grant_event.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_policy_set.cpp",
+  "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/short_grant_manager.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_validator.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/permission_definition_parser.cpp",
   "${access_token_path}/services/accesstokenmanager/main/cpp/src/permission/temp_permission_observer.cpp",
@@ -107,9 +110,9 @@ ohos_unittest("libaccesstoken_manager_service_coverage_test") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "json:nlohmann_json_static",
+    "relational_store:native_rdb",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "sqlite:sqlite",
   ]
 
   if (token_sync_enable == true) {

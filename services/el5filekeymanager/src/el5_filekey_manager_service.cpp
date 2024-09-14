@@ -93,7 +93,7 @@ int32_t El5FilekeyManagerService::Init()
 #ifdef THEME_SCREENLOCK_MGR_ENABLE
     // screen is unlocked, sa is called by USER_REMOVED, auto stop in 30s.
     if (!ScreenLock::ScreenLockManager::GetInstance()->IsScreenLocked()) {
-        LOG_DEBUG("Init when screen is unlocked.");
+        LOG_INFO("Init when screen is unlocked.");
         PostDelayedUnloadTask(SCREEN_ON_DELAY_TIME);
     }
 #endif
@@ -149,7 +149,7 @@ void El5FilekeyManagerService::CancelDelayedUnloadTask()
 
 int32_t El5FilekeyManagerService::AcquireAccess(DataLockType type)
 {
-    LOG_DEBUG("Acquire type %{public}d.", type);
+    LOG_INFO("Acquire type %{public}d.", type);
     bool isApp = true;
     int32_t ret = CheckReqLockPermission(type, isApp);
     if (ret != EFM_SUCCESS) {
@@ -167,7 +167,7 @@ int32_t El5FilekeyManagerService::AcquireAccess(DataLockType type)
 
 int32_t El5FilekeyManagerService::ReleaseAccess(DataLockType type)
 {
-    LOG_DEBUG("Release type %{public}d.", type);
+    LOG_INFO("Release type %{public}d.", type);
     bool isApp = true;
     int32_t ret = CheckReqLockPermission(type, isApp);
     if (ret != EFM_SUCCESS) {
@@ -185,7 +185,7 @@ int32_t El5FilekeyManagerService::ReleaseAccess(DataLockType type)
 
 int32_t El5FilekeyManagerService::GenerateAppKey(uint32_t uid, const std::string& bundleName, std::string& keyId)
 {
-    LOG_DEBUG("Generate app key for %{public}s.", bundleName.c_str());
+    LOG_INFO("Generate app key for %{public}s.", bundleName.c_str());
     if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
         LOG_ERROR("Generate app key permission denied.");
         return EFM_ERR_NO_PERMISSION;
@@ -200,9 +200,13 @@ int32_t El5FilekeyManagerService::GenerateAppKey(uint32_t uid, const std::string
     return service_->GenerateAppKey(uid, bundleName, keyId);
 }
 
-int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& keyId)
+int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& bundleName, int32_t userId)
 {
-    LOG_DEBUG("Delete app key.");
+    LOG_INFO("Delete %{public}d's %{public}s app key.", userId, bundleName.c_str());
+    if (userId < 0) {
+        LOG_ERROR("UserId is invalid!");
+        return EFM_ERR_INVALID_PARAMETER;
+    }
     if (IPCSkeleton::GetCallingUid() != INSTALLS_UID) {
         LOG_ERROR("Delete app key permission denied.");
         return EFM_ERR_NO_PERMISSION;
@@ -214,13 +218,13 @@ int32_t El5FilekeyManagerService::DeleteAppKey(const std::string& keyId)
         return EFM_SUCCESS;
     }
 
-    return service_->DeleteAppKey(keyId);
+    return service_->DeleteAppKey(bundleName, userId);
 }
 
 int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,
     std::vector<std::pair<int32_t, std::string>> &keyInfos)
 {
-    LOG_DEBUG("Get user %{public}d app key.", userId);
+    LOG_INFO("Get user %{public}d app key.", userId);
     if (userId < 0) {
         LOG_ERROR("UserId is invalid!");
         return EFM_ERR_INVALID_PARAMETER;
@@ -242,7 +246,7 @@ int32_t El5FilekeyManagerService::GetUserAppKey(int32_t userId, bool getAllFlag,
 int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
     std::vector<std::pair<std::string, bool>> &loadInfos)
 {
-    LOG_DEBUG("Change user %{public}d load infos.", userId);
+    LOG_INFO("Change user %{public}d load infos.", userId);
     if (userId < 0) {
         LOG_ERROR("UserId is invalid!");
         return EFM_ERR_INVALID_PARAMETER;
@@ -264,7 +268,7 @@ int32_t El5FilekeyManagerService::ChangeUserAppkeysLoadInfo(int32_t userId,
 int32_t El5FilekeyManagerService::SetFilePathPolicy()
 {
     int32_t userId = IPCSkeleton::GetCallingUid() / USERID_MASK;
-    LOG_DEBUG("Set user %{public}d file path policy.", userId);
+    LOG_INFO("Set user %{public}d file path policy.", userId);
     if (!VerifyHapCallingProcess(userId, SET_POLICY_CALLER, IPCSkeleton::GetCallingTokenID())) {
         LOG_ERROR("Set file path policy permission denied.");
         return EFM_ERR_NO_PERMISSION;
@@ -281,7 +285,7 @@ int32_t El5FilekeyManagerService::SetFilePathPolicy()
 
 int32_t El5FilekeyManagerService::RegisterCallback(const sptr<El5FilekeyCallbackInterface> &callback)
 {
-    LOG_DEBUG("Register callback.");
+    LOG_INFO("Register callback.");
     if (!VerifyNativeCallingProcess(FOUNDATION, IPCSkeleton::GetCallingTokenID())) {
         LOG_ERROR("Register callback permission denied.");
         return EFM_ERR_NO_PERMISSION;

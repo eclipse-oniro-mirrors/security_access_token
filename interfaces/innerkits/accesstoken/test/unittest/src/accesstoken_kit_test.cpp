@@ -156,6 +156,7 @@ void NativeTokenGet()
 
 void AccessTokenKitTest::SetUpTestCase()
 {
+    setuid(0);
     // make test case clean
     AccessTokenID tokenID = AccessTokenKit::GetHapTokenID(g_infoManagerTestInfoParms.userID,
                                                           g_infoManagerTestInfoParms.bundleName,
@@ -295,39 +296,39 @@ AccessTokenID AccessTokenKitTest::AllocTestToken(
 }
 
 /**
- * @tc.name: GetUserGrantedPermissionUsedType001
+ * @tc.name: GetPermissionUsedType001
  * @tc.desc: Get hap permission visit type return invalid.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType001, TestSize.Level1)
+HWTEST_F(AccessTokenKitTest, GetPermissionUsedType001, TestSize.Level1)
 {
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(selfTokenId_, accessBluetooth));
+        AccessTokenKit::GetPermissionUsedType(selfTokenId_, accessBluetooth));
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, g_infoManagerTestPolicyPrams);
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(0, accessBluetooth));
+        AccessTokenKit::GetPermissionUsedType(0, accessBluetooth));
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, "ohos.permission.ACCELEROMETER"));
+        AccessTokenKit::GetPermissionUsedType(tokenID, "ohos.permission.ACCELEROMETER"));
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, "ohos.permission.xxxxx"));
+        AccessTokenKit::GetPermissionUsedType(tokenID, "ohos.permission.xxxxx"));
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, accessBluetooth));
+        AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
 }
 
 /**
- * @tc.name: GetUserGrantedPermissionUsedType002
+ * @tc.name: GetPermissionUsedType002
  * @tc.desc: Different grant permission modes get different visit type.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType002, TestSize.Level1)
+HWTEST_F(AccessTokenKitTest, GetPermissionUsedType002, TestSize.Level1)
 {
     std::string accessBluetooth = "ohos.permission.ACCESS_BLUETOOTH";
     std::string sendMessages = "ohos.permission.SEND_MESSAGES";
@@ -361,28 +362,28 @@ HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType002, TestSize.Level
     AccessTokenID tokenID = AllocTestToken(g_infoManagerTestInfoParms, testPolicyPrams);
 
     EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, accessBluetooth));
+        AccessTokenKit::GetPermissionUsedType(tokenID, accessBluetooth));
 
-    EXPECT_EQ(PermUsedTypeEnum::NORMAL_TYPE, AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, sendMessages));
+    EXPECT_EQ(PermUsedTypeEnum::NORMAL_TYPE, AccessTokenKit::GetPermissionUsedType(tokenID, sendMessages));
 
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+        AccessTokenKit::GetPermissionUsedType(tokenID, writeCalendar));
     int32_t selfUid = getuid();
     EXPECT_EQ(0, SetSelfTokenID(tokenID));
     setuid(1);
     EXPECT_EQ(PermUsedTypeEnum::INVALID_USED_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, writeCalendar));
+        AccessTokenKit::GetPermissionUsedType(tokenID, writeCalendar));
     setuid(selfUid);
     ASSERT_EQ(0, SetSelfTokenID(selfTokenId_));
 }
 
 /**
- * @tc.name: GetUserGrantedPermissionUsedType003
+ * @tc.name: GetPermissionUsedType003
  * @tc.desc: Get security component visit type.
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType003, TestSize.Level1)
+HWTEST_F(AccessTokenKitTest, GetPermissionUsedType003, TestSize.Level1)
 {
     std::string distributedDatasync = "ohos.permission.DISTRIBUTED_DATASYNC";
     PermissionStateFull testState1 = {
@@ -402,7 +403,7 @@ HWTEST_F(AccessTokenKitTest, GetUserGrantedPermissionUsedType003, TestSize.Level
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenKit::GrantPermission(tokenID, distributedDatasync, PERMISSION_COMPONENT_SET));
     EXPECT_EQ(PermUsedTypeEnum::SEC_COMPONENT_TYPE,
-        AccessTokenKit::GetUserGrantedPermissionUsedType(tokenID, distributedDatasync));
+        AccessTokenKit::GetPermissionUsedType(tokenID, distributedDatasync));
 }
 
 /**
@@ -867,7 +868,7 @@ HWTEST_F(AccessTokenKitTest, SetPermissionRequestToggleStatus004, TestSize.Level
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -984,7 +985,7 @@ static void AllocAndSetHapToken(void)
     AccessTokenIDEx tokenIdEx = {0};
 
     PermissionDef infoManagerTestPermDef1 = {
-        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG",
+        .permissionName = "ohos.permission.DISABLE_PERMISSION_DIALOG_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -1004,7 +1005,7 @@ static void AllocAndSetHapToken(void)
     };
 
     PermissionDef infoManagerTestPermDef2 = {
-        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS",
+        .permissionName = "ohos.permission.GET_SENSITIVE_PERMISSIONS_TEST",
         .bundleName = "accesstoken_test",
         .grantMode = 1,
         .availableLevel = APL_NORMAL,
@@ -3321,6 +3322,31 @@ HWTEST_F(AccessTokenKitTest, GetNativeTokenName002, TestSize.Level1)
     // calling is not native token, permission denied
     ASSERT_EQ(AccessTokenError::ERR_PERMISSION_DENIED, AccessTokenKit::GetNativeTokenName(tokenId, name));
     setuid(selfUid);
+}
+
+/**
+ * @tc.name: UserPolicyTest
+ * @tc.desc: UserPolicyTest.
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(AccessTokenKitTest, UserPolicyTest, TestSize.Level1)
+{
+    setuid(0);
+    const char **perms = new const char *[1];
+    perms[INDEX_ZERO] = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
+    uint64_t tokenID = GetNativeTokenTest("TestCase", perms, 1);
+    EXPECT_EQ(0, SetSelfTokenID(tokenID));
+    delete[] perms;
+    UserState user = {.userId = 100, .isActive = true}; // 100 is userId
+    const std::vector<UserState> userList = { user };
+    const std::vector<std::string> permList = { "ohos.permission.INTERNET" };
+    int32_t ret = AccessTokenKit::InitUserPolicy(userList, permList);
+    EXPECT_EQ(ret, 0);
+    ret = AccessTokenKit::UpdateUserPolicy(userList);
+    EXPECT_EQ(ret, 0);
+    ret = AccessTokenKit::ClearUserPolicy();
+    EXPECT_EQ(ret, 0);
 }
 } // namespace AccessToken
 } // namespace Security

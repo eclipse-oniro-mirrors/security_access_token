@@ -121,6 +121,7 @@ PermissionStateFull g_locationTestStateBack12 = {
 
 void AccessTokenLocationRequestTest::SetUpTestCase()
 {
+    setuid(0);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(TEST_USER_ID, TEST_BUNDLE_NAME, TEST_INST_INDEX);
     AccessTokenKit::DeleteToken(tokenId);
 }
@@ -1618,7 +1619,6 @@ HWTEST_F(AccessTokenLocationRequestTest, GetSelfPermissionsState033, TestSize.Le
     PermissionOper ret = AccessTokenKit::GetSelfPermissionsState(permsList33, info);
     ASSERT_EQ(DYNAMIC_OPER, ret);
     ASSERT_EQ(static_cast<uint32_t>(2), permsList33.size());
-    ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
     ASSERT_EQ(DYNAMIC_OPER, permsList33[0].state);
 }
 

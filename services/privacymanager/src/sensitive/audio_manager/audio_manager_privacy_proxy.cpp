@@ -35,7 +35,12 @@ bool AudioManagerPrivacyProxy::GetPersistentMicMuteState()
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed");
         return false;
     }
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return false;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(
         AudioStandard::AudioPolicyInterfaceCode::GET_MICROPHONE_MUTE_PERSISTENT), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "GetPersistentMicMuteState failed, error: %{public}d", error);
@@ -57,7 +62,12 @@ int32_t AudioManagerPrivacyProxy::SetMicrophoneMutePersistent(const bool isMute,
     }
     data.WriteBool(isMute);
     data.WriteInt32(static_cast<int32_t>(type));
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(
         AudioStandard::AudioPolicyInterfaceCode::SET_MICROPHONE_MUTE_PERSISTENT), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Set microphoneMute failed, error: %d", error);

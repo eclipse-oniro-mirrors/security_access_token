@@ -23,7 +23,6 @@
 #include "soft_bus_socket_listener.h"
 #include "system_ability_definition.h"
 #include "constant_common.h"
-#include "device_manager.h"
 #include "dm_device_info.h"
 
 namespace OHOS {

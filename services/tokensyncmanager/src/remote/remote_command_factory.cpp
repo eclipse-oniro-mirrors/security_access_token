@@ -54,19 +54,12 @@ std::shared_ptr<UpdateRemoteHapTokenCommand> RemoteCommandFactory::NewUpdateRemo
     return std::make_shared<UpdateRemoteHapTokenCommand>(srcDeviceId, dstDeviceId, tokenInfo);
 }
 
-std::shared_ptr<SyncRemoteNativeTokenCommand> RemoteCommandFactory::NewSyncRemoteNativeTokenCommand(
-    const std::string &srcDeviceId, const std::string &dstDeviceId)
-{
-    return std::make_shared<SyncRemoteNativeTokenCommand>(srcDeviceId, dstDeviceId);
-}
-
 std::shared_ptr<BaseRemoteCommand> RemoteCommandFactory::NewRemoteCommandFromJson(
     const std::string &commandName, const std::string &commandJsonString)
 {
     const std::string SYNC_HAP_COMMAND_NAME = "SyncRemoteHapTokenCommand";
     const std::string DELETE_TOKEN_COMMAND_NAME = "DeleteRemoteTokenCommand";
     const std::string UPDATE_HAP_COMMAND_NAME = "UpdateRemoteHapTokenCommand";
-    const std::string SYNC_NATIVE_COMMAND_NAME = "SyncRemoteNativeTokenCommand";
 
     if (commandName == SYNC_HAP_COMMAND_NAME) {
         return std::make_shared<SyncRemoteHapTokenCommand>(commandJsonString);
@@ -76,9 +69,6 @@ std::shared_ptr<BaseRemoteCommand> RemoteCommandFactory::NewRemoteCommandFromJso
     }
     if (commandName == UPDATE_HAP_COMMAND_NAME) {
         return std::make_shared<UpdateRemoteHapTokenCommand>(commandJsonString);
-    }
-    if (commandName == SYNC_NATIVE_COMMAND_NAME) {
-        return std::make_shared<SyncRemoteNativeTokenCommand>(commandJsonString);
     }
     return nullptr;
 }

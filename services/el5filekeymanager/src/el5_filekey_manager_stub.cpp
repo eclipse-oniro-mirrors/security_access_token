@@ -97,8 +97,9 @@ void El5FilekeyManagerStub::GenerateAppKeyInner(MessageParcel &data, MessageParc
 
 void El5FilekeyManagerStub::DeleteAppKeyInner(MessageParcel &data, MessageParcel &reply)
 {
-    std::string keyId = data.ReadString();
-    reply.WriteInt32(this->DeleteAppKey(keyId));
+    std::string bundleName = data.ReadString();
+    int32_t userId = data.ReadInt32();
+    reply.WriteInt32(this->DeleteAppKey(bundleName, userId));
 }
 
 void El5FilekeyManagerStub::GetUserAppKeyInner(MessageParcel &data, MessageParcel &reply)

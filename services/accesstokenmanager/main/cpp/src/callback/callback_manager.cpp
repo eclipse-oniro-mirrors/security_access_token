@@ -32,7 +32,6 @@ namespace {
 static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_ACCESSTOKEN, "CallbackManager"};
 static const uint32_t MAX_CALLBACK_SIZE = 1024;
 #ifndef RESOURCESCHEDULE_FFRT_ENABLE
-static const time_t MAX_TIMEOUT_SEC = 30;
 static const int MAX_PTHREAD_NAME_LEN = 15; // pthread name max length
 #endif
 std::recursive_mutex g_instanceMutex;
@@ -135,7 +134,7 @@ bool CallbackManager::CalledAccordingToPermLlist(const std::vector<std::string>&
         [permName](const std::string& perm) { return perm == permName; });
 }
 
-void CallbackManager::ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID,
+void CallbackManager::ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID,
     const std::string& permName, int32_t changeType)
 {
     for (auto it = list.begin(); it != list.end(); ++it) {
@@ -205,25 +204,16 @@ void CallbackManager::ExecuteCallbackAsync(AccessTokenID tokenID, const std::str
 #endif
         std::vector<sptr<IRemoteObject>> list;
         this->GetCallbackObjectList(tokenID, permName, list);
-        this->ExcuteAllCallback(list, tokenID, permName, changeType);
+        this->ExecuteAllCallback(list, tokenID, permName, changeType);
     };
 
 #ifdef RESOURCESCHEDULE_FFRT_ENABLE
     std::string taskName = "AtmCallback";
-    ffrt::task_handle h = ffrt::submit_h(callbackStart, {}, {},
+    ffrt::submit_h(callbackStart, {}, {},
         ffrt::task_attr().qos(ffrt::qos_default).name(taskName.c_str()));
-    ffrt::wait({h});
 #else
     std::packaged_task<void()> callbackTask(callbackStart);
-    std::future<void> fut = callbackTask.get_future();
     std::make_unique<std::thread>(std::move(callbackTask))->detach();
-
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Waiting for the callback execution complete...");
-    std::future_status status = fut.wait_for(std::chrono::seconds(MAX_TIMEOUT_SEC));
-    if (status == std::future_status::timeout) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "CallbackTask callback execution timeout");
-        return;
-    }
 #endif
     ACCESSTOKEN_LOG_DEBUG(LABEL, "The callback execution is complete");
 }

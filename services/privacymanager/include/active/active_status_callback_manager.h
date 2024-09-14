@@ -37,6 +37,7 @@ struct CallbackData {
         : permList_(permList), callbackObject_(callback)
     {}
 
+    AccessTokenID registerTokenId {0};
     std::vector<std::string> permList_;
     sptr<IRemoteObject> callbackObject_;
 };
@@ -48,7 +49,7 @@ public:
     static ActiveStatusCallbackManager& GetInstance();
 
     int32_t AddCallback(
-        const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
+        AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback);
     int32_t RemoveCallback(const sptr<IRemoteObject>& callback);
     bool NeedCalled(const std::vector<std::string>& permList, const std::string& permName);
     void ExecuteCallbackAsync(

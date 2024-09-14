@@ -141,8 +141,9 @@ void PrivacyManagerStub::StartUsingPermissionInner(MessageParcel& data, MessageP
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
+    int32_t pid = data.ReadInt32();
     std::string permissionName = data.ReadString();
-    reply.WriteInt32(this->StartUsingPermission(tokenId, permissionName));
+    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName));
 }
 
 void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, MessageParcel& reply)
@@ -152,6 +153,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
+    int32_t pid = data.ReadInt32();
     std::string permissionName = data.ReadString();
     sptr<IRemoteObject> callback = data.ReadRemoteObject();
     if (callback == nullptr) {
@@ -159,7 +161,7 @@ void PrivacyManagerStub::StartUsingPermissionCallbackInner(MessageParcel& data, 
         reply.WriteInt32(PrivacyError::ERR_READ_PARCEL_FAILED);
         return;
     }
-    reply.WriteInt32(this->StartUsingPermission(tokenId, permissionName, callback));
+    reply.WriteInt32(this->StartUsingPermission(tokenId, pid, permissionName, callback));
 }
 
 void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessageParcel& reply)
@@ -174,8 +176,9 @@ void PrivacyManagerStub::StopUsingPermissionInner(MessageParcel& data, MessagePa
         return;
     }
     AccessTokenID tokenId = data.ReadUint32();
+    int32_t pid = data.ReadInt32();
     std::string permissionName = data.ReadString();
-    reply.WriteInt32(this->StopUsingPermission(tokenId, permissionName));
+    reply.WriteInt32(this->StopUsingPermission(tokenId, pid, permissionName));
 }
 
 void PrivacyManagerStub::RemovePermissionUsedRecordsInner(MessageParcel& data, MessageParcel& reply)

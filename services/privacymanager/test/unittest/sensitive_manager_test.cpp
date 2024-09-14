@@ -19,10 +19,6 @@
 #include "accesstoken_kit.h"
 #include "app_manager_access_client.h"
 #include "app_manager_access_proxy.h"
-#ifdef ABILITY_RUNTIME_ENABLE
-#include "ability_manager_interface.h"
-#include "app_mgr_interface.h"
-#endif
 #include "app_state_data.h"
 #define private public
 #include "audio_manager_privacy_client.h"
@@ -174,24 +170,6 @@ HWTEST_F(SensitiveManagerServiceTest, SetCameraMuteTest001, TestSize.Level1)
 
     CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, initMute);
 }
-
-#ifdef ABILITY_RUNTIME_ENABLE
-/*
- * @tc.name: AppManagerPrivacyCode001
- * @tc.desc: test api function
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(SensitiveManagerServiceTest, AppManagerPrivacyCode001, TestSize.Level1)
-{
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::REGISTER_APPLICATION_STATE_OBSERVER),
-        static_cast<uint32_t>(IAppMgr::Message::REGISTER_APPLICATION_STATE_OBSERVER)); // 12
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::UNREGISTER_APPLICATION_STATE_OBSERVER),
-        static_cast<uint32_t>(IAppMgr::Message::UNREGISTER_APPLICATION_STATE_OBSERVER)); // 13
-    ASSERT_EQ(static_cast<uint32_t>(OHOS::AppExecFwk::AppMgrInterfaceCode::GET_FOREGROUND_APPLICATIONS),
-        static_cast<uint32_t>(IAppMgr::Message::GET_FOREGROUND_APPLICATIONS)); // 14
-}
-#endif
 
 /*
  * @tc.name: RegisterAppObserverTest001

@@ -41,7 +41,12 @@ int32_t CameraManagerPrivacyProxy::MuteCameraPersist(PolicyType policyType, bool
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write bool");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(
         static_cast<uint32_t>(CAMERA_SERVICE_MUTE_CAMERA_PERSIST), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, error: %{public}d", error);
@@ -62,7 +67,12 @@ int32_t CameraManagerPrivacyProxy::IsCameraMuted(bool &muteMode)
         ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to write bool");
         return ERROR;
     }
-    int32_t error = Remote()->SendRequest(static_cast<uint32_t>(CAMERA_SERVICE_IS_CAMERA_MUTED), data, reply, option);
+    sptr<IRemoteObject> remote = Remote();
+    if (remote == nullptr) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Remote service is null.");
+        return ERROR;
+    }
+    int32_t error = remote->SendRequest(static_cast<uint32_t>(CAMERA_SERVICE_IS_CAMERA_MUTED), data, reply, option);
     if (error != ERR_NONE) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "SendRequest failed, error: %{public}d", error);
         return ERROR;

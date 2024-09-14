@@ -29,7 +29,6 @@ ohos_unittest("libtoken_sync_service_standard_test") {
     "../../src/command/base_remote_command.cpp",
     "../../src/command/delete_remote_token_command.cpp",
     "../../src/command/sync_remote_hap_token_command.cpp",
-    "../../src/command/sync_remote_native_token_command.cpp",
     "../../src/command/update_remote_hap_token_command.cpp",
     "../../src/device/device_info_manager.cpp",
     "../../src/device/device_info_repository.cpp",

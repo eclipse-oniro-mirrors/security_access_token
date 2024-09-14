@@ -35,13 +35,13 @@ static constexpr OHOS::HiviewDFX::HiLogLabel LABEL = {LOG_CORE, SECURITY_DOMAIN_
 const std::string MANAGE_HAP_TOKENID_PERMISSION = "ohos.permission.MANAGE_HAP_TOKENID";
 static const int32_t DUMP_CAPACITY_SIZE = 2 * 1024 * 1000;
 static const int MAX_PERMISSION_SIZE = 1000;
-#ifdef TOKEN_SYNC_ENABLE
-static const int MAX_NATIVE_TOKEN_INFO_SIZE = 20480;
-#endif
+static const int32_t MAX_USER_POLICY_SIZE = 1024;
 const std::string GRANT_SENSITIVE_PERMISSIONS = "ohos.permission.GRANT_SENSITIVE_PERMISSIONS";
 const std::string REVOKE_SENSITIVE_PERMISSIONS = "ohos.permission.REVOKE_SENSITIVE_PERMISSIONS";
 const std::string GET_SENSITIVE_PERMISSIONS = "ohos.permission.GET_SENSITIVE_PERMISSIONS";
 const std::string DISABLE_PERMISSION_DIALOG = "ohos.permission.DISABLE_PERMISSION_DIALOG";
+const std::string GRANT_SHORT_TERM_WRITE_MEDIAVIDEO = "ohos.permission.GRANT_SHORT_TERM_WRITE_MEDIAVIDEO";
+
 #ifdef HICOLLIE_ENABLE
 constexpr uint32_t TIMEOUT = 40; // 40s
 #endif // HICOLLIE_ENABLE
@@ -101,7 +101,7 @@ void AccessTokenManagerStub::DeleteTokenInfoInner(MessageParcel& data, MessagePa
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
+void AccessTokenManagerStub::GetPermissionUsedTypeInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
@@ -120,7 +120,7 @@ void AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner(MessageParcel
         reply.WriteInt32(static_cast<int32_t>(PermUsedTypeEnum::INVALID_USED_TYPE));
         return;
     }
-    PermUsedTypeEnum result = this->GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    PermUsedTypeEnum result = this->GetPermissionUsedType(tokenID, permissionName);
     int32_t type = static_cast<int32_t>(result);
     if (!reply.WriteInt32(type)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 fail.");
@@ -237,7 +237,7 @@ void AccessTokenManagerStub::GetPermissionsStatusInner(MessageParcel& data, Mess
     }
     ACCESSTOKEN_LOG_DEBUG(LABEL, "PermList size read from client data is %{public}d.", size);
     if (size > MAX_PERMISSION_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is invalid", size);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "PermList size %{public}d is oversize", size);
         reply.WriteInt32(INVALID_OPER);
         return;
     }
@@ -379,6 +379,29 @@ void AccessTokenManagerStub::RevokePermissionInner(MessageParcel& data, MessageP
         return;
     }
     int result = this->RevokePermission(tokenID, permissionName, flag);
+    reply.WriteInt32(result);
+}
+
+void AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner(MessageParcel& data, MessageParcel& reply)
+{
+    unsigned int callingTokenID = IPCSkeleton::GetCallingTokenID();
+    if ((this->GetTokenType(callingTokenID) == TOKEN_HAP) && (!IsSystemAppCalling())) {
+        reply.WriteInt32(AccessTokenError::ERR_NOT_SYSTEM_APP);
+        return;
+    }
+    AccessTokenID tokenID = data.ReadUint32();
+    std::string permissionName = data.ReadString();
+    uint32_t onceTime = data.ReadUint32();
+    if (!IsPrivilegedCalling() &&
+        VerifyAccessToken(callingTokenID, GRANT_SHORT_TERM_WRITE_MEDIAVIDEO) == PERMISSION_DENIED) {
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_VERIFY_REPORT",
+            HiviewDFX::HiSysEvent::EventType::SECURITY, "CODE", VERIFY_PERMISSION_ERROR,
+            "CALLER_TOKENID", callingTokenID, "PERMISSION_NAME", permissionName);
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingTokenID);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    int result = this->GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
     reply.WriteInt32(result);
 }
 
@@ -659,25 +682,6 @@ void AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner(MessageParcel& data,
     reply.WriteParcelable(&hapTokenParcel);
 }
 
-void AccessTokenManagerStub::GetAllNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::vector<NativeTokenInfoForSyncParcel> nativeTokenInfosRes;
-    int result = this->GetAllNativeTokenInfo(nativeTokenInfosRes);
-    reply.WriteInt32(result);
-    if (result != RET_SUCCESS) {
-        return;
-    }
-    reply.WriteUint32(nativeTokenInfosRes.size());
-    for (const auto& native : nativeTokenInfosRes) {
-        reply.WriteParcelable(&native);
-    }
-}
-
 void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsAccessTokenCalling()) {
@@ -693,36 +697,6 @@ void AccessTokenManagerStub::SetRemoteHapTokenInfoInner(MessageParcel& data, Mes
         return;
     }
     int result = this->SetRemoteHapTokenInfo(deviceID, *hapTokenParcel);
-    reply.WriteInt32(result);
-}
-
-void AccessTokenManagerStub::SetRemoteNativeTokenInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsAccessTokenCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::string deviceID = data.ReadString();
-
-    std::vector<NativeTokenInfoForSyncParcel> nativeParcelList;
-    uint32_t size = data.ReadUint32();
-    if (size > MAX_NATIVE_TOKEN_INFO_SIZE) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", size);
-        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
-        return;
-    }
-    for (uint32_t i = 0; i < size; i++) {
-        sptr<NativeTokenInfoForSyncParcel> nativeParcel = data.ReadParcelable<NativeTokenInfoForSyncParcel>();
-        if (nativeParcel == nullptr) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "NativeParcel read faild");
-            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
-            return;
-        }
-        nativeParcelList.emplace_back(*nativeParcel);
-    }
-
-    int result = this->SetRemoteNativeTokenInfo(deviceID, nativeParcelList);
     reply.WriteInt32(result);
 }
 
@@ -818,30 +792,6 @@ void AccessTokenManagerStub::GetVersionInner(MessageParcel& data, MessageParcel&
     }
 }
 
-void AccessTokenManagerStub::DumpPermDefInfoInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsShellProcessCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    std::string dumpInfo = "";
-    int32_t result = this->DumpPermDefInfo(dumpInfo);
-    if (!reply.WriteInt32(result)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write result failed.");
-    }
-    if (result != RET_SUCCESS) {
-        return;
-    }
-
-    if (!reply.SetDataCapacity(DUMP_CAPACITY_SIZE)) {
-        ACCESSTOKEN_LOG_WARN(LABEL, "Set DataCapacity failed.");
-    }
-    if (!reply.WriteString(dumpInfo)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Write String failed.");
-    }
-}
-
 void AccessTokenManagerStub::DumpTokenInfoInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsShellProcessCalling()) {
@@ -913,6 +863,96 @@ void AccessTokenManagerStub::GetNativeTokenNameInner(MessageParcel& data, Messag
     }
 }
 
+void AccessTokenManagerStub::InitUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::vector<UserState> userList;
+    std::vector<std::string> permList;
+    uint32_t userSize = data.ReadUint32();
+    uint32_t permSize = data.ReadUint32();
+    if ((userSize > MAX_USER_POLICY_SIZE) || (permSize > MAX_USER_POLICY_SIZE)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
+        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
+        return;
+    }
+    for (uint32_t i = 0; i < userSize; i++) {
+        UserState userInfo;
+        if (!data.ReadInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        if (!data.ReadBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        userList.emplace_back(userInfo);
+    }
+    for (uint32_t i = 0; i < permSize; i++) {
+        std::string permission;
+        if (!data.ReadString(permission)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read permission.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        permList.emplace_back(permission);
+    }
+    int32_t res = this->InitUserPolicy(userList, permList);
+    reply.WriteInt32(res);
+}
+
+void AccessTokenManagerStub::UpdateUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+    std::vector<UserState> userList;
+    uint32_t userSize = data.ReadUint32();
+    if (userSize > MAX_USER_POLICY_SIZE) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Size %{public}u is invalid", userSize);
+        reply.WriteInt32(AccessTokenError::ERR_OVERSIZE);
+        return;
+    }
+    for (uint32_t i = 0; i < userSize; i++) {
+        UserState userInfo;
+        if (!data.ReadInt32(userInfo.userId)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read userId.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        if (!data.ReadBool(userInfo.isActive)) {
+            ACCESSTOKEN_LOG_ERROR(LABEL, "Failed to read isActive.");
+            reply.WriteInt32(AccessTokenError::ERR_READ_PARCEL_FAILED);
+            return;
+        }
+        userList.emplace_back(userInfo);
+    }
+    int32_t res = this->UpdateUserPolicy(userList);
+    reply.WriteInt32(res);
+}
+
+void AccessTokenManagerStub::ClearUserPolicyInner(MessageParcel& data, MessageParcel& reply)
+{
+    uint32_t callingToken = IPCSkeleton::GetCallingTokenID();
+    if (VerifyAccessToken(callingToken, GET_SENSITIVE_PERMISSIONS) == PERMISSION_DENIED) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", callingToken);
+        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
+        return;
+    }
+
+    int32_t res = this->ClearUserPolicy();
+    reply.WriteInt32(res);
+}
+
 bool AccessTokenManagerStub::IsPrivilegedCalling() const
 {
     // shell process is root in debug mode.
@@ -956,14 +996,8 @@ void AccessTokenManagerStub::SetTokenSyncFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_FROM_REMOTE)] =
         &AccessTokenManagerStub::GetHapTokenInfoFromRemoteInner;
-    requestFuncMap_[
-        static_cast<uint32_t>(AccessTokenInterfaceCode::GET_ALL_NATIVE_TOKEN_FROM_REMOTE)] =
-        &AccessTokenManagerStub::GetAllNativeTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_HAP_TOKEN_INFO)] =
         &AccessTokenManagerStub::SetRemoteHapTokenInfoInner;
-    requestFuncMap_[
-        static_cast<uint32_t>(AccessTokenInterfaceCode::SET_REMOTE_NATIVE_TOKEN_INFO)] =
-        &AccessTokenManagerStub::SetRemoteNativeTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_TOKEN_INFO)] =
         &AccessTokenManagerStub::DeleteRemoteTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DELETE_REMOTE_DEVICE_TOKEN)] =
@@ -1011,12 +1045,18 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::GetPermissionManagerInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME)] =
         &AccessTokenManagerStub::GetNativeTokenNameInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::INIT_USER_POLICY)] =
+        &AccessTokenManagerStub::InitUserPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::UPDATE_USER_POLICY)] =
+        &AccessTokenManagerStub::UpdateUserPolicyInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_POLICY)] =
+        &AccessTokenManagerStub::ClearUserPolicyInner;
 }
 
 void AccessTokenManagerStub::SetPermissionOpFuncInMap()
 {
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_USER_GRANTED_PERMISSION_USED_TYPE)] =
-        &AccessTokenManagerStub::GetUserGrantedPermissionUsedTypeInner;
+        &AccessTokenManagerStub::GetPermissionUsedTypeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::VERIFY_ACCESSTOKEN)] =
         &AccessTokenManagerStub::VerifyAccessTokenInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_DEF_PERMISSION)] =
@@ -1031,6 +1071,8 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::GrantPermissionInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::REVOKE_PERMISSION)] =
         &AccessTokenManagerStub::RevokePermissionInner;
+    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GRANT_PERMISSION_FOR_SPECIFIEDTIME)] =
+        &AccessTokenManagerStub::GrantPermissionForSpecifiedTimeInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CLEAR_USER_GRANT_PERMISSION)] =
         &AccessTokenManagerStub::ClearUserGrantedPermissionStateInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_PERMISSION_OPER_STATE)] =
@@ -1045,8 +1087,6 @@ void AccessTokenManagerStub::SetPermissionOpFuncInMap()
         &AccessTokenManagerStub::UnRegisterPermStateChangeCallbackInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_TOKENINFO)] =
         &AccessTokenManagerStub::DumpTokenInfoInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::DUMP_PERM_DEFINITION_INFO)] =
-        &AccessTokenManagerStub::DumpPermDefInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_VERSION)] =
         &AccessTokenManagerStub::GetVersionInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::SET_PERMISSION_REQUEST_TOGGLE_STATUS)] =

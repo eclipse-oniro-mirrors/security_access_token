@@ -71,7 +71,18 @@ public:
      * @param permissionName permission to be checked
      * @return enum PermUsedTypeEnum, see access_token.h
      */
-    static PermUsedTypeEnum GetUserGrantedPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+    static PermUsedTypeEnum GetPermissionUsedType(AccessTokenID tokenID, const std::string& permissionName);
+
+    /**
+     * @brief Grant input permission to input tokenID flag for specified time.
+     * @param tokenID token id
+     * @param permissionName permission name quote
+     * @param onceTime the time it takes to work, the unit is second.
+     * @return error code, see access_token_error.h
+     */
+    static int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime);
+
     /**
      * @brief Create a unique hap token by input values.
      * @param info struct HapInfoParams quote, see hap_token_info.h
@@ -344,27 +355,12 @@ public:
      */
     static int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSync& hapSync);
     /**
-     * @brief Get all native token infos.
-     * @param nativeTokenInfosRes NativeTokenInfoForSync list quote
-     *        as input and query result
-     * @return error code, see access_token_error.h
-     */
-    static int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes);
-    /**
      * @brief Set remote hap token info with remote deviceID.
      * @param deviceID remote deviceID
      * @param hapSync hap token info to set
      * @return error code, see access_token_error.h
      */
     static int SetRemoteHapTokenInfo(const std::string& deviceID, const HapTokenInfoForSync& hapSync);
-    /**
-     * @brief Set remote native token info list with remote deviceID.
-     * @param deviceID remote deviceID
-     * @param nativeTokenInfoList native token info list to set
-     * @return error code, see access_token_error.h
-     */
-    static int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList);
     /**
      * @brief Delete remote token by remote deviceID and remote tokenID.
      * @param deviceID remote deviceID
@@ -406,12 +402,6 @@ public:
      */
     static void DumpTokenInfo(const AtmToolsParamInfo& info, std::string& dumpInfo);
     /**
-     * @brief Dump all permission definition infos.
-     * @param dumpInfo all permission definition info
-     * @return error code, see access_token_error.h
-     */
-    static int32_t DumpPermDefInfo(std::string& dumpInfo);
-    /**
      * @brief Get application info of permission manager.
      * @param info application info of permission manager
      */
@@ -423,6 +413,27 @@ public:
      * @return error code, see access_token_error.h
      */
     static int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name);
+
+    /**
+     * @brief Set user permission policy
+     * @param userList list of user id.
+     * @param permList list of permission
+     * @return error code, see access_token_error.h
+     */
+    static int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList);
+
+    /**
+     * @brief Update user permission policy
+     * @param userList list of user id.
+     * @return error code, see access_token_error.h
+     */
+    static int32_t UpdateUserPolicy(const std::vector<UserState>& userList);
+
+    /**
+     * @brief Clear user permission policy
+     * @return error code, see access_token_error.h
+     */
+    static int32_t ClearUserPolicy();
 };
 } // namespace AccessToken
 } // namespace Security

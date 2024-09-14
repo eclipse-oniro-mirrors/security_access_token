@@ -44,10 +44,11 @@ public:
     void StorePermissionPolicySet(std::vector<GenericValues>& permStateValueList);
     void Update(const std::vector<PermissionStateFull>& permStateList);
 
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(const std::string& permissionName);
+    PermUsedTypeEnum GetPermissionUsedType(const std::string& permissionName);
     int VerifyPermissionStatus(const std::string& permissionName);
     void GetDefPermissions(std::vector<PermissionDef>& permList);
     void GetPermissionStateFulls(std::vector<PermissionStateFull>& permList);
+    bool IsPermissionGrantedWithSecComp(const std::string& permissionName);
     int QueryPermissionFlag(const std::string& permissionName, int& flag);
     int32_t UpdatePermissionStatus(const std::string& permissionName, bool isGranted, uint32_t flag);
     void ToString(std::string& info);
@@ -60,8 +61,11 @@ public:
     static uint32_t GetFlagWithoutSpecifiedElement(uint32_t fullFlag, uint32_t removedFlag);
     static uint32_t GetFlagWroteToDb(uint32_t grantFlag);
     void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList);
+    void GetDeletedPermissionListToNotify(std::vector<std::string>& permissionList,
+        const std::vector<std::string>& constrainedList);
     void GetGrantedPermissionList(std::vector<std::string>& permissionList);
-
+    void RefreshPermStateToKernel(const std::vector<std::string>& permList,
+        bool hapUserIsActive, AccessTokenID tokenId, std::map<std::string, bool>& refreshedPermList);
     void GetPermissionStateList(std::vector<uint32_t>& opCodeList, std::vector<bool>& statusList);
     uint32_t GetReqPermissionSize();
 private:
