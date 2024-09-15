@@ -37,7 +37,7 @@ struct CallbackData {
         : permList_(permList), callbackObject_(callback)
     {}
 
-    AccessTokenID registerTokenId;
+    AccessTokenID registerTokenId {0};
     std::vector<std::string> permList_;
     sptr<IRemoteObject> callbackObject_;
 };
