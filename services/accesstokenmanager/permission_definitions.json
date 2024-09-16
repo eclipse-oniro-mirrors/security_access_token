@@ -4695,6 +4695,16 @@
             "distributedSceneEnable": false
         },
         {
+            "name": "ohos.permission.REGISTER_FINDNETWORK_ACCESSORY",
+            "grantMode": "system_grant",
+            "availableLevel": "system_basic",
+            "availableType": "SYSTEM",
+            "since": 13,
+            "deprecated": "",
+            "provisionEnable": true,
+            "distributedSceneEnable": false
+        },
+        {
             "name": "ohos.permission.MANAGE_SOFTBUS_NETWORK",
             "grantMode": "system_grant",
             "availableLevel": "system_core",
