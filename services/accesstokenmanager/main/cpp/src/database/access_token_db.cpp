@@ -289,7 +289,7 @@ int32_t AccessTokenDb::RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& 
             queryResultSet = nullptr;
 
             ACCESSTOKEN_LOG_WARN(LABEL, "Detech database corrupt, restore from backup!");
-            int32_t res = db_->Restore("");
+            res = db_->Restore("");
             if (res != NativeRdb::E_OK) {
                 ACCESSTOKEN_LOG_ERROR(LABEL, "Db restore failed, res is %{public}d.", res);
                 return res;
