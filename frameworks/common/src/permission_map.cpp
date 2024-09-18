@@ -438,6 +438,7 @@ const static std::vector<std::pair<std::string, bool>> g_permMap = {
     {"ohos.permission.SET_FOREGROUND_HAP_REMINDER",         false},
     {"ohos.permission.OPERATE_FINDNETWORK",                 false},
     {"ohos.permission.QUERY_FINDNETWORK_LOCATION",          false},
+    {"ohos.permission.REGISTER_FINDNETWORK_ACCESSORY",      false},
     {"ohos.permission.INJECT_INPUT_EVENT",              false},
     {"ohos.permission.ACCESS_SUBSCRIPTION_CAPSULE_DATA",              false},
     {"ohos.permission.PRE_START_ATOMIC_SERVICE",            false},
