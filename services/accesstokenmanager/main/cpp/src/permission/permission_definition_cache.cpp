@@ -163,7 +163,7 @@ void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& v
 
 void PermissionDefinitionCache::StorePermissionDef(AccessTokenID tokenID, std::vector<GenericValues>& valueList)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         if (tokenID == it->second.tokenId) {
