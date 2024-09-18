@@ -20,6 +20,7 @@
 #include "app_manager_access_client.h"
 #include "ipc_skeleton.h"
 #include "privacy_error.h"
+#include "securec.h"
 
 namespace OHOS {
 namespace Security {
@@ -128,7 +129,9 @@ int32_t PrivacySecCompEnhanceAgent::RegisterSecCompEnhance(const SecCompEnhanceD
     enhance.challenge = enhanceData.challenge;
     enhance.sessionId = enhanceData.sessionId;
     enhance.seqNum = enhanceData.seqNum;
-    enhance.key = enhanceData.key;
+    if (memcpy_s(enhance.key, AES_KEY_STORAGE_LEN, enhanceData.key, AES_KEY_STORAGE_LEN) != EOK) {
+        return PrivacyError::ERR_CALLBACK_ALREADY_EXIST;
+    }
     secCompEnhanceData_.emplace_back(enhance);
     ACCESSTOKEN_LOG_INFO(LABEL, "Register sec comp enhance success, pid %{public}d, total %{public}u.",
         pid, static_cast<uint32_t>(secCompEnhanceData_.size()));
