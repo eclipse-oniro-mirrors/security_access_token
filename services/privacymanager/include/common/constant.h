@@ -69,6 +69,7 @@ public:
         OP_ACCESS_NEARLINK = 40,
         OP_CAPTURE_SCREEN = 41,
         SHORT_TERM_WRITE_IMAGEVIDEO = 42,
+        CAMERA_BACKGROUND = 43,
     };
 
     enum ErrorCode {
