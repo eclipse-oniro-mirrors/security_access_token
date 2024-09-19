@@ -47,6 +47,7 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static int32_t PID = -1;
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static constexpr int32_t MAX_DETAIL_NUM = 500;
@@ -211,21 +212,20 @@ public:
     {}
 };
 
-
 /**
- * @tc.name: OnForegroundApplicationChanged001
+ * @tc.name: OnAppStateChanged001
  * @tc.desc: RegisterPermActiveStatusCallback with invalid parameter.
  * @tc.type: FUNC
  * @tc.require: issueI5RWX8
  */
-HWTEST_F(PermissionRecordManagerTest, OnForegroundApplicationChanged001, TestSize.Level1)
+HWTEST_F(PermissionRecordManagerTest, OnAppStateChanged001, TestSize.Level1)
 {
     PrivacyAppStateObserver observer;
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    observer.OnForegroundApplicationChanged(appStateData);
+    observer.OnAppStateChanged(appStateData);
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
-    observer.OnForegroundApplicationChanged(appStateData);
+    observer.OnAppStateChanged(appStateData);
     ASSERT_EQ(static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND), appStateData.state);
 }
 
@@ -244,23 +244,43 @@ HWTEST_F(PermissionRecordManagerTest, AppStatusListener001, TestSize.Level1)
         g_InfoParms2.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId2);
 
-    g_recordA1.tokenId = tokenId1;
-    g_recordA2.tokenId = tokenId1;
-    g_recordB1.tokenId = tokenId2;
-    g_recordB2.tokenId = tokenId2;
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA1);
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordA2);
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB1);
-    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(g_recordB2);
+    ContinusPermissionRecord recordA1 = {
+        .tokenId = tokenId1,
+        .opCode = Constant::OP_CAMERA,
+        .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    };
 
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_FOREGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_FOREGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PERM_ACTIVE_IN_BACKGROUND);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PERM_ACTIVE_IN_BACKGROUND);
+    ContinusPermissionRecord recordA2 = {
+        .tokenId = tokenId1,
+        .opCode = Constant::OP_MICROPHONE,
+        .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    };
+
+    ContinusPermissionRecord recordB1 = {
+        .tokenId = tokenId2,
+        .opCode = Constant::OP_CAMERA,
+        .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    };
+
+    ContinusPermissionRecord recordB2 = {
+        .tokenId = tokenId2,
+        .opCode = Constant::OP_MICROPHONE,
+        .status = ActiveChangeType::PERM_ACTIVE_IN_BACKGROUND,
+    };
+
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(recordA1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(recordA2);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(recordB1);
+    PermissionRecordManager::GetInstance().startRecordList_.emplace_back(recordB2);
+
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PID, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PID, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PID, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PID, PERM_ACTIVE_IN_FOREGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PID, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PID, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId1, PID, PERM_ACTIVE_IN_BACKGROUND);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId2, PID, PERM_ACTIVE_IN_BACKGROUND);
 }
 
 /*
@@ -278,24 +298,17 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest001, Tes
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
-
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_CAMERA,
-    };
+    std::string permission = "ohos.permission.CAMERA";
     CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, false);
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, permission, status);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, status);
 
-    PermissionRecord record;
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-
-    ASSERT_EQ(record1.tokenId, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, permission));
 }
 
 /*
@@ -310,22 +323,16 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest002, Tes
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
-
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_MICROPHONE,
-    };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    std::string permission = "ohos.permission.MICROPHONE";
+    PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, permission, status);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, status);
 
-    PermissionRecord record;
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    ASSERT_EQ(record1.tokenId, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, permission));
 }
 
 /*
@@ -340,22 +347,15 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest003, Tes
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
-
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_CAMERA,
-    };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    std::string permission = "ohos.permission.CAMERA";
+    PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, permission, status);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
 
-    PermissionRecord record;
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-
-    ASSERT_EQ(record1.tokenId, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, permission));
 }
 
 /*
@@ -370,21 +370,15 @@ HWTEST_F(PermissionRecordManagerTest, FindRecordsToUpdateAndExecutedTest004, Tes
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ActiveChangeType status = PERM_ACTIVE_IN_BACKGROUND;
-
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_CAMERA,
-    };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
+    std::string permission = "ohos.permission.CAMERA";
+    PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, permission, status);
 #ifdef CAMERA_FLOAT_WINDOW_ENABLE
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(false, tokenId, false);
     PermissionRecordManager::GetInstance().NotifyCameraWindowChange(true, tokenId, false);
 #endif
-    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, status);
+    PermissionRecordManager::GetInstance().ExecuteAndUpdateRecord(tokenId, PID, status);
 
-    PermissionRecord record;
-    PermissionRecordManager::GetInstance().GetRecordFromStartList(record1.tokenId, record1.opCode, record);
-    ASSERT_EQ(record1.tokenId, tokenId);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, permission));
 }
 
 /*
@@ -403,9 +397,9 @@ HWTEST_F(PermissionRecordManagerTest, ExecuteCameraCallbackAsyncTest001, TestSiz
     auto callbackWrap = new (std::nothrow) StateChangeCallback(callbackPtr);
     ASSERT_NE(nullptr, callbackPtr);
     ASSERT_NE(nullptr, callbackWrap);
-    PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+    PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, PID);
 
-    PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId);
+    PermissionRecordManager::GetInstance().ExecuteCameraCallbackAsync(tokenId, PID);
 }
 
 class PermActiveStatusChangeCallbackTest : public PermActiveStatusChangeCallbackStub {
@@ -460,7 +454,7 @@ HWTEST_F(PermissionRecordManagerTest, OnRemoteDied001, TestSize.Level1)
     permList.emplace_back("ohos.permission.CAMERA");
     wptr<IRemoteObject> remote = new (std::nothrow) PermActiveStatusChangeCallbackTest();
     callback = remote.promote();
-    ActiveStatusCallbackManager::GetInstance().AddCallback(permList, callback);
+    ActiveStatusCallbackManager::GetInstance().AddCallback(GetSelfTokenID(), permList, callback);
     ASSERT_EQ(static_cast<uint32_t>(1), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());
     recipient->OnRemoteDied(remote); // remote is not nullptr
     ASSERT_EQ(static_cast<uint32_t>(0), ActiveStatusCallbackManager::GetInstance().callbackDataList_.size());
@@ -492,7 +486,7 @@ HWTEST_F(PermissionRecordManagerTest, OnApplicationStateChanged001, TestSize.Lev
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
     appStateData.accessTokenId = tokenId;
-    observer.OnApplicationStateChanged(appStateData);
+    observer.OnAppStopped(appStateData);
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callbackPtr->type_);
@@ -601,26 +595,22 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartList001, TestSize.Lev
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
+    std::string permission = "ohos.permission.READ_MEDIA";
     ASSERT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
-    PermissionRecord record;
-    record.tokenId = tokenId;
-    record.opCode = Constant::OP_READ_MEDIA;
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
     // it->opcode == record.opcode && it->tokenId == record.tokenId
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record); // record in cache has delete
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, "ohos.permission.READ_MEDIA");
 
     ASSERT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
-    record.tokenId = RANDOM_TOKENID;
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
     // it->opcode == record.opcode && it->tokenId != record.tokenId
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(RANDOM_TOKENID, PID, "ohos.permission.READ_MEDIA");
 
-    record.opCode = Constant::OP_MICROPHONE;
     // it->opcode != record.opcode && it->tokenId != record.tokenId
-    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(record);
+    PermissionRecordManager::GetInstance().RemoveRecordFromStartList(tokenId, PID, "ohos.permission.MICROPHONE");
 
     ASSERT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
 }
 
 /*
@@ -662,13 +652,13 @@ HWTEST_F(PermissionRecordManagerTest, Unregister001, TestSize.Level1)
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
-        tokenId, "ohos.permission.READ_MEDIA"));
+        tokenId, PID, "ohos.permission.READ_MEDIA"));
 
     PermissionRecordManager::GetInstance().Unregister();
     PermissionRecordManager::GetInstance().Unregister();
 
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(
-        tokenId, "ohos.permission.READ_MEDIA"));
+        tokenId, PID, "ohos.permission.READ_MEDIA"));
 }
 
 /*
@@ -1376,7 +1366,7 @@ HWTEST_F(PermissionRecordManagerTest, DeletePermissionRecord001, TestSize.Level1
  */
 HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize.Level1)
 {
-    std::vector<PermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
+    std::vector<ContinusPermissionRecord> startRecordList = PermissionRecordManager::GetInstance().startRecordList_;
     PermissionRecordManager::GetInstance().startRecordList_.clear();
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
@@ -1384,17 +1374,9 @@ HWTEST_F(PermissionRecordManagerTest, RemoveRecordFromStartListTest001, TestSize
 
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
 
-    PermissionRecord record1 = {
-        .tokenId = tokenId,
-        .opCode = Constant::OP_CAMERA,
-    };
-
-    PermissionRecord record2 = {
-        .tokenId = 0,
-        .opCode = Constant::OP_MICROPHONE,
-    };
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record1);
-    PermissionRecordManager::GetInstance().AddRecordToStartList(record2);
+    ActiveChangeType status = PERM_ACTIVE_IN_FOREGROUND;
+    PermissionRecordManager::GetInstance().AddRecordToStartList(tokenId, PID, "ohos.permission.CAMERA", status);
+    PermissionRecordManager::GetInstance().AddRecordToStartList(0, PID, "ohos.permission.MICROPHONE", status);
     PermissionRecordManager::GetInstance().RemoveRecordFromStartListByToken(tokenId);
     ASSERT_EQ(1, PermissionRecordManager::GetInstance().startRecordList_.size());
     PermissionRecordManager::GetInstance().startRecordList_ = startRecordList;
@@ -1421,9 +1403,9 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
-        tokenId, "ohos.permission.CAMERA", callbackWrap->AsObject()));
+        tokenId, PID, "ohos.permission.CAMERA", callbackWrap->AsObject()));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.CAMERA"));
     CameraManagerPrivacyClient::GetInstance().MuteCameraPersist(PolicyType::PRIVACY, isMuteCamera);
 }
 

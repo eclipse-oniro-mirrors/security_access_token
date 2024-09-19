@@ -75,12 +75,12 @@ bool PermissionDefinitionCache::Update(const PermissionDef& info, AccessTokenID 
     return true;
 }
 
-void PermissionDefinitionCache::DeleteByBundleName(const std::string& bundleName)
+void PermissionDefinitionCache::DeleteByToken(AccessTokenID tokenId)
 {
     Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
-        if (bundleName == it->second.permDef.bundleName) {
+        if (tokenId == it->second.tokenId) {
             permissionDefinitionMap_.erase(it++);
         } else {
             ++it;
@@ -163,7 +163,7 @@ void PermissionDefinitionCache::StorePermissionDef(std::vector<GenericValues>& v
 
 void PermissionDefinitionCache::StorePermissionDef(AccessTokenID tokenID, std::vector<GenericValues>& valueList)
 {
-    Utils::UniqueWriteGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
+    Utils::UniqueReadGuard<Utils::RWLock> cacheGuard(this->cacheLock_);
     auto it = permissionDefinitionMap_.begin();
     while (it != permissionDefinitionMap_.end()) {
         if (tokenID == it->second.tokenId) {

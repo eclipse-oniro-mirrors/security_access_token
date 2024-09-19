@@ -17,88 +17,50 @@
 #define ACCESS_TOKEN_DB_H
 
 #include <vector>
-#include <map>
 
 #include "access_token.h"
+
+#include "access_token_db_util.h"
 #include "generic_values.h"
 #include "nocopyable.h"
+#include "rdb_predicates.h"
+#include "rdb_store.h"
 #include "rwlock.h"
-#include "sqlite_helper.h"
-#include "token_field_const.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-class AccessTokenDb : public SqliteHelper {
+class AccessTokenDb final {
 public:
-    enum ExecuteResult { FAILURE = -1, SUCCESS };
-    struct SqliteTable {
-    public:
-        std::string tableName_;
-        std::vector<std::string> tableColumnNames_;
-    };
-    enum DataType {
-        ACCESSTOKEN_HAP_INFO,
-        ACCESSTOKEN_NATIVE_INFO,
-        ACCESSTOKEN_PERMISSION_DEF,
-        ACCESSTOKEN_PERMISSION_STATE,
-        ACCESSTOKEN_PERMISSION_REQUEST_TOGGLE_STATUS,
-    };
-
     static AccessTokenDb& GetInstance();
+    virtual ~AccessTokenDb() = default;
 
-    ~AccessTokenDb() override;
-
-    int Add(const DataType type, const std::vector<GenericValues>& values);
-
-    int Remove(const DataType type, const GenericValues& conditions);
-
-    int Modify(const DataType type, const GenericValues& modifyValues, const GenericValues& conditions);
-
-    int Find(const DataType type, std::vector<GenericValues>& results);
-
-    int RefreshAll(const DataType type, const std::vector<GenericValues>& values);
-
-    int32_t FindByConditions(DataType type, const GenericValues& andConditions, std::vector<GenericValues>& results);
-
-    void OnCreate() override;
-    void OnUpdate(int32_t version) override;
+    int32_t Add(const AtmDataType type, const std::vector<GenericValues>& values);
+    int32_t Remove(const AtmDataType type, const GenericValues& conditionValue);
+    int32_t Modify(const AtmDataType type, const GenericValues& modifyValue, const GenericValues& conditionValue);
+    int32_t Find(AtmDataType type, const GenericValues& conditionValue, std::vector<GenericValues>& results);
+    int32_t DeleteAndInsertHap(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+        const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
 
 private:
-    int CreateHapTokenInfoTable() const;
-    int CreateNativeTokenInfoTable() const;
-    int CreatePermissionDefinitionTable() const;
-    int CreatePermissionStateTable() const;
-    int32_t CreatePermissionRequestToggleStatusTable() const;
-
-    int64_t Count(DataType type);
-
-    std::string CreateInsertPrepareSqlCmd(const DataType type) const;
-    std::string CreateDeletePrepareSqlCmd(
-        const DataType type, const std::vector<std::string>& columnNames = std::vector<std::string>()) const;
-    std::string CreateUpdatePrepareSqlCmd(const DataType type, const std::vector<std::string>& modifyColumns,
-        const std::vector<std::string>& conditionColumns) const;
-    std::string CreateSelectPrepareSqlCmd(const DataType type) const;
-    std::string CreateCountPrepareSqlCmd(DataType type) const;
-    std::string CreateSelectByConditionPrepareSqlCmd(DataType type, const std::vector<std::string>& andColumns) const;
-    int32_t AddAvailableTypeColumn() const;
-    int32_t AddPermDialogCapColumn() const;
-    int32_t AddRequestToggleStatusColumn() const;
-
     AccessTokenDb();
     DISALLOW_COPY_AND_MOVE(AccessTokenDb);
 
-    std::map<DataType, SqliteTable> dataTypeToSqlTable_;
+    int32_t RestoreAndInsertIfCorrupt(const int32_t resultCode, int64_t& outInsertNum,
+        const std::string& tableName, const std::vector<NativeRdb::ValuesBucket>& buckets);
+    int32_t RestoreAndDeleteIfCorrupt(const int32_t resultCode, int32_t& deletedRows,
+        const NativeRdb::RdbPredicates& predicates);
+    int32_t RestoreAndUpdateIfCorrupt(const int32_t resultCode, int32_t& changedRows,
+        const NativeRdb::ValuesBucket& bucket, const NativeRdb::RdbPredicates& predicates);
+    int32_t RestoreAndQueryIfCorrupt(const NativeRdb::RdbPredicates& predicates,
+        const std::vector<std::string>& columns, std::shared_ptr<NativeRdb::AbsSharedResultSet>& queryResultSet);
+    int32_t DeleteAndAddSingleTable(const GenericValues delCondition, const std::string& tableName,
+        const std::vector<GenericValues>& addValues);
+    int32_t DeleteAndAddRecord(AccessTokenID tokenId, const std::vector<GenericValues>& hapInfoValues,
+        const std::vector<GenericValues>& permDefValues, const std::vector<GenericValues>& permStateValues);
+
     OHOS::Utils::RWLock rwLock_;
-    inline static constexpr const char* HAP_TOKEN_INFO_TABLE = "hap_token_info_table";
-    inline static constexpr const char* NATIVE_TOKEN_INFO_TABLE = "native_token_info_table";
-    inline static constexpr const char* PERMISSION_DEF_TABLE = "permission_definition_table";
-    inline static constexpr const char* PERMISSION_STATE_TABLE = "permission_state_table";
-    inline static constexpr const char*
-        PERMISSION_REQUEST_TOGGLE_STATUS_TABLE = "permission_request_toggle_status_table";
-    inline static constexpr const char* DATABASE_NAME = "access_token.db";
-    inline static constexpr const char* DATABASE_PATH = "/data/service/el1/public/access_token/";
-    static const int DATABASE_VERSION = VERISION_4;
+    std::shared_ptr<NativeRdb::RdbStore> db_ = nullptr;
 };
 } // namespace AccessToken
 } // namespace Security

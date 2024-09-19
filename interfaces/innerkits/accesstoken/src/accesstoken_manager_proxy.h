@@ -43,7 +43,7 @@ public:
     explicit AccessTokenManagerProxy(const sptr<IRemoteObject>& impl);
     ~AccessTokenManagerProxy() override;
 
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+    PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) override;
     int VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName) override;
     int GetDefPermission(const std::string& permissionName, PermissionDefParcel& permissionDefResult) override;
@@ -57,6 +57,8 @@ public:
         int32_t userID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
+    int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     PermissionOper GetSelfPermissionsState(std::vector<PermissionListStateParcel>& permListParcel,
         PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetPermissionsStatus(
@@ -81,13 +83,13 @@ public:
         const PermStateChangeScopeParcel& scope, const sptr<IRemoteObject>& callback) override;
     int32_t UnRegisterPermStateChangeCallback(const sptr<IRemoteObject>& callback) override;
     AccessTokenID GetNativeTokenId(const std::string& processName) override;
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
+    int32_t ClearUserPolicy() override;
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
-    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoRes) override;
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
-    int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel) override;
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
@@ -97,7 +99,6 @@ public:
 
     int32_t SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfo, bool enable) override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
-    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetNativeTokenName(AccessTokenID tokenId, std::string& name) override;

@@ -15,11 +15,13 @@
 
 #include <cstdint>
 #include <gtest/gtest.h>
+#include <string>
 
 #include "ability_manager_access_loader.h"
 #include "access_token.h"
 #include "accesstoken_kit.h"
 #include "accesstoken_log.h"
+#include "active_change_response_info.h"
 #include "audio_manager_privacy_client.h"
 #include "camera_manager_privacy_client.h"
 #include "constant.h"
@@ -34,6 +36,7 @@
 #include "permission_used_record_db.h"
 #include "privacy_manager_service.h"
 #undef private
+#include "parameter.h"
 #include "perm_active_status_change_callback_stub.h"
 #include "privacy_error.h"
 #include "privacy_field_const.h"
@@ -50,20 +53,23 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
+static int32_t PID = -1;
+static int32_t TEST_PID_1 = 1;
+static int32_t TEST_PID_2 = 2;
+static int32_t TEST_PID_3 = 3;
 static AccessTokenID g_selfTokenId = 0;
 static AccessTokenID g_nativeToken = 0;
 static bool g_isMicEdmMute = false;
 static bool g_isMicMixMute = false;
 static bool g_isMicMute = false;
-constexpr const char* CAMERA_PERMISSION_NAME = "ohos.permission.CAMERA";
-constexpr const char* MICROPHONE_PERMISSION_NAME = "ohos.permission.MICROPHONE";
-constexpr const char* LOCATION_PERMISSION_NAME = "ohos.permission.LOCATION";
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t RANDOM_TOKENID = 123;
 static constexpr int32_t FIRST_INDEX = 0;
 static const int32_t NORMAL_TYPE_ADD_VALUE = 1;
 static const int32_t PICKER_TYPE_ADD_VALUE = 2;
 static const int32_t SEC_COMPONENT_TYPE_ADD_VALUE = 4;
+static const int32_t VALUE_MAX_LEN = 32;
+static const char* EDM_MIC_MUTE_KEY = "persist.edm.mic_disable";
 static PermissionStateFull g_testState1 = {
     .permissionName = "ohos.permission.CAMERA",
     .isGeneral = true,
@@ -79,6 +85,7 @@ static PermissionStateFull g_testState2 = {
     .grantStatus = {PermissionState::PERMISSION_GRANTED},
     .grantFlags = {1}
 };
+
 static PermissionStateFull g_testState3 = {
     .permissionName = "ohos.permission.MANAGE_AUDIO_CONFIG",
     .isGeneral = true,
@@ -124,6 +131,8 @@ public:
     void SetUp();
 
     void TearDown();
+
+    std::shared_ptr<PrivacyAppStateObserver> appStateObserver_ = nullptr;
 };
 
 void PermissionRecordManagerTest::SetUpTestCase()
@@ -154,6 +163,10 @@ void PermissionRecordManagerTest::SetUp()
     AccessTokenKit::AllocHapToken(g_InfoParms1, g_PolicyPrams1);
     AccessTokenKit::AllocHapToken(g_InfoParms2, g_PolicyPrams2);
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
+    if (appStateObserver_ != nullptr) {
+        return;
+    }
+    appStateObserver_ = std::make_shared<PrivacyAppStateObserver>();
 }
 
 void PermissionRecordManagerTest::TearDown()
@@ -167,6 +180,7 @@ void PermissionRecordManagerTest::TearDown()
         g_InfoParms2.instIndex);
     AccessTokenKit::DeleteToken(tokenId);
     PrivacyKit::RemovePermissionUsedRecords(tokenId, "");
+    appStateObserver_ = nullptr;
     EXPECT_EQ(0, SetSelfTokenID(g_selfTokenId));
 }
 
@@ -178,11 +192,16 @@ public:
     ~PermissionRecordManagerTestCb1()
     {}
 
-    virtual void StateChangeNotify(AccessTokenID tokenId, bool isShow)
-    {}
+    void StateChangeNotify(AccessTokenID tokenId, bool isShow)
+    {
+        GTEST_LOG_(INFO) << "PermissionRecordManagerTestCb1 isShow" << isShow;
+        isShow_ = isShow;
+    }
 
     void Stop()
     {}
+
+    bool isShow_ = true;
 };
 
 /**
@@ -194,8 +213,8 @@ public:
 HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback001, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, nullptr));
 }
 
 
@@ -231,15 +250,16 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestS
     for (size_t i = 0; i < MAX_CALLBACK_SIZE; ++i) {
         sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
         ASSERT_NE(nullptr, callback);
-        ASSERT_EQ(RET_SUCCESS,
-            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+        ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+            GetSelfTokenID(), permList, callback->AsObject()));
         callbacks.emplace_back(callback);
     }
 
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
     ASSERT_EQ(PrivacyError::ERR_CALLBACKS_EXCEED_LIMITATION,
-        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+            GetSelfTokenID(), permList, callback->AsObject()));
 
     for (size_t i = 0; i < callbacks.size(); ++i) {
         ASSERT_EQ(RET_SUCCESS,
@@ -256,8 +276,8 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback002, TestS
 HWTEST_F(PermissionRecordManagerTest, UnRegisterPermActiveStatusCallback001, TestSize.Level1)
 {
     std::vector<std::string> permList = {"ohos.permission.CAMERA"};
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-            PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, nullptr));
 }
 
 /*
@@ -276,8 +296,8 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest001, TestSize.Leve
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
-    ASSERT_EQ(ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().StartUsingPermission(0, permissionName, callbackWrap->AsObject()));
+    ASSERT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
+        0, PID, permissionName, callbackWrap->AsObject()));
 }
 
 /*
@@ -298,19 +318,19 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
         g_InfoParms1.instIndex);
     ASSERT_NE(INVALID_TOKENID, tokenId);
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
-        tokenId, "ohos.permission.LOCATION", callbackWrap->AsObject()));
+        tokenId, PID, "ohos.permission.LOCATION", callbackWrap->AsObject()));
 
     // tokenId invaild
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
-        g_nativeToken, "ohos.permission.CAMERA", nullptr));
+        g_nativeToken, PID, "ohos.permission.CAMERA", nullptr));
     
     ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
-        tokenId, "ohos.permission.CAMERA", nullptr));
+        tokenId, PID, "ohos.permission.CAMERA", nullptr));
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.CAMERA", nullptr));
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, "ohos.permission.CAMERA", nullptr));
 
     ASSERT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.CAMERA"));
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.CAMERA"));
 }
 
 /*
@@ -322,18 +342,22 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest002, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
-    PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
+
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+    SetParameter(EDM_MIC_MUTE_KEY, "true");
+
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.MICROPHONE";
     ASSERT_EQ(PrivacyError::ERR_EDM_POLICY_CHECK_FAILED,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName));
-
-    PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
 
 /*
@@ -345,24 +369,29 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest003, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
-    PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
+
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+    SetParameter(EDM_MIC_MUTE_KEY, "false");
+
     ASSERT_EQ(RET_SUCCESS,
         AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY));
 
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
-    ASSERT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
 
     usleep(500000); // 500000us = 0.5s
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -370,8 +399,10 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
 #else
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
 #endif
-    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName));
-    PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName));
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
 
 /*
@@ -383,27 +414,35 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest004, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
-    PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
+
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+    SetParameter(EDM_MIC_MUTE_KEY, "false");
+
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(false, PolicyType::PRIVACY);
     std::vector<std::string> permList = {"ohos.permission.MICROPHONE"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
-    ASSERT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.MICROPHONE";
-    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
-    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName));
-    PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName));
+
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
 
 /*
@@ -415,27 +454,189 @@ HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest005, TestSize.Leve
 HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest006, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
 
-    PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, true);
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
+
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+    SetParameter(EDM_MIC_MUTE_KEY, "true");
+
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
     std::vector<std::string> permList = {"ohos.permission.LOCATION"};
     sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
     ASSERT_NE(nullptr, callback);
-    ASSERT_EQ(RET_SUCCESS,
-        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, callback->AsObject()));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
 
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
     std::string permissionName = "ohos.permission.LOCATION";
-    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, permissionName));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, permissionName));
 
     usleep(500000); // 500000us = 0.5s
     ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
-    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, permissionName));
-    PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, permissionName));
+
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest007
+ * @tc.desc: PermissionRecordManager::StartUsingPermission function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest007, TestSize.Level1)
+{
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+
+    // tokenId invaild
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
+        g_nativeToken, PID, "ohos.permission.READ_MEDIA"));
+
+    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, PID, "ohos.permission.READ_MEDIA"));
+    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest008
+ * @tc.desc: Test multiple process start using permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest008, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
+
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, TEST_PID_1, permissionName));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, TEST_PID_3, permissionName));
+    ProcessData processData;
+    processData.accessTokenId = tokenId;
+    processData.pid = TEST_PID_1;
+    appStateObserver_->OnProcessDied(processData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+
+    processData.pid = TEST_PID_2;
+    appStateObserver_->OnProcessDied(processData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+
+    processData.pid = TEST_PID_3;
+    appStateObserver_->OnProcessDied(processData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_INACTIVE, callback->type_);
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest009
+ * @tc.desc: Test multiple process start using permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest009, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    auto callbackPtr1 = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto callbackWrap1 = new (std::nothrow) StateChangeCallback(callbackPtr1);
+    ASSERT_NE(nullptr, callbackPtr1);
+    ASSERT_NE(nullptr, callbackWrap1);
+
+    auto callbackPtr2 = std::make_shared<PermissionRecordManagerTestCb1>();
+    auto callbackWrap2 = new (std::nothrow) StateChangeCallback(callbackPtr2);
+    ASSERT_NE(nullptr, callbackPtr2);
+    ASSERT_NE(nullptr, callbackWrap2);
+
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName = "ohos.permission.CAMERA";
+
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, TEST_PID_1, permissionName, callbackWrap1->AsObject()));
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
+        tokenId, TEST_PID_2, permissionName, callbackWrap2->AsObject()));
+
+    AppStateData appStateData;
+    appStateData.accessTokenId = tokenId;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
+    appStateData.pid = TEST_PID_1;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    appStateData.pid = TEST_PID_2;
+    appStateObserver_->OnAppStateChanged(appStateData);
+
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.pid = TEST_PID_1;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(callbackPtr1->isShow_);
+    ASSERT_TRUE(callbackPtr2->isShow_);
+
+    appStateData.pid = TEST_PID_2;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_FALSE(callbackPtr2->isShow_);
+}
+
+/*
+ * @tc.name: StartUsingPermissionTest010
+ * @tc.desc: Test multiple process start using permission
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionRecordManagerTest, StartUsingPermissionTest010, TestSize.Level1)
+{
+    EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
+
+    std::vector<std::string> permList = {"ohos.permission.CAMERA"};
+    sptr<PermActiveStatusChangeCallback> callback = new (std::nothrow) PermActiveStatusChangeCallback();
+    ASSERT_NE(nullptr, callback);
+    ASSERT_EQ(RET_SUCCESS, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, callback->AsObject()));
+
+    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
+        g_InfoParms1.instIndex);
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
+    std::string permissionName = "ohos.permission.CAMERA";
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, TEST_PID_1, permissionName));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, TEST_PID_2, permissionName));
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, TEST_PID_2, "ohos.permission.CAMERA"));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_ACTIVE_IN_BACKGROUND, callback->type_);
+
+    ASSERT_EQ(Constant::SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, TEST_PID_1, "ohos.permission.CAMERA"));
+    usleep(500000); // 500000us = 0.5s
+    ASSERT_EQ(PERM_INACTIVE, callback->type_);
 }
 
 #ifndef APP_SECURITY_PRIVACY_SERVICE
@@ -449,11 +650,11 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
 
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(CAMERA_PERMISSION_NAME));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.CAMERA"));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(MICROPHONE_PERMISSION_NAME));
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.MICROPHONE"));
     sleep(3); // wait for dialog disappear
-    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog(LOCATION_PERMISSION_NAME)); // no dialog
+    ASSERT_EQ(true, PermissionRecordManager::GetInstance().ShowGlobalDialog("ohos.permission.LOCATION")); // no dialog
 }
 #endif
 
@@ -466,21 +667,28 @@ HWTEST_F(PermissionRecordManagerTest, ShowGlobalDialog001, TestSize.Level1)
 HWTEST_F(PermissionRecordManagerTest, AppStateChangeListener001, TestSize.Level1)
 {
     EXPECT_EQ(0, SetSelfTokenID(g_nativeToken));
-    bool isMicLoad = PermissionRecordManager::GetInstance().isMicLoad_;
+    
+    char value[VALUE_MAX_LEN] = {0};
+    GetParameter(EDM_MIC_MUTE_KEY, "", value, VALUE_MAX_LEN - 1);
+    GTEST_LOG_(INFO) << "value:" << value;
 
-    PermissionRecordManager::GetInstance().isMicLoad_ = true;
-    PermissionRecordManager::GetInstance().SetMutePolicy(PolicyType::EDM, CallerType::MICROPHONE, false);
+    bool isMute = strncmp(value, "true", VALUE_MAX_LEN) == 0;
+    SetParameter(EDM_MIC_MUTE_KEY, std::to_string(false).c_str());
+
     bool isMuteMic = AudioManagerPrivacyClient::GetInstance().GetPersistentMicMuteState();
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(true, PolicyType::PRIVACY);
     AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
         g_InfoParms1.instIndex);
     // status is inactive
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, PID, "ohos.permission.MICROPHONE"));
     sleep(3); // wait for dialog disappear
-    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PERM_ACTIVE_IN_BACKGROUND);
-    ASSERT_EQ(0, PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, MICROPHONE_PERMISSION_NAME));
+    PermissionRecordManager::GetInstance().NotifyAppStateChange(tokenId, PID, PERM_ACTIVE_IN_BACKGROUND);
+    ASSERT_EQ(RET_SUCCESS,
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.MICROPHONE"));
     AudioManagerPrivacyClient::GetInstance().SetMicrophoneMutePersistent(isMuteMic, PolicyType::PRIVACY);
-    PermissionRecordManager::GetInstance().isMicLoad_ = isMicLoad;
+    std::string str = isMute ? "true" : "false";
+    SetParameter(EDM_MIC_MUTE_KEY, str.c_str());
 }
 
 /*
@@ -571,31 +779,6 @@ HWTEST_F(PermissionRecordManagerTest, RemovePermissionUsedRecords001, TestSize.L
 }
 
 /*
- * @tc.name: StartUsingPermission001
- * @tc.desc: PermissionRecordManager::StartUsingPermission function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionRecordManagerTest, StartUsingPermission001, TestSize.Level1)
-{
-    AccessTokenID tokenId = AccessTokenKit::GetHapTokenID(g_InfoParms1.userID, g_InfoParms1.bundleName,
-        g_InfoParms1.instIndex);
-    ASSERT_NE(static_cast<AccessTokenID>(0), tokenId);
-
-    // tokenId invaild
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StartUsingPermission(
-        g_nativeToken, "ohos.permission.READ_MEDIA"));
-
-    ASSERT_EQ(Constant::SUCCESS, PermissionRecordManager::GetInstance().StartUsingPermission(
-        tokenId, "ohos.permission.READ_MEDIA"));
-    ASSERT_EQ(PrivacyError::ERR_PERMISSION_ALREADY_START_USING,
-        PermissionRecordManager::GetInstance().StartUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
-
-    ASSERT_EQ(Constant::SUCCESS,
-        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
-}
-
-/*
  * @tc.name: StopUsingPermission001
  * @tc.desc: PermissionRecordManager::StopUsingPermission function test
  * @tc.type: FUNC
@@ -609,15 +792,15 @@ HWTEST_F(PermissionRecordManagerTest, StopUsingPermission001, TestSize.Level1)
 
     // tokenId invaild
     ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().StopUsingPermission(
-        static_cast<AccessTokenID>(0), "ohos.permission.READ_MEDIA"));
+        static_cast<AccessTokenID>(0), PID, "ohos.permission.READ_MEDIA"));
 
     // permission invaild
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_EXIST, PermissionRecordManager::GetInstance().StopUsingPermission(
-        tokenId, "ohos.permission.test"));
+        tokenId, PID, "ohos.permission.test"));
 
     // not start using
     ASSERT_EQ(PrivacyError::ERR_PERMISSION_NOT_START_USING,
-        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, "ohos.permission.READ_MEDIA"));
+        PermissionRecordManager::GetInstance().StopUsingPermission(tokenId, PID, "ohos.permission.READ_MEDIA"));
 }
 
 /*
@@ -632,8 +815,8 @@ HWTEST_F(PermissionRecordManagerTest, RegisterPermActiveStatusCallback003, TestS
 
     permList.emplace_back("com.ohos.TEST");
     // GetDefPermission != Constant::SUCCESS && listRes is empty && listSrc is not empty
-    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID,
-        PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(permList, nullptr));
+    ASSERT_EQ(PrivacyError::ERR_PARAM_INVALID, PermissionRecordManager::GetInstance().RegisterPermActiveStatusCallback(
+        GetSelfTokenID(), permList, nullptr));
 }
 
 /*

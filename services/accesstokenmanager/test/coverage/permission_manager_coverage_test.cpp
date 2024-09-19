@@ -27,7 +27,6 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
-#include "running_form_info.h"
 #include "token_setproc.h"
 
 using namespace testing::ext;

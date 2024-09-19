@@ -18,6 +18,7 @@
 
 #include <iremote_proxy.h>
 
+#include "ams_manager_access_proxy.h"
 #include "app_state_data.h"
 #include "process_data.h"
 #include "service_ipc_interface_code.h"
@@ -29,13 +30,16 @@ class IApplicationStateObserver : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.appexecfwk.IApplicationStateObserver");
 
-    virtual void OnForegroundApplicationChanged(const AppStateData &appStateData) = 0;
+    virtual void OnProcessStateChanged(const ProcessData &processData) = 0;
     virtual void OnProcessDied(const ProcessData &processData) = 0;
-    virtual void OnApplicationStateChanged(const AppStateData &appStateData) = 0;
+    virtual void OnAppStateChanged(const AppStateData &appStateData) = 0;
+    virtual void OnAppStopped(const AppStateData &appStateData) = 0;
+
     enum class Message {
-        TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
+        TRANSACT_ON_PROCESS_STATE_CHANGED = 4,
         TRANSACT_ON_PROCESS_DIED = 5,
-        TRANSACT_ON_APPLICATION_STATE_CHANGED = 6,
+        TRANSACT_ON_APP_STATE_CHANGED = 7,
+        TRANSACT_ON_APP_STOPPED = 10,
     };
 };
 
@@ -43,12 +47,14 @@ class IAppMgr : public IRemoteBroker {
 public:
     DECLARE_INTERFACE_DESCRIPTOR(u"ohos.appexecfwk.AppMgr");
 
+    virtual sptr<IAmsMgr> GetAmsMgr() = 0;
     virtual int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
         const std::vector<std::string>& bundleNameList = {}) = 0;
     virtual int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer) = 0;
     virtual int32_t GetForegroundApplications(std::vector<AppStateData>& list) = 0;
 
     enum class Message {
+        APP_GET_MGR_INSTANCE = 6,
         REGISTER_APPLICATION_STATE_OBSERVER = 12,
         UNREGISTER_APPLICATION_STATE_OBSERVER = 13,
         GET_FOREGROUND_APPLICATIONS = 14,
@@ -61,6 +67,7 @@ public:
 
     virtual ~AppManagerAccessProxy() = default;
 
+    sptr<IAmsMgr> GetAmsMgr() override;
     int32_t RegisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer,
         const std::vector<std::string> &bundleNameList = {}) override;
     int32_t UnregisterApplicationStateObserver(const sptr<IApplicationStateObserver>& observer) override;

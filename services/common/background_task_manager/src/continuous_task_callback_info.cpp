@@ -143,6 +143,16 @@ uint64_t ContinuousTaskCallbackInfo::GetFullTokenId() const
 {
     return tokenId_;
 }
+
+uint32_t ContinuousTaskCallbackInfo::GetTypeId() const
+{
+    return typeId_;
+}
+
+std::vector<uint32_t> ContinuousTaskCallbackInfo::GetTypeIds() const
+{
+    return typeIds_;
+}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

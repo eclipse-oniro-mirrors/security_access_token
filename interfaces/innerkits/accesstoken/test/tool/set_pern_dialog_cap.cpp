@@ -55,6 +55,7 @@ int32_t main(int argc, char *argv[])
 {
     if (argc < 3) { // 3: size
         std::cout << "Help: ./SetPermDialogCapTest bundleName 0/1 (0: allow, 1: forbid)\n" << std::endl;
+        return 0;
     }
 
     NativeTokenGet();

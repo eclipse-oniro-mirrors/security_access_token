@@ -28,9 +28,9 @@ namespace OHOS {
 namespace Security {
 namespace AccessToken {
 namespace {
-constexpr const uint64_t MERGE_TIMESTAMP = 200; // 200ms
+constexpr const int64_t MERGE_TIMESTAMP = 200; // 200ms
 std::mutex g_lockCache;
-std::map<std::string, uint64_t> g_recordMap;
+std::map<std::string, int64_t> g_recordMap;
 }
 static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 {
@@ -40,7 +40,7 @@ static std::string GetRecordUniqueStr(const AddPermParamInfo& record)
 bool FindAndInsertRecord(const AddPermParamInfo& record)
 {
     std::string newRecordStr = GetRecordUniqueStr(record);
-    uint64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
+    int64_t curTimestamp = TimeUtil::GetCurrentTimestamp();
     std::lock_guard<std::mutex> lock(g_lockCache);
     auto iter = g_recordMap.find(newRecordStr);
     if (iter == g_recordMap.end()) {
@@ -83,7 +83,7 @@ int32_t PrivacyKit::AddPermissionUsedRecord(const AddPermParamInfo& info, bool a
     return RET_SUCCESS;
 }
 
-int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
@@ -91,11 +91,11 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName);
 }
 
 int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::string& permissionName,
-    const std::shared_ptr<StateCustomizedCbk>& callback)
+    const std::shared_ptr<StateCustomizedCbk>& callback, int32_t pid)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
@@ -103,10 +103,10 @@ int32_t PrivacyKit::StartUsingPermission(AccessTokenID tokenID, const std::strin
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, permissionName, callback);
+    return PrivacyManagerClient::GetInstance().StartUsingPermission(tokenID, pid, permissionName, callback);
 }
 
-int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName)
+int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string& permissionName, int32_t pid)
 {
     if (!DataValidator::IsTokenIDValid(tokenID) || !DataValidator::IsPermissionNameValid(permissionName)) {
         return PrivacyError::ERR_PARAM_INVALID;
@@ -114,7 +114,7 @@ int32_t PrivacyKit::StopUsingPermission(AccessTokenID tokenID, const std::string
     if (!DataValidator::IsHapCaller(tokenID)) {
         return PrivacyError::ERR_PARAM_INVALID;
     }
-    return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, permissionName);
+    return PrivacyManagerClient::GetInstance().StopUsingPermission(tokenID, pid, permissionName);
 }
 
 int32_t PrivacyKit::RemovePermissionUsedRecords(AccessTokenID tokenID, const std::string& deviceID)

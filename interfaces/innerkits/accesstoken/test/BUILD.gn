@@ -40,8 +40,10 @@ ohos_unittest("libaccesstoken_sdk_test") {
     "unittest/src/accesstoken_kit_extension_test.cpp",
     "unittest/src/accesstoken_kit_test.cpp",
     "unittest/src/accesstoken_location_request_test.cpp",
+    "unittest/src/accesstoken_short_time_permission_test.cpp",
     "unittest/src/app_installation_optimized_test.cpp",
     "unittest/src/clone_app_permission_test.cpp",
+    "unittest/src/edm_policy_set_test.cpp",
     "unittest/src/remote_token_kit_test.cpp",
     "unittest/src/security_component_grant_test.cpp",
   ]
@@ -52,7 +54,9 @@ ohos_unittest("libaccesstoken_sdk_test") {
 
   deps = [
     "${access_token_path}/frameworks/accesstoken:accesstoken_communication_adapter_cxx",
+    "${access_token_path}/frameworks/common:accesstoken_common_cxx",
     "${access_token_path}/interfaces/innerkits/nativetoken:libnativetoken_shared",
+    "${access_token_path}/interfaces/innerkits/token_setproc:libperm_setproc",
     "${access_token_path}/interfaces/innerkits/token_setproc:libtokensetproc_shared",
     "../:libaccesstoken_sdk",
     "../:libtokenid_sdk",
@@ -145,6 +149,8 @@ group("unittest") {
   deps = [
     ":accesstoken_mock_test",
     ":libaccesstoken_sdk_test",
+    "tool:GrantShortTermWriteImageVideo",
     "tool:SetPermDialogCapTest",
+    "tool:VerifyAccessToken",
   ]
 }

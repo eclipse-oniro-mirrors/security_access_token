@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -309,10 +309,11 @@ HWTEST_F(NativeTokenReceptorTest, ProcessNativeTokenInfos001, TestSize.Level1)
     sleep(3);
 
     // get sql data
+    GenericValues conditionValue;
     std::vector<GenericValues> nativeTokenResults;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_NATIVE_INFO, nativeTokenResults);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_NATIVE_INFO, conditionValue, nativeTokenResults);
     std::vector<GenericValues> permStateRes;
-    AccessTokenDb::GetInstance().Find(AccessTokenDb::ACCESSTOKEN_PERMISSION_STATE, permStateRes);
+    AccessTokenDb::GetInstance().Find(AtmDataType::ACCESSTOKEN_PERMISSION_STATE, conditionValue, permStateRes);
     for (GenericValues nativeTokenValue : nativeTokenResults) {
         AccessTokenID tokenId = (AccessTokenID)nativeTokenValue.GetInt(TokenFiledConst::FIELD_TOKEN_ID);
         if (tokenId != info.tokenID) {
@@ -378,45 +379,6 @@ HWTEST_F(NativeTokenReceptorTest, CheckNativeDCap001, TestSize.Level1)
     ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
     ASSERT_EQ(ret, RET_SUCCESS);
 }
-
-#ifdef TOKEN_SYNC_ENABLE
-/**
- * @tc.name: GetAllNativeTokenInfo001
- * @tc.desc: Verify GetAllNativeTokenInfo normal and abnormal branch
- * @tc.type: FUNC
- * @tc.require: Issue I5RJBB
- */
-HWTEST_F(NativeTokenReceptorTest, GetAllNativeTokenInfo001, TestSize.Level1)
-{
-    ACCESSTOKEN_LOG_INFO(LABEL, "GetAllNativeTokenInfo001!");
-
-    // test nativetokenInfo = nullptr
-    std::vector<NativeTokenInfoForSync> nativeVec;
-    std::vector<std::shared_ptr<NativeTokenInfoInner>> tokenInfos;
-    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
-    ASSERT_EQ(nativeVec.empty(), false);
-
-    // test process one
-    NativeTokenInfo info = {.apl = APL_NORMAL,
-        .ver = 1,
-        .processName = "GetAllNativeTokenInfo001",
-        .dcap = {"AT_CAP", "ST_CAP"},
-        .tokenID = 0x28100000,
-        .tokenAttr = 0};
-
-    std::vector<PermissionStateFull> permStateList = {};
-    std::shared_ptr<NativeTokenInfoInner> nativeToken = std::make_shared<NativeTokenInfoInner>(info, permStateList);
-    tokenInfos.emplace_back(nativeToken);
-    AccessTokenInfoManager::GetInstance().ProcessNativeTokenInfos(tokenInfos);
-    AccessTokenInfoManager::GetInstance().GetAllNativeTokenInfo(nativeVec);
-    ASSERT_EQ(!nativeVec.empty(), true);
-    AccessTokenID resultTokenId = AccessTokenInfoManager::GetInstance().GetNativeTokenId("GetAllNativeTokenInfo001");
-    ASSERT_EQ(resultTokenId, info.tokenID);
-
-    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveNativeTokenInfo(info.tokenID);
-    ASSERT_EQ(ret, RET_SUCCESS);
-}
-#endif
 
 static void PermStateListSet(std::vector<PermissionStateFull> &permStateList)
 {

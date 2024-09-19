@@ -13,23 +13,18 @@
  * limitations under the License.
  */
 #include "power_manager_loader.h"
-
-#include "power_mgr_client.h"
+#include "power_manager_client.h"
 
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
 bool PowerManagerLoader::IsScreenOn()
 {
-    bool isScreenOn = PowerMgr::PowerMgrClient::GetInstance().IsScreenOn();
-    delete &PowerMgr::PowerMgrClient::GetInstance();
-    return isScreenOn;
+    return PowerMgrClient::GetInstance().IsScreenOn();
 }
 
 void PowerManagerLoader::WakeupDevice()
 {
-    PowerMgr::PowerMgrClient::GetInstance().WakeupDevice();
-    delete &PowerMgr::PowerMgrClient::GetInstance();
 }
 
 extern "C" {

@@ -19,10 +19,6 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
-enum class AccessAppServiceInterfaceCode {
-    TRANSACT_ON_FOREGROUND_APPLICATION_CHANGED = 0,
-};
-
 enum class AccessAbilityServiceInterfaceCode {
     START_ABILITY_ADD_CALLER = 1005,
 };

@@ -40,7 +40,7 @@ static const int INVALID_DLP_TOKEN_FLAG = -1;
 static const int FIRSTCALLER_TOKENID_DEFAULT = 0;
 } // namespace
 
-PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
+PermUsedTypeEnum AccessTokenKit::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d, permissionName=%{public}s.",
@@ -49,7 +49,23 @@ PermUsedTypeEnum AccessTokenKit::GetUserGrantedPermissionUsedType(
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input param failed.");
         return PermUsedTypeEnum::INVALID_USED_TYPE;
     }
-    return AccessTokenManagerClient::GetInstance().GetUserGrantedPermissionUsedType(tokenID, permissionName);
+    return AccessTokenManagerClient::GetInstance().GetPermissionUsedType(tokenID, permissionName);
+}
+
+int AccessTokenKit::GrantPermissionForSpecifiedTime(
+    AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d, permissionName=%{public}s, onceTime=%{public}d.",
+        tokenID, permissionName.c_str(), onceTime);
+    if (tokenID == INVALID_TOKENID) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid tokenID");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    if (!DataValidator::IsPermissionNameValid(permissionName)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Invalid permissionName");
+        return AccessTokenError::ERR_PARAM_INVALID;
+    }
+    return AccessTokenManagerClient::GetInstance().GrantPermissionForSpecifiedTime(tokenID, permissionName, onceTime);
 }
 
 AccessTokenIDEx AccessTokenKit::AllocHapToken(const HapInfoParams& info, const HapPolicyParams& policy)
@@ -114,7 +130,6 @@ int AccessTokenKit::DeleteToken(AccessTokenID tokenID)
 {
     ACCESSTOKEN_LOG_INFO(LABEL, "TokenID=%{public}d.", tokenID);
     if (tokenID == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
         return AccessTokenError::ERR_PARAM_INVALID;
     }
     return AccessTokenManagerClient::GetInstance().DeleteToken(tokenID);
@@ -503,26 +518,12 @@ int AccessTokenKit::GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInf
     return AccessTokenManagerClient::GetInstance().GetHapTokenInfoFromRemote(tokenID, hapSync);
 }
 
-int AccessTokenKit::GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSync>& nativeTokenInfosRes)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called");
-
-    return AccessTokenManagerClient::GetInstance().GetAllNativeTokenInfo(nativeTokenInfosRes);
-}
-
 int AccessTokenKit::SetRemoteHapTokenInfo(const std::string& deviceID,
     const HapTokenInfoForSync& hapSync)
 {
     ACCESSTOKEN_LOG_DEBUG(LABEL, "DeviceID=%{public}s, tokenID=%{public}d.",
         ConstantCommon::EncryptDevId(deviceID).c_str(), hapSync.baseInfo.tokenID);
     return AccessTokenManagerClient::GetInstance().SetRemoteHapTokenInfo(deviceID, hapSync);
-}
-
-int AccessTokenKit::SetRemoteNativeTokenInfo(const std::string& deviceID,
-    const std::vector<NativeTokenInfoForSync>& nativeTokenInfoList)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "DeviceID=%{public}s.", ConstantCommon::EncryptDevId(deviceID).c_str());
-    return AccessTokenManagerClient::GetInstance().SetRemoteNativeTokenInfo(deviceID, nativeTokenInfoList);
 }
 
 int AccessTokenKit::DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID)
@@ -565,12 +566,6 @@ void AccessTokenKit::DumpTokenInfo(const AtmToolsParamInfo& info, std::string& d
     AccessTokenManagerClient::GetInstance().DumpTokenInfo(info, dumpInfo);
 }
 
-int32_t AccessTokenKit::DumpPermDefInfo(std::string& dumpInfo)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "Called.");
-    return AccessTokenManagerClient::GetInstance().DumpPermDefInfo(dumpInfo);
-}
-
 int32_t AccessTokenKit::GetVersion(uint32_t& version)
 {
     return AccessTokenManagerClient::GetInstance().GetVersion(version);
@@ -602,6 +597,25 @@ int32_t AccessTokenKit::GetNativeTokenName(AccessTokenID tokenId, std::string& n
     }
 
     return AccessTokenManagerClient::GetInstance().GetNativeTokenName(tokenId, name);
+}
+
+int32_t AccessTokenKit::InitUserPolicy(
+    const std::vector<UserState>& userList, const std::vector<std::string>& permList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().InitUserPolicy(userList, permList);
+}
+
+int32_t AccessTokenKit::UpdateUserPolicy(const std::vector<UserState>& userList)
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().UpdateUserPolicy(userList);
+}
+
+int32_t AccessTokenKit::ClearUserPolicy()
+{
+    ACCESSTOKEN_LOG_INFO(LABEL, "Enter.");
+    return AccessTokenManagerClient::GetInstance().ClearUserPolicy();
 }
 } // namespace AccessToken
 } // namespace Security

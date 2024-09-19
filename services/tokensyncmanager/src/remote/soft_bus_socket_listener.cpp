@@ -39,7 +39,7 @@ void SoftBusSocketListener::OnBind(int32_t socket, PeerSocketInfo info)
     ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd is %{public}d.", socket);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fd invalid.");
         return;
     }
 
@@ -58,7 +58,7 @@ void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
     ACCESSTOKEN_LOG_INFO(LABEL, "Socket fd %{public}d shutdown because %{public}u.", socket, reason);
 
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fd invalid.");
         return;
     }
 
@@ -73,7 +73,7 @@ void SoftBusSocketListener::OnShutdown(int32_t socket, ShutdownReason reason)
 bool SoftBusSocketListener::GetNetworkIdBySocket(const int32_t socket, std::string& networkId)
 {
     if (socket <= Constant::INVALID_SOCKET_FD) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fb invalid.");
+        ACCESSTOKEN_LOG_ERROR(LABEL, "Socket fd invalid.");
         return false;
     }
 

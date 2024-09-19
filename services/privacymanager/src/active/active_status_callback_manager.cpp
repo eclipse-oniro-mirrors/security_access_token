@@ -65,7 +65,7 @@ void ActiveStatusCallbackManager::InitEventHandler(const std::shared_ptr<AccessE
 #endif
 
 int32_t ActiveStatusCallbackManager::AddCallback(
-    const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
+    AccessTokenID regiterTokenId, const std::vector<std::string>& permList, const sptr<IRemoteObject>& callback)
 {
     if (callback == nullptr) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "Input is nullptr");
@@ -80,6 +80,7 @@ int32_t ActiveStatusCallbackManager::AddCallback(
     callback->AddDeathRecipient(callbackDeathRecipient_);
 
     CallbackData recordInstance;
+    recordInstance.registerTokenId = regiterTokenId;
     recordInstance.callbackObject_ = callback;
     recordInstance.permList_ = permList;
 
@@ -132,7 +133,7 @@ void ActiveStatusCallbackManager::ActiveStatusChange(
         for (auto it = callbackDataList_.begin(); it != callbackDataList_.end(); ++it) {
             std::vector<std::string> permList = (*it).permList_;
             if (!NeedCalled(permList, permName)) {
-                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, permName %{public}s", tokenId, permName.c_str());
+                ACCESSTOKEN_LOG_INFO(LABEL, "TokenId %{public}u, perm %{public}s", tokenId, permName.c_str());
                 continue;
             }
             list.emplace_back((*it).callbackObject_);
@@ -172,7 +173,9 @@ void ActiveStatusCallbackManager::ExecuteCallbackAsync(
     ACCESSTOKEN_LOG_INFO(LABEL, "Add permission task name:%{public}s", taskName.c_str());
     std::function<void()> task = ([tokenId, permName, deviceId, changeType]() {
         ActiveStatusCallbackManager::GetInstance().ActiveStatusChange(tokenId, permName, deviceId, changeType);
-        ACCESSTOKEN_LOG_INFO(LABEL, "Token: %{public}d, ActiveStatusChange end", tokenId);
+        ACCESSTOKEN_LOG_INFO(LABEL,
+            "Token: %{public}u, permName:  %{public}s, changeType: %{public}d, ActiveStatusChange end",
+            tokenId, permName.c_str(), changeType);
     });
     eventHandler_->ProxyPostTask(task, taskName);
     ACCESSTOKEN_LOG_INFO(LABEL, "The callback execution is complete");

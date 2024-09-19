@@ -29,8 +29,9 @@
 #undef private
 #include "accesstoken_callback_stubs.h"
 #include "callback_death_recipients.h"
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 #include "continuous_task_callback_info.h"
-#include "running_form_info.h"
+#endif
 
 using namespace testing::ext;
 using namespace OHOS;
@@ -42,8 +43,6 @@ namespace {
 static constexpr uint32_t MAX_CALLBACK_SIZE = 1024;
 static constexpr int32_t USER_ID = 100;
 static constexpr int32_t INST_INDEX = 0;
-static constexpr int32_t RANDOM_INPUT_32 = 123;
-static constexpr int64_t RANDOM_INPUT_64 = 123;
 static std::map<std::string, PermissionDefData> g_permissionDefinitionMap;
 static bool g_hasHapPermissionDefinition;
 static PermissionDef g_infoManagerTestPermDef1 = {
@@ -304,14 +303,16 @@ static AccessTokenID CreateTempHapTokenInfo()
 {
     g_infoManagerTestStateA.permissionName = "ohos.permission.APPROXIMATELY_LOCATION";
     g_infoManagerTestStateA.grantStatus[0] = PERMISSION_DENIED;
+    g_infoManagerTestStateB.permissionName = "ohos.permission.READ_PASTEBOARD";
+    g_infoManagerTestStateB.grantStatus[0] = PERMISSION_DENIED;
     static HapPolicyParams infoManagerTestPolicyPrams = {
         .apl = APL_NORMAL,
         .domain = "test.domain",
         .permList = {},
-        .permStateList = { g_infoManagerTestStateA }
+        .permStateList = { g_infoManagerTestStateA, g_infoManagerTestStateB}
     };
     static HapInfoParams infoManagerTestInfoParms = {
-        .userID = 1,
+        .userID = USER_ID,
         .bundleName = "GrantTempPermission",
         .instIndex = 0,
         .dlpType = DLP_COMMON,
@@ -445,7 +446,7 @@ HWTEST_F(PermissionManagerTest, DlpPermissionConfig002, TestSize.Level1)
         tokenID, "ohos.permission.CHANGE_ABILITY_ENABLED_STATE");
     ASSERT_EQ(PERMISSION_GRANTED, ret);
     ret = PermissionManager::GetInstance().VerifyAccessToken(
-        tokenID, "ohos.permission.CLEAN_APPLICATION_DATA");
+        tokenID, "ohos.permission..CLEAN_APPLICATION_DATA");
     ASSERT_EQ(PERMISSION_DENIED, ret);
 
     ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
@@ -1147,19 +1148,6 @@ HWTEST_F(PermissionManagerTest, GetSelfPermissionState003, TestSize.Level1)
 }
 
 /**
- * @tc.name: DumpPermDefInfo001
- * @tc.desc: PermissionManager::DumpPermDefInfo function test.
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, DumpPermDefInfo001, TestSize.Level1)
-{
-    std::string dumpInfo = "";
-    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().DumpPermDefInfo(dumpInfo));
-    EXPECT_EQ(false, dumpInfo.empty());
-}
-
-/**
  * @tc.name: SetPermissionRequestToggleStatus001
  * @tc.desc: PermissionManager::SetPermissionRequestToggleStatus function test with invalid permissionName, invalid
  * status and invalid userID.
@@ -1369,7 +1357,7 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     uint32_t flag = 0;
     // tokenId invalid
     ASSERT_EQ(AccessTokenError::ERR_TOKENID_NOT_EXIST, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
 
     HapInfoParams info = {
         .userID = USER_ID,
@@ -1390,12 +1378,61 @@ HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState002, TestSize.Level1)
     infoPtr->SetRemote(true);
     // remote token is true
     ASSERT_EQ(AccessTokenError::ERR_IDENTITY_CHECK_FAILED, PermissionManager::GetInstance().UpdateTokenPermissionState(
-        tokenId, permissionName, isGranted, flag));
+        tokenId, permissionName, isGranted, flag, true));
     infoPtr->SetRemote(false);
 
     // permission not in list
     ASSERT_EQ(ERR_PARAM_INVALID, PermissionManager::GetInstance().UpdateTokenPermissionState(tokenId,
-        permissionName, isGranted, flag));
+        permissionName, isGranted, flag, true));
+
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
+}
+
+/**
+ * @tc.name: UpdateTokenPermissionState003
+ * @tc.desc: PermissionManager::UpdateTokenPermissionState function test
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, UpdateTokenPermissionState003, TestSize.Level1)
+{
+    std::string permissionName = "ohos.permission.DUMP";
+    uint32_t flag = 0;
+
+    HapInfoParams info = {
+        .userID = USER_ID,
+        .bundleName = "permission_manager_test",
+        .instIndex = INST_INDEX,
+        .appIDDesc = "permission_manager_test"
+    };
+    PermissionStateFull permStat = {
+        .permissionName = permissionName,
+        .isGeneral = true,
+        .resDeviceID = {"dev-001"},
+        .grantStatus = {PermissionState::PERMISSION_DENIED},
+        .grantFlags = {PermissionFlag::PERMISSION_DEFAULT_FLAG}
+    };
+    HapPolicyParams policy = {
+        .apl = APL_NORMAL,
+        .domain = "domain",
+        .permStateList = {permStat}
+    };
+    AccessTokenIDEx tokenIdEx = {0};
+    ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().CreateHapTokenInfo(info, policy, tokenIdEx));
+    ASSERT_NE(static_cast<AccessTokenID>(0), tokenIdEx.tokenIdExStruct.tokenID);
+    AccessTokenID tokenId = tokenIdEx.tokenIdExStruct.tokenID;
+
+    flag = PERMISSION_ALLOW_THIS_TIME;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_COMPONENT_SET;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
+
+    flag = PERMISSION_USER_FIXED;
+    ASSERT_EQ(RET_SUCCESS, PermissionManager::GetInstance().UpdateTokenPermissionState(
+        tokenId, permissionName, false, flag, true));
 
     ASSERT_EQ(RET_SUCCESS, AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenId));
 }
@@ -1512,25 +1549,6 @@ HWTEST_F(PermissionManagerTest, VerifyHapAccessToken001, TestSize.Level1)
 }
 
 /**
- * @tc.name: ClearUserGrantedPermissionState001
- * @tc.desc: PermissionManager::ClearUserGrantedPermissionState function test
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, ClearUserGrantedPermissionState001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123; // 123 is random input
-
-    std::shared_ptr<HapTokenInfoInner> hap = std::make_shared<HapTokenInfoInner>();
-    ASSERT_NE(nullptr, hap);
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_[tokenId] = hap;
-
-    PermissionManager::GetInstance().ClearUserGrantedPermissionState(tokenId); // permPolicySet is null
-
-    AccessTokenInfoManager::GetInstance().hapTokenInfoMap_.erase(tokenId);
-}
-
-/**
  * @tc.name: GrantTempPermission001
  * @tc.desc: Test grant temp permission revoke permission after switching to background
  * @tc.type: FUNC
@@ -1546,7 +1564,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     // grant temp permission
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
@@ -1555,7 +1573,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission001, TestSize.Level1)
     // change to background
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     TempPermissionObserver::GetInstance().UnRegisterCallback();
@@ -1586,12 +1604,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission002, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // change to foreground
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_FOREGROUND);
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     sleep(11);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
@@ -1617,9 +1635,10 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1628,7 +1647,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission003, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1659,13 +1678,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission004, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1698,13 +1718,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission005, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1743,13 +1764,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission006, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // change to background
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1780,10 +1802,11 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission007, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -1815,13 +1838,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission008, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // change to background
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove background task
@@ -1853,12 +1877,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1867,7 +1893,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission009, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     sleep(11);
@@ -1897,12 +1923,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1911,7 +1939,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission010, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // form change to invisible
@@ -1946,12 +1974,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -1960,7 +1990,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission011, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove background tast
@@ -1992,12 +2022,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     // create a form
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::VISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -2006,7 +2038,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove form
@@ -2027,14 +2059,14 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission012, TestSize.Level1)
     ASSERT_EQ(RET_SUCCESS, ret);
     GTEST_LOG_(INFO) << "remove the token info";
 }
-#endif
+
 /**
- * @tc.name: GrantTempPermission0013
- * @tc.desc: Test grant temp permission process died
+ * @tc.name: GrantTempPermission013
+ * @tc.desc: Test grant temp permission, Create multiple continuous task
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0013, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission013, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2043,9 +2075,36 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0013, TestSize.Level1)
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-    ProcessData processData;
-    processData.accessTokenId = tokenID;
-    appStateObserver_->OnProcessDied(processData);
+    // create background task
+    std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
+        = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::DATA_TRANSFER);
+    continuousTaskCallbackInfo->tokenId_ = tokenID;
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
+
+    // create background task
+    std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo1
+        = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo1->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo1->tokenId_ = tokenID;
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo1);
+
+    // change to background
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.accessTokenId = tokenID;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+
+    // remove background tast
+    backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
+    sleep(11);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    // remove background tast
+    backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo1);
+    sleep(11);
     EXPECT_EQ(PERMISSION_DENIED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
     // remove hap
@@ -2055,12 +2114,86 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0013, TestSize.Level1)
 }
 
 /**
- * @tc.name: GrantTempPermission0014
+ * @tc.name: GrantTempPermission014
+ * @tc.desc: Test grant temp permission, Create multiple continuous task
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission014, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.READ_PASTEBOARD", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_PASTEBOARD"));
+    // create background task
+    std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
+        = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
+    continuousTaskCallbackInfo->tokenId_ = tokenID;
+    backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
+
+    // change to background
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
+    appStateData.accessTokenId = tokenID;
+    appStateObserver_->OnAppStateChanged(appStateData);
+    sleep(11);
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.READ_PASTEBOARD"));
+    // remove background tast
+    backgroundTaskObserver_->OnContinuousTaskStop(continuousTaskCallbackInfo);
+    sleep(11);
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    // remove hap
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+#endif
+/**
+ * @tc.name: GrantTempPermission015
+ * @tc.desc: Test grant temp permission process died
+ * @tc.type: FUNC
+ * @tc.require:
+ */
+HWTEST_F(PermissionManagerTest, GrantTempPermission015, TestSize.Level1)
+{
+    accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
+    accessTokenService_->Initialize();
+    AccessTokenID tokenID = CreateTempHapTokenInfo();
+    EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
+        "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_ALLOW_THIS_TIME));
+    EXPECT_EQ(PERMISSION_GRANTED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    AppStateData appStateData;
+    appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_TERMINATED);
+    appStateData.accessTokenId = tokenID;
+    appStateObserver_->OnAppStopped(appStateData);
+    EXPECT_EQ(PERMISSION_DENIED,
+        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
+    // remove hap
+    int32_t ret = AccessTokenInfoManager::GetInstance().RemoveHapTokenInfo(tokenID);
+    ASSERT_EQ(RET_SUCCESS, ret);
+    GTEST_LOG_(INFO) << "remove the token info";
+}
+
+/**
+ * @tc.name: GrantTempPermission016
  * @tc.desc: Test grant & revoke temp permission
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0014, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission016, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2080,12 +2213,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0014, TestSize.Level1)
 }
 
 /**
- * @tc.name: GrantTempPermission0015
+ * @tc.name: GrantTempPermission017
  * @tc.desc: Test grant temp permission not root
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0015, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission017, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2100,12 +2233,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0015, TestSize.Level1)
 }
 
 /**
- * @tc.name: GrantTempPermission0016
+ * @tc.name: GrantTempPermission018
  * @tc.desc: Test tokenID not in the list
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission018, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2113,22 +2246,17 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
     EXPECT_EQ(RET_SUCCESS, PermissionManager::GetInstance().GrantPermission(tokenID,
         "ohos.permission.APPROXIMATELY_LOCATION", PERMISSION_SYSTEM_FIXED));
 
-    ProcessData processData;
-    processData.accessTokenId = tokenID;
-    appStateObserver_->OnProcessDied(processData);
-    EXPECT_EQ(PERMISSION_GRANTED,
-        PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-
     // change to background
     AppStateData appStateData;
     appStateData.state = static_cast<int32_t>(ApplicationState::APP_STATE_BACKGROUND);
     appStateData.accessTokenId = tokenID;
-    appStateObserver_->OnForegroundApplicationChanged(appStateData);
+    appStateObserver_->OnAppStateChanged(appStateData);
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
-    TempPermissionObserver::GetInstance().formTokenMap_.clear();
     FormInstance formInstance;
     formInstance.bundleName_ = "GrantTempPermission";
+    formInstance.appIndex_ = 0;
+    formInstance.userId_ = USER_ID;
     formInstance.formVisiblity_ = FormVisibilityType::INVISIBLE;
     std::vector<FormInstance> formInstances;
     formInstances.emplace_back(formInstance);
@@ -2137,7 +2265,6 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
     EXPECT_EQ(PERMISSION_GRANTED,
         PermissionManager::GetInstance().VerifyAccessToken(tokenID, "ohos.permission.APPROXIMATELY_LOCATION"));
 
-    TempPermissionObserver::GetInstance().formTokenMap_["GrantTempPermission"] = tokenID;
     EXPECT_EQ(RET_SUCCESS,
         formStateObserver_->NotifyWhetherFormsVisible(FormVisibilityType::INVISIBLE, "#1", formInstances));
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -2150,12 +2277,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0016, TestSize.Level1)
 }
 #ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /**
- * @tc.name: GrantTempPermission0017
+ * @tc.name: GrantTempPermission019
  * @tc.desc: Test tokenID not in the list
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0017, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission019, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2167,6 +2294,7 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0017, TestSize.Level1)
     // create background task
     std::shared_ptr<ContinuousTaskCallbackInfo> continuousTaskCallbackInfo
         = std::make_shared<ContinuousTaskCallbackInfo>();
+    continuousTaskCallbackInfo->typeId_ = static_cast<uint32_t>(BackgroundMode::LOCATION);
     continuousTaskCallbackInfo->tokenId_ = tokenID;
     backgroundTaskObserver_->OnContinuousTaskStart(continuousTaskCallbackInfo);
     EXPECT_EQ(PERMISSION_GRANTED,
@@ -2187,12 +2315,12 @@ HWTEST_F(PermissionManagerTest, GrantTempPermission0017, TestSize.Level1)
 }
 #endif
 /**
- * @tc.name: GrantTempPermission0018
+ * @tc.name: GrantTempPermission020
  * @tc.desc: Test invalid permissionName
  * @tc.type: FUNC
  * @tc.require:
  */
-HWTEST_F(PermissionManagerTest, GrantTempPermission0018, TestSize.Level1)
+HWTEST_F(PermissionManagerTest, GrantTempPermission020, TestSize.Level1)
 {
     accessTokenService_->state_ = ServiceRunningState::STATE_RUNNING;
     accessTokenService_->Initialize();
@@ -2218,41 +2346,7 @@ HWTEST_F(PermissionManagerTest, PermissionCallbackTest001, TestSize.Level1)
     EXPECT_EQ(AccessTokenError::ERR_PARAM_INVALID, CallbackManager::GetInstance().AddCallback(scope, nullptr));
 }
 
-/*
- * @tc.name: RunningFormInfoParcel001
- * @tc.desc: RunningFormInfo::Marshalling | Unmarshalling
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(PermissionManagerTest, RunningFormInfoParcel001, TestSize.Level1)
-{
-    RunningFormInfo info;
-    info.formId_ = RANDOM_INPUT_64;
-    info.formName_ = "formName";
-    info.bundleName_ = "bundleName";
-    info.moduleName_ = "moduleName";
-    info.abilityName_ = "abilityName";
-    info.description_ = "description";
-    info.dimension_ = RANDOM_INPUT_32;
-    info.hostBundleName_ = "hostBundleName";
-    info.formLocation_ = FormLocation::DESKTOP;
-
-    Parcel parcel;
-    EXPECT_EQ(true, info.Marshalling(parcel));
-
-    auto p = RunningFormInfo::Unmarshalling(parcel);
-    EXPECT_NE(nullptr, p);
-    EXPECT_EQ(info.formId_, p->formId_);
-    EXPECT_EQ(info.formName_, p->formName_);
-    EXPECT_EQ(info.bundleName_, p->bundleName_);
-    EXPECT_EQ(info.moduleName_, p->moduleName_);
-    EXPECT_EQ(info.abilityName_, p->abilityName_);
-    EXPECT_EQ(info.description_, p->description_);
-    EXPECT_EQ(info.dimension_, p->dimension_);
-    EXPECT_EQ(info.hostBundleName_, p->hostBundleName_);
-    EXPECT_EQ(info.formLocation_, p->formLocation_);
-}
-
+#ifdef BGTASKMGR_CONTINUOUS_TASK_ENABLE
 /*
  * @tc.name: ContinuousTaskCallbackInfoParcel001
  * @tc.desc: ContinuousTaskCallbackInfo::Marshalling | Unmarshalling
@@ -2277,6 +2371,7 @@ HWTEST_F(PermissionManagerTest, ContinuousTaskCallbackInfoParcel001, TestSize.Le
     EXPECT_EQ(info.abilityId_, p->abilityId_);
     EXPECT_EQ(info.tokenId_, p->tokenId_);
 }
+#endif
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS

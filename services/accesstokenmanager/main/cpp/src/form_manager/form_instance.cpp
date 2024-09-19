@@ -40,15 +40,11 @@ bool FormInstance::ReadFromParcel(Parcel &parcel)
     formHostName_ = Str16ToStr8(u16FormHostName);
 
     int32_t formVisiblity;
-    if (!parcel.ReadInt32(formVisiblity)) {
+    if ((!parcel.ReadInt32(formVisiblity)) || (!parcel.ReadInt32(specification_))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
         return false;
     }
     formVisiblity_ = static_cast<FormVisibilityType>(formVisiblity);
-    if (!parcel.ReadInt32(specification_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
-        return false;
-    }
 
     std::u16string u16BundleName;
     std::u16string u16ModuleName;
@@ -70,6 +66,18 @@ bool FormInstance::ReadFromParcel(Parcel &parcel)
         return false;
     }
     formUsageState_ = static_cast<FormUsageState>(formUsageState);
+    std::u16string u16description;
+    if (!parcel.ReadString16(u16description)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString16 failed.");
+        return false;
+    }
+    description_ = Str16ToStr8(u16description);
+
+    if ((!parcel.ReadInt32(appIndex_)) || (!parcel.ReadInt32(userId_))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "ReadInt32 failed.");
+        return false;
+    }
+
     return true;
 }
 
@@ -85,37 +93,32 @@ bool FormInstance::Marshalling(Parcel &parcel) const
         return false;
     }
 
-    if (!parcel.WriteInt32(static_cast<int32_t>(formVisiblity_))) {
+    if ((!parcel.WriteInt32(static_cast<int32_t>(formVisiblity_))) || (!parcel.WriteInt32(specification_))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
         return false;
     }
 
-    if (!parcel.WriteInt32(specification_)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
-        return false;
-    }
-
-    if (!parcel.WriteString16(Str8ToStr16(bundleName_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
-        return false;
-    }
-
-    if (!parcel.WriteString16(Str8ToStr16(moduleName_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
-        return false;
-    }
-
-    if (!parcel.WriteString16(Str8ToStr16(abilityName_))) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
-        return false;
-    }
-
-    if (!parcel.WriteString16(Str8ToStr16(formName_))) {
+    if ((!parcel.WriteString16(Str8ToStr16(bundleName_))) || (!parcel.WriteString16(Str8ToStr16(moduleName_))) ||
+        (!parcel.WriteString16(Str8ToStr16(abilityName_))) || (!parcel.WriteString16(Str8ToStr16(formName_)))) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
         return false;
     }
 
     if (!parcel.WriteInt32(static_cast<int32_t>(formUsageState_))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return false;
+    }
+    if (!parcel.WriteString16(Str8ToStr16(description_))) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteString16 failed.");
+        return false;
+    }
+
+    if (!parcel.WriteInt32(appIndex_)) {
+        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
+        return false;
+    }
+
+    if (!parcel.WriteInt32(userId_)) {
         ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInt32 failed.");
         return false;
     }

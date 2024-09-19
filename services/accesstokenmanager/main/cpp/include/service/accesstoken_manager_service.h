@@ -45,7 +45,7 @@ public:
     void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string& deviceId) override;
 
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& info, const HapPolicyParcel& policy) override;
-    PermUsedTypeEnum GetUserGrantedPermissionUsedType(
+    PermUsedTypeEnum GetPermissionUsedType(
         AccessTokenID tokenID, const std::string& permissionName) override;
     int32_t InitHapToken(const HapInfoParcel& info, HapPolicyParcel& policy,
         AccessTokenIDEx& fullTokenId) override;
@@ -64,6 +64,8 @@ public:
         int32_t userID) override;
     int GrantPermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
     int RevokePermission(AccessTokenID tokenID, const std::string& permissionName, uint32_t flag) override;
+    int GrantPermissionForSpecifiedTime(
+        AccessTokenID tokenID, const std::string& permissionName, uint32_t onceTime) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int DeleteToken(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
@@ -84,10 +86,7 @@ public:
 
 #ifdef TOKEN_SYNC_ENABLE
     int GetHapTokenInfoFromRemote(AccessTokenID tokenID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
-    int GetAllNativeTokenInfo(std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfosRes) override;
     int SetRemoteHapTokenInfo(const std::string& deviceID, HapTokenInfoForSyncParcel& hapSyncParcel) override;
-    int SetRemoteNativeTokenInfo(const std::string& deviceID,
-        std::vector<NativeTokenInfoForSyncParcel>& nativeTokenInfoForSyncParcel) override;
     int DeleteRemoteToken(const std::string& deviceID, AccessTokenID tokenID) override;
     AccessTokenID GetRemoteNativeTokenID(const std::string& deviceID, AccessTokenID tokenID) override;
     int DeleteRemoteDeviceTokens(const std::string& deviceID) override;
@@ -98,8 +97,10 @@ public:
     int SetPermDialogCap(const HapBaseInfoParcel& hapBaseInfoParcel, bool enable) override;
     void GetPermissionManagerInfo(PermissionGrantInfoParcel& infoParcel) override;
     int32_t GetNativeTokenName(AccessTokenID tokenID, std::string& name) override;
+    int32_t InitUserPolicy(const std::vector<UserState>& userList, const std::vector<std::string>& permList) override;
+    int32_t UpdateUserPolicy(const std::vector<UserState>& userList) override;
+    int32_t ClearUserPolicy() override;
     void DumpTokenInfo(const AtmToolsParamInfoParcel& infoParcel, std::string& dumpInfo) override;
-    int32_t DumpPermDefInfo(std::string& dumpInfo) override;
     int32_t GetVersion(uint32_t& version) override;
     int Dump(int fd, const std::vector<std::u16string>& args) override;
 
@@ -108,18 +109,18 @@ private:
     bool GetConfigGrantValueFromFile(std::string& fileContent);
     void GetConfigValue();
     bool Initialize();
-    void DumpTokenIfNeeded();
     void AccessTokenServiceParamSet() const;
     PermissionOper GetPermissionsState(AccessTokenID tokenID, std::vector<PermissionListStateParcel>& reqPermList);
 #ifdef EVENTHANDLER_ENABLE
     std::shared_ptr<AppExecFwk::EventRunner> eventRunner_;
-    std::shared_ptr<AppExecFwk::EventRunner> dumpEventRunner_;
     std::shared_ptr<AccessEventHandler> eventHandler_;
-    std::shared_ptr<AccessEventHandler> dumpEventHandler_;
+    std::shared_ptr<AppExecFwk::EventRunner> shortGrantEventRunner_;
+    std::shared_ptr<AccessEventHandler> shortGrantEventHandler_;
 #endif
     ServiceRunningState state_;
     std::string grantBundleName_;
     std::string grantAbilityName_;
+    std::string grantServiceAbilityName_;
     std::string permStateAbilityName_;
     std::string globalSwitchAbilityName_;
 };

@@ -50,6 +50,7 @@
         "napi",
         "openssl",
         "power_manager",
+        "relational_store",
         "safwk",
         "samgr",
         "screenlock_mgr",
@@ -66,8 +67,9 @@
           "//base/security/access_token/tools:tools_atm"
         ],
         "fwk_group": [
-          "//base/security/access_token/interfaces/kits:napi_packages",
-          "//base/security/access_token/interfaces/kits:cj_packages"
+          "//base/security/access_token/interfaces/kits/capi:capi_packages",
+          "//base/security/access_token/interfaces/kits/cj:cj_packages",
+          "//base/security/access_token/interfaces/kits/napi:napi_packages"
         ],
         "service_group": [
           "//base/security/access_token/interfaces/innerkits/tokensync:libtokensync_sdk",

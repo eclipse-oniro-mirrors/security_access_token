@@ -28,7 +28,7 @@ public:
     virtual int32_t AcquireAccess(DataLockType type, bool isApp) = 0;
     virtual int32_t ReleaseAccess(DataLockType type, bool isApp) = 0;
     virtual int32_t GenerateAppKey(uint32_t uid, const std::string& bundleName, std::string& keyId) = 0;
-    virtual int32_t DeleteAppKey(const std::string& keyId) = 0;
+    virtual int32_t DeleteAppKey(const std::string& bundleName, int32_t userId) = 0;
     virtual int32_t GetUserAppKey(int32_t userId, bool getAllFlag,
         std::vector<std::pair<int32_t, std::string>> &keyInfos) = 0;
     virtual int32_t ChangeUserAppkeysLoadInfo(int32_t userId, std::vector<std::pair<std::string, bool>> &loadInfos) = 0;

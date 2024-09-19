@@ -55,7 +55,7 @@ public:
     void ExecuteCallbackAsync(AccessTokenID tokenID, const std::string& permName, int32_t changeType);
 
 private:
-    void ExcuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID, const std::string& permName,
+    void ExecuteAllCallback(std::vector<sptr<IRemoteObject>>& list, AccessTokenID tokenID, const std::string& permName,
         int32_t changeType);
     void GetCallbackObjectList(AccessTokenID tokenID, const std::string& permName,
         std::vector<sptr<IRemoteObject>>& list);

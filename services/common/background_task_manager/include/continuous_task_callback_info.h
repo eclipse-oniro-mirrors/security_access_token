@@ -49,6 +49,8 @@ struct ContinuousTaskCallbackInfo : public Parcelable {
     uint64_t tokenId_ {0};
 
     uint64_t GetFullTokenId() const;
+    uint32_t GetTypeId() const;
+    std::vector<uint32_t> GetTypeIds() const;
     bool ReadFromParcel(Parcel &parcel);
     bool Marshalling(Parcel &parcel) const override;
     static ContinuousTaskCallbackInfo *Unmarshalling(Parcel &parcel);
