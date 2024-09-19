@@ -47,6 +47,7 @@ if (is_standard_system) {
       "${access_token_path}/frameworks/accesstoken/include",
       "${access_token_path}/frameworks/common/include",
       "${access_token_path}/frameworks/privacy/include",
+      "${access_token_path}/frameworks/tokensync/include",
       "${access_token_path}/interfaces/innerkits/accesstoken/include",
       "${access_token_path}/interfaces/innerkits/privacy/include",
       "${access_token_path}/interfaces/innerkits/tokensync/src",
