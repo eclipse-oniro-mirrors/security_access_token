@@ -581,24 +581,6 @@ void AccessTokenKit::GetPermissionManagerInfo(PermissionGrantInfo& info)
     AccessTokenManagerClient::GetInstance().GetPermissionManagerInfo(info);
 }
 
-int32_t AccessTokenKit::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    ACCESSTOKEN_LOG_DEBUG(LABEL, "TokenID=%{public}d.", tokenId);
-
-    if (tokenId == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is invalid.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    ATokenTypeEnum type = GetTokenTypeFlag(static_cast<FullTokenID>(tokenId));
-    if ((type != ATokenTypeEnum::TOKEN_NATIVE) && (type != ATokenTypeEnum::TOKEN_SHELL)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token type %{public}u is invalid.", type);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    return AccessTokenManagerClient::GetInstance().GetNativeTokenName(tokenId, name);
-}
-
 int32_t AccessTokenKit::InitUserPolicy(
     const std::vector<UserState>& userList, const std::vector<std::string>& permList)
 {
