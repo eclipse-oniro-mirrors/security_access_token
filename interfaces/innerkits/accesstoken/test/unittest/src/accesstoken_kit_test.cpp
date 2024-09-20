@@ -42,7 +42,6 @@ static const int32_t INDEX_ONE = 1;
 static const int32_t INDEX_TWO = 2;
 static const int32_t INDEX_THREE = 3;
 static const int32_t INDEX_FOUR = 4;
-static const int32_t RANDOM_UID = 123;
 
 PermissionDef g_infoManagerTestPermDef1 = {
     .permissionName = "ohos.permission.test1",
