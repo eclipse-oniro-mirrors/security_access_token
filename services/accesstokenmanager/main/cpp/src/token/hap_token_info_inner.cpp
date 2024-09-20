@@ -301,7 +301,7 @@ int32_t HapTokenInfoInner::GetApiVersion(int32_t apiVersion)
         return apiVersion;
     }
     std::string api = apiStr.substr(inputSize - apiSize);
-    return std::stoi(api);
+    return std::atoi(api.c_str());
 }
 
 void HapTokenInfoInner::ToString(std::string& info) const
