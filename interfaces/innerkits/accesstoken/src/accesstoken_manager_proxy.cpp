@@ -1263,34 +1263,6 @@ void AccessTokenManagerProxy::GetPermissionManagerInfo(PermissionGrantInfoParcel
     }
     infoParcel = *parcel;
 }
-
-int32_t AccessTokenManagerProxy::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(IAccessTokenManager::GetDescriptor())) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteInterfaceToken failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-    if (!data.WriteUint32(tokenId)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "WriteUint32 failed.");
-        return ERR_WRITE_PARCEL_FAILED;
-    }
-
-    MessageParcel reply;
-    if (!SendRequest(AccessTokenInterfaceCode::GET_NATIVE_TOKEN_NAME, data, reply)) {
-        return ERR_SERVICE_ABNORMAL;
-    }
-
-    int32_t result = reply.ReadInt32();
-    if (result == RET_SUCCESS) {
-        if (!reply.ReadString(name)) {
-            ACCESSTOKEN_LOG_ERROR(LABEL, "ReadString failed.");
-            return ERR_READ_PARCEL_FAILED;
-        }
-    }
-    ACCESSTOKEN_LOG_INFO(LABEL, "Result from server (error=%{public}d, name=%{public}s).", result, name.c_str());
-    return result;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
