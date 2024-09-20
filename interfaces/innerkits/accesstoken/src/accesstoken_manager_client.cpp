@@ -666,7 +666,7 @@ void AccessTokenManagerClient::InitProxy()
         if (serviceDeathObserver_ != nullptr) {
             accesstokenSa->AddDeathRecipient(serviceDeathObserver_);
         }
-        proxy_ = iface_cast<IAccessTokenManager>(accesstokenSa);
+        proxy_ = new AccessTokenManagerProxy(accesstokenSa);
         if (proxy_ == nullptr) {
             ACCESSTOKEN_LOG_ERROR(LABEL, "Iface_cast get null");
         }
