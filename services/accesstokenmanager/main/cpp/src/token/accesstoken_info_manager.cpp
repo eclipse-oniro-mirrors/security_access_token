@@ -1442,29 +1442,6 @@ bool AccessTokenInfoManager::RemoveNativeInfoFromDatabase(AccessTokenID tokenID)
 
     return true;
 }
-
-int32_t AccessTokenInfoManager::GetNativeTokenName(AccessTokenID tokenId, std::string& name)
-{
-    if (tokenId == INVALID_TOKENID) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is invalid.", tokenId);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    ATokenTypeEnum type = AccessTokenIDManager::GetInstance().GetTokenIdType(tokenId);
-    if ((type != ATokenTypeEnum::TOKEN_NATIVE) && (type != ATokenTypeEnum::TOKEN_SHELL)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Token type %{public}u is invalid.", type);
-        return AccessTokenError::ERR_PARAM_INVALID;
-    }
-
-    std::shared_ptr<NativeTokenInfoInner> native = GetNativeTokenInfoInner(tokenId);
-    if (native == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenId %{public}u is not exist.", tokenId);
-        return AccessTokenError::ERR_TOKENID_NOT_EXIST;
-    }
-
-    name = native->GetProcessName();
-    return RET_SUCCESS;
-}
 } // namespace AccessToken
 } // namespace Security
 } // namespace OHOS
