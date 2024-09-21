@@ -147,13 +147,6 @@ public:
      */
     static ATokenTypeEnum GetTokenTypeFlag(FullTokenID tokenID);
     /**
-     * @brief Check native token dcap by token id.
-     * @param tokenID token id
-     * @param dcap dcap to be checked
-     * @return error code, see access_token_error.h
-     */
-    static int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap);
-    /**
      * @brief Query hap tokenID by input prarms.
      * @param userID user id
      * @param bundleName bundle name

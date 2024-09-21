@@ -19,7 +19,7 @@
 
 #include "constant.h"
 #include "hap_token_info.h"
-#include "native_token_info.h"
+#include "native_token_info_base.h"
 #include "nlohmann/json.hpp"
 #include "permission_state_full.h"
 #include "remote_protocol.h"
@@ -27,6 +27,18 @@
 namespace OHOS {
 namespace Security {
 namespace AccessToken {
+
+/**
+ * @brief Declares native token info for distributed synchronize class
+ */
+class NativeTokenInfoForSync final {
+public:
+    /** native token info */
+    NativeTokenInfoBase baseInfo;
+    /** permission state list */
+    std::vector<PermissionStateFull> permStateList;
+};
+
 /**
  * The base class for command. You can treat this as remote command header.
  */

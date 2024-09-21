@@ -132,8 +132,7 @@ void PermissionManager::AddDefPermissions(const std::vector<PermissionDef>& perm
             PermissionDefinitionCache::GetInstance().Insert(perm, tokenId);
         } else {
             PermissionDefinitionCache::GetInstance().Update(perm, tokenId);
-            ACCESSTOKEN_LOG_INFO(LABEL, "Permission %{public}s has define",
-                TransferPermissionDefToString(perm).c_str());
+            ACCESSTOKEN_LOG_INFO(LABEL, "Permission %{public}s has define", perm.permissionName.c_str());
         }
     }
 }
@@ -167,39 +166,6 @@ int PermissionManager::VerifyHapAccessToken(AccessTokenID tokenID, const std::st
     return permPolicySet->VerifyPermissionStatus(permissionName);
 }
 
-int PermissionManager::VerifyNativeAccessToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    std::shared_ptr<NativeTokenInfoInner> tokenInfoPtr =
-        AccessTokenInfoManager::GetInstance().GetNativeTokenInfoInner(tokenID);
-    if (tokenInfoPtr == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "tokenInfo is null, tokenId=%{public}u", tokenID);
-        return PERMISSION_DENIED;
-    }
-
-    NativeTokenInfo info;
-    tokenInfoPtr->TranslateToNativeTokenInfo(info);
-    if (!tokenInfoPtr->IsRemote() && !PermissionDefinitionCache::GetInstance().HasDefinition(permissionName)) {
-        if (PermissionDefinitionCache::GetInstance().IsHapPermissionDefEmpty()) {
-            ACCESSTOKEN_LOG_INFO(LABEL, "Permission definition set has not been installed!");
-            if (AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID) == TOKEN_NATIVE) {
-                return PERMISSION_GRANTED;
-            }
-            ACCESSTOKEN_LOG_ERROR(LABEL, "Token: %{public}d type error!", tokenID);
-            return PERMISSION_DENIED;
-        }
-        ACCESSTOKEN_LOG_ERROR(LABEL, "No definition for permission: %{public}s!", permissionName.c_str());
-        return PERMISSION_DENIED;
-    }
-    std::shared_ptr<PermissionPolicySet> permPolicySet =
-        AccessTokenInfoManager::GetInstance().GetNativePermissionPolicySet(tokenID);
-    if (permPolicySet == nullptr) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PolicySet is null, TokenID=%{public}d.", tokenID);
-        return PERMISSION_DENIED;
-    }
-
-    return permPolicySet->VerifyPermissionStatus(permissionName);
-}
-
 PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
     AccessTokenID tokenID, const std::string& permissionName)
 {
@@ -224,32 +190,6 @@ PermUsedTypeEnum PermissionManager::GetPermissionUsedType(
     }
 
     return permPolicySet->GetPermissionUsedType(permissionName);
-}
-
-int PermissionManager::VerifyAccessToken(AccessTokenID tokenID, const std::string& permissionName)
-{
-    if (tokenID == INVALID_TOKENID) {
-        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::ACCESS_TOKEN, "PERMISSION_CHECK",
-            HiviewDFX::HiSysEvent::EventType::FAULT, "CODE", VERIFY_TOKEN_ID_ERROR, "CALLER_TOKENID",
-            static_cast<AccessTokenID>(IPCSkeleton::GetCallingTokenID()), "PERMISSION_NAME", permissionName);
-        ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID is invalid");
-        return PERMISSION_DENIED;
-    }
-
-    if (!PermissionValidator::IsPermissionNameValid(permissionName)) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "PermissionName: %{public}s, invalid params!", permissionName.c_str());
-        return PERMISSION_DENIED;
-    }
-
-    ATokenTypeEnum tokenType = AccessTokenIDManager::GetInstance().GetTokenIdTypeEnum(tokenID);
-    if ((tokenType == TOKEN_NATIVE) || (tokenType == TOKEN_SHELL)) {
-        return VerifyNativeAccessToken(tokenID, permissionName);
-    }
-    if (tokenType == TOKEN_HAP) {
-        return VerifyHapAccessToken(tokenID, permissionName);
-    }
-    ACCESSTOKEN_LOG_ERROR(LABEL, "TokenID: %{public}d, invalid tokenType!", tokenID);
-    return PERMISSION_DENIED;
 }
 
 int PermissionManager::GetDefPermission(const std::string& permissionName, PermissionDef& permissionDefResult)
@@ -411,22 +351,6 @@ int PermissionManager::GetPermissionFlag(AccessTokenID tokenID, const std::strin
         flag = permPolicySet->GetFlagWithoutSpecifiedElement(fullFlag, PERMISSION_GRANTED_BY_POLICY);
     }
     return ret;
-}
-
-void PermissionManager::PermDefToString(const PermissionDef& def, std::string& info) const
-{
-    info.append(R"(    {)");
-    info.append("\n");
-    info.append(R"(      "permissionName": ")" + def.permissionName + R"(")" + ",\n");
-    info.append(R"(      "grantMode": )" + std::to_string(def.grantMode) + ",\n");
-    info.append(R"(      "availableLevel": )" + std::to_string(def.availableLevel) + ",\n");
-    info.append(R"(      "provisionEnable": )" + std::to_string(def.provisionEnable) + ",\n");
-    info.append(R"(      "distributedSceneEnable": )" + std::to_string(def.distributedSceneEnable) + ",\n");
-    info.append(R"(      "label": ")" + def.label + R"(")" + ",\n");
-    info.append(R"(      "labelId": )" + std::to_string(def.labelId) + ",\n");
-    info.append(R"(      "description": ")" + def.description + R"(")" + ",\n");
-    info.append(R"(      "descriptionId": )" + std::to_string(def.descriptionId) + ",\n");
-    info.append(R"(    })");
 }
 
 int32_t PermissionManager::FindPermRequestToggleStatusFromDb(int32_t userID, const std::string& permissionName)
@@ -950,24 +874,6 @@ void PermissionManager::GetStateOrFlagChangedList(std::vector<PermissionStateFul
 void PermissionManager::NotifyPermGrantStoreResult(bool result, uint64_t timestamp)
 {
     grantEvent_.NotifyPermGrantStoreResult(result, timestamp);
-}
-
-std::string PermissionManager::TransferPermissionDefToString(const PermissionDef& inPermissionDef)
-{
-    std::string infos;
-    infos.append(R"({"permissionName": ")" + inPermissionDef.permissionName + R"(")");
-    infos.append(R"(, "bundleName": ")" + inPermissionDef.bundleName + R"(")");
-    infos.append(R"(, "grantMode": )" + std::to_string(inPermissionDef.grantMode));
-    infos.append(R"(, "availableLevel": )" + std::to_string(inPermissionDef.availableLevel));
-    infos.append(R"(, "provisionEnable": )" + std::to_string(inPermissionDef.provisionEnable));
-    infos.append(R"(, "distributedSceneEnable": )" + std::to_string(inPermissionDef.distributedSceneEnable));
-    infos.append(R"(, "label": ")" + inPermissionDef.label + R"(")");
-    infos.append(R"(, "labelId": )" + std::to_string(inPermissionDef.labelId));
-    infos.append(R"(, "description": ")" + inPermissionDef.description + R"(")");
-    infos.append(R"(, "descriptionId": )" + std::to_string(inPermissionDef.descriptionId));
-    infos.append(R"(, "availableType": )" + std::to_string(inPermissionDef.availableType));
-    infos.append("}");
-    return infos;
 }
 
 void PermissionManager::AddPermToKernel(AccessTokenID tokenID, const std::shared_ptr<PermissionPolicySet>& policy)

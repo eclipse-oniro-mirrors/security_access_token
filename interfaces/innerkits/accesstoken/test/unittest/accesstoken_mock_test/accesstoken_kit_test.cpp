@@ -155,19 +155,6 @@ HWTEST_F(AccessTokenKitTest, GetTokenType001, TestSize.Level1)
 }
 
 /**
- * @tc.name: CheckNativeDCap001
- * @tc.desc: CheckNativeDCap with proxy is null
- * @tc.type: FUNC
- * @tc.require:
- */
-HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
-{
-    AccessTokenID tokenId = 123;
-    const std::string dcap = "AT_CAP";
-    ASSERT_EQ(AccessTokenError::ERR_SERVICE_ABNORMAL, AccessTokenKit::CheckNativeDCap(tokenId, dcap));
-}
-
-/**
  * @tc.name: GetHapTokenID001
  * @tc.desc: GetHapTokenID with proxy is null
  * @tc.type: FUNC

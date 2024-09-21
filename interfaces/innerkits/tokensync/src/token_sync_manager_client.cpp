@@ -17,7 +17,6 @@
 
 #include "accesstoken_log.h"
 #include "hap_token_info_for_sync_parcel.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "iservice_registry.h"
 
 namespace OHOS {

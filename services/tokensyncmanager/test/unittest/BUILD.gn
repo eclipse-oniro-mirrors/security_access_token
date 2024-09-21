@@ -60,6 +60,7 @@ ohos_unittest("libtoken_sync_service_standard_test") {
     "${access_token_path}/interfaces/innerkits/accesstoken/include",
     "${access_token_path}/interfaces/innerkits/nativetoken/include",
     "${access_token_path}/interfaces/innerkits/token_setproc/include",
+    "${access_token_path}/services/accesstokenmanager/main/cpp/include/token",
     "${access_token_path}/services/common/config_policy/include",
     "${access_token_path}/services/common/handler/include",
   ]

@@ -482,19 +482,6 @@ void AccessTokenManagerStub::GetTokenTypeInner(MessageParcel& data, MessageParce
     reply.WriteInt32(result);
 }
 
-void AccessTokenManagerStub::CheckNativeDCapInner(MessageParcel& data, MessageParcel& reply)
-{
-    if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
-        ACCESSTOKEN_LOG_ERROR(LABEL, "Permission denied(tokenID=%{public}d)", IPCSkeleton::GetCallingTokenID());
-        reply.WriteInt32(AccessTokenError::ERR_PERMISSION_DENIED);
-        return;
-    }
-    AccessTokenID tokenID = data.ReadUint32();
-    std::string dCap = data.ReadString();
-    int result = this->CheckNativeDCap(tokenID, dCap);
-    reply.WriteInt32(result);
-}
-
 void AccessTokenManagerStub::GetHapTokenIDInner(MessageParcel& data, MessageParcel& reply)
 {
     if (!IsNativeProcessCalling() && !IsPrivilegedCalling()) {
@@ -1021,8 +1008,6 @@ void AccessTokenManagerStub::SetLocalTokenOpFuncInMap()
         &AccessTokenManagerStub::DeleteTokenInfoInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_TOKEN_TYPE)] =
         &AccessTokenManagerStub::GetTokenTypeInner;
-    requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::CHECK_NATIVE_DCAP)] =
-        &AccessTokenManagerStub::CheckNativeDCapInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::GET_HAP_TOKEN_ID)] =
         &AccessTokenManagerStub::GetHapTokenIDInner;
     requestFuncMap_[static_cast<uint32_t>(AccessTokenInterfaceCode::ALLOC_LOCAL_TOKEN_ID)] =

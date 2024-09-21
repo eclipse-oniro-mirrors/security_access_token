@@ -19,7 +19,6 @@
 #include "access_token_error.h"
 #include "accesstoken_log.h"
 #include "i_accesstoken_manager.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -3073,38 +3072,6 @@ HWTEST_F(AccessTokenKitTest, ConcurrencyTest001, TestSize.Level1)
     for (auto it = threadVec.begin(); it != threadVec.end(); it++) {
         it->join();
     }
-}
-
-/**
- * @tc.name: CheckNativeDCap001
- * @tc.desc: cannot Check native dcap with invalid tokenID.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, CheckNativeDCap001, TestSize.Level1)
-{
-    AccessTokenID tokenID = 0;
-    const std::string dcap = "AT_CAP";
-    int ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
-
-    tokenID = 1;
-    ret = AccessTokenKit::CheckNativeDCap(tokenID, dcap);
-    ASSERT_EQ(ERR_TOKENID_NOT_EXIST, ret);
-}
-
-/**
- * @tc.name: CheckNativeDCap002
- * @tc.desc: cannot Check native dcap with invalid dcap.
- * @tc.type: FUNC
- * @tc.require: Issue Number
- */
-HWTEST_F(AccessTokenKitTest, CheckNativeDCap002, TestSize.Level1)
-{
-    AccessTokenID tokenID = 0Xff;
-    const std::string invalidDcap (INVALID_DCAP_LEN, 'x');
-    int ret = AccessTokenKit::CheckNativeDCap(tokenID, invalidDcap);
-    ASSERT_EQ(AccessTokenError::ERR_PARAM_INVALID, ret);
 }
 
 /**

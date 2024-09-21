@@ -21,7 +21,6 @@
 #include "accesstoken_log.h"
 #include "accesstoken_service_ipc_interface_code.h"
 #include "hap_token_info.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "nativetoken_kit.h"
 #include "permission_grant_info.h"
 #include "permission_state_change_info_parcel.h"
@@ -715,7 +714,7 @@ HWTEST_F(AccessTokenKitExtensionTest, GetSelfPermissionsState005, TestSize.Level
     EXPECT_EQ(0, SetSelfTokenID(tokenId));
     std::vector<PermissionListState> permsList4;
     PermissionListState tmp = {
-        .permissionName = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO", // todo
+        .permissionName = "ohos.permission.SHORT_TERM_WRITE_IMAGEVIDEO",
         .state = PASS_OPER
     };
     permsList4.emplace_back(tmp);

@@ -28,7 +28,6 @@
 #include "hap_token_info_for_sync_parcel.h"
 #include "i_accesstoken_manager.h"
 #include "iremote_proxy.h"
-#include "native_token_info_for_sync_parcel.h"
 #include "native_token_info_parcel.h"
 #include "permission_def_parcel.h"
 #include "permission_grant_info_parcel.h"
@@ -65,7 +64,6 @@ public:
         AccessTokenID tokenID, std::vector<PermissionListStateParcel>& permListParcel) override;
     int ClearUserGrantedPermissionState(AccessTokenID tokenID) override;
     int GetTokenType(AccessTokenID tokenID) override;
-    int CheckNativeDCap(AccessTokenID tokenID, const std::string& dcap) override;
     AccessTokenIDEx GetHapTokenID(int32_t userID, const std::string& bundleName, int32_t instIndex) override;
     AccessTokenID AllocLocalTokenID(const std::string& remoteDeviceID, AccessTokenID remoteTokenID) override;
     AccessTokenIDEx AllocHapToken(const HapInfoParcel& hapInfo, const HapPolicyParcel& policyParcel) override;
